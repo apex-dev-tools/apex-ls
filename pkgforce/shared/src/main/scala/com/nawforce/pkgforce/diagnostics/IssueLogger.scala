@@ -37,6 +37,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /** Trait to assist with logging in a context specific way */
+/*sealed*/
 trait IssueLogger {
   def log(issue: Issue): Unit
 

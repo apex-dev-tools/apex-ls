@@ -41,6 +41,10 @@ class CodeParser(val source: Source) {
     parse(parser => parser.block())
   }
 
+  def parsePropertyBlock(): IssuesAnd[ApexParser.PropertyBlockContext] = {
+    parse(parser => parser.propertyBlock())
+  }
+
   def parseSOQL(): IssuesAnd[ApexParser.QueryContext] = {
     parse(parser => parser.query())
   }
