@@ -1,6 +1,11 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser.{OutlineParser, ClassTypeDeclaration => OPClassTypeDeclaration, EnumTypeDeclaration => OPEnumTypeDeclaration, InterfaceTypeDeclaration => OPInterfaceTypeDeclaration}
+import com.financialforce.oparser.{
+  OutlineParser,
+  ClassTypeDeclaration => OPClassTypeDeclaration,
+  EnumTypeDeclaration => OPEnumTypeDeclaration,
+  InterfaceTypeDeclaration => OPInterfaceTypeDeclaration
+}
 import com.nawforce.apexlink.cst.{ClassDeclaration, EnumDeclaration, InterfaceDeclaration}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.Module
@@ -25,15 +30,15 @@ object OutlineParserFullDeclaration {
     val (success, reason, td) = OutlineParser.parse(cls.path.toString, contentsString)
     val rv =
       if (!success) {
-        System.err.println(s"FAILED to parse ${cls.path.toString} $reason")
+        LoggerOps.info(s"FAILED to parse ${cls.path.toString} $reason")
         None
-      }
-      else {
+      } else {
         td.get match {
-          case ctd: OPClassTypeDeclaration     => toClassDeclaration(ctd, cls, srcData, module, None)
-          case itd: OPInterfaceTypeDeclaration => toInterfaceDeclaration(itd, cls, srcData, module, None)
-          case etd: OPEnumTypeDeclaration      => toEnumDeclaration(etd, cls, srcData, module, None)
-          case _                               => None
+          case ctd: OPClassTypeDeclaration => toClassDeclaration(ctd, cls, srcData, module, None)
+          case itd: OPInterfaceTypeDeclaration =>
+            toInterfaceDeclaration(itd, cls, srcData, module, None)
+          case etd: OPEnumTypeDeclaration => toEnumDeclaration(etd, cls, srcData, module, None)
+          case _                          => None
         }
       }
     rv
@@ -59,7 +64,8 @@ object OutlineParserFullDeclaration {
         outerTypeName.isEmpty
       )
 
-    val thisType = ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
+    val thisType =
+      ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
 
     val rv = OutlineParserClassDeclaration.construct(
       cls.path,
@@ -91,7 +97,8 @@ object OutlineParserFullDeclaration {
         outerTypeName.isEmpty
       )
 
-    val thisType = ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
+    val thisType =
+      ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
 
     val rv = OutlineParserInterfaceDeclaration.construct(
       cls.path,
@@ -123,15 +130,11 @@ object OutlineParserFullDeclaration {
         outerTypeName.isEmpty
       )
 
-    val thisType = ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
+    val thisType =
+      ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
 
-    val rv = OutlineParserEnumDeclaration.construct(
-      etd,
-      source,
-      thisType,
-      outerTypeName,
-      modifierResults
-    )
+    val rv =
+      OutlineParserEnumDeclaration.construct(etd, source, thisType, outerTypeName, modifierResults)
     Some(rv)
   }
 }

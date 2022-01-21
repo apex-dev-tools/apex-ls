@@ -26,7 +26,7 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
 import com.nawforce.pkgforce.stream._
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.collection.immutable.ArraySeq
 import scala.collection.parallel.CollectionConverters._
 import scala.collection.{BufferedIterator, mutable}
@@ -126,8 +126,11 @@ class StreamDeployer(
     val missingClasses =
       docs.filterNot(doc => types.contains(TypeName(doc.name).withNamespace(module.namespace)))
     LoggerOps.debug(s"${missingClasses.length} of ${docs.length} classes not available from cache")
+    val failures = loadClassesWithOutlineParser(missingClasses)
+    if (failures.nonEmpty)
+      parseAndValidateClasses(failures)
 //    parseAndValidateClasses(missingClasses)
-    loadClassesWithOutlineParser(missingClasses)
+//    loadClassesWithOutlineParser(missingClasses)
   }
 
   /** Parse a collection of Apex classes, insert them and validate them. */
@@ -231,10 +234,13 @@ class StreamDeployer(
       .getOrElse(Iterator())
   }
 
-  private def loadClassesWithOutlineParser(classes: ArraySeq[ClassDocument]): Unit = {
+  private def loadClassesWithOutlineParser(
+    classes: ArraySeq[ClassDocument]
+  ): ArraySeq[ClassDocument] = {
     LoggerOps.info("Using outline parser")
 
-    val localAccum = new ConcurrentHashMap[TypeName, FullDeclaration]()
+    val localAccum      = new ConcurrentHashMap[TypeName, FullDeclaration]()
+    val failedDocuments = new ConcurrentLinkedQueue[ClassDocument]()
 
     LoggerOps.debugTime(s"Parsed ${classes.length} classes", classes.nonEmpty) {
       classes.par.foreach(cls => {
@@ -243,11 +249,12 @@ class StreamDeployer(
             System.err.println(error)
           case Right(srcData) => {
             LoggerOps.debugTime(s"Parsed ${cls.path}") {
-              OutlineParserFullDeclaration
+              val td = OutlineParserFullDeclaration
                 .toFullDeclaration(cls, srcData, module)
                 .map(td => {
                   localAccum.put(td.typeName, td)
                 })
+              if (td.isEmpty) failedDocuments.add(cls)
             }
           }
         }
@@ -255,17 +262,9 @@ class StreamDeployer(
       localAccum.entrySet.forEach(kv => {
         types.put(kv.getKey, kv.getValue)
       })
-      localAccum.values().asScala.foreach(
-        c =>
-          try {
-            c.validate()
-          } catch {
-            case ex: Throwable =>
-              println(s"Failed to validate ${c.name.toString()} ${ex}")
-              ex.printStackTrace()
-          }
-      )
+      localAccum.values().asScala.foreach(_.validate())
     }
+    ArraySeq.from(failedDocuments.asScala.toSeq)
   }
 
   /** Consume trigger events, these could be cached but they don't consume much time to for we load from disk and

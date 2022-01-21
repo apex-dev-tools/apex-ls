@@ -317,8 +317,8 @@ object FullDeclaration {
     data: SourceData,
     forceConstruct: Boolean
   ): Option[FullDeclaration] = {
-    createOP(module, doc, data, forceConstruct)
-    //createANTLR(module, doc, data, forceConstruct)
+    //createOP(module, doc, data, forceConstruct)
+    createANTLR(module, doc, data, forceConstruct)
   }
 
   private def createOP(

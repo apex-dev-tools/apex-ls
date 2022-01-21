@@ -1,7 +1,38 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser.{ClassTypeDeclaration => OPClassTypeDeclaration, ConstructorDeclaration => OPConstructorDeclaration, EnumTypeDeclaration => OPEnumTypeDeclaration, FieldDeclaration => OPFieldDeclaration, FormalParameter => OPFormalParameter, Id => OPId, Initializer => OPInitializer, InterfaceTypeDeclaration => OPInterfaceTypeDeclaration, Location => OPLocation, MethodDeclaration => OPMethodDeclaration, PropertyBlock => OPPropertyBlock, PropertyDeclaration => OPPropertyDeclaration}
-import com.nawforce.apexlink.cst.{ApexConstructorDeclaration, ApexFieldDeclaration, ApexInitializerBlock, ApexMethodDeclaration, ApexPropertyDeclaration, CST, ClassBodyDeclaration, ClassDeclaration, EnumDeclaration, Expression, FormalParameter, Id, InterfaceDeclaration, LazyBlock, PropertyBlock, QualifiedName, VariableDeclarator}
+import com.financialforce.oparser.{
+  ClassTypeDeclaration => OPClassTypeDeclaration,
+  ConstructorDeclaration => OPConstructorDeclaration,
+  EnumTypeDeclaration => OPEnumTypeDeclaration,
+  FieldDeclaration => OPFieldDeclaration,
+  FormalParameter => OPFormalParameter,
+  Id => OPId,
+  Initializer => OPInitializer,
+  InterfaceTypeDeclaration => OPInterfaceTypeDeclaration,
+  Location => OPLocation,
+  MethodDeclaration => OPMethodDeclaration,
+  PropertyBlock => OPPropertyBlock,
+  PropertyDeclaration => OPPropertyDeclaration
+}
+import com.nawforce.apexlink.cst.{
+  ApexConstructorDeclaration,
+  ApexFieldDeclaration,
+  ApexInitializerBlock,
+  ApexMethodDeclaration,
+  ApexPropertyDeclaration,
+  CST,
+  ClassBodyDeclaration,
+  ClassDeclaration,
+  EnumDeclaration,
+  Expression,
+  FormalParameter,
+  Id,
+  InterfaceDeclaration,
+  LazyBlock,
+  PropertyBlock,
+  QualifiedName,
+  VariableDeclarator
+}
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgImpl
@@ -83,25 +114,14 @@ private[opcst] object OutlineParserClassDeclaration {
 
     val fields = ctd.fields.flatMap(
       f =>
-        OutlineParserClassBodyDeclaration.constructFieldDeclaration(
-          path,
-          f,
-          source,
-          typeContext,
-          outerTypeName.isEmpty,
-          thisType
-        )
+        OutlineParserClassBodyDeclaration
+          .constructFieldDeclaration(path, f, source, typeContext, outerTypeName.isEmpty, thisType)
     )
 
     val initializers = ctd.initializers.flatMap(
       i =>
-        OutlineParserClassBodyDeclaration.constructInitializerBlock(
-          i,
-          source,
-          typeContext,
-          outerTypeName.isEmpty,
-          thisType
-        )
+        OutlineParserClassBodyDeclaration
+          .constructInitializerBlock(i, source, typeContext, outerTypeName.isEmpty, thisType)
     )
 
     val properties = ctd.properties.flatMap(
@@ -144,8 +164,10 @@ private[opcst] object OutlineParserClassDeclaration {
     )
     LocationUtils.stampLocation(
       declaration,
-      ctd.location.get.copy(startLineOffset = ctd.location.get.startLineOffset - 1,
-        endLineOffset = ctd.location.get.endLineOffset + endLineOffset.getOrElse(0)),
+      ctd.location.get.copy(
+        startLineOffset = ctd.location.get.startLineOffset - 1,
+        endLineOffset = ctd.location.get.endLineOffset + endLineOffset.getOrElse(0)
+      ),
       source.path
     )
     typeContext.freeze(declaration)
@@ -187,7 +209,8 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     val thisType = outerType.asInner(ii.id.get.id.contents)
     val modifierResults =
       ModifierUtils.interfaceModifiers(path, ii.id.get, ii.annotations, ii.modifiers, outer = false)
-    val rv = construct(path, ii, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
+    val rv =
+      construct(path, ii, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
   }
 
@@ -232,8 +255,10 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     )
     LocationUtils.stampLocation(
       declaration,
-      itd.location.get.copy(startLineOffset = itd.location.get.startLineOffset - 1,
-        endLineOffset = itd.location.get.endLineOffset + endLineOffset.getOrElse(0)),
+      itd.location.get.copy(
+        startLineOffset = itd.location.get.startLineOffset - 1,
+        endLineOffset = itd.location.get.endLineOffset + endLineOffset.getOrElse(0)
+      ),
       source.path
     )
     typeContext.freeze(declaration)
@@ -252,7 +277,7 @@ private[opcst] object OutlineParserEnumDeclaration {
     val modifierResults =
       ModifierUtils.enumModifiers(path, ie.id.get, ie.annotations, ie.modifiers, outer = false)
     val thisType = outerType.asInner(ie.id.get.id.contents)
-    val rv = construct(ie, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
+    val rv       = construct(ie, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
   }
 
@@ -269,7 +294,9 @@ private[opcst] object OutlineParserEnumDeclaration {
 
     val typeContext = new RelativeTypeContext
 
-    val fields = etd.constants.flatMap(c => constructEnumConstant(c, source, thisType, outerTypeName.isDefined))
+    val fields = etd.constants.flatMap(
+      c => constructEnumConstant(c, source, thisType, outerTypeName.isDefined)
+    )
 
     val declaration = EnumDeclaration(
       source,
@@ -284,8 +311,10 @@ private[opcst] object OutlineParserEnumDeclaration {
     )
     LocationUtils.stampLocation(
       declaration,
-      etd.location.get.copy(startLineOffset = etd.location.get.startLineOffset - 1,
-        endLineOffset = etd.location.get.endLineOffset + endLineOffset.getOrElse(0)),
+      etd.location.get.copy(
+        startLineOffset = etd.location.get.startLineOffset - 1,
+        endLineOffset = etd.location.get.endLineOffset + endLineOffset.getOrElse(0)
+      ),
       source.path
     )
     typeContext.freeze(declaration)
@@ -300,13 +329,15 @@ private[opcst] object OutlineParserEnumDeclaration {
   ): Option[ClassBodyDeclaration] = {
 
     val modifierResults = ModifierUtils.enumConstantModifiers()
-    val vd              = OutlineParserClassBodyDeclaration.constructVariableDeclarator(id, source, thisType.typeName)
+    val vd =
+      OutlineParserClassBodyDeclaration.constructVariableDeclarator(id, source, thisType.typeName)
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, thisType.typeName, vd)
     LocationUtils.stampLocation(
       declaration,
       id.id.location.copy(startLineOffset = id.id.location.startLineOffset - 1),
-      source.path)
+      source.path
+    )
     Some(declaration)
   }
 }
@@ -332,14 +363,17 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     )
 
     val parameters = cd.formalParameterList.formalParameters
-      .flatMap(
-        OutlineParserFormalParameter.construct(path, _, source, typeContext)
-      )
+      .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
       .pipe(ArraySeq.from)
 
-    val block = OutlineParserBlock.construct(source, cd.blockLocation.get, if (isOuter) Some(source) else None)
+    val block = OutlineParserBlock.construct(
+      source,
+      cd.blockLocation.get,
+      if (isOuter) Some(source) else None
+    )
 
-    val declaration = ApexConstructorDeclaration(modifierResults, qualifiedName, parameters, thisType.inTest, block)
+    val declaration =
+      ApexConstructorDeclaration(modifierResults, qualifiedName, parameters, thisType.inTest, block)
     val location = OPLocation(
       cd.id.id.location.startLine,
       cd.id.id.location.startLineOffset - 1,
@@ -373,12 +407,14 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val block =
       if (md.blockLocation.isEmpty) None
-      else Some(OutlineParserBlock.construct(source, md.blockLocation.get, if (isOuter) Some(source) else None, setStart=false))
+      else
+        Some(
+          OutlineParserBlock
+            .construct(source, md.blockLocation.get, if (isOuter) Some(source) else None)
+        )
 
     val parameters = md.formalParameterList.formalParameters
-      .flatMap(
-        OutlineParserFormalParameter.construct(path, _, source, typeContext)
-      )
+      .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
       .pipe(ArraySeq.from)
 
     val declaration = new ApexMethodDeclaration(
@@ -416,9 +452,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       ModifierUtils.interfaceMethodModifiers(path, md.id, md.annotations, md.modifiers)
 
     val parameters = md.formalParameterList.formalParameters
-      .flatMap(
-        OutlineParserFormalParameter.construct(path, _, source, typeContext)
-      )
+      .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
       .pipe(ArraySeq.from)
 
     val declaration = new ApexMethodDeclaration(
@@ -462,8 +496,9 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       fd.typeRef.typeNames(0).id.id.location.startLine,
       fd.typeRef.typeNames(0).id.id.location.startLineOffset - 1,
       0,
-      if(fd.blockLocation.isDefined) fd.blockLocation.get.endLine else fd.id.id.location.endLine,
-      if(fd.blockLocation.isDefined) fd.blockLocation.get.endLineOffset else fd.id.id.location.endLineOffset + 1,
+      if (fd.blockLocation.isDefined) fd.blockLocation.get.endLine else fd.id.id.location.endLine,
+      if (fd.blockLocation.isDefined) fd.blockLocation.get.endLineOffset
+      else fd.id.id.location.endLineOffset + 1,
       0
     )
     LocationUtils.stampLocation(declaration, location, source.path)
@@ -520,7 +555,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val init: Option[Expression] = if (fd.blockLocation.isDefined) parseInitializer() else None
 
-    val declaration = VariableDeclarator(typeName, OutlineParserId.construct(fd.id, source.path), init)
+    val declaration =
+      VariableDeclarator(typeName, OutlineParserId.construct(fd.id, source.path), init)
     LocationUtils.stampLocation(
       declaration,
       LocationUtils.extendLocation(fd.id.id.location, startLineOffset = -1),
@@ -540,7 +576,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     val modifierResults = ModifierUtils.initializerBlockModifiers(i.isStatic)
     val declaration = ApexInitializerBlock(
       modifierResults,
-      OutlineParserBlock.construct(source, i.blockLocation.get, if (isOuter) Some(source) else None, setStart = false),
+      OutlineParserBlock
+        .construct(source, i.blockLocation.get, if (isOuter) Some(source) else None),
       thisType.inTest
     )
     LocationUtils.stampLocation(
@@ -564,17 +601,18 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     def parsePropertyBlock(pb: OPPropertyBlock): Option[PropertyBlock] = {
 
-      SourceOps.withSource(source, pb.blockLocation.get, 0, if (isOuter) Some(source) else None) { propertyBlockSource =>
-        val parser = new CodeParser(propertyBlockSource)
-        val result = parser.parsePropertyBlock()
-        result.issues.foreach(OrgImpl.log)
-        if (result.issues.nonEmpty) return None
+      SourceOps.withSource(source, pb.blockLocation.get, 0, if (isOuter) Some(source) else None) {
+        propertyBlockSource =>
+          val parser = new CodeParser(propertyBlockSource)
+          val result = parser.parsePropertyBlock()
+          result.issues.foreach(OrgImpl.log)
+          if (result.issues.nonEmpty) return None
 
-        var rv: Option[PropertyBlock] = None
-        CST.sourceContext.withValue(Some(propertyBlockSource)) {
-          rv = PropertyBlock.construct(parser, result.value, propertyTypeName)
-        }
-        rv
+          var rv: Option[PropertyBlock] = None
+          CST.sourceContext.withValue(Some(propertyBlockSource)) {
+            rv = PropertyBlock.construct(parser, result.value, propertyTypeName)
+          }
+          rv
       }
     }
 
@@ -613,7 +651,7 @@ private[opcst] object OutlineParserFormalParameter {
     path: PathLike,
     src: OPFormalParameter,
     source: Source,
-    typeContext: RelativeTypeContext,
+    typeContext: RelativeTypeContext
   ): Option[FormalParameter] = {
 
     val fp = FormalParameter(
@@ -629,9 +667,9 @@ private[opcst] object OutlineParserFormalParameter {
 private[opcst] object OutlineParserBlock {
   val b = new BlockContext(null, 0)
 
-  def construct(src: Source, blockLocation: OPLocation, outer: Option[Source], setStart: Boolean = true): LazyBlock = {
+  def construct(src: Source, blockLocation: OPLocation, outer: Option[Source]): LazyBlock = {
 
-    SourceOps.withSource(src, blockLocation, 1, outer, setStart) { source =>
+    SourceOps.withSource(src, blockLocation, 1, outer) { source =>
       val wf = new WeakReference(b)
       wf.clear()
       LazyBlock(source, wf, isTrigger = false)
@@ -641,7 +679,7 @@ private[opcst] object OutlineParserBlock {
 
 private[opcst] object SourceOps {
 
-  def withSource[T](base: Source, blockLocation: OPLocation, offset: Int, outer: Option[Source], setStart: Boolean = true)(
+  def withSource[T](base: Source, blockLocation: OPLocation, offset: Int, outer: Option[Source])(
     f: Source => T
   ): T = {
 
@@ -655,11 +693,11 @@ private[opcst] object SourceOps {
     val source: Source = Source(
       base.path,
       newSrcData,
-      blockLocation.startLine - 1,
-      blockLocation.startLineOffset - 2,
+      0,
+      0,
       outer,
-      if (setStart) Some(blockLocation.startLine) else None,
-      if (setStart) Some(blockLocation.startLineOffset - 2) else None
+      Some(blockLocation.startLine),
+      Some(blockLocation.startLineOffset - 2)
     )
     f(source)
   }
