@@ -345,6 +345,22 @@
         <executions>
           <execution>
             <id>test</id>
+            <configuration>
+              <systemProperties>
+                <parser>ANTLR</parser>
+              </systemProperties>
+            </configuration>
+            <goals>
+              <goal>test</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>test OutlineParser</id>
+            <configuration>
+              <systemProperties>
+                <parser>OutlineParser</parser>
+              </systemProperties>
+            </configuration>
             <goals>
               <goal>test</goal>
             </goals>

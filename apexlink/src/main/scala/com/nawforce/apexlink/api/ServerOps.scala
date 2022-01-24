@@ -15,10 +15,11 @@
 package com.nawforce.apexlink.api
 
 /** Collection of Ops functions for changing global behaviours */
-object ServerOps  {
-  private var lazyBlocks: Boolean = true
+object ServerOps {
+  private var lazyBlocks: Boolean             = true
   private var duplicateObjectMonitor: Boolean = false
-  private var autoFlush: Boolean = true
+  private var autoFlush: Boolean              = true
+  private var useOutlineParser: Boolean       = false
 
   /** Are we using lazy blocks, this is enabled by default */
   def getLazyBlocks: Boolean = {
@@ -49,6 +50,16 @@ object ServerOps  {
   def setAutoFlush(enable: Boolean): Boolean = {
     val current = autoFlush
     autoFlush = enable
+    current
+  }
+
+  def getUseOutlineParser: Boolean = {
+    useOutlineParser
+  }
+
+  def setUseOutlineParser(enable: Boolean): Boolean = {
+    val current = useOutlineParser
+    useOutlineParser = enable
     current
   }
 }

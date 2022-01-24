@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.opcst.OutlineParserFullDeclaration
@@ -126,11 +127,14 @@ class StreamDeployer(
     val missingClasses =
       docs.filterNot(doc => types.contains(TypeName(doc.name).withNamespace(module.namespace)))
     LoggerOps.debug(s"${missingClasses.length} of ${docs.length} classes not available from cache")
-    val failures = loadClassesWithOutlineParser(missingClasses)
-    if (failures.nonEmpty)
-      parseAndValidateClasses(failures)
-//    parseAndValidateClasses(missingClasses)
-//    loadClassesWithOutlineParser(missingClasses)
+
+    if (ServerOps.getUseOutlineParser) {
+      val failures = loadClassesWithOutlineParser(missingClasses)
+      if (failures.nonEmpty)
+        parseAndValidateClasses(failures)
+    } else {
+      parseAndValidateClasses(missingClasses)
+    }
   }
 
   /** Parse a collection of Apex classes, insert them and validate them. */

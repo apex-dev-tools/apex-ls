@@ -19,7 +19,6 @@ import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
-import com.nawforce.pkgforce.diagnostics.UNUSED_CATEGORY
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 
@@ -30,6 +29,7 @@ trait TestHelper {
   def createOrg(path: PathLike): OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq())
     try {
+      ParserHelper.setParser()
       defaultOrg = Org.newOrg(path).asInstanceOf[OrgImpl]
       defaultOrg
     } finally {
@@ -40,6 +40,7 @@ trait TestHelper {
   def createOrgWithUnused(path: PathLike): OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq(classOf[UnusedPlugin]))
     try {
+      ParserHelper.setParser()
       defaultOrg = Org.newOrg(path).asInstanceOf[OrgImpl]
       defaultOrg
     } finally {
@@ -149,8 +150,10 @@ trait TestHelper {
   }
 
   def packagedCustomType(namespace: String, name: String): Option[TypeDeclaration] = {
-    packagedType(Some(Name(namespace)),
-                 TypeName(Name(name), Seq(), Some(TypeName(Name(namespace)))))
+    packagedType(
+      Some(Name(namespace)),
+      TypeName(Name(name), Seq(), Some(TypeName(Name(namespace))))
+    )
   }
 
   def packagedClass(namespace: String, name: String): Option[ApexClassDeclaration] = {
@@ -165,14 +168,16 @@ trait TestHelper {
   def hasIssues: Boolean = defaultOrg.issues.nonEmpty
 
   def getMessages(org: OrgImpl = defaultOrg): String = {
-    val messages = org.issues.issuesForFilesInternal(paths = null, includeWarnings = true, maxIssuesPerFile = 10)
+    val messages = org.issues
+      .issuesForFilesInternal(paths = null, includeWarnings = true, maxIssuesPerFile = 10)
       .mkString("\n")
     // For backward compatability with earlier behaviour
     if (messages.nonEmpty) messages + "\n" else ""
   }
 
   def getMessages(path: String): String = {
-    val messages = defaultOrg.issues.issuesForFileInternal(path)
+    val messages = defaultOrg.issues
+      .issuesForFileInternal(path)
       .map(_.asString())
       .mkString("\n")
     // For backward compatability with earlier behaviour
@@ -183,12 +188,14 @@ trait TestHelper {
 
   def dummyIssues: String = getMessages("/Dummy.cls")
 
-  def customObject(label: String,
-                   fields: Seq[(String, Option[String], Option[String])],
-                   fieldSets: Set[String] = Set(),
-                   sharingReason: Set[String] = Set(),
-                   sharingModel: String = "",
-                   extending: Boolean = false): String = {
+  def customObject(
+    label: String,
+    fields: Seq[(String, Option[String], Option[String])],
+    fieldSets: Set[String] = Set(),
+    sharingReason: Set[String] = Set(),
+    sharingModel: String = "",
+    extending: Boolean = false
+  ): String = {
     val fieldMetadata = fields.map(field => {
       s"""
          |    <fields>
@@ -196,8 +203,8 @@ trait TestHelper {
          |        ${if (field._2.nonEmpty) s"<type>${field._2.get}</type>" else ""}
          |        ${if (field._3.nonEmpty) s"<referenceTo>${field._3.get}</referenceTo>" else ""}
          |        ${if (field._3.nonEmpty)
-           s"<relationshipName>${field._1.replaceAll("__c$", "")}</relationshipName>"
-         else ""}
+        s"<relationshipName>${field._1.replaceAll("__c$", "")}</relationshipName>"
+      else ""}
          |    </fields>
          |""".stripMargin
     })
@@ -239,10 +246,10 @@ trait TestHelper {
        |    <fullName>$name</fullName>
        |    <type>$fieldType</type>
        |    ${if (relationshipName.nonEmpty) s"<referenceTo>${relationshipName.get}</referenceTo>"
-       else ""}
+    else ""}
        |    ${if (relationshipName.nonEmpty)
-         s"<relationshipName>${name.replaceAll("__c$", "")}</relationshipName>"
-       else ""}
+      s"<relationshipName>${name.replaceAll("__c$", "")}</relationshipName>"
+    else ""}
        |</CustomField>
        |""".stripMargin
   }
