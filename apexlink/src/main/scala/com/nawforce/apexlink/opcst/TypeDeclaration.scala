@@ -535,8 +535,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       val fieldSource: Source = Source(
         source.path,
         newSrcData,
-        fd.blockLocation.get.startLine - 1,
-        fd.blockLocation.get.startLineOffset - 2,
+        0, 
+        0,
         if (isOuter) Some(source) else None,
         Some(fd.blockLocation.get.startLine),
         Some(fd.blockLocation.get.startLineOffset - 2)

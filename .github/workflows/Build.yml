@@ -358,320 +358,320 @@ jobs:
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose samples/Cumulus
 
     - name: TriggerX (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/TriggerX/TriggerX
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/TriggerX/TriggerX
 
     - name: apex-query-builder (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-query-builder/apex-query-builder
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-query-builder/apex-query-builder
 
     - name: salesforce-bot-toolkit (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/salesforce-bot-toolkit/salesforce-bot-toolkit
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/salesforce-bot-toolkit/salesforce-bot-toolkit
 
     - name: SalesforceDurableStreamingDemo (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/SalesforceDurableStreamingDemo/SalesforceDurableStreamingDemo
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/SalesforceDurableStreamingDemo/SalesforceDurableStreamingDemo
 
     - name: amoss (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/amoss/amoss
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/amoss/amoss
 
     - name: SimpleLightningComponents (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/SimpleLightningComponents/SimpleLightningComponents
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/SimpleLightningComponents/SimpleLightningComponents
 
     - name: FormulaShare-DX (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/FormulaShare-DX/FormulaShare-DX
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/FormulaShare-DX/FormulaShare-DX
 
     - name: Apex-for-Xero (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Apex-for-Xero/Apex-for-Xero
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Apex-for-Xero/Apex-for-Xero
 
     - name: sendgrid-apex (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sendgrid-apex/sendgrid-apex
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sendgrid-apex/sendgrid-apex
 
     - name: FindNearby (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/FindNearby
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/FindNearby
 
     #- name: promiseV3 (Outline Parser)
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink-1.4.2.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/promiseV3/promiseV3
+    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink-1.4.2.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/promiseV3/promiseV3
 
     # - name: Apex-Opensource-Library (Outline Parser)
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Apex-Opensource-Library/Apex-Opensource-Library
+    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Apex-Opensource-Library/Apex-Opensource-Library
 
     - name: SFDCRules (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/SFDCRules/SFDCRules
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/SFDCRules/SFDCRules
 
     - name: forcelog (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/forcelog/forcelog
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/forcelog/forcelog
 
     - name: Apex-XML-Serializer (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Apex-XML-Serializer/Apex-XML-Serializer
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Apex-XML-Serializer/Apex-XML-Serializer
 
     - name: ObjectMerge (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/ObjectMerge/ObjectMerge
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/ObjectMerge/ObjectMerge
 
     - name: grid (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/grid/grid
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/grid/grid
 
     - name: soql-secure (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/soql-secure/soql-secure
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/soql-secure/soql-secure
 
     - name: box-salesforce-sdk (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/box-salesforce-sdk/box-salesforce-sdk
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/box-salesforce-sdk/box-salesforce-sdk
 
     - name: Angular (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Angular/Angular
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Angular/Angular
 
     - name: Lightweight-Trigger-Framework (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Lightweight-Trigger-Framework/Lightweight-Trigger-Framework
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Lightweight-Trigger-Framework/Lightweight-Trigger-Framework
 
     - name: SObjectFabricator (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/SObjectFabricator/SObjectFabricator
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/SObjectFabricator/SObjectFabricator
 
     - name: ApexTriggerHandler (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/ApexTriggerHandler/ApexTriggerHandler
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/ApexTriggerHandler/ApexTriggerHandler
 
     - name: forcedotcom-enterprise-architecture (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/forcedotcom-enterprise-architecture/forcedotcom-enterprise-architecture
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/forcedotcom-enterprise-architecture/forcedotcom-enterprise-architecture
 
     - name: sf-sandbox-post-copy (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sf-sandbox-post-copy/sf-sandbox-post-copy
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sf-sandbox-post-copy/sf-sandbox-post-copy
 
     - name: Multi-File-Uploader-Force (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Multi-File-Uploader-Force/Multi-File-Uploader-Force
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Multi-File-Uploader-Force/Multi-File-Uploader-Force
 
     - name: logger (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/logger/logger
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/logger/logger
 
     - name: apex-sobjectdataloader (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-sobjectdataloader/apex-sobjectdataloader
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-sobjectdataloader/apex-sobjectdataloader
 
     - name: q (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/q/q
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/q/q
 
     - name: MyTriggers (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/MyTriggers/MyTriggers
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/MyTriggers/MyTriggers
 
     - name: ForceDotComSprintWall (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/ForceDotComSprintWall/ForceDotComSprintWall
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/ForceDotComSprintWall/ForceDotComSprintWall
 
     - name: apex-rest-route (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-rest-route/apex-rest-route
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-rest-route/apex-rest-route
 
     - name: flowtoolbelt (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/flowtoolbelt/flowtoolbelt
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/flowtoolbelt/flowtoolbelt
 
     - name: user-access-visualization (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/user-access-visualization/user-access-visualization
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/user-access-visualization/user-access-visualization
 
     - name: einstein-ai (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/einstein-ai/einstein-ai
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/einstein-ai/einstein-ai
 
     - name: purealoe-lwc (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/purealoe-lwc
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/purealoe-lwc
 
     - name: HyperBatch (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/HyperBatch
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/HyperBatch
 
     - name: Interactions-for-Student-Recruitment (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Interactions-for-Student-Recruitment
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Interactions-for-Student-Recruitment
 
     - name: sobject-work-queue (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sobject-work-queue/sobject-work-queue
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sobject-work-queue/sobject-work-queue
 
     - name: ffhttp-core (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/ffhttp-core/ffhttp-core
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/ffhttp-core/ffhttp-core
 
     - name: Force.com-Toolkit-for-Facebook (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Force.com-Toolkit-for-Facebook/Force.com-Toolkit-for-Facebook
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Force.com-Toolkit-for-Facebook/Force.com-Toolkit-for-Facebook
 
     - name: sfdc-oauth-playground (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sfdc-oauth-playground/sfdc-oauth-playground
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sfdc-oauth-playground/sfdc-oauth-playground
 
     - name: salesforce-limit-monitor (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/salesforce-limit-monitor/salesforce-limit-monitor
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/salesforce-limit-monitor/salesforce-limit-monitor
 
     - name: Centralized-Salesforce-Dev-Framework (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Centralized-Salesforce-Dev-Framework/Centralized-Salesforce-Dev-Framework
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Centralized-Salesforce-Dev-Framework/Centralized-Salesforce-Dev-Framework
 
     - name: aws-sdk (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/aws-sdk/aws-sdk
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/aws-sdk/aws-sdk
 
     - name: eventlogging (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/eventlogging/eventlogging
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/eventlogging/eventlogging
 
     - name: quiz-host-app (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/quiz-host-app/quiz-host-app
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/quiz-host-app/quiz-host-app
 
     - name: sfdc-related-files-lightning (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sfdc-related-files-lightning/sfdc-related-files-lightning
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sfdc-related-files-lightning/sfdc-related-files-lightning
 
     - name: sObject-Remote (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sObject-Remote/sObject-Remote
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sObject-Remote/sObject-Remote
 
     - name: apex-domainbuilder (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-domainbuilder/apex-domainbuilder
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-domainbuilder/apex-domainbuilder
 
     - name: Force.com-Helper-Classes (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Force.com-Helper-Classes/Force.com-Helper-Classes
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Force.com-Helper-Classes/Force.com-Helper-Classes
 
     - name: selector (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/selector/selector
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/selector/selector
 
     - name: R-apex (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/R-apex/R-apex
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/R-apex/R-apex
 
     #- name: rflib (Outline Parser)
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/rflib/rflib
+    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/rflib/rflib
 
     - name: apex-dml-manager (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-dml-manager/apex-dml-manager
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-dml-manager/apex-dml-manager
 
     - name: ConnectApiHelper (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/ConnectApiHelper/ConnectApiHelper
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/ConnectApiHelper/ConnectApiHelper
 
     - name: sfdc-convert-attachments-to-chatter-files (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sfdc-convert-attachments-to-chatter-files/sfdc-convert-attachments-to-chatter-files
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sfdc-convert-attachments-to-chatter-files/sfdc-convert-attachments-to-chatter-files
 
     - name: Forceea-data-factory (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Forceea-data-factory/Forceea-data-factory/dx
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Forceea-data-factory/Forceea-data-factory/dx
 
     - name: ApexTestKit (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/ApexTestKit/ApexTestKit
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/ApexTestKit/ApexTestKit
 
     - name: jsonparse (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/jsonparse/jsonparse
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/jsonparse/jsonparse
 
     - name: sirono-common (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sirono-common/sirono-common
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sirono-common/sirono-common
 
     - name: apex-trigger-actions-framework (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-trigger-actions-framework/apex-trigger-actions-framework
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-trigger-actions-framework/apex-trigger-actions-framework
 
     - name: esapi (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/esapi/esapi
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/esapi/esapi
 
     - name: EnhancedLightningGrid (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/EnhancedLightningGrid/EnhancedLightningGrid
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/EnhancedLightningGrid/EnhancedLightningGrid
 
     - name: processBuilderBlocks (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/processBuilderBlocks/processBuilderBlocks
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/processBuilderBlocks/processBuilderBlocks
 
     - name: promise (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/promise/promise
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/promise/promise
 
     - name: Query.apex (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Query.apex/Query.apex
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Query.apex/Query.apex
 
     - name: apex-unified-logging (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-unified-logging/apex-unified-logging
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-unified-logging/apex-unified-logging
 
     - name: Zippex (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Zippex/Zippex
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Zippex/Zippex
 
     - name: TestDataFactory (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/TestDataFactory/TestDataFactory
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/TestDataFactory/TestDataFactory
 
     - name: automation-components (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/automation-components/automation-components
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/automation-components/automation-components
 
     - name: force-di (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/force-di/force-di
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/force-di/force-di
 
     - name: EDA (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/EDA/EDA
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/EDA/EDA
 
     - name: apex-lambda (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-lambda/apex-lambda
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-lambda/apex-lambda
 
     - name: sfdx-mass-action-scheduler (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sfdx-mass-action-scheduler/sfdx-mass-action-scheduler
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sfdx-mass-action-scheduler/sfdx-mass-action-scheduler
 
     - name: apex-recipes (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-recipes/apex-recipes
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-recipes/apex-recipes
 
     #- name: NPSP (Outline Parser)
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/NPSP
+    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/NPSP
 
     - name: apex-mdapi (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-mdapi/apex-mdapi
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-mdapi/apex-mdapi
 
     # - name: apex-rollup (Outline Parser)
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-rollup/apex-rollup
+    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-rollup/apex-rollup
 
     # - name: NebulaLogger (Outline Parser)
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/NebulaLogger/NebulaLogger
+    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/NebulaLogger/NebulaLogger
 
     - name: apex-toolingapi (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/apex-toolingapi/apex-toolingapi
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/apex-toolingapi/apex-toolingapi
 
     - name: Automated-Testing-for-Force (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Automated-Testing-for-Force/Automated-Testing-for-Force
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Automated-Testing-for-Force/Automated-Testing-for-Force
 
     - name: Batch-Entry-for-Salesforce (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Batch-Entry-for-Salesforce/Batch-Entry-for-Salesforce
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Batch-Entry-for-Salesforce/Batch-Entry-for-Salesforce
 
     - name: CustomMetadataLoader (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/CustomMetadataLoader/CustomMetadataLoader
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/CustomMetadataLoader/CustomMetadataLoader
 
     - name: declarative-lookup-rollup-summaries (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/declarative-lookup-rollup-summaries/declarative-lookup-rollup-summaries
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/declarative-lookup-rollup-summaries/declarative-lookup-rollup-summaries
 
     - name: df12-apex-enterprise-patterns (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/df12-apex-enterprise-patterns/df12-apex-enterprise-patterns
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/df12-apex-enterprise-patterns/df12-apex-enterprise-patterns
 
     - name: df12-deployment-tools (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/df12-deployment-tools/df12-deployment-tools
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/df12-deployment-tools/df12-deployment-tools
 
     - name: dreamhouse-sfdx (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/dreamhouse-sfdx/dreamhouse-sfdx
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/dreamhouse-sfdx/dreamhouse-sfdx
 
     - name: fflib-apex-mocks (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/fflib-apex-mocks/fflib-apex-mocks
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/fflib-apex-mocks/fflib-apex-mocks
 
     - name: fflib-apex-common (Outline Parser)
       run: |
         cp -r samples/fflib-apex-mocks/fflib-apex-mocks samples/fflib-apex-common
-        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/fflib-apex-common
+        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/fflib-apex-common
 
     - name: fflib-apex-common-samplecode (Outline Parser)
       run: |
         cp -r samples/fflib-apex-mocks/fflib-apex-mocks samples/fflib-apex-common-samplecode
         cp -r samples/fflib-apex-common/fflib-apex-common samples/fflib-apex-common-samplecode
-        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/fflib-apex-common-samplecode
+        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/fflib-apex-common-samplecode
 
     - name: at4dx (Outline Parser)
       run: |
         cp -r samples/fflib-apex-mocks/fflib-apex-mocks samples/at4dx
         cp -r samples/fflib-apex-common/fflib-apex-common samples/at4dx
         cp -r samples/force-di/force-di samples/at4dx
-        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/at4dx
+        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/at4dx
 
     - name: HEDAP (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/HEDAP/HEDAP
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/HEDAP/HEDAP
 
     - name: Milestones-PM (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Milestones-PM/Milestones-PM
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Milestones-PM/Milestones-PM
 
     - name: Salesforce-Lookup-Rollup-Summaries (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Salesforce-Lookup-Rollup-Summaries/Salesforce-Lookup-Rollup-Summaries
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Salesforce-Lookup-Rollup-Summaries/Salesforce-Lookup-Rollup-Summaries
 
     - name: Salesforce-Test-Factory (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Salesforce-Test-Factory/Salesforce-Test-Factory
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Salesforce-Test-Factory/Salesforce-Test-Factory
 
     - name: sfdc-trigger-framework (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/sfdc-trigger-framework/sfdc-trigger-framework
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/sfdc-trigger-framework/sfdc-trigger-framework
 
     - name: SmartFactory-for-Force.com (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/SmartFactory-for-Force/SmartFactory-for-Force
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/SmartFactory-for-Force/SmartFactory-for-Force
 
     - name: twilio-salesforce (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/twilio-salesforce/twilio-salesforce
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/twilio-salesforce/twilio-salesforce
 
     - name: Visualforce-Multiselect-Picklist (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Visualforce-Multiselect-Picklist/Visualforce-Multiselect-Picklist
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Visualforce-Multiselect-Picklist/Visualforce-Multiselect-Picklist
 
     - name: visualforce-table-grid (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/visualforce-table-grid/visualforce-table-grid
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/visualforce-table-grid/visualforce-table-grid
 
     - name: visualforce-typeahead (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/visualforce-typeahead/visualforce-typeahead
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/visualforce-typeahead/visualforce-typeahead
 
     - name: Cumulus (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -outline samples/Cumulus
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outline samples/Cumulus
 
