@@ -25,6 +25,7 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, TEST_METHOD_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier}
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
+import com.nawforce.pkgforce.pkgs.PackageBase
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 import com.nawforce.runtime.parsers.CodeParser
 import com.nawforce.runtime.platform.Path
@@ -69,9 +70,34 @@ class OrgImpl(val path: PathLike, initWorkspace: Option[Workspace]) extends Org 
   /** Lookup of available packages from the namespace (which must be unique), populated when packages created */
   var packagesByNamespace: Map[Option[Name], PackageImpl] = _
 
+  private def createPackage(org: OrgImpl, namespace: Option[Name], dependencies: Seq[PackageImpl], workspace: Workspace,
+                            layers: Seq[ModuleLayer], mdlFactory: (PackageImpl, DocumentIndex, Seq[Module]) => Module,
+                            logger: IssueLogger): PackageImpl = {
+    new PackageImpl(org, namespace, dependencies, workspace, layers, createModule, logger)
+  }
+
+  private def createModule(pkg: PackageBase[OrgImpl, Module], index: DocumentIndex, dependencies: Seq[Module]): Module = {
+    new Module(pkg.asInstanceOf[PackageImpl], index, dependencies)
+  }
+
   val packages: Seq[PackageImpl] = {
     OrgImpl.current.withValue(this) {
 
+      val packages = PackageBase.construct[OrgImpl, PackageImpl, Module](
+        workspace: Workspace, org = this,
+        createPackage,
+        createModule,
+        issueManager
+      )
+
+      // Finally, freeze everything
+      packagesByNamespace = packages.map(p => (p.namespace, p)).toMap
+      packages.foreach(_.modules.foreach(_.freeze()))
+      CodeParser.clearCaches()
+      packages
+
+
+      /*
       // Fold over layers to create packages - with any package(namespace) dependencies linked to each package
       // The workspace layers form a deploy ordering, so each is dependent on all previously created
       val packagesAndModules =
@@ -109,6 +135,7 @@ class OrgImpl(val path: PathLike, initWorkspace: Option[Workspace]) extends Org 
       all.foreach(_.freeze())
       CodeParser.clearCaches()
       all
+       */
     }
   }
 

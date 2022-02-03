@@ -20,43 +20,24 @@ import com.nawforce.apexlink.names._
 import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, TriggerDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexparser.ApexParser
-import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.pkgforce.diagnostics.{IssueLogger, LoggerOps}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.pkgs.PackageBase
+import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 
 import java.nio.charset.StandardCharsets
-import scala.collection.mutable
 
-class PackageImpl(val org: OrgImpl, val namespace: Option[Name], val basePackages: Seq[PackageImpl])
-  extends PackageAPI
+class PackageImpl(org: OrgImpl, namespace: Option[Name], override val basePackages: Seq[PackageImpl],
+                  workspace: Workspace, layers: Seq[ModuleLayer],
+                  mdlFactory: (PackageBase[OrgImpl, Module], DocumentIndex, Seq[Module]) => Module, logger: IssueLogger)
+  extends PackageBase[OrgImpl, Module](org, namespace, basePackages, workspace, layers, mdlFactory, logger) with PackageAPI
     with DefinitionProvider with CompletionProvider {
 
-  /** Modules used in this package, this will be null during construction. */
-  var modules: Array[Module] = _
-
-  /** Modules in construction phase. */
-  private var moduleBuilder = new mutable.ArrayBuffer[Module]()
-
-  /** Add a new module to the package, modules must be added in 'deploy order'. Once freezeModules is called no new
-    * modules can be added. */
-  private[nawforce] def add(module: Module): Unit = {
-    assert(moduleBuilder != null)
-    moduleBuilder.append(module)
-  }
-
-  /** Freeze the object post construction. */
-  private[nawforce] def freeze(): Unit = {
-    assert(modules == null)
-    modules = moduleBuilder.toArray
-    moduleBuilder = null
-
-    modules.foreach(_.freeze())
-  }
-
   /** Package modules in reverse deploy order, note ghost packages have no modules. */
-  lazy val orderedModules: Seq[Module] = modules.reverse.toSeq
+  lazy val orderedModules: Seq[Module] = modules.reverse
 
   /** Is this a ghost package, aka it has no modules. */
   lazy val isGhosted: Boolean = {

@@ -27,20 +27,22 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.GLOBAL_MODIFIER
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.pkgs.ModuleBase
 import com.nawforce.pkgforce.stream._
 import com.nawforce.runtime.parsers.SourceData
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
-class Module(val pkg: PackageImpl, val index: DocumentIndex, dependents: Seq[Module])
-  extends TypeFinder with ModuleCompletions {
+class Module(override val pkg: PackageImpl, override val index: DocumentIndex, override val dependents: Seq[Module])
+  extends ModuleBase[OrgImpl] with TypeFinder with ModuleCompletions {
 
-  val baseModules: Seq[Module] = dependents.reverse
   val basePackages: Seq[PackageImpl] = pkg.basePackages.reverse
   val namespace: Option[Name] = pkg.namespace
 
   def namespaces: Set[Name] = pkg.namespaces
+
+  override val baseModules: Seq[Module] = dependents.reverse
 
   private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
   private val schemaManager = SchemaSObjectType(this)
@@ -209,18 +211,13 @@ class Module(val pkg: PackageImpl, val index: DocumentIndex, dependents: Seq[Mod
         return declaration
     }
 
-    if (declaration.nonEmpty) {
-      upsertMetadata(declaration.get)
-      return declaration
-    }
-
     // Try base modules & packages of this module
     baseModules.view
       .flatMap(_.findPackageType(typeName, from))
       .headOption
       .orElse(
         basePackages.view
-          .flatMap(pkg => pkg.modules.headOption.flatMap(_.findPackageType(typeName, from, inPackage = false)))
+          .flatMap(pkg => pkg.orderedModules.lastOption.flatMap(_.findPackageType(typeName, from, inPackage = false)))
           .headOption)
   }
 
