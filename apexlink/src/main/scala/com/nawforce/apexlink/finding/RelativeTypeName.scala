@@ -31,14 +31,12 @@ import scala.collection.mutable
   */
 final class RelativeTypeContext {
   var contextTypeDeclaration: TypeDeclaration = _
-  //var deepHash: Int = _
   private val typeCache = mutable.Map[TypeName, Option[TypeResponse]]()
 
   /** Freeze the RelativeTypeContext by providing access to the enclosing Apex class. */
   def freeze(typeDeclaration: TypeDeclaration): Unit = {
     assert(contextTypeDeclaration == null)
     contextTypeDeclaration = typeDeclaration
-//    deepHash = typeDeclaration.deepHash
   }
 
   /** Reset internal caching, for use during re-validation. */
