@@ -375,6 +375,11 @@ class OrgAPIImpl extends OrgAPI {
     Future.successful(())
   }
 
+  override def enableOutlineParser(enable: Boolean): Future[Unit] = {
+    ServerOps.setUseOutlineParser(enable)
+    Future.successful(())
+  }
+
   override def setCacheDirectory(path: Option[String]): Future[Unit] = {
     Environment.setCacheDirOverride(Some(path.map(p => Path(p))))
     ServerOps.setAutoFlush(path.nonEmpty)

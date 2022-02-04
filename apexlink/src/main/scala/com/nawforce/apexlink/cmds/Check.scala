@@ -31,10 +31,10 @@ object Check {
   final val STATUS_ISSUES: Int = 4
 
   def usage(name: String) =
-    s"Usage: $name [-json] [-verbose [-unused]] [-info|-debug] [-nocache] [-depends] <directory>"
+    s"Usage: $name [-json] [-verbose [-unused]] [-info|-debug] [-nocache] [-depends] [-outline] <directory>"
 
   def run(args: Array[String]): Int = {
-    val flags = Set("-json", "-verbose", "-info", "-debug", "-nocache", "-unused", "-depends")
+    val flags = Set("-json", "-verbose", "-info", "-debug", "-nocache", "-unused", "-depends", "-outline")
 
     val json = args.contains("-json")
     val verbose = !json && args.contains("-verbose")
@@ -43,6 +43,7 @@ object Check {
     val depends = args.contains("-depends")
     val noCache = args.contains("-nocache")
     val unused = args.contains("-unused")
+    val useOutlineParser = args.contains("-outline")
 
     // Check we have some metadata directories to work with
     val dirs = args.filterNot(flags.contains)
@@ -59,6 +60,7 @@ object Check {
     try {
       // Setup cache flushing and logging defaults
       ServerOps.setAutoFlush(false)
+      ServerOps.setUseOutlineParser(useOutlineParser)
       LoggerOps.setLogger(new DefaultLogger(System.out))
       if (debug)
         LoggerOps.setLoggingLevel(LoggerOps.DEBUG_LOGGING)

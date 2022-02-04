@@ -19,7 +19,6 @@ import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
-import com.nawforce.pkgforce.diagnostics.UNUSED_CATEGORY
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 
@@ -30,6 +29,7 @@ trait TestHelper {
   def createOrg(path: PathLike): OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq())
     try {
+      ParserHelper.setParser()
       defaultOrg = Org.newOrg(path).asInstanceOf[OrgImpl]
       defaultOrg
     } finally {
@@ -40,6 +40,7 @@ trait TestHelper {
   def createOrgWithUnused(path: PathLike): OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq(classOf[UnusedPlugin]))
     try {
+      ParserHelper.setParser()
       defaultOrg = Org.newOrg(path).asInstanceOf[OrgImpl]
       defaultOrg
     } finally {

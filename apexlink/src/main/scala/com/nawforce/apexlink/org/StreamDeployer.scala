@@ -14,8 +14,10 @@
 
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
+import com.nawforce.apexlink.opcst.OutlineParserFullDeclaration
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryApex, TriggerDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.other._
@@ -25,7 +27,7 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
 import com.nawforce.pkgforce.stream._
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.collection.immutable.ArraySeq
 import scala.collection.parallel.CollectionConverters._
 import scala.collection.{BufferedIterator, mutable}
@@ -119,11 +121,20 @@ class StreamDeployer(module: Module, events: Iterator[PackageEvent], types: muta
     val missingClasses =
       docs.filterNot(doc => types.contains(TypeName(doc.name).withNamespace(module.namespace)))
     LoggerOps.debug(s"${missingClasses.length} of ${docs.length} classes not available from cache")
-    parseAndValidateClasses(missingClasses)
+
+    if (ServerOps.getUseOutlineParser) {
+      val failures = loadClassesWithOutlineParser(missingClasses)
+      if (failures.nonEmpty)
+        parseAndValidateClasses(failures)
+    } else {
+      parseAndValidateClasses(missingClasses)
+    }
   }
 
   /** Parse a collection of Apex classes, insert them and validate them. */
   private def parseAndValidateClasses(docs: ArraySeq[ClassDocument]): Unit = {
+    LoggerOps.info("Using ANTLR parser")
+
     LoggerOps.debugTime(s"Parsed ${docs.length} classes", docs.nonEmpty) {
       val classTypes = docs
         .flatMap(doc =>
@@ -215,6 +226,39 @@ class StreamDeployer(module: Module, events: Iterator[PackageEvent], types: muta
         localAccum.values().iterator().asScala
       })
       .getOrElse(Iterator())
+  }
+
+  private def loadClassesWithOutlineParser(
+    classes: ArraySeq[ClassDocument]
+  ): ArraySeq[ClassDocument] = {
+    LoggerOps.info("Using Outline Parser")
+
+    val localAccum      = new ConcurrentHashMap[TypeName, FullDeclaration]()
+    val failedDocuments = new ConcurrentLinkedQueue[ClassDocument]()
+
+    LoggerOps.debugTime(s"Parsed ${classes.length} classes", classes.nonEmpty) {
+      classes.par.foreach(cls => {
+        cls.path.readSourceData() match {
+          case Left(error) =>
+            LoggerOps.info(s"Failed reading source ${error}")
+          case Right(srcData) => {
+            LoggerOps.debugTime(s"Parsed ${cls.path}") {
+              val td = OutlineParserFullDeclaration
+                .toFullDeclaration(cls, srcData, module)
+                .map(td => {
+                  localAccum.put(td.typeName, td)
+                })
+              if (td.isEmpty) failedDocuments.add(cls)
+            }
+          }
+        }
+      })
+      localAccum.entrySet.forEach(kv => {
+        types.put(kv.getKey, kv.getValue)
+      })
+      localAccum.values().asScala.foreach(_.validate())
+    }
+    ArraySeq.from(failedDocuments.asScala.toSeq)
   }
 
   /** Consume trigger events, these could be cached but they don't consume much time to for we load from disk and

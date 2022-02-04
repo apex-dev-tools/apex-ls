@@ -18,7 +18,7 @@ import com.nawforce.apexlink.cst.{BlockVerifyContext, CST, VerifyContext}
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgImpl
-import com.nawforce.apexlink.types.apex.FullDeclaration
+import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.Nature
 import com.nawforce.pkgforce.path.PathLocation
@@ -30,15 +30,13 @@ import scala.collection.mutable
   * parts, such as constructors and methods which use RelativeTypeName.
   */
 final class RelativeTypeContext {
-  var contextTypeDeclaration: FullDeclaration = _
-  var deepHash: Int = _
+  var contextTypeDeclaration: TypeDeclaration = _
   private val typeCache = mutable.Map[TypeName, Option[TypeResponse]]()
 
   /** Freeze the RelativeTypeContext by providing access to the enclosing Apex class. */
-  def freeze(typeDeclaration: FullDeclaration): Unit = {
+  def freeze(typeDeclaration: TypeDeclaration): Unit = {
     assert(contextTypeDeclaration == null)
     contextTypeDeclaration = typeDeclaration
-    deepHash = typeDeclaration.deepHash
   }
 
   /** Reset internal caching, for use during re-validation. */
@@ -53,7 +51,7 @@ final class RelativeTypeContext {
         val response =
           // Workaround a stupid platform bug where the wrong type is used sometimes...
           if (typeName.outer.nonEmpty) {
-            TypeResolver(typeName, contextTypeDeclaration.module) match {
+            TypeResolver(typeName, contextTypeDeclaration.moduleDeclaration.get) match {
               case Right(td) => Right(td)
               case Left(_)   => TypeResolver(typeName, contextTypeDeclaration)
             }
@@ -61,7 +59,7 @@ final class RelativeTypeContext {
             TypeResolver(typeName, contextTypeDeclaration)
           }
 
-        if (response.isLeft && contextTypeDeclaration.module.isGhostedType(typeName))
+        if (response.isLeft && contextTypeDeclaration.moduleDeclaration.get.isGhostedType(typeName))
           None
         else
           Some(response)
@@ -113,7 +111,7 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
       case _ =>
         Option(definition.location)
           .foreach(location => context.missingType(location, relativeTypeName))
-        context.addVar(name, None, typeContext.contextTypeDeclaration.module.any)
+        context.addVar(name, None, typeContext.contextTypeDeclaration.moduleDeclaration.get.any)
     }
   }
 
