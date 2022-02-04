@@ -25,7 +25,9 @@ case class Source(
   code: SourceData,
   lineOffset: Int,
   columnOffset: Int,
-  outer: Option[Source]
+  outer: Option[Source],
+  startLine: Option[Int] = None,
+  startColumn: Option[Int] = None
 ) {
   lazy val hash: Int = code.hash
 

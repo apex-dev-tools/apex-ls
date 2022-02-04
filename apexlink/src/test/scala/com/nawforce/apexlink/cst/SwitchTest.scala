@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
+import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.path.PathLike
 import org.scalatest.funsuite.AnyFunSuite
@@ -21,10 +22,15 @@ import org.scalatest.funsuite.AnyFunSuite
 class SwitchTest extends AnyFunSuite with TestHelper {
 
   test("Empty switch") {
-    FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {{switch on 'A' {}}}")) { root: PathLike =>
-      val org = createOrg(root)
-      assert(dummyIssues ==
-        "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\nSyntax: line 1 at 38: extraneous input '}' expecting <EOF>\n")
+    FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {{switch on 'A' {}}}")) {
+      root: PathLike =>
+        val org = createOrg(root)
+        val expectedMsg = ServerOps.getUseOutlineParser match {
+          case true => "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\n"
+          case false =>
+            "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\nSyntax: line 1 at 38: extraneous input '}' expecting <EOF>\n"
+        }
+        assert(dummyIssues == expectedMsg)
     }
   }
 

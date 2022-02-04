@@ -29,6 +29,7 @@ class ApexParser(tokens: CommonTokenStream) extends js.Object {
   def compilationUnit(): CompilationUnitContext = js.native
   def triggerUnit(): TriggerUnitContext         = js.native
   def block(): BlockContext                     = js.native
+  def propertyBlock(): PropertyBlockContext     = js.native
   def query(): QueryContext                     = js.native
   def soslLiteral(): SoslLiteralContext         = js.native
   def expression(): ExpressionContext           = js.native

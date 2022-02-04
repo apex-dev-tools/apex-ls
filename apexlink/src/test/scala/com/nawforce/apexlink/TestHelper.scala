@@ -29,6 +29,7 @@ trait TestHelper {
   def createOrg(path: PathLike): Hierarchy.OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq())
     try {
+      ParserHelper.setParser()
       defaultOrg = Org.newOrg(path).asInstanceOf[Hierarchy.OrgImpl]
       defaultOrg
     } finally {
@@ -39,6 +40,7 @@ trait TestHelper {
   def createOrgWithUnused(path: PathLike): Hierarchy.OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq(classOf[UnusedPlugin]))
     try {
+      ParserHelper.setParser()
       defaultOrg = Org.newOrg(path).asInstanceOf[Hierarchy.OrgImpl]
       defaultOrg
     } finally {
