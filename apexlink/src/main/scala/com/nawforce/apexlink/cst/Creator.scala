@@ -17,7 +17,7 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.couldBeEqual
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.OrgImpl
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.names._
 import com.nawforce.runtime.parsers.CodeParser
@@ -157,7 +157,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
         rhs.verify(input, context)
         Some(id)
       case argument =>
-        OrgImpl.logError(
+        Hierarchy.OrgImpl.logError(
           argument.location,
           s"SObject type '$typeName' construction needs '<field name> = <value>' arguments")
         None
@@ -166,7 +166,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     if (validArgs.length == arguments.length) {
       val duplicates = validArgs.groupBy(_.name).collect { case (_, ArraySeq(_, y, _*)) => y }
       if (duplicates.nonEmpty) {
-        OrgImpl.logError(
+        Hierarchy.OrgImpl.logError(
           duplicates.head.location,
           s"Duplicate assignment to field '${duplicates.head.name}' on SObject type '$typeName'")
       }
@@ -241,7 +241,7 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
     val enclosedTypes = td.typeName.getMapType
 
     if (enclosedTypes.isEmpty) {
-      OrgImpl.logError(
+      Hierarchy.OrgImpl.logError(
         location,
         s"Expression pair list construction is only supported for Map types, not '${td.typeName}'")
       return ExprContext.empty
@@ -250,14 +250,14 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
     val keyType = context.getTypeAndAddDependency(enclosedTypes.get._1, context.thisType)
     if (keyType.isLeft) {
       if (!context.module.isGhostedType(enclosedTypes.get._1))
-        OrgImpl.log(keyType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
+        Hierarchy.OrgImpl.log(keyType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
       return ExprContext.empty
     }
 
     val valueType = context.getTypeAndAddDependency(enclosedTypes.get._2, context.thisType)
     if (valueType.isLeft) {
       if (!context.module.isGhostedType(enclosedTypes.get._2))
-        OrgImpl.log(valueType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
+        Hierarchy.OrgImpl.log(valueType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
       return ExprContext.empty
     }
 
@@ -266,7 +266,7 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
       if (pairContext._1.isDefined) {
         val isKeyAssignable = couldBeEqual(pairContext._1.typeDeclaration, keyType.toOption.get, context)
         if (!isKeyAssignable) {
-          OrgImpl.logError(location,
+          Hierarchy.OrgImpl.logError(location,
             s"Incompatible key type '${pairContext._1.typeName}' for '${keyType.toOption.get.typeName}'")
           return ExprContext.empty
         }
@@ -274,7 +274,7 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
       if (pairContext._2.isDefined) {
         val isValueAssignable = couldBeEqual(pairContext._2.typeDeclaration, valueType.toOption.get, context)
         if (!isValueAssignable) {
-          OrgImpl.logError(location,
+          Hierarchy.OrgImpl.logError(location,
             s"Incompatible value type '${pairContext._2.typeName}' for '${valueType.toOption.get.typeName}'")
           return ExprContext.empty
         }
@@ -334,7 +334,7 @@ final case class SetCreatorRest(parts: ArraySeq[Expression]) extends CreatorRest
     val enclosedType = td.typeName.getSetOrListType
 
     if (enclosedType.isEmpty) {
-      OrgImpl.logError(
+      Hierarchy.OrgImpl.logError(
         location,
         s"Expression list construction is only supported for Set or List types, not '${td.typeName}'")
       return ExprContext.empty
@@ -343,7 +343,7 @@ final case class SetCreatorRest(parts: ArraySeq[Expression]) extends CreatorRest
     context.getTypeAndAddDependency(enclosedType.get, context.thisType) match {
       case Left(error) =>
         if (!context.module.isGhostedType(enclosedType.get))
-          OrgImpl.log(error.asIssue(location))
+          Hierarchy.OrgImpl.log(error.asIssue(location))
         ExprContext.empty
       case Right(_) =>
         creating

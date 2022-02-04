@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.types.core
 
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.pkgforce.modifiers.{Modifier, ModifierOps}
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, Nature}
@@ -22,10 +22,10 @@ import com.nawforce.pkgforce.path.PathLike
 
 import scala.collection.immutable.ArraySeq
 
-class BasicTypeDeclaration(val paths: ArraySeq[PathLike], module: Module, val typeName: TypeName)
+class BasicTypeDeclaration(val paths: ArraySeq[PathLike], module: Hierarchy.Module, val typeName: TypeName)
     extends TypeDeclaration {
 
-  override val moduleDeclaration: Option[Module] = Some(module)
+  override val moduleDeclaration: Option[Hierarchy.Module] = Some(module)
   override val name: Name = typeName.name
   override val outerTypeName: Option[TypeName] = None
   override val nature: Nature = CLASS_NATURE
@@ -44,7 +44,7 @@ class BasicTypeDeclaration(val paths: ArraySeq[PathLike], module: Module, val ty
   override def validate(): Unit = {}
 }
 
-class InnerBasicTypeDeclaration(_paths: ArraySeq[PathLike], _module: Module, _typeName: TypeName)
+class InnerBasicTypeDeclaration(_paths: ArraySeq[PathLike], _module: Hierarchy.Module, _typeName: TypeName)
     extends BasicTypeDeclaration(_paths, _module, _typeName) {
   override val outerTypeName: Option[TypeName] = typeName.outer
 }

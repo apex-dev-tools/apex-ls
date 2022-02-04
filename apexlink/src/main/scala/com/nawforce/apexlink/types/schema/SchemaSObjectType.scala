@@ -18,7 +18,7 @@ import com.nawforce.apexlink.cst.VerifyContext
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.core.{BasicTypeDeclaration, FieldDeclaration, MethodDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.{CustomFieldDeclaration, CustomMethodDeclaration}
@@ -39,7 +39,7 @@ import scala.collection.mutable
   * types with the type argument set to a specific SObject, that type name will then be resolved to one of the handlers
   * below that has been created specifically for dealing with that aspect of the SObject reflective access.
   **/
-final case class SchemaSObjectType(module: Module)
+final case class SchemaSObjectType(module: Hierarchy.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.SObjectType)
     with PlatformTypes.PlatformTypeObserver {
 
@@ -124,7 +124,7 @@ final case class SchemaSObjectType(module: Module)
 /** Handler for Internal.SObjectType$<SObject> that provides reflective access for custom objects via expressions
   * starting with <name>.SObjectType.
   */
-final case class SObjectTypeImpl(sobjectName: Name, sobjectFields: SObjectFields, module: Module)
+final case class SObjectTypeImpl(sobjectName: Name, sobjectFields: SObjectFields, module: Hierarchy.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths,
                                  module,
                                  TypeNames.sObjectType$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))) {
@@ -162,7 +162,7 @@ final case class SObjectTypeImpl(sobjectName: Name, sobjectFields: SObjectFields
 /** Handler for Internal.SObjectTypeFields$<SObject> that provides fields access for custom objects via expressions
   * of the form Schema.SObjectType.<name>.Fields.
   */
-final case class SObjectTypeFields(sobjectName: Name, module: Module)
+final case class SObjectTypeFields(sobjectName: Name, module: Hierarchy.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths,
                                  module,
                                  TypeNames.sObjectTypeFields$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))) {
@@ -219,7 +219,7 @@ final case class SObjectTypeFields(sobjectName: Name, module: Module)
 
 /** Handler for Internal.SObjectFields$<SObject> that provides fields access for custom objects via expressions
   * of the form Schema.<name>.Fields. */
-final case class SObjectFields(baseType: TypeName, module: Module)
+final case class SObjectFields(baseType: TypeName, module: Hierarchy.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths,
                                  module,
                                  TypeNames.sObjectFields$(baseType)) {
@@ -272,7 +272,7 @@ final case class SObjectFields(baseType: TypeName, module: Module)
 }
 
 /** Handler for Internal.SObjectTypeFieldSets$<SObject> that provides fieldSet access for custom objects  */
-final case class SObjectTypeFieldSets(sobjectName: Name, module: Module)
+final case class SObjectTypeFieldSets(sobjectName: Name, module: Hierarchy.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths,
                                  module,
                                  TypeNames.sObjectTypeFieldSets$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))) {
@@ -313,7 +313,7 @@ final case class SObjectTypeFieldSets(sobjectName: Name, module: Module)
 
 /** Handler for Internal.SObjectFieldRowClause$<SObject> that joins the standard sharing reasons with any sharing
   * reasons that are declared on the the SObject. */
-final case class SObjectFieldRowCause(sobjectName: Name, module: Module)
+final case class SObjectFieldRowCause(sobjectName: Name, module: Hierarchy.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths,
                                  module,
                                  TypeNames.sObjectFieldRowCause$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))) {

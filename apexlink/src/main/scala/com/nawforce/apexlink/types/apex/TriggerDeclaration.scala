@@ -20,7 +20,7 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.{Module, OrgImpl}
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexparser.ApexParser.{TriggerCaseContext, TriggerUnitContext}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
@@ -44,7 +44,7 @@ case object AFTER_DELETE extends TriggerCase(name = "after delete")
 case object AFTER_UNDELETE extends TriggerCase(name = "after undelete")
 
 final case class TriggerDeclaration(source: Source,
-                                    module: Module,
+                                    module: Hierarchy.Module,
                                     nameId: Id,
                                     objectNameId: Id,
                                     typeName: TypeName,
@@ -59,7 +59,7 @@ final case class TriggerDeclaration(source: Source,
   override lazy val sourceHash: Int = source.hash
   override def paths: ArraySeq[PathLike] = ArraySeq(location.path)
 
-  override val moduleDeclaration: Option[Module] = Some(module)
+  override val moduleDeclaration: Option[Hierarchy.Module] = Some(module)
   override val name: Name = typeName.name
   override val outerTypeName: Option[TypeName] = None
   override val nature: Nature = TRIGGER_NATURE
@@ -85,7 +85,7 @@ final case class TriggerDeclaration(source: Source,
 
       val duplicateCases = cases.groupBy(_.name).collect { case (_, Seq(_, y, _*)) => y }
       duplicateCases.foreach(triggerCase =>
-        OrgImpl.logError(objectNameId.location, s"Duplicate trigger case for '${triggerCase.name}'"))
+        Hierarchy.OrgImpl.logError(objectNameId.location, s"Duplicate trigger case for '${triggerCase.name}'"))
 
       val context = new TypeVerifyContext(None, this, None)
       val tdOpt = context.getTypeAndAddDependency(objectTypeName, this)
@@ -93,7 +93,7 @@ final case class TriggerDeclaration(source: Source,
       tdOpt match {
         case Left(error) =>
           if (!module.isGhostedType(objectTypeName))
-            OrgImpl.log(error.asIssue(objectNameId.location))
+            Hierarchy.OrgImpl.log(error.asIssue(objectNameId.location))
         case Right(_) =>
           val triggerContext = context
             .getTypeFor(TypeNames.trigger(objectTypeName), this)
@@ -181,14 +181,14 @@ final case class TriggerDeclaration(source: Source,
 object TriggerDeclaration {
   private val prefix: TypeName = TypeName(Name("__sfdc_trigger"))
 
-  def create(module: Module, path: PathLike, data: SourceData): Option[TriggerDeclaration] = {
+  def create(module: Hierarchy.Module, path: PathLike, data: SourceData): Option[TriggerDeclaration] = {
     val parser = CodeParser(path, data)
     val result = parser.parseTrigger()
-    result.issues.foreach(OrgImpl.log)
+    result.issues.foreach(Hierarchy.OrgImpl.log)
     TriggerDeclaration.construct(parser, module, result.value)
   }
 
-  def construct(parser: CodeParser, module: Module, trigger: TriggerUnitContext): Option[TriggerDeclaration] = {
+  def construct(parser: CodeParser, module: Hierarchy.Module, trigger: TriggerUnitContext): Option[TriggerDeclaration] = {
     CST.sourceContext.withValue(Some(parser.source)) {
       val ids = CodeParser.toScala(trigger.id()).map(Id.construct)
       val cases = CodeParser.toScala(trigger.triggerCase()).map(constructCase)
@@ -240,7 +240,7 @@ object TriggerDeclaration {
   }
 }
 
-final case class TriggerContext(module: Module, baseType: TypeDeclaration)
+final case class TriggerContext(module: Hierarchy.Module, baseType: TypeDeclaration)
     extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeName(Names.Trigger)) {
 
   override def findField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {

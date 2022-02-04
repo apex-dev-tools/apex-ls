@@ -13,7 +13,7 @@
  */
 package com.nawforce.apexlink.pkg
 
-import com.nawforce.apexlink.org.PackageImpl
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
@@ -21,7 +21,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
-  private def refresh(pkg: PackageImpl, path: PathLike, source: String): Unit = {
+  private def refresh(pkg: Hierarchy.PackageImpl, path: PathLike, source: String): Unit = {
     path.write(source)
     pkg.refresh(path)
   }

@@ -14,53 +14,52 @@
 package com.nawforce.apexlink
 
 import com.nawforce.apexlink.api.{Org, ServerOps, TypeSummary}
-import com.nawforce.apexlink.org.OrgImpl
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
-import com.nawforce.pkgforce.diagnostics.UNUSED_CATEGORY
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 
 trait TestHelper {
 
-  private var defaultOrg: OrgImpl = _
+  private var defaultOrg: Hierarchy.OrgImpl = _
 
-  def createOrg(path: PathLike): OrgImpl = {
+  def createOrg(path: PathLike): Hierarchy.OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq())
     try {
-      defaultOrg = Org.newOrg(path).asInstanceOf[OrgImpl]
+      defaultOrg = Org.newOrg(path).asInstanceOf[Hierarchy.OrgImpl]
       defaultOrg
     } finally {
       PluginsManager.overridePlugins(plugins)
     }
   }
 
-  def createOrgWithUnused(path: PathLike): OrgImpl = {
+  def createOrgWithUnused(path: PathLike): Hierarchy.OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq(classOf[UnusedPlugin]))
     try {
-      defaultOrg = Org.newOrg(path).asInstanceOf[OrgImpl]
+      defaultOrg = Org.newOrg(path).asInstanceOf[Hierarchy.OrgImpl]
       defaultOrg
     } finally {
       PluginsManager.overridePlugins(plugins)
     }
   }
 
-  def createHappyOrg(path: PathLike): OrgImpl = {
+  def createHappyOrg(path: PathLike): Hierarchy.OrgImpl = {
     createOrg(path)
     assert(!hasIssues)
     defaultOrg
   }
 
-  def emptyOrg(): OrgImpl = {
+  def emptyOrg(): Hierarchy.OrgImpl = {
     FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
       createOrg(root)
     }
   }
 
-  def withOrg[T](op: OrgImpl => T): T = {
-    OrgImpl.current.withValue(defaultOrg) {
+  def withOrg[T](op: Hierarchy.OrgImpl => T): T = {
+    Hierarchy.OrgImpl.current.withValue(defaultOrg) {
       op(defaultOrg)
     }
   }
@@ -74,9 +73,9 @@ trait TestHelper {
     }
   }
 
-  def withEmptyOrg[T](op: OrgImpl => T): T = {
+  def withEmptyOrg[T](op: Hierarchy.OrgImpl => T): T = {
     val org = emptyOrg()
-    OrgImpl.current.withValue(org) {
+    Hierarchy.OrgImpl.current.withValue(org) {
       op(org)
     }
   }
@@ -164,7 +163,7 @@ trait TestHelper {
 
   def hasIssues: Boolean = defaultOrg.issues.nonEmpty
 
-  def getMessages(org: OrgImpl = defaultOrg): String = {
+  def getMessages(org: Hierarchy.OrgImpl = defaultOrg): String = {
     val messages = org.issues.issuesForFilesInternal(paths = null, includeWarnings = true, maxIssuesPerFile = 10)
       .mkString("\n")
     // For backward compatability with earlier behaviour

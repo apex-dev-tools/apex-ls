@@ -18,7 +18,7 @@ import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.{Module, OrgImpl}
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.apex.ApexClassDeclaration
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.other.AnyDeclaration
@@ -42,11 +42,11 @@ final case class ExprContext(isStatic: Option[Boolean],
                              locatable: Option[Locatable] = None) {
   def isDefined: Boolean = declaration.nonEmpty && !declaration.exists(_.isInstanceOf[AnyDeclaration])
 
-  def moduleDeclarationOpt: Option[Module] = declaration.flatMap(_.moduleDeclaration)
+  def moduleDeclarationOpt: Option[Hierarchy.Module] = declaration.flatMap(_.moduleDeclaration)
 
   def typeDeclaration: TypeDeclaration = declaration.get
 
-  def moduleDeclaration: Module = moduleDeclarationOpt.get
+  def moduleDeclaration: Hierarchy.Module = moduleDeclarationOpt.get
 
   def typeName: TypeName = declaration.get.typeName
 }
@@ -85,7 +85,7 @@ final case class EmptyExpr() extends Expression {
 object DotExpression {
   def findField(name: Name,
                 td: TypeDeclaration,
-                module: Module,
+                module: Hierarchy.Module,
                 staticContext: Option[Boolean]): Option[FieldDeclaration] = {
     val encodedName = EncodedName(name)
     val namespaceName = encodedName.defaultNamespace(module.namespace)
@@ -424,7 +424,7 @@ final case class PostfixExpression(expression: Expression, op: String) extends E
           if inter.isStatic.contains(false) =>
         inter
       case _ =>
-        OrgImpl.logError(location, s"Postfix increment/decrement is not supported on type '${td.typeName}'")
+        Hierarchy.OrgImpl.logError(location, s"Postfix increment/decrement is not supported on type '${td.typeName}'")
         ExprContext.empty
     }
   }
@@ -444,7 +444,7 @@ final case class PrefixExpression(expression: Expression, op: String) extends Ex
       case _ if inter.isStatic.contains(false) && op == "+" =>
         ExprContext(isStatic = Some(false), PlatformTypes.stringType)
       case _ =>
-        OrgImpl.logError(location, s"Prefix operations are not supported on type '${td.typeName}'")
+        Hierarchy.OrgImpl.logError(location, s"Prefix operations are not supported on type '${td.typeName}'")
         ExprContext.empty
     }
   }
@@ -462,7 +462,7 @@ final case class NegationExpression(expression: Expression, isBitwise: Boolean) 
       case TypeNames.Integer if isBitwise && inter.isStatic.contains(false)  => inter
       case TypeNames.Long if isBitwise && inter.isStatic.contains(false)     => inter
       case _ =>
-        OrgImpl.logError(location, s"Negation operations is not supported on type '${td.typeName}'")
+        Hierarchy.OrgImpl.logError(location, s"Negation operations is not supported on type '${td.typeName}'")
         ExprContext.empty
     }
   }
@@ -512,14 +512,14 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
       return ExprContext.empty
 
     if (leftInter.isStatic.contains(true))
-      OrgImpl.logError(location, s"Expecting instance for operation, not type '${leftInter.typeName}'")
+      Hierarchy.OrgImpl.logError(location, s"Expecting instance for operation, not type '${leftInter.typeName}'")
 
     if (rightInter.isStatic.contains(true))
-      OrgImpl.logError(location, s"Expecting instance for operation, not type '${rightInter.typeName}'")
+      Hierarchy.OrgImpl.logError(location, s"Expecting instance for operation, not type '${rightInter.typeName}'")
 
     operation.verify(leftInter, rightInter, op, context) match {
       case Left(error) =>
-        OrgImpl.logError(location, error)
+        Hierarchy.OrgImpl.logError(location, error)
         ExprContext.empty
       case Right(context) => context
     }
@@ -547,7 +547,7 @@ final case class QueryExpression(query: Expression, lhs: Expression, rhs: Expres
 
     ConditionalOperation.verify(leftInter, rightInter, "?", context) match {
       case Left(error) =>
-        OrgImpl.logError(location, error)
+        Hierarchy.OrgImpl.logError(location, error)
         ExprContext.empty
       case Right(context) => context
     }

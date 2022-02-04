@@ -14,7 +14,7 @@
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.{OrgImpl, PackageImpl}
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.plugins.UnusedPlugin.onlyTestCodeReferenceText
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryDeclaration}
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
@@ -24,7 +24,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class UnusedTest extends AnyFunSuite with TestHelper {
 
-  def orgIssuesFor(org: OrgImpl, path: PathLike): String = {
+  def orgIssuesFor(org: Hierarchy.OrgImpl, path: PathLike): String = {
     val messages = org.issueManager.issuesForFile(path.toString).map(_.asString()).mkString("\n")
     if (messages.nonEmpty) messages + "\n" else ""
   }
@@ -296,7 +296,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
   }
 
   def assertIsFullDeclaration(
-    pkg: PackageImpl,
+    pkg: Hierarchy.PackageImpl,
     name: String,
     namespace: Option[Name] = None
   ): Unit = {
@@ -309,7 +309,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
   }
 
   def assertIsSummaryDeclaration(
-    pkg: PackageImpl,
+    pkg: Hierarchy.PackageImpl,
     name: String,
     namespace: Option[Name] = None
   ): Unit = {
@@ -339,7 +339,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         val org2 = createOrgWithUnused(root)
         val pkg2 = org2.unmanaged
         assertIsSummaryDeclaration(pkg2, "Dummy")
-        OrgImpl.current.withValue(org2) {
+        Hierarchy.OrgImpl.current.withValue(org2) {
           assert(orgIssuesFor(org2, root.join("Dummy.cls")).isEmpty)
         }
       }
@@ -367,7 +367,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         val org2 = createOrgWithUnused(root)
         val pkg2 = org2.unmanaged
         assertIsSummaryDeclaration(pkg2, "Dummy")
-        OrgImpl.current.withValue(org2) {
+        Hierarchy.OrgImpl.current.withValue(org2) {
           assert(
             orgIssuesFor(org2, root.join("Dummy.cls")) ==
               "Unused: line 1 at 32-35: Unused method 'void foo()'\n"
@@ -390,7 +390,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(org.issues.isEmpty)
 
-      OrgImpl.current.withValue(org) {
+      Hierarchy.OrgImpl.current.withValue(org) {
         assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
       }
     }
@@ -447,7 +447,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(org.issues.isEmpty)
 
-      OrgImpl.current.withValue(org) {
+      Hierarchy.OrgImpl.current.withValue(org) {
         assert(orgIssuesFor(org, root.join("Controller.cls")).isEmpty)
         assert(orgIssuesFor(org, root.join("Extension.cls")).isEmpty)
       }
@@ -464,7 +464,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(org.issues.isEmpty)
 
-      OrgImpl.current.withValue(org) {
+      Hierarchy.OrgImpl.current.withValue(org) {
         assert(orgIssuesFor(org, root.join("Controller.cls")).isEmpty)
       }
     }
@@ -478,7 +478,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       val org = createOrgWithUnused(root)
-      OrgImpl.current.withValue(org) {
+      Hierarchy.OrgImpl.current.withValue(org) {
         assert(getMessages(root.join("Dummy.cls")).isEmpty)
       }
     }

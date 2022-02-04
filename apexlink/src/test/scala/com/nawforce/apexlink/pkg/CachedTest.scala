@@ -16,7 +16,7 @@ package com.nawforce.apexlink.pkg
 import com.nawforce.apexlink.api.{IssueOptions, ServerOps}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.PackageImpl
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryDeclaration}
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
@@ -26,11 +26,11 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
 
-  def assertIsNotDeclaration(pkg: PackageImpl, name: String, namespace: Option[Name] = None): Unit = {
+  def assertIsNotDeclaration(pkg: Hierarchy.PackageImpl, name: String, namespace: Option[Name] = None): Unit = {
     assert(pkg.orderedModules.head.findModuleType(TypeName(Name(name)).withNamespace(namespace)).isEmpty)
   }
 
-  def assertIsFullDeclaration(pkg: PackageImpl, name: String, namespace: Option[Name] = None): Unit = {
+  def assertIsFullDeclaration(pkg: Hierarchy.PackageImpl, name: String, namespace: Option[Name] = None): Unit = {
     assert(
       pkg.orderedModules.head
         .findModuleType(TypeName(Name(name)).withNamespace(namespace))
@@ -38,7 +38,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
         .isInstanceOf[FullDeclaration])
   }
 
-  def assertIsSummaryDeclaration(pkg: PackageImpl, name: String, namespace: Option[Name] = None): Unit = {
+  def assertIsSummaryDeclaration(pkg: Hierarchy.PackageImpl, name: String, namespace: Option[Name] = None): Unit = {
     assert(
       pkg.orderedModules.head
         .findModuleType(TypeName(Name(name)).withNamespace(namespace))

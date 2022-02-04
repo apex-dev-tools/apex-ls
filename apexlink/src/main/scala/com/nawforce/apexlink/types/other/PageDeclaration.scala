@@ -16,7 +16,7 @@ package com.nawforce.apexlink.types.other
 
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{GLOBAL_MODIFIER, Modifier, PRIVATE_MODIFIER, STATIC_MODIFIER}
@@ -29,7 +29,7 @@ import scala.collection.mutable
 import scala.util.hashing.MurmurHash3
 
 /** A individual Page being represented as a static field. */
-case class Page(module: Module, location: PathLocation, name: Name, vfContainer: VFContainer) extends FieldDeclaration {
+case class Page(module: Hierarchy.Module, location: PathLocation, name: Name, vfContainer: VFContainer) extends FieldDeclaration {
   override lazy val modifiers: ArraySeq[Modifier] = ArraySeq(STATIC_MODIFIER, GLOBAL_MODIFIER)
   override lazy val typeName: TypeName = TypeNames.PageReference
   override lazy val readAccess: Modifier = GLOBAL_MODIFIER
@@ -47,7 +47,7 @@ case class Page(module: Module, location: PathLocation, name: Name, vfContainer:
 }
 
 object Page {
-  def apply(module: Module, event: PageEvent): Seq[Page] = {
+  def apply(module: Hierarchy.Module, event: PageEvent): Seq[Page] = {
     val location = event.sourceInfo.location
     val document = MetadataDocument(location.path)
     val container = new VFContainer(module, event)
@@ -62,7 +62,7 @@ object Page {
 /** Page 'namespace' implementation. Provides access to pages in the package as well as pages that are accessible in
   * base packages via the `namespace__name` format.
   */
-final case class PageDeclaration(sources: ArraySeq[SourceInfo], override val module: Module, pages: ArraySeq[Page])
+final case class PageDeclaration(sources: ArraySeq[SourceInfo], override val module: Hierarchy.Module, pages: ArraySeq[Page])
   extends BasicTypeDeclaration(pages.map(p => p.location.path).distinct, module, TypeNames.Page)
     with DependentType with Dependent {
 
@@ -103,11 +103,11 @@ final case class PageDeclaration(sources: ArraySeq[SourceInfo], override val mod
 }
 
 object PageDeclaration {
-  def apply(module: Module): PageDeclaration = {
+  def apply(module: Hierarchy.Module): PageDeclaration = {
     new PageDeclaration(ArraySeq(), module, collectBasePages(module))
   }
 
-  private def collectBasePages(module: Module): ArraySeq[Page] = {
+  private def collectBasePages(module: Hierarchy.Module): ArraySeq[Page] = {
     ArraySeq.unsafeWrapArray(module.basePackages
       .flatMap(basePkg => {
         val nsPrefix = basePkg.namespace.get.toString() + "__"

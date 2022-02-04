@@ -37,7 +37,7 @@ import scala.jdk.CollectionConverters._
   *
   * FUTURE: Remove Module dependency.
   */
-class StreamDeployer(module: Module, events: Iterator[PackageEvent], types: mutable.Map[TypeName, TypeDeclaration]) {
+class StreamDeployer(module: Hierarchy.Module, events: Iterator[PackageEvent], types: mutable.Map[TypeName, TypeDeclaration]) {
   load()
 
   private def load(): Unit = {

@@ -40,7 +40,7 @@ import scala.collection.{BufferedIterator, mutable}
   *
   * FUTURE: Remove Module dependency.
   */
-class SObjectDeployer(module: Module) {
+class SObjectDeployer(module: Hierarchy.Module) {
 
   def createSObjects(events: BufferedIterator[PackageEvent]): Array[SObjectLikeDeclaration] = {
     val objectsEvents = bufferEvents(
@@ -151,7 +151,7 @@ class SObjectDeployer(module: Module) {
 
     val td = created.orElse(TypeResolver(targetTypeName, module).toOption)
     if ((td.isEmpty || !td.exists(_.isSObject)) && !module.isGhostedType(targetTypeName)) {
-      OrgImpl.logError(location,
+      Hierarchy.OrgImpl.logError(location,
         s"Lookup object $targetTypeName does not exist for field '$originatingFieldName'")
     }
 
@@ -213,10 +213,10 @@ class SObjectDeployer(module: Module) {
               |  fieldSets: ${fieldSets.map(_.value).mkString(",")}
               |  sharingReasons: ${fieldSets.map(_.value).mkString(",")}
               |""".stripMargin
-          OrgImpl.log(Issue(module.pkg.org.path.join("sfdx-project.json"), Diagnostic(ERROR_CATEGORY, Location.empty, message)))
+          Hierarchy.OrgImpl.log(Issue(module.pkg.org.path.join("sfdx-project.json"), Diagnostic(ERROR_CATEGORY, Location.empty, message)))
           Array.empty
         case (true, false) =>
-          OrgImpl.log(IssueOps.redefiningSObject(sources.head.location, event.reportingPath))
+          Hierarchy.OrgImpl.log(IssueOps.redefiningSObject(sources.head.location, event.reportingPath))
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
       }
     }
@@ -313,7 +313,7 @@ class SObjectDeployer(module: Module) {
       val sobjectType = resolveBaseType(typeName)
       if (sobjectType.isEmpty || !sobjectType.get.superClassDeclaration.exists(superClass =>
         superClass.typeName == TypeNames.SObject)) {
-        OrgImpl.logError(sources.head.location, s"No SObject declaration found for '$typeName'")
+        Hierarchy.OrgImpl.logError(sources.head.location, s"No SObject declaration found for '$typeName'")
         return Array()
       }
       Array(extendExistingSObject(sobjectType, sources, typeName, nature, fields, fieldSets, sharingReasons))
@@ -349,7 +349,7 @@ class SObjectDeployer(module: Module) {
     if (crossModule && !nature.extendable) {
       val baseNS = base.flatMap(_.moduleDeclaration).flatMap(_.namespace)
       if (baseNS != module.namespace) {
-        OrgImpl.log(
+        Hierarchy.OrgImpl.log(
           IssueOps.extendingOverNamespace(sources.head.location,
             nature,
             baseNS.getOrElse(Names.Empty),

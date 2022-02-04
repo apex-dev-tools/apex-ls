@@ -16,7 +16,7 @@ package com.nawforce.apexlink.types.other
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
-import com.nawforce.apexlink.org.{Module, OrgImpl}
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.apex.ApexDeclaration
 import com.nawforce.apexlink.types.core.{DependencyHolder, Dependent}
 import com.nawforce.pkgforce.names.DotName
@@ -25,7 +25,7 @@ import com.nawforce.pkgforce.stream.VFEvent
 
 import scala.collection.immutable.ArraySeq
 
-class VFContainer(module: Module, event: VFEvent) extends DependencyHolder {
+class VFContainer(module: Hierarchy.Module, event: VFEvent) extends DependencyHolder {
 
   def validate(): Set[Dependent] = {
     val controllers = getControllers
@@ -48,7 +48,7 @@ class VFContainer(module: Module, event: VFEvent) extends DependencyHolder {
       TypeResolver(controllerType, module) match {
         case Left(_) =>
           if (!module.isGhostedType(controllerType)) {
-            OrgImpl.log(
+            Hierarchy.OrgImpl.log(
               IssueOps.noTypeDeclaration(PathLocation(event.sourceInfo.location.path, controller.location),
                 controllerType))
           }

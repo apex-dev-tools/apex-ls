@@ -20,7 +20,7 @@ import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, 
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLike, UnsafeLocatable}
 
 trait DefinitionProvider {
-  this: PackageImpl =>
+  this: Hierarchy.PackageImpl =>
 
   def getDefinition(path: PathLike, line: Int, offset: Int, content: Option[String]): Array[LocationLink] = {
     // Make sure we have access to source code and a type to resolve things against

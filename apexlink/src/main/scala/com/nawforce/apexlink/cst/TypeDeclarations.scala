@@ -15,7 +15,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.apex.{FullDeclaration, ThisType}
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
@@ -30,7 +30,7 @@ import scala.collection.immutable.ArraySeq
 class CompilationUnit(val typeDeclaration: FullDeclaration) extends CST
 
 object CompilationUnit {
-  def construct(parser: CodeParser, module: Module, name: Name, compilationUnit: CompilationUnitContext): Option[CompilationUnit] = {
+  def construct(parser: CodeParser, module: Hierarchy.Module, name: Name, compilationUnit: CompilationUnitContext): Option[CompilationUnit] = {
     CST.sourceContext.withValue(Some(parser.source)) {
       FullDeclaration.construct(parser, module, name, compilationUnit.typeDeclaration())
         .map(fd => new CompilationUnit(fd).withContext(compilationUnit))
@@ -38,7 +38,7 @@ object CompilationUnit {
   }
 }
 
-final case class ClassDeclaration(_source: Source, _module: Module, _typeContext: RelativeTypeContext, _typeName: TypeName,
+final case class ClassDeclaration(_source: Source, _module: Hierarchy.Module, _typeContext: RelativeTypeContext, _typeName: TypeName,
                                   _outerTypeName: Option[TypeName], _id: Id, _modifiers: ModifierResults, _inTest: Boolean,
                                   _extendsType: Option[TypeName], _implementsTypes: ArraySeq[TypeName],
                                   _bodyDeclarations: ArraySeq[ClassBodyDeclaration])
@@ -123,7 +123,7 @@ object ClassDeclaration {
   }
 }
 
-final case class InterfaceDeclaration(_source: Source, _module: Module, _typeContext: RelativeTypeContext, _typeName: TypeName,
+final case class InterfaceDeclaration(_source: Source, _module: Hierarchy.Module, _typeContext: RelativeTypeContext, _typeName: TypeName,
                                       _outerTypeName: Option[TypeName], _id: Id, _modifiers: ModifierResults, _inTest: Boolean,
                                       _implementsTypes: ArraySeq[TypeName], _bodyDeclarations: ArraySeq[ClassBodyDeclaration])
   extends FullDeclaration(_source, _module, _typeContext, _typeName, _outerTypeName, _id, _modifiers, _inTest, None,
@@ -173,7 +173,7 @@ object InterfaceDeclaration {
   }
 }
 
-final case class EnumDeclaration(_source: Source, _module: Module, _typeContext: RelativeTypeContext, _typeName: TypeName,
+final case class EnumDeclaration(_source: Source, _module: Hierarchy.Module, _typeContext: RelativeTypeContext, _typeName: TypeName,
                                  _outerTypeName: Option[TypeName], _id: Id, _modifiers: ModifierResults,
                                  _inTest: Boolean, _bodyDeclarations: ArraySeq[ClassBodyDeclaration])
   extends FullDeclaration(_source, _module, _typeContext, _typeName, _outerTypeName, _id, _modifiers, _inTest, None,

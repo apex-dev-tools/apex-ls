@@ -15,12 +15,12 @@
 package com.nawforce.apexlink.types.other
 
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.core.BasicTypeDeclaration
 import com.nawforce.pkgforce.path.PathLike
 
 /** An any type declaration, there are deliberately very few uses of this, hopefully at some point it
   * can be removed.
   */
-final case class AnyDeclaration(module: Module)
+final case class AnyDeclaration(module: Hierarchy.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.Any)

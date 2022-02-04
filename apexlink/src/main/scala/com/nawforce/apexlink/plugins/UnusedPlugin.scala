@@ -15,7 +15,7 @@ package com.nawforce.apexlink.plugins
 
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.plugins.UnusedPlugin._
 import com.nawforce.apexlink.types.apex.{ApexFieldLike, ApexMethodLike, FullDeclaration}
 import com.nawforce.apexlink.types.core.{DependentType, MethodDeclaration}
@@ -132,7 +132,7 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
   private implicit class MethodOps(method: ApexMethodLike) {
 
     /** Is the method in use, NOTE: requires a MethodMap is constructed for shadow support first! */
-    def isUsed(module: Module, inTest: Boolean): Boolean = {
+    def isUsed(module: Hierarchy.Module, inTest: Boolean): Boolean = {
       method.isSynthetic ||
       (if (inTest)
         method.hasHolders || method.modifiers.exists(excludedTestMethodModifiers.contains)

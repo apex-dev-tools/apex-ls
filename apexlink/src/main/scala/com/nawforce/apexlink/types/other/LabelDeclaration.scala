@@ -17,7 +17,7 @@ package com.nawforce.apexlink.types.other
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.XNames.NameUtils
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, UNUSED_CATEGORY}
 import com.nawforce.pkgforce.documents._
@@ -60,7 +60,7 @@ final case class GhostLabel(name: Name) extends LabelField {
   * base packages via the Label.namespace.name format.
   */
 final class LabelDeclaration(
-  override val module: Module,
+  override val module: Hierarchy.Module,
   val sources: ArraySeq[SourceInfo],
   val labels: ArraySeq[Label],
   val nestedLabels: ArraySeq[NestedLabels]
@@ -138,7 +138,7 @@ trait NestedLabels extends TypeDeclaration {
   * this. As the exposed labels are owned elsewhere (by the passed LabelDeclaration) there is no need to set a
   * controller here.
   */
-private final class PackageLabels(module: Module, labelDeclaration: LabelDeclaration)
+private final class PackageLabels(module: Hierarchy.Module, labelDeclaration: LabelDeclaration)
     extends InnerBasicTypeDeclaration(
       PathLike.emptyPaths,
       module,
@@ -161,7 +161,7 @@ private final class PackageLabels(module: Module, labelDeclaration: LabelDeclara
 }
 
 /** System.Label.ns implementation for ghosted packages. This simulates the existence of any label you ask for. */
-final class GhostedLabels(module: Module, ghostedNamespace: Name)
+final class GhostedLabels(module: Hierarchy.Module, ghostedNamespace: Name)
     extends InnerBasicTypeDeclaration(
       PathLike.emptyPaths,
       module,
@@ -185,7 +185,7 @@ final class GhostedLabels(module: Module, ghostedNamespace: Name)
 object LabelDeclaration {
 
   /** Construct System.Label for a module from any base info. */
-  def apply(module: Module): LabelDeclaration = {
+  def apply(module: Hierarchy.Module): LabelDeclaration = {
     module.baseModules.headOption
       .map(_.labels)
       .map(base => {
@@ -197,7 +197,7 @@ object LabelDeclaration {
   }
 
   // Create labels declarations for each base package
-  private def createPackageLabels(module: Module): ArraySeq[NestedLabels] = {
+  private def createPackageLabels(module: Hierarchy.Module): ArraySeq[NestedLabels] = {
     ArraySeq.unsafeWrapArray(
       module.basePackages
         .map(basePkg => {

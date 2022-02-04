@@ -22,7 +22,7 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
-import com.nawforce.apexlink.org.{Module, OrgImpl}
+import com.nawforce.apexlink.org.Hierarchy
 import com.nawforce.apexlink.types.other.Component
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.synthetic.{CustomField, CustomFieldDeclaration, LocatableCustomFieldDeclaration}
@@ -58,7 +58,7 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
     modifiers.map(_.toString).mkString(" ") + " " + typeName.toString + " " + name.toString
 
   // Create an SObjectField version of this field
-  def getSObjectStaticField(shareTypeName: Option[TypeName], module: Option[Module]): CustomField = {
+  def getSObjectStaticField(shareTypeName: Option[TypeName], module: Option[Hierarchy.Module]): CustomField = {
     def preloadSObject(typeName: TypeName): TypeResponse = {
       module.map(m => TypeResolver(typeName, m)).getOrElse(PlatformTypes.get(typeName, None))
     }
@@ -266,10 +266,11 @@ trait AbstractTypeDeclaration {
 }
 
 trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
-  def paths: ArraySeq[PathLike]           // Metadata paths that contributed to this type
-  def inTest: Boolean = false             // Is type defined only for test code
+  def paths: ArraySeq[PathLike] // Metadata paths that contributed to this type
 
-  val moduleDeclaration: Option[Module]   // Module that owns this types, None for none-adopted platform types
+  def inTest: Boolean = false // Is type defined only for test code
+
+  val moduleDeclaration: Option[Hierarchy.Module] // Module that owns this types, None for none-adopted platform types
 
   val name: Name
   val typeName: TypeName
@@ -279,7 +280,7 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
 
   lazy val namespace: Option[Name] = {
     val outermostType = outerTypeName.getOrElse(typeName).outer
-    if(outermostType.forall(_.outer.isEmpty)) outermostType.map(_.name)
+    if (outermostType.forall(_.outer.isEmpty)) outermostType.map(_.name)
     else None
   }
 
@@ -397,16 +398,16 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
           Some(id)
         }
       case argument =>
-        OrgImpl.logError(argument.location,
-                         s"SObject type '$typeName' construction needs '<field name> = <value>' arguments")
+        Hierarchy.OrgImpl.logError(argument.location,
+          s"SObject type '$typeName' construction needs '<field name> = <value>' arguments")
         None
     }
 
     if (validArgs.length == arguments.length) {
       val duplicates = validArgs.groupBy(_.name).collect { case (_, ArraySeq(_, y, _*)) => y }
       if (duplicates.nonEmpty) {
-        OrgImpl.logError(duplicates.head.location,
-                         s"Duplicate assignment to field '${duplicates.head.name}' on SObject type '$typeName'")
+        Hierarchy.OrgImpl.logError(duplicates.head.location,
+          s"Duplicate assignment to field '${duplicates.head.name}' on SObject type '$typeName'")
       }
     }
   }
