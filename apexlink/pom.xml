@@ -2,6 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <groupId>com.github.nawforce</groupId>
   <artifactId>apexlink</artifactId>
   <version>2.3.1</version>
   <packaging>jar</packaging>
@@ -386,6 +387,7 @@
         <version>1.1.1640084764.9f463a9</version>
         <configuration>
           <configLocation>${project.basedir}/.scalafmt.conf</configLocation>
+          <showReformattedOnly>true</showReformattedOnly>
         </configuration>
         <executions>
           <execution>
