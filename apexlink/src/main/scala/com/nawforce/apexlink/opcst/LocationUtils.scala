@@ -3,7 +3,7 @@ package com.nawforce.apexlink.opcst
 import com.financialforce.oparser.{Location => OPLocation}
 import com.nawforce.pkgforce.path.{Location, PathLike, Positionable}
 
-private [opcst] object LocationUtils {
+private[opcst] object LocationUtils {
 
   def toLocation(src: Option[OPLocation]): Location = {
     src match {
@@ -21,6 +21,9 @@ private [opcst] object LocationUtils {
   }
 
   def extendLocation(location: OPLocation, startLineOffset: Int = 0): OPLocation = {
-    location.copy(startLineOffset = location.startLineOffset+startLineOffset, startByteOffset = location.startByteOffset+startLineOffset)
+    location.copy(
+      startLineOffset = location.startLineOffset + startLineOffset,
+      startByteOffset = location.startByteOffset + startLineOffset
+    )
   }
 }
