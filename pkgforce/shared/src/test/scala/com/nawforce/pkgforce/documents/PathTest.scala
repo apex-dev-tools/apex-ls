@@ -84,7 +84,7 @@ class PathTest extends AnyFunSuite {
   test("directory with file") {
     FileSystemHelper.run(Map[String, String]("Bar/Something.txt" -> "Hello")) { root: PathLike =>
       val file = root.join("Bar/Something.txt")
-      val dir = file.parent
+      val dir  = file.parent
       assert(dir.basename == "Bar")
       assert(dir.parent == root)
       assert(dir.exists)
@@ -140,7 +140,8 @@ class PathTest extends AnyFunSuite {
     FileSystemHelper.run(Map[String, String]("Bar" -> "Hello")) { root: PathLike =>
       assert(
         root.createDirectory("Bar").swap.getOrElse(throw new NoSuchElementException()) ==
-          "Can not create directory '/Bar', file already exists")
+          "Can not create directory '/Bar', file already exists"
+      )
     }
   }
 

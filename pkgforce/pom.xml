@@ -389,6 +389,28 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>org.antipathy</groupId>
+        <artifactId>mvn-scalafmt_2.13</artifactId>
+        <version>1.1.1640084764.9f463a9</version>
+        <configuration>
+          <configLocation>${project.basedir}/.scalafmt.conf</configLocation>
+          <sourceDirectories>
+            <param>${project.basedir}/shared/src/main/scala</param>
+            <param>${project.basedir}/js/src/main/scala</param>
+            <param>${project.basedir}/jvm/src/main/scala</param>
+          </sourceDirectories>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 </project>
