@@ -23,7 +23,7 @@ abstract class TriHierarchy {
     lazy val orderedModules: Seq[TModule] = modules.reverse
 
     /** Is this a ghost package, aka it has no modules. */
-    lazy val isGhosted: Boolean =  modules.isEmpty
+    lazy val isGhosted: Boolean = modules.isEmpty
   }
 
   trait TriModule {

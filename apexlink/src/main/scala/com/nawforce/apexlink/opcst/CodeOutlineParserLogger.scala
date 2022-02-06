@@ -1,7 +1,13 @@
 package com.nawforce.apexlink.opcst
 
 import com.financialforce.oparser.{Location => OPLocation}
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, IssueLogger, WARNING_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.{
+  Diagnostic,
+  ERROR_CATEGORY,
+  Issue,
+  IssueLogger,
+  WARNING_CATEGORY
+}
 import com.nawforce.pkgforce.path.PathLike
 
 import scala.collection.compat.immutable.ArraySeq

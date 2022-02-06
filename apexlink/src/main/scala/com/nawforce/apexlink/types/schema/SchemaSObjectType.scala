@@ -19,7 +19,12 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.Hierarchy
-import com.nawforce.apexlink.types.core.{BasicTypeDeclaration, FieldDeclaration, MethodDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{
+  BasicTypeDeclaration,
+  FieldDeclaration,
+  MethodDeclaration,
+  TypeDeclaration
+}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.{CustomFieldDeclaration, CustomMethodDeclaration}
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
@@ -38,7 +43,7 @@ import scala.collection.mutable
   * What generally happens is that during expression evaluation, a field type name will be given as one of the generic
   * types with the type argument set to a specific SObject, that type name will then be resolved to one of the handlers
   * below that has been created specifically for dealing with that aspect of the SObject reflective access.
-  **/
+  */
 final case class SchemaSObjectType(module: Hierarchy.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.SObjectType)
     with PlatformTypes.PlatformTypeObserver {
@@ -50,7 +55,8 @@ final case class SchemaSObjectType(module: Hierarchy.Module)
   module.upsertMetadata(SObjectFields(TypeNames.SObject, module))
 
   /** Callback for loading of Platform Type that may be SObjects so we can hoist correct describe structure around
-    * them. */
+    * them.
+    */
   override def loaded(td: PlatformTypeDeclaration): Unit = {
     if (td.isSObject) {
       add(td.name, hasFieldSets = true)
@@ -62,7 +68,7 @@ final case class SchemaSObjectType(module: Hierarchy.Module)
 
     // Handlers for Schema.SObjectType.<name>.Fields, Schema.<name>.Fields & Schema.<name>.SObjectType
     val typeName = TypeName(sobjectName, Nil, Some(TypeNames.Schema))
-    val fields = SObjectFields(typeName, module)
+    val fields   = SObjectFields(typeName, module)
     module.upsertMetadata(SObjectTypeFields(sobjectName, module))
     module.upsertMetadata(fields)
     module.upsertMetadata(SObjectTypeImpl(sobjectName, fields, module))
@@ -76,17 +82,32 @@ final case class SchemaSObjectType(module: Hierarchy.Module)
 
     // The Schema.SObjectType.<name> field that anchors all this
     val describeField =
-      CustomFieldDeclaration(sobjectName, TypeNames.describeSObjectResultOf(sobjectTypeName), None, asStatic = true)
+      CustomFieldDeclaration(
+        sobjectName,
+        TypeNames.describeSObjectResultOf(sobjectTypeName),
+        None,
+        asStatic = true
+      )
     sobjectFields.put(sobjectName, Some(describeField))
     describeField
   }
 
   def remove(sobjectName: Name): Unit = {
-    module.removeMetadata(TypeNames.sObjectFields$(TypeName(sobjectName, Nil, Some(TypeNames.Schema))))
-    module.removeMetadata(TypeNames.sObjectTypeFields$(TypeName(sobjectName, Nil, Some(TypeNames.Schema))))
-    module.removeMetadata(TypeNames.sObjectType$(TypeName(sobjectName, Nil, Some(TypeNames.Schema))))
-    module.removeMetadata(TypeNames.sObjectTypeFieldSets$(TypeName(sobjectName, Nil, Some(TypeNames.Schema))))
-    module.removeMetadata(TypeNames.sObjectFieldRowCause$(TypeName(sobjectName, Nil, Some(TypeNames.Schema))))
+    module.removeMetadata(
+      TypeNames.sObjectFields$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    )
+    module.removeMetadata(
+      TypeNames.sObjectTypeFields$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    )
+    module.removeMetadata(
+      TypeNames.sObjectType$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    )
+    module.removeMetadata(
+      TypeNames.sObjectTypeFieldSets$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    )
+    module.removeMetadata(
+      TypeNames.sObjectFieldRowCause$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    )
     sobjectFields.remove(sobjectName)
   }
 
@@ -101,22 +122,26 @@ final case class SchemaSObjectType(module: Hierarchy.Module)
     }
 
     sobjectFields
-      .getOrElseUpdate(name, {
-        // This handles cases where describe is used on a Platform SObject without the SObject first being used
-        // directly in Apex which would normally cause the describe handler to be created.
-        val td = TypeResolver(TypeName(name), module).toOption
-        if (td.nonEmpty && td.get.isSObject) {
-          Some(add(name, hasFieldSets = true))
-        } else {
-          None
+      .getOrElseUpdate(
+        name, {
+          // This handles cases where describe is used on a Platform SObject without the SObject first being used
+          // directly in Apex which would normally cause the describe handler to be created.
+          val td = TypeResolver(TypeName(name), module).toOption
+          if (td.nonEmpty && td.get.isSObject) {
+            Some(add(name, hasFieldSets = true))
+          } else {
+            None
+          }
         }
-      })
+      )
   }
 
-  override def findMethod(name: Name,
-                          params: ArraySeq[TypeName],
-                          staticContext: Option[Boolean],
-                          verifyContext: VerifyContext): Either[String, MethodDeclaration] = {
+  override def findMethod(
+    name: Name,
+    params: ArraySeq[TypeName],
+    staticContext: Option[Boolean],
+    verifyContext: VerifyContext
+  ): Either[String, MethodDeclaration] = {
     PlatformTypes.sObjectTypeType.findMethod(name, params, staticContext, verifyContext)
   }
 }
@@ -124,16 +149,22 @@ final case class SchemaSObjectType(module: Hierarchy.Module)
 /** Handler for Internal.SObjectType$<SObject> that provides reflective access for custom objects via expressions
   * starting with <name>.SObjectType.
   */
-final case class SObjectTypeImpl(sobjectName: Name, sobjectFields: SObjectFields, module: Hierarchy.Module)
-    extends BasicTypeDeclaration(PathLike.emptyPaths,
-                                 module,
-                                 TypeNames.sObjectType$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))) {
+final case class SObjectTypeImpl(
+  sobjectName: Name,
+  sobjectFields: SObjectFields,
+  module: Hierarchy.Module
+) extends BasicTypeDeclaration(
+      PathLike.emptyPaths,
+      module,
+      TypeNames.sObjectType$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    ) {
 
   private lazy val fieldField = CustomFieldDeclaration(
     Names.Fields,
     TypeNames.sObjectFields$(TypeName(sobjectName, Nil, Some(TypeNames.Schema))),
     None,
-    asStatic = true)
+    asStatic = true
+  )
 
   override val superClass: Option[TypeName] = Some(TypeNames.SObjectType)
 
@@ -151,10 +182,12 @@ final case class SObjectTypeImpl(sobjectName: Name, sobjectFields: SObjectFields
     }
   }
 
-  override def findMethod(name: Name,
-                          params: ArraySeq[TypeName],
-                          staticContext: Option[Boolean],
-                          verifyContext: VerifyContext): Either[String, MethodDeclaration] = {
+  override def findMethod(
+    name: Name,
+    params: ArraySeq[TypeName],
+    staticContext: Option[Boolean],
+    verifyContext: VerifyContext
+  ): Either[String, MethodDeclaration] = {
     PlatformTypes.sObjectTypeType.findMethod(name, params, staticContext, verifyContext)
   }
 }
@@ -163,15 +196,20 @@ final case class SObjectTypeImpl(sobjectName: Name, sobjectFields: SObjectFields
   * of the form Schema.SObjectType.<name>.Fields.
   */
 final case class SObjectTypeFields(sobjectName: Name, module: Hierarchy.Module)
-    extends BasicTypeDeclaration(PathLike.emptyPaths,
-                                 module,
-                                 TypeNames.sObjectTypeFields$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))) {
+    extends BasicTypeDeclaration(
+      PathLike.emptyPaths,
+      module,
+      TypeNames.sObjectTypeFields$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    ) {
 
   private lazy val sobjectFields: Map[Name, FieldDeclaration] = {
     TypeResolver(TypeName(sobjectName), module).toOption match {
       case Some(sobject: TypeDeclaration) =>
         sobject.fields
-          .map(field => (field.name, CustomFieldDeclaration(field.name, TypeNames.DescribeFieldResult, None)))
+          .map(
+            field =>
+              (field.name, CustomFieldDeclaration(field.name, TypeNames.DescribeFieldResult, None))
+          )
           .toMap
       case _ => Map()
     }
@@ -195,10 +233,12 @@ final case class SObjectTypeFields(sobjectName: Name, module: Hierarchy.Module)
       })
   }
 
-  override def findMethod(name: Name,
-                          params: ArraySeq[TypeName],
-                          staticContext: Option[Boolean],
-                          verifyContext: VerifyContext): Either[String, MethodDeclaration] = {
+  override def findMethod(
+    name: Name,
+    params: ArraySeq[TypeName],
+    staticContext: Option[Boolean],
+    verifyContext: VerifyContext
+  ): Either[String, MethodDeclaration] = {
     if (staticContext.contains(false)) {
       val method = methodMap.get((name, params.length))
       if (method.nonEmpty)
@@ -209,24 +249,28 @@ final case class SObjectTypeFields(sobjectName: Name, module: Hierarchy.Module)
 
   lazy val methodMap: Map[(Name, Int), MethodDeclaration] =
     Seq(
-      CustomMethodDeclaration(com.nawforce.pkgforce.path.Location.empty,
+      CustomMethodDeclaration(
+        com.nawforce.pkgforce.path.Location.empty,
         Name("getMap"),
         TypeNames.mapOf(TypeNames.String, TypeNames.SObjectField),
-        CustomMethodDeclaration.emptyParameters))
+        CustomMethodDeclaration.emptyParameters
+      )
+    )
       .map(m => ((m.name, m.parameters.length), m))
       .toMap
 }
 
 /** Handler for Internal.SObjectFields$<SObject> that provides fields access for custom objects via expressions
-  * of the form Schema.<name>.Fields. */
+  * of the form Schema.<name>.Fields.
+  */
 final case class SObjectFields(baseType: TypeName, module: Hierarchy.Module)
-    extends BasicTypeDeclaration(PathLike.emptyPaths,
-                                 module,
-                                 TypeNames.sObjectFields$(baseType)) {
+    extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.sObjectFields$(baseType)) {
 
   // Extend SObjectField for when used as return type for lookup SObjectField
   override val superClass: Option[TypeName] = Some(TypeNames.SObjectField)
-  override lazy val superClassDeclaration: Option[TypeDeclaration] = Some(PlatformTypes.sObjectFieldType)
+  override lazy val superClassDeclaration: Option[TypeDeclaration] = Some(
+    PlatformTypes.sObjectFieldType
+  )
 
   private lazy val sobjectFields: Map[Name, FieldDeclaration] = {
     val shareTypeName = if (typeName.isShare) Some(typeName) else None
@@ -247,8 +291,7 @@ final case class SObjectFields(baseType: TypeName, module: Hierarchy.Module)
     // Mimic SObjectType as we proxy for SObjectField
     // Future: Check if this is needed as its not hit bu unit tests
     if (name == Names.SObjectType)
-      return Some(
-        CustomFieldDeclaration(name, TypeNames.sObjectType$(baseType), None))
+      return Some(CustomFieldDeclaration(name, TypeNames.sObjectType$(baseType), None))
 
     // Provide other fields on the SObject
     sobjectFields
@@ -263,19 +306,23 @@ final case class SObjectFields(baseType: TypeName, module: Hierarchy.Module)
       })
   }
 
-  override def findMethod(name: Name,
-                          params: ArraySeq[TypeName],
-                          staticContext: Option[Boolean],
-                          verifyContext: VerifyContext): Either[String, MethodDeclaration] = {
+  override def findMethod(
+    name: Name,
+    params: ArraySeq[TypeName],
+    staticContext: Option[Boolean],
+    verifyContext: VerifyContext
+  ): Either[String, MethodDeclaration] = {
     PlatformTypes.sObjectFieldType.findMethod(name, params, staticContext, verifyContext)
   }
 }
 
-/** Handler for Internal.SObjectTypeFieldSets$<SObject> that provides fieldSet access for custom objects  */
+/** Handler for Internal.SObjectTypeFieldSets$<SObject> that provides fieldSet access for custom objects */
 final case class SObjectTypeFieldSets(sobjectName: Name, module: Hierarchy.Module)
-    extends BasicTypeDeclaration(PathLike.emptyPaths,
-                                 module,
-                                 TypeNames.sObjectTypeFieldSets$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))) {
+    extends BasicTypeDeclaration(
+      PathLike.emptyPaths,
+      module,
+      TypeNames.sObjectTypeFieldSets$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    ) {
 
   // Cache of discovered fieldSets
   private lazy val sobjectFieldSets: Map[Name, FieldDeclaration] = {
@@ -303,20 +350,25 @@ final case class SObjectTypeFieldSets(sobjectName: Name, module: Hierarchy.Modul
   }
 
   /** Intercept method lookup to provide Map() function. */
-  override def findMethod(name: Name,
-                          params: ArraySeq[TypeName],
-                          staticContext: Option[Boolean],
-                          verifyContext: VerifyContext): Either[String, MethodDeclaration] = {
+  override def findMethod(
+    name: Name,
+    params: ArraySeq[TypeName],
+    staticContext: Option[Boolean],
+    verifyContext: VerifyContext
+  ): Either[String, MethodDeclaration] = {
     PlatformTypes.sObjectTypeFieldSets.findMethod(name, params, staticContext, verifyContext)
   }
 }
 
 /** Handler for Internal.SObjectFieldRowClause$<SObject> that joins the standard sharing reasons with any sharing
-  * reasons that are declared on the the SObject. */
+  * reasons that are declared on the the SObject.
+  */
 final case class SObjectFieldRowCause(sobjectName: Name, module: Hierarchy.Module)
-    extends BasicTypeDeclaration(PathLike.emptyPaths,
-                                 module,
-                                 TypeNames.sObjectFieldRowCause$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))) {
+    extends BasicTypeDeclaration(
+      PathLike.emptyPaths,
+      module,
+      TypeNames.sObjectFieldRowCause$(TypeName(sobjectName, Nil, Some(TypeNames.Schema)))
+    ) {
 
   assert(sobjectName.value.endsWith("Share"))
 

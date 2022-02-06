@@ -34,7 +34,7 @@ import scala.collection.mutable
   */
 object TypeResolver {
   type TypeResponse = Either[TypeError, TypeDeclaration]
-  type TypeCache = mutable.HashMap[(TypeName, Hierarchy.Module), TypeResponse]
+  type TypeCache    = mutable.HashMap[(TypeName, Hierarchy.Module), TypeResponse]
 
   /* Search for TypeDeclaration from a absolute typename from given modules perspective. */
   def apply(typeName: TypeName, module: Hierarchy.Module): TypeResponse = {
@@ -44,13 +44,18 @@ object TypeResolver {
   }
 
   /** Search for TypeDeclaration from local or absolute typename from perspective of the module of 'from', if
-    * it has one. */
+    * it has one.
+    */
   def apply(typeName: TypeName, from: TypeDeclaration): TypeResponse = {
     TypeResolver(typeName, from, from.moduleDeclaration)
   }
 
-  /** Search for TypeDeclaration in Local local to 'from', Module, Dependent Module or Platform Type .*/
-  def apply(typeName: TypeName, from: TypeDeclaration, module: Option[Hierarchy.Module]): TypeResponse = {
+  /** Search for TypeDeclaration in Local local to 'from', Module, Dependent Module or Platform Type . */
+  def apply(
+    typeName: TypeName,
+    from: TypeDeclaration,
+    module: Option[Hierarchy.Module]
+  ): TypeResponse = {
     // Allow override of platform types in modules to support Schema.SObjectType handling.  This is a hack caused by
     // assuming platform types always live outside the module system and then deciding to inject some within it. It
     // might be fixable by assigning them to the correct module on construction/injection.
@@ -63,11 +68,13 @@ object TypeResolver {
     // Search module if we have one, otherwise short-cut to platform types
     sobjectIntercept(module) {
       from.moduleDeclaration
-        .map(module =>
-          module.getTypeFor(typeName, from) match {
-            case Some(td) => Right(td)
-            case None     => Left(MissingType(typeName))
-        })
+        .map(
+          module =>
+            module.getTypeFor(typeName, from) match {
+              case Some(td) => Right(td)
+              case None     => Left(MissingType(typeName))
+            }
+        )
         .getOrElse {
           platformType(typeName, from)
         }
@@ -75,37 +82,40 @@ object TypeResolver {
   }
 
   /** Search for platform TypeDeclaration from a local or absolute typename. */
-  def platformType(typeName: TypeName,
-                   from: TypeDeclaration): TypeResponse = {
+  def platformType(typeName: TypeName, from: TypeDeclaration): TypeResponse = {
     sobjectIntercept(from.moduleDeclaration) {
       PlatformTypes.get(typeName, Some(from))
     }
   }
 
   /** Search for platform TypeDeclaration from a absolute typename. */
-  def platformTypeOnly(typeName: TypeName,
-                       module: Hierarchy.Module): TypeResponse = {
+  def platformTypeOnly(typeName: TypeName, module: Hierarchy.Module): TypeResponse = {
     sobjectIntercept(Some(module)) {
       PlatformTypes.get(typeName, None)
     }
   }
 
   /** Hook to upgrade a SObject defined as a platform type into an SObject for the module. This allows us to support
-    * dependencies on Standard SObjects but also allows for module specific versions to be managed. */
-  private def sobjectIntercept(module: Option[Hierarchy.Module])(op: => TypeResponse): TypeResponse = {
+    * dependencies on Standard SObjects but also allows for module specific versions to be managed.
+    */
+  private def sobjectIntercept(
+    module: Option[Hierarchy.Module]
+  )(op: => TypeResponse): TypeResponse = {
     val result = op
     module
       .map(m => {
         result match {
           case Right(base) if base.isSObject && base.isInstanceOf[PlatformTypeDeclaration] =>
-            val td = new SObjectDeclaration(Array(),
+            val td = new SObjectDeclaration(
+              Array(),
               m,
               base.typeName,
               PlatformObjectNature,
               ArraySeq(),
               ArraySeq(),
               base.fields,
-              _isComplete = true)
+              _isComplete = true
+            )
             m.upsertMetadata(td)
             Right(td)
           case x => x

@@ -49,8 +49,11 @@ class VFContainer(module: Hierarchy.Module, event: VFEvent) extends DependencyHo
         case Left(_) =>
           if (!module.isGhostedType(controllerType)) {
             Hierarchy.OrgImpl.log(
-              IssueOps.noTypeDeclaration(PathLocation(event.sourceInfo.location.path, controller.location),
-                controllerType))
+              IssueOps.noTypeDeclaration(
+                PathLocation(event.sourceInfo.location.path, controller.location),
+                controllerType
+              )
+            )
           }
           None
         case Right(td: ApexDeclaration) => Some(td)

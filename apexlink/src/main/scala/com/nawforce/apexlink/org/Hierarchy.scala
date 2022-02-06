@@ -9,7 +9,13 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.plugins.PluginsManager
 import com.nawforce.apexlink.rpc._
-import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexFullDeclaration, FullDeclaration, TriggerDeclaration}
+import com.nawforce.apexlink.types.apex.{
+  ApexClassDeclaration,
+  ApexDeclaration,
+  ApexFullDeclaration,
+  FullDeclaration,
+  TriggerDeclaration
+}
 import com.nawforce.apexlink.types.core.{DependentType, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
@@ -37,15 +43,16 @@ import scala.util.DynamicVariable
 import scala.util.hashing.MurmurHash3
 
 object Hierarchy extends TriHierarchy {
-  type TOrg = OrgImpl
+  type TOrg     = OrgImpl
   type TPackage = PackageImpl
-  type TModule = Module
+  type TModule  = Module
 
   class OrgImpl(val path: PathLike, initWorkspace: Option[Workspace]) extends TriOrg with Org {
     val workspace: Workspace = initWorkspace.getOrElse(new Workspace(Seq()))
 
     /** Issues log for all packages in org. This is managed independently as errors may be raised against files
-     * for which there is no natural type representation. */
+      * for which there is no natural type representation.
+      */
     private[nawforce] val issueManager = new IssuesManager
 
     /** Manager for post validation plugins */
@@ -75,13 +82,31 @@ object Hierarchy extends TriHierarchy {
         // The workspace layers form a deploy ordering, so each is dependent on all previously created
         val declared =
           workspace.layers.foldLeft(Seq[PackageImpl]())((acc, pkgLayer) => {
-            acc :+ new PackageImpl(this, pkgLayer.namespace, acc, workspace, pkgLayer.layers, createModule, issueManager)
+            acc :+ new PackageImpl(
+              this,
+              pkgLayer.namespace,
+              acc,
+              workspace,
+              pkgLayer.layers,
+              createModule,
+              issueManager
+            )
           })
 
         // If no unmanaged, create it
         val unmanaged =
           if (declared.isEmpty || declared.lastOption.exists(_.namespace.nonEmpty))
-            Seq(new PackageImpl(this, None, declared, workspace, Seq.empty, createModule, issueManager))
+            Seq(
+              new PackageImpl(
+                this,
+                None,
+                declared,
+                workspace,
+                Seq.empty,
+                createModule,
+                issueManager
+              )
+            )
           else
             Seq.empty
 
@@ -94,7 +119,11 @@ object Hierarchy extends TriHierarchy {
       }
     }
 
-    private def createModule(pkg: PackageImpl, index: DocumentIndex, dependencies: Seq[Module]): Module = {
+    private def createModule(
+      pkg: PackageImpl,
+      index: DocumentIndex,
+      dependencies: Seq[Module]
+    ): Module = {
       new Module(pkg, index, dependencies)
     }
 
@@ -135,7 +164,9 @@ object Hierarchy extends TriHierarchy {
     /** Get a array of type identifiers available across all packages. */
     def getTypeIdentifiers(apexOnly: Boolean): Array[TypeIdentifier] = {
       OrgImpl.current.withValue(this) {
-        packages.foldLeft(Array[TypeIdentifier]())((acc, pkg) => acc ++ pkg.getTypeIdentifiers(apexOnly))
+        packages.foldLeft(Array[TypeIdentifier]())(
+          (acc, pkg) => acc ++ pkg.getTypeIdentifiers(apexOnly)
+        )
       }
     }
 
@@ -155,7 +186,7 @@ object Hierarchy extends TriHierarchy {
       OrgImpl.current.withValue(this) {
         (findTypeIdentifier(identifier) match {
           case Some(ad: ApexDeclaration) => Some(PathLocation(ad.location.path, ad.idLocation))
-          case _ => None
+          case _                         => None
         }).orNull
       }
     }
@@ -169,13 +200,26 @@ object Hierarchy extends TriHierarchy {
         })
     }
 
-    def getDependencyGraph(identifiers: Array[TypeIdentifier], depth: Integer, apexOnly: Boolean, ignoring: Array[TypeIdentifier]): DependencyGraph = {
+    def getDependencyGraph(
+      identifiers: Array[TypeIdentifier],
+      depth: Integer,
+      apexOnly: Boolean,
+      ignoring: Array[TypeIdentifier]
+    ): DependencyGraph = {
       OrgImpl.current.withValue(this) {
         val depWalker = new DownWalker(this, apexOnly)
         val nodeData = depWalker
           .walk(identifiers, depth, ignoring)
           .map(n => {
-            DependencyNode(n.id, nodeFileSize(n.id), n.nature, n.transitiveCount, n.extending, n.implementing, n.using)
+            DependencyNode(
+              n.id,
+              nodeFileSize(n.id),
+              n.nature,
+              n.transitiveCount,
+              n.extending,
+              n.implementing,
+              n.using
+            )
           })
         val nodeIndex = nodeData.map(_.identifier).zipWithIndex.toMap
 
@@ -186,7 +230,9 @@ object Hierarchy extends TriHierarchy {
           def safeLink(nature: String)(identifier: TypeIdentifier): Unit = {
             nodeIndex
               .get(identifier)
-              .foreach(target => if (source != target) linkData += DependencyLink(source, target, nature))
+              .foreach(
+                target => if (source != target) linkData += DependencyLink(source, target, nature)
+              )
           }
 
           n.extending.foreach(safeLink("extends"))
@@ -205,7 +251,12 @@ object Hierarchy extends TriHierarchy {
     }
 
     /** Locate a definition for a symbol */
-    override def getDefinition(path: String, line: Int, offset: Int, content: String): Array[LocationLink] = {
+    override def getDefinition(
+      path: String,
+      line: Int,
+      offset: Int,
+      content: String
+    ): Array[LocationLink] = {
       if (path == null)
         return Array.empty
 
@@ -217,7 +268,12 @@ object Hierarchy extends TriHierarchy {
       }
     }
 
-    override def getCompletionItems(path: String, line: Int, offset: Int, content: String): Array[CompletionItemLink] = {
+    override def getCompletionItems(
+      path: String,
+      line: Int,
+      offset: Int,
+      content: String
+    ): Array[CompletionItemLink] = {
       if (path == null || content == null)
         return Array.empty
 
@@ -230,9 +286,9 @@ object Hierarchy extends TriHierarchy {
     }
 
     def getDependencyBombs(count: Int): Array[BombScore] = {
-      val maxBombs = Math.max(0, count)
+      val maxBombs   = Math.max(0, count)
       val allClasses = packages.flatMap(_.orderedModules.flatMap(_.nonTestClasses.toSeq))
-      val bombs = mutable.PriorityQueue[BombScore]()(Ordering.by(1000 - _.score))
+      val bombs      = mutable.PriorityQueue[BombScore]()(Ordering.by(1000 - _.score))
       allClasses.foreach(cls => {
         if (!cls.inTest) {
           val score = cls.bombScore(allClasses.size)
@@ -247,52 +303,64 @@ object Hierarchy extends TriHierarchy {
     }
 
     def getTestClassNames(paths: Array[String], findTests: Boolean): Array[String] = {
-      def findPackageIdentifierAndSummary(path: String): Option[(Package, TypeIdentifier, TypeSummary)] = {
+      def findPackageIdentifierAndSummary(
+        path: String
+      ): Option[(Package, TypeIdentifier, TypeSummary)] = {
         packages.view
           .flatMap(pkg => {
             Option(pkg.getTypeOfPath(path))
-              .flatMap(typeId =>
-                Option(pkg.getSummaryOfType(typeId))
-                  .map(summary => (pkg, typeId, summary)))
+              .flatMap(
+                typeId =>
+                  Option(pkg.getSummaryOfType(typeId))
+                    .map(summary => (pkg, typeId, summary))
+              )
           })
           .headOption
       }
 
-      def findReferencedTestPaths(pkg: Package,
-                                  typeId: TypeIdentifier,
-                                  summary: TypeSummary,
-                                  filterTypeId: TypeIdentifier): Array[String] = {
+      def findReferencedTestPaths(
+        pkg: Package,
+        typeId: TypeIdentifier,
+        summary: TypeSummary,
+        filterTypeId: TypeIdentifier
+      ): Array[String] = {
         if (summary.modifiers.contains(ISTEST_ANNOTATION)) return Array(summary.name)
         if (!findTests) return Array.empty
 
-        Option(pkg.getDependencyHolders(typeId, apexOnly = true)).getOrElse(Array.empty).flatMap { dependentTypeId =>
-          Option(pkg.getSummaryOfType(dependentTypeId)).toArray
-            .filter { dependentSummary =>
-              dependentSummary.modifiers.contains(ISTEST_ANNOTATION)
-            }
-            .filter { _ =>
-              pkg.hasDependency(dependentTypeId, filterTypeId)
-            }
-            .map { dependentSummary =>
-              dependentSummary.name
-            }
+        Option(pkg.getDependencyHolders(typeId, apexOnly = true)).getOrElse(Array.empty).flatMap {
+          dependentTypeId =>
+            Option(pkg.getSummaryOfType(dependentTypeId)).toArray
+              .filter { dependentSummary =>
+                dependentSummary.modifiers.contains(ISTEST_ANNOTATION)
+              }
+              .filter { _ =>
+                pkg.hasDependency(dependentTypeId, filterTypeId)
+              }
+              .map { dependentSummary =>
+                dependentSummary.name
+              }
         }
       }
 
-      def targetsForInterfaces(pkg: Package,
-                               summary: TypeSummary): ArraySeq[(TypeIdentifier, TypeIdentifier, TypeSummary)] = {
+      def targetsForInterfaces(
+        pkg: Package,
+        summary: TypeSummary
+      ): ArraySeq[(TypeIdentifier, TypeIdentifier, TypeSummary)] = {
         summary.interfaces.flatMap { interface =>
           Option(pkg.getTypeIdentifier(interface))
             .flatMap { interfaceTypeId =>
-              val outerTypeId = interfaceTypeId.typeName.outer.map(pkg.getTypeIdentifier).getOrElse(interfaceTypeId)
+              val outerTypeId =
+                interfaceTypeId.typeName.outer.map(pkg.getTypeIdentifier).getOrElse(interfaceTypeId)
               Option(pkg.getSummaryOfType(outerTypeId))
                 .map((interfaceTypeId, outerTypeId, _))
             }
         }
       }
 
-      def targetsForSuperclass(pkg: Package,
-                               summary: TypeSummary): Array[(TypeIdentifier, TypeIdentifier, TypeSummary)] = {
+      def targetsForSuperclass(
+        pkg: Package,
+        summary: TypeSummary
+      ): Array[(TypeIdentifier, TypeIdentifier, TypeSummary)] = {
         summary.superClass
           .flatMap { tn =>
             Option(pkg.getTypeIdentifier(tn))
@@ -316,7 +384,8 @@ object Hierarchy extends TriHierarchy {
             }
             val superClassTargets = targetsForSuperclass(pkg, summary)
 
-            val targets = Seq((typeId, typeId, summary)) ++ interfaces ++ nestedInterfaces ++ superClassTargets
+            val targets =
+              Seq((typeId, typeId, summary)) ++ interfaces ++ nestedInterfaces ++ superClassTargets
 
             targets.flatMap {
               case (actualTypeId, outerTypeId, outerSummary) =>
@@ -331,7 +400,10 @@ object Hierarchy extends TriHierarchy {
       def getTypeOfPath(path: String): Option[TypeIdentifier] =
         packages.view.flatMap(pkg => Option(pkg.getTypeOfPath(path))).headOption
 
-      def countTransitiveDependencies(typeId: TypeIdentifier, transitiveDependencies: Array[TypeIdentifier]): Int = {
+      def countTransitiveDependencies(
+        typeId: TypeIdentifier,
+        transitiveDependencies: Array[TypeIdentifier]
+      ): Int = {
         transitiveDependencies.count(t => t != typeId)
       }
 
@@ -344,7 +416,8 @@ object Hierarchy extends TriHierarchy {
               (typeId, collector.transitives(typeId))
             }
             .map {
-              case (typeId, transitiveDependencies) => (path, countTransitiveDependencies(typeId, transitiveDependencies))
+              case (typeId, transitiveDependencies) =>
+                (path, countTransitiveDependencies(typeId, transitiveDependencies))
             }
         }
     }
@@ -352,9 +425,19 @@ object Hierarchy extends TriHierarchy {
     def getAllTestMethods: Array[TestMethod] = {
       val allClasses = packages.flatMap(_.orderedModules.flatMap(_.testClasses.toSeq))
 
-      allClasses.flatMap(c => c.methods
-        .filter(m => m.modifiers.contains(ISTEST_ANNOTATION) || m.modifiers.contains(TEST_METHOD_MODIFIER))
-        .map(m => TestMethod(c.name.toString(), m.name.toString()))).toSet.toArray
+      allClasses
+        .flatMap(
+          c =>
+            c.methods
+              .filter(
+                m =>
+                  m.modifiers.contains(ISTEST_ANNOTATION) || m.modifiers
+                    .contains(TEST_METHOD_MODIFIER)
+              )
+              .map(m => TestMethod(c.name.toString(), m.name.toString()))
+        )
+        .toSet
+        .toArray
     }
   }
 
@@ -385,19 +468,29 @@ object Hierarchy extends TriHierarchy {
     }
   }
 
-
-  class PackageImpl(val org: OrgImpl, val namespace: Option[Name], override val basePackages: Seq[PackageImpl],
-                    workspace: Workspace, layers: Seq[ModuleLayer],
-                    mdlFactory: (PackageImpl, DocumentIndex, Seq[Module]) => Module, logger: IssueLogger)
-    extends TriPackage with PackageAPI with DefinitionProvider with CompletionProvider {
+  class PackageImpl(
+    val org: OrgImpl,
+    val namespace: Option[Name],
+    override val basePackages: Seq[PackageImpl],
+    workspace: Workspace,
+    layers: Seq[ModuleLayer],
+    mdlFactory: (PackageImpl, DocumentIndex, Seq[Module]) => Module,
+    logger: IssueLogger
+  ) extends TriPackage
+      with PackageAPI
+      with DefinitionProvider
+      with CompletionProvider {
 
     val modules: Seq[Module] =
-      layers.foldLeft(Map[ModuleLayer, Module]())((acc, layer) => {
-        val issuesAndIndex = workspace.indexes(layer)
-        logger.logAll(issuesAndIndex.issues)
-        val module = mdlFactory(this, issuesAndIndex.value, layers.flatMap(acc.get))
-        acc + (layer -> module)
-      }).values.toSeq
+      layers
+        .foldLeft(Map[ModuleLayer, Module]())((acc, layer) => {
+          val issuesAndIndex = workspace.indexes(layer)
+          logger.logAll(issuesAndIndex.issues)
+          val module = mdlFactory(this, issuesAndIndex.value, layers.flatMap(acc.get))
+          acc + (layer -> module)
+        })
+        .values
+        .toSeq
 
     /** Is this or any base package of this a ghost package. */
     lazy val hasGhosted: Boolean = isGhosted || basePackages.exists(_.hasGhosted)
@@ -406,7 +499,7 @@ object Hierarchy extends TriHierarchy {
     def getPackageModule(path: PathLike): Option[Module] = {
       orderedModules.find(_.isVisibleFile(path)) match {
         case Some(module) if MetadataDocument(path).nonEmpty => Some(module)
-        case _ => None
+        case _                                               => None
       }
     }
 
@@ -415,9 +508,11 @@ object Hierarchy extends TriHierarchy {
       val ghostedPackages = basePackages
         .groupBy(_.isGhosted)
         .map(kv => (kv._1, kv._2.map(_.namespace.map(_.value).getOrElse("")).sorted.toArray))
-      PackageContext(namespace.map(_.value),
+      PackageContext(
+        namespace.map(_.value),
         ghostedPackages.getOrElse(true, Array.empty),
-        ghostedPackages.getOrElse(false, Array.empty))
+        ghostedPackages.getOrElse(false, Array.empty)
+      )
     }
 
     /** Set of namespaces used by this package and its base packages. */
@@ -434,79 +529,96 @@ object Hierarchy extends TriHierarchy {
         basePackages.filter(_.isGhosted).exists(_.namespace == encName.namespace)
       } else {
         basePackages.filter(_.isGhosted).exists(_.namespace.contains(typeName.outerName)) ||
-          typeName.params.exists(isGhostedType)
+        typeName.params.exists(isGhostedType)
       }
     }
 
     /** Check if a field name is ghosted in this package. */
     def isGhostedFieldName(name: Name): Boolean = {
       EncodedName(name).namespace match {
-        case None => false
+        case None     => false
         case Some(ns) => basePackages.filter(_.isGhosted).exists(_.namespace.contains(ns))
       }
     }
 
     /** Load a class to obtain it's FullDeclaration, issues are not updated, this just returns a temporary version of
-     * the class so that it can be inspected. */
-    protected def loadClass(path: PathLike, source: String)
-    : (Option[(ApexParser, ApexParser.CompilationUnitContext)], Option[ApexFullDeclaration]) = {
+      * the class so that it can be inspected.
+      */
+    protected def loadClass(
+      path: PathLike,
+      source: String
+    ): (Option[(ApexParser, ApexParser.CompilationUnitContext)], Option[ApexFullDeclaration]) = {
       MetadataDocument(path) match {
         case Some(doc: ApexClassDocument) =>
-          getPackageModule(path).map(module => {
-            val existingIssues = org.issueManager.pop(path)
-            val parser = CodeParser(doc.path, SourceData(source.getBytes(StandardCharsets.UTF_8)))
-            val result = parser.parseClassReturningParser()
-            try {
-              (Some(result.value),
-                CompilationUnit.construct(parser, module, doc.name, result.value._2).map(_.typeDeclaration))
-            } catch {
-              case ex: Throwable =>
-                LoggerOps.info(s"CST construction failed for ${doc.path}", ex)
-                (None, None)
-            } finally {
-              org.issueManager.push(path, existingIssues)
-            }
-          }).getOrElse((None, None))
+          getPackageModule(path)
+            .map(module => {
+              val existingIssues = org.issueManager.pop(path)
+              val parser         = CodeParser(doc.path, SourceData(source.getBytes(StandardCharsets.UTF_8)))
+              val result         = parser.parseClassReturningParser()
+              try {
+                (
+                  Some(result.value),
+                  CompilationUnit
+                    .construct(parser, module, doc.name, result.value._2)
+                    .map(_.typeDeclaration)
+                )
+              } catch {
+                case ex: Throwable =>
+                  LoggerOps.info(s"CST construction failed for ${doc.path}", ex)
+                  (None, None)
+              } finally {
+                org.issueManager.push(path, existingIssues)
+              }
+            })
+            .getOrElse((None, None))
         case _ => (None, None)
       }
     }
 
-    protected def loadTrigger(path: PathLike, source: String)
-    : (Option[(ApexParser, ApexParser.TriggerUnitContext)], Option[ApexFullDeclaration]) = {
+    protected def loadTrigger(
+      path: PathLike,
+      source: String
+    ): (Option[(ApexParser, ApexParser.TriggerUnitContext)], Option[ApexFullDeclaration]) = {
       MetadataDocument(path) match {
         case Some(doc: ApexTriggerDocument) =>
-          getPackageModule(path).map(module => {
-            val existingIssues = org.issueManager.pop(path)
-            val parser = CodeParser(doc.path, SourceData(source.getBytes(StandardCharsets.UTF_8)))
-            val result = parser.parseTriggerReturningParser()
-            try {
-              (Some(result.value),
-                TriggerDeclaration.construct(parser, module, result.value._2))
-            } catch {
-              case ex: Throwable =>
-                LoggerOps.info(s"CST construction failed for ${doc.path}", ex)
-                (None, None)
-            } finally {
-              org.issueManager.push(path, existingIssues)
-            }
-          }).getOrElse((None, None))
+          getPackageModule(path)
+            .map(module => {
+              val existingIssues = org.issueManager.pop(path)
+              val parser         = CodeParser(doc.path, SourceData(source.getBytes(StandardCharsets.UTF_8)))
+              val result         = parser.parseTriggerReturningParser()
+              try {
+                (Some(result.value), TriggerDeclaration.construct(parser, module, result.value._2))
+              } catch {
+                case ex: Throwable =>
+                  LoggerOps.info(s"CST construction failed for ${doc.path}", ex)
+                  (None, None)
+              } finally {
+                org.issueManager.push(path, existingIssues)
+              }
+            })
+            .getOrElse((None, None))
         case _ => (None, None)
       }
     }
   }
 
-  class Module(override val pkg: PackageImpl, override val index: DocumentIndex, override val dependents: Seq[Module])
-    extends TriModule with TypeFinder with ModuleCompletions {
+  class Module(
+    override val pkg: PackageImpl,
+    override val index: DocumentIndex,
+    override val dependents: Seq[Module]
+  ) extends TriModule
+      with TypeFinder
+      with ModuleCompletions {
 
     val basePackages: Seq[PackageImpl] = pkg.basePackages.reverse
-    val namespace: Option[Name] = pkg.namespace
+    val namespace: Option[Name]        = pkg.namespace
 
     def namespaces: Set[Name] = pkg.namespaces
 
     val baseModules: Seq[Module] = dependents.reverse
 
     private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
-    private val schemaManager = SchemaSObjectType(this)
+    private val schemaManager   = SchemaSObjectType(this)
 
     def freeze(): Unit = {
       // FUTURE: Have return types, currently can't be done because class loading code needs access to in-flight types
@@ -533,13 +645,15 @@ object Hierarchy extends TriHierarchy {
     def components: ComponentDeclaration =
       types(TypeNames.Component).asInstanceOf[ComponentDeclaration]
 
-    def nonTestClasses: Iterable[ApexClassDeclaration] = types.values.collect {
-      case ac: ApexClassDeclaration if !ac.inTest => ac
-    }
+    def nonTestClasses: Iterable[ApexClassDeclaration] =
+      types.values.collect {
+        case ac: ApexClassDeclaration if !ac.inTest => ac
+      }
 
-    def testClasses: Iterable[ApexClassDeclaration] = types.values.collect {
-      case ac: ApexClassDeclaration if ac.inTest => ac
-    }
+    def testClasses: Iterable[ApexClassDeclaration] =
+      types.values.collect {
+        case ac: ApexClassDeclaration if ac.inTest => ac
+      }
 
     /** Count of loaded types, for debug info */
     def typeCount: Int = types.size
@@ -562,11 +676,12 @@ object Hierarchy extends TriHierarchy {
     }
 
     /** Iterate metadata defined types, this will include referenced platform SObjects irrespective of if they have been
-     * extended or not which is perhaps not quite accurate to the method name. */
+      * extended or not which is perhaps not quite accurate to the method name.
+      */
     def getMetadataDefinedTypeIdentifiers(apexOnly: Boolean): Iterable[TypeIdentifier] = {
       types.values
         .collect {
-          case x: ApexDeclaration => x
+          case x: ApexDeclaration                 => x
           case x: SObjectDeclaration if !apexOnly => x
         }
         .map(td => TypeIdentifier(namespace, td.typeName))
@@ -579,7 +694,8 @@ object Hierarchy extends TriHierarchy {
         .orElse(
           typeName.outer
             .flatMap(types.get)
-            .flatMap(_.nestedTypes.find(_.typeName == typeName)))
+            .flatMap(_.nestedTypes.find(_.typeName == typeName))
+        )
     }
 
     def replaceType(typeName: TypeName, typeDeclaration: Option[TypeDeclaration]): Unit = {
@@ -592,7 +708,7 @@ object Hierarchy extends TriHierarchy {
         // type.
         typeName match {
           case TypeNames.Label => types.put(TypeName(labels.name), labels)
-          case _ => ()
+          case _               => ()
         }
 
       } else {
@@ -657,11 +773,18 @@ object Hierarchy extends TriHierarchy {
         return td.get
 
       // From may be used to locate type variable types so must be accurate even for a platform type request
-      from.map(TypeResolver.platformType(typeName, _)).orElse(Some(TypeResolver.platformTypeOnly(typeName, this))).get
+      from
+        .map(TypeResolver.platformType(typeName, _))
+        .orElse(Some(TypeResolver.platformTypeOnly(typeName, this)))
+        .get
     }
 
     // Find locally, or fallback to a searching base packages
-    def findPackageType(typeName: TypeName, from: Option[TypeDeclaration], inPackage: Boolean = true): Option[TypeDeclaration] = {
+    def findPackageType(
+      typeName: TypeName,
+      from: Option[TypeDeclaration],
+      inPackage: Boolean = true
+    ): Option[TypeDeclaration] = {
       // Might be an outer in this module
       var declaration = findModuleType(typeName)
       if (declaration.nonEmpty) {
@@ -674,7 +797,9 @@ object Hierarchy extends TriHierarchy {
       // Or maybe an inner
       if (typeName.outer.nonEmpty) {
         declaration = findPackageType(typeName.outer.get, from, inPackage = inPackage)
-          .flatMap(_.findNestedType(typeName.name).filter(td => td.isExternallyVisible || inPackage))
+          .flatMap(
+            _.findNestedType(typeName.name).filter(td => td.isExternallyVisible || inPackage)
+          )
         if (declaration.nonEmpty)
           return declaration
       }
@@ -685,8 +810,13 @@ object Hierarchy extends TriHierarchy {
         .headOption
         .orElse(
           basePackages.view
-            .flatMap(pkg => pkg.orderedModules.lastOption.flatMap(_.findPackageType(typeName, from, inPackage = false)))
-            .headOption)
+            .flatMap(
+              pkg =>
+                pkg.orderedModules.lastOption
+                  .flatMap(_.findPackageType(typeName, from, inPackage = false))
+            )
+            .headOption
+        )
     }
 
     /** Find a type just in this module. */
@@ -704,7 +834,11 @@ object Hierarchy extends TriHierarchy {
       if (declaration.nonEmpty)
         return declaration
 
-      if (targetType.params.isEmpty && (targetType.outer.isEmpty || targetType.outer.contains(TypeNames.Schema))) {
+      if (
+        targetType.params.isEmpty && (targetType.outer.isEmpty || targetType.outer.contains(
+          TypeNames.Schema
+        ))
+      ) {
         val encName = EncodedName(targetType.name).defaultNamespace(namespace)
         if (encName.ext.nonEmpty) {
           return types.get(TypeName(encName.fullName, Nil, Some(TypeNames.Schema)))
@@ -715,7 +849,7 @@ object Hierarchy extends TriHierarchy {
 
     def refreshInternal(existingLabels: LabelDeclaration): Seq[(TypeId, Set[TypeId])] = {
       val newLabels = createLabelDeclaration()
-      val holders = existingLabels.getTypeDependencyHolders
+      val holders   = existingLabels.getTypeDependencyHolders
       newLabels.updateTypeDependencyHolders(holders)
       replaceType(newLabels.typeName, Some(newLabels))
       newLabels.validate()
@@ -729,9 +863,10 @@ object Hierarchy extends TriHierarchy {
 
         checkPathInPackageOrThrow(path)
         val doc = MetadataDocument(path).getOrElse(
-          throw new IllegalArgumentException(s"Metadata type is not supported for '$path'"))
+          throw new IllegalArgumentException(s"Metadata type is not supported for '$path'")
+        )
         val sourceOpt = resolveSource(path)
-        val typeId = TypeId(this, doc.typeName(namespace))
+        val typeId    = TypeId(this, doc.typeName(namespace))
 
         // Update internal document tracking
         index.upsert(pkg.org.issueManager, doc)
@@ -772,7 +907,7 @@ object Hierarchy extends TriHierarchy {
         .get(typeName)
         .flatMap {
           case dt: DependentType => Some(dt)
-          case _ => None
+          case _                 => None
         }
     }
 
@@ -782,7 +917,10 @@ object Hierarchy extends TriHierarchy {
       LabelDeclaration(this).merge(stream)
     }
 
-    private def createTypes(doc: MetadataDocument, source: Option[SourceData]): Seq[DependentType] = {
+    private def createTypes(
+      doc: MetadataDocument,
+      source: Option[SourceData]
+    ): Seq[DependentType] = {
       doc match {
         case doc: ApexClassDocument =>
           source.flatMap(s => FullDeclaration.create(this, doc, s, forceConstruct = true)).toSeq
@@ -793,11 +931,12 @@ object Hierarchy extends TriHierarchy {
             refreshSObject(doc.path.parent)
           else
             refreshSObject(doc.path)
-        case _: SObjectFieldDocument | _: SObjectFieldSetDocument | _: SObjectSharingReasonDocument =>
+        case _: SObjectFieldDocument | _: SObjectFieldSetDocument |
+            _: SObjectSharingReasonDocument =>
           val sObjectDir = doc.path.parent.parent
           MetadataDocument(sObjectDir.join(s"${sObjectDir.basename}.object-meta.xml")) match {
             case Some(_: SObjectLike) => refreshSObject(sObjectDir)
-            case _ => Seq()
+            case _                    => Seq()
           }
         case _: LabelsDocument =>
           Seq(createLabelDeclaration())
@@ -823,7 +962,8 @@ object Hierarchy extends TriHierarchy {
             removeSObjectTypes(doc.path.parent.basename)
           else
             removeSObjectTypes(doc.path.basename.replaceFirst("\\.object$", ""))
-        case _: SObjectFieldDocument | _: SObjectFieldSetDocument | _: SObjectSharingReasonDocument =>
+        case _: SObjectFieldDocument | _: SObjectFieldSetDocument |
+            _: SObjectSharingReasonDocument =>
           val sObjectDir = doc.path.parent.parent
           removeSObjectTypes(sObjectDir.basename)
         case _ => types.remove(doc.typeName(namespace))
@@ -834,10 +974,12 @@ object Hierarchy extends TriHierarchy {
       val name = EncodedName(sobjectName)
       if (name.ext.contains(Name("c"))) {
         val typeName = TypeName(name.fullName, Nil, Some(TypeNames.Schema))
-        val objectNames = Seq(typeName,
+        val objectNames = Seq(
+          typeName,
           typeName.withNameReplace("__c$", "__Share"),
           typeName.withNameReplace("__c$", "__Feed"),
-          typeName.withNameReplace("__c$", "__History"))
+          typeName.withNameReplace("__c$", "__History")
+        )
         objectNames.foreach(typeName => schemaSObjectType.remove(typeName.name))
         objectNames.foreach(types.remove)
       }
@@ -848,9 +990,14 @@ object Hierarchy extends TriHierarchy {
         clearSObjectErrors(sObjectPath)
         val deployer = new SObjectDeployer(this)
         val sobjects = deployer.createSObjects(
-          SObjectGenerator.iterator(DocumentIndex(pkg.org.issueManager, namespace, sObjectPath)).buffered)
+          SObjectGenerator
+            .iterator(DocumentIndex(pkg.org.issueManager, namespace, sObjectPath))
+            .buffered
+        )
 
-        sobjects.foreach(sobject => schemaSObjectType.add(sobject.typeName.name, hasFieldSets = true))
+        sobjects.foreach(
+          sobject => schemaSObjectType.add(sobject.typeName.name, hasFieldSets = true)
+        )
         sobjects.toIndexedSeq
       } else {
         Seq()
@@ -874,11 +1021,10 @@ object Hierarchy extends TriHierarchy {
 
     private def resolveSource(path: PathLike): Option[SourceData] = {
       path.readSourceData() match {
-        case Left(_) => None
+        case Left(_)     => None
         case Right(data) => Some(data)
       }
     }
   }
-
 
 }

@@ -1,7 +1,38 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser.{ClassTypeDeclaration => OPClassTypeDeclaration, ConstructorDeclaration => OPConstructorDeclaration, EnumTypeDeclaration => OPEnumTypeDeclaration, FieldDeclaration => OPFieldDeclaration, FormalParameter => OPFormalParameter, Id => OPId, Initializer => OPInitializer, InterfaceTypeDeclaration => OPInterfaceTypeDeclaration, Location => OPLocation, MethodDeclaration => OPMethodDeclaration, PropertyBlock => OPPropertyBlock, PropertyDeclaration => OPPropertyDeclaration}
-import com.nawforce.apexlink.cst.{ApexConstructorDeclaration, ApexFieldDeclaration, ApexInitializerBlock, ApexMethodDeclaration, ApexPropertyDeclaration, CST, ClassBodyDeclaration, ClassDeclaration, EnumDeclaration, Expression, FormalParameter, Id, InterfaceDeclaration, LazyBlock, PropertyBlock, QualifiedName, VariableDeclarator}
+import com.financialforce.oparser.{
+  ClassTypeDeclaration => OPClassTypeDeclaration,
+  ConstructorDeclaration => OPConstructorDeclaration,
+  EnumTypeDeclaration => OPEnumTypeDeclaration,
+  FieldDeclaration => OPFieldDeclaration,
+  FormalParameter => OPFormalParameter,
+  Id => OPId,
+  Initializer => OPInitializer,
+  InterfaceTypeDeclaration => OPInterfaceTypeDeclaration,
+  Location => OPLocation,
+  MethodDeclaration => OPMethodDeclaration,
+  PropertyBlock => OPPropertyBlock,
+  PropertyDeclaration => OPPropertyDeclaration
+}
+import com.nawforce.apexlink.cst.{
+  ApexConstructorDeclaration,
+  ApexFieldDeclaration,
+  ApexInitializerBlock,
+  ApexMethodDeclaration,
+  ApexPropertyDeclaration,
+  CST,
+  ClassBodyDeclaration,
+  ClassDeclaration,
+  EnumDeclaration,
+  Expression,
+  FormalParameter,
+  Id,
+  InterfaceDeclaration,
+  LazyBlock,
+  PropertyBlock,
+  QualifiedName,
+  VariableDeclarator
+}
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.Hierarchy
@@ -504,7 +535,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       val fieldSource: Source = Source(
         source.path,
         newSrcData,
-        0, 
+        0,
         0,
         if (isOuter) Some(source) else None,
         Some(fd.blockLocation.get.startLine),
