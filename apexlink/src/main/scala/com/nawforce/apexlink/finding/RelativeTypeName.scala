@@ -31,7 +31,7 @@ import scala.collection.mutable
   */
 final class RelativeTypeContext {
   var contextTypeDeclaration: TypeDeclaration = _
-  private val typeCache = mutable.Map[TypeName, Option[TypeResponse]]()
+  private val typeCache                       = mutable.Map[TypeName, Option[TypeResponse]]()
 
   /** Freeze the RelativeTypeContext by providing access to the enclosing Apex class. */
   def freeze(typeDeclaration: TypeDeclaration): Unit = {
@@ -63,7 +63,8 @@ final class RelativeTypeContext {
           None
         else
           Some(response)
-      })
+      }
+    )
   }
 }
 
@@ -95,8 +96,10 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
           OrgImpl.log(error.asIssue(location))
         case Some(Right(td)) =>
           context.addDependency(td)
-          td.typeName.params.foreach(typeName =>
-            context.getTypeAndAddDependency(typeName, typeContext.contextTypeDeclaration))
+          td.typeName.params.foreach(
+            typeName =>
+              context.getTypeAndAddDependency(typeName, typeContext.contextTypeDeclaration)
+          )
         case None => ()
       }
     }
