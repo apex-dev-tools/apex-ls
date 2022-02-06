@@ -42,7 +42,7 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
             Diagnostic(
               ERROR_CATEGORY,
               Location.empty,
-              "Missing sfdx-project.json file at /sfdx-project.json"
+              s"Missing sfdx-project.json file at ${root.join("sfdx-project.json")}"
             )
           )
         )
@@ -341,7 +341,7 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
             diagnostics.Diagnostic(
               ERROR_CATEGORY,
               Location.empty,
-              "Package directory '/path' is not within the project directory '/pkg'"
+              s"Package directory '${root.join("path")}' is not within the project directory '${root.join("pkg")}'"
             )
           )
         )
