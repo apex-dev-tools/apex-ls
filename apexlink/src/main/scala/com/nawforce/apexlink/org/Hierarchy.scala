@@ -72,22 +72,29 @@ object Hierarchy extends TriHierarchy {
     private val flusher =
       if (autoFlush) new CacheFlusher(this, parsedCache) else new Flusher(this, parsedCache)
 
-    /** Lookup of available packages from the namespace (which must be unique), populated when packages created */
-    var packagesByNamespace: Map[Option[Name], PackageImpl] = _
+    /** Packages in org in deploy order, the last entry is the unmanaged package identified by namespace = None */
+    override val packages: ArraySeq[PackageImpl] = {
 
-    val packages: Seq[PackageImpl] = {
+      def createModule(
+        pkg: PackageImpl,
+        index: DocumentIndex,
+        dependencies: ArraySeq[Module]
+      ): Module = {
+        new Module(pkg, index, dependencies)
+      }
+
       OrgImpl.current.withValue(this) {
 
         // Fold over layers to create packages - with any package(namespace) dependencies linked to each package
         // The workspace layers form a deploy ordering, so each is dependent on all previously created
         val declared =
-          workspace.layers.foldLeft(Seq[PackageImpl]())((acc, pkgLayer) => {
+          workspace.layers.foldLeft(ArraySeq[PackageImpl]())((acc, pkgLayer) => {
             acc :+ new PackageImpl(
               this,
               pkgLayer.namespace,
               acc,
               workspace,
-              pkgLayer.layers,
+              ArraySeq.unsafeWrapArray(pkgLayer.layers.toArray),
               createModule,
               issueManager
             )
@@ -102,38 +109,24 @@ object Hierarchy extends TriHierarchy {
                 None,
                 declared,
                 workspace,
-                Seq.empty,
+                ArraySeq.empty,
                 createModule,
                 issueManager
               )
             )
           else
             Seq.empty
-
-        // Finally, freeze everything
-        val packages = declared ++ unmanaged
-        packagesByNamespace = packages.map(p => (p.namespace, p)).toMap
-        packages.foreach(_.modules.foreach(_.freeze()))
-        CodeParser.clearCaches()
-        packages
+        ArraySeq.unsafeWrapArray((declared ++ unmanaged).toArray)
       }
     }
 
-    private def createModule(
-      pkg: PackageImpl,
-      index: DocumentIndex,
-      dependencies: Seq[Module]
-    ): Module = {
-      new Module(pkg, index, dependencies)
-    }
-
-    /** After loading packages we want to flush, but flushing depends on the package list being available. */
-    private val initialFlush =
+    /** After packages/module setup load metadata & flush to cache */
+    OrgImpl.current.withValue(this) {
+      packages.foreach(_.modules.foreach(_.freeze()))
+      CodeParser.clearCaches()
       if (autoFlush)
         flusher.refreshAndFlush()
-
-    /** All orgs have an unmanaged package, it has to be the last entry in 'packages'. */
-    val unmanaged: PackageImpl = packages.last
+    }
 
     /** Get all loaded packages. */
     def getPackages(): Array[Package] = packages.toArray[Package]
@@ -471,26 +464,28 @@ object Hierarchy extends TriHierarchy {
   class PackageImpl(
     val org: OrgImpl,
     val namespace: Option[Name],
-    override val basePackages: Seq[PackageImpl],
+    override val basePackages: ArraySeq[PackageImpl],
     workspace: Workspace,
-    layers: Seq[ModuleLayer],
-    mdlFactory: (PackageImpl, DocumentIndex, Seq[Module]) => Module,
+    layers: ArraySeq[ModuleLayer],
+    mdlFactory: (PackageImpl, DocumentIndex, ArraySeq[Module]) => Module,
     logger: IssueLogger
   ) extends TriPackage
       with PackageAPI
       with DefinitionProvider
       with CompletionProvider {
 
-    val modules: Seq[Module] =
-      layers
-        .foldLeft(Map[ModuleLayer, Module]())((acc, layer) => {
-          val issuesAndIndex = workspace.indexes(layer)
-          logger.logAll(issuesAndIndex.issues)
-          val module = mdlFactory(this, issuesAndIndex.value, layers.flatMap(acc.get))
-          acc + (layer -> module)
-        })
-        .values
-        .toSeq
+    val modules: ArraySeq[Module] =
+      ArraySeq.unsafeWrapArray(
+        layers
+          .foldLeft(Map[ModuleLayer, Module]())((acc, layer) => {
+            val issuesAndIndex = workspace.indexes(layer)
+            logger.logAll(issuesAndIndex.issues)
+            val module = mdlFactory(this, issuesAndIndex.value, layers.flatMap(acc.get))
+            acc + (layer -> module)
+          })
+          .values
+          .toArray
+      )
 
     /** Is this or any base package of this a ghost package. */
     lazy val hasGhosted: Boolean = isGhosted || basePackages.exists(_.hasGhosted)
@@ -520,25 +515,6 @@ object Hierarchy extends TriHierarchy {
       namespace.toSet ++
         basePackages.flatMap(_.namespaces) ++
         PlatformTypeDeclaration.namespaces
-    }
-
-    /* Check if a type is ghosted in this package */
-    def isGhostedType(typeName: TypeName): Boolean = {
-      if (typeName.outer.contains(TypeNames.Schema)) {
-        val encName = EncodedName(typeName.name)
-        basePackages.filter(_.isGhosted).exists(_.namespace == encName.namespace)
-      } else {
-        basePackages.filter(_.isGhosted).exists(_.namespace.contains(typeName.outerName)) ||
-        typeName.params.exists(isGhostedType)
-      }
-    }
-
-    /** Check if a field name is ghosted in this package. */
-    def isGhostedFieldName(name: Name): Boolean = {
-      EncodedName(name).namespace match {
-        case None     => false
-        case Some(ns) => basePackages.filter(_.isGhosted).exists(_.namespace.contains(ns))
-      }
     }
 
     /** Load a class to obtain it's FullDeclaration, issues are not updated, this just returns a temporary version of
@@ -605,17 +581,12 @@ object Hierarchy extends TriHierarchy {
   class Module(
     override val pkg: PackageImpl,
     override val index: DocumentIndex,
-    override val dependents: Seq[Module]
+    override val dependents: ArraySeq[Module]
   ) extends TriModule
       with TypeFinder
       with ModuleCompletions {
 
-    val basePackages: Seq[PackageImpl] = pkg.basePackages.reverse
-    val namespace: Option[Name]        = pkg.namespace
-
     def namespaces: Set[Name] = pkg.namespaces
-
-    val baseModules: Seq[Module] = dependents.reverse
 
     private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
     private val schemaManager   = SchemaSObjectType(this)
@@ -628,8 +599,6 @@ object Hierarchy extends TriHierarchy {
 
       new StreamDeployer(this, PackageStream.eventStream(index), types)
     }
-
-    override def toString: String = s"Module(${index.path})"
 
     def schemaSObjectType: SchemaSObjectType = schemaManager
 
@@ -657,18 +626,6 @@ object Hierarchy extends TriHierarchy {
 
     /** Count of loaded types, for debug info */
     def typeCount: Int = types.size
-
-    /** Test if a file is visible to this module, i.e. in scope & not ignored */
-    def isVisibleFile(path: PathLike): Boolean = {
-      index.isVisibleFile(path)
-    }
-
-    /* Transitive Bases (dependent modules for this modules & its dependents) */
-    def transitiveBaseModules: Set[Module] = {
-      namespace
-        .map(_ => dependents.toSet ++ dependents.flatMap(_.transitiveBaseModules))
-        .getOrElse(baseModules.toSet)
-    }
 
     /* Iterator over available types */
     def getTypes: Iterable[TypeDeclaration] = {
@@ -715,11 +672,6 @@ object Hierarchy extends TriHierarchy {
         types.remove(typeName)
       }
     }
-
-    def isGhostedType(typeName: TypeName): Boolean = pkg.isGhostedType(typeName)
-
-    /* Check if a field name is ghosted in this package */
-    def isGhostedFieldName(name: Name): Boolean = pkg.isGhostedFieldName(name)
 
     // Upsert some metadata to the package
     def upsertMetadata(td: TypeDeclaration, altTypeName: Option[TypeName] = None): Unit = {
