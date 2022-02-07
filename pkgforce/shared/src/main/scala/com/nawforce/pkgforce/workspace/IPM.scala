@@ -69,17 +69,13 @@ object IPM extends TriHierarchy {
   ) extends TriPackage {
 
     val modules: ArraySeq[Module] =
-      ArraySeq.unsafeWrapArray(
-        layers
-          .foldLeft(Map[ModuleLayer, Module]())((acc, layer) => {
-            val issuesAndIndex = workspace.indexes(layer)
-            logger.logAll(issuesAndIndex.issues)
-            val module = mdlFactory(this, issuesAndIndex.value, layers.flatMap(acc.get))
-            acc + (layer -> module)
-          })
-          .values
-          .toArray
-      )
+      layers
+        .foldLeft(ArraySeq[Module]())((acc, layer) => {
+          val issuesAndIndex = workspace.indexes(layer)
+          logger.logAll(issuesAndIndex.issues)
+          val module = mdlFactory(this, issuesAndIndex.value, acc)
+          acc :+ module
+        })
   }
 
   class Module(
