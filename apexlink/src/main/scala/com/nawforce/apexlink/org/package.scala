@@ -33,7 +33,7 @@ package object org {
     while (continue) {
       continue = events.head match {
         case _ if accept.contains(events.head.getClass) => buffer.append(events.head); true
-        case event: IssuesEvent                         => event.issues.foreach(OPM.OrgImpl.log); true
+        case event: IssuesEvent                         => event.issues.foreach(OrgInfo.log); true
         case _                                          => false
       }
       if (continue) {
@@ -53,7 +53,7 @@ package object org {
     while (continue) {
       continue = events.head match {
         case e: T           => buffer.append(e); true
-        case e: IssuesEvent => e.issues.foreach(OPM.OrgImpl.log); true
+        case e: IssuesEvent => e.issues.foreach(OrgInfo.log); true
         case _              => false
       }
       if (continue) {

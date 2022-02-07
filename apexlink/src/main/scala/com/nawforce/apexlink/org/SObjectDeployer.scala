@@ -190,7 +190,7 @@ class SObjectDeployer(module: OPM.Module) {
 
     val td = created.orElse(TypeResolver(targetTypeName, module).toOption)
     if ((td.isEmpty || !td.exists(_.isSObject)) && !module.isGhostedType(targetTypeName)) {
-      OPM.OrgImpl.logError(
+      OrgInfo.logError(
         location,
         s"Lookup object $targetTypeName does not exist for field '$originatingFieldName'"
       )
@@ -279,7 +279,7 @@ class SObjectDeployer(module: OPM.Module) {
               |  fieldSets: ${fieldSets.map(_.value).mkString(",")}
               |  sharingReasons: ${fieldSets.map(_.value).mkString(",")}
               |""".stripMargin
-          OPM.OrgImpl.log(
+          OrgInfo.log(
             Issue(
               module.pkg.org.path.join("sfdx-project.json"),
               Diagnostic(ERROR_CATEGORY, Location.empty, message)
@@ -287,7 +287,7 @@ class SObjectDeployer(module: OPM.Module) {
           )
           Array.empty
         case (true, false) =>
-          OPM.OrgImpl.log(IssueOps.redefiningSObject(sources.head.location, event.reportingPath))
+          OrgInfo.log(IssueOps.redefiningSObject(sources.head.location, event.reportingPath))
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
       }
     }
@@ -418,7 +418,7 @@ class SObjectDeployer(module: OPM.Module) {
           superClass => superClass.typeName == TypeNames.SObject
         )
       ) {
-        OPM.OrgImpl.logError(sources.head.location, s"No SObject declaration found for '$typeName'")
+        OrgInfo.logError(sources.head.location, s"No SObject declaration found for '$typeName'")
         return Array()
       }
       Array(
@@ -468,7 +468,7 @@ class SObjectDeployer(module: OPM.Module) {
     if (crossModule && !nature.extendable) {
       val baseNS = base.flatMap(_.moduleDeclaration).flatMap(_.namespace)
       if (baseNS != module.namespace) {
-        OPM.OrgImpl.log(
+        OrgInfo.log(
           IssueOps.extendingOverNamespace(
             sources.head.location,
             nature,

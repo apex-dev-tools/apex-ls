@@ -35,7 +35,7 @@ import com.nawforce.apexlink.cst.{
 }
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.apex.ThisType
 import com.nawforce.apexlink.types.core.ParameterDeclaration
 import com.nawforce.apexparser.ApexParser.BlockContext
@@ -544,7 +544,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
       val parser = new CodeParser(fieldSource)
       val result = parser.parseExpression()
-      result.issues.foreach(OPM.OrgImpl.log)
+      result.issues.foreach(OrgInfo.log)
       if (result.issues.nonEmpty) return None
       var expr: Option[Expression] = None
       CST.sourceContext.withValue(Some(fieldSource)) {
@@ -605,7 +605,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         propertyBlockSource =>
           val parser = new CodeParser(propertyBlockSource)
           val result = parser.parsePropertyBlock()
-          result.issues.foreach(OPM.OrgImpl.log)
+          result.issues.foreach(OrgInfo.log)
           if (result.issues.nonEmpty) return None
 
           var rv: Option[PropertyBlock] = None

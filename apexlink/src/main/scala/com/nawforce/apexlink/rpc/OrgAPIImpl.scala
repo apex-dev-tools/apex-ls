@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.rpc
 
 import com.nawforce.apexlink.api.{Org, ServerOps}
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.runtime.platform.{Environment, Path}
@@ -83,7 +83,7 @@ case class GetIssues(
   override def process(queue: OrgQueue): Unit = {
 
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(
         GetIssuesResult(
           orgImpl.issueManager
@@ -110,7 +110,7 @@ object GetIssues {
 case class HasUpdatedIssues(promise: Promise[Array[String]]) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(orgImpl.issues.hasUpdatedIssues)
     }
   }
@@ -127,7 +127,7 @@ object HasUpdatedIssues {
 case class IgnoreUpdatedIssues(promise: Promise[Unit], path: String) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(orgImpl.issues.ignoreUpdatedIssues(path))
     }
   }
@@ -144,7 +144,7 @@ object IgnoreUpdatedIssues {
 case class IssuesForFile(promise: Promise[IssuesResult], path: String) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(IssuesResult(orgImpl.issues.issuesForFileInternal(path).toArray))
     }
   }
@@ -166,7 +166,7 @@ case class IssuesForFiles(
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(
         IssuesResult(
           orgImpl.issues.issuesForFilesInternal(paths, includeWarnings, maxErrorsPerFile).toArray
@@ -193,7 +193,7 @@ case class TypeIdentifiers(promise: Promise[GetTypeIdentifiersResult], apexOnly:
     extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(GetTypeIdentifiersResult(orgImpl.getTypeIdentifiers(apexOnly)))
     }
   }
@@ -254,7 +254,7 @@ case class IdentifierForPath(promise: Promise[IdentifierForPathResult], path: St
     extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       val types = orgImpl.packagesByNamespace.values.flatMap(pkg => Option(pkg.getTypeOfPath(path)))
       promise.success(IdentifierForPathResult(types.headOption))
     }
@@ -299,7 +299,7 @@ object GetDefinition {
 case class GetDependencyBombs(promise: Promise[Array[BombScore]], count: Int) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(orgImpl.getDependencyBombs(count))
     }
   }
@@ -320,7 +320,7 @@ case class GetTestClassNames(
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(GetTestClassNamesResult(orgImpl.getTestClassNames(paths, findTests)))
     }
   }
@@ -344,7 +344,7 @@ case class GetDependencyCounts(
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OPM.OrgImpl.current.withValue(orgImpl) {
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(
         GetDependencyCountsResult(
           orgImpl

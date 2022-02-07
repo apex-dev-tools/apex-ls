@@ -14,7 +14,7 @@
 package com.nawforce.apexlink
 
 import com.nawforce.apexlink.api.{Org, ServerOps, TypeSummary}
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
@@ -61,7 +61,7 @@ trait TestHelper {
   }
 
   def withOrg[T](op: OPM.OrgImpl => T): T = {
-    OPM.OrgImpl.current.withValue(defaultOrg) {
+    OrgInfo.current.withValue(defaultOrg) {
       op(defaultOrg)
     }
   }
@@ -77,7 +77,7 @@ trait TestHelper {
 
   def withEmptyOrg[T](op: OPM.OrgImpl => T): T = {
     val org = emptyOrg()
-    OPM.OrgImpl.current.withValue(org) {
+    OrgInfo.current.withValue(org) {
       op(org)
     }
   }

@@ -40,7 +40,7 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
   }
 
   def refreshAndFlush(): Boolean = {
-    OPM.OrgImpl.current.withValue(org) {
+    OrgInfo.current.withValue(org) {
       lock.synchronized {
         val packages = org.packages
 

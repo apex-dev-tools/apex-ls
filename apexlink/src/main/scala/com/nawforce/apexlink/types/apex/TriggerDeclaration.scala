@@ -20,7 +20,7 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexparser.ApexParser.{TriggerCaseContext, TriggerUnitContext}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
@@ -88,7 +88,7 @@ final case class TriggerDeclaration(
       val duplicateCases = cases.groupBy(_.name).collect { case (_, Seq(_, y, _*)) => y }
       duplicateCases.foreach(
         triggerCase =>
-          OPM.OrgImpl
+          OrgInfo
             .logError(objectNameId.location, s"Duplicate trigger case for '${triggerCase.name}'")
       )
 
@@ -98,7 +98,7 @@ final case class TriggerDeclaration(
       tdOpt match {
         case Left(error) =>
           if (!module.isGhostedType(objectTypeName))
-            OPM.OrgImpl.log(error.asIssue(objectNameId.location))
+            OrgInfo.log(error.asIssue(objectNameId.location))
         case Right(_) =>
           val triggerContext = context
             .getTypeFor(TypeNames.trigger(objectTypeName), this)
@@ -197,7 +197,7 @@ object TriggerDeclaration {
   def create(module: OPM.Module, path: PathLike, data: SourceData): Option[TriggerDeclaration] = {
     val parser = CodeParser(path, data)
     val result = parser.parseTrigger()
-    result.issues.foreach(OPM.OrgImpl.log)
+    result.issues.foreach(OrgInfo.log)
     TriggerDeclaration.construct(parser, module, result.value)
   }
 

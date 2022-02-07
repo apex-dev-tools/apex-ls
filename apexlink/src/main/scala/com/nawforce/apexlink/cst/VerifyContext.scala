@@ -18,7 +18,7 @@ import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.memory.SkinnySet
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.Plugin
 import com.nawforce.apexlink.types.apex._
 import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration}
@@ -86,22 +86,22 @@ trait VerifyContext {
 
   def missingType(location: PathLocation, typeName: TypeName): Unit = {
     if (!module.isGhostedType(typeName) && !suppressIssues)
-      OPM.OrgImpl.log(IssueOps.noTypeDeclaration(location, typeName))
+      OrgInfo.log(IssueOps.noTypeDeclaration(location, typeName))
   }
 
   def missingIdentifier(location: PathLocation, typeName: TypeName, name: Name): Unit = {
     if (!module.isGhostedType(EncodedName(name).asTypeName) && !suppressIssues)
-      OPM.OrgImpl.log(IssueOps.noVariableOrType(location, name, typeName))
+      OrgInfo.log(IssueOps.noVariableOrType(location, name, typeName))
   }
 
   def logError(location: PathLocation, msg: String): Unit = {
     if (!suppressIssues)
-      OPM.OrgImpl.logError(location, msg)
+      OrgInfo.logError(location, msg)
   }
 
   def log(issue: Issue): Unit = {
     if (!suppressIssues)
-      OPM.OrgImpl.log(issue)
+      OrgInfo.log(issue)
   }
 }
 

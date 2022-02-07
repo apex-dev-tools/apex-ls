@@ -20,7 +20,7 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.finding.{RelativeTypeContext, TypeResolver}
 import com.nawforce.apexlink.memory.Monitor
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexparser.ApexParser.TypeDeclarationContext
 import com.nawforce.pkgforce.diagnostics.LoggerOps
@@ -149,16 +149,13 @@ abstract class FullDeclaration(
       if (superClassDeclaration.isEmpty) {
         context.missingType(id.location, superClass.get)
       } else if (superClassDeclaration.get.nature != CLASS_NATURE) {
-        OPM.OrgImpl.logError(
-          id.location,
-          s"Parent type '${superClass.get.asDotName}' must be a class"
-        )
+        OrgInfo.logError(id.location, s"Parent type '${superClass.get.asDotName}' must be a class")
       } else if (
         superClassDeclaration.get.modifiers
           .intersect(Seq(VIRTUAL_MODIFIER, ABSTRACT_MODIFIER))
           .isEmpty
       ) {
-        OPM.OrgImpl.logError(
+        OrgInfo.logError(
           id.location,
           s"Parent class '${superClass.get.asDotName}' must be declared virtual or abstract"
         )
@@ -169,7 +166,7 @@ abstract class FullDeclaration(
     val duplicateNestedType =
       (this +: nestedTypes).groupBy(_.name).collect { case (_, Seq(_, y, _*)) => y }
     duplicateNestedType.foreach(
-      td => OPM.OrgImpl.logError(td.location, s"Duplicate type name '${td.name.toString}'")
+      td => OrgInfo.logError(td.location, s"Duplicate type name '${td.name.toString}'")
     )
 
     // Check interfaces are visible
@@ -179,8 +176,7 @@ abstract class FullDeclaration(
         if (!context.module.isGhostedType(interface))
           context.missingType(id.location, interface)
       } else if (td.get.nature != INTERFACE_NATURE)
-        OPM.OrgImpl
-          .logError(id.location, s"Type '${interface.toString}' must be an interface")
+        OrgInfo.logError(id.location, s"Type '${interface.toString}' must be an interface")
     })
 
     // Detail check each body declaration
@@ -190,7 +186,7 @@ abstract class FullDeclaration(
       .filter(t => t.nestedTypes.nonEmpty)
       .foreach(_.nestedTypes.foreach {
         case fd: FullDeclaration =>
-          OPM.OrgImpl
+          OrgInfo
             .logError(fd.id.location, s"${fd.id.name}: Inner types of Inner types are not valid.")
         case _ =>
       })
@@ -324,7 +320,7 @@ object FullDeclaration {
     val parser = CodeParser(doc.path, data)
     val result = parser.parseClass()
     val issues = result.issues
-    issues.foreach(OPM.OrgImpl.log)
+    issues.foreach(OrgInfo.log)
     if (issues.isEmpty || forceConstruct) {
       try {
         CompilationUnit.construct(parser, module, doc.name, result.value).map(_.typeDeclaration)

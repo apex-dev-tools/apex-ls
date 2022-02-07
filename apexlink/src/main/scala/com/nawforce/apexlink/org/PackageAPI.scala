@@ -36,7 +36,7 @@ trait PackageAPI extends Package {
   this: OPM.PackageImpl =>
 
   override def getNamespaces(withDependents: Boolean): Array[String] = {
-    OPM.OrgImpl.current.withValue(org) {
+    OrgInfo.current.withValue(org) {
       val ns = namespace.map(_.value).getOrElse("")
       if (withDependents)
         (ns +: basePackages.map(_.namespace.map(_.value).getOrElse(""))).toArray
