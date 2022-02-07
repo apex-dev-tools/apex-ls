@@ -10,9 +10,9 @@ import org.scalatest.funsuite.AnyFunSuite
 class MDIndexTest extends AnyFunSuite with TestHelper {
 
   test("Empty org") {
-      virtualFS(Map()) { root: PathLike =>
-        val index = MDIndex.create(root)
-        assert(index != null)
-      }
+    virtualFS(Map()) { root: PathLike =>
+      val index = MDIndex.create(root)
+      assert(index != null)
     }
   }
+}

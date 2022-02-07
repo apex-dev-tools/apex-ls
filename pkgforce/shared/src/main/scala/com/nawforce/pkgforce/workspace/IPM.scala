@@ -13,9 +13,9 @@ import com.nawforce.pkgforce.pkgs.TriHierarchy
 import scala.collection.immutable.ArraySeq
 
 object IPM extends TriHierarchy {
-  type TOrg = Index
+  type TOrg     = Index
   type TPackage = Package
-  type TModule = Module
+  type TModule  = Module
 
   class Index(val path: PathLike, initWorkspace: Option[Workspace]) extends TriOrg {
     val workspace: Workspace = initWorkspace.getOrElse(new Workspace(Seq()))
@@ -23,10 +23,10 @@ object IPM extends TriHierarchy {
     override val packages: ArraySeq[Package] = {
 
       def createModule(
-                        pkg: Package,
-                        index: DocumentIndex,
-                        dependencies: ArraySeq[Module]
-                      ): Module = {
+        pkg: Package,
+        index: DocumentIndex,
+        dependencies: ArraySeq[Module]
+      ): Module = {
         new Module(pkg, index, dependencies)
       }
 
@@ -35,32 +35,22 @@ object IPM extends TriHierarchy {
       // Fold over layers to create packages - with any package(namespace) dependencies linked to each package
       // The workspace layers form a deploy ordering, so each is dependent on all previously created
       val declared =
-      workspace.layers.foldLeft(ArraySeq[Package]())((acc, pkgLayer) => {
-        acc :+ new Package(
-          this,
-          pkgLayer.namespace,
-          acc,
-          workspace,
-          ArraySeq.unsafeWrapArray(pkgLayer.layers.toArray),
-          createModule,
-          logger
-        )
-      })
+        workspace.layers.foldLeft(ArraySeq[Package]())((acc, pkgLayer) => {
+          acc :+ new Package(
+            this,
+            pkgLayer.namespace,
+            acc,
+            workspace,
+            ArraySeq.unsafeWrapArray(pkgLayer.layers.toArray),
+            createModule,
+            logger
+          )
+        })
 
       // If no unmanaged, create it
       val unmanaged =
         if (declared.isEmpty || declared.lastOption.exists(_.namespace.nonEmpty))
-          Seq(
-            new Package(
-              this,
-              None,
-              declared,
-              workspace,
-              ArraySeq.empty,
-              createModule,
-              logger
-            )
-          )
+          Seq(new Package(this, None, declared, workspace, ArraySeq.empty, createModule, logger))
         else
           Seq.empty
       ArraySeq.unsafeWrapArray((declared ++ unmanaged).toArray)
@@ -69,14 +59,14 @@ object IPM extends TriHierarchy {
   }
 
   class Package(
-                 override val org: Index,
-                 override val namespace: Option[Name],
-                 override val basePackages: ArraySeq[Package],
-                 workspace: Workspace,
-                 layers: ArraySeq[ModuleLayer],
-                 mdlFactory: (Package, DocumentIndex, ArraySeq[Module]) => Module,
-                 logger: IssueLogger
-               ) extends TriPackage {
+    override val org: Index,
+    override val namespace: Option[Name],
+    override val basePackages: ArraySeq[Package],
+    workspace: Workspace,
+    layers: ArraySeq[ModuleLayer],
+    mdlFactory: (Package, DocumentIndex, ArraySeq[Module]) => Module,
+    logger: IssueLogger
+  ) extends TriPackage {
 
     val modules: ArraySeq[Module] =
       ArraySeq.unsafeWrapArray(
@@ -93,9 +83,8 @@ object IPM extends TriHierarchy {
   }
 
   class Module(
-                override val pkg: Package,
-                override val index: DocumentIndex,
-                override val dependents: ArraySeq[Module]
-              ) extends TriModule {
-  }
+    override val pkg: Package,
+    override val index: DocumentIndex,
+    override val dependents: ArraySeq[Module]
+  ) extends TriModule {}
 }
