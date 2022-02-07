@@ -16,7 +16,7 @@ package com.nawforce.apexlink.types.other
 
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{
@@ -34,12 +34,8 @@ import scala.collection.mutable
 import scala.util.hashing.MurmurHash3
 
 /** A individual Page being represented as a static field. */
-case class Page(
-  module: Hierarchy.Module,
-  location: PathLocation,
-  name: Name,
-  vfContainer: VFContainer
-) extends FieldDeclaration {
+case class Page(module: OPM.Module, location: PathLocation, name: Name, vfContainer: VFContainer)
+    extends FieldDeclaration {
   override lazy val modifiers: ArraySeq[Modifier] = ArraySeq(STATIC_MODIFIER, GLOBAL_MODIFIER)
   override lazy val typeName: TypeName            = TypeNames.PageReference
   override lazy val readAccess: Modifier          = GLOBAL_MODIFIER
@@ -58,7 +54,7 @@ case class Page(
 }
 
 object Page {
-  def apply(module: Hierarchy.Module, event: PageEvent): Seq[Page] = {
+  def apply(module: OPM.Module, event: PageEvent): Seq[Page] = {
     val location  = event.sourceInfo.location
     val document  = MetadataDocument(location.path)
     val container = new VFContainer(module, event)
@@ -82,7 +78,7 @@ object Page {
   */
 final case class PageDeclaration(
   sources: ArraySeq[SourceInfo],
-  override val module: Hierarchy.Module,
+  override val module: OPM.Module,
   pages: ArraySeq[Page]
 ) extends BasicTypeDeclaration(pages.map(p => p.location.path).distinct, module, TypeNames.Page)
     with DependentType
@@ -127,11 +123,11 @@ final case class PageDeclaration(
 }
 
 object PageDeclaration {
-  def apply(module: Hierarchy.Module): PageDeclaration = {
+  def apply(module: OPM.Module): PageDeclaration = {
     new PageDeclaration(ArraySeq(), module, collectBasePages(module))
   }
 
-  private def collectBasePages(module: Hierarchy.Module): ArraySeq[Page] = {
+  private def collectBasePages(module: OPM.Module): ArraySeq[Page] = {
     ArraySeq.unsafeWrapArray(
       module.basePackages
         .flatMap(basePkg => {

@@ -15,7 +15,7 @@ package com.nawforce.apexlink.types.schema
 
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformField
 import com.nawforce.apexlink.types.synthetic.CustomFieldDeclaration
@@ -63,7 +63,7 @@ trait SObjectFieldFinder {
   private def getSObjectField(
     field: FieldDeclaration,
     shareTypeName: Option[TypeName],
-    module: Option[Hierarchy.Module]
+    module: Option[OPM.Module]
   ): FieldDeclaration = {
     field match {
       /* Relationship 'Id' fields can be used in place of the actual relationship field as must be typed as such */

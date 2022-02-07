@@ -17,7 +17,7 @@ package com.nawforce.apexlink.finding
 import com.nawforce.apexlink.cst.{BlockVerifyContext, CST, VerifyContext}
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.Nature
@@ -93,7 +93,7 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
     if (relativeTypeName != TypeNames.Void) {
       typeContext.resolve(relativeTypeName) match {
         case Some(Left(error)) =>
-          Hierarchy.OrgImpl.log(error.asIssue(location))
+          OPM.OrgImpl.log(error.asIssue(location))
         case Some(Right(td)) =>
           context.addDependency(td)
           td.typeName.params.foreach(

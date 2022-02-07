@@ -40,7 +40,7 @@ import scala.jdk.CollectionConverters._
   * FUTURE: Remove Module dependency.
   */
 class StreamDeployer(
-  module: Hierarchy.Module,
+  module: OPM.Module,
   events: Iterator[PackageEvent],
   types: mutable.Map[TypeName, TypeDeclaration]
 ) {

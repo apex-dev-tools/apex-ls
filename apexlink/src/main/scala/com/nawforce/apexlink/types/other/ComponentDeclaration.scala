@@ -16,7 +16,7 @@ package com.nawforce.apexlink.types.other
 
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.synthetic.CustomFieldDeclaration
@@ -31,7 +31,7 @@ import scala.util.hashing.MurmurHash3
 
 /** An individual component being represented as a nested type. */
 final case class Component(
-  module: Hierarchy.Module,
+  module: OPM.Module,
   location: PathLocation,
   componentName: Name,
   attributes: Option[ArraySeq[Name]],
@@ -80,7 +80,7 @@ final case class Component(
 }
 
 object Component {
-  def apply(module: Hierarchy.Module, event: ComponentEvent): Component = {
+  def apply(module: OPM.Module, event: ComponentEvent): Component = {
     val location = event.sourceInfo.location
     val document = MetadataDocument(location.path)
     new Component(
@@ -98,7 +98,7 @@ object Component {
 /** Component namespace handler */
 final case class ComponentDeclaration(
   sources: ArraySeq[SourceInfo],
-  module: Hierarchy.Module,
+  module: OPM.Module,
   components: Seq[TypeDeclaration],
   nestedComponents: Seq[NestedComponents]
 ) extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.Component)
@@ -188,7 +188,7 @@ trait NestedComponents extends TypeDeclaration {
 /** Component.ns implementation for exposing components from dependent packages. As the exposed components are
   * owned elsewhere there is no need to set a controller here.
   */
-final class PackageComponents(module: Hierarchy.Module, componentDeclaration: ComponentDeclaration)
+final class PackageComponents(module: OPM.Module, componentDeclaration: ComponentDeclaration)
     extends InnerBasicTypeDeclaration(
       PathLike.emptyPaths,
       module,
@@ -205,7 +205,7 @@ final class PackageComponents(module: Hierarchy.Module, componentDeclaration: Co
   override def nestedTypes: ArraySeq[TypeDeclaration] = componentDeclaration.nestedTypes
 }
 
-final class GhostedComponents(module: Hierarchy.Module, ghostedPackage: Hierarchy.PackageImpl)
+final class GhostedComponents(module: OPM.Module, ghostedPackage: OPM.PackageImpl)
     extends InnerBasicTypeDeclaration(
       PathLike.emptyPaths,
       module,
@@ -225,11 +225,11 @@ final class GhostedComponents(module: Hierarchy.Module, ghostedPackage: Hierarch
 object ComponentDeclaration {
   val standardTypes = Seq(PlatformTypes.apexComponent, PlatformTypes.chatterComponent)
 
-  def apply(module: Hierarchy.Module): ComponentDeclaration = {
+  def apply(module: OPM.Module): ComponentDeclaration = {
     new ComponentDeclaration(ArraySeq(), module, standardTypes, collectBaseComponents(module))
   }
 
-  private def collectBaseComponents(module: Hierarchy.Module): Seq[NestedComponents] = {
+  private def collectBaseComponents(module: OPM.Module): Seq[NestedComponents] = {
     module.basePackages
       .map(basePkg => {
         basePkg.orderedModules.headOption

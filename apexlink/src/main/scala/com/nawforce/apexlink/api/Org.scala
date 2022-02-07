@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.api
 
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.rpc.{BombScore, CompletionItemLink, DependencyGraph, LocationLink}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -152,10 +152,10 @@ object Org {
     LoggerOps.infoTime(
       s"Org created",
       show = true,
-      s" with autoFlush = ${ServerOps.getAutoFlush}, build = ${Hierarchy.OrgImpl.implementationBuild}"
+      s" with autoFlush = ${ServerOps.getAutoFlush}, build = ${OPM.OrgImpl.implementationBuild}"
     ) {
       val ws  = Workspace(path)
-      val org = new Hierarchy.OrgImpl(path, ws.value)
+      val org = new OPM.OrgImpl(path, ws.value)
       ws.issues.foreach(org.issueManager.add)
       org
     }

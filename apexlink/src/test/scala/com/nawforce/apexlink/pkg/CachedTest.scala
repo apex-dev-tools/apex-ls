@@ -16,7 +16,7 @@ package com.nawforce.apexlink.pkg
 import com.nawforce.apexlink.api.{IssueOptions, ServerOps}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryDeclaration}
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
@@ -27,7 +27,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
 
   def assertIsNotDeclaration(
-    pkg: Hierarchy.PackageImpl,
+    pkg: OPM.PackageImpl,
     name: String,
     namespace: Option[Name] = None
   ): Unit = {
@@ -37,7 +37,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
   }
 
   def assertIsFullDeclaration(
-    pkg: Hierarchy.PackageImpl,
+    pkg: OPM.PackageImpl,
     name: String,
     namespace: Option[Name] = None
   ): Unit = {
@@ -50,7 +50,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
   }
 
   def assertIsSummaryDeclaration(
-    pkg: Hierarchy.PackageImpl,
+    pkg: OPM.PackageImpl,
     name: String,
     namespace: Option[Name] = None
   ): Unit = {

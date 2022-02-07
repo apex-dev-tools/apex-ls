@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.deps
 
 import com.nawforce.apexlink.api.Org
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration}
 import com.nawforce.apexlink.types.core.DependencyHolder
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier}
@@ -96,7 +96,7 @@ class DownWalker(org: Org, apexOnly: Boolean) {
 
   private def createNode(id: TypeIdentifier, ignoring: Array[TypeIdentifier]): Option[NodeData] = {
     org
-      .asInstanceOf[Hierarchy.OrgImpl]
+      .asInstanceOf[OPM.OrgImpl]
       .findTypeIdentifier(id)
       .filter(td => !apexOnly || td.isInstanceOf[ApexDeclaration])
       .collect { case td: DependencyHolder => td }

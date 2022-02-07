@@ -8,7 +8,7 @@ import com.financialforce.oparser.{
 }
 import com.nawforce.apexlink.cst.{ClassDeclaration, EnumDeclaration, InterfaceDeclaration}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{FullDeclaration, ThisType}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents.ClassDocument
@@ -21,7 +21,7 @@ object OutlineParserFullDeclaration {
   def toFullDeclaration(
     cls: ClassDocument,
     srcData: SourceData,
-    module: Hierarchy.Module
+    module: OPM.Module
   ): Option[FullDeclaration] = {
 
     val contentsString: String = srcData.asString
@@ -48,7 +48,7 @@ object OutlineParserFullDeclaration {
     ctd: OPClassTypeDeclaration,
     cls: ClassDocument,
     srcData: SourceData,
-    module: Hierarchy.Module,
+    module: OPM.Module,
     outerTypeName: Option[TypeName]
   ): Option[ClassDeclaration] = {
 
@@ -82,7 +82,7 @@ object OutlineParserFullDeclaration {
     itd: OPInterfaceTypeDeclaration,
     cls: ClassDocument,
     srcData: SourceData,
-    module: Hierarchy.Module,
+    module: OPM.Module,
     outerTypeName: Option[TypeName]
   ): Option[InterfaceDeclaration] = {
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
@@ -115,7 +115,7 @@ object OutlineParserFullDeclaration {
     etd: OPEnumTypeDeclaration,
     cls: ClassDocument,
     srcData: SourceData,
-    module: Hierarchy.Module,
+    module: OPM.Module,
     outerTypeName: Option[TypeName]
   ): Option[EnumDeclaration] = {
     val source: Source     = Source(cls.path, srcData, 0, 0, None)

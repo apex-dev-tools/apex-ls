@@ -23,7 +23,7 @@ import scala.collection.mutable.ArrayBuffer
 
 /** Matchers to support code completion */
 trait ModuleCompletions {
-  this: Hierarchy.Module =>
+  this: OPM.Module =>
 
   def matchTypeName(content: String, offset: Int): Array[CompletionItemLink] = {
     val prefix = content
@@ -50,7 +50,7 @@ trait ModuleCompletions {
   }
 
   def matchTypeNameForModule(
-    module: Hierarchy.Module,
+    module: OPM.Module,
     searchTerm: Option[String]
   ): Array[CompletionItemLink] = {
 

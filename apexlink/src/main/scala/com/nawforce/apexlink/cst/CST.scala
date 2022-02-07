@@ -15,7 +15,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.names.XNames.NameUtils
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.{PathLike, Positionable}
@@ -51,9 +51,9 @@ final case class Id(name: Name) extends CST {
     if (name.nonEmpty) {
       val illegalError = name.isLegalIdentifier
       if (illegalError.nonEmpty)
-        Hierarchy.OrgImpl.log(IssueOps.illegalIdentifier(location, name, illegalError.get))
+        OPM.OrgImpl.log(IssueOps.illegalIdentifier(location, name, illegalError.get))
       else if (name.isReservedIdentifier)
-        Hierarchy.OrgImpl.log(IssueOps.reservedIdentifier(location, name))
+        OPM.OrgImpl.log(IssueOps.reservedIdentifier(location, name))
     }
   }
 }

@@ -14,7 +14,7 @@
 package com.nawforce.apexlink.stress
 
 import com.nawforce.apexlink.api.{IssueOptions, Org, ServerOps}
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents.ApexNature
 
@@ -37,7 +37,7 @@ object PartialStressTest {
       return
     }
 
-    val org          = Org.newOrg(args.head).asInstanceOf[Hierarchy.OrgImpl]
+    val org          = Org.newOrg(args.head).asInstanceOf[OPM.OrgImpl]
     val issueOptions = new IssueOptions
     issueOptions.includeZombies = true
     val baselineIssues = org.issues.issuesForFiles(null, includeWarnings = false, 0).length

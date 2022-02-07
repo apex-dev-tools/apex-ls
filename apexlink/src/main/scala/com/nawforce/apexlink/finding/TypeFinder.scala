@@ -15,13 +15,13 @@
 package com.nawforce.apexlink.finding
 
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.Hierarchy
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.names.{DotName, TypeName}
 
 /** Helper that implements local type searching, extracted out as logic is a bit involved. */
 trait TypeFinder {
-  this: Hierarchy.Module =>
+  this: OPM.Module =>
 
   /** Find a type relative to a starting type from a local or global name. */
   def getTypeFor(typeName: TypeName, from: TypeDeclaration): Option[TypeDeclaration] = {
