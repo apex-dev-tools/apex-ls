@@ -35,7 +35,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   override def beforeEach(): Unit = {
-    ParserHelper.setParser();
+    ParserHelper.setParser()
   }
 
   test("Version not empty") {
@@ -81,12 +81,11 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       issues <- orgAPI.getIssues(includeWarnings = false, maxIssuesPerFile = 0)
     } yield {
       assert(result.error.isEmpty)
+
+      val path = Path("/silly")
       assert(
         issues.issues sameElements Array(
-          Issue(
-            Path("/silly"),
-            Diagnostic(ERROR_CATEGORY, Location.empty, "No directory at /silly")
-          )
+          Issue(path, Diagnostic(ERROR_CATEGORY, Location.empty, s"No directory at $path"))
         )
       )
     }

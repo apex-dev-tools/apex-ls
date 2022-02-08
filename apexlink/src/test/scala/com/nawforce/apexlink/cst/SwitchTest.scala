@@ -30,7 +30,7 @@ class SwitchTest extends AnyFunSuite with TestHelper {
           case true =>
             "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\nSyntax: line 1 at 38: extraneous input '}' expecting <EOF>\n"
         }
-        assert(dummyIssues == expectedMsg)
+        assert(getMessages(root.join("Dummy.cls")) == expectedMsg)
     }
   }
 

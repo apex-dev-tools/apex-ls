@@ -9,6 +9,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
+    - run: git config --global core.autocrlf false
     - uses: actions/checkout@v2
     - uses: olafurpg/setup-scala@v10
 
@@ -22,7 +23,7 @@ jobs:
     - name: Set up Maven
       uses: stCarolas/setup-maven@v4.2
       with:
-        maven-version: 3.8.1        
+        maven-version: 3.8.1
 
     - name: runforce-checkout
       uses: actions/checkout@v2

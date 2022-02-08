@@ -169,7 +169,9 @@ case class IssuesForFiles(
     OrgInfo.current.withValue(orgImpl) {
       promise.success(
         IssuesResult(
-          orgImpl.issues.issuesForFilesInternal(paths, includeWarnings, maxErrorsPerFile).toArray
+          orgImpl.issues
+            .issuesForFilesInternal(paths.map(Path(_)), includeWarnings, maxErrorsPerFile)
+            .toArray
         )
       )
     }
