@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2019 Kevin Jones, All rights reserved.
+ Copyright (c) 2022 Kevin Jones, All rights reserved.
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -12,15 +12,20 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.apexlink.types.other
+package com.nawforce.apexlink.api
 
-import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.OPM
-import com.nawforce.apexlink.types.core.BasicTypeDeclaration
-import com.nawforce.pkgforce.path.PathLike
+import java.io.File
+import java.util.jar.JarFile
 
-/** An any type declaration, there are deliberately very few uses of this, hopefully at some point it
-  * can be removed.
-  */
-final case class AnyDeclaration(module: OPM.Module)
-    extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.Any)
+object BuildInfo {
+  lazy val implementationBuild: String = {
+    val sourceURI = classOf[Org].getProtectionDomain.getCodeSource.getLocation.toURI
+    if (!sourceURI.toString.endsWith(".jar"))
+      ""
+    else {
+      val manifest = new JarFile(new File(sourceURI)).getManifest
+      Option(manifest.getMainAttributes.getValue("Implementation-Build")).getOrElse("")
+    }
+  }
+
+}

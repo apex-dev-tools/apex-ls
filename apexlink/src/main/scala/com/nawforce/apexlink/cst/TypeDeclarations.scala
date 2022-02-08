@@ -15,7 +15,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{FullDeclaration, ThisType}
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
@@ -32,7 +32,7 @@ class CompilationUnit(val typeDeclaration: FullDeclaration) extends CST
 object CompilationUnit {
   def construct(
     parser: CodeParser,
-    module: Module,
+    module: OPM.Module,
     name: Name,
     compilationUnit: CompilationUnitContext
   ): Option[CompilationUnit] = {
@@ -46,7 +46,7 @@ object CompilationUnit {
 
 final case class ClassDeclaration(
   _source: Source,
-  _module: Module,
+  _module: OPM.Module,
   _typeContext: RelativeTypeContext,
   _typeName: TypeName,
   _outerTypeName: Option[TypeName],
@@ -201,7 +201,7 @@ object ClassDeclaration {
 
 final case class InterfaceDeclaration(
   _source: Source,
-  _module: Module,
+  _module: OPM.Module,
   _typeContext: RelativeTypeContext,
   _typeName: TypeName,
   _outerTypeName: Option[TypeName],
@@ -299,7 +299,7 @@ object InterfaceDeclaration {
 
 final case class EnumDeclaration(
   _source: Source,
-  _module: Module,
+  _module: OPM.Module,
   _typeContext: RelativeTypeContext,
   _typeName: TypeName,
   _outerTypeName: Option[TypeName],

@@ -20,7 +20,7 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.finding.{RelativeTypeContext, TypeResolver}
 import com.nawforce.apexlink.memory.Monitor
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.{Module, OrgImpl}
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexparser.ApexParser.TypeDeclarationContext
 import com.nawforce.pkgforce.diagnostics.LoggerOps
@@ -38,7 +38,7 @@ import scala.collection.mutable
 /* Apex type declaration, a wrapper around the Apex parser output. This is the base for classes, interfaces & enums*/
 abstract class FullDeclaration(
   val source: Source,
-  val module: Module,
+  val module: OPM.Module,
   val typeContext: RelativeTypeContext,
   override val typeName: TypeName,
   override val outerTypeName: Option[TypeName],
@@ -56,9 +56,9 @@ abstract class FullDeclaration(
 
   override def paths: ArraySeq[PathLike] = ArraySeq(source.path)
 
-  override val moduleDeclaration: Option[Module] = Some(module)
-  override val name: Name                        = typeName.name
-  override val idLocation: Location              = id.location.location
+  override val moduleDeclaration: Option[OPM.Module] = Some(module)
+  override val name: Name                            = typeName.name
+  override val idLocation: Location                  = id.location.location
   override val nature: Nature
   override val inTest: Boolean = _inTest
 
@@ -149,13 +149,13 @@ abstract class FullDeclaration(
       if (superClassDeclaration.isEmpty) {
         context.missingType(id.location, superClass.get)
       } else if (superClassDeclaration.get.nature != CLASS_NATURE) {
-        OrgImpl.logError(id.location, s"Parent type '${superClass.get.asDotName}' must be a class")
+        OrgInfo.logError(id.location, s"Parent type '${superClass.get.asDotName}' must be a class")
       } else if (
         superClassDeclaration.get.modifiers
           .intersect(Seq(VIRTUAL_MODIFIER, ABSTRACT_MODIFIER))
           .isEmpty
       ) {
-        OrgImpl.logError(
+        OrgInfo.logError(
           id.location,
           s"Parent class '${superClass.get.asDotName}' must be declared virtual or abstract"
         )
@@ -166,7 +166,7 @@ abstract class FullDeclaration(
     val duplicateNestedType =
       (this +: nestedTypes).groupBy(_.name).collect { case (_, Seq(_, y, _*)) => y }
     duplicateNestedType.foreach(
-      td => OrgImpl.logError(td.location, s"Duplicate type name '${td.name.toString}'")
+      td => OrgInfo.logError(td.location, s"Duplicate type name '${td.name.toString}'")
     )
 
     // Check interfaces are visible
@@ -176,7 +176,7 @@ abstract class FullDeclaration(
         if (!context.module.isGhostedType(interface))
           context.missingType(id.location, interface)
       } else if (td.get.nature != INTERFACE_NATURE)
-        OrgImpl.logError(id.location, s"Type '${interface.toString}' must be an interface")
+        OrgInfo.logError(id.location, s"Type '${interface.toString}' must be an interface")
     })
 
     // Detail check each body declaration
@@ -186,7 +186,7 @@ abstract class FullDeclaration(
       .filter(t => t.nestedTypes.nonEmpty)
       .foreach(_.nestedTypes.foreach {
         case fd: FullDeclaration =>
-          OrgImpl
+          OrgInfo
             .logError(fd.id.location, s"${fd.id.name}: Inner types of Inner types are not valid.")
         case _ =>
       })
@@ -299,7 +299,7 @@ abstract class FullDeclaration(
   }
 }
 
-final case class ThisType(module: Module, typeName: TypeName, inTest: Boolean) {
+final case class ThisType(module: OPM.Module, typeName: TypeName, inTest: Boolean) {
   def typeId: TypeId = TypeId(module, typeName)
 
   def typeIdentifier: TypeIdentifier = typeId.asTypeIdentifier
@@ -312,7 +312,7 @@ final case class ThisType(module: Module, typeName: TypeName, inTest: Boolean) {
 object FullDeclaration {
 
   def create(
-    module: Module,
+    module: OPM.Module,
     doc: ClassDocument,
     data: SourceData,
     forceConstruct: Boolean
@@ -320,7 +320,7 @@ object FullDeclaration {
     val parser = CodeParser(doc.path, data)
     val result = parser.parseClass()
     val issues = result.issues
-    issues.foreach(OrgImpl.log)
+    issues.foreach(OrgInfo.log)
     if (issues.isEmpty || forceConstruct) {
       try {
         CompilationUnit.construct(parser, module, doc.name, result.value).map(_.typeDeclaration)
@@ -336,7 +336,7 @@ object FullDeclaration {
 
   def construct(
     parser: CodeParser,
-    module: Module,
+    module: OPM.Module,
     name: Name,
     typeDecl: TypeDeclarationContext
   ): Option[FullDeclaration] = {

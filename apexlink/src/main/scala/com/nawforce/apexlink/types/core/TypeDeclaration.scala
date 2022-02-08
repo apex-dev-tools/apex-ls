@@ -22,7 +22,7 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
-import com.nawforce.apexlink.org.{Module, OrgImpl}
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.other.Component
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.synthetic.{
@@ -64,7 +64,7 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
   // Create an SObjectField version of this field
   def getSObjectStaticField(
     shareTypeName: Option[TypeName],
-    module: Option[Module]
+    module: Option[OPM.Module]
   ): CustomField = {
     def preloadSObject(typeName: TypeName): TypeResponse = {
       module.map(m => TypeResolver(typeName, m)).getOrElse(PlatformTypes.get(typeName, None))
@@ -322,10 +322,11 @@ trait AbstractTypeDeclaration {
 
 trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
   def paths: ArraySeq[PathLike] // Metadata paths that contributed to this type
+
   def inTest: Boolean = false // Is type defined only for test code
 
   val moduleDeclaration: Option[
-    Module
+    OPM.Module
   ] // Module that owns this types, None for none-adopted platform types
 
   val name: Name
@@ -463,7 +464,7 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
           Some(id)
         }
       case argument =>
-        OrgImpl.logError(
+        OrgInfo.logError(
           argument.location,
           s"SObject type '$typeName' construction needs '<field name> = <value>' arguments"
         )
@@ -473,7 +474,7 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
     if (validArgs.length == arguments.length) {
       val duplicates = validArgs.groupBy(_.name).collect { case (_, ArraySeq(_, y, _*)) => y }
       if (duplicates.nonEmpty) {
-        OrgImpl.logError(
+        OrgInfo.logError(
           duplicates.head.location,
           s"Duplicate assignment to field '${duplicates.head.name}' on SObject type '$typeName'"
         )

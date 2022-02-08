@@ -20,7 +20,7 @@ import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, 
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLike, UnsafeLocatable}
 
 trait DefinitionProvider {
-  this: PackageImpl =>
+  this: OPM.PackageImpl =>
 
   def getDefinition(
     path: PathLike,

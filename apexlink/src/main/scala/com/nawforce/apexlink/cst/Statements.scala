@@ -16,7 +16,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.cst.stmts.SwitchStatement
-import com.nawforce.apexlink.org.OrgImpl
+import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, TypeName}
@@ -69,7 +69,7 @@ final case class LazyBlock(
       if (statementContext == null) {
         val parser = new CodeParser(source)
         val result = parser.parseBlock()
-        result.issues.foreach(OrgImpl.log)
+        result.issues.foreach(OrgInfo.log)
         statementContext = result.value
         blockContextRef = new WeakReference(statementContext)
         reParsed = true

@@ -14,10 +14,10 @@
 
 package com.nawforce.apexlink.types.core
 
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.pkgforce.names.{TypeIdentifier, TypeName}
 
-case class TypeId(module: Module, typeName: TypeName) {
+case class TypeId(module: OPM.Module, typeName: TypeName) {
   def asTypeIdentifier: TypeIdentifier = {
     TypeIdentifier(module.pkg.namespace, typeName)
   }
@@ -26,7 +26,7 @@ case class TypeId(module: Module, typeName: TypeName) {
 }
 
 object TypeId {
-  def apply(module: Module, typeIdentifier: TypeIdentifier): Option[TypeId] = {
+  def apply(module: OPM.Module, typeIdentifier: TypeIdentifier): Option[TypeId] = {
     // Quick test if module is the right one
     val typeName = typeIdentifier.typeName
     if (typeIdentifier.namespace == module.namespace)
