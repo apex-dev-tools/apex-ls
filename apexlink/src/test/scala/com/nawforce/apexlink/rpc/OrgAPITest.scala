@@ -35,7 +35,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   override def beforeEach(): Unit = {
-    ParserHelper.setParser();
+    ParserHelper.setParser()
   }
 
   test("Version not empty") {
@@ -85,7 +85,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       val path = Path("/silly")
       assert(
         issues.issues sameElements Array(
-          Issue(path, Diagnostic(ERROR_CATEGORY, Location.empty, s"No directory at ${path}"))
+          Issue(path, Diagnostic(ERROR_CATEGORY, Location.empty, s"No directory at $path"))
         )
       )
     }
@@ -158,23 +158,22 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
     }
 
     val issues: Future[Assertion] =
-      ServerOps.getUseOutlineParser match {
-        case true =>
-          pkg flatMap { _ =>
-            orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
-              assert(issuesResult.issues.length == 5)
-              assert(issuesResult.issues.count(_.path.toString.contains("SingleError")) == 1)
-              assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 3)
-            }
+      if (ServerOps.getUseOutlineParser) {
+        pkg flatMap { _ =>
+          orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
+            assert(issuesResult.issues.length == 5)
+            assert(issuesResult.issues.count(_.path.toString.contains("SingleError")) == 1)
+            assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 3)
           }
-        case false =>
-          pkg flatMap { _ =>
-            orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
-              assert(issuesResult.issues.length == 4)
-              assert(issuesResult.issues.count(_.path.toString.contains("SingleError")) == 1)
-              assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 2)
-            }
+        }
+      } else {
+        pkg flatMap { _ =>
+          orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
+            assert(issuesResult.issues.length == 4)
+            assert(issuesResult.issues.count(_.path.toString.contains("SingleError")) == 1)
+            assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 2)
           }
+        }
       }
 
     issues
@@ -250,6 +249,9 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
+      println("Graph")
+      println(graph.nodeData.mkString("Array(", ", ", ")"))
+      println("Graph")
       assert(
         graph.nodeData sameElements Array(
           DependencyNode(
