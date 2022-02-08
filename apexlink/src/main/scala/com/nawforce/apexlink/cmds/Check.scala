@@ -14,8 +14,12 @@
 
 package com.nawforce.apexlink.cmds
 
-import com.nawforce.apexlink.api.{Org, ServerOps}
-import com.nawforce.apexlink.org.OrgImpl
+import com.nawforce.apexlink.api.{
+  Org,
+  OutlineParserMultithreaded,
+  OutlineParserSingleThreaded,
+  ServerOps
+}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.pkgforce.api.IssueLocation
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
@@ -31,20 +35,31 @@ object Check {
   final val STATUS_ISSUES: Int    = 4
 
   def usage(name: String) =
-    s"Usage: $name [-json] [-verbose [-unused]] [-info|-debug] [-nocache] [-depends] [-outline] <directory>"
+    s"Usage: $name [-json] [-verbose [-unused]] [-info|-debug] [-nocache] [-depends] [-outlinesingle|-outlinemulti] <directory>"
 
   def run(args: Array[String]): Int = {
     val flags =
-      Set("-json", "-verbose", "-info", "-debug", "-nocache", "-unused", "-depends", "-outline")
+      Set(
+        "-json",
+        "-verbose",
+        "-info",
+        "-debug",
+        "-nocache",
+        "-unused",
+        "-depends",
+        "-outlinesingle",
+        "-outlinemulti"
+      )
 
-    val json             = args.contains("-json")
-    val verbose          = !json && args.contains("-verbose")
-    val debug            = !json && args.contains("-debug")
-    val info             = !json && !debug && args.contains("-info")
-    val depends          = args.contains("-depends")
-    val noCache          = args.contains("-nocache")
-    val unused           = args.contains("-unused")
-    val useOutlineParser = args.contains("-outline")
+    val json                           = args.contains("-json")
+    val verbose                        = !json && args.contains("-verbose")
+    val debug                          = !json && args.contains("-debug")
+    val info                           = !json && !debug && args.contains("-info")
+    val depends                        = args.contains("-depends")
+    val noCache                        = args.contains("-nocache")
+    val unused                         = args.contains("-unused")
+    val useOutlineParserSingleThreaded = args.contains("-outlinesingle")
+    val useOutlineParserMultithreaded  = args.contains("-outlinemulti")
 
     // Check we have some metadata directories to work with
     val dirs = args.filterNot(flags.contains)
@@ -62,7 +77,10 @@ object Check {
     try {
       // Setup cache flushing and logging defaults
       ServerOps.setAutoFlush(false)
-      ServerOps.setUseOutlineParser(useOutlineParser)
+      if (useOutlineParserSingleThreaded)
+        ServerOps.setCurrentParser(OutlineParserSingleThreaded)
+      else if (useOutlineParserMultithreaded)
+        ServerOps.setCurrentParser(OutlineParserMultithreaded)
       LoggerOps.setLogger(new DefaultLogger(System.out))
       if (debug)
         LoggerOps.setLoggingLevel(LoggerOps.DEBUG_LOGGING)

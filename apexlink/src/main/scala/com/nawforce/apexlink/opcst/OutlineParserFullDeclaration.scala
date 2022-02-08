@@ -26,7 +26,6 @@ object OutlineParserFullDeclaration {
 
     val contentsString: String = srcData.asString
 
-    LoggerOps.info("Using outline parser")
     val (success, reason, td) = OutlineParser.parse(cls.path.toString, contentsString)
     val rv =
       if (!success) {
