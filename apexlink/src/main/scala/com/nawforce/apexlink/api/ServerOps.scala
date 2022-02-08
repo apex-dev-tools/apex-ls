@@ -14,12 +14,26 @@
 
 package com.nawforce.apexlink.api
 
+sealed trait AvailableParser { val shortName: String }
+case object ANTLRParser extends AvailableParser {
+  val shortName         = "ANTLR".toLowerCase
+  override def toString = "ANTLR"
+}
+case object OutlineParserSingleThreaded extends AvailableParser {
+  val shortName         = "OutlineSingle".toLowerCase
+  override def toString = "Outline Parser - Single Threaded"
+}
+case object OutlineParserMultithreaded extends AvailableParser {
+  val shortName         = "OutlineMulti".toLowerCase
+  override def toString = "Outline Parser - Multithreaded"
+}
+
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
   private var lazyBlocks: Boolean             = true
   private var duplicateObjectMonitor: Boolean = false
   private var autoFlush: Boolean              = true
-  private var useOutlineParser: Boolean       = false
+  private var currentParser: AvailableParser  = ANTLRParser
 
   /** Are we using lazy blocks, this is enabled by default */
   def getLazyBlocks: Boolean = {
@@ -53,13 +67,22 @@ object ServerOps {
     current
   }
 
-  def getUseOutlineParser: Boolean = {
-    useOutlineParser
+  def getCurrentParser: AvailableParser = {
+    currentParser
   }
 
-  def setUseOutlineParser(enable: Boolean): Boolean = {
-    val current = useOutlineParser
-    useOutlineParser = enable
-    current
+  def setCurrentParser(newParser: String): AvailableParser = {
+    newParser.toLowerCase match {
+      case ANTLRParser.shortName                 => setCurrentParser(ANTLRParser)
+      case OutlineParserSingleThreaded.shortName => setCurrentParser(OutlineParserSingleThreaded)
+      case OutlineParserMultithreaded.shortName  => setCurrentParser(OutlineParserMultithreaded)
+      case _                                     => currentParser
+    }
+  }
+
+  def setCurrentParser(newParser: AvailableParser): AvailableParser = {
+    val previousParser = currentParser
+    currentParser = newParser
+    previousParser
   }
 }

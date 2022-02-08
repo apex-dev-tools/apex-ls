@@ -436,8 +436,8 @@ class OrgAPIImpl extends OrgAPI {
     Future.successful(())
   }
 
-  override def enableOutlineParser(enable: Boolean): Future[Unit] = {
-    ServerOps.setUseOutlineParser(enable)
+  override def setParser(parser: String): Future[Unit] = {
+    ServerOps.setCurrentParser(parser)
     Future.successful(())
   }
 

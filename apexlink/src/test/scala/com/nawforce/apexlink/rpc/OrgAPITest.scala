@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.rpc
 
 import com.nawforce.apexlink.ParserHelper
-import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.api.{ANTLRParser, ServerOps}
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.Location
@@ -159,8 +159,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
     }
 
     val issues: Future[Assertion] =
-      ServerOps.getUseOutlineParser match {
-        case true =>
+      ServerOps.getCurrentParser == ANTLRParser match {
+        case false =>
           pkg flatMap { _ =>
             orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
               assert(issuesResult.issues.length == 5)
@@ -168,7 +168,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
               assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 3)
             }
           }
-        case false =>
+        case true =>
           pkg flatMap { _ =>
             orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
               assert(issuesResult.issues.length == 4)
