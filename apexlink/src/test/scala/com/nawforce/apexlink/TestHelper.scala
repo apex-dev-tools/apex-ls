@@ -25,6 +25,7 @@ import com.nawforce.pkgforce.path.PathLike
 trait TestHelper {
 
   private var defaultOrg: OrgImpl = _
+  private var root: PathLike      = _
 
   def createOrg(path: PathLike): OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq())
@@ -56,6 +57,7 @@ trait TestHelper {
 
   def emptyOrg(): OrgImpl = {
     FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
+      this.root = root
       createOrg(root)
     }
   }
@@ -86,6 +88,7 @@ trait TestHelper {
     try {
       ServerOps.setAutoFlush(false)
       FileSystemHelper.run(classes) { root: PathLike =>
+        this.root = root
         createOrg(root)
         classes.keys
           .map(cls => unmanagedClass(cls.replace(".cls", "")).get)
@@ -114,6 +117,7 @@ trait TestHelper {
     try {
       ServerOps.setAutoFlush(false)
       FileSystemHelper.run(Map("Dummy.trigger" -> text)) { root: PathLike =>
+        this.root = root
         createOrg(root)
         unmanagedType(TypeName(Name("__sfdc_trigger/Dummy"))).get
       }
@@ -175,18 +179,16 @@ trait TestHelper {
     if (messages.nonEmpty) messages + "\n" else ""
   }
 
-  def getMessages(path: String): String = {
+  def getMessages(path: PathLike): String = {
     val messages = defaultOrg.issues
       .issuesForFileInternal(path)
       .map(_.asString())
       .mkString("\n")
-    // For backward compatability with earlier behaviour
+    // For backward compatibility with earlier behaviour
     if (messages.nonEmpty) messages + "\n" else ""
   }
 
-  def getMessages(path: PathLike): String = getMessages(path.toString)
-
-  def dummyIssues: String = getMessages("/Dummy.cls")
+  def dummyIssues: String = getMessages(root.join("Dummy.cls"))
 
   def customObject(
     label: String,
