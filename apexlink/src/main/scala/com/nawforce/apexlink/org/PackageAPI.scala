@@ -33,10 +33,10 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 
 trait PackageAPI extends Package {
-  this: PackageImpl =>
+  this: OPM.PackageImpl =>
 
   override def getNamespaces(withDependents: Boolean): Array[String] = {
-    OrgImpl.current.withValue(org) {
+    OrgInfo.current.withValue(org) {
       val ns = namespace.map(_.value).getOrElse("")
       if (withDependents)
         (ns +: basePackages.map(_.namespace.map(_.value).getOrElse(""))).toArray
@@ -90,7 +90,7 @@ trait PackageAPI extends Package {
     })
   }
 
-  private def getModuleOfPath(path: PathLike): Option[Module] = {
+  private def getModuleOfPath(path: PathLike): Option[OPM.Module] = {
     orderedModules.view.find(m => m.isVisibleFile(path))
   }
 

@@ -18,7 +18,7 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
@@ -41,7 +41,7 @@ object DependentValidation {
   /* Test if all Type dependencies are valid. Ignore other types of dependency since these can't be checked */
   def areTypeDependenciesValid(
     dependents: Array[DependentSummary],
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Boolean = {
     for (dependent <- dependents) {
@@ -61,7 +61,7 @@ object DependentValidation {
   /* Find a valid type dependency, to be valid it must carry correct hash and have valid dependencies itself */
   private def findValidTypeDependent(
     dependent: TypeDependentSummary,
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Option[TypeDeclaration] = {
 
@@ -90,7 +90,7 @@ object DependentValidation {
    */
   def getDependents(
     dependents: Array[DependentSummary],
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Array[Dependent] = {
     dependents.flatMap(dependent => {
@@ -104,7 +104,7 @@ object DependentValidation {
 
   private def findDependent(
     dependent: DependentSummary,
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Option[Dependent] = {
     dependent match {
@@ -118,7 +118,7 @@ object DependentValidation {
   /* Find a type dependency, no need to check this as should have been done via areTypeDependenciesValid */
   private def findDependent(
     dependent: TypeDependentSummary,
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Option[TypeDeclaration] = {
     TypeId(module, dependent.typeId).flatMap(typeId => {
@@ -129,7 +129,7 @@ object DependentValidation {
   /* Find a field dependency */
   private def findDependent(
     dependent: FieldDependentSummary,
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Option[FieldDeclaration] = {
     val name = Name(dependent.name)
@@ -143,7 +143,7 @@ object DependentValidation {
   /* Find a method dependency */
   private def findDependent(
     dependent: MethodDependentSummary,
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Option[MethodDeclaration] = {
     val name = Name(dependent.name)
@@ -167,7 +167,7 @@ object DependentValidation {
   /* Find an outer or inner type from namespace mapping to a package */
   private def findExactDependentType(
     typeName: TypeName,
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Option[TypeDeclaration] = {
     findDependentType(typeName, module, typeCache).flatMap(td => {
@@ -182,7 +182,7 @@ object DependentValidation {
   /* Find an Apex type declaration from a module */
   private def findDependentType(
     typeName: TypeName,
-    module: Module,
+    module: OPM.Module,
     typeCache: TypeCache
   ): Option[TypeDeclaration] = {
     val response = typeCache.getOrElseUpdate((typeName, module), TypeResolver(typeName, module))
@@ -201,7 +201,7 @@ object DependentValidation {
 
 /** Common dependency handling for Summary elements */
 trait SummaryDependencyHandler extends DependencyHolder {
-  val module: Module
+  val module: OPM.Module
   val dependents: Array[DependentSummary]
   private var _dependents: Option[Seq[Dependent]] = None
 
@@ -232,7 +232,7 @@ class SummaryParameter(parameterSummary: ParameterSummary) extends ParameterDecl
 }
 
 class SummaryMethod(
-  val module: Module,
+  val module: OPM.Module,
   path: PathLike,
   val outerTypeId: TypeId,
   override val inTest: Boolean,
@@ -255,7 +255,7 @@ class SummaryMethod(
 }
 
 class SummaryBlock(
-  val module: Module,
+  val module: OPM.Module,
   path: PathLike,
   override val inTest: Boolean,
   blockSummary: BlockSummary
@@ -270,7 +270,7 @@ class SummaryBlock(
 }
 
 class SummaryField(
-  val module: Module,
+  val module: OPM.Module,
   path: PathLike,
   val outerTypeId: TypeId,
   override val inTest: Boolean,
@@ -291,7 +291,7 @@ class SummaryField(
 }
 
 class SummaryConstructor(
-  val module: Module,
+  val module: OPM.Module,
   path: PathLike,
   override val inTest: Boolean,
   constructorSummary: ConstructorSummary
@@ -309,7 +309,7 @@ class SummaryConstructor(
 
 class SummaryDeclaration(
   path: PathLike,
-  val module: Module,
+  val module: OPM.Module,
   val outerTypeName: Option[TypeName],
   typeSummary: TypeSummary
 ) extends ApexClassDeclaration
@@ -323,7 +323,7 @@ class SummaryDeclaration(
   override val location: PathLocation = PathLocation(path, typeSummary.location)
   override val idLocation: Location   = typeSummary.idLocation
 
-  override val moduleDeclaration: Option[Module] = Some(module)
+  override val moduleDeclaration: Option[OPM.Module] = Some(module)
 
   override val name: Name                    = Names(typeSummary.name)
   override val typeName: TypeName            = typeSummary.typeName
@@ -435,13 +435,13 @@ class SummaryDeclaration(
 }
 
 case class SummaryApex(
-  module: Module,
+  module: OPM.Module,
   declaration: SummaryDeclaration,
   diagnostics: Array[Diagnostic]
 )
 
 object SummaryApex {
-  def apply(path: PathLike, module: Module, data: Array[Byte]): SummaryApex = {
+  def apply(path: PathLike, module: OPM.Module, data: Array[Byte]): SummaryApex = {
     val summary: ApexSummary = readBinary[ApexSummary](data)
     val sd                   = new SummaryDeclaration(path, module, None, summary.typeSummary)
     new SummaryApex(module, sd, summary.diagnostics)

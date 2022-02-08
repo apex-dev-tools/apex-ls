@@ -18,7 +18,7 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
-import com.nawforce.apexlink.org.{Module, OrgImpl}
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
@@ -115,7 +115,7 @@ trait ApexFieldLike extends FieldDeclaration with IdLocatable {
 /** Apex defined types core features, be they full or summary style */
 trait ApexDeclaration extends DependentType with IdLocatable {
   val sourceHash: Int
-  val module: Module
+  val module: OPM.Module
 
   def summary: TypeSummary
 }
@@ -187,7 +187,7 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
           case (_, duplicates) =>
             duplicates.tail.foreach {
               case af: ApexFieldLike =>
-                OrgImpl.logError(af.idPathLocation, s"Duplicate field/property: '${af.name}'")
+                OrgInfo.logError(af.idPathLocation, s"Duplicate field/property: '${af.name}'")
               case _ => assert(false)
             }
             duplicates.head
@@ -259,7 +259,7 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
         )
     }
 
-    methods.errors.foreach(OrgImpl.log)
+    methods.errors.foreach(OrgInfo.log)
     methods
   }
 

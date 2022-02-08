@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.finding
 
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.schema.{PlatformObjectNature, SObjectDeclaration}
@@ -34,10 +34,10 @@ import scala.collection.mutable
   */
 object TypeResolver {
   type TypeResponse = Either[TypeError, TypeDeclaration]
-  type TypeCache    = mutable.HashMap[(TypeName, Module), TypeResponse]
+  type TypeCache    = mutable.HashMap[(TypeName, OPM.Module), TypeResponse]
 
   /* Search for TypeDeclaration from a absolute typename from given modules perspective. */
-  def apply(typeName: TypeName, module: Module): TypeResponse = {
+  def apply(typeName: TypeName, module: OPM.Module): TypeResponse = {
     sobjectIntercept(Some(module)) {
       module.findType(typeName)
     }
@@ -51,7 +51,7 @@ object TypeResolver {
   }
 
   /** Search for TypeDeclaration in Local local to 'from', Module, Dependent Module or Platform Type . */
-  def apply(typeName: TypeName, from: TypeDeclaration, module: Option[Module]): TypeResponse = {
+  def apply(typeName: TypeName, from: TypeDeclaration, module: Option[OPM.Module]): TypeResponse = {
     // Allow override of platform types in modules to support Schema.SObjectType handling.  This is a hack caused by
     // assuming platform types always live outside the module system and then deciding to inject some within it. It
     // might be fixable by assigning them to the correct module on construction/injection.
@@ -85,7 +85,7 @@ object TypeResolver {
   }
 
   /** Search for platform TypeDeclaration from a absolute typename. */
-  def platformTypeOnly(typeName: TypeName, module: Module): TypeResponse = {
+  def platformTypeOnly(typeName: TypeName, module: OPM.Module): TypeResponse = {
     sobjectIntercept(Some(module)) {
       PlatformTypes.get(typeName, None)
     }
@@ -94,7 +94,7 @@ object TypeResolver {
   /** Hook to upgrade a SObject defined as a platform type into an SObject for the module. This allows us to support
     * dependencies on Standard SObjects but also allows for module specific versions to be managed.
     */
-  private def sobjectIntercept(module: Option[Module])(op: => TypeResponse): TypeResponse = {
+  private def sobjectIntercept(module: Option[OPM.Module])(op: => TypeResponse): TypeResponse = {
     val result = op
     module
       .map(m => {

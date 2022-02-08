@@ -33,7 +33,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 trait CompletionProvider {
-  this: PackageImpl =>
+  this: OPM.PackageImpl =>
 
   def getCompletionItems(
     path: PathLike,

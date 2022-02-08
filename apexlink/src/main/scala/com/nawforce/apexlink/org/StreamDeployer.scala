@@ -14,7 +14,13 @@
 
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.api.{
+  ANTLRParser,
+  AvailableParser,
+  OutlineParserMultithreaded,
+  OutlineParserSingleThreaded,
+  ServerOps
+}
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.opcst.OutlineParserFullDeclaration
@@ -40,7 +46,7 @@ import scala.jdk.CollectionConverters._
   * FUTURE: Remove Module dependency.
   */
 class StreamDeployer(
-  module: Module,
+  module: OPM.Module,
   events: Iterator[PackageEvent],
   types: mutable.Map[TypeName, TypeDeclaration]
 ) {
@@ -128,12 +134,12 @@ class StreamDeployer(
       docs.filterNot(doc => types.contains(TypeName(doc.name).withNamespace(module.namespace)))
     LoggerOps.debug(s"${missingClasses.length} of ${docs.length} classes not available from cache")
 
-    if (ServerOps.getUseOutlineParser) {
-      val failures = loadClassesWithOutlineParser(missingClasses)
+    if (ServerOps.getCurrentParser == ANTLRParser) {
+      parseAndValidateClasses(missingClasses)
+    } else {
+      val failures = loadClassesWithOutlineParser(ServerOps.getCurrentParser, missingClasses)
       if (failures.nonEmpty)
         parseAndValidateClasses(failures)
-    } else {
-      parseAndValidateClasses(missingClasses)
     }
   }
 
@@ -240,15 +246,25 @@ class StreamDeployer(
   }
 
   private def loadClassesWithOutlineParser(
+    selectedParser: AvailableParser,
     classes: ArraySeq[ClassDocument]
   ): ArraySeq[ClassDocument] = {
-    LoggerOps.info("Using Outline Parser")
+    selectedParser match {
+      case OutlineParserMultithreaded | OutlineParserSingleThreaded =>
+        LoggerOps.info(s"Using $selectedParser")
+      case _ =>
+        LoggerOps.info(s"Unsupported parser $selectedParser")
+        return classes
+    }
 
     val localAccum      = new ConcurrentHashMap[TypeName, FullDeclaration]()
     val failedDocuments = new ConcurrentLinkedQueue[ClassDocument]()
 
+    val clsItr =
+      if (selectedParser == OutlineParserSingleThreaded) classes.iterator else classes.par.iterator
+
     LoggerOps.debugTime(s"Parsed ${classes.length} classes", classes.nonEmpty) {
-      classes.par.foreach(cls => {
+      clsItr.foreach(cls => {
         cls.path.readSourceData() match {
           case Left(error) =>
             LoggerOps.info(s"Failed reading source ${error}")

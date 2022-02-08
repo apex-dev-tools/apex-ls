@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.rpc
 
 import com.nawforce.apexlink.api.{Org, ServerOps}
-import com.nawforce.apexlink.org.OrgImpl
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.runtime.platform.{Environment, Path}
@@ -82,8 +82,8 @@ case class GetIssues(
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
 
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(
         GetIssuesResult(
           orgImpl.issueManager
@@ -109,8 +109,8 @@ object GetIssues {
 
 case class HasUpdatedIssues(promise: Promise[Array[String]]) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(orgImpl.issues.hasUpdatedIssues)
     }
   }
@@ -126,8 +126,8 @@ object HasUpdatedIssues {
 
 case class IgnoreUpdatedIssues(promise: Promise[Unit], path: String) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(orgImpl.issues.ignoreUpdatedIssues(path))
     }
   }
@@ -143,9 +143,9 @@ object IgnoreUpdatedIssues {
 
 case class IssuesForFile(promise: Promise[IssuesResult], path: String) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
-      promise.success(IssuesResult(orgImpl.issues.issuesForFileInternal(Path(path)).toArray))
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
+      promise.success(IssuesResult(orgImpl.issues.issuesForFileInternal(path).toArray))
     }
   }
 }
@@ -165,8 +165,8 @@ case class IssuesForFiles(
   maxErrorsPerFile: Int
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(
         IssuesResult(
           orgImpl.issues
@@ -194,8 +194,8 @@ object IssuesForFiles {
 case class TypeIdentifiers(promise: Promise[GetTypeIdentifiersResult], apexOnly: Boolean)
     extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(GetTypeIdentifiersResult(orgImpl.getTypeIdentifiers(apexOnly)))
     }
   }
@@ -255,8 +255,8 @@ object IdentifierLocation {
 case class IdentifierForPath(promise: Promise[IdentifierForPathResult], path: String)
     extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       val types = orgImpl.packagesByNamespace.values.flatMap(pkg => Option(pkg.getTypeOfPath(path)))
       promise.success(IdentifierForPathResult(types.headOption))
     }
@@ -279,7 +279,7 @@ case class GetDefinition(
   content: Option[String]
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
     promise.success(orgImpl.getDefinition(path, line, offset, content.orNull))
   }
 }
@@ -300,8 +300,8 @@ object GetDefinition {
 
 case class GetDependencyBombs(promise: Promise[Array[BombScore]], count: Int) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(orgImpl.getDependencyBombs(count))
     }
   }
@@ -321,8 +321,8 @@ case class GetTestClassNames(
   findTests: Boolean
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(GetTestClassNamesResult(orgImpl.getTestClassNames(paths, findTests)))
     }
   }
@@ -345,8 +345,8 @@ case class GetDependencyCounts(
   request: GetDependencyCountsRequest
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
-    OrgImpl.current.withValue(orgImpl) {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
       promise.success(
         GetDependencyCountsResult(
           orgImpl
@@ -377,7 +377,7 @@ case class GetCompletionItems(
   content: String
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
     promise.success(orgImpl.getCompletionItems(path, line, offset, content))
   }
 }
@@ -398,7 +398,7 @@ object GetCompletionItems {
 
 case class GetAllTestMethods(promise: Promise[Array[TestMethod]]) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OrgImpl]
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
     promise.success(orgImpl.getAllTestMethods)
   }
 }
@@ -438,8 +438,8 @@ class OrgAPIImpl extends OrgAPI {
     Future.successful(())
   }
 
-  override def enableOutlineParser(enable: Boolean): Future[Unit] = {
-    ServerOps.setUseOutlineParser(enable)
+  override def setParser(parser: String): Future[Unit] = {
+    ServerOps.setCurrentParser(parser)
     Future.successful(())
   }
 

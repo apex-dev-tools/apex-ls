@@ -18,7 +18,7 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.finding.{MissingType, WrongTypeArguments}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.schema.SObjectFieldFinder
 import com.nawforce.apexlink.types.synthetic.{CustomMethodDeclaration, CustomParameterDeclaration}
@@ -41,8 +41,8 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
 
   val cls: java.lang.Class[_] = native.asInstanceOf[java.lang.Class[_]]
 
-  override def paths: ArraySeq[PathLike]              = PathLike.emptyPaths
-  override lazy val moduleDeclaration: Option[Module] = None
+  override def paths: ArraySeq[PathLike]                  = PathLike.emptyPaths
+  override lazy val moduleDeclaration: Option[OPM.Module] = None
 
   override lazy val name: Name                      = typeName.name
   override lazy val typeName: TypeName              = PlatformTypeDeclaration.typeNameFromClass(cls, cls)
