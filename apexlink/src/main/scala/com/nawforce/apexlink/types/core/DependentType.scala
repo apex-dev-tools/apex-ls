@@ -18,7 +18,7 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.ApexClassDeclaration
 import com.nawforce.apexlink.types.other.{Component, Interview, Label, Page}
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
@@ -32,7 +32,7 @@ import scala.collection.mutable
 trait DependentType extends TypeDeclaration {
 
   /** The owning package, this is needed to disambiguate but restricts where DependentType can be used currently. */
-  val module: Module
+  val module: OPM.Module
 
   /** TypeId for this type */
   lazy val typeId: TypeId = TypeId(module, typeName)
@@ -103,7 +103,7 @@ object DependentType {
 
   /** Helper for converting a set of Dependents into a set of TypeIds */
   def dependentsToTypeIds(
-    module: Module,
+    module: OPM.Module,
     dependents: mutable.Set[Dependent],
     apexOnly: Boolean,
     outerTypesOnly: Boolean,

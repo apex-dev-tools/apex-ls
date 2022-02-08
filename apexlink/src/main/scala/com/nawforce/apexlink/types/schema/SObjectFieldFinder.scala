@@ -15,11 +15,11 @@ package com.nawforce.apexlink.types.schema
 
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformField
 import com.nawforce.apexlink.types.synthetic.CustomFieldDeclaration
-import com.nawforce.pkgforce.names.{Name, Names, _}
+import com.nawforce.pkgforce.names._
 
 /* SObject field finding support. This is separated so it can be used by TypeDeclarations that can be used to
  * represent SObjects, the current cases being PlatformTypeDeclaration for standard objects and SObjectDeclarations
@@ -63,7 +63,7 @@ trait SObjectFieldFinder {
   private def getSObjectField(
     field: FieldDeclaration,
     shareTypeName: Option[TypeName],
-    module: Option[Module]
+    module: Option[OPM.Module]
   ): FieldDeclaration = {
     field match {
       /* Relationship 'Id' fields can be used in place of the actual relationship field as must be typed as such */

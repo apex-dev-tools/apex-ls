@@ -18,7 +18,7 @@ import com.nawforce.apexlink.cst.VerifyContext
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.Module
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.synthetic.{CustomMethodDeclaration, CustomParameterDeclaration}
@@ -73,7 +73,7 @@ trait SObjectLikeDeclaration extends DependentType
 
 final case class SObjectDeclaration(
   sources: Array[SourceInfo],
-  module: Module,
+  module: OPM.Module,
   typeName: TypeName,
   sobjectNature: SObjectNature,
   fieldSets: ArraySeq[Name],
@@ -88,10 +88,10 @@ final case class SObjectDeclaration(
     with DependencyHolder
     with Dependent {
 
-  override def location: PathLocation            = sources.headOption.map(_.location).orNull
-  override val inTest: Boolean                   = false
-  override val moduleDeclaration: Option[Module] = Some(module)
-  override lazy val isComplete: Boolean          = _isComplete
+  override def location: PathLocation                = sources.headOption.map(_.location).orNull
+  override val inTest: Boolean                       = false
+  override val moduleDeclaration: Option[OPM.Module] = Some(module)
+  override lazy val isComplete: Boolean              = _isComplete
 
   override val paths: ArraySeq[PathLike] =
     ArraySeq.unsafeWrapArray(sources.map(source => source.location.path))

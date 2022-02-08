@@ -18,7 +18,7 @@ import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.memory.SkinnySet
-import com.nawforce.apexlink.org.{Module, OrgImpl}
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.Plugin
 import com.nawforce.apexlink.types.apex._
 import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration}
@@ -36,7 +36,7 @@ trait VerifyContext {
   def parent(): Option[VerifyContext]
 
   /** Module for current outer type */
-  def module: Module
+  def module: OPM.Module
 
   /** Get type declaration of 'this', this may be a trigger declaration */
   def thisType: TypeDeclaration
@@ -86,22 +86,22 @@ trait VerifyContext {
 
   def missingType(location: PathLocation, typeName: TypeName): Unit = {
     if (!module.isGhostedType(typeName) && !suppressIssues)
-      OrgImpl.log(IssueOps.noTypeDeclaration(location, typeName))
+      OrgInfo.log(IssueOps.noTypeDeclaration(location, typeName))
   }
 
   def missingIdentifier(location: PathLocation, typeName: TypeName, name: Name): Unit = {
     if (!module.isGhostedType(EncodedName(name).asTypeName) && !suppressIssues)
-      OrgImpl.log(IssueOps.noVariableOrType(location, name, typeName))
+      OrgInfo.log(IssueOps.noVariableOrType(location, name, typeName))
   }
 
   def logError(location: PathLocation, msg: String): Unit = {
     if (!suppressIssues)
-      OrgImpl.logError(location, msg)
+      OrgInfo.logError(location, msg)
   }
 
   def log(issue: Issue): Unit = {
     if (!suppressIssues)
-      OrgImpl.log(issue)
+      OrgInfo.log(issue)
   }
 }
 
@@ -147,7 +147,7 @@ trait HolderVerifyContext {
   def getTypeAndAddDependency(
     typeName: TypeName,
     from: TypeDeclaration,
-    usingModule: Module
+    usingModule: OPM.Module
   ): TypeResponse = {
     val result =
       getTypeFor(typeName, from) match {
@@ -212,7 +212,7 @@ final class TypeVerifyContext(
 
   override def parent(): Option[VerifyContext] = parentContext
 
-  override def module: Module = typeDeclaration.module
+  override def module: OPM.Module = typeDeclaration.module
 
   override def thisType: TypeDeclaration = typeDeclaration
 
@@ -246,7 +246,7 @@ final class BodyDeclarationVerifyContext(
 
   override def parent(): Option[VerifyContext] = Some(parentContext)
 
-  override def module: Module = parentContext.module
+  override def module: OPM.Module = parentContext.module
 
   override def thisType: TypeDeclaration = parentContext.thisType
 
@@ -282,7 +282,7 @@ abstract class BlockVerifyContext(parentContext: VerifyContext) extends VerifyCo
 
   override def parent(): Option[VerifyContext] = Some(parentContext)
 
-  override def module: Module = parentContext.module
+  override def module: OPM.Module = parentContext.module
 
   override def thisType: TypeDeclaration = parentContext.thisType
 
@@ -381,7 +381,7 @@ final class ExpressionVerifyContext(parentContext: BlockVerifyContext) extends V
 
   override def parent(): Option[VerifyContext] = Some(parentContext)
 
-  override def module: Module = parentContext.module
+  override def module: OPM.Module = parentContext.module
 
   override def thisType: TypeDeclaration = parentContext.thisType
 

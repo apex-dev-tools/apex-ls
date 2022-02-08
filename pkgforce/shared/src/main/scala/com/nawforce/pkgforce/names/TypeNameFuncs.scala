@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2019 Kevin Jones, All rights reserved.
+ Copyright (c) 2022 Kevin Jones, All rights reserved.
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -11,16 +11,14 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
+package com.nawforce.pkgforce.names
 
-package com.nawforce.apexlink.types.other
+/** Utility functions that extend basic TypeName handling */
+object TypeNameFuncs {
+  implicit class TypeNameFuncs(typeName: TypeName) {
 
-import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.OPM
-import com.nawforce.apexlink.types.core.BasicTypeDeclaration
-import com.nawforce.pkgforce.path.PathLike
+    def outerName: Name =
+      typeName.outer.map(_.outerName).getOrElse(typeName.name)
 
-/** An any type declaration, there are deliberately very few uses of this, hopefully at some point it
-  * can be removed.
-  */
-final case class AnyDeclaration(module: OPM.Module)
-    extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.Any)
+  }
+}

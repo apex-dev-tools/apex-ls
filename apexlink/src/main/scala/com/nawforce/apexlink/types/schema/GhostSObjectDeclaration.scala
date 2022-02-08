@@ -17,7 +17,7 @@ import com.nawforce.apexlink.cst.VerifyContext
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.{Module, SObjectDeployer}
+import com.nawforce.apexlink.org.{OPM, SObjectDeployer}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.modifiers.{GLOBAL_MODIFIER, Modifier}
 import com.nawforce.pkgforce.names.{Name, TypeName}
@@ -25,7 +25,7 @@ import com.nawforce.pkgforce.names.{Name, TypeName}
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
-final case class GhostSObjectDeclaration(module: Module, _typeName: TypeName)
+final case class GhostSObjectDeclaration(module: OPM.Module, _typeName: TypeName)
     extends BasicTypeDeclaration(ArraySeq(), module, _typeName)
     with SObjectLikeDeclaration
     with SObjectFieldFinder

@@ -20,6 +20,7 @@ import com.nawforce.apexlink.api.{
   OutlineParserSingleThreaded,
   ServerOps
 }
+import com.nawforce.apexlink.api.{Org, ServerOps}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.pkgforce.api.IssueLocation
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}

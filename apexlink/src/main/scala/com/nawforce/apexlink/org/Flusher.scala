@@ -22,9 +22,9 @@ import com.nawforce.pkgforce.path.PathLike
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.mutable
 
-case class RefreshRequest(pkg: PackageImpl, path: PathLike)
+case class RefreshRequest(pkg: OPM.PackageImpl, path: PathLike)
 
-class Flusher(org: OrgImpl, parsedCache: Option[ParsedCache]) {
+class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
   protected val lock         = new ReentrantLock(true)
   protected val refreshQueue = new mutable.Queue[RefreshRequest]()
   private var expired        = false
@@ -40,7 +40,7 @@ class Flusher(org: OrgImpl, parsedCache: Option[ParsedCache]) {
   }
 
   def refreshAndFlush(): Boolean = {
-    OrgImpl.current.withValue(org) {
+    OrgInfo.current.withValue(org) {
       lock.synchronized {
         val packages = org.packages
 
@@ -72,7 +72,7 @@ class Flusher(org: OrgImpl, parsedCache: Option[ParsedCache]) {
 
 }
 
-class CacheFlusher(org: OrgImpl, parsedCache: Option[ParsedCache])
+class CacheFlusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache])
     extends Flusher(org, parsedCache)
     with Runnable {
 

@@ -17,7 +17,7 @@ package com.nawforce.apexlink.types.other
 import com.nawforce.apexlink.cst.VerifyContext
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.{Module, PackageImpl}
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.documents.{MetadataDocument, SourceInfo}
@@ -30,7 +30,7 @@ import scala.collection.mutable
 import scala.util.hashing.MurmurHash3
 
 /** A individual custom interview being represented as interview derived type. */
-final case class Interview(module: Module, location: PathLocation, interviewName: Name)
+final case class Interview(module: OPM.Module, location: PathLocation, interviewName: Name)
     extends InnerBasicTypeDeclaration(
       ArraySeq.unsafeWrapArray(Option(location).map(_.path).toArray),
       module,
@@ -55,7 +55,7 @@ final case class Interview(module: Module, location: PathLocation, interviewName
 }
 
 object Interview {
-  def apply(module: Module, event: FlowEvent): Interview = {
+  def apply(module: OPM.Module, event: FlowEvent): Interview = {
     val location = event.sourceInfo.location
     val document = MetadataDocument(location.path)
     new Interview(module, location, document.get.name)
@@ -67,7 +67,7 @@ object Interview {
   */
 final class InterviewDeclaration(
   sources: ArraySeq[SourceInfo],
-  override val module: Module,
+  override val module: OPM.Module,
   interviews: Seq[TypeDeclaration],
   nestedInterviews: Seq[NestedInterviews]
 ) extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.Interview)
@@ -144,7 +144,7 @@ trait NestedInterviews extends TypeDeclaration {
 }
 
 /** Flow.Interview.ns implementation for exposing interviews from dependent packages. */
-final class PackageInterviews(module: Module, interviewDeclaration: InterviewDeclaration)
+final class PackageInterviews(module: OPM.Module, interviewDeclaration: InterviewDeclaration)
     extends InnerBasicTypeDeclaration(
       PathLike.emptyPaths,
       module,
@@ -162,7 +162,7 @@ final class PackageInterviews(module: Module, interviewDeclaration: InterviewDec
 }
 
 /** Flow.Interview.ns implementation for ghosted packages. This simulates the existence of any flow you ask for. */
-final class GhostedInterviews(module: Module, ghostedPackage: PackageImpl)
+final class GhostedInterviews(module: OPM.Module, ghostedPackage: OPM.PackageImpl)
     extends InnerBasicTypeDeclaration(
       PathLike.emptyPaths,
       module,
@@ -180,11 +180,11 @@ final class GhostedInterviews(module: Module, ghostedPackage: PackageImpl)
 }
 
 object InterviewDeclaration {
-  def apply(module: Module): InterviewDeclaration = {
+  def apply(module: OPM.Module): InterviewDeclaration = {
     new InterviewDeclaration(ArraySeq(), module, Seq.empty, collectBaseInterviews(module))
   }
 
-  private def collectBaseInterviews(module: Module): Seq[NestedInterviews] = {
+  private def collectBaseInterviews(module: OPM.Module): Seq[NestedInterviews] = {
     module.basePackages
       .map(basePkg => {
         basePkg.orderedModules.headOption
