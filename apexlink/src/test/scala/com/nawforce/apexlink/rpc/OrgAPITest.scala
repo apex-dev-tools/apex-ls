@@ -23,7 +23,6 @@ import com.nawforce.runtime.platform.{Environment, Path}
 import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatest.funsuite.AsyncFunSuite
 
-import scala.collection.immutable.ArraySeq
 import scala.concurrent.Future
 
 class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
@@ -250,11 +249,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
-      println("Graph")
-      println(graph.nodeData.mkString("Array(", ", ", ")"))
-      println("Graph")
       assert(
-        ArraySeq.unsafeWrapArray(graph.nodeData) == ArraySeq(
+        graph.nodeData sameElements Array(
           DependencyNode(
             TypeIdentifier(None, TypeName(Name("Hello"))),
             85,
