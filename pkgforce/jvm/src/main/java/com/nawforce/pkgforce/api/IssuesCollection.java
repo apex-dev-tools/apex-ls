@@ -12,7 +12,7 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.apexlink.api;
+package com.nawforce.pkgforce.api;
 
 import com.nawforce.pkgforce.api.Issue;
 import com.nawforce.pkgforce.api.IssueLocation;
