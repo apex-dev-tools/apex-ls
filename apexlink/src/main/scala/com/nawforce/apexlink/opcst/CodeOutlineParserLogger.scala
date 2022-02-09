@@ -8,7 +8,7 @@ import com.nawforce.pkgforce.diagnostics.{
   IssueLogger,
   WARNING_CATEGORY
 }
-import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.path.{OutlineParserLocationOps, PathLike}
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
@@ -29,11 +29,21 @@ private[opcst] class CodeOutlineParserLogger(path: PathLike) extends IssueLogger
   }
 
   def logError(location: OPLocation, message: String): Unit = {
-    log(Issue(path, Diagnostic(ERROR_CATEGORY, LocationUtils.toLocation(location), message)))
+    log(
+      Issue(
+        path,
+        Diagnostic(ERROR_CATEGORY, OutlineParserLocationOps.toLocation(location), message)
+      )
+    )
   }
 
   def logWarning(location: OPLocation, message: String): Unit = {
-    log(Issue(path, Diagnostic(WARNING_CATEGORY, LocationUtils.toLocation(location), message)))
+    log(
+      Issue(
+        path,
+        Diagnostic(WARNING_CATEGORY, OutlineParserLocationOps.toLocation(location), message)
+      )
+    )
   }
 
   def issues: ArraySeq[Issue] = {
