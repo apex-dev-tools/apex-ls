@@ -11,12 +11,10 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.apexlink.org
+package com.nawforce.pkgforce.diagnostics
 
-import com.nawforce.apexlink.api.IssuesCollection
-import com.nawforce.pkgforce.api.{IssueLocation, Issue => APIIssue}
+import com.nawforce.pkgforce.api.{IssueLocation, IssuesCollection, Issue => APIIssue}
 import com.nawforce.pkgforce.diagnostics
-import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.platform.Path
 

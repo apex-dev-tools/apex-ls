@@ -1,24 +1,30 @@
-/*
- * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
- */
+package com.nawforce.runtime.workspace
 
-package com.nawforce.pkgforce.workspace
-
-import com.nawforce.pkgforce.diagnostics.{CatchingLogger, IssueLogger}
-import com.nawforce.pkgforce.documents.DocumentIndex
+import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.nawforce.pkgforce.diagnostics._
+import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex}
 import com.nawforce.pkgforce.names.Name
-import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.pkgforce.pkgs.TriHierarchy
+import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 
 import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
 
 object IPM extends TriHierarchy {
   type TOrg     = Index
   type TPackage = Package
   type TModule  = Module
 
-  class Index(val path: PathLike, initWorkspace: Option[Workspace]) extends TriOrg {
-    val workspace: Workspace = initWorkspace.getOrElse(new Workspace(Seq()))
+  class Index(val path: PathLike) extends TriOrg {
+
+    val issues: IssuesManager = new IssuesManager
+
+    val workspace: Workspace = {
+      val wsAndIssues = Workspace.apply(path)
+      wsAndIssues.issues.foreach(issues.add)
+      wsAndIssues.value.getOrElse(new Workspace(Seq()))
+    }
 
     override val packages: ArraySeq[Package] = {
 
@@ -56,6 +62,9 @@ object IPM extends TriHierarchy {
       ArraySeq.unsafeWrapArray((declared ++ unmanaged).toArray)
     }
 
+    def rootModule: Option[Module] = {
+      packages.find(_.modules.nonEmpty).map(_.modules.head)
+    }
   }
 
   class Package(
@@ -82,5 +91,42 @@ object IPM extends TriHierarchy {
     override val pkg: Package,
     override val index: DocumentIndex,
     override val dependents: ArraySeq[Module]
-  ) extends TriModule {}
+  ) extends TriModule {
+
+    private val types = mutable.Map[Name, TypeDeclaration]()
+
+    loadClasses()
+
+    private def loadClasses(): Unit = {
+      val namespace = pkg.namespace
+      index
+        .get(ApexNature)
+        .foreach(document => {
+          val source = document.path.readSourceData()
+          source match {
+            case Left(err) =>
+              pkg.org.issues
+                .add(new Issue(document.path, Diagnostic(ERROR_CATEGORY, Location.empty, err)))
+            case Right(source) =>
+              val (success, reason, td) =
+                OutlineParser.parse(document.path.toString, source.asString)
+              if (!success) {
+                reason.map(reason => {
+                  pkg.org.issues.add(
+                    new Issue(document.path, Diagnostic(ERROR_CATEGORY, Location.empty, reason))
+                  )
+                })
+              } else {
+                td.map(td => {
+                  types.put(Name(document.typeName(namespace).toString), td)
+                })
+              }
+          }
+        })
+    }
+
+    def findExactTypeId(name: String): Option[TypeDeclaration] = {
+      types.get(Name(name))
+    }
+  }
 }
