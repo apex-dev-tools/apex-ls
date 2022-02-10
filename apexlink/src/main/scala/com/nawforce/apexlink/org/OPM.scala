@@ -13,7 +13,7 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.api.{BuildInfo, Org, Package, ServerOps}
+import com.nawforce.apexlink.api.{BuildInfo, Org, Package, ServerOps, TypeSummary}
 import com.nawforce.apexlink.cst.CompilationUnit
 import com.nawforce.apexlink.deps.{DownWalker, TransitiveCollector}
 import com.nawforce.apexlink.finding.TypeFinder
@@ -318,10 +318,23 @@ object OPM extends TriHierarchy {
       bombs.dequeueAll.toArray.reverse
     }
 
-    def getDependencyCounts(paths: Array[String]): Array[(String, Int)] = {
+    def getDependencyCounts(
+      paths: Array[String],
+      excludeTestClasses: Boolean
+    ): Array[(String, Int)] = {
 
-      def getTypeOfPath(path: String): Option[TypeIdentifier] =
-        packages.view.flatMap(pkg => Option(pkg.getTypeOfPath(path))).headOption
+      def getTypeAndSummaryOfPath(path: String): Option[(TypeIdentifier, TypeSummary)] =
+        packages.view
+          .flatMap(
+            pkg =>
+              Option(pkg.getTypeOfPath(path))
+                .flatMap(
+                  typeId =>
+                    Option(pkg.getSummaryOfType(typeId))
+                      .flatMap(summary => Option(typeId, summary))
+                )
+          )
+          .headOption
 
       def countTransitiveDependencies(
         typeId: TypeIdentifier,
@@ -334,9 +347,13 @@ object OPM extends TriHierarchy {
 
       paths
         .flatMap { path =>
-          getTypeOfPath(path)
-            .map { typeId =>
-              (typeId, collector.transitives(typeId))
+          getTypeAndSummaryOfPath(path)
+            .filter {
+              case (_, summary) =>
+                !excludeTestClasses || !summary.modifiers.contains(ISTEST_ANNOTATION)
+            }
+            .map {
+              case (typeId, _) => (typeId, collector.transitives(typeId))
             }
             .map {
               case (typeId, transitiveDependencies) =>
