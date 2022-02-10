@@ -31,9 +31,10 @@ object Indexer {
 
     val start = System.currentTimeMillis()
     val index = new MDIndex(Path(args(0)))
-    val stop = System.currentTimeMillis()
+    val stop  = System.currentTimeMillis()
 
-    index.issuesForFiles(null, false, 100)
+    index
+      .issuesForFiles(null, false, 100)
       .foreach(issue => println(issue.asString))
 
     println(s"Index loading took ${stop - start}ms")
