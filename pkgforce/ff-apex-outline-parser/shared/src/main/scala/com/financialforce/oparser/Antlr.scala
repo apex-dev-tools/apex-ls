@@ -4,7 +4,7 @@
 package com.financialforce.oparser
 
 import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
-import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 
 import java.io.ByteArrayInputStream
 import scala.jdk.CollectionConverters.CollectionHasAsScala
@@ -13,7 +13,7 @@ object Antlr {
 
   def parse(source: Array[Byte]): Option[TypeDeclaration] = {
     val cis: CaseInsensitiveInputStream = new CaseInsensitiveInputStream(
-      new ByteArrayInputStream(source, 0, source.length)
+      CharStreams.fromStream(new ByteArrayInputStream(source, 0, source.length))
     )
     val tokenStream = new CommonTokenStream(new ApexLexer(cis))
     tokenStream.fill()

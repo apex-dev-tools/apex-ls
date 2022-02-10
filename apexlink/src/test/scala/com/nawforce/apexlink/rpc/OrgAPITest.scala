@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.rpc
 
 import com.nawforce.apexlink.ParserHelper
-import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.api.{ANTLRParser, ServerOps}
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.Location
@@ -35,7 +35,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   override def beforeEach(): Unit = {
-    ParserHelper.setParser();
+    ParserHelper.setParser()
   }
 
   test("Version not empty") {
@@ -81,12 +81,11 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       issues <- orgAPI.getIssues(includeWarnings = false, maxIssuesPerFile = 0)
     } yield {
       assert(result.error.isEmpty)
+
+      val path = Path("/silly")
       assert(
         issues.issues sameElements Array(
-          Issue(
-            Path("/silly"),
-            Diagnostic(ERROR_CATEGORY, Location.empty, "No directory at /silly")
-          )
+          Issue(path, Diagnostic(ERROR_CATEGORY, Location.empty, s"No directory at $path"))
         )
       )
     }
@@ -159,8 +158,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
     }
 
     val issues: Future[Assertion] =
-      ServerOps.getUseOutlineParser match {
-        case true =>
+      ServerOps.getCurrentParser == ANTLRParser match {
+        case false =>
           pkg flatMap { _ =>
             orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
               assert(issuesResult.issues.length == 5)
@@ -168,7 +167,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
               assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 3)
             }
           }
-        case false =>
+        case true =>
           pkg flatMap { _ =>
             orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
               assert(issuesResult.issues.length == 4)

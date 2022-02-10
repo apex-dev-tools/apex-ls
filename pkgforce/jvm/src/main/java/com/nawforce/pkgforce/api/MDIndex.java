@@ -4,37 +4,58 @@
 
 package com.nawforce.pkgforce.api;
 
-import com.nawforce.pkgforce.diagnostics.IssuesAnd;
+import com.financialforce.oparser.TypeDeclaration;
+import com.nawforce.pkgforce.diagnostics.IssuesManager;
 import com.nawforce.pkgforce.path.PathLike;
-import com.nawforce.pkgforce.workspace.IPM;
-import com.nawforce.pkgforce.workspace.Workspace;
 import com.nawforce.runtime.platform.Path;
-import scala.Option;
-import scala.jdk.javaapi.CollectionConverters;
+import com.nawforce.runtime.workspace.IPM;
+import scala.jdk.javaapi.OptionConverters;
 
 import java.util.Optional;
 
-public class MDIndex {
-    private IPM.Index index;
+public class MDIndex implements IssuesCollection {
+    private final IPM.Index index;
+    private final Optional<IPM.Module> rootModule;
 
-    /**
-     * Create a new MDIndex from a workspace path. Creation may fail if there are fatal errors in the workspace
-     * configuration. Errors & Warnings are automatically logged in the singleton IssueLog.
-     */
-    public static MDIndex create(String path) {
-        return create(Path.apply(path));
+    public MDIndex(String path) {
+        this(Path.apply(path));
     }
 
-    public static MDIndex create(PathLike path) {
-        IssuesAnd<Option<Workspace>> wsAndIssues = Workspace.apply(path);
-
-        IssuesLog log = IssuesLog.getInstance();
-        CollectionConverters.asJava(wsAndIssues.issues()).forEach(log::add);
-
-        return new MDIndex(path, wsAndIssues.value());
+    public MDIndex(PathLike path) {
+        index = new IPM.Index(path);
+        rootModule =  OptionConverters.toJava(index.rootModule());
     }
 
-    private MDIndex(PathLike path, Option<Workspace> ws) {
-        index = new IPM.Index(path, ws);
+    public TypeDeclaration findExactTypeId(String name) {
+        return rootModule.flatMap(module -> OptionConverters.toJava(module.findExactTypeId(name))).orElse(null);
+    }
+
+    private IssuesManager issues() {
+        return index.issues();
+    }
+
+    @Override
+    public String[] hasUpdatedIssues() {
+        return issues().hasUpdatedIssues();
+    }
+
+    @Override
+    public void ignoreUpdatedIssues(String path) {
+        issues().ignoreUpdatedIssues(path);
+    }
+
+    @Override
+    public Issue[] issuesForFile(String path) {
+        return issues().issuesForFile(path);
+    }
+
+    @Override
+    public Issue[] issuesForFileLocation(String path, IssueLocation location) {
+        return issues().issuesForFileLocation(path, location);
+    }
+
+    @Override
+    public Issue[] issuesForFiles(String[] paths, boolean includeWarnings, int maxErrorsPerFile) {
+        return issues().issuesForFiles(paths, includeWarnings, maxErrorsPerFile);
     }
 }

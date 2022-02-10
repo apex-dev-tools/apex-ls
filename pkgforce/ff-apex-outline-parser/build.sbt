@@ -23,7 +23,7 @@ lazy val parser = crossProject(JVMPlatform, JSPlatform).in(file(".")).
   settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % "3.2.9" % "test",
-      "com.github.nawforce" % "apex-parser" % "2.11.0" //% "test"
+      "com.github.nawforce" % "apex-parser" % "2.12.1" //% "test"
     ),
     scalacOptions += "-deprecation"
   ).

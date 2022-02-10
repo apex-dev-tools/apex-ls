@@ -163,8 +163,8 @@ trait OrgAPI {
   @api.JSONRPCMethod(name = "version")
   def version(): Future[String]
 
-  @api.JSONRPCMethod(name = "enableOutlineParser")
-  def enableOutlineParser(enable: Boolean): Future[Unit]
+  @api.JSONRPCMethod(name = "setParser")
+  def setParser(parser: String): Future[Unit]
 
   @api.JSONRPCMethod(name = "setLoggingLevel")
   def setLoggingLevel(level: String): Future[Unit]

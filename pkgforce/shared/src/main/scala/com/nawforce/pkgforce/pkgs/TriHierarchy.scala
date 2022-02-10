@@ -8,7 +8,6 @@ import com.nawforce.pkgforce.documents.DocumentIndex
 import com.nawforce.pkgforce.names.TypeNameFuncs.TypeNameFuncs
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.pkgforce.workspace.IPM.Module
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 
 import scala.collection.immutable.ArraySeq

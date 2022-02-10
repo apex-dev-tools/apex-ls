@@ -16,6 +16,7 @@ package com.nawforce.apexlink.api
 
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.rpc.{BombScore, CompletionItemLink, DependencyGraph, LocationLink}
+import com.nawforce.pkgforce.api.IssuesCollection
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
