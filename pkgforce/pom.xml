@@ -195,7 +195,7 @@
               <goal>run</goal>
             </goals>
             <configuration>
-              <args>pkgforceJS/build</args>
+              <args>pkgforceJS/build pkgforceJS/test</args>
             </configuration>
           </execution>
         </executions>
