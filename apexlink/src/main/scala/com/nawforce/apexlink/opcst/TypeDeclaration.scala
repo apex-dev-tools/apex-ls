@@ -42,6 +42,7 @@ import com.nawforce.apexparser.ApexParser.BlockContext
 import com.nawforce.pkgforce.modifiers.{MethodOwnerNature, ModifierResults}
 import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.path.OutlineParserLocationOps.{stampLocation, extendLocation}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
 
 import java.lang.ref.WeakReference
@@ -162,7 +163,7 @@ private[opcst] object OutlineParserClassDeclaration {
       implementsType,
       bodyDeclarations
     )
-    LocationUtils.stampLocation(
+    stampLocation(
       declaration,
       ctd.location.get.copy(
         startLineOffset = ctd.location.get.startLineOffset - 1,
@@ -253,7 +254,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
       implementsType,
       ArraySeq.from(methods)
     )
-    LocationUtils.stampLocation(
+    stampLocation(
       declaration,
       itd.location.get.copy(
         startLineOffset = itd.location.get.startLineOffset - 1,
@@ -309,7 +310,7 @@ private[opcst] object OutlineParserEnumDeclaration {
       thisType.inTest,
       ArraySeq.from(fields)
     )
-    LocationUtils.stampLocation(
+    stampLocation(
       declaration,
       etd.location.get.copy(
         startLineOffset = etd.location.get.startLineOffset - 1,
@@ -333,7 +334,7 @@ private[opcst] object OutlineParserEnumDeclaration {
       OutlineParserClassBodyDeclaration.constructVariableDeclarator(id, source, thisType.typeName)
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, thisType.typeName, vd)
-    LocationUtils.stampLocation(
+    stampLocation(
       declaration,
       id.id.location.copy(startLineOffset = id.id.location.startLineOffset - 1),
       source.path
@@ -356,7 +357,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     val modifierResults =
       ModifierUtils.constructorModifiers(path, cd.id, cd.annotations, cd.modifiers)
     val qualifiedName = QualifiedName(cd.qName.qName.map(id => Names(id.id.contents)).toIndexedSeq)
-    LocationUtils.stampLocation(
+    stampLocation(
       qualifiedName,
       cd.id.id.location.copy(startLineOffset = cd.id.id.location.startLineOffset - 1),
       source.path
@@ -382,7 +383,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       cd.location.get.endLineOffset - 1,
       0
     )
-    LocationUtils.stampLocation(declaration, location, source.path)
+    stampLocation(declaration, location, source.path)
     Some(declaration)
   }
 
@@ -435,7 +436,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       0
     )
 
-    LocationUtils.stampLocation(declaration, location, source.path)
+    stampLocation(declaration, location, source.path)
     Some(declaration)
   }
 
@@ -473,7 +474,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       0
     )
 
-    LocationUtils.stampLocation(declaration, location, source.path)
+    stampLocation(declaration, location, source.path)
     Some(declaration)
   }
 
@@ -501,7 +502,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       else fd.id.id.location.endLineOffset + 1,
       0
     )
-    LocationUtils.stampLocation(declaration, location, source.path)
+    stampLocation(declaration, location, source.path)
     Some(declaration)
   }
 
@@ -557,11 +558,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val declaration =
       VariableDeclarator(typeName, OutlineParserId.construct(fd.id, source.path), init)
-    LocationUtils.stampLocation(
-      declaration,
-      LocationUtils.extendLocation(fd.id.id.location, startLineOffset = -1),
-      source.path
-    )
+    stampLocation(declaration, extendLocation(fd.id.id.location, startLineOffset = -1), source.path)
     declaration
   }
 
@@ -580,7 +577,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         .construct(source, i.blockLocation.get, if (isOuter) Some(source) else None),
       thisType.inTest
     )
-    LocationUtils.stampLocation(
+    stampLocation(
       declaration,
       i.location.get.copy(startLineOffset = i.location.get.startLineOffset - 1),
       source.path
@@ -638,7 +635,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       0
     )
 
-    LocationUtils.stampLocation(declaration, location, source.path)
+    stampLocation(declaration, location, source.path)
     Some(declaration)
   }
 }
