@@ -46,6 +46,7 @@ import com.nawforce.pkgforce.modifiers.{
   WITH_SHARING_MODIFIER
 }
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.path.OutlineParserLocationOps.extendLocation
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
@@ -156,7 +157,7 @@ private[opcst] object ModifierUtils {
     if (modifiers.intersect(ApexModifiers.visibilityModifiers).size > 1) {
       if (logger.isEmpty)
         logger.logWarning(
-          LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+          extendLocation(id.id.location, startLineOffset = -1),
           s"Only one visibility modifier from 'global', 'public' & 'private' should be used on $pluralName"
         )
       PUBLIC_MODIFIER +: modifiers.diff(ApexModifiers.visibilityModifiers)
@@ -174,7 +175,7 @@ private[opcst] object ModifierUtils {
     if (modifiers.intersect(sharingModifiers).size > 1) {
       if (logger.isEmpty)
         logger.logWarning(
-          LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+          extendLocation(id.id.location, startLineOffset = -1),
           s"Only one sharing modifier from 'with sharing', 'without sharing' & 'inherited sharing' should be used on $pluralName"
         )
       WITHOUT_SHARING_MODIFIER +: modifiers.diff(sharingModifiers)
@@ -211,7 +212,7 @@ private[opcst] object ModifierUtils {
       val duplicates = modifiers.duplicates(identity)
       if (duplicates.nonEmpty) {
         logger.logError(
-          LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+          extendLocation(id.id.location, startLineOffset = -1),
           s"Modifier '${duplicates.head._1.toString}' is used more than once"
         )
       }
@@ -231,7 +232,7 @@ private[opcst] object ModifierUtils {
       if (allow.contains(modifier)) Some(modifier)
       else {
         logger.logError(
-          LocationUtils.extendLocation(annotation.qName.location, startLineOffset = -2),
+          extendLocation(annotation.qName.location, startLineOffset = -2),
           s"Annotation '${annotation.toString()}' is not supported on $pluralName"
         )
         None
@@ -242,7 +243,7 @@ private[opcst] object ModifierUtils {
       if (allow.contains(modifier)) Some(modifier)
       else {
         logger.logError(
-          LocationUtils.extendLocation(opModifier.location, startLineOffset = -1),
+          extendLocation(opModifier.location, startLineOffset = -1),
           s"Modifier '${opModifier.toString()}' is not supported on $pluralName"
         )
         None
@@ -288,7 +289,7 @@ private[opcst] object ModifierUtils {
       if (logger.isEmpty) {
         if (outer && !mods.contains(ISTEST_ANNOTATION) && mods.contains(PRIVATE_MODIFIER)) {
           logger.logError(
-            LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+            extendLocation(id.id.location, startLineOffset = -1),
             s"Private modifier is not allowed on outer classes"
           )
           mods.filterNot(_ == PRIVATE_MODIFIER)
@@ -297,19 +298,19 @@ private[opcst] object ModifierUtils {
             .contains(PUBLIC_MODIFIER))
         ) {
           logger.logError(
-            LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+            extendLocation(id.id.location, startLineOffset = -1),
             s"Outer classes must be declared either 'global' or 'public'"
           )
           PUBLIC_MODIFIER +: mods
         } else if (mods.contains(ABSTRACT_MODIFIER) && mods.contains(VIRTUAL_MODIFIER)) {
           logger.logError(
-            LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+            extendLocation(id.id.location, startLineOffset = -1),
             s"Abstract classes are virtual classes"
           )
           mods.filterNot(_ == VIRTUAL_MODIFIER)
         } else if (!outer && mods.contains(ISTEST_ANNOTATION)) {
           logger.logError(
-            LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+            extendLocation(id.id.location, startLineOffset = -1),
             s"isTest can only be used on outer classes"
           )
           mods.filterNot(_ == ISTEST_ANNOTATION)
@@ -358,7 +359,7 @@ private[opcst] object ModifierUtils {
           .contains(WEBSERVICE_MODIFIER)
       ) {
         logger.logError(
-          LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+          extendLocation(id.id.location, startLineOffset = -1),
           s"webservice fields must be global"
         )
         GLOBAL_MODIFIER +: mods.diff(ApexModifiers.visibilityModifiers)
@@ -432,25 +433,25 @@ private[opcst] object ModifierUtils {
           .contains(WEBSERVICE_MODIFIER)
       ) {
         logger.logError(
-          LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+          extendLocation(id.id.location, startLineOffset = -1),
           s"webservice methods must be global"
         )
         GLOBAL_MODIFIER +: mods.diff(ApexModifiers.visibilityModifiers)
       } else if (isOuter && mods.contains(WEBSERVICE_MODIFIER)) {
         logger.logError(
-          LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+          extendLocation(id.id.location, startLineOffset = -1),
           s"webservice methods can only be declared on outer classes"
         )
         GLOBAL_MODIFIER +: mods.diff(ApexModifiers.visibilityModifiers)
       } else if (mods.contains(VIRTUAL_MODIFIER) && mods.contains(ABSTRACT_MODIFIER)) {
         logger.logError(
-          LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+          extendLocation(id.id.location, startLineOffset = -1),
           s"abstract methods are virtual methods"
         )
         mods.filterNot(_ == VIRTUAL_MODIFIER)
       } else if (ownerNature != ABSTRACT_METHOD_NATURE && mods.contains(ABSTRACT_MODIFIER)) {
         logger.logError(
-          LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+          extendLocation(id.id.location, startLineOffset = -1),
           s"abstract methods can only be declared on abstract classes"
         )
         mods
@@ -481,13 +482,13 @@ private[opcst] object ModifierUtils {
       if (logger.isEmpty) {
         if (outer && mods.contains(PRIVATE_MODIFIER)) {
           logger.logError(
-            LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+            extendLocation(id.id.location, startLineOffset = -1),
             s"Private modifier is not allowed on outer interfaces"
           )
           mods.filterNot(_ == PRIVATE_MODIFIER)
         } else if (outer && !(mods.contains(GLOBAL_MODIFIER) || mods.contains(PUBLIC_MODIFIER))) {
           logger.logError(
-            LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+            extendLocation(id.id.location, startLineOffset = -1),
             s"Outer interfaces must be declared either 'global' or 'public'"
           )
           PUBLIC_MODIFIER +: mods
@@ -538,13 +539,13 @@ private[opcst] object ModifierUtils {
       if (logger.isEmpty) {
         if (outer && mods.contains(PRIVATE_MODIFIER)) {
           logger.logError(
-            LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+            extendLocation(id.id.location, startLineOffset = -1),
             s"Private modifier is not allowed on outer enums"
           )
           mods.filterNot(_ == PRIVATE_MODIFIER)
         } else if (outer && !(mods.contains(GLOBAL_MODIFIER) || mods.contains(PUBLIC_MODIFIER))) {
           logger.logError(
-            LocationUtils.extendLocation(id.id.location, startLineOffset = -1),
+            extendLocation(id.id.location, startLineOffset = -1),
             s"Outer enums must be declared either 'global' or 'public'"
           )
           PUBLIC_MODIFIER +: mods
