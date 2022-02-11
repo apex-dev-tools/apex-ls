@@ -46,7 +46,7 @@ import com.nawforce.pkgforce.modifiers.{
   WITH_SHARING_MODIFIER
 }
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.pkgforce.path.OutlineParserLocationOps.extendLocation
+import com.nawforce.runtime.platform.OutlineParserLocationOps.extendLocation
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
@@ -516,7 +516,7 @@ private[opcst] object ModifierUtils {
       id
     )
 
-    ModifierResults((mods ++ ArraySeq(VIRTUAL_MODIFIER, PUBLIC_MODIFIER)), logger.issues).intern
+    ModifierResults(mods ++ ArraySeq(VIRTUAL_MODIFIER, PUBLIC_MODIFIER), logger.issues).intern
   }
 
   def enumModifiers(
