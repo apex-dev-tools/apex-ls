@@ -1,23 +1,24 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.api
+package com.nawforce.runtime.api
 
-import com.nawforce.pkgforce.TestHelper
+import com.nawforce.pkgforce.api.MDIndex
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
-class MDIndexTest extends AnyFunSuite with TestHelper {
+class MDIndexTest extends AnyFunSuite {
 
   test("Empty org") {
-    virtualFS(Map()) { root: PathLike =>
+    FileSystemHelper.run(Map()) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index != null)
     }
   }
 
   test("MDAPI class is loaded") {
-    virtualFS(Map("Foo.cls" -> "public class Foo {}")) { root: PathLike =>
+    FileSystemHelper.run(Map("Foo.cls" -> "public class Foo {}")) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
       assert(index.findExactTypeId("Foo") != null)
@@ -27,7 +28,7 @@ class MDIndexTest extends AnyFunSuite with TestHelper {
   }
 
   test("SFDX class is loaded") {
-    virtualFS(
+    FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}] }",
         "sources/Foo.cls"   -> "public class Foo {}"
@@ -42,7 +43,7 @@ class MDIndexTest extends AnyFunSuite with TestHelper {
   }
 
   test("SFDX namespaced class is loaded") {
-    virtualFS(
+    FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
         "sources/Foo.cls"   -> "public class Foo {}"
