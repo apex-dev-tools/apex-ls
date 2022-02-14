@@ -42,8 +42,8 @@ import com.nawforce.apexparser.ApexParser.BlockContext
 import com.nawforce.pkgforce.modifiers.{MethodOwnerNature, ModifierResults}
 import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.pkgforce.path.OutlineParserLocationOps.{stampLocation, extendLocation}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
+import com.nawforce.runtime.platform.OutlineParserLocationOps.{extendLocation, stampLocation}
 
 import java.lang.ref.WeakReference
 import scala.collection.immutable.ArraySeq

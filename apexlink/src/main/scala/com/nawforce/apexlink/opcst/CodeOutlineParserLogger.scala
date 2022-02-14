@@ -8,7 +8,8 @@ import com.nawforce.pkgforce.diagnostics.{
   IssueLogger,
   WARNING_CATEGORY
 }
-import com.nawforce.pkgforce.path.{OutlineParserLocationOps, PathLike}
+import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.platform.OutlineParserLocationOps
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
