@@ -5,12 +5,26 @@ import apex.jorje.semantic.compiler.sfdc.SymbolProvider
 import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.resolver.SymbolResolver
 
+/**
+  * Empty class that doesn't provide any symbols that are not part of source.
+  * It is needed to provide a concrete implementation for the apex compiler
+  */
 class EmptySymbolProvider extends SymbolProvider {
   override def find(symbolResolver: SymbolResolver, typeInfo: TypeInfo, s: String): TypeInfo = null
 
-  override def getVfComponentType(symbolResolver: SymbolResolver, typeInfo: TypeInfo, namespace: Namespace, s: String): TypeInfo = null
+  override def getVfComponentType(
+    symbolResolver: SymbolResolver,
+    typeInfo: TypeInfo,
+    namespace: Namespace,
+    s: String
+  ): TypeInfo = null
 
-  override def getFlowInterviewType(symbolResolver: SymbolResolver, typeInfo: TypeInfo, namespace: Namespace, s: String): TypeInfo = null
+  override def getFlowInterviewType(
+    symbolResolver: SymbolResolver,
+    typeInfo: TypeInfo,
+    namespace: Namespace,
+    s: String
+  ): TypeInfo = null
 
   override def getSObjectType(typeInfo: TypeInfo, s: String): TypeInfo = null
 

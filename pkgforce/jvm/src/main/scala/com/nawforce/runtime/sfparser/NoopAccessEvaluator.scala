@@ -4,6 +4,9 @@ import apex.jorje.semantic.compiler.{Namespace, StructuredVersion}
 import apex.jorje.semantic.compiler.sfdc.{AccessEvaluator, PlaceholderOrgPerm}
 import apex.jorje.semantic.symbol.`type`.{SObjectTypeInfo, TypeInfo}
 
+/**
+  * Empty classes to provide a concrete implementation for the apex compiler
+  */
 class NoopAccessEvaluator extends AccessEvaluator {
   override def hasPermission(placeholderOrgPerm: PlaceholderOrgPerm): Boolean = false
 
@@ -35,11 +38,17 @@ class NoopAccessEvaluator extends AccessEvaluator {
 
   override def hasApexParameterizedTypes: Boolean = false
 
-  override def isValidPackageVersion(namespace: Namespace, structuredVersion: StructuredVersion): Boolean = false
+  override def isValidPackageVersion(
+    namespace: Namespace,
+    structuredVersion: StructuredVersion
+  ): Boolean = false
 
   override def isManagedPackageInstalled(namespace: Namespace): Boolean = false
 
-  override def isSetupEntityVisibleToType(sObjectTypeInfo: SObjectTypeInfo, typeInfo: TypeInfo): Boolean = false
+  override def isSetupEntityVisibleToType(
+    sObjectTypeInfo: SObjectTypeInfo,
+    typeInfo: TypeInfo
+  ): Boolean = false
 
   override def hasConnectDeserializer(typeInfo: TypeInfo): Boolean = false
 
