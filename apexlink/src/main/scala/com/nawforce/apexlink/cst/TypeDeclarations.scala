@@ -104,7 +104,6 @@ final case class ClassDeclaration(
 }
 
 object ClassDeclaration {
-  val staticModifier: ArraySeq[Modifier] = ArraySeq(STATIC_MODIFIER)
 
   def constructInner(
     parser: CodeParser,
@@ -153,7 +152,8 @@ object ClassDeclaration {
                     ApexInitializerBlock.construct(
                       parser,
                       thisType,
-                      ModifierResults(getModifiers(CodeParser.toScala(cbd.STATIC())), ArraySeq()),
+                      ApexModifiers
+                        .initializerBlockModifiers(CodeParser.toScala(cbd.STATIC()).isDefined),
                       x
                     )
                   )
@@ -194,9 +194,6 @@ object ClassDeclaration {
     td
   }
 
-  private def getModifiers(isStatic: Option[TerminalNode]): ArraySeq[Modifier] = {
-    isStatic.map(_ => staticModifier).getOrElse(ArraySeq.empty)
-  }
 }
 
 final case class InterfaceDeclaration(
@@ -428,7 +425,7 @@ object EnumDeclaration {
     val fields = constants.map(constant => {
       ApexFieldDeclaration(
         thisType,
-        ModifierResults(ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER), ArraySeq()),
+        ApexModifiers.enumConstantModifiers(),
         thisType.typeName,
         VariableDeclarator(thisType.typeName, Id.construct(constant), None).withContext(constant)
       ).withContext(constant)

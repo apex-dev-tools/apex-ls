@@ -14,8 +14,13 @@
 package com.nawforce.pkgforce.modifiers
 
 import com.nawforce.apexparser.ApexParser.ModifierContext
-import com.nawforce.pkgforce.diagnostics.CodeParserLogger
-import com.nawforce.pkgforce.modifiers.ApexModifiers.{asModifiers, visibilityModifiers}
+import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
+import com.nawforce.pkgforce.modifiers.ApexModifiers.{
+  allowableModifiers,
+  asModifiers,
+  toModifiers,
+  visibilityModifiers
+}
 import com.nawforce.runtime.parsers.CodeParser
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
 
@@ -72,9 +77,24 @@ object MethodModifiers {
     isOuter: Boolean
   ): ModifierResults = {
 
-    val logger = new CodeParserLogger(parser)
+    val logger = new ModifierLogger()
+    val mods   = toModifiers(parser, modifierContexts)
+    classMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerNature, isOuter)
+  }
+
+  def classMethodModifiers(
+    logger: ModifierLogger,
+    modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
+    context: LogEntryContext,
+    ownerNature: MethodOwnerNature,
+    isOuter: Boolean
+  ): ModifierResults = {
+
+    val allowedModifiers =
+      allowableModifiers(modifiers, MethodModifiersAndAnnotations, "methods", logger)
+
     val mods = ApexModifiers.deduplicateVisibility(
-      asModifiers(modifierContexts, MethodModifiersAndAnnotations, "methods", logger, context),
+      asModifiers(allowedModifiers, logger, context),
       "methods",
       logger,
       context
@@ -112,9 +132,22 @@ object MethodModifiers {
     context: ParserRuleContext,
     isOuter: Boolean
   ): ModifierResults = {
-    val logger = new CodeParserLogger(parser)
+    val logger = new ModifierLogger()
+    val mods   = toModifiers(parser, modifierContexts)
+    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context), isOuter)
+  }
+
+  def interfaceMethodModifiers(
+    logger: ModifierLogger,
+    modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
+    context: LogEntryContext,
+    isOuter: Boolean
+  ): ModifierResults = {
+
+    val allowedModifiers = allowableModifiers(modifiers, Set.empty, "interface methods", logger)
+
     val mods = ApexModifiers.deduplicateVisibility(
-      asModifiers(modifierContexts, Set.empty, "interface methods", logger, context),
+      asModifiers(allowedModifiers, logger, context),
       "methods",
       logger,
       context
