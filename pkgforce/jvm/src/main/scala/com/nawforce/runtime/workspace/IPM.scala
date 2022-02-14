@@ -3,14 +3,15 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.financialforce.oparser.TypeDeclaration
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex}
 import com.nawforce.pkgforce.names.Name
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 
+import java.util.concurrent.{ExecutorService, Executors}
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
@@ -31,12 +32,14 @@ object IPM extends TriHierarchy {
 
     override val packages: ArraySeq[Package] = {
 
+      val loadingPool = Executors.newFixedThreadPool(2)
+
       def createModule(
         pkg: Package,
         index: DocumentIndex,
         dependencies: ArraySeq[Module]
       ): Module = {
-        new Module(pkg, index, dependencies)
+        new Module(pkg, index, dependencies, loadingPool)
       }
 
       val logger = new CatchingLogger
@@ -55,6 +58,8 @@ object IPM extends TriHierarchy {
             logger
           )
         })
+
+      loadingPool.shutdown()
 
       // If no unmanaged, create it
       val unmanaged =
@@ -93,7 +98,8 @@ object IPM extends TriHierarchy {
   class Module(
     override val pkg: Package,
     override val index: DocumentIndex,
-    override val dependents: ArraySeq[Module]
+    override val dependents: ArraySeq[Module],
+    loadingPool: ExecutorService
   ) extends TriModule {
 
     private val types = mutable.Map[Name, TypeDeclaration]()
@@ -102,7 +108,7 @@ object IPM extends TriHierarchy {
 
     private def loadClasses(): Unit = {
       val namespace = pkg.namespace
-      ApexClassLoader
+      new ApexClassLoader(loadingPool)
         .loadClasses(index.get(ApexNature), pkg.org.issues)
         .map(
           docAndType => types.put(Name(docAndType._1.typeName(namespace).toString), docAndType._2)

@@ -15,7 +15,6 @@ package com.nawforce.runtime.cmds
 
 import com.nawforce.pkgforce.api.MDIndex
 import com.nawforce.runtime.platform.Path
-import com.nawforce.runtime.workspace.ApexClassLoader
 
 object Indexer {
 
@@ -39,8 +38,5 @@ object Indexer {
       .foreach(issue => println(issue.asString))
 
     println(s"Index loading took ${stop - start}ms")
-
-    // We need to shutdown threads for normal exit
-    ApexClassLoader.shutdown()
   }
 }
