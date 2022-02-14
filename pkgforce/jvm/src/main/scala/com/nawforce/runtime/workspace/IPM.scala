@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
 package com.nawforce.runtime.workspace
 
 import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
@@ -99,30 +102,11 @@ object IPM extends TriHierarchy {
 
     private def loadClasses(): Unit = {
       val namespace = pkg.namespace
-      index
-        .get(ApexNature)
-        .foreach(document => {
-          val source = document.path.readSourceData()
-          source match {
-            case Left(err) =>
-              pkg.org.issues
-                .add(new Issue(document.path, Diagnostic(ERROR_CATEGORY, Location.empty, err)))
-            case Right(source) =>
-              val (success, reason, td) =
-                OutlineParser.parse(document.path.toString, source.asString)
-              if (!success) {
-                reason.map(reason => {
-                  pkg.org.issues.add(
-                    new Issue(document.path, Diagnostic(ERROR_CATEGORY, Location.empty, reason))
-                  )
-                })
-              } else {
-                td.map(td => {
-                  types.put(Name(document.typeName(namespace).toString), td)
-                })
-              }
-          }
-        })
+      ApexClassLoader
+        .loadClasses(index.get(ApexNature), pkg.org.issues)
+        .map(
+          docAndType => types.put(Name(docAndType._1.typeName(namespace).toString), docAndType._2)
+        )
     }
 
     def findExactTypeId(name: String): Option[TypeDeclaration] = {

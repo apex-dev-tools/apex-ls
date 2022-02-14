@@ -1,9 +1,13 @@
-package com.nawforce.apexlink.opcst
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
+package com.nawforce.runtime.platform
 
 import com.financialforce.oparser.{Location => OPLocation}
 import com.nawforce.pkgforce.path.{Location, PathLike, Positionable}
 
-private[opcst] object LocationUtils {
+/** Utility methods to manipulate and map from Outline Parser Location to pkgforce Location */
+object OutlineParserLocationOps {
 
   def toLocation(src: Option[OPLocation]): Location = {
     src match {

@@ -118,3 +118,4 @@ trait IdLocatable extends Locatable {
   def idLocation: Location
   def idPathLocation: PathLocation = PathLocation(location.path, idLocation)
 }
+
