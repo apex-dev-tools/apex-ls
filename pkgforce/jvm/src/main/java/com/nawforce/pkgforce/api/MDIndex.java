@@ -12,9 +12,11 @@ import com.nawforce.runtime.workspace.IPM;
 import scala.jdk.javaapi.CollectionConverters;
 import scala.jdk.javaapi.OptionConverters;
 
-import java.util.LinkedList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class MDIndex implements IssuesCollection {
     private final IPM.Index index;
@@ -45,6 +47,11 @@ public class MDIndex implements IssuesCollection {
         return rootModule
                 .map(module -> CollectionConverters.asJava(module.fuzzyFindTypeIds(name)))
                 .orElse(new LinkedList<>());
+    }
+
+    public List<String> getFilesWithErrors() {
+        return Arrays.stream(issues().issuesForFiles(null, false, 1))
+                .map(Issue::filePath).collect(Collectors.toList());
     }
 
     private IssuesManager issues() {
