@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.TypeDeclaration
+import com.financialforce.oparser.{ClassTypeDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex}
 import com.nawforce.pkgforce.names.Name
@@ -102,7 +102,8 @@ object IPM extends TriHierarchy {
     loadingPool: ExecutorService
   ) extends TriModule {
 
-    private val types = mutable.Map[Name, TypeDeclaration]()
+    private val lowerNames = mutable.TreeSet[String]()
+    private val types      = mutable.Map[Name, TypeDeclaration]()
 
     loadClasses()
 
@@ -110,13 +111,54 @@ object IPM extends TriHierarchy {
       val namespace = pkg.namespace
       new ApexClassLoader(loadingPool)
         .loadClasses(index.get(ApexNature), pkg.org.issues)
-        .map(
-          docAndType => types.put(Name(docAndType._1.typeName(namespace).toString), docAndType._2)
-        )
+        .foreach { docAndType =>
+          loadClass(docAndType._1.typeName(namespace).toString, docAndType._2)
+        }
+    }
+
+    private def loadClass(name: String, decl: TypeDeclaration): Unit = {
+      lowerNames.add(name.toLowerCase)
+      types.put(Name(name), decl)
+
+      decl match {
+        case outer: ClassTypeDeclaration =>
+          outer.innerTypes.foreach(
+            inner =>
+              inner.id.foreach(id => {
+                val innerName = s"$name.$id"
+                lowerNames.add(name.toLowerCase)
+                types.put(Name(innerName), inner)
+              })
+          )
+        case _ => ()
+      }
     }
 
     def findExactTypeId(name: String): Option[TypeDeclaration] = {
       types.get(Name(name))
+    }
+
+    def fuzzyFindTypeId(name: String): Option[TypeDeclaration] = {
+      if (name.nonEmpty) {
+        val lower = name.toLowerCase
+        lowerNames.rangeFrom(lower).take(1).find(_.startsWith(lower)).flatMap(findExactTypeId)
+      } else {
+        None
+      }
+    }
+
+    def fuzzyFindTypeIds(name: String): Seq[TypeDeclaration] = {
+      if (name.nonEmpty) {
+        val lower = name.toLowerCase
+        lowerNames
+          .rangeFrom(lower)
+          .iterator
+          .filter(_.startsWith(lower))
+          .flatMap(findExactTypeId)
+          .toSeq
+      } else {
+        Seq.empty
+      }
     }
   }
 }
