@@ -9,17 +9,12 @@ import com.nawforce.pkgforce.documents.MetadataDocument
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.SourceData
 
-import java.util.concurrent.Executors
+import java.util.concurrent.ExecutorService
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 
-object ApexClassLoader {
-  private val executors                             = Executors.newFixedThreadPool(2)
-  private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(executors)
-
-  def shutdown(): Unit = {
-    executors.shutdown()
-  }
+final class ApexClassLoader(loadingPool: ExecutorService) {
+  private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(loadingPool)
 
   def loadClasses(
     documents: Iterator[MetadataDocument],
