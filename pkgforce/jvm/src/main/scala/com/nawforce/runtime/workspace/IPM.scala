@@ -71,7 +71,7 @@ object IPM extends TriHierarchy {
     }
 
     def rootModule: Option[Module] = {
-      packages.find(_.modules.nonEmpty).map(_.modules.head)
+      packages.find(_.modules.nonEmpty).map(_.modules.last)
     }
   }
 
@@ -135,30 +135,66 @@ object IPM extends TriHierarchy {
     }
 
     def findExactTypeId(name: String): Option[TypeDeclaration] = {
-      types.get(Name(name))
+      types
+        .get(Name(name))
+        .orElse(baseModules.headOption.flatMap(_.findExactTypeId(name)))
+        .orElse(
+          basePackages.headOption
+            .flatMap(_.orderedModules.headOption.flatMap(_.findExactTypeId(name)))
+        )
     }
 
     def fuzzyFindTypeId(name: String): Option[TypeDeclaration] = {
-      if (name.nonEmpty) {
+      if (name != null && name.nonEmpty) {
         val lower = name.toLowerCase
-        lowerNames.rangeFrom(lower).take(1).find(_.startsWith(lower)).flatMap(findExactTypeId)
+        lowerNames
+          .rangeFrom(lower)
+          .take(1)
+          .find(_.startsWith(lower))
+          .flatMap(name => types.get(Name(name)))
+          .orElse(baseModules.headOption.flatMap(_.fuzzyFindTypeId(name)))
+          .orElse(
+            basePackages.headOption
+              .flatMap(_.orderedModules.headOption.flatMap(_.fuzzyFindTypeId(name)))
+          )
       } else {
         None
       }
     }
 
     def fuzzyFindTypeIds(name: String): Seq[TypeDeclaration] = {
-      if (name.nonEmpty) {
-        val lower = name.toLowerCase
-        lowerNames
-          .rangeFrom(lower)
-          .iterator
-          .filter(_.startsWith(lower))
-          .flatMap(findExactTypeId)
-          .toSeq
+      if (name != null && name.nonEmpty) {
+        val accum = new mutable.HashMap[Name, TypeDeclaration]()
+        accumFuzzyFindTypeIds(name, accum)
+        accum.keys.toSeq.sortBy(_.value.length).flatMap(accum.get)
       } else {
         Seq.empty
       }
+    }
+
+    private def accumFuzzyFindTypeIds(
+      name: String,
+      accum: mutable.Map[Name, TypeDeclaration]
+    ): Unit = {
+      // Accumulate lower layers first
+      if (baseModules.isEmpty) {
+        basePackages.headOption.foreach(
+          _.orderedModules.headOption.foreach(_.accumFuzzyFindTypeIds(name, accum))
+        )
+      } else {
+        baseModules.headOption.foreach(_.accumFuzzyFindTypeIds(name, accum))
+      }
+
+      // Add/Overwrite with this module
+      val lower = name.toLowerCase
+      lowerNames
+        .rangeFrom(lower)
+        .iterator
+        .filter(_.startsWith(lower))
+        .foreach(typeName => {
+          val name = Name(typeName)
+          types.get(name).foreach(accum.put(name, _))
+        })
     }
   }
 }
