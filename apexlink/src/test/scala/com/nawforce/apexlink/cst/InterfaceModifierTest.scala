@@ -188,7 +188,7 @@ class InterfaceModifierTest extends AnyFunSuite with TestHelper {
     typeDeclaration("global interface Dummy {@isTest void foo();}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 24-31: Annotation '@isTest' is not supported on interface methods\n"
+        "Error: line 1 at 24-31: Annotation '@IsTest' is not supported on interface methods\n"
     )
   }
 }

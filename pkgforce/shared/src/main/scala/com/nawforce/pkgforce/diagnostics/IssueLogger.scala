@@ -73,24 +73,16 @@ class CatchingLogger extends IssueLogger {
     }
   }
 }
+class LogEntryContext(val location: Location, val path: PathLike)
 
-sealed trait ParserIssueLogger extends IssueLogger {
-  // Get location for an AST context
-  def location(context: ParserRuleContext): PathLocation
-
-  def logError(context: ParserRuleContext, message: String): Unit = {
-    val l = location(context)
-    log(Issue(l.path, Diagnostic(ERROR_CATEGORY, l.location, message)))
-  }
-
-  def logWarning(context: ParserRuleContext, message: String): Unit = {
-    val l = location(context)
-    log(Issue(l.path, Diagnostic(WARNING_CATEGORY, l.location, message)))
+object LogEntryContext {
+  def apply(parser: CodeParser, context: ParserRuleContext): LogEntryContext = {
+    val pathLocation = parser.getPathLocation(context)
+    new LogEntryContext(pathLocation.location, pathLocation.path)
   }
 }
 
-/** Logger using a specific CodaParser */
-class CodeParserLogger(parser: CodeParser) extends ParserIssueLogger {
+class ModifierLogger extends IssueLogger {
   private var issueLog: ArrayBuffer[Issue] = _
 
   def isEmpty: Boolean = issueLog == null
@@ -101,14 +93,19 @@ class CodeParserLogger(parser: CodeParser) extends ParserIssueLogger {
     issueLog.append(issue)
   }
 
-  override def location(context: ParserRuleContext): PathLocation = {
-    parser.getPathLocation(context)
-  }
-
   def issues: ArraySeq[Issue] = {
     if (isEmpty)
       Issue.emptyArray
     else
       ArraySeq.unsafeWrapArray(issueLog.toArray)
+  }
+
+  def logError(context: LogEntryContext, message: String): Unit = {
+    log(Issue(context.path, Diagnostic(ERROR_CATEGORY, context.location, message)))
+  }
+
+  def logWarning(context: LogEntryContext, message: String): Unit = {
+    val l = context.location
+    log(Issue(context.path, Diagnostic(WARNING_CATEGORY, context.location, message)))
   }
 }
