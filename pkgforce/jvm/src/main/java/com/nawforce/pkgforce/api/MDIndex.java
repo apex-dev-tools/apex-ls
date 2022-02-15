@@ -9,8 +9,11 @@ import com.nawforce.pkgforce.diagnostics.IssuesManager;
 import com.nawforce.pkgforce.path.PathLike;
 import com.nawforce.runtime.platform.Path;
 import com.nawforce.runtime.workspace.IPM;
+import scala.jdk.javaapi.CollectionConverters;
 import scala.jdk.javaapi.OptionConverters;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
 public class MDIndex implements IssuesCollection {
@@ -23,11 +26,25 @@ public class MDIndex implements IssuesCollection {
 
     public MDIndex(PathLike path) {
         index = new IPM.Index(path);
-        rootModule =  OptionConverters.toJava(index.rootModule());
+        rootModule = OptionConverters.toJava(index.rootModule());
     }
 
     public TypeDeclaration findExactTypeId(String name) {
-        return rootModule.flatMap(module -> OptionConverters.toJava(module.findExactTypeId(name))).orElse(null);
+        return rootModule
+                .flatMap(module -> OptionConverters.toJava(module.findExactTypeId(name)))
+                .orElse(null);
+    }
+
+    public TypeDeclaration fuzzyFindTypeId(String name) {
+        return rootModule
+                .flatMap(module -> OptionConverters.toJava(module.fuzzyFindTypeId(name)))
+                .orElse(null);
+    }
+
+    public List<TypeDeclaration> fuzzyFindTypeIds(String name) {
+        return rootModule
+                .map(module -> CollectionConverters.asJava(module.fuzzyFindTypeIds(name)))
+                .orElse(new LinkedList<>());
     }
 
     private IssuesManager issues() {
