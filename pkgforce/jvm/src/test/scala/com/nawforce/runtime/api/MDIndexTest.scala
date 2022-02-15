@@ -14,6 +14,30 @@ class MDIndexTest extends AnyFunSuite {
     FileSystemHelper.run(Map()) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index != null)
+      assert(index.getFilesWithErrors.isEmpty)
+    }
+  }
+
+  test("File with error") {
+    FileSystemHelper.run(Map(
+      "Foo.cls" -> "",
+      "Bar.cls" -> "public class Bar {}"
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index != null)
+      assert(index.getFilesWithErrors.toArray sameElements Array(root.join("Foo.cls").toString))
+    }
+  }
+
+  test("Files with error") {
+    FileSystemHelper.run(Map(
+      "Foo.cls" -> "",
+      "Bar.cls" -> ""
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index != null)
+      assert(index.getFilesWithErrors.toArray sameElements
+        Array(root.join("Bar.cls").toString, root.join("Foo.cls").toString))
     }
   }
 

@@ -11,7 +11,10 @@ import com.nawforce.runtime.platform.Path;
 import com.nawforce.runtime.workspace.IPM;
 import scala.jdk.javaapi.OptionConverters;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class MDIndex implements IssuesCollection {
     private final IPM.Index index;
@@ -23,11 +26,16 @@ public class MDIndex implements IssuesCollection {
 
     public MDIndex(PathLike path) {
         index = new IPM.Index(path);
-        rootModule =  OptionConverters.toJava(index.rootModule());
+        rootModule = OptionConverters.toJava(index.rootModule());
     }
 
     public TypeDeclaration findExactTypeId(String name) {
         return rootModule.flatMap(module -> OptionConverters.toJava(module.findExactTypeId(name))).orElse(null);
+    }
+
+    public List<String> getFilesWithErrors() {
+        return Arrays.stream(issues().issuesForFiles(null, false, 1))
+                .map(Issue::filePath).collect(Collectors.toList());
     }
 
     private IssuesManager issues() {
