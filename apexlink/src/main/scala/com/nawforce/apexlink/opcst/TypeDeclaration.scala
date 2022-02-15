@@ -44,6 +44,18 @@ import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
 import com.nawforce.runtime.platform.OutlineParserLocationOps.{extendLocation, stampLocation}
+import com.nawforce.runtime.platform.OutlineParserModifierOps.{
+  constructorModifiers,
+  classModifiers,
+  interfaceModifiers,
+  enumModifiers,
+  parameterModifiers,
+  fieldModifiers,
+  classMethodModifiers,
+  interfaceMethodModifiers,
+  initializerBlockModifiers,
+  enumConstantModifiers
+}
 
 import java.lang.ref.WeakReference
 import scala.collection.immutable.ArraySeq
@@ -183,7 +195,7 @@ private[opcst] object OutlineParserClassDeclaration {
   ): Option[ClassDeclaration] = {
 
     val modifierResults =
-      ModifierUtils.classModifiers(path, ic.id.get, ic.annotations, ic.modifiers, outer = false)
+      classModifiers(path, ic.id.get, ic.annotations, ic.modifiers, outer = false)
     val thisType = outerType.asInner(ic.id.get.id.contents)
     val rv = OutlineParserClassDeclaration.construct(
       path,
@@ -209,7 +221,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
 
     val thisType = outerType.asInner(ii.id.get.id.contents)
     val modifierResults =
-      ModifierUtils.interfaceModifiers(path, ii.id.get, ii.annotations, ii.modifiers, outer = false)
+      interfaceModifiers(path, ii.id.get, ii.annotations, ii.modifiers, outer = false)
     val rv =
       construct(path, ii, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
@@ -276,7 +288,7 @@ private[opcst] object OutlineParserEnumDeclaration {
     outerType: ThisType
   ): Option[EnumDeclaration] = {
     val modifierResults =
-      ModifierUtils.enumModifiers(path, ie.id.get, ie.annotations, ie.modifiers, outer = false)
+      enumModifiers(path, ie.id.get, ie.annotations, ie.modifiers, outer = false)
     val thisType = outerType.asInner(ie.id.get.id.contents)
     val rv       = construct(ie, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
@@ -329,7 +341,7 @@ private[opcst] object OutlineParserEnumDeclaration {
     isOuter: Boolean
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults = ModifierUtils.enumConstantModifiers()
+    val modifierResults = enumConstantModifiers()
     val vd =
       OutlineParserClassBodyDeclaration.constructVariableDeclarator(id, source, thisType.typeName)
 
@@ -355,7 +367,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
   ): Option[ClassBodyDeclaration] = {
 
     val modifierResults =
-      ModifierUtils.constructorModifiers(path, cd.id, cd.annotations, cd.modifiers)
+      constructorModifiers(path, cd.id, cd.annotations, cd.modifiers)
     val qualifiedName = QualifiedName(cd.qName.qName.map(id => Names(id.id.contents)).toIndexedSeq)
     stampLocation(
       qualifiedName,
@@ -397,14 +409,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults = ModifierUtils.classMethodModifiers(
-      path,
-      md.id,
-      md.annotations,
-      md.modifiers,
-      methodOwnerNature,
-      isOuter
-    )
+    val modifierResults =
+      classMethodModifiers(path, md.id, md.annotations, md.modifiers, methodOwnerNature, isOuter)
 
     val block =
       if (md.blockLocation.isEmpty) None
@@ -449,8 +455,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults =
-      ModifierUtils.interfaceMethodModifiers(path, md.id, md.annotations, md.modifiers)
+    val modifierResults = interfaceMethodModifiers(path, md.id, md.annotations, md.modifiers)
 
     val parameters = md.formalParameterList.formalParameters
       .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
@@ -487,10 +492,9 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults =
-      ModifierUtils.fieldModifiers(path, fd.id, fd.annotations, fd.modifiers, isOuter)
-    val fieldTypeName = TypeReference.construct(fd.typeRef)
-    val vd            = constructVariableDeclarator(fd, source, fieldTypeName, isOuter)
+    val modifierResults = fieldModifiers(path, fd.id, fd.annotations, fd.modifiers, isOuter)
+    val fieldTypeName   = TypeReference.construct(fd.typeRef)
+    val vd              = constructVariableDeclarator(fd, source, fieldTypeName, isOuter)
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, fieldTypeName, vd)
     val location = OPLocation(
@@ -570,7 +574,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults = ModifierUtils.initializerBlockModifiers(i.isStatic)
+    val modifierResults = initializerBlockModifiers(i.isStatic)
     val declaration = ApexInitializerBlock(
       modifierResults,
       OutlineParserBlock
@@ -613,9 +617,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       }
     }
 
-    val modifierResults =
-      ModifierUtils.fieldModifiers(path, pd.id, pd.annotations, pd.modifiers, isOuter)
-    val propertyBlocks = ArraySeq.from(pd.propertyBlocks.flatMap(parsePropertyBlock))
+    val modifierResults = fieldModifiers(path, pd.id, pd.annotations, pd.modifiers, isOuter)
+    val propertyBlocks  = ArraySeq.from(pd.propertyBlocks.flatMap(parsePropertyBlock))
 
     val declaration =
       ApexPropertyDeclaration(
@@ -652,8 +655,7 @@ private[opcst] object OutlineParserFormalParameter {
   ): Option[FormalParameter] = {
 
     val fp = FormalParameter(
-      ModifierUtils
-        .parameterModifiers(path, src.id.get, src.annotations, src.modifiers),
+      parameterModifiers(path, src.id.get, src.annotations, src.modifiers),
       RelativeTypeName(typeContext, TypeReference.construct(src.typeRef.get)),
       OutlineParserId.construct(src.id, source.path)
     )

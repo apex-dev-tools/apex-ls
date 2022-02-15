@@ -15,6 +15,11 @@ import com.nawforce.pkgforce.documents.ClassDocument
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.runtime.parsers.{Source, SourceData}
+import com.nawforce.runtime.platform.OutlineParserModifierOps.{
+  classModifiers,
+  interfaceModifiers,
+  enumModifiers
+}
 
 object OutlineParserFullDeclaration {
 
@@ -55,13 +60,7 @@ object OutlineParserFullDeclaration {
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
 
     val modifierResults =
-      ModifierUtils.classModifiers(
-        cls.path,
-        ctd.id.get,
-        ctd.annotations,
-        ctd.modifiers,
-        outerTypeName.isEmpty
-      )
+      classModifiers(cls.path, ctd.id.get, ctd.annotations, ctd.modifiers, outerTypeName.isEmpty)
 
     val thisType =
       ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
@@ -88,7 +87,7 @@ object OutlineParserFullDeclaration {
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
 
     val modifierResults =
-      ModifierUtils.interfaceModifiers(
+      interfaceModifiers(
         cls.path,
         itd.id.get,
         itd.annotations,
@@ -121,13 +120,7 @@ object OutlineParserFullDeclaration {
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
 
     val modifierResults =
-      ModifierUtils.enumModifiers(
-        cls.path,
-        etd.id.get,
-        etd.annotations,
-        etd.modifiers,
-        outerTypeName.isEmpty
-      )
+      enumModifiers(cls.path, etd.id.get, etd.annotations, etd.modifiers, outerTypeName.isEmpty)
 
     val thisType =
       ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
