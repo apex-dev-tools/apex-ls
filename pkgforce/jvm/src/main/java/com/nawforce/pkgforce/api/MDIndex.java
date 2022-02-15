@@ -9,10 +9,12 @@ import com.nawforce.pkgforce.diagnostics.IssuesManager;
 import com.nawforce.pkgforce.path.PathLike;
 import com.nawforce.runtime.platform.Path;
 import com.nawforce.runtime.workspace.IPM;
+import scala.jdk.javaapi.CollectionConverters;
 import scala.jdk.javaapi.OptionConverters;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -30,7 +32,21 @@ public class MDIndex implements IssuesCollection {
     }
 
     public TypeDeclaration findExactTypeId(String name) {
-        return rootModule.flatMap(module -> OptionConverters.toJava(module.findExactTypeId(name))).orElse(null);
+        return rootModule
+                .flatMap(module -> OptionConverters.toJava(module.findExactTypeId(name)))
+                .orElse(null);
+    }
+
+    public TypeDeclaration fuzzyFindTypeId(String name) {
+        return rootModule
+                .flatMap(module -> OptionConverters.toJava(module.fuzzyFindTypeId(name)))
+                .orElse(null);
+    }
+
+    public List<TypeDeclaration> fuzzyFindTypeIds(String name) {
+        return rootModule
+                .map(module -> CollectionConverters.asJava(module.fuzzyFindTypeIds(name)))
+                .orElse(new LinkedList<>());
     }
 
     public List<String> getFilesWithErrors() {
