@@ -10,6 +10,7 @@ import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.javaapi.CollectionConverters
 
 object CompilerService {
+  var suppressErrors = true
 
   def visitAstFromString(
     source: String,
@@ -87,8 +88,9 @@ object CompilerService {
   }
 
   private def showParserErrorsIfAny(apexCompiler: ApexCompiler): Unit = {
-    apexCompiler.getErrors.asScala.foreach(e => {
-      println(e.getError)
-    })
+    if (!suppressErrors)
+      apexCompiler.getErrors.asScala.foreach(e => {
+        println(e.getError)
+      })
   }
 }
