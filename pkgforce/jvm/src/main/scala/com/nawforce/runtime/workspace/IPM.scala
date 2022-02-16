@@ -196,5 +196,35 @@ object IPM extends TriHierarchy {
           types.get(name).foreach(accum.put(name, _))
         })
     }
+
+    def findTypeIdsByNamespace(namespacePrefix: String): Seq[TypeDeclaration] = {
+      if (namespacePrefix != null) {
+        val accum = new mutable.HashMap[Name, TypeDeclaration]()
+        accumFindTypeIdsByNamespace(namespacePrefix, accum)
+        accum.keys.toSeq.sortBy(_.value.length).flatMap(accum.get)
+      } else {
+        Seq.empty
+      }
+    }
+
+    private def accumFindTypeIdsByNamespace(
+      namespacePrefix: String,
+      accum: mutable.Map[Name, TypeDeclaration]
+    ): Unit = {
+      basePackages.headOption.foreach(
+        _.orderedModules.headOption.foreach(_.accumFindTypeIdsByNamespace(namespacePrefix, accum))
+      )
+
+      val namespaceMatches =
+        if (namespacePrefix.isEmpty)
+          pkg.namespace.isEmpty
+        else
+          pkg.namespace.exists(ns => ns.value.toLowerCase.startsWith(namespacePrefix.toLowerCase))
+
+      if (namespaceMatches) {
+        baseModules.headOption.foreach(_.accumFindTypeIdsByNamespace(namespacePrefix, accum))
+        accum.addAll(types)
+      }
+    }
   }
 }

@@ -49,6 +49,12 @@ public class MDIndex implements IssuesCollection {
                 .orElse(new LinkedList<>());
     }
 
+    public List<TypeDeclaration> findTypeIdsByNamespace(String namespace) {
+        return rootModule
+                .map(module -> CollectionConverters.asJava(module.findTypeIdsByNamespace(namespace)))
+                .orElse(new LinkedList<>());
+    }
+
     public List<String> getFilesWithErrors() {
         return Arrays.stream(issues().issuesForFiles(null, false, 1))
                 .map(Issue::filePath).collect(Collectors.toList());
