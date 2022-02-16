@@ -2,61 +2,45 @@ package com.nawforce.apexlink.opcst
 
 import com.financialforce.oparser.{
   TypeArguments => OPTypeArguments,
+  TypeList => OPTypeList,
   TypeName => OPTypeName,
-  TypeRef => OPTypeReference,
-  TypeList => OPTypeList
+  TypeRef => OPTypeReference
 }
-import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
+import com.nawforce.pkgforce.names.TypeName
 
-import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
+import com.nawforce.apexlink.cst.{
+  CSTTypeArguments,
+  CSTTypeName,
+  CSTTypeReference,
+  TypeReference => CSTTypeReference
+}
 
 private[opcst] object TypeReference {
 
   def construct(tr: OPTypeReference): TypeName = {
-    val arraySubs = tr.arraySubscripts.length
-    val names     = tr.typeNames
-    if (tr.typeNames.head.id.id.lowerCaseContents == "void") TypeNames.Void
-    else createTypeName(decodeName(names.head), names.tail.toSeq).withArraySubscripts(arraySubs)
+    CSTTypeReference.construct(Some(new OutlineParserTypeReference(tr)))
   }
 
-  private def decodeName(name: OPTypeName): TypeName = {
-    val params   = createTypeParams(name.typeArguments)
-    val typeName = getName(name)
-    val encType  = EncodedName(typeName)
-    if (encType.ext.nonEmpty)
-      TypeName(encType.fullName, params, Some(TypeNames.Schema)).intern
-    else
-      TypeName(typeName, params, None).intern
+  private class OutlineParserTypeName(typeName: OPTypeName) extends CSTTypeName {
+    override def typeArguments(): Option[CSTTypeArguments] =
+      typeName.typeArguments.map(new OutlineParserTypeArgument(_))
+    override def isList: Boolean           = typeName.id.id.lowerCaseContents == "list"
+    override def isSet: Boolean            = typeName.id.id.lowerCaseContents == "set"
+    override def isMap: Boolean            = typeName.id.id.lowerCaseContents == "map"
+    override def getIdText: Option[String] = Option(typeName.id.id.contents)
   }
 
-  private def getName(name: OPTypeName): Name = {
-    if (name.id.id.lowerCaseContents == "list") Names.ListName
-    else if (name.id.id.lowerCaseContents == "set") Names.SetName
-    else if (name.id.id.lowerCaseContents == "map") Names.MapName
-    else Option(name.id).map(id => Names(id.id.contents)).getOrElse(Names.Empty)
+  private class OutlineParserTypeReference(typeReference: OPTypeReference)
+      extends CSTTypeReference {
+    override def arraySubscriptsCount(): Int = typeReference.arraySubscripts.length
+    override def typeNames(): ArraySeq[CSTTypeName] =
+      ArraySeq.from(typeReference.typeNames.map(new OutlineParserTypeName(_)))
   }
 
-  private def createTypeParams(typeArguments: Option[OPTypeArguments]): Seq[TypeName] = {
-    typeArguments
-      .flatMap(a => a.typeList)
-      .map(tl => tl.typeRefs.toSeq)
-      .getOrElse(Seq())
-      .map(construct)
-  }
-
-  @tailrec
-  private def createTypeName(outer: TypeName, names: Seq[OPTypeName]): TypeName = {
-    names match {
-      case Nil => outer
-      case hd +: tl =>
-        createTypeName(
-          TypeName(getName(hd), createTypeParams(hd.typeArguments), Some(outer)).intern,
-          tl
-        )
-    }
+  private class OutlineParserTypeArgument(typeArguments: OPTypeArguments) extends CSTTypeArguments {
+    override def typeRefs(): ArraySeq[CSTTypeReference] =
+      ArraySeq.from(typeArguments.typeList.get.typeRefs.map(new OutlineParserTypeReference(_)))
   }
 }
 
