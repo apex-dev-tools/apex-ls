@@ -14,11 +14,13 @@ import com.financialforce.oparser.{
   Annotation,
   ClassTypeDeclaration,
   ConstructorDeclaration,
+  EnumTypeDeclaration,
   FieldDeclaration,
   FormalParameter,
   FormalParameterList,
   Id,
   IdToken,
+  InterfaceTypeDeclaration,
   Location,
   MethodDeclaration,
   Modifier,
@@ -26,7 +28,8 @@ import com.financialforce.oparser.{
   QualifiedName,
   TypeDeclaration,
   TypeList,
-  TypeName
+  TypeName,
+  TypeRef
 }
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.{Source, SourceData}
@@ -40,7 +43,7 @@ class SFParser(val source: Source) {
   private val visitor                                  = new TopLevelVisitor()
   private var typeDeclaration: Option[TypeDeclaration] = None
 
-  def parseClass(): Option[TypeDeclaration] = {
+  def parse: Option[TypeDeclaration] = {
     parse()
   }
 
@@ -68,15 +71,23 @@ class SFParser(val source: Source) {
 
   private def getTypeDeclaration(root: Compilation, path: String): Option[TypeDeclaration] = {
 
-    //TODO: figure out ctd location? Check if we can use root.bodyLoc
-    val userClass = classOf[UserClass]
+    val userClass     = classOf[UserClass]
+    val userInterface = classOf[UserInterface]
+    val userEnum      = classOf[UserEnum]
+    val typeInfo      = root.getDefiningType
+    //TODO: figure out td location? Check if we can use root.bodyLoc
     root.getClass match {
-      case `userClass` => {
-        val typeInfo = root.getDefiningType
-        val ctd      = getClasTypesDeclaration(path, typeInfo)
+      case `userClass` =>
+        val ctd = getClasTypesDeclaration(path, typeInfo)
         getInnerTypes(root).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd.innerTypes.append)
         return Some(ctd)
-      }
+      case `userInterface` =>
+        val itd = getInterfaceDeclaration(path, typeInfo)
+        return Some(itd)
+      case `userEnum` =>
+        val etd = getEnumTypeDeclaration(path, typeInfo)
+        return Some(etd)
+      case _ =>
     }
     None
   }
@@ -91,54 +102,113 @@ class SFParser(val source: Source) {
       .toArray
   }
 
+  private def getEnumTypeDeclaration(path: String, typeInfo: TypeInfo): EnumTypeDeclaration = {
+    val etd = new EnumTypeDeclaration(path)
+    //TODO: annotations
+    val annotation = toAnnotations()
+    val modifiers  = toModifiers(typeInfo.getModifiers)
+    val constants  = constructFieldDeclarations(typeInfo).map(_.id)
+
+    etd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    modifiers.foreach(etd.add)
+    annotation.foreach(etd.add)
+    constants.foreach(etd.constants.append)
+    etd
+  }
+
+  private def getInterfaceDeclaration(
+    path: String,
+    typeInfo: TypeInfo
+  ): InterfaceTypeDeclaration = {
+    val itd = new InterfaceTypeDeclaration(path)
+    //TODO: annotations
+    val annotation = toAnnotations()
+    val methods    = constructMethodDeclaration(typeInfo)
+    val modifiers  = toModifiers(typeInfo.getModifiers)
+
+    itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    //We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
+    modifiers.filterNot(_.text.equalsIgnoreCase("interface")).foreach(itd.add)
+    //The parser returns access and the abstract modifier for each method
+    // so we can remove them for interface declarations
+    methods
+      .map(x => {
+        x.modifiers.clear()
+        x
+      })
+      .foreach(itd.add)
+    annotation.foreach(itd.add)
+    itd.extendsTypeList = constructInterfaceTypeList(typeInfo)
+    itd
+  }
+
   private def getClasTypesDeclaration(path: String, typeInfo: TypeInfo): ClassTypeDeclaration = {
     val ctd = new ClassTypeDeclaration(path)
     //TODO: annotations, initialization block
 
-    val constructors =
-      getUserDefinedMethods(typeInfo.methods().getConstructors).map(toConstructorDeclaration)
+    val constructors = constructConstructorDeclaration(typeInfo)
+    val methods      = constructMethodDeclaration(typeInfo)
+    val annotation   = toAnnotations()
+    val fields       = constructFieldDeclarations(typeInfo)
+    val properties   = constructPropertyDeclaration(typeInfo)
+    val modifiers    = toModifiers(typeInfo.getModifiers)
 
-    val methods = getUserDefinedMethods(typeInfo.methods.getStaticsAndInstance)
-      .filter(x => x.getGenerated.isUserDefined)
-      .map(toMethodDeclaration)
+    ctd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    constructors.foreach(ctd.constructors.append)
+    modifiers.foreach(ctd.add)
+    methods.foreach(ctd.add)
+    annotation.foreach(ctd.add)
+    properties.foreach(ctd.properties.append)
+    fields.foreach(ctd.fields.append)
+    ctd.extendsTypeRef = constructExtendsTypeRef(typeInfo)
+    ctd.implementsTypeList = constructInterfaceTypeList(typeInfo)
+    ctd
+  }
 
-    val fields =
-      typeInfo.fields
-        .all()
-        .asScala
-        .filter(f => f.getMemberType == Member.Type.FIELD)
-        .map(toField)
-
-    val properties =
-      typeInfo
-        .fields()
-        .all()
-        .asScala
-        .filter(f => f.getMemberType == Member.Type.PROPERTY)
-        .map(toProperties)
-    val modifiers = toModifiers(typeInfo.getModifiers)
-
+  private def constructInterfaceTypeList(typeInfo: TypeInfo): Option[TypeList] = {
     //Since SuperTypes and Interface wont resolve in compile stage we can use the typeRef instead
-    val superType = toTypeRef(typeInfo.getCodeUnitDetails.getSuperTypeRef.toScala)
-    val interfaceRef = {
+
+    val interfaceRef =
       typeInfo.getCodeUnitDetails.getInterfaceTypeRefs.asScala.map(x => toTypeRef(Some(x)))
-    }
+
     val tl                            = new TypeList
     var interfaceTl: Option[TypeList] = None
     if (interfaceRef.nonEmpty) {
       interfaceRef.flatten.foreach(tl.add)
       interfaceTl = Some(tl)
     }
+    interfaceTl
+  }
 
-    ctd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    constructors.foreach(ctd.constructors.append)
-    modifiers.foreach(ctd.add)
-    methods.foreach(ctd.add)
-    properties.foreach(ctd.properties.append)
-    fields.foreach(ctd.fields.append)
-    ctd.extendsTypeRef = superType
-    ctd.implementsTypeList = interfaceTl
-    ctd
+  private def constructExtendsTypeRef(typeInfo: TypeInfo): Option[TypeRef] = {
+    //Since SuperTypes and Interface wont resolve in compile stage we can use the typeRef instead
+    toTypeRef(typeInfo.getCodeUnitDetails.getSuperTypeRef.toScala)
+  }
+
+  private def constructPropertyDeclaration(typeInfo: TypeInfo): Iterable[PropertyDeclaration] = {
+    typeInfo
+      .fields()
+      .all()
+      .asScala
+      .filter(f => f.getMemberType == Member.Type.PROPERTY)
+      .map(toProperties)
+  }
+
+  private def constructFieldDeclarations(typeInfo: TypeInfo): Iterable[FieldDeclaration] = {
+    typeInfo.fields
+      .all()
+      .asScala
+      .filter(f => f.getMemberType == Member.Type.FIELD)
+      .map(toField)
+  }
+
+  private def constructMethodDeclaration(typeInfo: TypeInfo): Array[MethodDeclaration] = {
+    getUserDefinedMethods(typeInfo.methods.getStaticsAndInstance)
+      .map(toMethodDeclaration)
+  }
+
+  private def constructConstructorDeclaration(typeInfo: TypeInfo): Array[ConstructorDeclaration] = {
+    getUserDefinedMethods(typeInfo.methods().getConstructors).map(toConstructorDeclaration)
   }
 
   private def getUserDefinedMethods(from: java.util.Collection[MethodInfo]): Array[MethodInfo] = {
@@ -211,7 +281,7 @@ class SFParser(val source: Source) {
     from
       .all()
       .asScala
-      .filter(mod => mod.getApexName != "explicitStatementExecuted")
+      .filterNot(mod => mod.getApexName == "explicitStatementExecuted")
       .map(x => Modifier(toIdToken(x.getApexName, from.getLoc)))
       .toArray
   }
