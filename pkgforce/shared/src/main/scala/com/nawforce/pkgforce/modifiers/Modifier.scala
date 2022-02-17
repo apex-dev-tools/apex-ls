@@ -14,7 +14,7 @@
 package com.nawforce.pkgforce.modifiers
 
 import com.nawforce.apexparser.ApexParser.{IdContext, ModifierContext, PropertyBlockContext}
-import com.nawforce.pkgforce.diagnostics.CodeParserLogger
+import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.runtime.parsers.CodeParser
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
@@ -231,17 +231,17 @@ object ApexModifiers {
       TEST_VISIBLE_ANNOTATION
     )
 
+  private val staticModifier: ArraySeq[Modifier] = ArraySeq(STATIC_MODIFIER)
+
   /* Convert parser contexts to Modifiers */
   def asModifiers(
-    modifierContexts: ArraySeq[ModifierContext],
-    allow: Set[Modifier],
-    pluralName: String,
-    logger: CodeParserLogger,
-    idContext: ParserRuleContext
+    modifiers: ArraySeq[Modifier],
+    logger: ModifierLogger,
+    idContext: LogEntryContext
   ): ArraySeq[Modifier] = {
 
-    val modifiers = toModifiers(modifierContexts, allow, pluralName, logger)
-    if (modifiers.size == modifierContexts.size) {
+    val distinctModifiers = modifiers.distinct
+    if (modifiers.size != distinctModifiers.size) {
       val duplicates = modifiers.duplicates(identity)
       if (duplicates.nonEmpty) {
         logger.logError(
@@ -250,15 +250,14 @@ object ApexModifiers {
         )
       }
     }
-    modifiers.distinct
+    distinctModifiers
   }
 
-  private def toModifiers(
-    modifierContexts: ArraySeq[ModifierContext],
-    allow: Set[Modifier],
-    pluralName: String,
-    logger: CodeParserLogger
-  ): ArraySeq[Modifier] = {
+  def toModifiers(
+    parser: CodeParser,
+    modifierContexts: ArraySeq[ModifierContext]
+  ): ArraySeq[(Modifier, LogEntryContext, String)] = {
+
     modifierContexts.flatMap(modifierContext => {
       val annotation = CodeParser.toScala(modifierContext.annotation())
       val modifiers =
@@ -272,23 +271,43 @@ object ApexModifiers {
           )
           .getOrElse(ModifierOps(CodeParser.getText(modifierContext).toLowerCase, ""))
 
-      val allowable = modifiers.partition(allow.contains)
-      if (allowable._2.nonEmpty) {
-        val modifierType = if (annotation.nonEmpty) "Annotation" else "Modifier"
-        logger.logError(
-          modifierContext,
-          s"$modifierType '${CodeParser.getText(modifierContext)}' is not supported on $pluralName"
-        )
-      }
-      allowable._1
+      modifiers.map(
+        m =>
+          (
+            m,
+            LogEntryContext(parser, modifierContext),
+            if (annotation.nonEmpty) "Annotation" else "Modifier"
+          )
+      )
     })
+  }
+
+  def allowableModifiers(
+    modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
+    allow: Set[Modifier],
+    pluralName: String,
+    logger: ModifierLogger
+  ): ArraySeq[Modifier] = {
+
+    val allowable = modifiers.partition {
+      case (modifier, _, _) => allow.contains(modifier)
+    }
+
+    allowable._2.foreach {
+      case (modifier, logEntryContext, modifierType) =>
+        logger.logError(
+          logEntryContext,
+          s"${modifierType} '${modifier.name}' is not supported on $pluralName"
+        )
+    }
+    allowable._1.map(_._1)
   }
 
   def deduplicateVisibility(
     modifiers: ArraySeq[Modifier],
     pluralName: String,
-    logger: CodeParserLogger,
-    idContext: ParserRuleContext
+    logger: ModifierLogger,
+    idContext: LogEntryContext
   ): ArraySeq[Modifier] = {
     if (modifiers.intersect(visibilityModifiers).size > 1) {
       if (logger.isEmpty)
@@ -305,8 +324,8 @@ object ApexModifiers {
   private def deduplicateSharing(
     modifiers: ArraySeq[Modifier],
     pluralName: String,
-    logger: CodeParserLogger,
-    idContext: ParserRuleContext
+    logger: ModifierLogger,
+    idContext: LogEntryContext
   ): ArraySeq[Modifier] = {
     if (modifiers.intersect(sharingModifiers).size > 1) {
       if (logger.isEmpty)
@@ -314,7 +333,7 @@ object ApexModifiers {
           idContext,
           s"Only one sharing modifier from 'with sharing', 'without sharing' & 'inherited sharing' should be used on $pluralName"
         )
-      WITHOUT_SHARING_MODIFIER +: modifiers.diff(visibilityModifiers)
+      WITHOUT_SHARING_MODIFIER +: modifiers.diff(sharingModifiers)
     } else {
       modifiers
     }
@@ -323,8 +342,8 @@ object ApexModifiers {
   private def deduplicate(
     modifiers: ArraySeq[Modifier],
     pluralName: String,
-    logger: CodeParserLogger,
-    idContext: ParserRuleContext
+    logger: ModifierLogger,
+    idContext: LogEntryContext
   ): ArraySeq[Modifier] = {
     deduplicateVisibility(
       deduplicateSharing(modifiers, pluralName, logger, idContext),
@@ -340,14 +359,23 @@ object ApexModifiers {
     outer: Boolean,
     idContext: IdContext
   ): ModifierResults = {
+    val logger = new ModifierLogger()
+    val mods   = toModifiers(parser, modifierContexts)
+    classModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
+  }
 
-    val logger = new CodeParserLogger(parser)
-    val mods = deduplicate(
-      asModifiers(modifierContexts, ClassModifiersAndAnnotations, "classes", logger, idContext),
-      "classes",
-      logger,
-      idContext
-    )
+  def classModifiers(
+    logger: ModifierLogger,
+    modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
+    outer: Boolean,
+    idContext: LogEntryContext
+  ): ModifierResults = {
+
+    val allowedModifiers =
+      allowableModifiers(modifiers, ClassModifiersAndAnnotations, "classes", logger)
+
+    val mods =
+      deduplicate(asModifiers(allowedModifiers, logger, idContext), "classes", logger, idContext)
 
     val results =
       if (logger.isEmpty) {
@@ -383,15 +411,22 @@ object ApexModifiers {
     idContext: IdContext
   ): ModifierResults = {
 
-    val logger = new CodeParserLogger(parser)
+    val logger = new ModifierLogger()
+    val mods   = toModifiers(parser, modifierContexts)
+    interfaceModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
+  }
+
+  def interfaceModifiers(
+    logger: ModifierLogger,
+    modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
+    outer: Boolean,
+    idContext: LogEntryContext
+  ): ModifierResults = {
+
+    val allowedModifiers =
+      allowableModifiers(modifiers, InterfaceModifiersAndAnnotations, "interfaces", logger)
     val mods = deduplicateVisibility(
-      asModifiers(
-        modifierContexts,
-        InterfaceModifiersAndAnnotations,
-        "interfaces",
-        logger,
-        idContext
-      ),
+      asModifiers(allowedModifiers, logger, idContext),
       "interfaces",
       logger,
       idContext
@@ -425,9 +460,23 @@ object ApexModifiers {
     idContext: IdContext
   ): ModifierResults = {
 
-    val logger = new CodeParserLogger(parser)
+    val logger = new ModifierLogger()
+    val mods   = toModifiers(parser, modifierContexts)
+    enumModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
+  }
+
+  def enumModifiers(
+    logger: ModifierLogger,
+    modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
+    outer: Boolean,
+    idContext: LogEntryContext
+  ): ModifierResults = {
+
+    val allowedModifiers =
+      allowableModifiers(modifiers, TypeModifiersAndAnnotations, "enums", logger)
+
     val mods = deduplicateVisibility(
-      asModifiers(modifierContexts, TypeModifiersAndAnnotations, "enums", logger, idContext),
+      asModifiers(allowedModifiers, logger, idContext),
       "enums",
       logger,
       idContext
@@ -457,18 +506,19 @@ object ApexModifiers {
     idContext: PropertyBlockContext
   ): ModifierResults = {
 
-    val logger = new CodeParserLogger(parser)
+    val logger = new ModifierLogger()
+
+    val modifiers = toModifiers(parser, modifierContexts)
+    val allowedModifiers =
+      allowableModifiers(modifiers, visibilityModifiers.toSet, "property set/get", logger)
+
+    val logContext = LogEntryContext(parser, idContext)
+
     val mods = deduplicateVisibility(
-      asModifiers(
-        modifierContexts,
-        visibilityModifiers.toSet,
-        "property set/get",
-        logger,
-        idContext
-      ),
+      asModifiers(allowedModifiers, logger, logContext),
       "property set/get",
       logger,
-      idContext
+      logContext
     )
     ModifierResults(mods, logger.issues).intern
   }
@@ -478,16 +528,22 @@ object ApexModifiers {
     modifierContexts: ArraySeq[ModifierContext],
     context: ParserRuleContext
   ): ModifierResults = {
+    val logger = new ModifierLogger()
+    val mods   = toModifiers(parser, modifierContexts)
+    constructorModifiers(logger, mods, LogEntryContext(parser, context))
+  }
 
-    val logger = new CodeParserLogger(parser)
+  def constructorModifiers(
+    logger: ModifierLogger,
+    modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
+    context: LogEntryContext
+  ): ModifierResults = {
+
+    val allowedModifiers =
+      allowableModifiers(modifiers, legalConstructorModifiersAndAnnotations, "constructors", logger)
+
     val mods = deduplicateVisibility(
-      asModifiers(
-        modifierContexts,
-        legalConstructorModifiersAndAnnotations,
-        "constructors",
-        logger,
-        context
-      ),
+      asModifiers(allowedModifiers, logger, context),
       "constructors",
       logger,
       context
@@ -508,16 +564,22 @@ object ApexModifiers {
     modifierContexts: ArraySeq[ModifierContext],
     context: ParserRuleContext
   ): ModifierResults = {
+    val logger = new ModifierLogger()
+    val mods   = toModifiers(parser, modifierContexts)
+    parameterModifiers(logger, mods, LogEntryContext(parser, context))
+  }
 
-    val logger = new CodeParserLogger(parser)
+  def parameterModifiers(
+    logger: ModifierLogger,
+    modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
+    context: LogEntryContext
+  ): ModifierResults = {
+
+    val allowedModifiers =
+      allowableModifiers(modifiers, legalParameterModifiersAndAnnotations, "parameters", logger)
+
     val mods = deduplicateVisibility(
-      asModifiers(
-        modifierContexts,
-        legalParameterModifiersAndAnnotations,
-        "parameters",
-        logger,
-        context
-      ),
+      asModifiers(allowedModifiers, logger, context),
       "parameters",
       logger,
       context
@@ -532,18 +594,20 @@ object ApexModifiers {
     context: ParserRuleContext
   ): ModifierResults = {
 
-    val logger = new CodeParserLogger(parser)
+    val logger = new ModifierLogger()
+
+    val modifiers = toModifiers(parser, modifierContexts)
+
+    val allowedModifiers =
+      allowableModifiers(modifiers, legalCatchModifiersAndAnnotations, "catch variables", logger)
+
+    val logContext = LogEntryContext(parser, context)
+
     val mods = deduplicateVisibility(
-      asModifiers(
-        modifierContexts,
-        legalCatchModifiersAndAnnotations,
-        "catch variables",
-        logger,
-        context
-      ),
+      asModifiers(allowedModifiers, logger, logContext),
       "catch variables",
       logger,
-      context
+      logContext
     )
 
     ModifierResults(mods, logger.issues).intern
@@ -556,21 +620,37 @@ object ApexModifiers {
     isTrigger: Boolean
   ): ModifierResults = {
 
-    val logger = new CodeParserLogger(parser)
-    val mods = deduplicateVisibility(
-      asModifiers(
-        modifierContexts,
+    val logger = new ModifierLogger()
+
+    val modifiers = toModifiers(parser, modifierContexts)
+
+    val allowedModifiers =
+      allowableModifiers(
+        modifiers,
         if (isTrigger) legalTriggerLocalVarsModifiersAndAnnotations
         else legalLocalVarsModifiersAndAnnotations,
         "local variables",
-        logger,
-        context
-      ),
+        logger
+      )
+
+    val logContext = LogEntryContext(parser, context)
+
+    val mods = deduplicateVisibility(
+      asModifiers(allowedModifiers, logger, logContext),
       "local variables",
       logger,
-      context
+      logContext
     )
 
     ModifierResults(mods, logger.issues).intern
   }
+
+  def initializerBlockModifiers(isStatic: Boolean): ModifierResults = {
+    val mods = if (isStatic) staticModifier else ArraySeq.empty
+
+    ModifierResults(mods, ArraySeq())
+  }
+
+  def enumConstantModifiers(): ModifierResults =
+    ModifierResults(ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER), ArraySeq())
 }

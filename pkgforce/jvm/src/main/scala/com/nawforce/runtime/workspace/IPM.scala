@@ -3,14 +3,15 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.financialforce.oparser.{ClassTypeDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex}
 import com.nawforce.pkgforce.names.Name
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 
+import java.util.concurrent.{ExecutorService, Executors}
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
@@ -31,12 +32,14 @@ object IPM extends TriHierarchy {
 
     override val packages: ArraySeq[Package] = {
 
+      val loadingPool = Executors.newFixedThreadPool(2)
+
       def createModule(
         pkg: Package,
         index: DocumentIndex,
         dependencies: ArraySeq[Module]
       ): Module = {
-        new Module(pkg, index, dependencies)
+        new Module(pkg, index, dependencies, loadingPool)
       }
 
       val logger = new CatchingLogger
@@ -56,6 +59,8 @@ object IPM extends TriHierarchy {
           )
         })
 
+      loadingPool.shutdown()
+
       // If no unmanaged, create it
       val unmanaged =
         if (declared.isEmpty || declared.lastOption.exists(_.namespace.nonEmpty))
@@ -66,7 +71,7 @@ object IPM extends TriHierarchy {
     }
 
     def rootModule: Option[Module] = {
-      packages.find(_.modules.nonEmpty).map(_.modules.head)
+      packages.find(_.modules.nonEmpty).map(_.modules.last)
     }
   }
 
@@ -93,24 +98,133 @@ object IPM extends TriHierarchy {
   class Module(
     override val pkg: Package,
     override val index: DocumentIndex,
-    override val dependents: ArraySeq[Module]
+    override val dependents: ArraySeq[Module],
+    loadingPool: ExecutorService
   ) extends TriModule {
 
-    private val types = mutable.Map[Name, TypeDeclaration]()
+    private val lowerNames = mutable.TreeSet[String]()
+    private val types      = mutable.Map[Name, TypeDeclaration]()
 
     loadClasses()
 
     private def loadClasses(): Unit = {
       val namespace = pkg.namespace
-      ApexClassLoader
+      new ApexClassLoader(loadingPool)
         .loadClasses(index.get(ApexNature), pkg.org.issues)
-        .map(
-          docAndType => types.put(Name(docAndType._1.typeName(namespace).toString), docAndType._2)
-        )
+        .foreach { docAndType =>
+          loadClass(docAndType._1.typeName(namespace).toString, docAndType._2)
+        }
+    }
+
+    private def loadClass(name: String, decl: TypeDeclaration): Unit = {
+      lowerNames.add(name.toLowerCase)
+      types.put(Name(name), decl)
+
+      decl match {
+        case outer: ClassTypeDeclaration =>
+          outer.innerTypes.foreach(
+            inner =>
+              inner.id.foreach(id => {
+                val innerName = s"$name.$id"
+                lowerNames.add(name.toLowerCase)
+                types.put(Name(innerName), inner)
+              })
+          )
+        case _ => ()
+      }
     }
 
     def findExactTypeId(name: String): Option[TypeDeclaration] = {
-      types.get(Name(name))
+      types
+        .get(Name(name))
+        .orElse(baseModules.headOption.flatMap(_.findExactTypeId(name)))
+        .orElse(
+          basePackages.headOption
+            .flatMap(_.orderedModules.headOption.flatMap(_.findExactTypeId(name)))
+        )
+    }
+
+    def fuzzyFindTypeId(name: String): Option[TypeDeclaration] = {
+      if (name != null && name.nonEmpty) {
+        val lower = name.toLowerCase
+        lowerNames
+          .rangeFrom(lower)
+          .take(1)
+          .find(_.startsWith(lower))
+          .flatMap(name => types.get(Name(name)))
+          .orElse(baseModules.headOption.flatMap(_.fuzzyFindTypeId(name)))
+          .orElse(
+            basePackages.headOption
+              .flatMap(_.orderedModules.headOption.flatMap(_.fuzzyFindTypeId(name)))
+          )
+      } else {
+        None
+      }
+    }
+
+    def fuzzyFindTypeIds(name: String): Seq[TypeDeclaration] = {
+      if (name != null && name.nonEmpty) {
+        val accum = new mutable.HashMap[Name, TypeDeclaration]()
+        accumFuzzyFindTypeIds(name, accum)
+        accum.keys.toSeq.sortBy(_.value.length).flatMap(accum.get)
+      } else {
+        Seq.empty
+      }
+    }
+
+    private def accumFuzzyFindTypeIds(
+      name: String,
+      accum: mutable.Map[Name, TypeDeclaration]
+    ): Unit = {
+      // Accumulate lower layers first
+      if (baseModules.isEmpty) {
+        basePackages.headOption.foreach(
+          _.orderedModules.headOption.foreach(_.accumFuzzyFindTypeIds(name, accum))
+        )
+      } else {
+        baseModules.headOption.foreach(_.accumFuzzyFindTypeIds(name, accum))
+      }
+
+      // Add/Overwrite with this module
+      val lower = name.toLowerCase
+      lowerNames
+        .rangeFrom(lower)
+        .iterator
+        .filter(_.startsWith(lower))
+        .foreach(typeName => {
+          val name = Name(typeName)
+          types.get(name).foreach(accum.put(name, _))
+        })
+    }
+
+    def findTypeIdsByNamespace(namespacePrefix: String): Seq[TypeDeclaration] = {
+      if (namespacePrefix != null) {
+        val accum = new mutable.HashMap[Name, TypeDeclaration]()
+        accumFindTypeIdsByNamespace(namespacePrefix, accum)
+        accum.keys.toSeq.sortBy(_.value.length).flatMap(accum.get)
+      } else {
+        Seq.empty
+      }
+    }
+
+    private def accumFindTypeIdsByNamespace(
+      namespacePrefix: String,
+      accum: mutable.Map[Name, TypeDeclaration]
+    ): Unit = {
+      basePackages.headOption.foreach(
+        _.orderedModules.headOption.foreach(_.accumFindTypeIdsByNamespace(namespacePrefix, accum))
+      )
+
+      val namespaceMatches =
+        if (namespacePrefix.isEmpty)
+          pkg.namespace.isEmpty
+        else
+          pkg.namespace.exists(ns => ns.value.toLowerCase.startsWith(namespacePrefix.toLowerCase))
+
+      if (namespaceMatches) {
+        baseModules.headOption.foreach(_.accumFindTypeIdsByNamespace(namespacePrefix, accum))
+        accum.addAll(types)
+      }
     }
   }
 }
