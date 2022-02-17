@@ -19,7 +19,7 @@ class SFParserTest extends AnyFunSuite {
     val content =
       """
         | public abstract class Dummy extends Bar implements Baz, Boo{
-
+        |   @TestVisible
         |   private Foo f = new Foo();
         |   public string prop {get; set;}
         |   public static final String s = 's';

@@ -2,7 +2,7 @@ package com.nawforce.runtime.sfparser
 
 import apex.jorje.semantic.ast.compilation.{AnonymousClass, _}
 import apex.jorje.semantic.ast.member.Parameter
-import apex.jorje.semantic.ast.modifier.ModifierGroup
+import apex.jorje.semantic.ast.modifier.{ModifierGroup, ModifierGroupBuilder}
 import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
 import apex.jorje.semantic.compiler.parser.ParserEngine
 import apex.jorje.semantic.symbol.`type`.TypeInfo
@@ -35,6 +35,7 @@ import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.{Source, SourceData}
 import org.apache.commons.lang3.reflect.FieldUtils
 
+import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
@@ -103,15 +104,13 @@ class SFParser(val source: Source) {
   }
 
   private def getEnumTypeDeclaration(path: String, typeInfo: TypeInfo): EnumTypeDeclaration = {
-    val etd = new EnumTypeDeclaration(path)
-    //TODO: annotations
-    val annotation = toAnnotations()
-    val modifiers  = toModifiers(typeInfo.getModifiers)
-    val constants  = constructFieldDeclarations(typeInfo).map(_.id)
+    val etd                     = new EnumTypeDeclaration(path)
+    val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
+    val constants               = constructFieldDeclarations(typeInfo).map(_.id)
 
     etd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    modifiers.foreach(etd.add)
-    annotation.foreach(etd.add)
+    modifiersAndAnnotations._1.foreach(etd.add)
+    modifiersAndAnnotations._2.foreach(etd.add)
     constants.foreach(etd.constants.append)
     etd
   }
@@ -120,16 +119,14 @@ class SFParser(val source: Source) {
     path: String,
     typeInfo: TypeInfo
   ): InterfaceTypeDeclaration = {
-    val itd = new InterfaceTypeDeclaration(path)
-    //TODO: annotations
-    val annotation = toAnnotations()
-    val methods    = constructMethodDeclaration(typeInfo)
-    val modifiers  = toModifiers(typeInfo.getModifiers)
+    val itd                     = new InterfaceTypeDeclaration(path)
+    val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
+    val methods                 = constructMethodDeclaration(typeInfo)
 
     itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     //We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
-    modifiers.filterNot(_.text.equalsIgnoreCase("interface")).foreach(itd.add)
-    //The parser returns access and the abstract modifier for each method
+    modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).foreach(itd.add)
+    //The parser returns abstract and access modifiers for each method
     // so we can remove them for interface declarations
     methods
       .map(x => {
@@ -137,27 +134,26 @@ class SFParser(val source: Source) {
         x
       })
       .foreach(itd.add)
-    annotation.foreach(itd.add)
+    modifiersAndAnnotations._2.foreach(itd.add)
     itd.extendsTypeList = constructInterfaceTypeList(typeInfo)
     itd
   }
 
   private def getClasTypesDeclaration(path: String, typeInfo: TypeInfo): ClassTypeDeclaration = {
     val ctd = new ClassTypeDeclaration(path)
-    //TODO: annotations, initialization block
+    //TODO: initialization block
 
-    val constructors = constructConstructorDeclaration(typeInfo)
-    val methods      = constructMethodDeclaration(typeInfo)
-    val annotation   = toAnnotations()
-    val fields       = constructFieldDeclarations(typeInfo)
-    val properties   = constructPropertyDeclaration(typeInfo)
-    val modifiers    = toModifiers(typeInfo.getModifiers)
+    val constructors            = constructConstructorDeclaration(typeInfo)
+    val methods                 = constructMethodDeclaration(typeInfo)
+    val fields                  = constructFieldDeclarations(typeInfo)
+    val properties              = constructPropertyDeclaration(typeInfo)
+    val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
     ctd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     constructors.foreach(ctd.constructors.append)
-    modifiers.foreach(ctd.add)
+    modifiersAndAnnotations._1.foreach(ctd.add)
+    modifiersAndAnnotations._2.foreach(ctd.add)
     methods.foreach(ctd.add)
-    annotation.foreach(ctd.add)
     properties.foreach(ctd.properties.append)
     fields.foreach(ctd.fields.append)
     ctd.extendsTypeRef = constructExtendsTypeRef(typeInfo)
@@ -203,31 +199,36 @@ class SFParser(val source: Source) {
   }
 
   private def constructMethodDeclaration(typeInfo: TypeInfo): Array[MethodDeclaration] = {
-    getUserDefinedMethods(typeInfo.methods.getStaticsAndInstance)
+    typeInfo.methods.getStaticsAndInstance
+      .filter(_.getGenerated.isUserDefined)
       .map(toMethodDeclaration)
+      .toArray
   }
 
   private def constructConstructorDeclaration(typeInfo: TypeInfo): Array[ConstructorDeclaration] = {
-    getUserDefinedMethods(typeInfo.methods().getConstructors).map(toConstructorDeclaration)
-  }
-
-  private def getUserDefinedMethods(from: java.util.Collection[MethodInfo]): Array[MethodInfo] = {
-    from.asScala.filter(_.getGenerated.isUserDefined).toArray
+    typeInfo
+      .methods()
+      .getConstructors
+      .filter(_.getGenerated.isUserDefined)
+      .map(toConstructorDeclaration)
+      .toArray
   }
 
   private def toProperties(from: FieldInfo): PropertyDeclaration = {
+    val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     new PropertyDeclaration(
-      toAnnotations().to(ArrayBuffer),
-      toModifiers(from.getModifiers).to(ArrayBuffer),
+      modifiersAndAnnotations._2,
+      modifiersAndAnnotations._1,
       toTypeRef(from.getType),
       toId(from.getName, from.getLoc)
     )
   }
 
   private def toField(from: FieldInfo): FieldDeclaration = {
+    val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     val fd = FieldDeclaration(
-      toAnnotations().to(ArrayBuffer),
-      toModifiers(from.getModifiers).to(ArrayBuffer),
+      modifiersAndAnnotations._2,
+      modifiersAndAnnotations._1,
       toTypeRef(from.getType),
       toId(from.getName, from.getLoc)
     )
@@ -236,9 +237,10 @@ class SFParser(val source: Source) {
   }
 
   private def toMethodDeclaration(from: MethodInfo): MethodDeclaration = {
+    val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     MethodDeclaration(
-      toAnnotations().to(ArrayBuffer),
-      toModifiers(from.getModifiers).to(ArrayBuffer),
+      modifiersAndAnnotations._2,
+      modifiersAndAnnotations._1,
       toTypeRef(from.getReturnType),
       toId(from.getCanonicalName, from.getLoc),
       toFormalParameterList(from.getParameters)
@@ -247,9 +249,10 @@ class SFParser(val source: Source) {
   }
 
   private def toConstructorDeclaration(from: MethodInfo): ConstructorDeclaration = {
+    val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     ConstructorDeclaration(
-      toAnnotations().to(ArrayBuffer),
-      toModifiers(from.getModifiers).to(ArrayBuffer),
+      modifiersAndAnnotations._2,
+      modifiersAndAnnotations._1,
       toQName(from.getName, from.getLoc),
       toFormalParameterList(from.getParameters)
     )
@@ -269,26 +272,30 @@ class SFParser(val source: Source) {
   }
 
   private def toFormalParameter(p: Parameter): FormalParameter = {
-    //TODO: handle parameter annotations here?
-    val fp = new FormalParameter()
+    val aAndM = toModifiersAndAnnotations(p.getModifiers.getModifiers)
+    val fp    = new FormalParameter()
     fp.add(toId(p.getName.getValue, p.getLoc))
     toTypeRef(Some(p.getTypeRef)).foreach(fp.add)
-    toModifiers(p.getModifiers.getModifiers).foreach(fp.add)
+    aAndM._1.foreach(fp.add)
+    aAndM._2.foreach(fp.add)
     fp
   }
 
-  private def toModifiers(from: ModifierGroup): Array[Modifier] = {
-    from
-      .all()
-      .asScala
-      .filterNot(mod => mod.getApexName == "explicitStatementExecuted")
-      .map(x => Modifier(toIdToken(x.getApexName, from.getLoc)))
-      .toArray
+  private def toModifiersAndAnnotations(
+    from: ModifierGroup
+  ): (ArrayBuffer[Modifier], ArrayBuffer[Annotation]) = {
+    val builder = from.copy()
+    val modifiers = builder.getModifiers.asScala
+      .filterNot(m => m.getModifierType.getApexName == "explicitStatementExecuted")
+      .map(m => Modifier(toIdToken(m.getModifierType.getApexName, m.getLoc)))
+      .to(ArrayBuffer)
+    val annotations = builder.getAnnotations.asScala.map(toAnnotation).to(ArrayBuffer)
+    (modifiers, annotations)
   }
 
-  private def toAnnotations(): Array[Annotation] = {
-    //TODO
-    Array.empty
+  private def toAnnotation(from: apex.jorje.semantic.ast.modifier.Annotation): Annotation = {
+    //TODO: add parameters
+    Annotation(toQName(from.getType.getApexName, from.getLoc), None)
   }
 
   private def toLoc(
