@@ -179,6 +179,50 @@ class MDIndexTest extends AnyFunSuite {
     }
   }
 
+  test("MDAPI find by namespace") {
+    FileSystemHelper.run(Map(
+      "Foo.cls" -> "public class Foo { }",
+      "FooBar.cls" -> "public class FooBar { public class Bar {} }"
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index.hasUpdatedIssues.isEmpty)
+
+      val findResults = index.findTypeIdsByNamespace("")
+      assert(findResults.size() == 3)
+      assert(findResults.get(0).id.get.toString == "Foo")
+      assert(findResults.get(1).id.get.toString == "FooBar")
+      assert(findResults.get(2).id.get.toString == "Bar")
+
+      assert(index.findTypeIdsByNamespace("F").isEmpty)
+    }
+  }
+
+  test("SFDX find by namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+        "sources/Foo.cls" -> "public class Foo {}",
+        "sources/FooBar.cls" -> "public class FooBar { public class Bar {} }"
+      )
+    ) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index.hasUpdatedIssues.isEmpty)
+
+      val findResults = index.findTypeIdsByNamespace("ns")
+      assert(findResults.size() == 3)
+      assert(findResults.get(0).id.get.toString == "Foo")
+      assert(findResults.get(1).id.get.toString == "FooBar")
+      assert(findResults.get(2).id.get.toString == "Bar")
+
+
+      val findResults2 = index.findTypeIdsByNamespace("n")
+      assert(findResults2 == findResults)
+
+      assert(index.findTypeIdsByNamespace("F").isEmpty)
+      assert(index.findTypeIdsByNamespace("").isEmpty)
+    }
+  }
+
   test("SFDX multiple package directories") {
     FileSystemHelper.run(
       Map(
@@ -186,7 +230,7 @@ class MDIndexTest extends AnyFunSuite {
         "sources1/Foo.cls" -> "public class Foo {}",
         "sources1/Bar.cls" -> "public class Bar {}",
         "sources2/Foo.cls" -> "public class Foo {}",
-        "sources2/Baz.cls" -> "public class Baz {}",
+        "sources2/Baz.cls" -> "public class Baz { public class Bar {} }",
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -198,6 +242,7 @@ class MDIndexTest extends AnyFunSuite {
       assert(index.findExactTypeId("Foo").path == sources2FooPath)
       assert(index.findExactTypeId("Bar").path == sources1BarPath)
       assert(index.findExactTypeId("Baz").path == sources2BazPath)
+      assert(index.findExactTypeId("Baz.Bar").path == sources2BazPath)
 
       assert(index.fuzzyFindTypeId("F").path == sources2FooPath)
       assert(index.fuzzyFindTypeId("B").path == sources2BazPath)
@@ -210,6 +255,13 @@ class MDIndexTest extends AnyFunSuite {
       assert(bFind.size() == 2)
       assert(bFind.get(0).path == sources1BarPath)
       assert(bFind.get(1).path == sources2BazPath)
+
+      val nsFind = index.findTypeIdsByNamespace("")
+      assert(nsFind.size() == 4)
+      assert(nsFind.get(0).path == sources1BarPath)
+      assert(nsFind.get(1).path == sources2FooPath)
+      assert(nsFind.get(2).path == sources2BazPath)
+      assert(nsFind.get(3).path == sources2BazPath)
     }
   }
 
@@ -231,7 +283,7 @@ class MDIndexTest extends AnyFunSuite {
         "sources1/Foo.cls" -> "public class Foo {}",
         "sources1/Bar.cls" -> "public class Bar {}",
         "sources2/Foo.cls" -> "public class Foo {}",
-        "sources2/Baz.cls" -> "public class Baz {}",
+        "sources2/Baz.cls" -> "public class Baz { public class Bar {} }",
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -243,6 +295,7 @@ class MDIndexTest extends AnyFunSuite {
       assert(index.findExactTypeId("Foo").path == sources2FooPath)
       assert(index.findExactTypeId("Bar").path == sources1BarPath)
       assert(index.findExactTypeId("Baz").path == sources2BazPath)
+      assert(index.findExactTypeId("Baz.Bar").path == sources2BazPath)
 
       assert(index.fuzzyFindTypeId("F").path == sources2FooPath)
       assert(index.fuzzyFindTypeId("B").path == sources2BazPath)
@@ -255,6 +308,13 @@ class MDIndexTest extends AnyFunSuite {
       assert(bFind.size() == 2)
       assert(bFind.get(0).path == sources1BarPath)
       assert(bFind.get(1).path == sources2BazPath)
+
+      val nsFind = index.findTypeIdsByNamespace("")
+      assert(nsFind.size() == 4)
+      assert(nsFind.get(0).path == sources1BarPath)
+      assert(nsFind.get(1).path == sources2FooPath)
+      assert(nsFind.get(2).path == sources2BazPath)
+      assert(nsFind.get(3).path == sources2BazPath)
     }
   }
 
