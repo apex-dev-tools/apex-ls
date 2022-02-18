@@ -1,8 +1,10 @@
 package com.nawforce.runtime.sfparser
 
+import apex.jorje.semantic.ast.AstNode
 import apex.jorje.semantic.ast.compilation.{AnonymousClass, _}
 import apex.jorje.semantic.ast.member.Parameter
-import apex.jorje.semantic.ast.modifier.{ModifierGroup, ModifierGroupBuilder}
+import apex.jorje.semantic.ast.modifier.ModifierGroup
+import apex.jorje.semantic.ast.statement.BlockStatement
 import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
 import apex.jorje.semantic.compiler.parser.ParserEngine
 import apex.jorje.semantic.symbol.`type`.TypeInfo
@@ -20,6 +22,7 @@ import com.financialforce.oparser.{
   FormalParameterList,
   Id,
   IdToken,
+  Initializer,
   InterfaceTypeDeclaration,
   Location,
   MethodDeclaration,
@@ -35,7 +38,6 @@ import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.{Source, SourceData}
 import org.apache.commons.lang3.reflect.FieldUtils
 
-import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
@@ -81,6 +83,7 @@ class SFParser(val source: Source) {
       case `userClass` =>
         val ctd = getClasTypesDeclaration(path, typeInfo)
         getInnerTypes(root).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd.innerTypes.append)
+        getInitBlocks(root).foreach(ctd.initializers.append)
         return Some(ctd)
       case `userInterface` =>
         val itd = getInterfaceDeclaration(path, typeInfo)
@@ -93,14 +96,34 @@ class SFParser(val source: Source) {
     None
   }
 
+  private def getInitBlocks(root: Compilation) = {
+    def toInitializer(x: AstNode, isStatic: Boolean) = {
+      val init = Initializer(isStatic)
+      init.location = Some(toLoc(x.getLoc, 0, 0))
+      init
+    }
+
+    //This is quite hacky too
+    val nonStaticBlocks = getClassMembers(root).getStatements.asScala
+      .filter(_.isInstanceOf[BlockStatement])
+      .map(toInitializer(_, isStatic = false))
+
+    val staticBlocks = getClassMembers(root).getMethods.asScala
+      .filter(_.getMethodInfo.getCanonicalName.equals("<clinit>"))
+      .map(toInitializer(_, isStatic = true))
+
+    nonStaticBlocks ++ staticBlocks
+  }
+
   private def getInnerTypes(root: Compilation): Array[Compilation] = {
-    //This is seems very hacky but i haven't found anything that exposes the inner types easily yet
+    getClassMembers(root).getInnerTypes.asScala.toArray
+  }
+
+  private def getClassMembers(root: Compilation): UserClassMembers = {
+    //This is seems very hacky but its the easiest way to expose innerTypes and initializer blocks
     FieldUtils
       .readDeclaredField(root, "members", true)
       .asInstanceOf[UserClassMembers]
-      .getInnerTypes
-      .asScala
-      .toArray
   }
 
   private def getEnumTypeDeclaration(path: String, typeInfo: TypeInfo): EnumTypeDeclaration = {
@@ -141,7 +164,6 @@ class SFParser(val source: Source) {
 
   private def getClasTypesDeclaration(path: String, typeInfo: TypeInfo): ClassTypeDeclaration = {
     val ctd = new ClassTypeDeclaration(path)
-    //TODO: initialization block
 
     val constructors            = constructConstructorDeclaration(typeInfo)
     val methods                 = constructMethodDeclaration(typeInfo)
@@ -199,7 +221,7 @@ class SFParser(val source: Source) {
   }
 
   private def constructMethodDeclaration(typeInfo: TypeInfo): Array[MethodDeclaration] = {
-    typeInfo.methods.getStaticsAndInstance
+    typeInfo.methods.getStaticsAndInstance.asScala
       .filter(_.getGenerated.isUserDefined)
       .map(toMethodDeclaration)
       .toArray
@@ -209,6 +231,7 @@ class SFParser(val source: Source) {
     typeInfo
       .methods()
       .getConstructors
+      .asScala
       .filter(_.getGenerated.isUserDefined)
       .map(toConstructorDeclaration)
       .toArray
