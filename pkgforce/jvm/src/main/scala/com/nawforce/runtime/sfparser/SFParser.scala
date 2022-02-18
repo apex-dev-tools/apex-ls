@@ -65,8 +65,8 @@ class SFParser(val source: Source) {
   private def parserTypeDeclaration(): Unit = {
     visitor.getTopLevel match {
       case Some(value) => {
-        val ctd = getTypeDeclaration(value, source.path.basename)
-        typeDeclaration = ctd
+        val td = getTypeDeclaration(value, source.path.basename)
+        typeDeclaration = td
       }
       case _ =>
     }
@@ -81,15 +81,13 @@ class SFParser(val source: Source) {
     //TODO: figure out td location? Check if we can use root.bodyLoc
     root.getClass match {
       case `userClass` =>
-        val ctd = getClasTypesDeclaration(path, typeInfo)
-        getInnerTypes(root).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd.innerTypes.append)
-        getInitBlocks(root).foreach(ctd.initializers.append)
+        val ctd = constructClassTypeDeclaration(path, root)
         return Some(ctd)
       case `userInterface` =>
-        val itd = getInterfaceDeclaration(path, typeInfo)
+        val itd = constructInterfaceTypeDeclaration(path, typeInfo)
         return Some(itd)
       case `userEnum` =>
-        val etd = getEnumTypeDeclaration(path, typeInfo)
+        val etd = constructEnumTypeDeclaration(path, typeInfo)
         return Some(etd)
       case _ =>
     }
@@ -126,7 +124,10 @@ class SFParser(val source: Source) {
       .asInstanceOf[UserClassMembers]
   }
 
-  private def getEnumTypeDeclaration(path: String, typeInfo: TypeInfo): EnumTypeDeclaration = {
+  private def constructEnumTypeDeclaration(
+    path: String,
+    typeInfo: TypeInfo
+  ): EnumTypeDeclaration = {
     val etd                     = new EnumTypeDeclaration(path)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
     val constants               = constructFieldDeclarations(typeInfo).map(_.id)
@@ -138,7 +139,7 @@ class SFParser(val source: Source) {
     etd
   }
 
-  private def getInterfaceDeclaration(
+  private def constructInterfaceTypeDeclaration(
     path: String,
     typeInfo: TypeInfo
   ): InterfaceTypeDeclaration = {
@@ -149,17 +150,23 @@ class SFParser(val source: Source) {
     itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     //We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
     modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).foreach(itd.add)
+    modifiersAndAnnotations._2.foreach(itd.add)
     //The parser returns abstract and access modifiers for each method
     // so we can remove them for interface declarations
-    methods
-      .map(x => {
-        x.modifiers.clear()
-        x
-      })
-      .foreach(itd.add)
-    modifiersAndAnnotations._2.foreach(itd.add)
+    methods.foreach(x => {
+      x.modifiers.clear()
+      itd.add(x)
+    })
     itd.extendsTypeList = constructInterfaceTypeList(typeInfo)
     itd
+  }
+
+  private def constructClassTypeDeclaration(path: String, root: Compilation) = {
+    val typeInfo = root.getDefiningType
+    val ctd      = getClasTypesDeclaration(path, typeInfo)
+    getInnerTypes(root).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd.innerTypes.append)
+    getInitBlocks(root).foreach(ctd.initializers.append)
+    ctd
   }
 
   private def getClasTypesDeclaration(path: String, typeInfo: TypeInfo): ClassTypeDeclaration = {
@@ -184,57 +191,52 @@ class SFParser(val source: Source) {
   }
 
   private def constructInterfaceTypeList(typeInfo: TypeInfo): Option[TypeList] = {
-    //Since SuperTypes and Interface wont resolve in compile stage we can use the typeRef instead
-
     val interfaceRef =
       typeInfo.getCodeUnitDetails.getInterfaceTypeRefs.asScala.map(x => toTypeRef(Some(x)))
-
-    val tl                            = new TypeList
-    var interfaceTl: Option[TypeList] = None
-    if (interfaceRef.nonEmpty) {
-      interfaceRef.flatten.foreach(tl.add)
-      interfaceTl = Some(tl)
-    }
-    interfaceTl
+    val tl = new TypeList
+    interfaceRef.flatten.foreach(tl.add)
+    if (tl.typeRefs.nonEmpty) Some(tl) else None
   }
 
   private def constructExtendsTypeRef(typeInfo: TypeInfo): Option[TypeRef] = {
-    //Since SuperTypes and Interface wont resolve in compile stage we can use the typeRef instead
     toTypeRef(typeInfo.getCodeUnitDetails.getSuperTypeRef.toScala)
   }
 
   private def constructPropertyDeclaration(typeInfo: TypeInfo): Iterable[PropertyDeclaration] = {
-    typeInfo
-      .fields()
-      .all()
-      .asScala
-      .filter(f => f.getMemberType == Member.Type.PROPERTY)
+    getFieldInfoByType(typeInfo, Member.Type.PROPERTY)
       .map(toProperties)
   }
 
   private def constructFieldDeclarations(typeInfo: TypeInfo): Iterable[FieldDeclaration] = {
-    typeInfo.fields
-      .all()
-      .asScala
-      .filter(f => f.getMemberType == Member.Type.FIELD)
+    getFieldInfoByType(typeInfo, Member.Type.FIELD)
       .map(toField)
   }
 
-  private def constructMethodDeclaration(typeInfo: TypeInfo): Array[MethodDeclaration] = {
+  private def getFieldInfoByType(
+    typeInfo: TypeInfo,
+    fieldType: Member.Type
+  ): Iterable[FieldInfo] = {
+    typeInfo.fields
+      .all()
+      .asScala
+      .filter(f => f.getMemberType == fieldType)
+  }
+
+  private def constructMethodDeclaration(typeInfo: TypeInfo): Iterable[MethodDeclaration] = {
     typeInfo.methods.getStaticsAndInstance.asScala
       .filter(_.getGenerated.isUserDefined)
       .map(toMethodDeclaration)
-      .toArray
   }
 
-  private def constructConstructorDeclaration(typeInfo: TypeInfo): Array[ConstructorDeclaration] = {
+  private def constructConstructorDeclaration(
+    typeInfo: TypeInfo
+  ): Iterable[ConstructorDeclaration] = {
     typeInfo
       .methods()
       .getConstructors
       .asScala
       .filter(_.getGenerated.isUserDefined)
       .map(toConstructorDeclaration)
-      .toArray
   }
 
   private def toProperties(from: FieldInfo): PropertyDeclaration = {

@@ -84,7 +84,6 @@ class SFParserTest extends AnyFunSuite {
       op.asInstanceOf[InterfaceTypeDeclaration],
       sfp.asInstanceOf[InterfaceTypeDeclaration]
     )
-    println(sfp)
   }
 
   test("Enums") {
@@ -105,7 +104,6 @@ class SFParserTest extends AnyFunSuite {
       op.asInstanceOf[EnumTypeDeclaration],
       sfp.asInstanceOf[EnumTypeDeclaration]
     )
-    println(sfp)
   }
 
 }
