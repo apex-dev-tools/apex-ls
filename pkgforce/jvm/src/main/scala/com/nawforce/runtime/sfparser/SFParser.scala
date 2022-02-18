@@ -34,15 +34,14 @@ import com.financialforce.oparser.{
   TypeName,
   TypeRef
 }
-import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.parsers.{Source, SourceData}
 import org.apache.commons.lang3.reflect.FieldUtils
 
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
+import scala.util.Try
 
-class SFParser(val source: Source) {
+class SFParser(path: String, contents: String) {
   private val visitor                                  = new TopLevelVisitor()
   private var typeDeclaration: Option[TypeDeclaration] = None
 
@@ -57,7 +56,7 @@ class SFParser(val source: Source) {
   private def parse(
     parserEngineType: ParserEngine.Type = ParserEngine.Type.NAMED
   ): Option[TypeDeclaration] = {
-    CompilerService.visitAstFromString(source.code.asString, visitor, parserEngineType)
+    CompilerService.visitAstFromString(contents, visitor, parserEngineType)
     parserTypeDeclaration()
     typeDeclaration
   }
@@ -65,7 +64,7 @@ class SFParser(val source: Source) {
   private def parserTypeDeclaration(): Unit = {
     visitor.getTopLevel match {
       case Some(value) => {
-        val td = getTypeDeclaration(value, source.path.basename)
+        val td = getTypeDeclaration(value, path)
         typeDeclaration = td
       }
       case _ =>
@@ -101,16 +100,24 @@ class SFParser(val source: Source) {
       init
     }
 
-    //This is quite hacky too
-    val nonStaticBlocks = getClassMembers(root).getStatements.asScala
+    val block: ArrayBuffer[Initializer] = ArrayBuffer()
+    getClassMembers(root).getStatements.asScala
       .filter(_.isInstanceOf[BlockStatement])
       .map(toInitializer(_, isStatic = false))
+      .foreach(block.append)
 
-    val staticBlocks = getClassMembers(root).getMethods.asScala
-      .filter(_.getMethodInfo.getCanonicalName.equals("<clinit>"))
-      .map(toInitializer(_, isStatic = true))
+    val clinit = getClassMembers(root).getMethods.asScala
+      .find(_.getMethodInfo.getCanonicalName.equals("<clinit>"))
 
-    nonStaticBlocks ++ staticBlocks
+    // This is very messy and haven't found a better way to access static blocks
+    //If theres no static block then theres no body and toString will throw an error
+    val hasStaticBody = Try {
+      clinit.get.getBody.toString
+    }.toOption.isDefined
+    if (hasStaticBody) {
+      block.append(toInitializer(clinit.get, isStatic = true))
+    }
+    block
   }
 
   private def getInnerTypes(root: Compilation): Array[Compilation] = {
@@ -312,10 +319,22 @@ class SFParser(val source: Source) {
     val builder = from.copy()
     val modifiers = builder.getModifiers.asScala
       .filterNot(m => m.getModifierType.getApexName == "explicitStatementExecuted")
-      .map(m => Modifier(toIdToken(m.getModifierType.getApexName, m.getLoc)))
+      .map(
+        m =>
+          Modifier(toIdToken(correctSharingNameIfRequired(m.getModifierType.getApexName), m.getLoc))
+      )
       .to(ArrayBuffer)
     val annotations = builder.getAnnotations.asScala.map(toAnnotation).to(ArrayBuffer)
     (modifiers, annotations)
+  }
+
+  private def correctSharingNameIfRequired(name: String): String = {
+    name match {
+      case "withSharing"      => "with sharing"
+      case "withoutSharing"   => "without sharing"
+      case "inheritedSharing" => "inherited sharing"
+      case _                  => name
+    }
   }
 
   private def toAnnotation(from: apex.jorje.semantic.ast.modifier.Annotation): Annotation = {
@@ -381,7 +400,7 @@ class SFParser(val source: Source) {
 
 object SFParser {
 
-  def apply(path: PathLike, code: SourceData): SFParser = {
-    new SFParser(Source(path, code, 0, 0, None))
+  def apply(path: String, contents: String): SFParser = {
+    new SFParser(path, contents)
   }
 }
