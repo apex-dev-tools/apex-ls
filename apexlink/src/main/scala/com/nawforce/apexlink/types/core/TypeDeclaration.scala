@@ -71,11 +71,12 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
     }
 
     // Some messy special cases
+    /*
     if (typeName == TypeNames.IdType && idTarget.nonEmpty) {
       // Id field that carries a target SObjectType returns 'fields'
       preloadSObject(idTarget.get)
       CustomFieldDeclaration(name, TypeNames.sObjectFields$(idTarget.get), None, asStatic = true)
-    } else if (CustomField.isSObjectPrimitive(typeName)) {
+    } else*/ if (CustomField.isSObjectPrimitive(typeName)) {
       // Primitives (including other Id types)
       if (shareTypeName.nonEmpty && name == Names.RowCause)
         CustomFieldDeclaration(

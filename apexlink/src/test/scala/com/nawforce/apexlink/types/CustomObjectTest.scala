@@ -783,6 +783,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  /*
   test("Lookup SObjectField (via Id field)") {
     FileSystemHelper.run(
       Map(
@@ -800,7 +801,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
         )
       )
     }
-  }
+  }*/
 
   test("Lookup SObjectField (via relationship field)") {
     FileSystemHelper.run(
