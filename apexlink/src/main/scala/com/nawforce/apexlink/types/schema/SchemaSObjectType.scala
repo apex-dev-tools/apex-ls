@@ -27,6 +27,7 @@ import com.nawforce.apexlink.types.core.{
 }
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.{CustomFieldDeclaration, CustomMethodDeclaration}
+import com.nawforce.pkgforce.modifiers.{GLOBAL_MODIFIER, Modifier}
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 
@@ -265,6 +266,8 @@ final case class SObjectTypeFields(sobjectName: Name, module: OPM.Module)
   */
 final case class SObjectFields(baseType: TypeName, module: OPM.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.sObjectFields$(baseType)) {
+
+  override val modifiers: ArraySeq[Modifier] = ArraySeq(GLOBAL_MODIFIER)
 
   // Extend SObjectField for when used as return type for lookup SObjectField
   override val superClass: Option[TypeName] = Some(TypeNames.SObjectField)
