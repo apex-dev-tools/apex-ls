@@ -33,13 +33,20 @@ object TypeId {
       return Some(new TypeId(module, typeName))
 
     // Fallback to searching for the right module
-    module.pkg.org.packagesByNamespace
-      .get(typeIdentifier.namespace)
-      .flatMap(pkg => pkg.orderedModules.find(_.findModuleType(typeName).nonEmpty))
-      .map(module => TypeId(module, typeName))
-      .orElse({
-        assert(false)
-        None
-      })
+    val pkg = module.pkg.org.packagesByNamespace.get(typeIdentifier.namespace)
+    if (pkg.nonEmpty) {
+      var module = pkg.get.orderedModules.find(_.findModuleType(typeName).nonEmpty)
+      if (module.nonEmpty)
+        return Some(TypeId(module.get, typeName))
+
+      if (typeName.outer.nonEmpty) {
+        module = pkg.get.orderedModules.find(_.findModuleType(typeName.outer.get).nonEmpty)
+        if (module.nonEmpty)
+          return Some(TypeId(module.get, typeName))
+      }
+    }
+
+    assert(false)
+    None
   }
 }
