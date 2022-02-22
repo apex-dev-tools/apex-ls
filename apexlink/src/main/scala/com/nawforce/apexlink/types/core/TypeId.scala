@@ -24,29 +24,3 @@ case class TypeId(module: OPM.Module, typeName: TypeName) {
 
   override def toString: String = asTypeIdentifier.toString
 }
-
-object TypeId {
-  def apply(module: OPM.Module, typeIdentifier: TypeIdentifier): Option[TypeId] = {
-    // Quick test if module is the right one
-    val typeName = typeIdentifier.typeName
-    if (typeIdentifier.namespace == module.namespace)
-      return Some(new TypeId(module, typeName))
-
-    // Fallback to searching for the right module
-    val pkg = module.pkg.org.packagesByNamespace.get(typeIdentifier.namespace)
-    if (pkg.nonEmpty) {
-      var module = pkg.get.orderedModules.find(_.findModuleType(typeName).nonEmpty)
-      if (module.nonEmpty)
-        return Some(TypeId(module.get, typeName))
-
-      if (typeName.outer.nonEmpty) {
-        module = pkg.get.orderedModules.find(_.findModuleType(typeName.outer.get).nonEmpty)
-        if (module.nonEmpty)
-          return Some(TypeId(module.get, typeName))
-      }
-    }
-
-    assert(false)
-    None
-  }
-}
