@@ -12,7 +12,10 @@ import com.nawforce.runtime.workspace.IPM;
 import scala.jdk.javaapi.CollectionConverters;
 import scala.jdk.javaapi.OptionConverters;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Optional;
@@ -58,6 +61,56 @@ public class MDIndex implements IssuesCollection {
     public List<String> getFilesWithErrors() {
         return Arrays.stream(issues().issuesForFiles(null, false, 1))
                 .map(Issue::filePath).collect(Collectors.toList());
+    }
+
+    public ApexResourceFile getResourceFile(String uriFilename) {
+
+        final String filename = URIToPath(uriFilename);
+
+        return rootModule
+                .map(module -> CollectionConverters.asJava(module.getTypesByPath(filename)))
+                .filter(types -> !types.isEmpty())
+                .map(types -> new ApexResourceFile(types.get(0).path(), types, issuesForFile(filename).length > 0))
+                .orElse(null);
+    }
+
+    public ApexResourceFile findResourceFile(String uriFilename) {
+
+        final String filename = URIToPath(uriFilename);
+
+        return rootModule
+                .map(module -> CollectionConverters.asJava(module.findTypesByPath(filename)))
+                .filter(types -> !types.isEmpty())
+                .map(types -> new ApexResourceFile(types.get(0).path(), types, issuesForFile(filename).length > 0))
+                .orElse(null);
+    }
+
+    public List<ApexResourceFile> fuzzyFindResourceFile(String uriFilename) {
+
+        final String filename = URIToPath(uriFilename);
+
+        return rootModule
+                .map(module -> CollectionConverters.asJava(module.fuzzyFindTypesByPath(filename))
+                        .stream()
+                        .collect(Collectors.groupingBy(TypeDeclaration::path)))
+                        .map(groups -> groups.entrySet()
+                                .stream()
+                                .map(group -> new ApexResourceFile(group.getKey(), group.getValue(), issuesForFile(group.getKey()).length > 0))
+                                .sorted(Comparator.comparing(ApexResourceFile::getFilename))
+                                .collect(Collectors.toList())
+                )
+                .orElse(new LinkedList<>());
+    }
+
+    private String URIToPath(String uriFilename) {
+        try {
+            URI uri = new URI(uriFilename);
+            return uri.getPath();
+        }
+        catch(URISyntaxException ex) {
+            // ignored
+        }
+        return uriFilename;
     }
 
     private IssuesManager issues() {
