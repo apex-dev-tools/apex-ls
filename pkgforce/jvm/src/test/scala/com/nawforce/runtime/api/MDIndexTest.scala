@@ -318,4 +318,77 @@ class MDIndexTest extends AnyFunSuite {
     }
   }
 
+  test("SFDX get resource file") {
+    FileSystemHelper.run(Map(
+      "Foo.cls" -> "public class Foo { }",
+      "FooBar.cls" -> "public class FooBar { public class Bar {} }"
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index.hasUpdatedIssues.isEmpty)
+
+      val fooPath = root.join("Foo.cls").toString
+      val fooBarPath = root.join("FooBar.cls").toString
+      val missingPath = root.join("Missing.cls").toString
+
+      val fooResource = index.getResourceFile(fooPath)
+      assert(fooResource != null)
+      assert(fooResource.getTypes.size() == 1)
+      assert(fooResource.getFilename == fooPath)
+      val fooBarResource = index.getResourceFile(fooBarPath)
+      assert(fooBarResource != null)
+      assert(fooBarResource.getTypes.size() == 2)
+      assert(fooBarResource.getFilename == fooBarPath)
+      val missingResource = index.getResourceFile(missingPath)
+      assert(missingResource == null)
+    }
+  }
+
+  test("SFDX find resource file") {
+    FileSystemHelper.run(Map(
+      "Foo.cls" -> "public class Foo { }",
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index.hasUpdatedIssues.isEmpty)
+
+      val expectedFooPath = root.join("Foo.cls").toString
+
+      var fooPath = root.join("foo.cls").toString
+      var fooResource = index.findResourceFile(fooPath)
+      assert(fooResource != null)
+      assert(fooResource.getTypes.size() == 1)
+      assert(fooResource.getFilename == expectedFooPath)
+
+      fooPath = root.join("FOO.CLS").toString
+      fooResource = index.findResourceFile(fooPath)
+      assert(fooResource != null)
+      assert(fooResource.getTypes.size() == 1)
+      assert(fooResource.getFilename == expectedFooPath)
+    }
+  }
+
+  test("SFDX fuzzy find resource file") {
+    FileSystemHelper.run(Map(
+      "Foo.cls" -> "public class Foo { public class Zig {} }",
+      "FooBar.cls" -> "public class FooBar { public class Bar {} }"
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index.hasUpdatedIssues.isEmpty)
+
+      val searchPath = root.join("Foo").toString
+      val fooResources = index.fuzzyFindResourceFile(searchPath)
+      assert(fooResources.size() == 2)
+
+      val fooResource = fooResources.get(0)
+      assert(fooResource.getTypes.size() == 2)
+      val expectedFooPath = root.join("Foo.cls").toString
+      assert(fooResource.getFilename == expectedFooPath)
+      assert(fooResource.getTypes.stream().allMatch(_.path == expectedFooPath))
+
+      val fooBarResource = fooResources.get(1)
+      assert(fooBarResource.getTypes.size() == 2)
+      val expectedFooBarPath = root.join("FooBar.cls").toString
+      assert(fooBarResource.getFilename == expectedFooBarPath)
+      assert(fooBarResource.getTypes.stream().allMatch(_.path == expectedFooBarPath))
+    }
+  }
 }
