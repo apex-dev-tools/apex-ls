@@ -338,7 +338,7 @@ abstract class MethodCall extends Expression
 final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) extends MethodCall {
 
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
-    verify(location, input.typeDeclaration, None, input, context)
+    verify(location, input.typeDeclaration, input.isStatic, input, context)
   }
 
   def verify(

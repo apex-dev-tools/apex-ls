@@ -20,6 +20,26 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class MethodTest extends AnyFunSuite with TestHelper {
 
+  test("Method call instance->instance") {
+    typeDeclaration("public class Dummy {void f1(){} void f2() {f1();} }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Method call static->static") {
+    typeDeclaration("public class Dummy {static void f1(){} static void f2() {f1();} }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Method call static->instance") {
+    typeDeclaration("public class Dummy {void f1(){} static void f2() {f1();} }")
+    assert(dummyIssues == "Error: line 1 at 50-54: No matching method found for 'f1' on 'Dummy' taking no arguments\n")
+  }
+
+  test("Method call instance->static") {
+    typeDeclaration("public class Dummy {static void f1(){} void f2() {f1();} }")
+    assert(dummyIssues.isEmpty)
+  }
+
   test("Method call with ambiguous target") {
     typeDeclaration("public class Dummy { {EventBus.publish(null); } }")
     assert(
