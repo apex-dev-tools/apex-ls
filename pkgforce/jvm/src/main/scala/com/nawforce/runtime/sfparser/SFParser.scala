@@ -1,11 +1,13 @@
 package com.nawforce.runtime.sfparser
 
+import apex.jorje.data.ast.TypeRefs.ArrayTypeRef
 import apex.jorje.semantic.ast.AstNode
 import apex.jorje.semantic.ast.compilation.{AnonymousClass, _}
 import apex.jorje.semantic.ast.member.Parameter
 import apex.jorje.semantic.ast.modifier.ModifierGroup
 import apex.jorje.semantic.ast.statement.BlockStatement
 import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
+import apex.jorje.semantic.compiler.ApexCompiler
 import apex.jorje.semantic.compiler.parser.ParserEngine
 import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.member.Member
@@ -14,6 +16,7 @@ import apex.jorje.semantic.symbol.member.variable.FieldInfo
 import com.financialforce.oparser
 import com.financialforce.oparser.{
   Annotation,
+  ArraySubscripts,
   ClassTypeDeclaration,
   ConstructorDeclaration,
   EnumTypeDeclaration,
@@ -29,6 +32,7 @@ import com.financialforce.oparser.{
   Modifier,
   PropertyDeclaration,
   QualifiedName,
+  TypeArguments,
   TypeDeclaration,
   TypeList,
   TypeName,
@@ -56,22 +60,32 @@ class SFParser(path: String, contents: String) {
   private def parse(
     parserEngineType: ParserEngine.Type = ParserEngine.Type.NAMED
   ): Option[TypeDeclaration] = {
-    CompilerService.visitAstFromString(contents, visitor, parserEngineType)
-    parserTypeDeclaration()
+    val compiler = CompilerService.visitAstFromString(contents, visitor, parserEngineType)
+    parserTypeDeclaration(compiler)
     typeDeclaration
   }
 
-  private def parserTypeDeclaration(): Unit = {
+  private def parserTypeDeclaration(compiler: ApexCompiler): Unit = {
     visitor.getTopLevel match {
       case Some(value) => {
-        val td = getTypeDeclaration(value, path)
-        typeDeclaration = td
+        val cu = compiler.getCodeUnit(value.getDefiningType)
+        if (cu != null) {
+          typeDeclaration = getTypeDeclaration(cu.getNode, path)
+        } else {
+          throw new RuntimeException(s"No code unit found for type ${value.toString}")
+        }
       }
       case _ =>
     }
   }
 
   private def getTypeDeclaration(root: Compilation, path: String): Option[TypeDeclaration] = {
+    def getMembers[T](root: Compilation): T = {
+      //This is seems very hacky but its the easiest way to expose innerTypes and initializer blocks and unresolved methods
+      FieldUtils
+        .readDeclaredField(root, "members", true)
+        .asInstanceOf[T]
+    }
 
     val userClass     = classOf[UserClass]
     val userInterface = classOf[UserInterface]
@@ -80,10 +94,11 @@ class SFParser(path: String, contents: String) {
     //TODO: figure out td location? Check if we can use root.bodyLoc
     root.getClass match {
       case `userClass` =>
-        val ctd = constructClassTypeDeclaration(path, root)
+        val ctd = constructClassTypeDeclaration(path, typeInfo, getMembers[UserClassMembers](root))
         return Some(ctd)
       case `userInterface` =>
-        val itd = constructInterfaceTypeDeclaration(path, typeInfo)
+        val itd =
+          constructInterfaceTypeDeclaration(path, typeInfo, getMembers[UserInterfaceMembers](root))
         return Some(itd)
       case `userEnum` =>
         val etd = constructEnumTypeDeclaration(path, typeInfo)
@@ -93,7 +108,7 @@ class SFParser(path: String, contents: String) {
     None
   }
 
-  private def getInitBlocks(root: Compilation) = {
+  private def getInitBlocks(members: UserClassMembers) = {
     def toInitializer(x: AstNode, isStatic: Boolean) = {
       val init = Initializer(isStatic)
       init.location = Some(toLoc(x.getLoc, 0, 0))
@@ -101,12 +116,12 @@ class SFParser(path: String, contents: String) {
     }
 
     val block: ArrayBuffer[Initializer] = ArrayBuffer()
-    getClassMembers(root).getStatements.asScala
+    members.getStatements.asScala
       .filter(_.isInstanceOf[BlockStatement])
       .map(toInitializer(_, isStatic = false))
       .foreach(block.append)
 
-    val clinit = getClassMembers(root).getMethods.asScala
+    val clinit = members.getMethods.asScala
       .find(_.getMethodInfo.getCanonicalName.equals("<clinit>"))
 
     // This is very messy and haven't found a better way to access static blocks
@@ -120,15 +135,8 @@ class SFParser(path: String, contents: String) {
     block
   }
 
-  private def getInnerTypes(root: Compilation): Array[Compilation] = {
-    getClassMembers(root).getInnerTypes.asScala.toArray
-  }
-
-  private def getClassMembers(root: Compilation): UserClassMembers = {
-    //This is seems very hacky but its the easiest way to expose innerTypes and initializer blocks
-    FieldUtils
-      .readDeclaredField(root, "members", true)
-      .asInstanceOf[UserClassMembers]
+  private def getInnerTypes(members: UserClassMembers): Array[Compilation] = {
+    members.getInnerTypes.asScala.toArray
   }
 
   private def constructEnumTypeDeclaration(
@@ -148,31 +156,44 @@ class SFParser(path: String, contents: String) {
 
   private def constructInterfaceTypeDeclaration(
     path: String,
+    typeInfo: TypeInfo,
+    members: UserInterfaceMembers
+  ): InterfaceTypeDeclaration = {
+    val itd = getInterfaceTypeDeclaration(path, typeInfo)
+    //The parser returns abstract and access modifiers for each method
+    // so we can remove them for interface declarations
+    val methods = constructMethodDeclarationForInterface(members)
+    methods.foreach(x => {
+      x.modifiers.clear()
+      itd.add(x)
+    })
+    itd
+  }
+
+  private def getInterfaceTypeDeclaration(
+    path: String,
     typeInfo: TypeInfo
   ): InterfaceTypeDeclaration = {
     val itd                     = new InterfaceTypeDeclaration(path)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
-    val methods                 = constructMethodDeclaration(typeInfo)
 
     itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     //We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
     modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).foreach(itd.add)
     modifiersAndAnnotations._2.foreach(itd.add)
-    //The parser returns abstract and access modifiers for each method
-    // so we can remove them for interface declarations
-    methods.foreach(x => {
-      x.modifiers.clear()
-      itd.add(x)
-    })
     itd.extendsTypeList = constructInterfaceTypeList(typeInfo)
     itd
   }
 
-  private def constructClassTypeDeclaration(path: String, root: Compilation) = {
-    val typeInfo = root.getDefiningType
-    val ctd      = getClasTypesDeclaration(path, typeInfo)
-    getInnerTypes(root).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd.innerTypes.append)
-    getInitBlocks(root).foreach(ctd.initializers.append)
+  private def constructClassTypeDeclaration(
+    path: String,
+    typeInfo: TypeInfo,
+    members: UserClassMembers
+  ) = {
+    val ctd = getClasTypesDeclaration(path, typeInfo)
+    getInnerTypes(members).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd.innerTypes.append)
+    getInitBlocks(members).foreach(ctd.initializers.append)
+    constructMethodDeclarationForClass(members).foreach(ctd.add)
     ctd
   }
 
@@ -180,7 +201,6 @@ class SFParser(path: String, contents: String) {
     val ctd = new ClassTypeDeclaration(path)
 
     val constructors            = constructConstructorDeclaration(typeInfo)
-    val methods                 = constructMethodDeclaration(typeInfo)
     val fields                  = constructFieldDeclarations(typeInfo)
     val properties              = constructPropertyDeclaration(typeInfo)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
@@ -189,7 +209,6 @@ class SFParser(path: String, contents: String) {
     constructors.foreach(ctd.constructors.append)
     modifiersAndAnnotations._1.foreach(ctd.add)
     modifiersAndAnnotations._2.foreach(ctd.add)
-    methods.foreach(ctd.add)
     properties.foreach(ctd.properties.append)
     fields.foreach(ctd.fields.append)
     ctd.extendsTypeRef = constructExtendsTypeRef(typeInfo)
@@ -229,9 +248,29 @@ class SFParser(path: String, contents: String) {
       .filter(f => f.getMemberType == fieldType)
   }
 
-  private def constructMethodDeclaration(typeInfo: TypeInfo): Iterable[MethodDeclaration] = {
-    typeInfo.methods.getStaticsAndInstance.asScala
-      .filter(_.getGenerated.isUserDefined)
+  private def constructMethodDeclarationForClass(
+    members: UserClassMembers
+  ): Iterable[MethodDeclaration] = {
+    /*
+    We use the methods from the code unit class members here since methods with custom types will be
+    unresolved and wont be available in typeInfo from the visitor.
+     */
+    members.getMethods.asScala
+      .map(_.getMethodInfo)
+      .filter(x => x.getGenerated.isUserDefined && !x.isConstructor)
+      .map(toMethodDeclaration)
+  }
+
+  private def constructMethodDeclarationForInterface(
+    members: UserInterfaceMembers
+  ): Iterable[MethodDeclaration] = {
+    /*
+    We use the methods from the code unit class members here since methods with custom types will be
+    unresolved and wont be available in typeInfo from the visitor.
+     */
+    members.getMethods.asScala
+      .map(_.getMethodInfo)
+      .filter(x => x.getGenerated.isUserDefined && !x.isConstructor)
       .map(toMethodDeclaration)
   }
 
@@ -360,7 +399,16 @@ class SFParser(path: String, contents: String) {
 
   private def toTypeRef(from: TypeInfo): com.financialforce.oparser.TypeRef = {
     val tr = new oparser.TypeRef
-    tr.add(new TypeName(toId(from.getCodeUnitDetails.getName, from.getCodeUnitDetails.getLoc)))
+    //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
+    tr.isResolved = from.isResolved
+    from.getApexName
+      .replaceAll("<.*>", "")
+      .split("\\.")
+      .foreach(
+        n =>
+          tr.add(toTypeNameFromTypeInfo(from.getTypeArguments, n, from.getCodeUnitDetails.getLoc))
+      )
+
     tr
   }
 
@@ -370,12 +418,61 @@ class SFParser(path: String, contents: String) {
     from match {
       case Some(typ) => {
         val res = new oparser.TypeRef()
-        typ.getNames.forEach(t => res.add(new TypeName(toId(t.getValue, t.getLoc))))
+        if (typ.isInstanceOf[ArrayTypeRef]) {
+          //TODO: Resolve this properly
+          //Temporary work around for comparison work as something like String[][] resolves
+          // into deep nested typeRef with string type arguments
+          val id = typ.getNames.asScala.head
+          res.add(new TypeName(toId(id.getValue, id.getLoc)))
+          for (_ <- 0 to typ.toString.split("\\[").length - 2) {
+            res.add(ArraySubscripts())
+          }
+        } else {
+          typ.getNames.forEach(
+            t =>
+              res.add({
+                toTypeNameFromTypeRef(typ.getTypeArguments, t.getValue, t.getLoc)
+              })
+          )
+        }
+
         return Some(res)
       }
       case _ =>
     }
     None
+  }
+
+  private def toTypeNameFromTypeRef(
+    typeArguments: java.util.List[apex.jorje.data.ast.TypeRef],
+    name: String,
+    location: apex.jorje.data.Location
+  ) = {
+    val tp = new TypeName(toId(name, location))
+    val tl = new TypeList
+    typeArguments.asScala.flatMap(x => toTypeRef(Some(x))).foreach(tl.add)
+    if (tl.typeRefs.nonEmpty) {
+      val typeArgument = new TypeArguments()
+      typeArgument.typeList = Some(tl)
+      tp.typeArguments = Some(typeArgument)
+    }
+    tp
+  }
+
+  private def toTypeNameFromTypeInfo(
+    typeArguments: java.util.List[apex.jorje.semantic.symbol.`type`.TypeInfo],
+    name: String,
+    location: apex.jorje.data.Location
+  ) = {
+    val tp = new TypeName(toId(name, location))
+    val tl = new TypeList
+    typeArguments.asScala.map(toTypeRef).foreach(tl.add)
+    if (tl.typeRefs.nonEmpty) {
+      val typeArgument = new TypeArguments()
+      typeArgument.typeList = Some(tl)
+      tp.typeArguments = Some(typeArgument)
+    }
+    tp
   }
 
   private class TopLevelVisitor extends AstVisitor[AdditionalPassScope] {

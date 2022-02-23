@@ -4,6 +4,7 @@
 package com.financialforce.oparser
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object StringUtils {
 
@@ -21,6 +22,13 @@ object StringUtils {
   def asString[T](a: mutable.ArrayBuffer[T], separator: String): String = {
     a.map(_.toString).mkString(separator)
   }
+}
+
+trait TypeRefAndId {
+  val typeRef: TypeRef
+  val id: Id
+  val annotations: mutable.ArrayBuffer[Annotation]
+  val modifiers: mutable.ArrayBuffer[Modifier]
 }
 
 trait IdAssignable {
@@ -98,7 +106,8 @@ case class Annotation(qName: QualifiedName, parameters: Option[String]) {
 }
 
 case class Modifier(token: Token) {
-  def text: String       = token.contents
+  def text: String = token.contents
+
   def location: Location = token.location
 
   override def toString: String = text
@@ -114,7 +123,7 @@ case class Id(id: IdToken) {
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[Id]
-    id.lowerCaseContents == other.id.lowerCaseContents
+    id.lowerCaseContents.equalsIgnoreCase(other.id.lowerCaseContents)
   }
 }
 
@@ -143,6 +152,7 @@ class QualifiedName extends IdAssignable {
 class TypeRef extends TypeNameAssignable with ArraySubscriptsAssignable {
   val typeNames: mutable.ArrayBuffer[TypeName]              = mutable.ArrayBuffer[TypeName]()
   val arraySubscripts: mutable.ArrayBuffer[ArraySubscripts] = mutable.ArrayBuffer[ArraySubscripts]()
+  var isResolved: Boolean                                   = false
 
   override def add(tn: TypeName): Unit = typeNames.append(tn)
 
@@ -300,7 +310,8 @@ case class MethodDeclaration(
   typeRef: TypeRef,
   id: Id,
   formalParameterList: FormalParameterList
-) extends BodyDeclaration {
+) extends BodyDeclaration
+    with TypeRefAndId {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
@@ -326,6 +337,7 @@ class PropertyDeclaration(
   val typeRef: TypeRef,
   val id: Id
 ) extends BodyDeclaration
+    with TypeRefAndId
     with PropertyBlockAssignable {
 
   var location: Option[Location]      = None
@@ -354,7 +366,8 @@ case class FieldDeclaration(
   modifiers: mutable.ArrayBuffer[Modifier],
   typeRef: TypeRef,
   id: Id
-) extends BodyDeclaration {
+) extends BodyDeclaration
+    with TypeRefAndId {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
