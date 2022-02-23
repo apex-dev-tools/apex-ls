@@ -1,49 +1,49 @@
-## apex-link
+## ff-apex-ls
 
-This is a static analysis library for Salesforce metadata. It mostly focuses on Apex classes but also handles other types of metadata if they are relevant to understanding Apex code, such as custom objects. The library is used by the VSCode extension [apex-assist](https://github.com/nawforce/apex-assist), [PMD](https://pmd.github.io/) and various proprietry tools. Metadata support utilities such Apex & Visualforce parsing are provided by the pkgforce module. If you are interested in Apex or Visualforce parsing on node for your own tools see [apex-parser](https://github.com/nawforce/apex-parser) and [vf-parser](https://github.com/nawforce/vf-parser). 
+This repo contains a FinancialForce fork of the open source [apex-link](https://github.com/nawforce/apex-link). Before forking the [pkgforce](https://github.com/nawforce/pkgforce) library was merged into apex-link to make it easier to refactor functionality between these libraries. The merging of these libraries is intended to be temporary; they will be split again to allow for independent versioning and re-branding when the FinancialForce versions are made open-source. Releases < 2.4 have been made from the nawforce repos, this repo is being used for subsequent releases.
 
-The library is named after the 'link' programs used in other languages to construct a single executable from a number of object files. The library does not construct an executable, but does create a detailed relationship graph between the metadata that it loads which allows for 'whole-program' analyses to be implemented. In constructing this graph it validates the metadata to ensure correctness and so can also be used to validate metadata without ever deploying it to a Salesforce Org. This makes the library particularly useful when performing code refactoring, as it can give near instant feedback on the state of a codebase as you change it.
+Refactoring is focusing on two broad areas:
 
-### Current Capabilities
-Currently the main aim of the Apex validation is to ensure that code is not referencing any types, fields, methods etc that are not available, this feature is largely complete at this point. The main validation holes are in statement validation which have not yet been implemented beyond some simple cases, e.g. comparing the wrong data types in if statements will not yet cause an error.
+* Adding support for an apex.db like model inside the pkgforce library that uses the outline parser.
+* Introducing the Apex Jorje parser as an alternative to the ‘apex-parser’ module.
 
-The library can support multi-package analysis using either 1GP or 2GP models. It works best when all metadata is 
-provided for analysis but there is also support for ignoring metadata from specific namespaces if it is not available. There is no in-built support for retrieving metadata from an org but this may be added.
+The outline parser has been directly embedded into pkgforce for this work; we expect to open source this as a separate module later. The Apex Jorje jar is being pulled in via a maven artefact. 
 
-### Testing
-The library comes with a set of unit tests to limit regressions. We also use a set of around 100 of the most popular Salesforce projects on github for testing. These are made available in this repo via git modules (see samples/README.md) and can be run using the 'Test' github action. If you have a particular interest in seeing a project regularly tested for compatibility please feel free to raise a PR to add it.
+### apex.db alternative
 
-### API Access
-The main API for the library is based around the concept of a virtual (in-memory) Salesforce Org. Using this model makes it a little easier to reason about how the API should work. You can find docs for the Org abstraction at [javadoc.io](https://javadoc.io/doc/com.github.nawforce/apexlink/latest/com/nawforce/common/api/Org.html). Many of the internal classes of the library are available for use but only classes in the com.nawforce.apexlink.api package are considered stable.
+Work on an alternative to apex.db is being exposed via [MDIndex](https://github.com/financialforcedev/ff-apex-ls/blob/master/pkgforce/jvm/src/main/java/com/nawforce/pkgforce/api/MDIndex.java) which is based on ApexIndex from Jorje. Currently you can construct an index using the outline parser over very large metadata projects in a few seconds. [MDIndexTest](https://github.com/financialforcedev/ff-apex-ls/blob/master/pkgforce/jvm/src/test/scala/com/nawforce/runtime/api/MDIndexTest.scala) provides some examples of how to use.
 
-The [apex-assist](https://github.com/nawforce/apex-assist) VSCode extension makes use of a JSON-RPC server that is built into the library. The [API](https://javadoc.io/doc/com.github.nawforce/apexlink/latest/com/nawforce/common/rpc/OrgAPI.html) for this is not considered stable, but it may be more convenient for some use cases.
+The naming as ‘MDIndex’ is deliberate as we expect to include other types of metadata relevant to Apex semantic analysis later on. This is similar to how apex-link currently works in that different metadata types are indexed together using the type names they expose to Apex, e.g. Schema.Foo__c for a custom object.  
 
-### Roadmap
-Building this library has been a multi-year effort, but there are still plenty of features to add:  
+The apex-link library relies on a metadata containment hierarchy to isolate different layers of metadata. This is used for a number of purposes such as supporting the analysis of extension packages over base packages, 1GP multi-package directory analysis support and 2GP package analysis. The hierarchy used in apex-link is an ‘Org’ containing ‘Packages’  which contain ‘Modules’ with reverse deploy ordering of children. For the MDIndex model we have adjusted this to be Index->Package->Module but hide the internal structure via acting on the top-most module. This means searches will collate results over the hierarchy and present a consolidated view of the metadata even though internally we are managing multiple layers of metadata to better support advanced semantic analysis later on. 
+
+The apex-link library is not yet making use of MDIndex but can use the Outline parser directly. Once MDIndex has matured we intend to make use of it directly within apex-link as it will allow significant simplification of some of our ‘type finding’ logic. To reach that point we need to show compatibility with ApexIndex using Jorge.
+
+### Jorje Parser Compatibility
+
+The Jorje parser/compiler presents an AST which has a higher level of abstraction around types than our own apex-parser. To understand the differences better we are working on the ability to compare outputs so that we know the input of the indexing processes are comparable. Initially we are treating Jorje as a reference implementation for testing purposes but intend to swap over parsers once compatibility has been reached. 
+
+TODO: Provide links to implementation
  
-* Add ability to import metadata into a layer from external sources, such as directly from an org
-* Extended validations (this can be done incrementally with each release)
-* Provide a means to perform call graph analysis
-* Provide an API to search/access the internal syntax trees
-     
-### Maven
-To use the jar in a maven project add the following to your pom.xml
+### Gulp CLI
 
-    <dependency>
-        <groupId>com.github.nawforce</groupId>
-        <artifactId>apexlink</artifactId>
-        <version>2.4.0-SNAPSHOT</version>
-    </dependency>
+A separate item that is also in progress is a CLI which downloads the additional metadata from an org that is needed for semantic analysis. This is currently part of the [apex-link-sfdx-cli](https://github.com/nawforce/apex-link-sfdx-cli) but to enable reuse we plan that the core logic will be re-packaged as a NPM module.
+
 
 ### Building
-The library is split into two modules 'apex-link' & 'pkgforce', the apex-link library depends on pkgforce. Each have there own pom.xml files that you can use to build. To build both use:
+The library is split into two modules 'apex-link' & 'pkgforce', the apex-link library depends on pkgforce. Each have their own pom.xml files that you can use to build. To build both use:
 
     mvn clean install -Dgpg.skip
 
 We recommend using IntelliJ for development work because of its excellent Scala support. Project files for IntelliJ are also included.
 
-pkgforce can be cross built for use on node.js. To support this it also has an sbt build process.
+pkgforce can be cross built for use on node.js. To support this it also has an sbt build process. This is run automatically as part of the outer project maven build.
 
-### Source & Licenses
-The core of apex-link is written in Scala but should run on any fairly recent JVM and is known to cross compile to Javascript via scala.js. Please let me know if you have trouble building or running it. All the source code included uses a 3-clause BSD license. The only third-party component included is the Apex Antlr4 grammar originally from [Tooling-force.com](https://github.com/neowit/tooling-force.com), although the version used is now markedly different 
-from the original.  
+### Source & Licences
+The source code forked from apex-link & pkgforce uses a  3-clause BSD licence. There are two external contributions, 
+
+* The Apex Antlr4 grammar was originally from [Tooling-force.com](https://github.com/neowit/tooling-force.com), although the version used is now markedly different from the original.  
+* The antlr4c3 CodeCompletionCore.java has been embedded under a MIT licence.
+
+Licensing for new contributions from FinancialForce employees is TBD.
+
