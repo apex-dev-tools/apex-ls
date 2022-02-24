@@ -41,6 +41,7 @@ case object NO_MATCH_ERROR extends MethodCallError("No matching method found")
 case object AMBIGUOUS_ERROR extends MethodCallError("Ambiguous method call")
 
 final case class MethodMap(
+  typeName: Option[TypeName],
   td: Option[ApexClassDeclaration],
   methodsByName: Map[(Name, Int), Array[MethodDeclaration]],
   testVisiblePrivateMethods: Set[MethodDeclaration],
@@ -70,8 +71,35 @@ final case class MethodMap(
     context: VerifyContext
   ): Either[String, MethodDeclaration] = {
     findMethodCall(name, params, staticContext, context) match {
-      case Left(err)     => Left(err.value)
       case Right(method) => Right(method)
+      case Left(err) =>
+        val callee = typeName.map(_.toString).getOrElse("Unknown")
+        val paramsMessage =
+          if (params.nonEmpty)
+            s"arguments '${params.map(_.toString).mkString(", ")}'"
+          else
+            "no arguments"
+        val suggestion = suggestMethod(name, params, staticContext).getOrElse("")
+        Left(s"${err.value} for '$name' on '$callee' taking $paramsMessage$suggestion")
+    }
+  }
+
+  private def suggestMethod(
+    name: Name,
+    params: ArraySeq[TypeName],
+    staticContext: Option[Boolean]
+  ): Option[String] = {
+    val matched = methodsByName.get((name, params.length)).flatMap(_.headOption)
+    if (matched.isEmpty) {
+      methodsByName
+        .find(_._1._1 == name)
+        .map(sameName => s", did you mean to call '${sameName._2.head.toString()}'?")
+    } else if (staticContext.nonEmpty && matched.exists(_.isStatic != staticContext.get)) {
+      Some(
+        s", are you trying to call the instance method '${matched.get.toString()}' from a static context?"
+      )
+    } else {
+      Some(s", wrong argument types for calling '${matched.get.toString()}'")
     }
   }
 
@@ -189,7 +217,7 @@ object MethodMap {
     "database.querylocator start(database.batchablecontext)"
 
   def empty(): MethodMap = {
-    new MethodMap(None, Map(), Set(), Nil)
+    new MethodMap(None, None, Map(), Set(), Nil)
   }
 
   private def toMap(workingMap: WorkingMap): Map[(Name, Int), Array[MethodDeclaration]] = {
@@ -205,7 +233,7 @@ object MethodMap {
       val key = (method.name, method.parameters.length)
       workingMap.put(key, method :: workingMap.getOrElse(key, Nil))
     })
-    new MethodMap(None, toMap(workingMap), Set(), Nil)
+    new MethodMap(Some(td.typeName), None, toMap(workingMap), Set(), Nil)
   }
 
   def apply(
@@ -299,9 +327,21 @@ object MethodMap {
       if (testVisiblePrivate.isEmpty) emptyMethodDeclarationsSet else testVisiblePrivate.toSet
     td match {
       case td: ApexClassDeclaration =>
-        new MethodMap(Some(td), toMap(workingMap), testVisiblePrivateSet, errors.toList)
-      case _: TypeDeclaration =>
-        new MethodMap(None, toMap(workingMap), testVisiblePrivateSet, errors.toList)
+        new MethodMap(
+          Some(td.typeName),
+          Some(td),
+          toMap(workingMap),
+          testVisiblePrivateSet,
+          errors.toList
+        )
+      case td: TypeDeclaration =>
+        new MethodMap(
+          Some(td.typeName),
+          None,
+          toMap(workingMap),
+          testVisiblePrivateSet,
+          errors.toList
+        )
     }
   }
 
