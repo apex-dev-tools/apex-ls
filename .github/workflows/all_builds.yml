@@ -1,0 +1,72 @@
+name: apexlink build and tests 
+
+# This script currently runs windows/linux builds and tests in parallel for
+# java versions 8 and 11.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linux_build_java_8:
+    uses: ./.github/workflows/reusable_linux_build.yml
+    with:
+      java_version: "8"    
+      dependencies_name: "linux_java_8_deps"
+      artifact_name: "linux_java_8"
+
+  linux_test_java_8:
+    needs: linux_build_java_8
+    uses: ./.github/workflows/reusable_tests.yml
+    with:
+      agent: "ubuntu-latest"
+      java_version: "8"    
+      dependencies_name: "linux_java_8_deps"
+      artifact_name: "linux_java_8"
+
+  linux_build_java_11:
+    uses: ./.github/workflows/reusable_linux_build.yml
+    with:
+      java_version: "11"    
+      dependencies_name: "linux_java_11_deps"
+      artifact_name: "linux_java_11"
+
+  linux_test_java_11:
+    needs: linux_build_java_11
+    uses: ./.github/workflows/reusable_tests.yml
+    with:
+      agent: "ubuntu-latest"
+      java_version: "11"    
+      dependencies_name: "linux_java_11_deps"
+      artifact_name: "linux_java_11"
+
+  windows_build_java_8:
+    uses: ./.github/workflows/reusable_windows_build.yml
+    with:
+      java_version: "8"    
+      dependencies_name: "windows_java_8_deps"
+      artifact_name: "windows_java_8"
+
+  windows_test_java_8:
+    needs: windows_build_java_8
+    uses: ./.github/workflows/reusable_tests.yml
+    with:
+      agent: "ubuntu-latest"
+      java_version: "8"    
+      dependencies_name: "windows_java_8_deps"
+      artifact_name: "windows_java_8"
+
+  windows_build_java_11:
+    uses: ./.github/workflows/reusable_windows_build.yml
+    with:
+      java_version: "11"    
+      dependencies_name: "windows_java_11_deps"
+      artifact_name: "windows_java_11"
+
+  windows_test_java_11:
+    needs: windows_build_java_11
+    uses: ./.github/workflows/reusable_tests.yml
+    with:
+      agent: "ubuntu-latest"
+      java_version: "11"    
+      dependencies_name: "windows_java_11_deps"
+      artifact_name: "windows_java_11"
