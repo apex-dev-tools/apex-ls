@@ -1,18 +1,15 @@
-package com.nawforce.pkgforce.parsers
+package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{
-  ClassTypeDeclaration,
-  Compare,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration,
-  OutlineParser
-}
-import com.nawforce.runtime.parsers.SourceData
+import com.financialforce.oparser._
 import com.nawforce.runtime.platform.Path
-import com.nawforce.runtime.sfparser.SFParser
+import com.nawforce.runtime.sfparser.{SFParser, SubsetCompare}
+import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
-class SFParserTest extends AnyFunSuite {
+class SFParserTest extends AnyFunSuite with BeforeAndAfter {
+  before {
+    SubsetCompare.clearWarnings()
+  }
 
   test("Classes") {
     val path = Path("Dummy.cls")
@@ -20,20 +17,23 @@ class SFParserTest extends AnyFunSuite {
       """
         | public abstract class Dummy extends Bar implements Baz, Boo{
         |   static {
+        |   Bar bar = new Bar();
         |   }
-        |   {}
+        |   {
+        |   Foo b = new Foo();
+        |   }
         |   @TestVisible
         |   private Foo f = new Foo();
         |   public string prop {get; set;}
         |   public static final String s = 's';
-        |   private Season seas = Season.FALL;
+        |   private Dummy.Season seas = Season.FALL;
         |
         |   public Dummy(){}
         |   public Dummy(Integer a) {}
         |   public Dummy(String q){}
         |
         |   public abstract void abs();
-        |   public abstract void vMethod(String a, Abc b);
+        |   public abstract void vMethod(String[] a, Abc b);
         |   public boolean bMethod() {}
         |   public static void sMethod(){}
         |   private void pMethod(){}
@@ -51,20 +51,59 @@ class SFParserTest extends AnyFunSuite {
         |      FALL
         |   }
         |   private interface innerInter {
-        |      void add();
+        |      Boo add();
         |      Integer minus();
         |   }
         | }
         |""".stripMargin
 
     val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path, SourceData(content)).parse.get
+    val sfp = SFParser(path.basename, content).parse.get
 
-    Compare.compareClassTypeDeclarations(
+    SubsetCompare.subsetOffClassDeclarations(
       op.asInstanceOf[ClassTypeDeclaration],
       sfp.asInstanceOf[ClassTypeDeclaration]
     )
 
+    assert(SubsetCompare.getWarnings().isEmpty, "Warnings are not empty")
+
+  }
+
+  test("class sharing") {
+    val path = Path("Dummy.cls")
+    val content =
+      """
+        | public with sharing class Dummy extends Baz {
+        |  private Boo test(){return new Boo();}
+        |
+        |  private Class Boo{}
+        | }
+        |""".stripMargin
+
+    val op  = OutlineParser.parse(path.basename, content)._3.get
+    val sfp = SFParser(path.basename, content).parse.get
+    SubsetCompare.subsetOffClassDeclarations(
+      op.asInstanceOf[ClassTypeDeclaration],
+      sfp.asInstanceOf[ClassTypeDeclaration]
+    )
+  }
+
+  test("ArraySubscript") {
+    val path = Path("Dummy.cls")
+    val content =
+      """
+        | public  class Dummy {
+        |  private List<Foo> test() {}
+        | }
+        |""".stripMargin
+
+    val op  = OutlineParser.parse(path.basename, content)._3.get
+    val sfp = SFParser(path.basename, content).parse.get
+    SubsetCompare.subsetOffClassDeclarations(
+      op.asInstanceOf[ClassTypeDeclaration],
+      sfp.asInstanceOf[ClassTypeDeclaration]
+    )
+    assert(SubsetCompare.getWarnings().isEmpty, "Warnings are not empty")
   }
 
   test("Interface") {
@@ -79,11 +118,12 @@ class SFParserTest extends AnyFunSuite {
         |""".stripMargin
 
     val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path, SourceData(content)).parse.get
-    Compare.compareInterfaceTypeDeclarations(
+    val sfp = SFParser(path.basename, content).parse.get
+    SubsetCompare.compareInterfaceTypeDeclarations(
       op.asInstanceOf[InterfaceTypeDeclaration],
       sfp.asInstanceOf[InterfaceTypeDeclaration]
     )
+    assert(SubsetCompare.getWarnings().isEmpty, "Warnings are not empty")
   }
 
   test("Enums") {
@@ -99,11 +139,12 @@ class SFParserTest extends AnyFunSuite {
         |""".stripMargin
 
     val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path, SourceData(content)).parse.get
-    Compare.compareEnumTypeDeclarations(
+    val sfp = SFParser(path.basename, content).parse.get
+    SubsetCompare.compareEnumTypeDeclarations(
       op.asInstanceOf[EnumTypeDeclaration],
       sfp.asInstanceOf[EnumTypeDeclaration]
     )
+    assert(SubsetCompare.getWarnings().isEmpty, "Warnings are not empty")
   }
 
 }

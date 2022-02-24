@@ -1,4 +1,4 @@
-package com.nawforce.pkgforce.sfparser
+package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser.{
   ClassTypeDeclaration,

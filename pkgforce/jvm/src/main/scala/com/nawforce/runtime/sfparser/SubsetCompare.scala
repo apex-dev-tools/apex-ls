@@ -1,12 +1,10 @@
 package com.nawforce.runtime.sfparser
-
 import com.financialforce.oparser.{
   ClassTypeDeclaration,
   EnumTypeDeclaration,
   Id,
   InterfaceTypeDeclaration,
   MethodDeclaration,
-  TypeList,
   TypeRef,
   TypeRefAndId
 }
@@ -161,7 +159,7 @@ object SubsetCompare {
     errorMsg: String,
     first: ArrayBuffer[T],
     second: ArrayBuffer[T]
-  ):Unit = {
+  ): Unit = {
     if (!compareForTypeRefAndId(fInnerIds, sInnerIds, first, second)) {
       val (fDiff, sDiff) = getDiffIfTheresIsAny(first, second)
       throw new Exception(s"$errorMsg $fDiff != $sDiff")
@@ -370,7 +368,7 @@ object SubsetCompare {
     }
   }
 
-  def getWarnings: Set[String] = {
+  def getWarnings(): Set[String] = {
     warnings.toSet
   }
 
