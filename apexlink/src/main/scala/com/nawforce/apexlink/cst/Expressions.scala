@@ -385,21 +385,11 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
                 location.path,
                 WARNING_CATEGORY,
                 location.location,
-                s"$err for '${target.name}' on '${callee.typeName}' " +
-                  s"taking arguments '${argTypes.map(_.toString).mkString(", ")}', likely due to unknown type"
+                s"$err, likely due to unknown type"
               )
             )
-          } else if (argTypes.isEmpty) {
-            context.logError(
-              location,
-              s"$err for '${target.name}' on '${callee.typeName}' taking no arguments"
-            )
           } else {
-            context.logError(
-              location,
-              s"$err for '${target.name}' on '${callee.typeName}' " +
-                s"taking arguments '${argTypes.map(_.toString).mkString(", ")}'"
-            )
+            context.logError(location, s"$err")
           }
         }
         ExprContext.empty
