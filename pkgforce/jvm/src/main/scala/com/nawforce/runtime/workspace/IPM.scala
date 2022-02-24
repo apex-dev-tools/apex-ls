@@ -226,5 +226,32 @@ object IPM extends TriHierarchy {
         accum.addAll(types)
       }
     }
+
+    def getTypesByPath(path: String): Seq[TypeDeclaration] = {
+      findTypesByPathPredicate(t => t == path)
+    }
+
+    def findTypesByPath(path: String): Seq[TypeDeclaration] = {
+      findTypesByPathPredicate(t => t.equalsIgnoreCase(path))
+    }
+
+    def fuzzyFindTypesByPath(path: String): Seq[TypeDeclaration] = {
+      findTypesByPathPredicate(t => t.toLowerCase.startsWith(path.toLowerCase))
+    }
+
+    private def findTypesByPathPredicate(predicate: String => Boolean): Seq[TypeDeclaration] = {
+      var typesForPath = types.values.filter(t => predicate(t.path))
+      if (typesForPath.nonEmpty) return typesForPath.toSeq
+
+      typesForPath = baseModules.headOption
+        .map(_.findTypesByPathPredicate(predicate))
+        .getOrElse(Seq.empty)
+      if (typesForPath.nonEmpty) return typesForPath.toSeq
+
+      typesForPath = basePackages.headOption
+        .flatMap(_.orderedModules.headOption.map(_.findTypesByPathPredicate(predicate)))
+        .getOrElse(Seq.empty)
+      typesForPath.toSeq
+    }
   }
 }
