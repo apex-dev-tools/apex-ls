@@ -1,5 +1,6 @@
 package com.nawforce.runtime.sfparser
 
+import apex.jorje.data.ast
 import apex.jorje.data.ast.TypeRefs.ArrayTypeRef
 import apex.jorje.semantic.ast.AstNode
 import apex.jorje.semantic.ast.compilation.{AnonymousClass, _}
@@ -40,6 +41,7 @@ import com.financialforce.oparser.{
 }
 import org.apache.commons.lang3.reflect.FieldUtils
 
+import java.util
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
@@ -124,7 +126,8 @@ class SFParser(path: String, contents: String) {
     val clinit = members.getMethods.asScala
       .find(_.getMethodInfo.getCanonicalName.equals("<clinit>"))
 
-    // This is very messy and haven't found a better way to access static blocks
+    //TODO: Fix this as it is flaky and does not work properly
+    //This is very messy and haven't found a better way to access static blocks
     //If theres no static block then theres no body and toString will throw an error
     val hasStaticBody = Try {
       clinit.get.getBody.toString
@@ -400,7 +403,6 @@ class SFParser(path: String, contents: String) {
   private def toTypeRef(from: TypeInfo): com.financialforce.oparser.TypeRef = {
     val tr = new oparser.TypeRef
     //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
-    tr.isResolved = from.isResolved
     from.getApexName
       .replaceAll("<.*>", "")
       .split("\\.")
@@ -419,7 +421,7 @@ class SFParser(path: String, contents: String) {
       case Some(typ) => {
         val res = new oparser.TypeRef()
         if (typ.isInstanceOf[ArrayTypeRef]) {
-          //TODO: Resolve this properly
+          //TODO: Resolve array subscripts properly
           //Temporary work around for comparison work as something like String[][] resolves
           // into deep nested typeRef with string type arguments
           val id = typ.getNames.asScala.head
@@ -428,12 +430,20 @@ class SFParser(path: String, contents: String) {
             res.add(ArraySubscripts())
           }
         } else {
+          //We add the type arguments to the last type and not for each name
+          val typArguments = typ.getTypeArguments.asScala
           typ.getNames.forEach(
             t =>
               res.add({
-                toTypeNameFromTypeRef(typ.getTypeArguments, t.getValue, t.getLoc)
+                toTypeNameFromTypeRef(new util.ArrayList[ast.TypeRef](), t.getValue, t.getLoc)
               })
           )
+          if (typArguments.nonEmpty) {
+            val ta = new TypeArguments
+            val tl = toTypeList(typArguments.flatMap(x => toTypeRef(Some(x))))
+            ta.add(tl)
+            res.typeNames.last.typeArguments = Some(ta)
+          }
         }
 
         return Some(res)
@@ -449,8 +459,7 @@ class SFParser(path: String, contents: String) {
     location: apex.jorje.data.Location
   ) = {
     val tp = new TypeName(toId(name, location))
-    val tl = new TypeList
-    typeArguments.asScala.flatMap(x => toTypeRef(Some(x))).foreach(tl.add)
+    val tl = toTypeList(typeArguments.asScala.flatMap(x => toTypeRef(Some(x))))
     if (tl.typeRefs.nonEmpty) {
       val typeArgument = new TypeArguments()
       typeArgument.typeList = Some(tl)
@@ -465,14 +474,19 @@ class SFParser(path: String, contents: String) {
     location: apex.jorje.data.Location
   ) = {
     val tp = new TypeName(toId(name, location))
-    val tl = new TypeList
-    typeArguments.asScala.map(toTypeRef).foreach(tl.add)
+    val tl = toTypeList(typeArguments.asScala.map(toTypeRef))
     if (tl.typeRefs.nonEmpty) {
       val typeArgument = new TypeArguments()
       typeArgument.typeList = Some(tl)
       tp.typeArguments = Some(typeArgument)
     }
     tp
+  }
+
+  private def toTypeList(typRefs: Iterable[TypeRef]) = {
+    val tl = new TypeList
+    typRefs.foreach(tl.add)
+    tl
   }
 
   private class TopLevelVisitor extends AstVisitor[AdditionalPassScope] {

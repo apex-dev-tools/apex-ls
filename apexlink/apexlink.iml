@@ -11,6 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="scala-sdk-2.13.3" level="application" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.13.3" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-parallel-collections_2.13:1.0.0" level="project" />
     <orderEntry type="module" module-name="pkgforce_2.13" />
@@ -49,6 +50,5 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.scala-js:scalajs-stubs_2.13:1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: com.google.jimfs:jimfs:1.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: com.google.guava:guava:18.0" level="project" />
-    <orderEntry type="library" name="scala-sdk-2.13.3" level="application" />
   </component>
 </module>

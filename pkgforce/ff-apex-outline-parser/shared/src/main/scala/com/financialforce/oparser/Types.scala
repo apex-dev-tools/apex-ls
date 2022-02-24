@@ -24,13 +24,6 @@ object StringUtils {
   }
 }
 
-trait TypeRefAndId {
-  val typeRef: TypeRef
-  val id: Id
-  val annotations: mutable.ArrayBuffer[Annotation]
-  val modifiers: mutable.ArrayBuffer[Modifier]
-}
-
 trait IdAssignable {
   def add(i: Id): Unit
 }
@@ -77,6 +70,17 @@ trait InitializerAssignable {
 
 trait PropertyBlockAssignable {
   def add(pb: PropertyBlock): Unit
+}
+
+trait Signature {
+  val typeRef: TypeRef
+  val id: Id
+  val annotations: mutable.ArrayBuffer[Annotation]
+  val modifiers: mutable.ArrayBuffer[Modifier]
+}
+
+trait SignatureWithParameterList extends Signature {
+  val formalParameterList: FormalParameterList
 }
 
 class MemberDeclaration extends ModifierAssignable with TypeRefAssignable {
@@ -152,7 +156,6 @@ class QualifiedName extends IdAssignable {
 class TypeRef extends TypeNameAssignable with ArraySubscriptsAssignable {
   val typeNames: mutable.ArrayBuffer[TypeName]              = mutable.ArrayBuffer[TypeName]()
   val arraySubscripts: mutable.ArrayBuffer[ArraySubscripts] = mutable.ArrayBuffer[ArraySubscripts]()
-  var isResolved: Boolean                                   = false
 
   override def add(tn: TypeName): Unit = typeNames.append(tn)
 
@@ -311,7 +314,7 @@ case class MethodDeclaration(
   id: Id,
   formalParameterList: FormalParameterList
 ) extends BodyDeclaration
-    with TypeRefAndId {
+    with SignatureWithParameterList {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
@@ -337,7 +340,7 @@ class PropertyDeclaration(
   val typeRef: TypeRef,
   val id: Id
 ) extends BodyDeclaration
-    with TypeRefAndId
+    with Signature
     with PropertyBlockAssignable {
 
   var location: Option[Location]      = None
@@ -367,7 +370,7 @@ case class FieldDeclaration(
   typeRef: TypeRef,
   id: Id
 ) extends BodyDeclaration
-    with TypeRefAndId {
+    with Signature {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
