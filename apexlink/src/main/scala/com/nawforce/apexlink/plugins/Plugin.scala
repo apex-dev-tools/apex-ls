@@ -14,12 +14,13 @@
 package com.nawforce.apexlink.plugins
 
 import com.nawforce.apexlink.cst._
+import com.nawforce.apexlink.plugins.Plugin.emptyTypes
 import com.nawforce.apexlink.types.apex.{SummaryDeclaration, TriggerDeclaration}
 import com.nawforce.apexlink.types.core.DependentType
 
 class Plugin(td: DependentType) {
 
-  def onTypeValidated(): Unit = {
+  def onTypeValidated(): Seq[DependentType] = {
     td match {
       case td: ClassDeclaration     => onClassValidated(td)
       case td: InterfaceDeclaration => onInterfaceValidated(td)
@@ -29,15 +30,19 @@ class Plugin(td: DependentType) {
     }
   }
 
-  def onClassValidated(td: ClassDeclaration): Unit = {}
+  def onClassValidated(td: ClassDeclaration): Seq[DependentType] = emptyTypes
 
-  def onInterfaceValidated(td: InterfaceDeclaration): Unit = {}
+  def onInterfaceValidated(td: InterfaceDeclaration): Seq[DependentType] = emptyTypes
 
-  def onEnumValidated(td: EnumDeclaration): Unit = {}
+  def onEnumValidated(td: EnumDeclaration): Seq[DependentType] = emptyTypes
 
-  def onTriggerValidated(td: TriggerDeclaration): Unit = {}
+  def onTriggerValidated(td: TriggerDeclaration): Seq[DependentType] = emptyTypes
 
-  def onSummaryValidated(td: SummaryDeclaration): Unit = {}
+  def onSummaryValidated(td: SummaryDeclaration): Seq[DependentType] = emptyTypes
 
   def onBlockValidated(block: Block, isStatic: Boolean, context: BlockVerifyContext): Unit = {}
+}
+
+object Plugin {
+  val emptyTypes: Seq[DependentType] = Seq.empty
 }
