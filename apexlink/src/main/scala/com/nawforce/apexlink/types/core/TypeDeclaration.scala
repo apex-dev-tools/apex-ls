@@ -168,9 +168,12 @@ trait MethodDeclaration extends DependencyHolder with Dependent {
   def isVirtualOrOverride: Boolean = isVirtual || isOverride
   def isVirtualOrAbstract: Boolean = isVirtual || isAbstract
 
-  override def toString: String =
-    modifiers.map(_.toString).mkString(" ") + " " + typeName.toString + " " + name.toString + "(" +
+  override def toString: String = {
+    val modifierStr = if (modifiers.nonEmpty) modifiers.map(_.toString).mkString(" ") + " " else ""
+    modifierStr +
+      typeName.toString + " " + name.toString + "(" +
       parameters.map(_.toString).mkString(", ") + ")"
+  }
 
   def hasSameSignature(
     other: MethodDeclaration,

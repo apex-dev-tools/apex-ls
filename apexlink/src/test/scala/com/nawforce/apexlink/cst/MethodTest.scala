@@ -20,10 +20,39 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class MethodTest extends AnyFunSuite with TestHelper {
 
+  test("Method call instance->instance") {
+    typeDeclaration("public class Dummy {void f1(){} void f2() {f1();} }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Method call static->static") {
+    typeDeclaration("public class Dummy {static void f1(){} static void f2() {f1();} }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Method call static->instance") {
+    typeDeclaration("public class Dummy {void f1(){} static void f2() {f1();} }")
+    assert(
+      dummyIssues == "Error: line 1 at 50-54: No matching method found for 'f1' on 'Dummy' taking no arguments, are you trying to call the instance method 'void f1()' from a static context?\n"
+    )
+  }
+
+  test("Method call instance->static") {
+    typeDeclaration("public class Dummy {static void f1(){} void f2() {f1();} }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Method call wrong arguments") {
+    typeDeclaration("public class Dummy {static void f1(String a){} void f2() {f1();} }")
+    assert(
+      dummyIssues == "Error: line 1 at 58-62: No matching method found for 'f1' on 'Dummy' taking no arguments, did you mean to call 'static void f1(System.String a)'?\n"
+    )
+  }
+
   test("Method call with ambiguous target") {
     typeDeclaration("public class Dummy { {EventBus.publish(null); } }")
     assert(
-      dummyIssues == "Error: line 1 at 22-44: Ambiguous method call for 'publish' on 'System.EventBus' taking arguments 'null'\n"
+      dummyIssues == "Error: line 1 at 22-44: Ambiguous method call for 'publish' on 'System.EventBus' taking arguments 'null', wrong argument types for calling 'public static System.List<Database.SaveResult> publish(System.List<System.SObject> sobjects)'\n"
     )
   }
 
@@ -197,7 +226,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
         "Extend.cls" -> "public class Extend extends Base { protected override Extend getInstance() {return null;} { this.getInstance();} }"
       )
     ) { root: PathLike =>
-      val org = createOrg(root)
+      createOrg(root)
       assert(
         getMessages(root.join("Extend.cls")) ==
           "Error: line 1 at 61-72: Method 'getInstance' has wrong return type to override, should be 'Base'\n"
@@ -212,7 +241,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
         "Extend.cls" -> "public class Extend extends Base { public override Extend getInstance() {return null;} { this.getInstance();} }"
       )
     ) { root: PathLike =>
-      val org = createOrg(root)
+      createOrg(root)
       assert(
         getMessages(root.join("Extend.cls")) ==
           "Error: line 1 at 58-69: Method 'getInstance' has wrong return type to override, should be 'Base'\n"
@@ -246,10 +275,10 @@ class MethodTest extends AnyFunSuite with TestHelper {
         "force-app/Dummy.cls" -> "public class Dummy { {ext.Something a; EventBus.publish(a); } }"
       )
     ) { root: PathLike =>
-      val org = createOrg(root)
+      createOrg(root)
       assert(
         getMessages(root.join("force-app").join("Dummy.cls")) ==
-          "Warning: line 1 at 39-58: Ambiguous method call for 'publish' on 'System.EventBus' taking arguments 'any', likely due to unknown type\n"
+          "Warning: line 1 at 39-58: Ambiguous method call for 'publish' on 'System.EventBus' taking arguments 'any', wrong argument types for calling 'public static System.List<Database.SaveResult> publish(System.List<System.SObject> sobjects)', likely due to unknown type\n"
       )
     }
   }
