@@ -14,13 +14,12 @@ import com.financialforce.oparser.{
 }
 
 import scala.collection.mutable
-import scala.collection.mutable.Queue
 import scala.collection.mutable.ArrayBuffer
 
 object SubsetCompare {
   private val warnings: ArrayBuffer[String] = ArrayBuffer()
 
-  def getWarnings(): Set[String] = {
+  def getWarnings: Set[String] = {
     warnings.toSet
   }
 
@@ -330,7 +329,7 @@ object SubsetCompare {
           .foreach(x => {
             getTypeArgumentTypeRefs(x).foreach(typeRefQueue.append)
             x.typeNames.foreach(allTypeNames.append)
-            typeRefQueue.dequeue
+            typeRefQueue.dequeue()
           })
       }
       return allTypeNames
@@ -351,17 +350,19 @@ object SubsetCompare {
     isSubset
   }
 
-  private def compareForTypeRefAndId[T <: Signature](
+  private def subsetCompare[T <: Signature](
     fInnerIds: ArrayBuffer[Id],
     sInnerIds: ArrayBuffer[Id],
     first: ArrayBuffer[T],
     second: ArrayBuffer[T]
-  ): Boolean = {
+  ): (Boolean, ArrayBuffer[T], ArrayBuffer[T]) = {
     val (_, firstDiff, secondDiff) = getDiffIfThereIsAny(first, second)
     var check                      = firstDiff.isEmpty && secondDiff.isEmpty
     if (!check) {
       //They are not exactly equal so we fall back to check the subset
-      check = firstDiff.forall(f => findAndCheckTypeRefSubSet(fInnerIds, sInnerIds, f, secondDiff))
+      val nonTypRefSubsetTypes =
+        firstDiff.filterNot(f => findAndCheckTypeRefSubSet(fInnerIds, sInnerIds, f, secondDiff))
+      check = nonTypRefSubsetTypes.isEmpty
       if (check) {
         warnings.append(
           prettyWarnings(
@@ -371,9 +372,14 @@ object SubsetCompare {
           )
         )
       }
+      return (
+        check,
+        nonTypRefSubsetTypes,
+        secondDiff.filter(s => nonTypRefSubsetTypes.exists(f => f.id == s.id))
+      )
     }
 
-    check
+    (check, ArrayBuffer(), ArrayBuffer())
   }
 
   private def findAndCheckTypeRefSubSet[T <: Signature](
@@ -449,9 +455,9 @@ object SubsetCompare {
     first: ArrayBuffer[T],
     second: ArrayBuffer[T]
   ): Unit = {
-    if (!compareForTypeRefAndId(fInnerIds, sInnerIds, first, second)) {
-      val (isDiff, fDiff, sDiff) = getDiffIfThereIsAny(first, second)
-      throw new Exception(s"$errorMsg $fDiff != $sDiff")
+    val (areSubsets, failedFirst, failedSecond) = subsetCompare(fInnerIds, sInnerIds, first, second)
+    if (!areSubsets) {
+      throw new Exception(s"$errorMsg $failedFirst != $failedSecond")
     }
   }
 

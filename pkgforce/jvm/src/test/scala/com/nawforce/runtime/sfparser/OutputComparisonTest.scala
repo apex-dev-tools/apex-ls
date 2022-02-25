@@ -15,6 +15,7 @@ object OutputComparisonTest {
   var withWarnings = 0
   var errors       = 0
   var total        = 0
+  var parseFailure = 0
 
   def main(args: Array[String]): Unit = {
 
@@ -35,13 +36,17 @@ object OutputComparisonTest {
     files.foreach(f => {
       parseFiles(f)
     })
-    println(s"""
-        |Output Comparison Summary
-        |Total files parsed: ${total}
-        |Exactly Equal: ${exactlyEqual}
-        |Files with comparison warnings: ${withWarnings}
-        |Files with comparison errors: ${errors}
-        |""".stripMargin)
+    def toPercentage(result: Int) = {
+      (result / total.toFloat) * 100
+    }
+    println(f"""
+         |Output Comparison Summary
+         |Total cls files processed: $total
+         |Parse Failures: $parseFailure (${toPercentage(parseFailure)}%.0f%%)
+         |Exactly Equal: $exactlyEqual (${toPercentage(exactlyEqual)}%.0f%%)
+         |Files with comparison warnings: $withWarnings (${toPercentage(withWarnings)}%.0f%%)
+         |Files with comparison errors: $errors (${toPercentage(errors)}%.0f%%)
+         |""".stripMargin)
   }
 
   private def parseFiles(path: Path): Unit = {
@@ -50,23 +55,23 @@ object OutputComparisonTest {
     val (success, reason, opOut) = OutlineParser.parse(path.toString, contentsString)
     val sfOut                    = SFParser(path.toString, contentsString).parse
     total += 1
-    if (!success) {
-      System.err.println(s"PARSE FAILURE $path")
+    if (!success || sfOut.isEmpty) {
+      parseFailure += 1
+      System.err.println(s"Parse Failure $path $reason")
+      return
     }
     try {
       val warnings = compareTDs(opOut.get, sfOut.get)
       if (warnings.nonEmpty) {
         withWarnings += 1
-//        println(s"Comparison Warnings for path ${path}")
-//        warnings.foreach(println)
+        //TODO: Process warnings?
       } else {
         exactlyEqual += 1
       }
     } catch {
       case ex: Throwable =>
         errors += 1
-        System.err.println(s"Failed output comparison: $path")
-        System.err.println(ex.getMessage)
+        System.err.println(s"Failed output on ${path} due to ${ex.getMessage}")
     }
   }
 
@@ -84,7 +89,7 @@ object OutputComparisonTest {
         SubsetCompare.compareEnumTypeDeclarations(enm, other.asInstanceOf[EnumTypeDeclaration])
       case _ =>
     }
-    SubsetCompare.getWarnings()
+    SubsetCompare.getWarnings
   }
 
   private def getFilesFromPath(absolutePath: Path) = {
