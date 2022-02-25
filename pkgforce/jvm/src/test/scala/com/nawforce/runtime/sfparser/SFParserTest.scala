@@ -2,7 +2,6 @@ package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser._
 import com.nawforce.runtime.platform.Path
-import com.nawforce.runtime.sfparser.{SFParser, SubsetCompare}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
