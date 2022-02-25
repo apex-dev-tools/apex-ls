@@ -7,10 +7,8 @@ import com.financialforce.oparser.{
   OutlineParser,
   TypeDeclaration
 }
-import com.nawforce.runtime.sfparser.{SFParser, SubsetCompare}
 
 import java.nio.file.{Files, Path, Paths}
-import scala.collection.mutable.ArrayBuffer
 
 object OutputComparisonTest {
   var exactlyEqual = 0

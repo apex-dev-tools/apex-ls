@@ -34,7 +34,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         |
         |   public abstract void abs();
         |   public abstract void vMethod(String[] a, Abc b);
-        |   public boolean bMethod() {}
+        |   public List<boolean> bMethod() {}
         |   public static void sMethod(){}
         |   private void pMethod(){}
         |
@@ -86,24 +86,6 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
       op.asInstanceOf[ClassTypeDeclaration],
       sfp.asInstanceOf[ClassTypeDeclaration]
     )
-  }
-
-  test("ArraySubscript") {
-    val path = Path("Dummy.cls")
-    val content =
-      """
-        | public  class Dummy {
-        |  private List<Foo> test() {}
-        | }
-        |""".stripMargin
-
-    val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse.get
-    SubsetCompare.subsetOffClassDeclarations(
-      op.asInstanceOf[ClassTypeDeclaration],
-      sfp.asInstanceOf[ClassTypeDeclaration]
-    )
-    assert(SubsetCompare.getWarnings().isEmpty, "Warnings are not empty")
   }
 
   test("Interface") {

@@ -3,13 +3,18 @@ package com.nawforce.runtime.sfparser
 import com.financialforce.oparser.{
   ClassTypeDeclaration,
   EnumTypeDeclaration,
+  FormalParameterList,
   Id,
   InterfaceTypeDeclaration,
+  MethodDeclaration,
   Signature,
   SignatureWithParameterList,
+  TypeName,
   TypeRef
 }
 
+import scala.collection.mutable
+import scala.collection.mutable.Queue
 import scala.collection.mutable.ArrayBuffer
 
 object SubsetCompare {
@@ -67,6 +72,8 @@ object SubsetCompare {
     }
 
     def compareInnerInterfaces(
+      fInnerIds: ArrayBuffer[Id],
+      sInnerIds: ArrayBuffer[Id],
       fst: Seq[InterfaceTypeDeclaration],
       snd: Seq[InterfaceTypeDeclaration]
     ): Unit = {
@@ -76,7 +83,7 @@ object SubsetCompare {
         if (sOpt.isEmpty) {
           throw new Exception(s"Inner interface not found ${f.id} in ${first.id}")
         }
-        compareInterfaceTypeDeclarations(f, sOpt.get)
+        compareInterfaceTypeDeclarations(f, sOpt.get, fInnerIds, sInnerIds)
       })
     }
 
@@ -165,6 +172,8 @@ object SubsetCompare {
     )
 
     compareInnerInterfaces(
+      fInIds,
+      sInIds,
       innerInterfaceTypeDeclarations(first),
       innerInterfaceTypeDeclarations(second)
     )
@@ -175,7 +184,9 @@ object SubsetCompare {
 
   def compareInterfaceTypeDeclarations(
     first: InterfaceTypeDeclaration,
-    second: InterfaceTypeDeclaration
+    second: InterfaceTypeDeclaration,
+    fInnerIds: ArrayBuffer[Id] = ArrayBuffer(),
+    sInnerIds: ArrayBuffer[Id] = ArrayBuffer()
   ): Unit = {
 
     checkAndThrowIfDiff("Different Annotations", first.annotations, second.annotations)
@@ -191,8 +202,8 @@ object SubsetCompare {
       )
     }
     checkAndThrowIfDiffForSignatures(
-      ArrayBuffer(),
-      ArrayBuffer(),
+      fInnerIds,
+      sInnerIds,
       "Different methods",
       first.methods,
       second.methods
@@ -230,13 +241,37 @@ object SubsetCompare {
   private def getDiffIfThereIsAny[T](
     first: ArrayBuffer[T],
     second: ArrayBuffer[T]
-  ): (ArrayBuffer[T], ArrayBuffer[T]) = {
+  ): (Boolean, ArrayBuffer[T], ArrayBuffer[T]) = {
     val diff = first.filterNot(second.contains)
     if (diff.nonEmpty) {
       val otherDiff = second.filterNot(first.contains)
-      return (diff, otherDiff)
+      return (true, diff, otherDiff)
     }
-    (ArrayBuffer(), ArrayBuffer())
+    (false, ArrayBuffer(), ArrayBuffer())
+  }
+
+  private def getTypeArgumentTypeRefs(typ: TypeRef): ArrayBuffer[TypeRef] = {
+    typ.typeNames
+      .flatMap(_.typeArguments)
+      .flatMap(_.typeList)
+      .flatMap(_.typeRefs)
+  }
+
+  private def compareTypeRef(
+    firstIds: ArrayBuffer[Id],
+    secondIds: ArrayBuffer[Id],
+    first: Option[TypeRef],
+    second: Option[TypeRef]
+  ): Boolean = {
+    first match {
+      case Some(fType) =>
+        if (second.nonEmpty) {
+          return compareTypeRef(firstIds, secondIds, fType, second.get)
+        }
+        false
+      case None => second.isEmpty
+    }
+
   }
 
   private def compareTypeRef(
@@ -245,13 +280,6 @@ object SubsetCompare {
     first: TypeRef,
     second: TypeRef
   ): Boolean = {
-    def getTypeArguments(typ: TypeRef): ArrayBuffer[TypeRef] = {
-      typ.typeNames
-        .flatMap(_.typeArguments)
-        .flatMap(_.typeList)
-        .flatMap(_.typeRefs)
-    }
-
     if (first == second) {
       return true
     }
@@ -263,8 +291,8 @@ object SubsetCompare {
     if (!checks) {
       if (first.typeNames.map(_.id) == second.typeNames.map(_.id)) {
         //Type arguments for type names must have failed
-        val firstTypArgumentTypeRefs  = getTypeArguments(first)
-        val secondTypArgumentTypeRefs = getTypeArguments(second)
+        val firstTypArgumentTypeRefs  = getTypeArgumentTypeRefs(first)
+        val secondTypArgumentTypeRefs = getTypeArgumentTypeRefs(second)
         checks = areTypeRefsSubsets(
           firstIds,
           secondIds,
@@ -288,12 +316,28 @@ object SubsetCompare {
   }
 
   private def compareListAdnArraySubscriptIfAny(first: TypeRef, second: TypeRef): Boolean = {
-    //Check if type is array subscript and the other has a List type
-    //TODO: this doesn't doo deep list checks
-    first.arraySubscripts.nonEmpty && second.typeNames
-      .map(_.id.id.contents)
-      .contains("List")
-    //TODO we need to check the others values again ignoring this list and substring stuff
+    //Check if type is array subscript and the other has matching number of List type
+    //TODO we need to compare typerefs again make sure the other are matching
+    if (first.arraySubscripts.nonEmpty) {
+      val allTypeNames = ArrayBuffer[TypeName]()
+      val typeRefQueue = mutable.Queue[TypeRef]()
+
+      getTypeArgumentTypeRefs(second).foreach(typeRefQueue.append)
+      second.typeNames.foreach(allTypeNames.append)
+      while (typeRefQueue.nonEmpty) {
+        typeRefQueue
+          .clone()
+          .foreach(x => {
+            getTypeArgumentTypeRefs(x).foreach(typeRefQueue.append)
+            x.typeNames.foreach(allTypeNames.append)
+            typeRefQueue.dequeue
+          })
+      }
+      return allTypeNames
+        .map(_.id.id.lowerCaseContents)
+        .count(_.equalsIgnoreCase("list")) == first.arraySubscripts.length
+    }
+    false
   }
 
   private def areTypeRefsSubsets(
@@ -313,8 +357,8 @@ object SubsetCompare {
     first: ArrayBuffer[T],
     second: ArrayBuffer[T]
   ): Boolean = {
-    val (firstDiff, secondDiff) = getDiffIfThereIsAny(first, second)
-    var check                   = firstDiff.isEmpty && secondDiff.isEmpty
+    val (_, firstDiff, secondDiff) = getDiffIfThereIsAny(first, second)
+    var check                      = firstDiff.isEmpty && secondDiff.isEmpty
     if (!check) {
       //They are not exactly equal so we fall back to check the subset
       check = firstDiff.forall(f => findAndCheckTypeRefSubSet(fInnerIds, sInnerIds, f, secondDiff))
@@ -338,49 +382,64 @@ object SubsetCompare {
     firstSig: T,
     secondDiff: ArrayBuffer[T]
   ): Boolean = {
-    def checkAnnotationAgainst(s: T): Boolean = {
-      val (fD, sD) = getDiffIfThereIsAny(firstSig.annotations, s.annotations)
-      fD == sD
-    }
 
-    def checkForModifiersAgainst(s: T): Boolean = {
-      val (fD, sD) = getDiffIfThereIsAny(firstSig.annotations, s.annotations)
-      fD == sD
-    }
-
-    def checkForParameterListAgainst(s: T): Boolean = {
-      firstSig.asInstanceOf[SignatureWithParameterList].formalParameterList == s
-        .asInstanceOf[SignatureWithParameterList]
-        .formalParameterList
-    }
     firstSig match {
-      case fMethod: SignatureWithParameterList =>
-        val numberOfParams = fMethod.formalParameterList.formalParameters.map(_.id)
-        secondDiff.find(
-          s =>
-            firstSig.id == s.id && s
-              .asInstanceOf[SignatureWithParameterList]
-              .formalParameterList
-              .formalParameters
-              .map(_.id)
-              == numberOfParams
-        ) match {
-          case Some(secondSig) =>
-            val typeRefIdCheck = compareTypeRef(fIds, sIds, firstSig.typeRef, secondSig.typeRef)
-            typeRefIdCheck & checkForParameterListAgainst(secondSig) && checkForModifiersAgainst(
-              secondSig
-            ) && checkAnnotationAgainst(secondSig)
-        }
+      case fMethod: MethodDeclaration =>
+        findAndCompareMethods(
+          fIds,
+          sIds,
+          fMethod,
+          secondDiff.asInstanceOf[ArrayBuffer[MethodDeclaration]]
+        )
       case _ =>
         secondDiff.find(firstSig.id == _.id) match {
           case Some(secondSig) =>
             val typeRefIdCheck = compareTypeRef(fIds, sIds, firstSig.typeRef, secondSig.typeRef)
-            typeRefIdCheck && checkForModifiersAgainst(secondSig) && checkAnnotationAgainst(
-              secondSig
-            )
+            typeRefIdCheck && firstSig.annotations == secondSig.annotations && firstSig.modifiers == secondSig.modifiers
           case _ => false
         }
     }
+  }
+
+  private def findAndCompareMethods(
+    fIds: ArrayBuffer[Id],
+    sIds: ArrayBuffer[Id],
+    first: MethodDeclaration,
+    second: ArrayBuffer[MethodDeclaration]
+  ): Boolean = {
+    val numberOfParams = first.formalParameterList.formalParameters.length
+    val possibleMethods = second.filter(
+      s =>
+        s.asInstanceOf[SignatureWithParameterList].formalParameterList.formalParameters.length ==
+          numberOfParams
+    )
+    possibleMethods.nonEmpty && possibleMethods.exists(secondMethod => {
+      val typeRefIdCheck = compareTypeRef(fIds, sIds, first.typeRef, secondMethod.typeRef)
+      typeRefIdCheck && checkForParameterListAgainst(
+        fIds,
+        sIds,
+        first.formalParameterList,
+        secondMethod.formalParameterList
+      ) && first.annotations == secondMethod.annotations && first.modifiers == secondMethod.modifiers
+    })
+  }
+
+  private def checkForParameterListAgainst(
+    fIds: ArrayBuffer[Id],
+    sIds: ArrayBuffer[Id],
+    first: FormalParameterList,
+    second: FormalParameterList
+  ): Boolean = {
+    if (first.formalParameters.nonEmpty) {
+      return second.formalParameters.nonEmpty && first.formalParameters.zipWithIndex.forall(f => {
+        val s = second.formalParameters(f._2)
+        compareTypeRef(fIds, sIds, f._1.typeRef, s.typeRef) && !getDiffIfThereIsAny(
+          f._1.annotations,
+          s.annotations
+        )._1 && !getDiffIfThereIsAny(f._1.modifiers, s.modifiers)._1 && s.id == f._1.id
+      })
+    }
+    second.formalParameters.isEmpty
   }
 
   private def checkAndThrowIfDiffForSignatures[T <: Signature](
@@ -391,7 +450,7 @@ object SubsetCompare {
     second: ArrayBuffer[T]
   ): Unit = {
     if (!compareForTypeRefAndId(fInnerIds, sInnerIds, first, second)) {
-      val (fDiff, sDiff) = getDiffIfThereIsAny(first, second)
+      val (isDiff, fDiff, sDiff) = getDiffIfThereIsAny(first, second)
       throw new Exception(s"$errorMsg $fDiff != $sDiff")
     }
   }
@@ -401,8 +460,8 @@ object SubsetCompare {
     first: ArrayBuffer[T],
     second: ArrayBuffer[T]
   ): Unit = {
-    val (firstDiff, secondDiff) = getDiffIfThereIsAny(first, second)
-    if (firstDiff.nonEmpty) {
+    val (isDiff, firstDiff, secondDiff) = getDiffIfThereIsAny(first, second)
+    if (isDiff) {
       throw new Exception(s"${errorMsg}: ${firstDiff} != ${secondDiff}")
     }
   }
