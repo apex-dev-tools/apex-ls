@@ -420,12 +420,14 @@ class SFParser(path: String, contents: String) {
     from match {
       case Some(typ) => {
         val res = new oparser.TypeRef()
+        //Things to note here,
+        // if its a return type that has '[]' then parser will resolve '[]' to a list
+        // but if its a in a typeArgument then it will resolve as ArrayTypeRef
         if (typ.isInstanceOf[ArrayTypeRef]) {
           //TODO: Resolve array subscripts properly
           //Temporary work around for comparison work as something like String[][] resolves
           // into deep nested typeRef with string type arguments
-          val id = typ.getNames.asScala.head
-          res.add(new TypeName(toId(id.getValue, id.getLoc)))
+          typ.getNames.forEach(x => res.add(new TypeName(toId(x.getValue, x.getLoc))))
           for (_ <- 0 to typ.toString.split("\\[").length - 2) {
             res.add(ArraySubscripts())
           }
