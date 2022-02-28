@@ -4,6 +4,7 @@
 package com.financialforce.oparser
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object StringUtils {
 
@@ -71,11 +72,22 @@ trait PropertyBlockAssignable {
   def add(pb: PropertyBlock): Unit
 }
 
+trait Signature {
+  val typeRef: TypeRef
+  val id: Id
+  val annotations: mutable.ArrayBuffer[Annotation]
+  val modifiers: mutable.ArrayBuffer[Modifier]
+}
+
+trait SignatureWithParameterList extends Signature {
+  val formalParameterList: FormalParameterList
+}
+
 class MemberDeclaration extends ModifierAssignable with TypeRefAssignable {
 
   val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  val modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer[Modifier]()
-  var typeRef: Option[TypeRef] = None
+  val modifiers: mutable.ArrayBuffer[Modifier]     = mutable.ArrayBuffer[Modifier]()
+  var typeRef: Option[TypeRef]                     = None
 
   override def add(a: Annotation): Unit = annotations.append(a)
 
@@ -99,6 +111,7 @@ case class Annotation(qName: QualifiedName, parameters: Option[String]) {
 
 case class Modifier(token: Token) {
   def text: String = token.contents
+
   def location: Location = token.location
 
   override def toString: String = text
@@ -114,7 +127,7 @@ case class Id(id: IdToken) {
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[Id]
-    id.lowerCaseContents == other.id.lowerCaseContents
+    id.lowerCaseContents.equalsIgnoreCase(other.id.lowerCaseContents)
   }
 }
 
@@ -123,7 +136,7 @@ class QualifiedName extends IdAssignable {
 
   def location: Location = {
     val start = qName.head.id.location
-    val end = qName.last.id.location
+    val end   = qName.last.id.location
     Location.from(start, end)
   }
 
@@ -141,7 +154,7 @@ class QualifiedName extends IdAssignable {
 }
 
 class TypeRef extends TypeNameAssignable with ArraySubscriptsAssignable {
-  val typeNames: mutable.ArrayBuffer[TypeName] = mutable.ArrayBuffer[TypeName]()
+  val typeNames: mutable.ArrayBuffer[TypeName]              = mutable.ArrayBuffer[TypeName]()
   val arraySubscripts: mutable.ArrayBuffer[ArraySubscripts] = mutable.ArrayBuffer[ArraySubscripts]()
 
   override def add(tn: TypeName): Unit = typeNames.append(tn)
@@ -215,9 +228,9 @@ case class ArraySubscripts() {
 class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdAssignable {
 
   val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  val modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer[Modifier]()
-  var typeRef: Option[TypeRef] = None
-  var id: Option[Id] = None
+  val modifiers: mutable.ArrayBuffer[Modifier]     = mutable.ArrayBuffer[Modifier]()
+  var typeRef: Option[TypeRef]                     = None
+  var id: Option[Id]                               = None
 
   override def add(a: Annotation): Unit = annotations.append(a)
 
@@ -276,8 +289,8 @@ case class ConstructorDeclaration(
   formalParameterList: FormalParameterList
 ) extends BodyDeclaration {
 
-  val id: Id = qName.qName(0)
-  var location: Option[Location] = None
+  val id: Id                          = qName.qName(0)
+  var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
 
   override def equals(obj: Any): Boolean = {
@@ -300,9 +313,10 @@ case class MethodDeclaration(
   typeRef: TypeRef,
   id: Id,
   formalParameterList: FormalParameterList
-) extends BodyDeclaration {
+) extends BodyDeclaration
+    with SignatureWithParameterList {
 
-  var location: Option[Location] = None
+  var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
 
   override def equals(obj: Any): Boolean = {
@@ -326,9 +340,10 @@ class PropertyDeclaration(
   val typeRef: TypeRef,
   val id: Id
 ) extends BodyDeclaration
+    with Signature
     with PropertyBlockAssignable {
 
-  var location: Option[Location] = None
+  var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
 
   val propertyBlocks: mutable.ArrayBuffer[PropertyBlock] = mutable.ArrayBuffer[PropertyBlock]()
@@ -354,9 +369,10 @@ case class FieldDeclaration(
   modifiers: mutable.ArrayBuffer[Modifier],
   typeRef: TypeRef,
   id: Id
-) extends BodyDeclaration {
+) extends BodyDeclaration
+    with Signature {
 
-  var location: Option[Location] = None
+  var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
 
   override def equals(obj: Any): Boolean = {
@@ -378,8 +394,8 @@ object Initializer {
 }
 
 case class Initializer(isStatic: Boolean) extends BodyDeclaration {
-  override val id: Id = Initializer.id
-  override var location: Option[Location] = None
+  override val id: Id                          = Initializer.id
+  override var location: Option[Location]      = None
   override var blockLocation: Option[Location] = None
 }
 
@@ -400,12 +416,12 @@ class ClassTypeDeclaration(val path: String)
     with InitializerAssignable {
 
   val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  val modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer[Modifier]()
-  var id: Option[Id] = None
-  val typeParameters: mutable.ArrayBuffer[String] = mutable.ArrayBuffer[String]()
-  var extendsTypeRef: Option[TypeRef] = None
-  var implementsTypeList: Option[TypeList] = None
-  var location: Option[Location] = None
+  val modifiers: mutable.ArrayBuffer[Modifier]     = mutable.ArrayBuffer[Modifier]()
+  var id: Option[Id]                               = None
+  val typeParameters: mutable.ArrayBuffer[String]  = mutable.ArrayBuffer[String]()
+  var extendsTypeRef: Option[TypeRef]              = None
+  var implementsTypeList: Option[TypeList]         = None
+  var location: Option[Location]                   = None
 
   val constructors: mutable.ArrayBuffer[ConstructorDeclaration] =
     mutable.ArrayBuffer[ConstructorDeclaration]()
@@ -496,12 +512,12 @@ class InterfaceTypeDeclaration(val path: String)
     with TypeListAssignable
     with MethodDeclarationAssignable {
 
-  val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  val modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer[Modifier]()
-  var id: Option[Id] = None
-  var extendsTypeList: Option[TypeList] = None
+  val annotations: mutable.ArrayBuffer[Annotation]    = mutable.ArrayBuffer[Annotation]()
+  val modifiers: mutable.ArrayBuffer[Modifier]        = mutable.ArrayBuffer[Modifier]()
+  var id: Option[Id]                                  = None
+  var extendsTypeList: Option[TypeList]               = None
   val methods: mutable.ArrayBuffer[MethodDeclaration] = mutable.ArrayBuffer[MethodDeclaration]()
-  var location: Option[Location] = None
+  var location: Option[Location]                      = None
 
   override def add(a: Annotation): Unit = annotations.append(a)
 
@@ -534,10 +550,10 @@ class EnumTypeDeclaration(val path: String)
     with ModifierAssignable {
 
   val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  val modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer[Modifier]()
-  var id: Option[Id] = None
-  val constants: mutable.ArrayBuffer[Id] = mutable.ArrayBuffer[Id]()
-  var location: Option[Location] = None
+  val modifiers: mutable.ArrayBuffer[Modifier]     = mutable.ArrayBuffer[Modifier]()
+  var id: Option[Id]                               = None
+  val constants: mutable.ArrayBuffer[Id]           = mutable.ArrayBuffer[Id]()
+  var location: Option[Location]                   = None
 
   override def add(a: Annotation): Unit = annotations.append(a)
 
@@ -630,7 +646,7 @@ object Parse {
       return (true, addInitializer(ctd, false).toSeq)
     }
 
-    val md = new MemberDeclaration
+    val md    = new MemberDeclaration
     var index = parseModifiers(0, tokens, md)
 
     if (index >= tokens.length()) {
@@ -660,7 +676,7 @@ object Parse {
   def parseInterfaceMember(itd: InterfaceTypeDeclaration, tokens: Tokens): Seq[BodyDeclaration] = {
     if (tokens.isEmpty()) return Seq.empty
 
-    val md = new MemberDeclaration
+    val md    = new MemberDeclaration
     var index = parseModifiers(0, tokens, md)
     index = parseTypeRef(index, tokens, md)
     addMethod(index, tokens, md, itd).toSeq
@@ -703,7 +719,7 @@ object Parse {
   ): Option[ConstructorDeclaration] = {
 
     val formalParameterList = new FormalParameterList
-    val index = parseFormalParameterList(startIndex, tokens, formalParameterList)
+    val index               = parseFormalParameterList(startIndex, tokens, formalParameterList)
     if (index < tokens.length()) {
       throw new Exception(s"Unrecognised constructor ${tokens.toString()}")
     }
@@ -728,7 +744,7 @@ object Parse {
       throw new Exception(s"Unrecognised method ${tokens.toString()}")
     }
 
-    val id = tokenToId(tokens(startIndex).get)
+    val id    = tokenToId(tokens(startIndex).get)
     var index = startIndex + 1
 
     val formalParameterList = new FormalParameterList
@@ -749,7 +765,7 @@ object Parse {
     ctd: ClassTypeDeclaration
   ): Option[PropertyDeclaration] = {
 
-    val id = tokenToId(tokens(startIndex).get)
+    val id    = tokenToId(tokens(startIndex).get)
     val index = startIndex + 1
 
     if (index < tokens.length()) {
@@ -774,11 +790,11 @@ object Parse {
 
     def skipToNextField(startIndex: Int): (Location, Int) = {
       var nestedParenthesis = 0
-      var angleBrackets = 0
-      var squareBrackets = 0
-      var index = startIndex
-      var found = false
-      var endLocation = nextToken.location
+      var angleBrackets     = 0
+      var squareBrackets    = 0
+      var index             = startIndex
+      var found             = false
+      var endLocation       = nextToken.location
       while (!found && index < tokens.length()) {
         tokens(index) match {
           case Some(t: NonIdToken) =>
@@ -814,9 +830,9 @@ object Parse {
       (endLocation, index)
     }
 
-    var index = startIndex
+    var index                           = startIndex
     var startLocation: Option[Location] = None
-    var endLocation = Location.default
+    var endLocation                     = Location.default
     while (index < tokens.length()) {
       val id = tokenToId(tokens(index).get)
 
@@ -893,7 +909,7 @@ object Parse {
 
   private def parseTypeList(startIndex: Int, tokens: Tokens, res: TypeListAssignable): Int = {
     val typeList = new TypeList
-    var index = parseTypeRef(startIndex, tokens, typeList)
+    var index    = parseTypeRef(startIndex, tokens, typeList)
     while (index < tokens.length() && tokens(index).get.matches(Tokens.CommaStr)) {
       index = parseTypeRef(index + 1, tokens, typeList)
     }
@@ -943,7 +959,7 @@ object Parse {
     }
 
     val parameters = if (tokens(index).exists(_.matches(Tokens.LParenStr))) {
-      val builder = new StringBuilder()
+      val builder      = new StringBuilder()
       var nestingCount = 1
       //builder.append(tokens(index).get.contents)
       index += 1
@@ -982,7 +998,7 @@ object Parse {
   private val sharingModifiers = Set(Tokens.WithStr, Tokens.WithoutStr, Tokens.InheritedStr)
 
   private def parseModifiers(startIndex: Int, tokens: Tokens, res: ModifierAssignable): Int = {
-    var index = startIndex
+    var index    = startIndex
     var continue = true
     while (continue && index < tokens.length()) {
       if (tokens(index).get.matches(Tokens.AtSignStr)) {
@@ -1018,7 +1034,7 @@ object Parse {
   ): Int = {
     if (!tokens(startIndex).exists(_.matches(Tokens.LParenStr))) return startIndex
 
-    var index = startIndex + 1
+    var index        = startIndex + 1
     var indexAtStart = startIndex
     while (
       indexAtStart != index && index < tokens
@@ -1148,7 +1164,7 @@ object Compare {
       throw new Exception(s"Different properties ${first.properties} != ${second.properties}")
     }
 
-    if (first.fields != second.fields) {
+    if (first.fields.toSet != second.fields.toSet) {
       throw new Exception(s"Different fields ${first.fields} != ${second.fields}")
     }
 
@@ -1210,7 +1226,7 @@ object Compare {
       throw new Exception(s"Different or empty enum id ${first.id} != ${second.id}")
     }
 
-    if (first.constants != second.constants) {
+    if (first.constants.toSet != second.constants.toSet) {
       throw new Exception(s"Different constants ${first.constants} != ${second.constants}")
     }
   }
