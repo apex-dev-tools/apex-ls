@@ -512,7 +512,7 @@ class OutlineParser(path: String, contents: String) {
 
       // Hmmm
       val byteLength =
-        if (currentChar.toInt <= 128) 1
+        if (currentChar.toInt < 128) 1
         else
           byteBuffer
             .append(currentChar)
