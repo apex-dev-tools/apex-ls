@@ -78,10 +78,12 @@ object CompilerService {
       val compilerContext = FieldUtils
         .readDeclaredField(apexCompiler, "compilerContext", true)
         .asInstanceOf[CompilerContext]
-
+      val getOperation =
+        CompilerStage.ADDITIONAL_VALIDATE.getClass.getDeclaredMethod("getOperation")
+      getOperation.setAccessible(true)
       allUnits.foreach(unit => {
-        val op: CompilerOperation = MethodUtils
-          .invokeMethod(CompilerStage.ADDITIONAL_VALIDATE, true, "getOperation")
+        val op: CompilerOperation = getOperation
+          .invoke(CompilerStage.ADDITIONAL_VALIDATE)
           .asInstanceOf[CompilerOperation]
         op.invoke(compilerContext, unit)
       })
