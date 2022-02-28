@@ -27,6 +27,7 @@ class Plugin(td: DependentType) {
       case td: EnumDeclaration      => onEnumValidated(td)
       case td: TriggerDeclaration   => onTriggerValidated(td)
       case td: SummaryDeclaration   => onSummaryValidated(td)
+      case _                        => emptyTypes
     }
   }
 
