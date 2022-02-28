@@ -459,7 +459,7 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
           field = findField(id.name, staticContext = Some(false))
 
         if (field.isEmpty) {
-          if (!context.module.isGhostedFieldName(id.name))
+          if (!context.module.isGhostedFieldName(id.name) && !context.module.isGhostedType(typeName))
             context.log(IssueOps.unknownFieldOnSObject(id.location, id.name, typeName))
           None
         } else {
