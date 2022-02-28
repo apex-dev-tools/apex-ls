@@ -299,7 +299,7 @@ final case class ArrayExpression(expression: Expression, arrayExpression: Expres
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
 
     val index =
-      arrayExpression.verify(ExprContext(isStatic = Some(false), context.thisType), context)
+      arrayExpression.verify(ExprContext(input.isStatic, context.thisType), context)
     if (index.declaration.isEmpty)
       return ExprContext.empty
     if (index.typeName != TypeNames.Integer) {
