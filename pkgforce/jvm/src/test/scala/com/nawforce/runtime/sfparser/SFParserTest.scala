@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
+
 package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser._
@@ -64,7 +68,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
       sfp.asInstanceOf[ClassTypeDeclaration]
     )
 
-    assert(SubsetCompare.getWarnings().isEmpty, "Warnings are not empty")
+    assert(SubsetCompare.getWarnings.isEmpty, "Warnings are not empty")
 
   }
 
@@ -75,7 +79,6 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         | public with sharing class Dummy extends Baz {
         |  private Boo test(){return new Boo();}
         |
-        |  private Class Boo{}
         | }
         |""".stripMargin
 
@@ -85,6 +88,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
       op.asInstanceOf[ClassTypeDeclaration],
       sfp.asInstanceOf[ClassTypeDeclaration]
     )
+    assert(SubsetCompare.getWarnings.isEmpty, "Warnings are not empty")
   }
 
   test("Interface") {
@@ -104,7 +108,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
       op.asInstanceOf[InterfaceTypeDeclaration],
       sfp.asInstanceOf[InterfaceTypeDeclaration]
     )
-    assert(SubsetCompare.getWarnings().isEmpty, "Warnings are not empty")
+    assert(SubsetCompare.getWarnings.isEmpty, "Warnings are not empty")
   }
 
   test("Enums") {
@@ -125,7 +129,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
       op.asInstanceOf[EnumTypeDeclaration],
       sfp.asInstanceOf[EnumTypeDeclaration]
     )
-    assert(SubsetCompare.getWarnings().isEmpty, "Warnings are not empty")
+    assert(SubsetCompare.getWarnings.isEmpty, "Warnings are not empty")
   }
 
 }

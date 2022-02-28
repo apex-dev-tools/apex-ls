@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
+
 package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser.{
