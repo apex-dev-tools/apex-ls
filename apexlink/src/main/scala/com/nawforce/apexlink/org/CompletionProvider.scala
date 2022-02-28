@@ -83,7 +83,7 @@ trait CompletionProvider {
     val tokenAndIndex =
       findTokenAndIndex(parserAndCU._1, line, adjustedOffset, offset != adjustedOffset)
     val core       = new CodeCompletionCore(parserAndCU._1, preferredRules.asJava, ignoredTokens.asJava)
-    val candidates = core.collectCandidates(tokenAndIndex._2, parserAndCU._2)
+    val candidates = core.collectCandidates(tokenAndIndex._2, parserAndCU._2, 1024)
 
     // Generate a list of possible keyword matches
     val keywords = candidates.tokens.asScala

@@ -141,7 +141,7 @@ public class CodeCompletionCore {
    * Optionally you can pass in a parser rule context which limits the ATN walk to only that or called rules. This can significantly
    * speed up the retrieval process but might miss some candidates (if they are outside of the given context).
    */
-  public CandidatesCollection collectCandidates(int caretTokenIndex, ParserRuleContext context) {
+  public CandidatesCollection collectCandidates(int caretTokenIndex, ParserRuleContext context, int maxStates) {
     this.shortcutMap.clear();
     this.candidates.rules.clear();
     this.candidates.tokens.clear();
@@ -165,7 +165,7 @@ public class CodeCompletionCore {
 
     LinkedList<Integer> callStack = new LinkedList<>();
     int startRule = context != null ? context.getRuleIndex() : 0;
-    this.processRule(this.atn.ruleToStartState[startRule], 0, callStack, "\n");
+    this.processRule(this.atn.ruleToStartState[startRule], 0, callStack, "\n", maxStates);
 
     tokenStream.seek(currentIndex);
 
@@ -384,7 +384,7 @@ public class CodeCompletionCore {
    * The result can be empty in case we hit only non-epsilon transitions that didn't match the current input or if we
    * hit the caret position.
    */
-  private Set<Integer> processRule(ATNState startState, int tokenIndex, LinkedList<Integer> callStack, String indentation) {
+  private Set<Integer> processRule(ATNState startState, int tokenIndex, LinkedList<Integer> callStack, String indentation, int maxStates) {
 
     // Start with rule specific handling before going into the ATN walk.
 
@@ -492,6 +492,9 @@ public class CodeCompletionCore {
     while (!statePipeline.isEmpty()) {
       currentEntry = statePipeline.removeLast();
       ++this.statesProcessed;
+      if (this.statesProcessed > maxStates) {
+        break;
+      }
 
       currentSymbol = this.tokens.get(currentEntry.tokenIndex).getType();
 
@@ -522,7 +525,7 @@ public class CodeCompletionCore {
       for (Transition transition : transitions) {
         switch (transition.getSerializationType()) {
           case Transition.RULE: {
-            Set<Integer> endStatus = this.processRule(transition.target, currentEntry.tokenIndex, callStack, indentation);
+            Set<Integer> endStatus = this.processRule(transition.target, currentEntry.tokenIndex, callStack, indentation, maxStates);
             for (Integer position : endStatus) {
               statePipeline.addLast(new PipelineEntry(((RuleTransition) transition).followState, position));
             }
