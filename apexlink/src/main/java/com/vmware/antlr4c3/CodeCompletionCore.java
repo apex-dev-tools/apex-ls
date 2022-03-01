@@ -5,16 +5,12 @@
  *
  * See LICENSE file for more info.
  */
+/*
+ * This file has modifications, see KJJ comments.
+ */
 package com.vmware.antlr4c3;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -152,14 +148,23 @@ public class CodeCompletionCore {
 
     int currentIndex = tokenStream.index();
     tokenStream.seek(this.tokenStartIndex);
-    this.tokens = new LinkedList<>();
-    int offset = 1;
+    this.tokens = new ArrayList<>(tokenStream.size());
+    int offset = 0;
     while (true) {
+      /* KJJ: Optimised loop, the original use of CommonTokenStream.LT(...) was very slow for large inputs */
+      Token token = tokenStream.get(offset++);
+      if (token.getChannel() == 0) {
+        this.tokens.add(token);
+        if (token.getTokenIndex() >= caretTokenIndex || token.getType() == Token.EOF) {
+          break;
+        }
+      }
+      /* KJJ: Original code, with offset starting at 1
       Token token = tokenStream.LT(offset++);
       this.tokens.add(token);
       if (token.getTokenIndex() >= caretTokenIndex || token.getType() == Token.EOF) {
         break;
-      }
+      }*/
     }
     tokenStream.seek(currentIndex);
 
@@ -492,6 +497,8 @@ public class CodeCompletionCore {
     while (!statePipeline.isEmpty()) {
       currentEntry = statePipeline.removeLast();
       ++this.statesProcessed;
+
+      /* KJJ: Protection against run away processing */
       if (this.statesProcessed > maxStates) {
         break;
       }
