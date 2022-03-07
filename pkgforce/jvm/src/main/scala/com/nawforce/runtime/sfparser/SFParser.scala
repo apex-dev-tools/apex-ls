@@ -12,7 +12,7 @@ import apex.jorje.semantic.ast.member.Parameter
 import apex.jorje.semantic.ast.modifier.ModifierGroup
 import apex.jorje.semantic.ast.statement.BlockStatement
 import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
-import apex.jorje.semantic.compiler.ApexCompiler
+import apex.jorje.semantic.compiler.{ApexCompiler, SourceFile}
 import apex.jorje.semantic.compiler.parser.ParserEngine
 import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.member.Member
@@ -49,39 +49,53 @@ import java.util
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
+import scala.language.postfixOps
 import scala.util.Try
 
-class SFParser(path: String, contents: String) {
-  private val visitor                                  = new TopLevelVisitor()
-  private var typeDeclaration: Option[TypeDeclaration] = None
+class SFParser(source: Map[String, String]) {
+  private val visitor                                        = new TopLevelVisitor()
+  private val typeDeclarations: ArrayBuffer[TypeDeclaration] = ArrayBuffer()
+  private val parseFailures: ArrayBuffer[String]             = ArrayBuffer()
 
-  def parse: Option[TypeDeclaration] = {
+  def parse: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]) = {
     parse()
   }
 
-  def parseBlock(): Option[TypeDeclaration] = {
+  def parseBlock(): (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]) = {
     parse(ParserEngine.Type.ANONYMOUS)
   }
 
   private def parse(
     parserEngineType: ParserEngine.Type = ParserEngine.Type.NAMED
-  ): Option[TypeDeclaration] = {
-    val compiler = CompilerService.visitAstFromString(contents, visitor, parserEngineType)
-    parserTypeDeclaration(compiler)
-    typeDeclaration
+  ): (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]) = {
+    val compiler = CompilerService.visitAstFromString(toSourceFiles, visitor, parserEngineType)
+    source.keys.foreach(path => {
+      getTypeDeclaration(path, compiler) match {
+        case Some(value) => typeDeclarations.append(value)
+        case None        => parseFailures.append(path)
+      }
+    })
+    (typeDeclarations, parseFailures)
   }
 
-  private def parserTypeDeclaration(compiler: ApexCompiler): Unit = {
-    visitor.getTopLevel match {
-      case Some(value) => {
+  private def toSourceFiles: List[SourceFile] = {
+    source.map {
+      case (path, contents) => SourceFile.builder().setKnownName(path).setBody(contents).build()
+    }.toList
+  }
+
+  private def getTypeDeclaration(path: String, compiler: ApexCompiler): Option[TypeDeclaration] = {
+    visitor.getTopLevelNodes.find(
+      _.getDefiningType.getCodeUnitDetails.getSource.getKnownName == path
+    ) match {
+      case Some(value) =>
         val cu = compiler.getCodeUnit(value.getDefiningType)
         if (cu != null) {
-          typeDeclaration = getTypeDeclaration(cu.getNode, path)
+          getTypeDeclaration(cu.getNode, path)
         } else {
           throw new RuntimeException(s"No code unit found for type ${value.toString}")
         }
-      }
-      case _ =>
+      case _ => None
     }
   }
 
@@ -422,7 +436,7 @@ class SFParser(path: String, contents: String) {
     from: Option[apex.jorje.data.ast.TypeRef]
   ): Option[com.financialforce.oparser.TypeRef] = {
     from match {
-      case Some(typ) => {
+      case Some(typ) =>
         val res = new oparser.TypeRef()
         //Things to note here,
         // if its a return type that has '[]' then parser will resolve '[]' to a list
@@ -453,7 +467,6 @@ class SFParser(path: String, contents: String) {
         }
 
         return Some(res)
-      }
       case _ =>
     }
     None
@@ -496,28 +509,34 @@ class SFParser(path: String, contents: String) {
   }
 
   private class TopLevelVisitor extends AstVisitor[AdditionalPassScope] {
-    private var topLevel: Option[Compilation] = None
+    private val topLevelNodes: ArrayBuffer[Compilation] = ArrayBuffer()
 
-    def getTopLevel: Option[Compilation] = topLevel
+    def getTopLevelNodes: ArrayBuffer[Compilation] = topLevelNodes
 
-    override def visitEnd(node: UserClass, scope: AdditionalPassScope): Unit = topLevel = Some(node)
+    override def visitEnd(node: UserClass, scope: AdditionalPassScope): Unit =
+      topLevelNodes.append(node)
 
-    override def visitEnd(node: UserEnum, scope: AdditionalPassScope): Unit = topLevel = Some(node)
+    override def visitEnd(node: UserEnum, scope: AdditionalPassScope): Unit =
+      topLevelNodes.append(node)
 
     override def visitEnd(node: UserInterface, scope: AdditionalPassScope): Unit =
-      topLevel = Some(node)
+      topLevelNodes.append(node)
 
     override def visitEnd(node: UserTrigger, scope: AdditionalPassScope): Unit =
-      topLevel = Some(node)
+      topLevelNodes.append(node)
 
     override def visitEnd(node: AnonymousClass, scope: AdditionalPassScope): Unit =
-      topLevel = Some(node)
+      topLevelNodes.append(node)
   }
 }
 
 object SFParser {
 
   def apply(path: String, contents: String): SFParser = {
-    new SFParser(path, contents)
+    new SFParser(Map(path -> contents))
+  }
+
+  def apply(sources: Map[String, String]): SFParser = {
+    new SFParser(sources)
   }
 }
