@@ -4,21 +4,16 @@
 
 package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration,
-  OutlineParser,
-  TypeDeclaration
-}
+import com.financialforce.oparser.{ClassTypeDeclaration, EnumTypeDeclaration, InterfaceTypeDeclaration, OutlineParser, TypeDeclaration}
 
 import java.nio.file.{Files, Path, Paths}
+import scala.collection.mutable.ArrayBuffer
 
 object OutputComparisonTest {
   var exactlyEqual = 0
   var withWarnings = 0
-  var errors       = 0
-  var total        = 0
+  var errors = 0
+  var total = 0
   var parseFailure = 0
 
   def main(args: Array[String]): Unit = {
@@ -36,14 +31,24 @@ object OutputComparisonTest {
     val absolutePath = Paths.get(Option(args.head).getOrElse("")).toAbsolutePath.normalize()
 
     val files: Seq[Path] = getFilesFromPath(absolutePath)
+    val sources: Map[String, String] = files
+      .map(path => {
+        path.toString -> getUTF8ContentsFromPath(path)
+      })
+      .toMap
+
+    val sfParserOutput = SFParser(sources).parse
 
     files.foreach(f => {
-      parseFiles(f)
+      compareOutputs(f, sfParserOutput)
     })
+
     def toPercentage(result: Int) = {
       (result / total.toFloat) * 100
     }
-    println(f"""
+
+    println(
+      f"""
          |Output Comparison Summary
          |Total cls files processed: $total
          |Parse Failures: $parseFailure (${toPercentage(parseFailure)}%.0f%%)
@@ -53,19 +58,27 @@ object OutputComparisonTest {
          |""".stripMargin)
   }
 
-  private def parseFiles(path: Path): Unit = {
-    val contentsBytes            = Files.readAllBytes(path)
-    val contentsString: String   = new String(contentsBytes, "utf8")
-    val (success, reason, opOut) = OutlineParser.parse(path.toString, contentsString)
-    val sfOut                    = SFParser(path.toString, contentsString).parse
+  private def getOutLineParserOutput(path: Path) = {
+    val contentsString = getUTF8ContentsFromPath(path)
+    OutlineParser.parse(path.toString, contentsString)
+  }
+
+  private def findSfParserOutput(path: Path, output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])) = {
+    output._1.find(_.path == path.toString)
+  }
+
+  private def compareOutputs(path: Path, sfOutput: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])): Unit = {
+    val (success, reason, opOut) = getOutLineParserOutput(path)
+    val sfTd = findSfParserOutput(path, sfOutput)
+
     total += 1
-    if (!success || sfOut.isEmpty) {
+    if (!success || sfOutput._2.nonEmpty) {
       parseFailure += 1
       System.err.println(s"Parse Failure $path $reason")
       return
     }
     try {
-      val warnings = compareTDs(opOut.get, sfOut.get)
+      val warnings = compareTDs(opOut.get, sfTd.get)
       if (warnings.nonEmpty) {
         withWarnings += 1
         //TODO: Process warnings?
@@ -75,7 +88,7 @@ object OutputComparisonTest {
     } catch {
       case ex: Throwable =>
         errors += 1
-        System.err.println(s"Failed output on ${path} due to ${ex.getMessage}")
+        System.err.println(s"Failed output on $path due to ${ex.getMessage}")
     }
   }
 
@@ -109,5 +122,10 @@ object OutputComparisonTest {
       println("Single file")
       Seq(absolutePath)
     }
+  }
+
+  private def getUTF8ContentsFromPath(absolutePath: Path): String = {
+    val contentsBytes = Files.readAllBytes(absolutePath)
+    new String(contentsBytes, "utf8")
   }
 }

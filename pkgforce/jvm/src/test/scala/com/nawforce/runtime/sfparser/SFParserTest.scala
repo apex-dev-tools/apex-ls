@@ -61,7 +61,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         |""".stripMargin
 
     val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse.get
+    val sfp = SFParser(path.basename, content).parse._1.head
 
     SubsetCompare.subsetOffClassDeclarations(
       op.asInstanceOf[ClassTypeDeclaration],
@@ -83,7 +83,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         |""".stripMargin
 
     val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse.get
+    val sfp = SFParser(path.basename, content).parse._1.head
     SubsetCompare.subsetOffClassDeclarations(
       op.asInstanceOf[ClassTypeDeclaration],
       sfp.asInstanceOf[ClassTypeDeclaration]
@@ -103,7 +103,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         |""".stripMargin
 
     val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse.get
+    val sfp = SFParser(path.basename, content).parse._1.head
     SubsetCompare.compareInterfaceTypeDeclarations(
       op.asInstanceOf[InterfaceTypeDeclaration],
       sfp.asInstanceOf[InterfaceTypeDeclaration]
@@ -124,7 +124,7 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         |""".stripMargin
 
     val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse.get
+    val sfp = SFParser(path.basename, content).parse._1.head
     SubsetCompare.compareEnumTypeDeclarations(
       op.asInstanceOf[EnumTypeDeclaration],
       sfp.asInstanceOf[EnumTypeDeclaration]
