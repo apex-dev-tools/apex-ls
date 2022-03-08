@@ -5,7 +5,7 @@
 package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
-import com.nawforce.runtime.sfparser.compare.{SubsetCompare, TypeIdCollector}
+import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
@@ -39,7 +39,6 @@ object OutputComparisonTest {
       .toMap
     val sfParserOutput = SFParser(sources).parse
     val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
-    println(sfTypeResolver.allIds.size)
     files.foreach(f => {
       compareOutputs(f, sfParserOutput, sfTypeResolver)
     })
@@ -86,8 +85,8 @@ object OutputComparisonTest {
     }
     try {
       val opResolver = new TypeIdCollector(List(opOut.get))
-      val comparator       = SubsetCompare(opOut.get, sfTd.get, opResolver, sfTypeIdResolver)
-      comparator.compare()
+      val comparator = SubsetComparator(opOut.get, opResolver, sfTypeIdResolver)
+      comparator.subsetOf(sfTd.get)
       val warnings = comparator.getWarnings
       if (warnings.nonEmpty) {
         withWarnings += 1

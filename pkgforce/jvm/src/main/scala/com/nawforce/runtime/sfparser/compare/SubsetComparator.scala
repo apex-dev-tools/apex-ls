@@ -9,11 +9,10 @@ import com.financialforce.oparser._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class SubsetCompare(
+class SubsetComparator(
   firstTd: TypeDeclaration,
-  secondTd: TypeDeclaration,
-  fResolver: TypeIdResolver,
-  sResolver: TypeIdResolver
+  var fResolver: Option[TypeIdResolver],
+  var sResolver: Option[TypeIdResolver]
 ) {
   private val warnings: ArrayBuffer[String] = ArrayBuffer()
 
@@ -25,7 +24,13 @@ class SubsetCompare(
     warnings.clear()
   }
 
-  def compare(): Unit = {
+  def subsetOf(secondTd: TypeDeclaration): Unit = {
+    if (fResolver.isEmpty) {
+      fResolver = Some(new TypeIdCollector(List(firstTd)))
+    }
+    if (sResolver.isEmpty) {
+      sResolver = Some(new TypeIdCollector(List(secondTd)))
+    }
     firstTd match {
       case cls: ClassTypeDeclaration =>
         subsetOffClassDeclarations(cls, secondTd.asInstanceOf[ClassTypeDeclaration])
@@ -37,7 +42,7 @@ class SubsetCompare(
     }
   }
 
-  def subsetOffClassDeclarations(
+  private def subsetOffClassDeclarations(
     first: ClassTypeDeclaration,
     second: ClassTypeDeclaration
   ): Unit = {
@@ -155,7 +160,7 @@ class SubsetCompare(
 
   }
 
-  def compareInterfaceTypeDeclarations(
+  private def compareInterfaceTypeDeclarations(
     first: InterfaceTypeDeclaration,
     second: InterfaceTypeDeclaration
   ): Unit = {
@@ -175,7 +180,10 @@ class SubsetCompare(
     checkAndThrowIfDiffForSignatures("Different methods", first.methods, second.methods)
   }
 
-  def compareEnumTypeDeclarations(first: EnumTypeDeclaration, second: EnumTypeDeclaration): Unit = {
+  private def compareEnumTypeDeclarations(
+    first: EnumTypeDeclaration,
+    second: EnumTypeDeclaration
+  ): Unit = {
 
     checkAndThrowIfDiff("Different Annotations", first.annotations, second.annotations)
     checkAndThrowIfDiff("Different modifiers", first.modifiers, second.modifiers)
@@ -235,33 +243,42 @@ class SubsetCompare(
   }
 
   private def compareTypeRef(first: TypeRef, second: TypeRef): Boolean = {
+    def checkTypeArguments(): Boolean = {
+      val firstTypArgumentTypeRefs  = getTypeArgumentTypeRefs(first)
+      val secondTypArgumentTypeRefs = getTypeArgumentTypeRefs(second)
+      (firstTypArgumentTypeRefs.isEmpty && secondTypArgumentTypeRefs.isEmpty) || areTypeRefsSubsets(
+        firstTypArgumentTypeRefs,
+        secondTypArgumentTypeRefs
+      )
+    }
+
     if (first == second) {
       return true
     }
 
     val fTypeNamesRemovedResolvedTypes =
-      first.typeNames.filterNot(f => fResolver.canBeResolved(f.id))
+      first.typeNames.filterNot(f => fResolver.get.canBeResolved(f.id))
     val sTypeNamesRemovedResolvedTypes =
-      second.typeNames.filterNot(s => sResolver.canBeResolved(s.id))
+      second.typeNames.filterNot(s => sResolver.get.canBeResolved(s.id))
     //if fTypeNamesRemovedResolvedTypes and sTypeNamesRemovedResolvedTypes are empty then all the types could be resolved
     var checks =
       fTypeNamesRemovedResolvedTypes == sTypeNamesRemovedResolvedTypes && first.arraySubscripts == second.arraySubscripts
     if (sTypeNamesRemovedResolvedTypes.isEmpty && fTypeNamesRemovedResolvedTypes.nonEmpty) {
-      checks = true
-      warnings.append(
-        prettyWarnings(
-          "TypeRef has resolved resolved FQD name and the other doesn't",
-          ArrayBuffer(first),
-          ArrayBuffer(second)
+      // we have all resolved types in second
+      checks = checkTypeArguments() && first.arraySubscripts == second.arraySubscripts
+      if (checks)
+        warnings.append(
+          prettyWarnings(
+            "TypeRef has resolved resolved FQD name and the other doesn't",
+            ArrayBuffer(first),
+            ArrayBuffer(second)
+          )
         )
-      )
     }
     if (!checks) {
       if (first.typeNames.map(_.id) == second.typeNames.map(_.id)) {
         //Type arguments for type names must have failed
-        val firstTypArgumentTypeRefs  = getTypeArgumentTypeRefs(first)
-        val secondTypArgumentTypeRefs = getTypeArgumentTypeRefs(second)
-        checks = areTypeRefsSubsets(firstTypArgumentTypeRefs, secondTypArgumentTypeRefs)
+        checks = checkTypeArguments()
       } else {
         checks = compareListAdnArraySubscriptIfAny(first, second)
         if (checks) {
@@ -419,20 +436,17 @@ class SubsetCompare(
 
 }
 
-object SubsetCompare {
+object SubsetComparator {
 
   def apply(
     first: TypeDeclaration,
-    second: TypeDeclaration,
     fResolver: TypeIdResolver,
     sResolver: TypeIdResolver
-  ): SubsetCompare = {
-    new SubsetCompare(first, second, fResolver, sResolver)
+  ): SubsetComparator = {
+    new SubsetComparator(first, Some(fResolver), Some(sResolver))
   }
 
-  def apply(first: TypeDeclaration, second: TypeDeclaration): SubsetCompare = {
-    val fResolver = new TypeIdCollector(List(first))
-    val sResolver = new TypeIdCollector(List(second))
-    new SubsetCompare(first, second, fResolver, sResolver)
+  def apply(first: TypeDeclaration): SubsetComparator = {
+    new SubsetComparator(first, None, None)
   }
 }

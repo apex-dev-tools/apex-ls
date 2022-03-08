@@ -6,7 +6,7 @@ package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser._
 import com.nawforce.runtime.platform.Path
-import com.nawforce.runtime.sfparser.compare.SubsetCompare
+import com.nawforce.runtime.sfparser.compare.SubsetComparator
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -60,8 +60,8 @@ class SFParserTest extends AnyFunSuite {
 
     val op         = OutlineParser.parse(path.basename, content)._3.get
     val sfp        = SFParser(path.basename, content).parse._1.head
-    val comparator = SubsetCompare(op, sfp)
-    comparator.compare()
+    val comparator = SubsetComparator(op)
+    comparator.subsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
 
@@ -79,8 +79,8 @@ class SFParserTest extends AnyFunSuite {
 
     val op         = OutlineParser.parse(path.basename, content)._3.get
     val sfp        = SFParser(path.basename, content).parse._1.head
-    val comparator = SubsetCompare(op, sfp)
-    comparator.compare()
+    val comparator = SubsetComparator(op)
+    comparator.subsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
@@ -98,8 +98,8 @@ class SFParserTest extends AnyFunSuite {
 
     val op         = OutlineParser.parse(path.basename, content)._3.get
     val sfp        = SFParser(path.basename, content).parse._1.head
-    val comparator = SubsetCompare(op, sfp)
-    comparator.compare()
+    val comparator = SubsetComparator(op)
+    comparator.subsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
@@ -118,8 +118,8 @@ class SFParserTest extends AnyFunSuite {
 
     val op         = OutlineParser.parse(path.basename, content)._3.get
     val sfp        = SFParser(path.basename, content).parse._1.head
-    val comparator = SubsetCompare(op, sfp)
-    comparator.compare()
+    val comparator = SubsetComparator(op)
+    comparator.subsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }

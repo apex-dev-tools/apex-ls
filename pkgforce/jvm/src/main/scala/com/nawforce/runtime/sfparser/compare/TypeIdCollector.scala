@@ -9,7 +9,7 @@ trait TypeIdResolver {
 }
 
 class TypeIdCollector(tds: List[TypeDeclaration]) extends TypeIdResolver {
-  val allIds: ArrayBuffer[Id] = ArrayBuffer()
+  private val allIds: ArrayBuffer[Id] = ArrayBuffer()
   tds.foreach(td => appendToIds(td, allIds))
 
   def canBeResolved(id: Id): Boolean = {
