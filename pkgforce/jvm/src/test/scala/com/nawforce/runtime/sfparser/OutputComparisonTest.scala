@@ -4,7 +4,8 @@
 
 package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{ClassTypeDeclaration, EnumTypeDeclaration, InterfaceTypeDeclaration, OutlineParser, TypeDeclaration}
+import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.nawforce.runtime.sfparser.compare.{SubsetCompare, TypeIdCollector}
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
@@ -12,8 +13,8 @@ import scala.collection.mutable.ArrayBuffer
 object OutputComparisonTest {
   var exactlyEqual = 0
   var withWarnings = 0
-  var errors = 0
-  var total = 0
+  var errors       = 0
+  var total        = 0
   var parseFailure = 0
 
   def main(args: Array[String]): Unit = {
@@ -36,19 +37,18 @@ object OutputComparisonTest {
         path.toString -> getUTF8ContentsFromPath(path)
       })
       .toMap
-
     val sfParserOutput = SFParser(sources).parse
-
+    val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
+    println(sfTypeResolver.allIds.size)
     files.foreach(f => {
-      compareOutputs(f, sfParserOutput)
+      compareOutputs(f, sfParserOutput, sfTypeResolver)
     })
 
     def toPercentage(result: Int) = {
       (result / total.toFloat) * 100
     }
 
-    println(
-      f"""
+    println(f"""
          |Output Comparison Summary
          |Total cls files processed: $total
          |Parse Failures: $parseFailure (${toPercentage(parseFailure)}%.0f%%)
@@ -63,13 +63,20 @@ object OutputComparisonTest {
     OutlineParser.parse(path.toString, contentsString)
   }
 
-  private def findSfParserOutput(path: Path, output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])) = {
+  private def findSfParserOutput(
+    path: Path,
+    output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
+  ) = {
     output._1.find(_.path == path.toString)
   }
 
-  private def compareOutputs(path: Path, sfOutput: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])): Unit = {
+  private def compareOutputs(
+    path: Path,
+    sfOutput: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]),
+    sfTypeIdResolver: TypeIdCollector
+  ): Unit = {
     val (success, reason, opOut) = getOutLineParserOutput(path)
-    val sfTd = findSfParserOutput(path, sfOutput)
+    val sfTd                     = findSfParserOutput(path, sfOutput)
 
     total += 1
     if (!success || sfOutput._2.nonEmpty) {
@@ -78,7 +85,10 @@ object OutputComparisonTest {
       return
     }
     try {
-      val warnings = compareTDs(opOut.get, sfTd.get)
+      val opResolver = new TypeIdCollector(List(opOut.get))
+      val comparator       = SubsetCompare(opOut.get, sfTd.get, opResolver, sfTypeIdResolver)
+      comparator.compare()
+      val warnings = comparator.getWarnings
       if (warnings.nonEmpty) {
         withWarnings += 1
         //TODO: Process warnings?
@@ -90,23 +100,6 @@ object OutputComparisonTest {
         errors += 1
         System.err.println(s"Failed output on $path due to ${ex.getMessage}")
     }
-  }
-
-  private def compareTDs(td: TypeDeclaration, other: TypeDeclaration) = {
-    SubsetCompare.clearWarnings()
-    td match {
-      case cls: ClassTypeDeclaration =>
-        SubsetCompare.subsetOffClassDeclarations(cls, other.asInstanceOf[ClassTypeDeclaration])
-      case int: InterfaceTypeDeclaration =>
-        SubsetCompare.compareInterfaceTypeDeclarations(
-          int,
-          other.asInstanceOf[InterfaceTypeDeclaration]
-        )
-      case enm: EnumTypeDeclaration =>
-        SubsetCompare.compareEnumTypeDeclarations(enm, other.asInstanceOf[EnumTypeDeclaration])
-      case _ =>
-    }
-    SubsetCompare.getWarnings
   }
 
   private def getFilesFromPath(absolutePath: Path) = {

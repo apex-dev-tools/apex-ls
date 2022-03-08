@@ -6,13 +6,11 @@ package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser._
 import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.sfparser.compare.SubsetCompare
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
-class SFParserTest extends AnyFunSuite with BeforeAndAfter {
-  before {
-    SubsetCompare.clearWarnings()
-  }
+class SFParserTest extends AnyFunSuite {
 
   test("Classes") {
     val path = Path("Dummy.cls")
@@ -60,15 +58,12 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         | }
         |""".stripMargin
 
-    val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse._1.head
+    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val sfp        = SFParser(path.basename, content).parse._1.head
+    val comparator = SubsetCompare(op, sfp)
+    comparator.compare()
 
-    SubsetCompare.subsetOffClassDeclarations(
-      op.asInstanceOf[ClassTypeDeclaration],
-      sfp.asInstanceOf[ClassTypeDeclaration]
-    )
-
-    assert(SubsetCompare.getWarnings.isEmpty, "Warnings are not empty")
+    assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
 
   }
 
@@ -82,13 +77,12 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         | }
         |""".stripMargin
 
-    val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse._1.head
-    SubsetCompare.subsetOffClassDeclarations(
-      op.asInstanceOf[ClassTypeDeclaration],
-      sfp.asInstanceOf[ClassTypeDeclaration]
-    )
-    assert(SubsetCompare.getWarnings.isEmpty, "Warnings are not empty")
+    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val sfp        = SFParser(path.basename, content).parse._1.head
+    val comparator = SubsetCompare(op, sfp)
+    comparator.compare()
+
+    assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
 
   test("Interface") {
@@ -102,13 +96,12 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         | }
         |""".stripMargin
 
-    val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse._1.head
-    SubsetCompare.compareInterfaceTypeDeclarations(
-      op.asInstanceOf[InterfaceTypeDeclaration],
-      sfp.asInstanceOf[InterfaceTypeDeclaration]
-    )
-    assert(SubsetCompare.getWarnings.isEmpty, "Warnings are not empty")
+    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val sfp        = SFParser(path.basename, content).parse._1.head
+    val comparator = SubsetCompare(op, sfp)
+    comparator.compare()
+
+    assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
 
   test("Enums") {
@@ -123,13 +116,12 @@ class SFParserTest extends AnyFunSuite with BeforeAndAfter {
         | }
         |""".stripMargin
 
-    val op  = OutlineParser.parse(path.basename, content)._3.get
-    val sfp = SFParser(path.basename, content).parse._1.head
-    SubsetCompare.compareEnumTypeDeclarations(
-      op.asInstanceOf[EnumTypeDeclaration],
-      sfp.asInstanceOf[EnumTypeDeclaration]
-    )
-    assert(SubsetCompare.getWarnings.isEmpty, "Warnings are not empty")
+    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val sfp        = SFParser(path.basename, content).parse._1.head
+    val comparator = SubsetCompare(op, sfp)
+    comparator.compare()
+
+    assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
 
 }
