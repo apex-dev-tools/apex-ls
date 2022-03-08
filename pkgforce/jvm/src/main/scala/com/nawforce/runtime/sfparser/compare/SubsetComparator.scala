@@ -269,7 +269,7 @@ class SubsetComparator(
       if (checks)
         warnings.append(
           prettyWarnings(
-            "TypeRef has resolved resolved FQD name and the other doesn't",
+            "TypeRef has fully resolved type names and the other does not",
             ArrayBuffer(first),
             ArrayBuffer(second)
           )
