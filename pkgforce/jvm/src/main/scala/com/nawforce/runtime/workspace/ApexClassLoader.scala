@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.financialforce.oparser._
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.MetadataDocument
 import com.nawforce.pkgforce.path.Location
@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 
-final class ApexClassLoader(loadingPool: ExecutorService) {
+final class ApexClassLoader(loadingPool: ExecutorService, factory: TypeDeclarationFactory) {
   private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(loadingPool)
 
   def loadClasses(
@@ -50,7 +50,7 @@ final class ApexClassLoader(loadingPool: ExecutorService) {
     source: SourceData
   ): Future[Either[Option[Issue], (MetadataDocument, TypeDeclaration)]] = {
     Future {
-      val (_, reason, td) = OutlineParser.parse(document.path.toString, source.asString)
+      val (_, reason, td) = OutlineParser.parse(document.path.toString, source.asString, factory)
       td
         .map(td => Right(document, td))
         .getOrElse(

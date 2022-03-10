@@ -5,7 +5,7 @@ package com.financialforce.oparser
 
 import scala.annotation.tailrec
 
-class OutlineParser(path: String, contents: String) {
+class OutlineParser(path: String, contents: String, factory: TypeDeclarationFactory) {
 
   private var charOffset = 0
   private var byteOffset = 0
@@ -154,7 +154,8 @@ class OutlineParser(path: String, contents: String) {
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
             case Tokens.LBraceStr =>
-              val classTypeDeclaration = Parse.parseClassType(tokens, path)
+              val classTypeDeclaration = factory.createClassTypeDeclaration(path, None)
+              Parse.parseClassType(classTypeDeclaration, tokens, path)
               typeDeclaration = Some(classTypeDeclaration)
               val startLocation = Location.fromStart(tokens(0).get.location)
               tokens.clear()
@@ -281,14 +282,16 @@ class OutlineParser(path: String, contents: String) {
 
   private def consumeInnerType(ctd: ClassTypeDeclaration, token: Token): Unit = {
     if (token.matches(Tokens.ClassStr)) {
-      val innerClass = Parse.parseClassType(tokens, ctd.path)
+      val innerClass = factory.createClassTypeDeclaration(ctd.path, Some(ctd))
+      Parse.parseClassType(innerClass, tokens, ctd.path)
       val startLocation = Location.fromStart(token.location)
       tokens.clear()
       consumeClassBody(innerClass)
       innerClass.location = Some(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
       ctd.innerTypes.append(innerClass)
     } else if (token.matches(Tokens.InterfaceStr)) {
-      val innerInterface = Parse.parseInterfaceType(tokens, ctd.path)
+      val innerInterface = factory.createInterfaceTypeDeclaration(ctd.path, Some(ctd))
+      Parse.parseInterfaceType(innerInterface, tokens, ctd.path)
       val startLocation = Location.fromStart(token.location)
       tokens.clear()
       consumeInterfaceBody(innerInterface)
@@ -297,7 +300,8 @@ class OutlineParser(path: String, contents: String) {
       )
       ctd.innerTypes.append(innerInterface)
     } else if (token.matches(Tokens.EnumStr)) {
-      val innerEnum = Parse.parseEnumType(tokens, ctd.path)
+      val innerEnum = factory.createEnumTypeDeclaration(ctd.path, Some(ctd))
+      Parse.parseEnumType(innerEnum, tokens, ctd.path)
       val startLocation = Location.fromStart(token.location)
       tokens.clear()
       consumeEnumBody(innerEnum)
@@ -385,7 +389,8 @@ class OutlineParser(path: String, contents: String) {
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
             case Tokens.LBraceStr =>
-              val interfaceTypeDeclaration = Parse.parseInterfaceType(tokens, path)
+              val interfaceTypeDeclaration = factory.createInterfaceTypeDeclaration(path, None)
+              Parse.parseInterfaceType(interfaceTypeDeclaration, tokens, path)
               typeDeclaration = Some(interfaceTypeDeclaration)
               val startLocation = Location.fromStart(tokens(0).get.location)
               tokens.clear()
@@ -441,7 +446,8 @@ class OutlineParser(path: String, contents: String) {
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
             case Tokens.LBraceStr =>
-              val enumTypeDeclaration = Parse.parseEnumType(tokens, path)
+              val enumTypeDeclaration = factory.createEnumTypeDeclaration(path, None)
+              Parse.parseEnumType(enumTypeDeclaration, tokens, path)
               typeDeclaration = Some(enumTypeDeclaration)
               val startLocation = Location.fromStart(tokens(0).get.location)
               tokens.clear()
@@ -741,7 +747,8 @@ class OutlineParser(path: String, contents: String) {
 }
 
 object OutlineParser {
-  def parse(path: String, contents: String): (Boolean, Option[String], Option[TypeDeclaration]) = {
-    new OutlineParser(path, contents).parse()
+  def parse(path: String, contents: String, factory: TypeDeclarationFactory = new TypeDeclarationFactory())
+  : (Boolean, Option[String], Option[TypeDeclaration]) = {
+    new OutlineParser(path, contents, factory).parse()
   }
 }
