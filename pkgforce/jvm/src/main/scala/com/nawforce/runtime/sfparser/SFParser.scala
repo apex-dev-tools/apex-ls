@@ -12,7 +12,7 @@ import apex.jorje.semantic.ast.member.Parameter
 import apex.jorje.semantic.ast.modifier.ModifierGroup
 import apex.jorje.semantic.ast.statement.BlockStatement
 import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
-import apex.jorje.semantic.compiler.{ApexCompiler, SourceFile}
+import apex.jorje.semantic.compiler.{ApexCompiler, CodeUnit, SourceFile}
 import apex.jorje.semantic.compiler.parser.ParserEngine
 import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.member.Member
@@ -53,7 +53,6 @@ import scala.language.postfixOps
 import scala.util.Try
 
 class SFParser(source: Map[String, String]) {
-  private val visitor                                        = new TopLevelVisitor()
   private val typeDeclarations: ArrayBuffer[TypeDeclaration] = ArrayBuffer()
   private val parseFailures: ArrayBuffer[String]             = ArrayBuffer()
 
@@ -68,9 +67,10 @@ class SFParser(source: Map[String, String]) {
   private def parse(
     parserEngineType: ParserEngine.Type = ParserEngine.Type.NAMED
   ): (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]) = {
-    val compiler = CompilerService.visitAstFromString(toSourceFiles, visitor, parserEngineType)
+    val (_, cu) =
+      CompilerService.visitAstFromString(toSourceFiles, parserEngineType)
     source.keys.foreach(path => {
-      getTypeDeclaration(path, compiler) match {
+      getTypeDeclaration(path, cu) match {
         case Some(value) => typeDeclarations.append(value)
         case None        => parseFailures.append(path)
       }
@@ -84,16 +84,13 @@ class SFParser(source: Map[String, String]) {
     }.toList
   }
 
-  private def getTypeDeclaration(path: String, compiler: ApexCompiler): Option[TypeDeclaration] = {
-    visitor.getTopLevelNodes.find(
-      _.getDefiningType.getCodeUnitDetails.getSource.getKnownName == path
-    ) match {
-      case Some(value) =>
-        val cu = compiler.getCodeUnit(value.getDefiningType)
+  private def getTypeDeclaration(path: String, cu: List[CodeUnit]): Option[TypeDeclaration] = {
+    cu.find(_.getSourceFile.getKnownName == path) match {
+      case Some(cu) =>
         if (cu != null) {
           getTypeDeclaration(cu.getNode, path)
         } else {
-          throw new RuntimeException(s"No code unit found for type ${value.toString}")
+          throw new RuntimeException(s"No code unit found for type $path")
         }
       case _ => None
     }
@@ -506,27 +503,6 @@ class SFParser(source: Map[String, String]) {
     val tl = new TypeList
     typRefs.foreach(tl.add)
     tl
-  }
-
-  private class TopLevelVisitor extends AstVisitor[AdditionalPassScope] {
-    private val topLevelNodes: ArrayBuffer[Compilation] = ArrayBuffer()
-
-    def getTopLevelNodes: ArrayBuffer[Compilation] = topLevelNodes
-
-    override def visitEnd(node: UserClass, scope: AdditionalPassScope): Unit =
-      topLevelNodes.append(node)
-
-    override def visitEnd(node: UserEnum, scope: AdditionalPassScope): Unit =
-      topLevelNodes.append(node)
-
-    override def visitEnd(node: UserInterface, scope: AdditionalPassScope): Unit =
-      topLevelNodes.append(node)
-
-    override def visitEnd(node: UserTrigger, scope: AdditionalPassScope): Unit =
-      topLevelNodes.append(node)
-
-    override def visitEnd(node: AnonymousClass, scope: AdditionalPassScope): Unit =
-      topLevelNodes.append(node)
   }
 }
 
