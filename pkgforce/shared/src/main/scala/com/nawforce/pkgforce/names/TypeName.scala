@@ -131,6 +131,10 @@ object TypeName {
     new TypeName(name, new ofRef(params), Option(outer))
   }
 
+  def fromStringOrNull(typeName: String): TypeName = {
+    apply(typeName).getOrElse(null);
+  }
+
   /** Create a type name from a sequence of names, these should be provided in inner->outer order */
   def apply(names: Seq[Name]): TypeName = {
     names match {
