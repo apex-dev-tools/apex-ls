@@ -4,15 +4,11 @@
 
 package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration,
-  OutlineParser,
-  TypeDeclaration
-}
+import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
 
 import java.nio.file.{Files, Path, Paths}
+import scala.collection.mutable.ArrayBuffer
 
 object OutputComparisonTest {
   var exactlyEqual = 0
@@ -36,13 +32,21 @@ object OutputComparisonTest {
     val absolutePath = Paths.get(Option(args.head).getOrElse("")).toAbsolutePath.normalize()
 
     val files: Seq[Path] = getFilesFromPath(absolutePath)
-
+    val sources: Map[String, String] = files
+      .map(path => {
+        path.toString -> getUTF8ContentsFromPath(path)
+      })
+      .toMap
+    val sfParserOutput = SFParser(sources).parse
+    val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
     files.foreach(f => {
-      parseFiles(f)
+      compareOutputs(f, sfParserOutput, sfTypeResolver)
     })
+
     def toPercentage(result: Int) = {
       (result / total.toFloat) * 100
     }
+
     println(f"""
          |Output Comparison Summary
          |Total cls files processed: $total
@@ -53,19 +57,37 @@ object OutputComparisonTest {
          |""".stripMargin)
   }
 
-  private def parseFiles(path: Path): Unit = {
-    val contentsBytes            = Files.readAllBytes(path)
-    val contentsString: String   = new String(contentsBytes, "utf8")
-    val (success, reason, opOut) = OutlineParser.parse(path.toString, contentsString)
-    val sfOut                    = SFParser(path.toString, contentsString).parse
+  private def getOutLineParserOutput(path: Path) = {
+    val contentsString = getUTF8ContentsFromPath(path)
+    OutlineParser.parse(path.toString, contentsString)
+  }
+
+  private def findSfParserOutput(
+    path: Path,
+    output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
+  ) = {
+    output._1.find(_.path == path.toString)
+  }
+
+  private def compareOutputs(
+    path: Path,
+    sfOutput: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]),
+    sfTypeIdResolver: TypeIdCollector
+  ): Unit = {
+    val (success, reason, opOut) = getOutLineParserOutput(path)
+    val sfTd                     = findSfParserOutput(path, sfOutput)
+
     total += 1
-    if (!success || sfOut.isEmpty) {
+    if (!success || sfOutput._2.nonEmpty) {
       parseFailure += 1
       System.err.println(s"Parse Failure $path $reason")
       return
     }
     try {
-      val warnings = compareTDs(opOut.get, sfOut.get)
+      val opResolver = new TypeIdCollector(List(opOut.get))
+      val comparator = SubsetComparator(opOut.get, opResolver, sfTypeIdResolver)
+      comparator.subsetOf(sfTd.get)
+      val warnings = comparator.getWarnings
       if (warnings.nonEmpty) {
         withWarnings += 1
         //TODO: Process warnings?
@@ -75,25 +97,8 @@ object OutputComparisonTest {
     } catch {
       case ex: Throwable =>
         errors += 1
-        System.err.println(s"Failed output on ${path} due to ${ex.getMessage}")
+        System.err.println(s"Failed output on $path due to ${ex.getMessage}")
     }
-  }
-
-  private def compareTDs(td: TypeDeclaration, other: TypeDeclaration) = {
-    SubsetCompare.clearWarnings()
-    td match {
-      case cls: ClassTypeDeclaration =>
-        SubsetCompare.subsetOffClassDeclarations(cls, other.asInstanceOf[ClassTypeDeclaration])
-      case int: InterfaceTypeDeclaration =>
-        SubsetCompare.compareInterfaceTypeDeclarations(
-          int,
-          other.asInstanceOf[InterfaceTypeDeclaration]
-        )
-      case enm: EnumTypeDeclaration =>
-        SubsetCompare.compareEnumTypeDeclarations(enm, other.asInstanceOf[EnumTypeDeclaration])
-      case _ =>
-    }
-    SubsetCompare.getWarnings
   }
 
   private def getFilesFromPath(absolutePath: Path) = {
@@ -109,5 +114,10 @@ object OutputComparisonTest {
       println("Single file")
       Seq(absolutePath)
     }
+  }
+
+  private def getUTF8ContentsFromPath(absolutePath: Path): String = {
+    val contentsBytes = Files.readAllBytes(absolutePath)
+    new String(contentsBytes, "utf8")
   }
 }

@@ -8,7 +8,7 @@ import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
 import apex.jorje.semantic.compiler._
 import apex.jorje.semantic.compiler.parser.ParserEngine
 import apex.jorje.semantic.compiler.sfdc.NoopCompilerProgressCallback
-import org.apache.commons.lang3.reflect.{FieldUtils, MethodUtils}
+import org.apache.commons.lang3.reflect.FieldUtils
 
 import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.javaapi.CollectionConverters
@@ -17,12 +17,11 @@ object CompilerService {
   var suppressErrors = true
 
   def visitAstFromString(
-    source: String,
+    sourceFiles: List[SourceFile],
     visitor: AstVisitor[AdditionalPassScope],
     parserEngineType: ParserEngine.Type
   ): ApexCompiler = {
-    val sourceFile      = SourceFile.builder().setBody(source).build()
-    val compilationUnit = createCompilationInput(List(sourceFile), visitor)
+    val compilationUnit = createCompilationInput(sourceFiles, visitor)
     compile(compilationUnit, parserEngineType)
   }
 
