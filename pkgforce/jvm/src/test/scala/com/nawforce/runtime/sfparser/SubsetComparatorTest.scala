@@ -418,23 +418,23 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
   }
 
   describe("Methods") {
-    def baseMethod(): MethodDeclaration = {
-      toMethodDeclaration(
-        Array(toAnnotation(Array("Override"), None)),
-        Array("public", "static").map(toModifier),
-        toTypeRef(Map("void" -> None)),
-        toId("method"),
-        toParameterList(
-          Array(
-            toParameter(
-              Array[Annotation](),
-              Array[Modifier](),
-              Some(toTypeRef(Map("String" -> None))),
-              Some(toId("s"))
-            )
-          )
-        )
-      )
+    def generateMethod(
+      annotations: Array[Annotation] = Array(toAnnotation(Array("Override"), None)),
+      modifiers: Array[Modifier] = Array("public", "static").map(toModifier),
+      typeRef: TypeRef = toTypeRef(Map("void" -> None)),
+      id: Id = toId("method"),
+      parameters: FormalParameterList = generateParameterList()
+    ): MethodDeclaration = {
+      toMethodDeclaration(annotations, modifiers, typeRef, id, parameters)
+    }
+
+    def generateParameterList(
+      annotations: Array[Annotation] = Array[Annotation](),
+      modifiers: Array[Modifier] = Array[Modifier](),
+      typeRef: TypeRef = toTypeRef(Map("String" -> None)),
+      id: Id = toId("s")
+    ): FormalParameterList = {
+      toParameterList(Array(toParameter(annotations, modifiers, Some(typeRef), Some(id))))
     }
 
     it("should be equal") {
@@ -442,8 +442,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
 
-      first.methods.append(baseMethod())
-      second.methods.append(baseMethod())
+      first.methods.append(generateMethod())
+      second.methods.append(generateMethod())
 
       //When
       val comparator = SubsetComparator(first)
@@ -457,43 +457,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("String" -> None))),
-                Some(toId("s"))
-              )
-            )
-          )
-        )
-      )
-      second.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          //Unresolved name Foo
-          toTypeRef(Map("Foo" -> None, "Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("String" -> None))),
-                Some(toId("s"))
-              )
-            )
-          )
-        )
-      )
+
+      first.methods.append(generateMethod(typeRef = toTypeRef(Map("Bar" -> None))))
+      second.methods.append(generateMethod(typeRef = toTypeRef(Map("Foo" -> None, "Bar" -> None))))
 
       //When
       val comparator = SubsetComparator(first)
@@ -509,43 +475,13 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("String" -> None))))))),
-                Some(toId("s"))
-              )
-            )
-          )
-        )
-      )
+
+      first.methods.append(generateMethod(typeRef = toTypeRef(Map("Bar" -> None))))
       second.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("ResolvedName" -> None, "Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("String" -> None))))))),
-                Some(toId("s"))
-              )
-            )
-          )
-        )
+        generateMethod(typeRef = toTypeRef(Map("ResolvedName" -> None, "Bar" -> None)))
       )
 
+      //When
       val comparator =
         SubsetComparator(first, getMockResolver(), getMockResolver(Array("ResolvedName")))
       comparator.subsetOf(second)
@@ -558,49 +494,48 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       )
     }
 
-    it("should be subsets when return types have all resolved name") {
+    it("should be subsets when return types have array subscripts and the other has List") {
+      //Given
+      val first  = generateEmptyClassDeclaration("Dummy")
+      val second = generateEmptyClassDeclaration("Dummy")
+      first.methods.append(generateMethod(typeRef = toTypeRef(Map("String" -> None), 1)))
+      second.methods.append(
+        generateMethod(typeRef =
+          toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("String" -> None))))))
+        )
+      )
+
+      val comparator =
+        SubsetComparator(first, getMockResolver(), getMockResolver(Array("ResolvedName")))
+      comparator.subsetOf(second)
+
+      //Then
+      assert(comparator.getWarnings.nonEmpty)
+      assert(
+        comparator.getWarnings.head
+          .contains("TypeRef Array Subscript resolved to List in other")
+      )
+    }
+
+    it("should be subsets when parameterList have all resolved name") {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
       first.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("Bar" -> None))))))),
-                Some(toId("s"))
-              )
-            )
+        generateMethod(parameters =
+          generateParameterList(
+            typeRef = toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("Bar" -> None)))))),
+            id = toId("s")
           )
         )
       )
       second.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(
-                  toTypeRef(
-                    Map(
-                      "List" -> Some(Array(toTypeRef(Map("ResolvedName" -> None, "Bar" -> None))))
-                    )
-                  )
-                ),
-                Some(toId("s"))
-              )
-            )
+        generateMethod(parameters =
+          generateParameterList(
+            typeRef = toTypeRef(
+              Map("List" -> Some(Array(toTypeRef(Map("ResolvedName" -> None, "Bar" -> None)))))
+            ),
+            id = toId("s")
           )
         )
       )
@@ -617,106 +552,21 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       )
     }
 
-    it("should be subsets when return types have array subscripts and the other has List") {
-      //Given
-      val first  = generateEmptyClassDeclaration("Dummy")
-      val second = generateEmptyClassDeclaration("Dummy")
-      first.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("String" -> None), 1),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("Bar" -> None))))))),
-                Some(toId("s"))
-              )
-            )
-          )
-        )
-      )
-      second.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("String" -> None)))))),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(
-                  toTypeRef(
-                    Map(
-                      "List" -> Some(Array(toTypeRef(Map("ResolvedName" -> None, "Bar" -> None))))
-                    )
-                  )
-                ),
-                Some(toId("s"))
-              )
-            )
-          )
-        )
-      )
-
-      val comparator =
-        SubsetComparator(first, getMockResolver(), getMockResolver(Array("ResolvedName")))
-      comparator.subsetOf(second)
-
-      //Then
-      assert(comparator.getWarnings.nonEmpty)
-      assert(
-        comparator.getWarnings.head
-          .contains("TypeRef Array Subscript resolved to List in other")
-      )
-    }
-
     it("should not be equal when parameterList have different type arguments") {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
+
       first.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("Foo" -> None))),
-                Some(toId("s"))
-              )
-            )
-          )
+        generateMethod(parameters =
+          generateParameterList(typeRef = toTypeRef(Map("Foo" -> None)), id = toId("s"))
         )
       )
       second.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("Bar" -> None))),
-                Some(toId("s"))
-              )
-            )
-          )
+        generateMethod(parameters =
+          generateParameterList(typeRef = toTypeRef(Map("Bar" -> None)), id = toId("s"))
         )
       )
-
       //When
       val comparator = SubsetComparator(first)
 
@@ -731,43 +581,20 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
+
       first.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("Bar" -> None))),
-                Some(toId("s"))
-              )
-            )
-          )
+        generateMethod(
+          parameters = generateParameterList(typeRef = toTypeRef(Map("Bar" -> None))),
+          id = toId("s")
         )
       )
       second.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("ResolvedName" -> None, "Bar" -> None))),
-                Some(toId("s"))
-              )
-            )
-          )
+        generateMethod(
+          parameters =
+            generateParameterList(typeRef = toTypeRef(Map("ResolvedName" -> None, "Bar" -> None))),
+          id = toId("s")
         )
       )
-
       val comparator =
         SubsetComparator(first, getMockResolver(), getMockResolver(Array("ResolvedName")))
       comparator.subsetOf(second)
@@ -785,44 +612,20 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
       first.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("Bar" -> None))))))),
-                Some(toId("s"))
-              )
-            )
-          )
+        generateMethod(
+          parameters = generateParameterList(typeRef =
+            toTypeRef(Map("List" -> Some(Array(toTypeRef(Map("Bar" -> None))))))
+          ),
+          id = toId("s")
         )
       )
       second.methods.append(
-        toMethodDeclaration(
-          Array(toAnnotation(Array("Override"), None)),
-          Array("public", "static").map(toModifier),
-          toTypeRef(Map("Bar" -> None)),
-          toId("method"),
-          toParameterList(
-            Array(
-              toParameter(
-                Array[Annotation](),
-                Array[Modifier](),
-                Some(
-                  toTypeRef(
-                    Map(
-                      "List" -> Some(Array(toTypeRef(Map("ResolvedName" -> None, "Bar" -> None))))
-                    )
-                  )
-                ),
-                Some(toId("s"))
-              )
-            )
+        generateMethod(parameters =
+          generateParameterList(
+            typeRef = toTypeRef(
+              Map("List" -> Some(Array(toTypeRef(Map("ResolvedName" -> None, "Bar" -> None)))))
+            ),
+            id = toId("s")
           )
         )
       )
