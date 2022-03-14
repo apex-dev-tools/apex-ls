@@ -7,7 +7,7 @@ import org.scalatest.funspec.AnyFunSpec
 class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
   private def generateClassDeclaration(name: String): ClassTypeDeclaration = {
-    val ctd = new ClassTypeDeclaration("path/Dummy.ls")
+    val ctd = new ClassTypeDeclaration("path/Dummy.ls", None)
     ctd.add(toId(name))
     ctd.add(toAnnotation(Array("TestVisible"), None))
     ctd.add(toModifier("private"))
@@ -76,7 +76,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
   }
 
   private def generateEmptyClassDeclaration(name: String): ClassTypeDeclaration = {
-    val ctd = new ClassTypeDeclaration(name)
+    val ctd = new ClassTypeDeclaration(name, None)
     ctd.id = Some(toId(name))
     ctd
   }
