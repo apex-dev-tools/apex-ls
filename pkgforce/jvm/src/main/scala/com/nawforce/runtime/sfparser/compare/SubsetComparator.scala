@@ -114,12 +114,6 @@ class SubsetComparator(
       throw new Exception(s"Different or empty class id ${first.id} != ${second.id}")
     }
 
-    if (first.typeParameters != second.typeParameters) {
-      throw new Exception(
-        s"Different typeParameters ${first.typeParameters} != ${second.typeParameters}"
-      )
-    }
-
     if (first.extendsTypeRef != second.extendsTypeRef) {
       throw new Exception(s"Different extends ${first.extendsTypeRef} != ${second.extendsTypeRef}")
     }

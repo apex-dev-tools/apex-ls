@@ -3,7 +3,13 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{ClassTypeDeclaration, TypeDeclaration}
+import com.financialforce.oparser.{
+  ClassTypeDeclaration,
+  EnumTypeDeclaration,
+  InterfaceTypeDeclaration,
+  TypeDeclaration,
+  TypeDeclarationFactory
+}
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex}
 import com.nawforce.pkgforce.names.Name
@@ -93,6 +99,8 @@ object IPM extends TriHierarchy {
           val module = mdlFactory(this, issuesAndIndex.value, acc)
           acc :+ module
         })
+
+    def namespaceAsString: String = namespace.map(_.value).getOrElse("")
   }
 
   class Module(
@@ -109,14 +117,24 @@ object IPM extends TriHierarchy {
 
     private def loadClasses(): Unit = {
       val namespace = pkg.namespace
-      new ApexClassLoader(loadingPool)
+      new ApexClassLoader(loadingPool, ModuleClassFactory)
         .loadClasses(index.get(ApexNature), pkg.org.issues)
         .foreach { docAndType =>
-          loadClass(docAndType._1.typeName(namespace).toString, docAndType._2)
+          markModule(docAndType._2)
+          insertClass(docAndType._1.typeName(namespace).toString, docAndType._2)
         }
     }
 
-    private def loadClass(name: String, decl: TypeDeclaration): Unit = {
+    private def markModule(decl: TypeDeclaration): Unit = {
+      decl match {
+        case scoped: ModuleScoped =>
+          decl.innerTypes.foreach(markModule)
+          scoped.module = Some(this)
+        case _ => ()
+      }
+    }
+
+    private def insertClass(name: String, decl: TypeDeclaration): Unit = {
       lowerNames.add(name.toLowerCase)
       types.put(Name(name), decl)
 
