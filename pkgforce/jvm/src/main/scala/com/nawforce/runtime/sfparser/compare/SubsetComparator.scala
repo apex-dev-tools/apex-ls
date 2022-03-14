@@ -269,7 +269,7 @@ class SubsetComparator(
       if (checks)
         warnings.append(
           prettyWarnings(
-            "TypeRef has fully resolved type names and the other does not",
+            "TypeRefs in second has all names fully resolved the other does not",
             ArrayBuffer(first),
             ArrayBuffer(second)
           )
@@ -324,7 +324,7 @@ class SubsetComparator(
     first: ArrayBuffer[TypeRef],
     second: ArrayBuffer[TypeRef]
   ): Boolean = {
-    val isSubset = first.nonEmpty &&
+    val isSubset = first.nonEmpty && first.size == second.size &&
       first.forall(f => second.exists(s => compareTypeRef(f, s)))
     isSubset
   }
