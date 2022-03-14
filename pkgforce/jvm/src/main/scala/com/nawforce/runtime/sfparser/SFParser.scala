@@ -8,12 +8,13 @@ import apex.jorje.data.ast
 import apex.jorje.data.ast.TypeRefs.ArrayTypeRef
 import apex.jorje.semantic.ast.AstNode
 import apex.jorje.semantic.ast.compilation.{AnonymousClass, _}
-import apex.jorje.semantic.ast.member.Parameter
+import apex.jorje.semantic.ast.member.{Method, Parameter}
 import apex.jorje.semantic.ast.modifier.ModifierGroup
 import apex.jorje.semantic.ast.statement.BlockStatement
-import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
+import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor, Scope}
 import apex.jorje.semantic.compiler.{ApexCompiler, CodeUnit, SourceFile}
 import apex.jorje.semantic.compiler.parser.ParserEngine
+import apex.jorje.semantic.exception.Errors
 import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.member.Member
 import apex.jorje.semantic.symbol.member.method.MethodInfo
@@ -138,17 +139,16 @@ class SFParser(source: Map[String, String]) {
       .map(toInitializer(_, isStatic = false))
       .foreach(block.append)
 
-    val clinit = members.getMethods.asScala
-      .find(_.getMethodInfo.getCanonicalName.equals("<clinit>"))
+    val clinit =
+      members.getMethods.asScala.find(_.getMethodInfo.getCanonicalName.equals("<clinit>"))
 
-    //TODO: Fix this as it is flaky and does not work properly
-    //This is very messy and haven't found a better way to access static blocks
-    //If theres no static block then theres no body and toString will throw an error
-    val hasStaticBody = Try {
-      clinit.get.getBody.toString
-    }.toOption.isDefined
-    if (hasStaticBody) {
-      block.append(toInitializer(clinit.get, isStatic = true))
+    clinit match {
+      case Some(cli) =>
+        val visitor = new BlockStatementVisitor()
+        cli.traverse(visitor, new AdditionalPassScope(Errors.createErrors()))
+        if (visitor.statements.nonEmpty)
+          block.append(toInitializer(visitor.statements.head, isStatic = true))
+      case None =>
     }
     block
   }
@@ -504,6 +504,30 @@ class SFParser(source: Map[String, String]) {
     typRefs.foreach(tl.add)
     tl
   }
+
+  private class BlockStatementVisitor extends AstVisitor[AdditionalPassScope] {
+    val statements: ArrayBuffer[BlockStatement] = ArrayBuffer[BlockStatement]()
+
+    override def visit(node: Method, scope: AdditionalPassScope): Boolean = {
+      scope.push(node)
+      true
+    }
+
+    override def visitEnd(node: Method, scope: AdditionalPassScope): Unit = {
+      scope.pop(node)
+    }
+
+    override def visit(node: BlockStatement, scope: AdditionalPassScope): Boolean = {
+      scope.push(node)
+      true
+    }
+
+    override def visitEnd(node: BlockStatement, scope: AdditionalPassScope): Unit = {
+      scope.pop(node)
+      statements.append(node)
+    }
+  }
+
 }
 
 object SFParser {
