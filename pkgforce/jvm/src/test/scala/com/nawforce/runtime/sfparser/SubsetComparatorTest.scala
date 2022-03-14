@@ -89,6 +89,47 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
     }
   }
 
+  describe("Initializer blocks") {
+    it("should be equal") {
+      //Given
+      val first  = generateEmptyClassDeclaration("Dummy")
+      val second = generateEmptyClassDeclaration("Dummy")
+
+      first.initializers.append(new Initializer(true))
+      first.initializers.append(new Initializer(false))
+
+      second.initializers.append(new Initializer(true))
+      second.initializers.append(new Initializer(false))
+
+      //When
+      val comparator = SubsetComparator(first)
+      comparator.subsetOf(second)
+
+      //Then
+      assert(comparator.getWarnings.isEmpty)
+    }
+
+    it("should be not be equal") {
+      //Given
+      val first  = generateEmptyClassDeclaration("Dummy")
+      val second = generateEmptyClassDeclaration("Dummy")
+
+      first.initializers.append(new Initializer(true))
+      first.initializers.append(new Initializer(false))
+
+      second.initializers.append(new Initializer(false))
+      second.initializers.append(new Initializer(false))
+      //When
+      val comparator = SubsetComparator(first)
+
+      //Then
+      val caught = intercept[Exception] {
+        comparator.subsetOf(second)
+      }
+      assert(caught.getMessage.contains("Different initializers"))
+    }
+  }
+
   describe("Annotations") {
     it("should pass when annotations are Equal") {
       //Given
