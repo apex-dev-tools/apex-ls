@@ -7,6 +7,7 @@ package com.nawforce.pkgforce.api;
 import com.financialforce.oparser.TypeDeclaration;
 import com.nawforce.pkgforce.diagnostics.IssuesManager;
 import com.nawforce.pkgforce.path.PathLike;
+import com.nawforce.pkgforce.types.ApexTypeAdapter;
 import com.nawforce.runtime.platform.Path;
 import com.nawforce.runtime.workspace.IPM;
 import scala.jdk.javaapi.CollectionConverters;
@@ -14,11 +15,7 @@ import scala.jdk.javaapi.OptionConverters;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MDIndex implements IssuesCollection {
@@ -34,27 +31,31 @@ public class MDIndex implements IssuesCollection {
         rootModule = OptionConverters.toJava(index.rootModule());
     }
 
-    public TypeDeclaration findExactTypeId(String name) {
+    public ApexType findExactTypeId(String name) {
         return rootModule
                 .flatMap(module -> OptionConverters.toJava(module.findExactTypeId(name)))
+                .map(ApexTypeAdapter::new)
                 .orElse(null);
     }
 
-    public TypeDeclaration fuzzyFindTypeId(String name) {
+    public ApexType fuzzyFindTypeId(String name) {
         return rootModule
                 .flatMap(module -> OptionConverters.toJava(module.fuzzyFindTypeId(name)))
+                .map(ApexTypeAdapter::new)
                 .orElse(null);
     }
 
-    public List<TypeDeclaration> fuzzyFindTypeIds(String name) {
+    public List<ApexType> fuzzyFindTypeIds(String name) {
         return rootModule
                 .map(module -> CollectionConverters.asJava(module.fuzzyFindTypeIds(name)))
+                .map(types -> types.stream().map(type -> (ApexType) new ApexTypeAdapter(type)).collect(Collectors.toList()))
                 .orElse(new LinkedList<>());
     }
 
-    public List<TypeDeclaration> findTypeIdsByNamespace(String namespace) {
+    public List<ApexType> findTypeIdsByNamespace(String namespace) {
         return rootModule
                 .map(module -> CollectionConverters.asJava(module.findTypeIdsByNamespace(namespace)))
+                .map(types -> types.stream().map(type -> (ApexType) new ApexTypeAdapter(type)).collect(Collectors.toList()))
                 .orElse(new LinkedList<>());
     }
 
@@ -66,23 +67,32 @@ public class MDIndex implements IssuesCollection {
     public ApexResourceFile getResourceFile(String uriFilename) {
 
         final String filename = URIToPath(uriFilename);
-
-        return rootModule
+        List<TypeDeclaration> allTypes = rootModule
                 .map(module -> CollectionConverters.asJava(module.getTypesByPath(filename)))
                 .filter(types -> !types.isEmpty())
-                .map(types -> new ApexResourceFile(types.get(0).path(), types, issuesForFile(filename).length > 0))
                 .orElse(null);
+        if (allTypes == null)
+            return null;
+
+        String typePath = allTypes.get(0).path();
+        return new ApexResourceFile(typePath,
+                allTypes.stream().map(type -> (ApexType) new ApexTypeAdapter(type)).collect(Collectors.toList()),
+                issuesForFile(typePath).length > 0);
     }
 
     public ApexResourceFile findResourceFile(String uriFilename) {
-
         final String filename = URIToPath(uriFilename);
-
-        return rootModule
+        List<TypeDeclaration> allTypes = rootModule
                 .map(module -> CollectionConverters.asJava(module.findTypesByPath(filename)))
                 .filter(types -> !types.isEmpty())
-                .map(types -> new ApexResourceFile(types.get(0).path(), types, issuesForFile(filename).length > 0))
                 .orElse(null);
+        if (allTypes == null)
+            return null;
+
+        String typePath = allTypes.get(0).path();
+        return new ApexResourceFile(typePath,
+                allTypes.stream().map(type -> (ApexType) new ApexTypeAdapter(type)).collect(Collectors.toList()),
+                issuesForFile(typePath).length > 0);
     }
 
     public List<ApexResourceFile> fuzzyFindResourceFile(String uriFilename) {
@@ -95,7 +105,11 @@ public class MDIndex implements IssuesCollection {
                         .collect(Collectors.groupingBy(TypeDeclaration::path)))
                         .map(groups -> groups.entrySet()
                                 .stream()
-                                .map(group -> new ApexResourceFile(group.getKey(), group.getValue(), issuesForFile(group.getKey()).length > 0))
+                                .map(group -> new ApexResourceFile(group.getKey(),
+                                        group.getValue().stream()
+                                                .map(type -> (ApexType) new ApexTypeAdapter(type))
+                                                .collect(Collectors.toList()),
+                                        issuesForFile(group.getKey()).length > 0))
                                 .sorted(Comparator.comparing(ApexResourceFile::getFilename))
                                 .collect(Collectors.toList())
                 )

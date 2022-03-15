@@ -22,7 +22,7 @@ object Antlr {
     val tree = parser.compilationUnit()
 
     if (Option(tree.typeDeclaration().classDeclaration()).isDefined) {
-      val ctd = new ClassTypeDeclaration("")
+      val ctd = new ClassTypeDeclaration("", None)
       tree
         .typeDeclaration()
         .modifier()
@@ -40,7 +40,7 @@ object Antlr {
       return Some(ctd)
     }
     if (Option(tree.typeDeclaration().interfaceDeclaration()).isDefined) {
-      val itd = new InterfaceTypeDeclaration("")
+      val itd = new InterfaceTypeDeclaration("", None)
       tree
         .typeDeclaration()
         .modifier()
@@ -58,7 +58,7 @@ object Antlr {
       return Some(itd)
     }
     if (Option(tree.typeDeclaration().enumDeclaration()).isDefined) {
-      val etd = new EnumTypeDeclaration("")
+      val etd = new EnumTypeDeclaration("", None)
       tree
         .typeDeclaration()
         .modifier()
@@ -185,7 +185,7 @@ object Antlr {
           c.modifier().asScala.filter(_.annotation() == null).map(toModifier).foreach(md.add)
 
           Option(d.classDeclaration()).foreach(icd => {
-            val innerClassDeclaration = new ClassTypeDeclaration("")
+            val innerClassDeclaration = new ClassTypeDeclaration("", Some(ctd))
             innerClassDeclaration.annotations.addAll(md.annotations)
             innerClassDeclaration.modifiers.addAll(md.modifiers)
             ctd.innerTypes.append(innerClassDeclaration)
@@ -193,7 +193,7 @@ object Antlr {
           })
 
           Option(d.interfaceDeclaration()).foreach(iid => {
-            val innerInterfaceDeclaration = new InterfaceTypeDeclaration("")
+            val innerInterfaceDeclaration = new InterfaceTypeDeclaration("", Some(ctd))
             innerInterfaceDeclaration.annotations.addAll(md.annotations)
             innerInterfaceDeclaration.modifiers.addAll(md.modifiers)
             ctd.innerTypes.append(innerInterfaceDeclaration)
@@ -201,7 +201,7 @@ object Antlr {
           })
 
           Option(d.enumDeclaration()).foreach(ied => {
-            val innerEnumDeclaration = new EnumTypeDeclaration("")
+            val innerEnumDeclaration = new EnumTypeDeclaration("", Some(ctd))
             innerEnumDeclaration.annotations.addAll(md.annotations)
             innerEnumDeclaration.modifiers.addAll(md.modifiers)
             ctd.innerTypes.append(innerEnumDeclaration)

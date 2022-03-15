@@ -101,10 +101,10 @@ class MDIndexTest extends AnyFunSuite {
     )) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.fuzzyFindTypeId("Foo").id.get.toString == "Foo")
-      assert(index.fuzzyFindTypeId("FO").id.get.toString == "Foo")
-      assert(index.fuzzyFindTypeId("f").id.get.toString == "Foo")
-      assert(index.fuzzyFindTypeId("Foob").id.get.toString == "FooBar")
+      assert(index.fuzzyFindTypeId("Foo").getApexName == "Foo")
+      assert(index.fuzzyFindTypeId("FO").getApexName == "Foo")
+      assert(index.fuzzyFindTypeId("f").getApexName == "Foo")
+      assert(index.fuzzyFindTypeId("Foob").getApexName == "FooBar")
       assert(index.fuzzyFindTypeId("Fox") == null)
       assert(index.fuzzyFindTypeId("O") == null)
       assert(index.fuzzyFindTypeId("X") == null)
@@ -122,10 +122,10 @@ class MDIndexTest extends AnyFunSuite {
     ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.fuzzyFindTypeId("ns.Foo").id.get.toString == "Foo")
-      assert(index.fuzzyFindTypeId("ns.FO").id.get.toString == "Foo")
-      assert(index.fuzzyFindTypeId("ns.f").id.get.toString == "Foo")
-      assert(index.fuzzyFindTypeId("ns.Foob").id.get.toString == "FooBar")
+      assert(index.fuzzyFindTypeId("ns.Foo").getApexName == "ns.Foo")
+      assert(index.fuzzyFindTypeId("ns.FO").getApexName == "ns.Foo")
+      assert(index.fuzzyFindTypeId("ns.f").getApexName == "ns.Foo")
+      assert(index.fuzzyFindTypeId("ns.Foob").getApexName == "ns.FooBar")
       assert(index.fuzzyFindTypeId("Foo") == null)
       assert(index.fuzzyFindTypeId("ns.Fox") == null)
       assert(index.fuzzyFindTypeId("") == null)
@@ -142,11 +142,11 @@ class MDIndexTest extends AnyFunSuite {
 
       val fooFind = index.fuzzyFindTypeIds("Foo")
       assert(fooFind.size() == 2)
-      assert(fooFind.get(0).id.get.toString == "Foo")
-      assert(fooFind.get(1).id.get.toString == "FooBar")
+      assert(fooFind.get(0).getApexName == "Foo")
+      assert(fooFind.get(1).getApexName == "FooBar")
       assert(index.fuzzyFindTypeIds("FO").size() == 2)
       assert(index.fuzzyFindTypeIds("f").size() == 2)
-      assert(index.fuzzyFindTypeIds("Foob").get(0).id.get.toString == "FooBar")
+      assert(index.fuzzyFindTypeIds("Foob").get(0).getApexName == "FooBar")
       assert(index.fuzzyFindTypeIds("Fox").isEmpty)
       assert(index.fuzzyFindTypeIds("O").isEmpty)
       assert(index.fuzzyFindTypeIds("X").isEmpty)
@@ -167,11 +167,11 @@ class MDIndexTest extends AnyFunSuite {
 
       val fooFind = index.fuzzyFindTypeIds("ns.Foo")
       assert(fooFind.size() == 2)
-      assert(fooFind.get(0).id.get.toString == "Foo")
-      assert(fooFind.get(1).id.get.toString == "FooBar")
+      assert(fooFind.get(0).getApexName == "ns.Foo")
+      assert(fooFind.get(1).getApexName == "ns.FooBar")
       assert(index.fuzzyFindTypeIds("ns.FO").size() == 2)
       assert(index.fuzzyFindTypeIds("ns.f").size() == 2)
-      assert(index.fuzzyFindTypeIds("ns.Foob").get(0).id.get.toString == "FooBar")
+      assert(index.fuzzyFindTypeIds("ns.Foob").get(0).getApexName == "ns.FooBar")
       assert(index.fuzzyFindTypeIds("Foo").isEmpty)
       assert(index.fuzzyFindTypeIds("ns.O").isEmpty)
       assert(index.fuzzyFindTypeIds("ns.X").isEmpty)
@@ -189,9 +189,9 @@ class MDIndexTest extends AnyFunSuite {
 
       val findResults = index.findTypeIdsByNamespace("")
       assert(findResults.size() == 3)
-      assert(findResults.get(0).id.get.toString == "Foo")
-      assert(findResults.get(1).id.get.toString == "FooBar")
-      assert(findResults.get(2).id.get.toString == "Bar")
+      assert(findResults.get(0).getApexName == "Foo")
+      assert(findResults.get(1).getApexName == "FooBar")
+      assert(findResults.get(2).getApexName == "FooBar.Bar")
 
       assert(index.findTypeIdsByNamespace("F").isEmpty)
     }
@@ -210,13 +210,15 @@ class MDIndexTest extends AnyFunSuite {
 
       val findResults = index.findTypeIdsByNamespace("ns")
       assert(findResults.size() == 3)
-      assert(findResults.get(0).id.get.toString == "Foo")
-      assert(findResults.get(1).id.get.toString == "FooBar")
-      assert(findResults.get(2).id.get.toString == "Bar")
-
+      assert(findResults.get(0).getApexName == "ns.Foo")
+      assert(findResults.get(1).getApexName == "ns.FooBar")
+      assert(findResults.get(2).getApexName == "ns.FooBar.Bar")
 
       val findResults2 = index.findTypeIdsByNamespace("n")
-      assert(findResults2 == findResults)
+      assert(findResults2.size() == 3)
+      assert(findResults2.get(0).getApexName == "ns.Foo")
+      assert(findResults2.get(1).getApexName == "ns.FooBar")
+      assert(findResults2.get(2).getApexName == "ns.FooBar.Bar")
 
       assert(index.findTypeIdsByNamespace("F").isEmpty)
       assert(index.findTypeIdsByNamespace("").isEmpty)
@@ -239,29 +241,29 @@ class MDIndexTest extends AnyFunSuite {
       val sources2BazPath = root.join("sources2").join("Baz.cls").toString
 
       assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("Foo").path == sources2FooPath)
-      assert(index.findExactTypeId("Bar").path == sources1BarPath)
-      assert(index.findExactTypeId("Baz").path == sources2BazPath)
-      assert(index.findExactTypeId("Baz.Bar").path == sources2BazPath)
+      assert(index.findExactTypeId("Foo").getFile.getFilename == sources2FooPath)
+      assert(index.findExactTypeId("Bar").getFile.getFilename == sources1BarPath)
+      assert(index.findExactTypeId("Baz").getFile.getFilename == sources2BazPath)
+      assert(index.findExactTypeId("Baz.Bar").getFile.getFilename == sources2BazPath)
 
-      assert(index.fuzzyFindTypeId("F").path == sources2FooPath)
-      assert(index.fuzzyFindTypeId("B").path == sources2BazPath)
+      assert(index.fuzzyFindTypeId("F").getFile.getFilename == sources2FooPath)
+      assert(index.fuzzyFindTypeId("B").getFile.getFilename == sources2BazPath)
 
       val fFind = index.fuzzyFindTypeIds("F")
       assert(fFind.size() == 1)
-      assert(fFind.get(0).path == sources2FooPath)
+      assert(fFind.get(0).getFile.getFilename == sources2FooPath)
 
       val bFind = index.fuzzyFindTypeIds("B")
       assert(bFind.size() == 2)
-      assert(bFind.get(0).path == sources1BarPath)
-      assert(bFind.get(1).path == sources2BazPath)
+      assert(bFind.get(0).getFile.getFilename == sources1BarPath)
+      assert(bFind.get(1).getFile.getFilename == sources2BazPath)
 
       val nsFind = index.findTypeIdsByNamespace("")
       assert(nsFind.size() == 4)
-      assert(nsFind.get(0).path == sources1BarPath)
-      assert(nsFind.get(1).path == sources2FooPath)
-      assert(nsFind.get(2).path == sources2BazPath)
-      assert(nsFind.get(3).path == sources2BazPath)
+      assert(nsFind.get(0).getFile.getFilename == sources1BarPath)
+      assert(nsFind.get(1).getFile.getFilename == sources2FooPath)
+      assert(nsFind.get(2).getFile.getFilename == sources2BazPath)
+      assert(nsFind.get(3).getFile.getFilename == sources2BazPath)
     }
   }
 
@@ -292,29 +294,29 @@ class MDIndexTest extends AnyFunSuite {
       val sources2BazPath = root.join("sources2").join("Baz.cls").toString
 
       assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("Foo").path == sources2FooPath)
-      assert(index.findExactTypeId("Bar").path == sources1BarPath)
-      assert(index.findExactTypeId("Baz").path == sources2BazPath)
-      assert(index.findExactTypeId("Baz.Bar").path == sources2BazPath)
+      assert(index.findExactTypeId("Foo").getFile.getFilename == sources2FooPath)
+      assert(index.findExactTypeId("Bar").getFile.getFilename == sources1BarPath)
+      assert(index.findExactTypeId("Baz").getFile.getFilename == sources2BazPath)
+      assert(index.findExactTypeId("Baz.Bar").getFile.getFilename == sources2BazPath)
 
-      assert(index.fuzzyFindTypeId("F").path == sources2FooPath)
-      assert(index.fuzzyFindTypeId("B").path == sources2BazPath)
+      assert(index.fuzzyFindTypeId("F").getFile.getFilename == sources2FooPath)
+      assert(index.fuzzyFindTypeId("B").getFile.getFilename == sources2BazPath)
 
       val fFind = index.fuzzyFindTypeIds("F")
       assert(fFind.size() == 1)
-      assert(fFind.get(0).path == sources2FooPath)
+      assert(fFind.get(0).getFile.getFilename == sources2FooPath)
 
       val bFind = index.fuzzyFindTypeIds("B")
       assert(bFind.size() == 2)
-      assert(bFind.get(0).path == sources1BarPath)
-      assert(bFind.get(1).path == sources2BazPath)
+      assert(bFind.get(0).getFile.getFilename == sources1BarPath)
+      assert(bFind.get(1).getFile.getFilename == sources2BazPath)
 
       val nsFind = index.findTypeIdsByNamespace("")
       assert(nsFind.size() == 4)
-      assert(nsFind.get(0).path == sources1BarPath)
-      assert(nsFind.get(1).path == sources2FooPath)
-      assert(nsFind.get(2).path == sources2BazPath)
-      assert(nsFind.get(3).path == sources2BazPath)
+      assert(nsFind.get(0).getFile.getFilename == sources1BarPath)
+      assert(nsFind.get(1).getFile.getFilename == sources2FooPath)
+      assert(nsFind.get(2).getFile.getFilename == sources2BazPath)
+      assert(nsFind.get(3).getFile.getFilename == sources2BazPath)
     }
   }
 
@@ -382,13 +384,127 @@ class MDIndexTest extends AnyFunSuite {
       assert(fooResource.getTypes.size() == 2)
       val expectedFooPath = root.join("Foo.cls").toString
       assert(fooResource.getFilename == expectedFooPath)
-      assert(fooResource.getTypes.stream().allMatch(_.path == expectedFooPath))
+      assert(fooResource.getTypes.stream().allMatch(_.getFile.getFilename == expectedFooPath))
 
       val fooBarResource = fooResources.get(1)
       assert(fooBarResource.getTypes.size() == 2)
       val expectedFooBarPath = root.join("FooBar.cls").toString
       assert(fooBarResource.getFilename == expectedFooBarPath)
-      assert(fooBarResource.getTypes.stream().allMatch(_.path == expectedFooBarPath))
+      assert(fooBarResource.getTypes.stream().allMatch(_.getFile.getFilename == expectedFooBarPath))
     }
   }
+
+  test("MDAPI ApexType") {
+    FileSystemHelper.run(Map(
+      "Foo.cls" -> "public class Foo { public class Bar {} }"
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index.hasUpdatedIssues.isEmpty)
+
+      val foo = index.findExactTypeId("Foo")
+      assert(foo != null)
+      assert(foo.getApexName == "Foo")
+      assert(foo.getApexNamespace == "")
+      assert(foo.getEnclosingType == null)
+
+      val bar = index.findExactTypeId("Foo.Bar")
+      assert(bar != null)
+      assert(bar.getApexName == "Foo.Bar")
+      assert(bar.getApexNamespace == "")
+      assert(bar.getEnclosingType.getApexName == "Foo")
+
+      val fooFile = foo.getFile
+      assert(fooFile != null)
+      assert(fooFile.getFilename == "/Foo.cls")
+      assert(!fooFile.hasError)
+      assert(fooFile.getTypes.size() == 2)
+      assert(fooFile.getTypes.contains(foo))
+      assert(fooFile.getTypes.contains(bar))
+
+      val barFile = bar.getFile
+      assert(barFile != null)
+      assert(barFile.getFilename == "/Foo.cls")
+      assert(!barFile.hasError)
+      assert(barFile.getTypes.size() == 2)
+      assert(fooFile.getTypes.contains(foo))
+      assert(fooFile.getTypes.contains(bar))
+    }
+  }
+
+  test("SFDX ApexType (no namespace)") {
+    FileSystemHelper.run(Map(
+      "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}]}",
+      "sources/Foo.cls" -> "public class Foo { public class Bar {} }"
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index.hasUpdatedIssues.isEmpty)
+
+      val foo = index.findExactTypeId("Foo")
+      assert(foo != null)
+      assert(foo.getApexName == "Foo")
+      assert(foo.getApexNamespace == "")
+      assert(foo.getEnclosingType == null)
+
+      val bar = index.findExactTypeId("Foo.Bar")
+      assert(bar != null)
+      assert(bar.getApexName == "Foo.Bar")
+      assert(bar.getApexNamespace == "")
+      assert(bar.getEnclosingType.getApexName == "Foo")
+
+      val fooFile = foo.getFile
+      assert(fooFile != null)
+      assert(fooFile.getFilename == "/sources/Foo.cls")
+      assert(!fooFile.hasError)
+      assert(fooFile.getTypes.size() == 2)
+      assert(fooFile.getTypes.contains(foo))
+      assert(fooFile.getTypes.contains(bar))
+
+      val barFile = bar.getFile
+      assert(barFile != null)
+      assert(barFile.getFilename == "/sources/Foo.cls")
+      assert(!barFile.hasError)
+      assert(barFile.getTypes.size() == 2)
+      assert(fooFile.getTypes.contains(foo))
+      assert(fooFile.getTypes.contains(bar))
+    }
+  }
+
+  test("SFDX ApexType (namespaced)") {
+    FileSystemHelper.run(Map(
+      "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+      "sources/Foo.cls" -> "public class Foo { public class Bar {} }"
+    )) { root: PathLike =>
+      val index = new MDIndex(root)
+      assert(index.hasUpdatedIssues.isEmpty)
+
+      val foo = index.findExactTypeId("ns.Foo")
+      assert(foo != null)
+      assert(foo.getApexName == "ns.Foo")
+      assert(foo.getApexNamespace == "ns")
+      assert(foo.getEnclosingType == null)
+
+      val bar = index.findExactTypeId("ns.Foo.Bar")
+      assert(bar != null)
+      assert(bar.getApexName == "ns.Foo.Bar")
+      assert(bar.getApexNamespace == "ns")
+      assert(bar.getEnclosingType.getApexName == "ns.Foo")
+
+      val fooFile = foo.getFile
+      assert(fooFile != null)
+      assert(fooFile.getFilename == "/sources/Foo.cls")
+      assert(!fooFile.hasError)
+      assert(fooFile.getTypes.size() == 2)
+      assert(fooFile.getTypes.contains(foo))
+      assert(fooFile.getTypes.contains(bar))
+
+      val barFile = bar.getFile
+      assert(barFile != null)
+      assert(barFile.getFilename == "/sources/Foo.cls")
+      assert(!barFile.hasError)
+      assert(barFile.getTypes.size() == 2)
+      assert(fooFile.getTypes.contains(foo))
+      assert(fooFile.getTypes.contains(bar))
+    }
+  }
+
 }
