@@ -122,4 +122,52 @@ class SFParserTest extends AnyFunSuite {
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
 
+  test("Classes with multiple static initializers") {
+    val path = Path("Dummy.cls")
+    val content =
+      """
+        | public class Dummy {
+        |   static String a;
+        |   static {
+        |     Dummy a = new Dummy;
+        |     {}
+        |   }
+        |   static {
+        |     Dummy a = new Dummy;
+        |   }
+        | }
+        |""".stripMargin
+
+    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val sfp        = SFParser(path.basename, content).parse._1.head
+    val comparator = SubsetComparator(op)
+    comparator.subsetOf(sfp)
+
+    assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
+  }
+
+  test("Classes with multiple instance initializers") {
+    val path = Path("Dummy.cls")
+    val content =
+      """
+        | public class Dummy {
+        |   String a;
+        |   {
+        |     Dummy a = new Dummy;
+        |     {}
+        |   }
+        |   {
+        |     Dummy a = new Dummy;
+        |   }
+        | }
+        |""".stripMargin
+
+    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val sfp        = SFParser(path.basename, content).parse._1.head
+    val comparator = SubsetComparator(op)
+    comparator.subsetOf(sfp)
+
+    assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
+  }
+
 }

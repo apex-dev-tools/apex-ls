@@ -518,7 +518,7 @@ class SFParser(source: Map[String, String]) {
 
     override def visit(node: BlockStatement, scope: AdditionalPassScope): Boolean = {
       scope.push(node)
-      true
+      false
     }
 
     override def visitEnd(node: BlockStatement, scope: AdditionalPassScope): Unit = {
@@ -530,6 +530,10 @@ class SFParser(source: Map[String, String]) {
 }
 
 object SFParser {
+  import java.util.logging.LogManager
+
+  // Stop Jorje logging a startup message
+  LogManager.getLogManager.reset()
 
   def apply(path: String, contents: String): SFParser = {
     new SFParser(Map(path -> contents))
