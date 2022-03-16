@@ -7,7 +7,6 @@ package com.nawforce.runtime.sfparser
 import com.financialforce.oparser._
 import com.nawforce.runtime.platform.Path
 import com.nawforce.runtime.sfparser.compare.SubsetComparator
-import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
 class SFParserTest extends AnyFunSuite {
@@ -18,11 +17,10 @@ class SFParserTest extends AnyFunSuite {
       """
         | public abstract class Dummy extends Bar implements Baz, Boo{
         |   static {
-        |   Bar bar = new Bar();
+        |     Bar bar = new Bar();
         |   }
-        |   {
-        |   Foo b = new Foo();
-        |   }
+        |   static {}
+        |   {}
         |   @TestVisible
         |   private Foo f = new Foo();
         |   public string prop {get; set;}
