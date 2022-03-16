@@ -146,8 +146,7 @@ class SFParser(source: Map[String, String]) {
       case Some(cli) =>
         val visitor = new BlockStatementVisitor()
         cli.traverse(visitor, new AdditionalPassScope(Errors.createErrors()))
-        if (visitor.statements.nonEmpty)
-          block.append(toInitializer(visitor.statements.head, isStatic = true))
+        visitor.statements.foreach(s => block.append(toInitializer(s, isStatic = true)))
       case None =>
     }
     block
