@@ -39,17 +39,27 @@ object OutputComparisonTest {
       .toMap
     val sfParserOutput = SFParser(sources).parse
     val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
-    files.foreach(f => {
-      compareOutputs(f, sfParserOutput, sfTypeResolver)
-    })
+    if (sfParserOutput._2.nonEmpty) {
+      parseFailure = sfParserOutput._2.size
+      System.err.println(
+        s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
+      )
+    }
+
+    files
+      .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
+      .foreach(f => {
+        compareOutputs(f, sfParserOutput, sfTypeResolver)
+      })
 
     def toPercentage(result: Int) = {
-      (result / total.toFloat) * 100
+      (result / files.size.toFloat) * 100
     }
 
     println(f"""
          |Output Comparison Summary
-         |Total cls files processed: $total
+         |Total cls files processed: ${files.size}
+         |Total comparisons: $total
          |Parse Failures: $parseFailure (${toPercentage(parseFailure)}%.0f%%)
          |Exactly Equal: $exactlyEqual (${toPercentage(exactlyEqual)}%.0f%%)
          |Files with comparison warnings: $withWarnings (${toPercentage(withWarnings)}%.0f%%)
@@ -78,7 +88,7 @@ object OutputComparisonTest {
     val sfTd                     = findSfParserOutput(path, sfOutput)
 
     total += 1
-    if (!success || sfOutput._2.nonEmpty) {
+    if (!success) {
       parseFailure += 1
       System.err.println(s"Parse Failure $path $reason")
       return
