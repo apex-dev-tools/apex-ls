@@ -38,18 +38,12 @@ trait TypeFinder {
   }
 
   private def findLocalTypeFor(dotName: DotName, from: TypeDeclaration): Option[TypeDeclaration] = {
-    val matched =
-      if (dotName.firstName == from.name) {
-        if (dotName.isCompound)
-          findLocalTypeFor(dotName.tail, from)
-        else
-          Some(from)
-      } else {
-        None
-      }
-
-    if (matched.nonEmpty)
-      return matched
+    // Shortcut self reference
+    if (!dotName.isCompound && dotName.firstName == from.name)
+      return Some(from)
+    // Remove self reference but avoid false positive match against an inner
+    else if (dotName.isCompound && dotName.firstName == from.name && from.outerTypeName.isEmpty)
+      return findLocalTypeFor(dotName.tail, from)
 
     getNestedType(dotName, from)
       .orElse(
