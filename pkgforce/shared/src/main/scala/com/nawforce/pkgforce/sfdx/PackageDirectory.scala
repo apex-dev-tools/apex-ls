@@ -60,4 +60,40 @@ object PackageDirectory {
       }
     )
   }
+
+  def fromUnpackagedMetadata(
+    projectPath: PathLike,
+    config: ValueWithPositions,
+    value: Value.Value
+  ): PackageDirectory = {
+    val location = config
+      .lineAndOffsetOf(value)
+      .map(lineAndOffset => Location(lineAndOffset._1, lineAndOffset._2))
+      .getOrElse(Location.empty)
+
+    val relativePath = value match {
+      case ujson.Str(value) => Some(value)
+      case _ =>
+        config
+          .lineAndOffsetOf(value)
+          .map(
+            lineAndOffset =>
+              throw SFDXProjectError(
+                lineAndOffset,
+                "'unpackagedMetadata' entries should all be strings"
+              )
+          )
+        None
+    }
+
+    new PackageDirectory(
+      projectPath.join(relativePath.get),
+      relativePath.get,
+      location,
+      None,
+      None,
+      Seq()
+    )
+  }
+
 }

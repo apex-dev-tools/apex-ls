@@ -104,6 +104,21 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
           .getOrElse(Seq.empty)
     }
 
+  val unpackagedMetadata: Seq[PackageDirectory] =
+    plugins.getOrElse("unpackagedMetadata", ujson.Arr()) match {
+      case value: ujson.Arr =>
+        value.value.toSeq.map(
+          value => PackageDirectory.fromUnpackagedMetadata(projectPath, config, value)
+        )
+      case value =>
+        config
+          .lineAndOffsetOf(value)
+          .map(lineAndOffset => {
+            throw SFDXProjectError(lineAndOffset, "'unpackagedMetadata' should be an array")
+          })
+          .getOrElse(Seq.empty)
+    }
+
   val maxDependencyCount: Option[Int] = {
     plugins.get("maxDependencyCount") match {
       case None => None
@@ -134,9 +149,11 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   }
 
+  private val extendedPackageDirectories = packageDirectories ++ unpackagedMetadata
+
   def metadataGlobs: Seq[String] = {
     val glob = MetadataDocument.extensionsGlob
-    packageDirectories.map(directory => s"${directory.relativePath}/**/*.$glob")
+    extendedPackageDirectories.map(directory => s"${directory.relativePath}/**/*.$glob")
   }
 
   def layers(logger: IssueLogger): Seq[NamespaceLayer] = {
@@ -160,7 +177,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
 
     val localPackage = NamespaceLayer(
       namespace,
-      packageDirectories
+      extendedPackageDirectories
         .foldLeft((Map[String, VersionedPackageLayer](), List[ModuleLayer]()))(
           foldPackageDirectory(logger)
         )
@@ -173,6 +190,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
 
     val externalPackages =
       dependencies.flatMap(dependent => packageDependentLayers(logger, dependent))
+
     val layers = externalPackages :+ localPackage
 
     if (layers.map(_.namespace).toSet.size != layers.size) {

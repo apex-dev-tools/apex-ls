@@ -73,6 +73,62 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
     }
   }
 
+  test("Dual packageDirectories") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"foo\"}, {\"path\": \"bar\"}]}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.nonEmpty)
+
+      val dir1 = root.join("foo")
+      val dir2 = root.join("bar")
+      project.get.layers(logger) should matchPattern {
+        case List(
+              NamespaceLayer(
+                None,
+                List(
+                  ModuleLayer(projectPath1, path1, List()),
+                  ModuleLayer(projectPath2, path2, List())
+                )
+              )
+            ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
+      }
+
+      assert(logger.issues.isEmpty)
+    }
+  }
+
+  test("Single packageDirectory with unpackagedMetadata") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"foo\"}], \"plugins\": {\"unpackagedMetadata\": [\"bar\"]} }"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.nonEmpty)
+
+      val dir1 = root.join("foo")
+      val dir2 = root.join("bar")
+      project.get.layers(logger) should matchPattern {
+        case List(
+              NamespaceLayer(
+                None,
+                List(
+                  ModuleLayer(projectPath1, path1, List()),
+                  ModuleLayer(projectPath2, path2, List())
+                )
+              )
+            ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
+      }
+
+      assert(logger.issues.isEmpty)
+    }
+  }
+
   test("Single packageDirectory, named without version") {
     FileSystemHelper.run(
       Map(

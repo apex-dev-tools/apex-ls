@@ -775,4 +775,98 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
       )
     }
   }
+
+  test("Empty unpackagedMetadata") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"unpackagedMetadata\": []}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.get.plugins.size == 1)
+      assert(project.get.plugins.contains("unpackagedMetadata"))
+      assert(project.get.unpackagedMetadata.isEmpty)
+    }
+  }
+
+  test("unpackagedMetadata not an array") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"unpackagedMetadata\": 42}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+
+      assert(project.isEmpty)
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 35), "'unpackagedMetadata' should be an array")
+          )
+        )
+      )
+    }
+  }
+
+  test("unpackagedMetadata single path") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"unpackagedMetadata\": [\"path\"]}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+
+      assert(project.get.unpackagedMetadata.size == 1)
+      val pd = project.get.unpackagedMetadata.head
+      assert(pd.path == root.join("path"))
+      assert(pd.name.isEmpty)
+      assert(pd.version.isEmpty)
+      assert(pd.dependencies.isEmpty)
+    }
+  }
+
+  test("unpackagedMetadata multiple paths") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"unpackagedMetadata\": [\"path1\", \"path2\"]}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+
+      assert(project.get.unpackagedMetadata.size == 2)
+      val pd1 = project.get.unpackagedMetadata.head
+      assert(pd1.path == root.join("path1"))
+      val pd2 = project.get.unpackagedMetadata(1)
+      assert(pd2.path == root.join("path2"))
+    }
+  }
+
+  test("unpackagedMetadata bad path element") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"unpackagedMetadata\": [\"path1\", 10]}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+
+      assert(project.isEmpty)
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location(1, 45),
+              "'unpackagedMetadata' entries should all be strings"
+            )
+          )
+        )
+      )
+    }
+  }
+
 }
