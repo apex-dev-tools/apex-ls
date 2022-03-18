@@ -7,7 +7,6 @@ package com.nawforce.runtime.sfparser
 import com.financialforce.oparser._
 import com.nawforce.runtime.platform.Path
 import com.nawforce.runtime.sfparser.compare.SubsetComparator
-import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
 class SFParserTest extends AnyFunSuite {
@@ -18,11 +17,10 @@ class SFParserTest extends AnyFunSuite {
       """
         | public abstract class Dummy extends Bar implements Baz, Boo{
         |   static {
-        |   Bar bar = new Bar();
+        |     Bar bar = new Bar();
         |   }
-        |   {
-        |   Foo b = new Foo();
-        |   }
+        |   static {}
+        |   {}
         |   @TestVisible
         |   private Foo f = new Foo();
         |   public string prop {get; set;}
@@ -113,6 +111,54 @@ class SFParserTest extends AnyFunSuite {
         |    SPRING,
         |    SUMMER,
         |    FALL
+        | }
+        |""".stripMargin
+
+    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val sfp        = SFParser(path.basename, content).parse._1.head
+    val comparator = SubsetComparator(op)
+    comparator.subsetOf(sfp)
+
+    assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
+  }
+
+  test("Classes with multiple static initializers") {
+    val path = Path("Dummy.cls")
+    val content =
+      """
+        | public class Dummy {
+        |   static String a;
+        |   static {
+        |     Dummy a = new Dummy;
+        |     {}
+        |   }
+        |   static {
+        |     Dummy a = new Dummy;
+        |   }
+        | }
+        |""".stripMargin
+
+    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val sfp        = SFParser(path.basename, content).parse._1.head
+    val comparator = SubsetComparator(op)
+    comparator.subsetOf(sfp)
+
+    assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
+  }
+
+  test("Classes with multiple instance initializers") {
+    val path = Path("Dummy.cls")
+    val content =
+      """
+        | public class Dummy {
+        |   String a;
+        |   {
+        |     Dummy a = new Dummy;
+        |     {}
+        |   }
+        |   {
+        |     Dummy a = new Dummy;
+        |   }
         | }
         |""".stripMargin
 

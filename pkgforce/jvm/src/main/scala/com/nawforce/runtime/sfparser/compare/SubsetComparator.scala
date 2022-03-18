@@ -136,7 +136,12 @@ class SubsetComparator(
         )
     }
 
-    //TODO: Initializer checks
+    if (
+      first.initializers.filter(_.isStatic) != second.initializers.filter(
+        _.isStatic
+      ) || first.initializers.filterNot(_.isStatic) != second.initializers.filterNot(_.isStatic)
+    )
+      throw new Exception(s"Different initializers ${first.initializers} != ${second.initializers}")
 
     checkAndThrowIfDiff("Different constructors", first.constructors, second.constructors)
     checkAndThrowIfDiffForSignatures("Different methods", first.methods, second.methods)
