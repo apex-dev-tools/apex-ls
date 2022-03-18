@@ -41,7 +41,7 @@ import com.financialforce.oparser.{
   TypeDeclaration,
   TypeList,
   TypeName,
-  TypeRef
+  UnresolvedTypeRef
 }
 import org.apache.commons.lang3.reflect.FieldUtils
 
@@ -242,7 +242,7 @@ class SFParser(source: Map[String, String]) {
     if (tl.typeRefs.nonEmpty) Some(tl) else None
   }
 
-  private def constructExtendsTypeRef(typeInfo: TypeInfo): Option[TypeRef] = {
+  private def constructExtendsTypeRef(typeInfo: TypeInfo): Option[UnresolvedTypeRef] = {
     toTypeRef(typeInfo.getCodeUnitDetails.getSuperTypeRef.toScala)
   }
 
@@ -415,8 +415,8 @@ class SFParser(source: Map[String, String]) {
     IdToken(name, toLoc(loc, loc.getLine, loc.getColumn + name.length - 1))
   }
 
-  private def toTypeRef(from: TypeInfo): com.financialforce.oparser.TypeRef = {
-    val tr = new oparser.TypeRef
+  private def toTypeRef(from: TypeInfo): com.financialforce.oparser.UnresolvedTypeRef = {
+    val tr = new UnresolvedTypeRef
     //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
     from.getApexName
       .replaceAll("<.*>", "")
@@ -431,10 +431,10 @@ class SFParser(source: Map[String, String]) {
 
   private def toTypeRef(
     from: Option[apex.jorje.data.ast.TypeRef]
-  ): Option[com.financialforce.oparser.TypeRef] = {
+  ): Option[com.financialforce.oparser.UnresolvedTypeRef] = {
     from match {
       case Some(typ) =>
-        val res = new oparser.TypeRef()
+        val res = new UnresolvedTypeRef()
         //Things to note here,
         // if its a return type that has '[]' then parser will resolve '[]' to a list
         // but if its a in a typeArgument then it will resolve as ArrayTypeRef
@@ -499,7 +499,7 @@ class SFParser(source: Map[String, String]) {
     tp
   }
 
-  private def toTypeList(typRefs: Iterable[TypeRef]) = {
+  private def toTypeList(typRefs: Iterable[UnresolvedTypeRef]) = {
     val tl = new TypeList
     typRefs.foreach(tl.add)
     tl
