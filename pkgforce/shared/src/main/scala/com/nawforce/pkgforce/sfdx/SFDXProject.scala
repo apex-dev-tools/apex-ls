@@ -20,6 +20,7 @@ import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.pkgforce.workspace.{ModuleLayer, NamespaceLayer}
 import ujson.Value
 
+import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
 
 class SFDXProjectError(val line: Int, val offset: Int, message: String) extends Throwable(message)
@@ -119,6 +120,40 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
           .getOrElse(Seq.empty)
     }
 
+  val additionalNamespaces: Set[Option[Name]] =
+    plugins.getOrElse("additionalNamespaces", ujson.Arr()) match {
+      case value: ujson.Arr =>
+        value.value.toSeq
+          .flatMap(value => {
+            value match {
+              case ujson.Str(value) => Some(value)
+              case _ =>
+                config
+                  .lineAndOffsetOf(value)
+                  .map(
+                    lineAndOffset =>
+                      throw SFDXProjectError(
+                        lineAndOffset,
+                        "'additionalNamespaces' entries should all be strings"
+                      )
+                  )
+                None
+            }
+          })
+          .map {
+            case "unmanaged" => None
+            case ns          => Some(Name(ns))
+          }
+          .toSet
+      case value =>
+        config
+          .lineAndOffsetOf(value)
+          .map(lineAndOffset => {
+            throw SFDXProjectError(lineAndOffset, "'additionalNamespaces' should be an array")
+          })
+          .getOrElse(Set.empty)
+    }
+
   val maxDependencyCount: Option[Int] = {
     plugins.get("maxDependencyCount") match {
       case None => None
@@ -149,6 +184,20 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   }
 
+  private val gulpPackages = additionalNamespaces.flatMap(ns => {
+    createGulpPath(ns) match {
+      case Left(err) =>
+        config
+          .lineAndOffsetOf(plugins.get("additionalNamespaces"))
+          .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, err))
+          .getOrElse(None)
+        None
+      case Right(path) if ns != namespace =>
+        Some(NamespaceLayer(ns, Seq(ModuleLayer(projectPath, path, Seq()))))
+      case Right(_) => None
+    }
+  })
+
   private val extendedPackageDirectories = packageDirectories ++ unpackagedMetadata
 
   def metadataGlobs: Seq[String] = {
@@ -175,15 +224,20 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
       return Seq.empty
     }
 
-    val localPackage = NamespaceLayer(
-      namespace,
-      extendedPackageDirectories
-        .foldLeft((Map[String, VersionedPackageLayer](), List[ModuleLayer]()))(
-          foldPackageDirectory(logger)
-        )
-        ._2
-        .reverse
-    )
+    val localModules = extendedPackageDirectories
+      .foldLeft((Map[String, VersionedPackageLayer](), List[ModuleLayer]()))(
+        foldPackageDirectory(logger)
+      )
+      ._2
+      .reverse
+
+    val gulpLocalModule =
+      if (additionalNamespaces.contains(namespace))
+        Seq(ModuleLayer(projectPath, gulpPath(namespace).mkString("/"), Seq()))
+      else
+        Seq()
+
+    val localPackage = NamespaceLayer(namespace, gulpLocalModule ++ localModules)
 
     if (!validatePackagePathsLocal(localPackage.layers, logger))
       return Seq.empty
@@ -191,7 +245,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     val externalPackages =
       dependencies.flatMap(dependent => packageDependentLayers(logger, dependent))
 
-    val layers = externalPackages :+ localPackage
+    val layers = externalPackages ++ gulpPackages :+ localPackage
 
     if (layers.map(_.namespace).toSet.size != layers.size) {
       logger.log(
@@ -200,7 +254,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
           Diagnostic(
             ERROR_CATEGORY,
             dependencies.head.location,
-            s"plugin dependencies must use unique namespaces"
+            s"plugin additionalNamespaces/dependencies must use unique namespaces"
           )
         )
       )
@@ -208,6 +262,30 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
 
     layers
+  }
+
+  private def gulpPath(namespace: Option[Name]): Seq[String] = {
+    Seq(".apexlink", "gulp", namespace.map(_.value).getOrElse("unmanaged"))
+  }
+
+  private def createGulpPath(namespace: Option[Name]): Either[String, String] = {
+    @tailrec
+    def createDirectoryPath(root: PathLike, parts: Seq[String]): Either[String, PathLike] = {
+      if (parts.isEmpty) return Right(root)
+
+      val next = root.join(parts.head)
+      if (next.isDirectory)
+        createDirectoryPath(next, parts.tail)
+      else
+        root.createDirectory(parts.head) match {
+          case Left(err)   => Left(err)
+          case Right(path) => createDirectoryPath(path, parts.tail)
+        }
+    }
+
+    val pathParts = gulpPath(namespace)
+    createDirectoryPath(projectPath, pathParts)
+    Right(pathParts.mkString("/"))
   }
 
   private def validatePackagePathsLocal(modules: Seq[ModuleLayer], logger: IssueLogger): Boolean = {
@@ -252,10 +330,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
         Seq(NamespaceLayer(dependent.namespace, Nil))
       case (true, true) =>
         Seq(
-          NamespaceLayer(
-            dependent.namespace,
-            Seq(ModuleLayer(dependent.path.get, dependent.path.get, Seq.empty))
-          )
+          NamespaceLayer(dependent.namespace, Seq(ModuleLayer(dependent.path.get, ".", Seq.empty)))
         )
       case (false, true) =>
         SFDXProject(dependent.path.get, logger)
@@ -277,7 +352,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     )
     val newLayer = VersionedPackageLayer(
       packageDirectory.version,
-      ModuleLayer(projectPath, packageDirectory.path, dependencies.map(_.packageLayer))
+      ModuleLayer(projectPath, packageDirectory.relativePath, dependencies.map(_.packageLayer))
     )
 
     // For 2GP, named packages need a version as well
