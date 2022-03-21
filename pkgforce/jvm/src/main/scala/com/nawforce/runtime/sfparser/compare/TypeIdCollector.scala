@@ -17,10 +17,7 @@ class TypeIdCollector(tds: List[TypeDeclaration]) extends TypeIdResolver {
   }
 
   private def appendToIds(td: TypeDeclaration, acc: ArrayBuffer[Id]): Unit = {
-    td.id match {
-      case Some(value) => acc.append(value)
-      case _           =>
-    }
+    acc.append(td.id)
     td match {
       case cls: ClassTypeDeclaration =>
         cls.innerTypes.foreach(appendToIds(_, acc))

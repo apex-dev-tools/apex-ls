@@ -140,14 +140,11 @@ object IPM extends TriHierarchy {
 
       decl match {
         case outer: ClassTypeDeclaration =>
-          outer.innerTypes.foreach(
-            inner =>
-              inner.id.foreach(id => {
-                val innerName = s"$name.$id"
-                lowerNames.add(name.toLowerCase)
-                types.put(Name(innerName), inner)
-              })
-          )
+          outer.innerTypes.foreach(inner => {
+            val innerName = s"$name.${inner.id}"
+            lowerNames.add(name.toLowerCase)
+            types.put(Name(innerName), inner)
+          })
         case _ => ()
       }
     }
@@ -258,7 +255,7 @@ object IPM extends TriHierarchy {
     }
 
     private def findTypesByPathPredicate(predicate: String => Boolean): Seq[TypeDeclaration] = {
-      var typesForPath = types.values.filter(t => predicate(t.path))
+      var typesForPath = types.values.filter(t => t.paths.exists(p => predicate(p)))
       if (typesForPath.nonEmpty) return typesForPath.toSeq
 
       typesForPath = baseModules.headOption

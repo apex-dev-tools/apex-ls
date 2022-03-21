@@ -26,8 +26,8 @@ object OutlineParserModifierOps {
 
   private def toModifiers(
     path: PathLike,
-    annotations: ArrayBuffer[OPAnnotation],
-    src: ArrayBuffer[OPModifier]
+    annotations: ArraySeq[OPAnnotation],
+    src: ArraySeq[OPModifier]
   ): ArraySeq[(Modifier, LogEntryContext, String)] = {
 
     val modifiers = {
@@ -66,8 +66,8 @@ object OutlineParserModifierOps {
   def fieldModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArrayBuffer[OPAnnotation],
-    src: ArrayBuffer[OPModifier],
+    annotations: ArraySeq[OPAnnotation],
+    src: ArraySeq[OPModifier],
     outer: Boolean
   ): ModifierResults = {
     val logger = new ModifierLogger()
@@ -78,8 +78,8 @@ object OutlineParserModifierOps {
   def classModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArrayBuffer[OPAnnotation],
-    src: ArrayBuffer[OPModifier],
+    annotations: ArraySeq[OPAnnotation],
+    src: ArraySeq[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
@@ -91,8 +91,8 @@ object OutlineParserModifierOps {
   def interfaceModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArrayBuffer[OPAnnotation],
-    src: ArrayBuffer[OPModifier],
+    annotations: ArraySeq[OPAnnotation],
+    src: ArraySeq[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
@@ -104,8 +104,8 @@ object OutlineParserModifierOps {
   def enumModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArrayBuffer[OPAnnotation],
-    src: ArrayBuffer[OPModifier],
+    annotations: ArraySeq[OPAnnotation],
+    src: ArraySeq[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
@@ -121,7 +121,11 @@ object OutlineParserModifierOps {
     src: ArrayBuffer[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, annotations, src)
+    val mods = toModifiers(
+      path,
+      ArraySeq.unsafeWrapArray(annotations.toArray),
+      ArraySeq.unsafeWrapArray(src.toArray)
+    )
     ApexModifiers.constructorModifiers(logger, mods, OPLogEntryContext(path, id.id.location))
   }
 
@@ -133,7 +137,11 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, annotations, src)
+    val mods = toModifiers(
+      path,
+      ArraySeq.unsafeWrapArray(annotations.toArray),
+      ArraySeq.unsafeWrapArray(src.toArray)
+    )
     ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, id.id.location))
   }
 
@@ -147,7 +155,11 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, annotations, src)
+    val mods = toModifiers(
+      path,
+      ArraySeq.unsafeWrapArray(annotations.toArray),
+      ArraySeq.unsafeWrapArray(src.toArray)
+    )
 
     MethodModifiers.classMethodModifiers(
       logger,
@@ -165,7 +177,11 @@ object OutlineParserModifierOps {
     src: ArrayBuffer[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, annotations, src)
+    val mods = toModifiers(
+      path,
+      ArraySeq.unsafeWrapArray(annotations.toArray),
+      ArraySeq.unsafeWrapArray(src.toArray)
+    )
     MethodModifiers.interfaceMethodModifiers(
       logger,
       mods,

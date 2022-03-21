@@ -19,36 +19,36 @@ object ModuleScoped {
   }
 }
 
-class ModuleClassTypeDeclaration(path: String, enclosing: Option[ClassTypeDeclaration])
+class ModuleClassTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
     extends ClassTypeDeclaration(path, enclosing)
     with ModuleScoped
 
-class ModuleInterfaceTypeDeclaration(path: String, enclosing: Option[ClassTypeDeclaration])
+class ModuleInterfaceTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
     extends InterfaceTypeDeclaration(path, enclosing)
     with ModuleScoped
 
-class ModuleEnumTypeDeclaration(path: String, enclosing: Option[ClassTypeDeclaration])
+class ModuleEnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
     extends EnumTypeDeclaration(path, enclosing)
     with ModuleScoped
 
 object ModuleClassFactory extends TypeDeclarationFactory {
   override def createClassTypeDeclaration(
     path: String,
-    enclosing: Option[ClassTypeDeclaration]
+    enclosing: ClassTypeDeclaration
   ): ClassTypeDeclaration = {
     new ModuleClassTypeDeclaration(path, enclosing)
   }
 
   override def createInterfaceTypeDeclaration(
     path: String,
-    enclosing: Option[ClassTypeDeclaration]
+    enclosing: ClassTypeDeclaration
   ): InterfaceTypeDeclaration = {
     new ModuleInterfaceTypeDeclaration(path, enclosing)
   }
 
   override def createEnumTypeDeclaration(
     path: String,
-    enclosing: Option[ClassTypeDeclaration]
+    enclosing: ClassTypeDeclaration
   ): EnumTypeDeclaration = {
     new ModuleEnumTypeDeclaration(path, enclosing)
   }

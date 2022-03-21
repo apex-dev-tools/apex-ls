@@ -32,8 +32,8 @@ public class ApexTypeAdapter implements ApexType {
     }
 
     private List<ApexType> getTypes(TypeDeclaration td) {
-        if (td.enclosing().nonEmpty())
-            return getTypes(td.enclosing().get());
+        if (td.enclosing() != null)
+            return getTypes(td.enclosing());
 
         ApexType[] types = new ApexType[1 + td.innerTypes().length()];
         types[0] = new ApexTypeAdapter(td);
@@ -44,9 +44,9 @@ public class ApexTypeAdapter implements ApexType {
 
     @Override
     public String getApexName() {
-        String name = td.id().get().toString();
-        if (td.enclosing().nonEmpty())
-            name = td.enclosing().get().id().get().toString() + "." + name;
+        String name = td.id().toString();
+        if (td.enclosing() != null)
+            name = td.enclosing().id().toString() + "." + name;
         String ns = getApexNamespace();
         if (ns.length() != 0)
             name = ns + "." + name;
@@ -60,10 +60,10 @@ public class ApexTypeAdapter implements ApexType {
 
     @Override
     public ApexType getEnclosingType() {
-        if (!module().isPresent() || td.enclosing().isEmpty())
+        if (!module().isPresent() || td.enclosing() == null)
             return null;
 
-        return new ApexTypeAdapter(td.enclosing().get());
+        return new ApexTypeAdapter(td.enclosing());
     }
 
     @Override
@@ -74,7 +74,7 @@ public class ApexTypeAdapter implements ApexType {
 
     @Override
     public ApexTypeId getParent() {
-        if (td.extendsTypeRef().isEmpty())
+        if (td.extendsTypeRef() == null)
             return null;
 
         // TODO: Namespace handling
@@ -83,10 +83,10 @@ public class ApexTypeAdapter implements ApexType {
 
     @Override
     public List<ApexTypeId> getInterfaces() {
-        if (td.implementsTypeList().isEmpty())
+        if (td.implementsTypeList() == null)
             return null;
 
-        ArrayBuffer<TypeRef> refs = td.implementsTypeList().get().typeRefs();
+        ArrayBuffer<TypeRef> refs = td.implementsTypeList().typeRefs();
         NameApexTypeId[] interfaces = new NameApexTypeId[refs.length()];
         int entry = 0;
         for (int i = 0; i < td.constructors().length(); i++)

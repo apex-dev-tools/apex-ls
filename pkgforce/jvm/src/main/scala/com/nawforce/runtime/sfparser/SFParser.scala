@@ -160,7 +160,7 @@ class SFParser(source: Map[String, String]) {
     path: String,
     typeInfo: TypeInfo
   ): EnumTypeDeclaration = {
-    val etd                     = new EnumTypeDeclaration(path, None)
+    val etd                     = new EnumTypeDeclaration(path, null)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
     val constants               = constructFieldDeclarations(typeInfo).map(_.id)
 
@@ -191,14 +191,14 @@ class SFParser(source: Map[String, String]) {
     path: String,
     typeInfo: TypeInfo
   ): InterfaceTypeDeclaration = {
-    val itd                     = new InterfaceTypeDeclaration(path, None)
+    val itd                     = new InterfaceTypeDeclaration(path, null)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
     itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     //We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
     modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).foreach(itd.add)
     modifiersAndAnnotations._2.foreach(itd.add)
-    itd.extendsTypeList = constructInterfaceTypeList(typeInfo)
+    itd._implementsTypeList = constructInterfaceTypeList(typeInfo).getOrElse(null)
     itd
   }
 
@@ -208,14 +208,14 @@ class SFParser(source: Map[String, String]) {
     members: UserClassMembers
   ) = {
     val ctd = getClassTypesDeclaration(path, typeInfo)
-    getInnerTypes(members).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd.innerTypes.append)
-    getInitBlocks(members).foreach(ctd.initializers.append)
+    getInnerTypes(members).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd._innerTypes.append)
+    getInitBlocks(members).foreach(ctd._initializers.append)
     constructMethodDeclarationForClass(members).foreach(ctd.add)
     ctd
   }
 
   private def getClassTypesDeclaration(path: String, typeInfo: TypeInfo): ClassTypeDeclaration = {
-    val ctd = new ClassTypeDeclaration(path, None)
+    val ctd = new ClassTypeDeclaration(path, null)
 
     val constructors            = constructConstructorDeclaration(typeInfo)
     val fields                  = constructFieldDeclarations(typeInfo)
@@ -223,13 +223,13 @@ class SFParser(source: Map[String, String]) {
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
     ctd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    constructors.foreach(ctd.constructors.append)
+    constructors.foreach(ctd._constructors.append)
     modifiersAndAnnotations._1.foreach(ctd.add)
     modifiersAndAnnotations._2.foreach(ctd.add)
-    properties.foreach(ctd.properties.append)
-    fields.foreach(ctd.fields.append)
-    ctd.extendsTypeRef = constructExtendsTypeRef(typeInfo)
-    ctd.implementsTypeList = constructInterfaceTypeList(typeInfo)
+    properties.foreach(ctd._properties.append)
+    fields.foreach(ctd._fields.append)
+    ctd._extendsTypeRef = constructExtendsTypeRef(typeInfo).getOrElse(null)
+    ctd._implementsTypeList = constructInterfaceTypeList(typeInfo).getOrElse(null)
     ctd
   }
 
