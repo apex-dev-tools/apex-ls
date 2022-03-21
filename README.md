@@ -23,7 +23,7 @@ The apex-link library is not yet making use of MDIndex but can use the Outline p
 
 The Jorje parser/compiler presents an AST which has a higher level of abstraction around types than our own apex-parser. To understand the differences better we are working on the ability to compare outputs so that we know the input of the indexing processes are comparable. Initially we are treating Jorje as a reference implementation for testing purposes but intend to swap over parsers once compatibility has been reached. 
 
-TODO: Provide links to implementation
+The main test client for this work is [OutputComparisonTest](https://github.com/financialforcedev/ff-apex-ls/blob/master/pkgforce/jvm/src/test/scala/com/nawforce/runtime/sfparser/OutputComparisonTest.scala) which utilises [SFParser](https://github.com/financialforcedev/ff-apex-ls/blob/master/pkgforce/jvm/src/main/scala/com/nawforce/runtime/sfparser/SFParser.scala) & [OutlineParser](https://github.com/financialforcedev/ff-apex-ls/blob/master/pkgforce/ff-apex-outline-parser/shared/src/main/scala/com/financialforce/oparser/OutlineParser.scala).
  
 ### Gulp CLI
 
