@@ -170,6 +170,8 @@ class UnresolvedTypeRef extends TypeNameAssignable with ArraySubscriptsAssignabl
   }
 
   override def equals(obj: Any): Boolean = {
+    if (!obj.isInstanceOf[UnresolvedTypeRef])
+      return false
     val other = obj.asInstanceOf[UnresolvedTypeRef]
     other.typeNames == typeNames && other.arraySubscripts == arraySubscripts
   }

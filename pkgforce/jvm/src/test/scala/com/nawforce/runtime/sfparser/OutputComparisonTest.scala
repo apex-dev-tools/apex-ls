@@ -5,7 +5,10 @@
 package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
+import com.nawforce.runtime.workspace.IPM
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
@@ -38,19 +41,23 @@ object OutputComparisonTest {
       })
       .toMap
     val sfParserOutput = SFParser(sources).parse
-    val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
     if (sfParserOutput._2.nonEmpty) {
       parseFailure = sfParserOutput._2.size
       System.err.println(
         s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
       )
     }
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      files
+        .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
+        .foreach(f => {
+          val sf = findSfParserOutput(f.toAbsolutePath, sfParserOutput)
+          val op = index.rootModule.get.findExactTypeId(sf.get.getFullName)
+          compareResolved(op, sf)
+        })
 
-    files
-      .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
-      .foreach(f => {
-        compareOutputs(f, sfParserOutput, sfTypeResolver)
-      })
+    }
 
     def toPercentage(result: Int) = {
       (result / files.size.toFloat) * 100
@@ -77,6 +84,18 @@ object OutputComparisonTest {
     output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
   ) = {
     output._1.find(_.path == path.toString)
+  }
+
+  private def compareResolved(
+    fromIndex: Option[TypeDeclaration],
+    fromSf: Option[TypeDeclaration]
+  ): Unit = {
+    val comparator = SubsetComparator(
+      fromIndex.get,
+      new TypeIdCollector(List.empty),
+      new TypeIdCollector(List.empty)
+    )
+    comparator.subsetOf(fromSf.get)
   }
 
   private def compareOutputs(
