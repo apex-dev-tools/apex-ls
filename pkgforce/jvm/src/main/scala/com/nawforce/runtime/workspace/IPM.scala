@@ -161,7 +161,7 @@ object IPM extends TriHierarchy {
       }
 
       decl.extendsTypeRef = decl.extendsTypeRef match {
-        case Some(etr) => findType(etr, decl)
+        case Some(etr) => findType(etr, decl).orElse(decl.extendsTypeRef)
         case None      => None
       }
       decl.implementsTypeList.foreach(tl => {

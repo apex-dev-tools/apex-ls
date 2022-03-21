@@ -165,7 +165,7 @@ class UnresolvedTypeRef extends TypeNameAssignable with ArraySubscriptsAssignabl
 
   override def add(as: ArraySubscripts): Unit = arraySubscripts.append(as)
 
-  override def getFullName:String = {
+  override def getFullName: String = {
     toString
   }
 
