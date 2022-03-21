@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="Maven 1" modules="apexlink,pkgforce_2.13">
+      <option name="deprecationWarnings" value="true" />
+      <parameters>
+        <parameter value="-opt:l:inline" />
+        <parameter value="-opt-inline-from:com.nawforce.**" />
+      </parameters>
+    </profile>
+  </component>
+</project>
