@@ -8,7 +8,7 @@ import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
 import apex.jorje.semantic.compiler
 import apex.jorje.semantic.compiler._
 import apex.jorje.semantic.compiler.parser.ParserEngine
-import apex.jorje.semantic.compiler.sfdc.NoopCompilerProgressCallback
+import apex.jorje.semantic.compiler.sfdc.{NoopCompilerProgressCallback, SymbolProvider}
 
 import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.javaapi.CollectionConverters
@@ -16,11 +16,12 @@ import scala.jdk.javaapi.CollectionConverters
 object CompilerService {
   var suppressErrors = true
 
-  def visitAstFromString(
+  def compile(
     sourceFiles: List[SourceFile],
-    parserEngineType: ParserEngine.Type
+    parserEngineType: ParserEngine.Type,
+    symbolProvider: SymbolProvider = EmptySymbolProvider()
   ): (ApexCompiler, List[CodeUnit]) = {
-    val compilationUnit = createCompilationInput(sourceFiles)
+    val compilationUnit = createCompilationInput(sourceFiles, symbolProvider)
     compile(compilationUnit, parserEngineType)
   }
 
@@ -30,10 +31,13 @@ object CompilerService {
     * NoopAccessEvaluator, doesn't provide any validation.
     * NoopQueryValidators, no validation of queries.
     */
-  private def createCompilationInput(sourceFiles: List[SourceFile]): CompilationInput = {
+  private def createCompilationInput(
+    sourceFiles: List[SourceFile],
+    symbolProvider: SymbolProvider
+  ): CompilationInput = {
     new CompilationInput(
       CollectionConverters.asJava(sourceFiles),
-      EmptySymbolProvider(),
+      symbolProvider,
       NoopAccessEvaluator(),
       NoopQueryValidator(),
       new AstVisitor[AdditionalPassScope](),

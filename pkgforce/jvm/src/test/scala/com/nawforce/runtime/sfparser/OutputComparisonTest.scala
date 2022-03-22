@@ -4,6 +4,7 @@
 
 package com.nawforce.runtime.sfparser
 
+import apex.jorje.lsp.impl.symbols.ApexSymbolProvider
 import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
 import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
 
@@ -23,48 +24,53 @@ object OutputComparisonTest {
       System.err.println(s"No workspace directory argument provided.")
       return
     }
-    if (args.length > 1) {
+    if (args.length < 2) {
       System.err.println(
-        s"Multiple arguments provided, expected workspace directory, '${args.mkString(", ")}'}"
+        s"Not enough arguments provided, expected workspace directory and apex db path, '${args.mkString(", ")}'}"
       )
       return
     }
     val absolutePath = Paths.get(Option(args.head).getOrElse("")).toAbsolutePath.normalize()
+    val dbpath       = Paths.get(args.tail.headOption.getOrElse("")).toAbsolutePath.normalize()
 
-    val files: Seq[Path] = getFilesFromPath(absolutePath)
-    val sources: Map[String, String] = files
-      .map(path => {
-        path.toString -> getUTF8ContentsFromPath(path)
-      })
-      .toMap
-    val sfParserOutput = SFParser(sources).parse
-    val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
-    if (sfParserOutput._2.nonEmpty) {
-      parseFailure = sfParserOutput._2.size
-      System.err.println(
-        s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
-      )
+    SFLanguageServer.runAndExit(dbpath) { symbolProvider: ApexSymbolProvider =>
+      val files: Seq[Path] = getFilesFromPath(absolutePath)
+      val sources: Map[String, String] = files
+        .map(path => {
+          path.toString -> getUTF8ContentsFromPath(path)
+        })
+        .toMap
+
+      val sfParserOutput =
+        SFParser(sources).parseClassWithSymbolProvider(symbolProvider)
+      val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
+      if (sfParserOutput._2.nonEmpty) {
+        parseFailure = sfParserOutput._2.size
+        System.err.println(
+          s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
+        )
+      }
+
+      files
+        .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
+        .foreach(f => {
+          compareOutputs(f, sfParserOutput, sfTypeResolver)
+        })
+
+      def toPercentage(result: Int) = {
+        (result / files.size.toFloat) * 100
+      }
+
+      println(f"""
+             |Output Comparison Summary
+             |Total cls files processed: ${files.size}
+             |Total comparisons: $total
+             |Parse Failures: $parseFailure (${toPercentage(parseFailure)}%.0f%%)
+             |Exactly Equal: $exactlyEqual (${toPercentage(exactlyEqual)}%.0f%%)
+             |Files with comparison warnings: $withWarnings (${toPercentage(withWarnings)}%.0f%%)
+             |Files with comparison errors: $errors (${toPercentage(errors)}%.0f%%)
+             |""".stripMargin)
     }
-
-    files
-      .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
-      .foreach(f => {
-        compareOutputs(f, sfParserOutput, sfTypeResolver)
-      })
-
-    def toPercentage(result: Int) = {
-      (result / files.size.toFloat) * 100
-    }
-
-    println(f"""
-         |Output Comparison Summary
-         |Total cls files processed: ${files.size}
-         |Total comparisons: $total
-         |Parse Failures: $parseFailure (${toPercentage(parseFailure)}%.0f%%)
-         |Exactly Equal: $exactlyEqual (${toPercentage(exactlyEqual)}%.0f%%)
-         |Files with comparison warnings: $withWarnings (${toPercentage(withWarnings)}%.0f%%)
-         |Files with comparison errors: $errors (${toPercentage(errors)}%.0f%%)
-         |""".stripMargin)
   }
 
   private def getOutLineParserOutput(path: Path) = {

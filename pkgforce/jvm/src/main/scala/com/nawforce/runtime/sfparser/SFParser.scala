@@ -14,6 +14,7 @@ import apex.jorje.semantic.ast.statement.BlockStatement
 import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor, Scope}
 import apex.jorje.semantic.compiler.{ApexCompiler, CodeUnit, SourceFile}
 import apex.jorje.semantic.compiler.parser.ParserEngine
+import apex.jorje.semantic.compiler.sfdc.SymbolProvider
 import apex.jorje.semantic.exception.Errors
 import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.member.Member
@@ -51,7 +52,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
 import scala.language.postfixOps
-import scala.util.Try
 
 class SFParser(source: Map[String, String]) {
   private val typeDeclarations: ArrayBuffer[TypeDeclaration] = ArrayBuffer()
@@ -65,11 +65,18 @@ class SFParser(source: Map[String, String]) {
     parse(ParserEngine.Type.ANONYMOUS)
   }
 
+  def parseClassWithSymbolProvider(
+    symbolProvider: SymbolProvider
+  ): (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]) = {
+    parse(ParserEngine.Type.NAMED, symbolProvider)
+  }
+
   private def parse(
-    parserEngineType: ParserEngine.Type = ParserEngine.Type.NAMED
+    parserEngineType: ParserEngine.Type = ParserEngine.Type.NAMED,
+    symbolProvider: SymbolProvider = EmptySymbolProvider()
   ): (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]) = {
     val (_, cu) =
-      CompilerService.visitAstFromString(toSourceFiles, parserEngineType)
+      CompilerService.compile(toSourceFiles, parserEngineType, symbolProvider)
     source.keys.foreach(path => {
       getTypeDeclaration(path, cu) match {
         case Some(value) => typeDeclarations.append(value)
@@ -530,6 +537,7 @@ class SFParser(source: Map[String, String]) {
 }
 
 object SFParser {
+
   import java.util.logging.LogManager
 
   // Stop Jorje logging a startup message
