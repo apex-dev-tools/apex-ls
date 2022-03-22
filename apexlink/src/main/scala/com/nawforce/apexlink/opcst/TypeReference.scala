@@ -1,6 +1,7 @@
 package com.nawforce.apexlink.opcst
 
 import com.financialforce.oparser.{
+  UnresolvedTypeRef,
   TypeArguments => OPTypeArguments,
   TypeList => OPTypeList,
   TypeName => OPTypeName,
@@ -33,9 +34,22 @@ private[opcst] object TypeReference {
 
   private class OutlineParserTypeReference(typeReference: OPTypeReference)
       extends CSTTypeReference {
-    override def arraySubscriptsCount(): Int = typeReference.arraySubscripts.length
-    override def typeNames(): ArraySeq[CSTTypeName] =
-      ArraySeq.from(typeReference.typeNames.map(new OutlineParserTypeName(_)))
+    override def arraySubscriptsCount(): Int = {
+      //TODO: is this actually right behaviour?
+      typeReference match {
+        case utr: UnresolvedTypeRef => utr.arraySubscripts.length
+        case _                      => 0
+      }
+    }
+
+    override def typeNames(): ArraySeq[CSTTypeName] = {
+      //TODO: is this actually right behaviour?
+      typeReference match {
+        case utr: UnresolvedTypeRef =>
+          ArraySeq.from(utr.typeNames.map(new OutlineParserTypeName(_)))
+        case _ => ArraySeq.empty
+      }
+    }
   }
 
   private class OutlineParserTypeArgument(typeArguments: OPTypeArguments) extends CSTTypeArguments {

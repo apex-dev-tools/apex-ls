@@ -20,7 +20,7 @@ object Antlr {
     tokenStream.fill()
 
     val parser = new ApexParser(tokenStream)
-    val tree = parser.compilationUnit()
+    val tree   = parser.compilationUnit()
 
     if (Option(tree.typeDeclaration().classDeclaration()).isDefined) {
       val ctd = new ClassTypeDeclaration("", null)
@@ -148,7 +148,7 @@ object Antlr {
 
   def antlrTypeRef(res: TypeRefAssignable, ctx: ApexParser.TypeRefContext): Unit = {
 
-    val typeRef = new TypeRef
+    val typeRef = new UnresolvedTypeRef
     res.add(typeRef)
 
     ctx
@@ -307,7 +307,7 @@ object Antlr {
     if (Option(ctx.typeRef()).isDefined) {
       antlrTypeRef(md, ctx.typeRef())
     } else {
-      md.typeRef = Some(new TypeRef)
+      md.typeRef = Some(new UnresolvedTypeRef)
       md.typeRef.get.add(new TypeName(toId("void")))
     }
 
@@ -337,7 +337,7 @@ object Antlr {
     if (Option(ctx.typeRef()).isDefined) {
       antlrTypeRef(md, ctx.typeRef())
     } else {
-      md.typeRef = Some(new TypeRef)
+      md.typeRef = Some(new UnresolvedTypeRef)
       md.typeRef.get.add(new TypeName(toId("void")))
     }
 

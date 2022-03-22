@@ -1,21 +1,40 @@
 package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{Annotation, ArraySubscripts, ConstructorDeclaration, FieldDeclaration, FormalParameter, FormalParameterList, Id, IdToken, Location, MethodDeclaration, Modifier, PropertyDeclaration, QualifiedName, TypeArguments, TypeList, TypeName, TypeRef}
+import com.financialforce.oparser.{
+  Annotation,
+  ArraySubscripts,
+  ConstructorDeclaration,
+  FieldDeclaration,
+  FormalParameter,
+  FormalParameterList,
+  Id,
+  IdToken,
+  Location,
+  MethodDeclaration,
+  Modifier,
+  PropertyDeclaration,
+  QualifiedName,
+  TypeArguments,
+  TypeList,
+  TypeName,
+  TypeRef,
+  UnresolvedTypeRef
+}
 
 import scala.collection.immutable.ArraySeq
 
 trait DeclarationGeneratorHelper {
   def toTypeRef(
-    typeNameWithArguments: Map[String, Option[Array[TypeRef]]],
+    typeNameWithArguments: Map[String, Option[Array[UnresolvedTypeRef]]],
     totalSubscripts: Int = 0
-  ): TypeRef = {
+  ): UnresolvedTypeRef = {
     val typNames: Array[TypeName] = typeNameWithArguments map {
       case (name, args) => toTypeNames(name, args)
     } to Array
     toTypeRef(typNames, totalSubscripts)
   }
 
-  def toTypeNames(typeName: String, maybeArguments: Option[Array[TypeRef]]): TypeName = {
+  def toTypeNames(typeName: String, maybeArguments: Option[Array[UnresolvedTypeRef]]): TypeName = {
     val tp = new TypeName(toId(typeName))
     maybeArguments match {
       case Some(arguments) => tp.add(toTypeArguments(Some(arguments)))
@@ -24,7 +43,7 @@ trait DeclarationGeneratorHelper {
     tp
   }
 
-  def toTypeArguments(maybeTypes: Option[Array[TypeRef]]): TypeArguments = {
+  def toTypeArguments(maybeTypes: Option[Array[UnresolvedTypeRef]]): TypeArguments = {
     val ta = new TypeArguments()
     maybeTypes match {
       case Some(types) => ta.typeList = Some(toTypeList(types))
@@ -33,14 +52,14 @@ trait DeclarationGeneratorHelper {
     ta
   }
 
-  def toTypeList(types: Array[TypeRef]): TypeList = {
+  def toTypeList(types: Array[UnresolvedTypeRef]): TypeList = {
     val tl = new TypeList()
     types.foreach(tl.add)
     tl
   }
 
-  def toTypeRef(typeNames: Array[TypeName], totalSubscripts: Int): TypeRef = {
-    val tr = new TypeRef()
+  def toTypeRef(typeNames: Array[TypeName], totalSubscripts: Int): UnresolvedTypeRef = {
+    val tr = new UnresolvedTypeRef()
     typeNames.foreach(tr.add)
     Array.fill(totalSubscripts)(new ArraySubscripts).foreach(tr.add)
     tr
@@ -121,7 +140,7 @@ trait DeclarationGeneratorHelper {
   def toPropertyDeclaration(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
-    typeRef: TypeRef,
+    typeRef: UnresolvedTypeRef,
     id: Id
   ): PropertyDeclaration = {
     new PropertyDeclaration(ArraySeq.unsafeWrapArray(annotation), ArraySeq.unsafeWrapArray(modifiers), typeRef, id)
@@ -130,7 +149,7 @@ trait DeclarationGeneratorHelper {
   def toFieldDeclaration(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
-    typeRef: TypeRef,
+    typeRef: UnresolvedTypeRef,
     id: Id
   ): FieldDeclaration = {
     FieldDeclaration(ArraySeq.unsafeWrapArray(annotation), ArraySeq.unsafeWrapArray(modifiers), typeRef, id)

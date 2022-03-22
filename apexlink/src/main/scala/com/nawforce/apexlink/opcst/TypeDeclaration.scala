@@ -1,6 +1,7 @@
 package com.nawforce.apexlink.opcst
 
 import com.financialforce.oparser.{
+  UnresolvedTypeRef,
   ClassTypeDeclaration => OPClassTypeDeclaration,
   ConstructorDeclaration => OPConstructorDeclaration,
   EnumTypeDeclaration => OPEnumTypeDeclaration,
@@ -429,15 +430,18 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     val declaration = new ApexMethodDeclaration(
       thisType,
       modifierResults,
-      RelativeTypeName(typeContext, TypeReference.construct(md.typeRef)),
+      RelativeTypeName(
+        typeContext,
+        TypeReference.construct(md.typeRef.asInstanceOf[UnresolvedTypeRef])
+      ),
       OutlineParserId.construct(md.id, source.path),
       parameters,
       block
     )
 
     val location = OPLocation(
-      md.typeRef.typeNames(0).id.id.location.startLine,
-      md.typeRef.typeNames(0).id.id.location.startLineOffset - 1,
+      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLine,
+      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLineOffset - 1,
       0,
       md.location.get.endLine,
       md.location.get.endLineOffset - 1,
@@ -466,15 +470,18 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     val declaration = new ApexMethodDeclaration(
       thisType,
       modifierResults,
-      RelativeTypeName(typeContext, TypeReference.construct(md.typeRef)),
+      RelativeTypeName(
+        typeContext,
+        TypeReference.construct(md.typeRef.asInstanceOf[UnresolvedTypeRef])
+      ),
       OutlineParserId.construct(md.id, source.path),
       parameters,
       None
     )
 
     val location = OPLocation(
-      md.typeRef.typeNames(0).id.id.location.startLine,
-      md.typeRef.typeNames(0).id.id.location.startLineOffset - 1,
+      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLine,
+      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLineOffset - 1,
       0,
       md.location.get.endLine,
       md.location.get.endLineOffset - 1,
@@ -501,13 +508,13 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       ArraySeq.unsafeWrapArray(fd.modifiers.toArray),
       isOuter
     )
-    val fieldTypeName = TypeReference.construct(fd.typeRef)
+    val fieldTypeName = TypeReference.construct(fd.typeRef.asInstanceOf[UnresolvedTypeRef])
     val vd            = constructVariableDeclarator(fd, source, fieldTypeName, isOuter)
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, fieldTypeName, vd)
     val location = OPLocation(
-      fd.typeRef.typeNames(0).id.id.location.startLine,
-      fd.typeRef.typeNames(0).id.id.location.startLineOffset - 1,
+      fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLine,
+      fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLineOffset - 1,
       0,
       if (fd.blockLocation.isDefined) fd.blockLocation.get.endLine else fd.id.id.location.endLine,
       if (fd.blockLocation.isDefined) fd.blockLocation.get.endLineOffset
@@ -606,7 +613,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val propertyTypeName = TypeReference.construct(pd.typeRef)
+    val propertyTypeName = TypeReference.construct(pd.typeRef.asInstanceOf[UnresolvedTypeRef])
 
     def parsePropertyBlock(pb: OPPropertyBlock): Option[PropertyBlock] = {
 
@@ -644,8 +651,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       )
 
     val location = OPLocation(
-      pd.typeRef.typeNames(0).id.id.location.startLine,
-      pd.typeRef.typeNames(0).id.id.location.startLineOffset - 1,
+      pd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLine,
+      pd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLineOffset - 1,
       0,
       pd.location.get.endLine,
       pd.location.get.endLineOffset - 1,

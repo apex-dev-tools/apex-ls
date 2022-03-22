@@ -3,6 +3,8 @@
  */
 package com.financialforce.oparser
 
+import com.nawforce.runtime.workspace.ModuleClassFactory
+
 import scala.annotation.tailrec
 
 class OutlineParser(path: String, contents: String, factory: TypeDeclarationFactory) {
@@ -742,7 +744,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
 }
 
 object OutlineParser {
-  def parse(path: String, contents: String, factory: TypeDeclarationFactory = new TypeDeclarationFactory())
+  def parse(path: String, contents: String, factory: TypeDeclarationFactory = ModuleClassFactory)
   : (Boolean, Option[String], Option[TypeDeclaration]) = {
     new OutlineParser(path, contents, factory).parse()
   }
