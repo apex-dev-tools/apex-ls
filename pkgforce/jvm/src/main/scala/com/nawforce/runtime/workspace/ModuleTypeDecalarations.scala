@@ -6,8 +6,18 @@ package com.nawforce.runtime.workspace
 import com.financialforce.oparser._
 import com.nawforce.runtime.workspace.IPM.Module
 
+import scala.collection.immutable.ArraySeq
+
 trait ModuleScoped {
   var module: Option[IPM.Module] = None
+}
+
+trait IModuleTypeDeclaration extends ITypeDeclaration with ModuleScoped {
+  /* TODO: Remove these hacks, think we need generics in Outline parser */
+  def enclosingModule: Option[IModuleTypeDeclaration] =
+    enclosing.map(td => td.asInstanceOf[IModuleTypeDeclaration])
+  def innerTypesModule: ArraySeq[IModuleTypeDeclaration] =
+    innerTypes.map(td => td.asInstanceOf[IModuleTypeDeclaration])
 }
 
 object ModuleScoped {
@@ -21,15 +31,15 @@ object ModuleScoped {
 
 class ModuleClassTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
     extends ClassTypeDeclaration(path, enclosing)
-    with ModuleScoped
+    with IModuleTypeDeclaration
 
 class ModuleInterfaceTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
     extends InterfaceTypeDeclaration(path, enclosing)
-    with ModuleScoped
+    with IModuleTypeDeclaration
 
 class ModuleEnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
     extends EnumTypeDeclaration(path, enclosing)
-    with ModuleScoped
+    with IModuleTypeDeclaration
 
 object ModuleClassFactory extends TypeDeclarationFactory {
   override def createClassTypeDeclaration(

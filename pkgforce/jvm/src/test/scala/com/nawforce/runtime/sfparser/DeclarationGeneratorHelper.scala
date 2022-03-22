@@ -1,26 +1,8 @@
 package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{
-  Annotation,
-  ArraySubscripts,
-  ConstructorDeclaration,
-  FieldDeclaration,
-  FormalParameter,
-  FormalParameterList,
-  Id,
-  IdToken,
-  Location,
-  MethodDeclaration,
-  Modifier,
-  PropertyDeclaration,
-  QualifiedName,
-  TypeArguments,
-  TypeList,
-  TypeName,
-  TypeRef
-}
+import com.financialforce.oparser.{Annotation, ArraySubscripts, ConstructorDeclaration, FieldDeclaration, FormalParameter, FormalParameterList, Id, IdToken, Location, MethodDeclaration, Modifier, PropertyDeclaration, QualifiedName, TypeArguments, TypeList, TypeName, TypeRef}
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.immutable.ArraySeq
 
 trait DeclarationGeneratorHelper {
   def toTypeRef(
@@ -113,8 +95,8 @@ trait DeclarationGeneratorHelper {
     parameters: FormalParameterList
   ): ConstructorDeclaration = {
     ConstructorDeclaration(
-      annotation.to(ArrayBuffer),
-      modifiers.to(ArrayBuffer),
+      ArraySeq.unsafeWrapArray(annotation),
+      ArraySeq.unsafeWrapArray(modifiers),
       toQName(names),
       parameters
     )
@@ -128,8 +110,8 @@ trait DeclarationGeneratorHelper {
     parameters: FormalParameterList
   ): MethodDeclaration = {
     MethodDeclaration(
-      annotation.to(ArrayBuffer),
-      modifiers.to(ArrayBuffer),
+      ArraySeq.unsafeWrapArray(annotation),
+      ArraySeq.unsafeWrapArray(modifiers),
       typeRef,
       id,
       parameters
@@ -142,7 +124,7 @@ trait DeclarationGeneratorHelper {
     typeRef: TypeRef,
     id: Id
   ): PropertyDeclaration = {
-    new PropertyDeclaration(annotation.to(ArrayBuffer), modifiers.to(ArrayBuffer), typeRef, id)
+    new PropertyDeclaration(ArraySeq.unsafeWrapArray(annotation), ArraySeq.unsafeWrapArray(modifiers), typeRef, id)
   }
 
   def toFieldDeclaration(
@@ -151,6 +133,6 @@ trait DeclarationGeneratorHelper {
     typeRef: TypeRef,
     id: Id
   ): FieldDeclaration = {
-    FieldDeclaration(annotation.to(ArrayBuffer), modifiers.to(ArrayBuffer), typeRef, id)
+    FieldDeclaration(ArraySeq.unsafeWrapArray(annotation), ArraySeq.unsafeWrapArray(modifiers), typeRef, id)
   }
 }

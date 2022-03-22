@@ -22,6 +22,15 @@ object StringUtils {
   def asString[T](a: mutable.ArrayBuffer[T], separator: String): String = {
     a.map(_.toString).mkString(separator)
   }
+
+  def asString[T](a: ArraySeq[T]): String = {
+    asString(a, " ")
+  }
+
+  def asString[T](a: ArraySeq[T], separator: String): String = {
+    a.map(_.toString).mkString(separator)
+  }
+
 }
 
 trait IdAssignable {
@@ -75,8 +84,8 @@ trait PropertyBlockAssignable {
 trait Signature {
   val typeRef: TypeRef
   val id: Id
-  val annotations: mutable.ArrayBuffer[Annotation]
-  val modifiers: mutable.ArrayBuffer[Modifier]
+  val annotations: ArraySeq[Annotation]
+  val modifiers: ArraySeq[Modifier]
 }
 
 trait SignatureWithParameterList extends Signature {
@@ -247,8 +256,8 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[FormalParameter]
 
-    other.annotations.sameElements(annotations) &&
-    other.modifiers.sameElements(modifiers) &&
+    other.annotations == annotations &&
+    other.modifiers == modifiers &&
     other.typeRef == typeRef &&
     other.id == id
   }
@@ -282,8 +291,8 @@ sealed trait BodyDeclaration {
 }
 
 case class ConstructorDeclaration(
-  annotations: mutable.ArrayBuffer[Annotation],
-  modifiers: mutable.ArrayBuffer[Modifier],
+  annotations: ArraySeq[Annotation],
+  modifiers: ArraySeq[Modifier],
   qName: QualifiedName,
   formalParameterList: FormalParameterList
 ) extends BodyDeclaration {
@@ -294,8 +303,8 @@ case class ConstructorDeclaration(
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[ConstructorDeclaration]
-    other.annotations.sameElements(annotations) &&
-    other.modifiers.sameElements(modifiers) &&
+    other.annotations == annotations &&
+    other.modifiers == modifiers &&
       other.qName == qName &&
       other.formalParameterList == formalParameterList
   }
@@ -311,8 +320,8 @@ object ConstructorDeclaration {
 }
 
 case class MethodDeclaration(
-                              annotations: mutable.ArrayBuffer[Annotation],
-                              modifiers: mutable.ArrayBuffer[Modifier],
+                              annotations: ArraySeq[Annotation],
+                              modifiers: ArraySeq[Modifier],
                               typeRef: TypeRef,
                               id: Id,
                               formalParameterList: FormalParameterList
@@ -324,8 +333,8 @@ case class MethodDeclaration(
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[MethodDeclaration]
-    other.annotations.sameElements(annotations) &&
-    other.modifiers.sameElements(modifiers) &&
+    other.annotations == annotations &&
+    other.modifiers == modifiers &&
     other.typeRef == typeRef &&
       other.id == id &&
       other.formalParameterList == formalParameterList
@@ -342,8 +351,8 @@ object MethodDeclaration {
 }
 
 class PropertyDeclaration(
-                           val annotations: mutable.ArrayBuffer[Annotation],
-                           val modifiers: mutable.ArrayBuffer[Modifier],
+                           val annotations: ArraySeq[Annotation],
+                           val modifiers: ArraySeq[Modifier],
                            val typeRef: TypeRef,
                            val id: Id
                          ) extends BodyDeclaration
@@ -357,8 +366,8 @@ class PropertyDeclaration(
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[PropertyDeclaration]
-    other.annotations.sameElements(annotations) &&
-    other.modifiers.sameElements(modifiers) &&
+    other.annotations == annotations &&
+    other.modifiers == modifiers &&
     other.typeRef == typeRef &&
     other.id == id
   }
@@ -376,8 +385,8 @@ object PropertyDeclaration {
 }
 
 case class FieldDeclaration(
-  annotations: mutable.ArrayBuffer[Annotation],
-  modifiers: mutable.ArrayBuffer[Modifier],
+  annotations: ArraySeq[Annotation],
+  modifiers: ArraySeq[Modifier],
   typeRef: TypeRef,
   id: Id
 ) extends BodyDeclaration
@@ -388,15 +397,15 @@ case class FieldDeclaration(
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[FieldDeclaration]
-    other.annotations.sameElements(annotations) &&
-    other.modifiers.sameElements(modifiers) &&
+    other.annotations == annotations &&
+    other.modifiers == modifiers &&
     other.typeRef == typeRef &&
     other.id == id
   }
 
   override def toString: String = {
     import StringUtils._
-    s"${id.id.location} ${asString(annotations)} ${asString(modifiers)} ${typeRef} ${id}"
+    s"${id.id.location} ${asString(annotations)} ${asString(modifiers)} $typeRef $id"
   }
 }
 
@@ -405,7 +414,7 @@ object FieldDeclaration {
 }
 
 object Initializer {
-  val id = Id(IdToken("initializer", Location.default))
+  val id: Id = Id(IdToken("initializer", Location.default))
 }
 
 case class Initializer(isStatic: Boolean) extends BodyDeclaration {
@@ -415,11 +424,11 @@ case class Initializer(isStatic: Boolean) extends BodyDeclaration {
 }
 
 trait ITypeDeclaration {
-  def paths: ArraySeq[String]
+  def paths: Array[String]
   def location: Location
 
   def id: Id
-  def enclosing: ClassTypeDeclaration
+  def enclosing: Option[ITypeDeclaration]
   def extendsTypeRef: TypeRef
   def implementsTypeList: TypeList
 
@@ -427,14 +436,14 @@ trait ITypeDeclaration {
   def annotations: ArraySeq[Annotation]
   def initializers: ArraySeq[Initializer]
 
-  def innerTypes: ArraySeq[TypeDeclaration]
+  def innerTypes: ArraySeq[ITypeDeclaration]
   def constructors: ArraySeq[ConstructorDeclaration]
   def methods: ArraySeq[MethodDeclaration]
   def properties: ArraySeq[PropertyDeclaration]
   def fields: ArraySeq[FieldDeclaration]
 }
 
-sealed class TypeDeclaration(val path: String, val enclosing: ClassTypeDeclaration) extends ITypeDeclaration {
+sealed class TypeDeclaration(val path: String, _enclosing: ClassTypeDeclaration) extends ITypeDeclaration {
   var _location: Location = null
 
   var _id: Id = null
@@ -451,10 +460,11 @@ sealed class TypeDeclaration(val path: String, val enclosing: ClassTypeDeclarati
   var _properties: mutable.ArrayBuffer[PropertyDeclaration]= mutable.ArrayBuffer()
   var _fields: mutable.ArrayBuffer[FieldDeclaration]= mutable.ArrayBuffer()
 
-  override def paths: ArraySeq[String] = ArraySeq(path)
+  override def paths: Array[String] = Array(path)
   override def location: Location = _location
 
   override def id: Id = _id
+  override def enclosing: Option[ClassTypeDeclaration] = Option(_enclosing)
   override def extendsTypeRef: TypeRef = _extendsTypeRef
   override def implementsTypeList: TypeList = _implementsTypeList
 
@@ -588,8 +598,8 @@ class InterfaceTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
 
   override def toString: String = {
     import StringUtils._
-    s"""Interface:  ${id}
-       |Path:       ${path}
+    s"""Interface:  $id
+       |Path:       $path
        |Location:   ${id.id.location}
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
@@ -616,8 +626,8 @@ class EnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
 
   override def toString: String = {
     import StringUtils._
-    s"""Enum:        ${id}
-       |Path:       ${path}
+    s"""Enum:       $id
+       |Path:       $path
        |Location:   ${id.id.location}
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
@@ -630,7 +640,7 @@ class EnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
 
 object Parse {
 
-  def parseClassType(ctd: ClassTypeDeclaration, tokens: Tokens, path: String): ClassTypeDeclaration = {
+  def parseClassType(ctd: ClassTypeDeclaration, tokens: Tokens): ClassTypeDeclaration = {
     var index = parseModifiers(0, tokens, ctd)
 
     if (!tokens(index).exists(_.matches(Tokens.ClassStr)))
@@ -650,7 +660,7 @@ object Parse {
     ctd
   }
 
-  def parseInterfaceType(itd: InterfaceTypeDeclaration, tokens: Tokens, path: String): InterfaceTypeDeclaration = {
+  def parseInterfaceType(itd: InterfaceTypeDeclaration, tokens: Tokens): InterfaceTypeDeclaration = {
     var index = parseModifiers(0, tokens, itd)
 
     if (!tokens(index).exists(_.matches(Tokens.InterfaceStr)))
@@ -666,7 +676,7 @@ object Parse {
     itd
   }
 
-  def parseEnumType(etd: EnumTypeDeclaration, tokens: Tokens, path: String): EnumTypeDeclaration = {
+  def parseEnumType(etd: EnumTypeDeclaration, tokens: Tokens): EnumTypeDeclaration = {
     var index = parseModifiers(0, tokens, etd)
 
     if (!tokens(index).exists(_.matches(Tokens.EnumStr)))
@@ -690,7 +700,7 @@ object Parse {
   ): (Boolean, Seq[BodyDeclaration]) = {
 
     if (tokens.isEmpty()) {
-      return (true, addInitializer(ctd, false).toSeq)
+      return (true, addInitializer(ctd, isStatic = false).toSeq)
     }
 
     val md    = new MemberDeclaration
@@ -738,8 +748,7 @@ object Parse {
   }
 
   def parsePropertyBlock(
-    propertyDeclaration: PropertyDeclaration,
-    tokens: Tokens
+    propertyDeclaration: PropertyDeclaration
   ): Option[PropertyBlock] = {
     val pb = new PropertyBlock
     propertyDeclaration.add(pb)
@@ -771,8 +780,8 @@ object Parse {
       throw new Exception(s"Unrecognised constructor ${tokens.toString()}")
     }
     val constructor = ConstructorDeclaration(
-      md.annotations,
-      md.modifiers,
+      ArraySeq.unsafeWrapArray(md.annotations.toArray),
+      ArraySeq.unsafeWrapArray(md.modifiers.toArray),
       toQualifiedName(md.typeRef.get),
       formalParameterList
     )
@@ -800,7 +809,7 @@ object Parse {
       throw new Exception(s"Unrecognised method ${tokens.toString()}")
     }
     val method =
-      MethodDeclaration(md.annotations, md.modifiers, md.typeRef.get, id, formalParameterList)
+      MethodDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id, formalParameterList)
     res.add(method)
     Some(method)
   }
@@ -820,7 +829,7 @@ object Parse {
     }
 
     val property =
-      new PropertyDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
+      new PropertyDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
     ctd._properties.append(property)
     Some(property)
   }
@@ -883,7 +892,7 @@ object Parse {
     while (index < tokens.length()) {
       val id = tokenToId(tokens(index).get)
 
-      val field = FieldDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
+      val field = FieldDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
       ctd._fields.append(field)
       fields.append(field)
 
@@ -1111,21 +1120,18 @@ object Compare {
       o.innerTypes
         .filter(_.isInstanceOf[ClassTypeDeclaration])
         .map(_.asInstanceOf[ClassTypeDeclaration])
-        .toIndexedSeq
     }
 
     def innerInterfaceTypeDeclarations(o: ClassTypeDeclaration): Seq[InterfaceTypeDeclaration] = {
       o.innerTypes
         .filter(_.isInstanceOf[InterfaceTypeDeclaration])
         .map(_.asInstanceOf[InterfaceTypeDeclaration])
-        .toIndexedSeq
     }
 
     def innerEnumTypeDeclarations(o: ClassTypeDeclaration): Seq[EnumTypeDeclaration] = {
       o.innerTypes
         .filter(_.isInstanceOf[EnumTypeDeclaration])
         .map(_.asInstanceOf[EnumTypeDeclaration])
-        .toIndexedSeq
     }
 
     def compareInnerClasses(

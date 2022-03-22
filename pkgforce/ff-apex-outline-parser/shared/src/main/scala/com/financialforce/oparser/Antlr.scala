@@ -7,6 +7,7 @@ import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStrea
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 
 import java.io.ByteArrayInputStream
+import scala.collection.compat.immutable.ArraySeq
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 object Antlr {
@@ -185,7 +186,7 @@ object Antlr {
           c.modifier().asScala.filter(_.annotation() == null).map(toModifier).foreach(md.add)
 
           Option(d.classDeclaration()).foreach(icd => {
-            val innerClassDeclaration = new ClassTypeDeclaration("", null)
+            val innerClassDeclaration = new ClassTypeDeclaration("", ctd)
             innerClassDeclaration._annotations.addAll(md.annotations)
             innerClassDeclaration._modifiers.addAll(md.modifiers)
             ctd._innerTypes.append(innerClassDeclaration)
@@ -213,7 +214,7 @@ object Antlr {
           Option(d.propertyDeclaration()).foreach(antlrPropertyDeclaration(ctd, md, _))
           Option(d.fieldDeclaration()).foreach(antlrFieldDeclaration(ctd, md, _))
         })
-        Option(c.block()).foreach(i => {
+        Option(c.block()).foreach(_ => {
           ctd.add(Initializer(Option(c.STATIC()).isDefined))
         })
       }
@@ -281,7 +282,7 @@ object Antlr {
       )
 
     val constructor =
-      ConstructorDeclaration(md.annotations, md.modifiers, qName, formalParameterList)
+      ConstructorDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), qName, formalParameterList)
 
     ctd._constructors.append(constructor)
   }
@@ -311,7 +312,7 @@ object Antlr {
     }
 
     val method =
-      MethodDeclaration(md.annotations, md.modifiers, md.typeRef.get, id, formalParameterList)
+      MethodDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id, formalParameterList)
 
     res.add(method)
   }
@@ -341,7 +342,7 @@ object Antlr {
     }
 
     val method =
-      MethodDeclaration(md.annotations, md.modifiers, md.typeRef.get, id, formalParameterList)
+      MethodDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id, formalParameterList)
 
     res.add(method)
   }
@@ -373,7 +374,7 @@ object Antlr {
     antlrTypeRef(md, ctx.typeRef())
 
     val property =
-      new PropertyDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
+      new PropertyDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
 
     ctd._properties.append(property)
   }
@@ -389,7 +390,7 @@ object Antlr {
       .foreach(_.variableDeclarator().asScala.foreach(v => {
         val id = toId(v.id())
         val field =
-          FieldDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
+          FieldDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
         ctd._fields.append(field)
       }))
   }

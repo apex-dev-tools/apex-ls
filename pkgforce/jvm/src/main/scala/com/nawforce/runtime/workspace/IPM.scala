@@ -3,13 +3,7 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration,
-  TypeDeclaration,
-  TypeDeclarationFactory
-}
+import com.financialforce.oparser.{ClassTypeDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex}
 import com.nawforce.pkgforce.names.Name
@@ -110,8 +104,9 @@ object IPM extends TriHierarchy {
     loadingPool: ExecutorService
   ) extends TriModule {
 
-    private val lowerNames = mutable.TreeSet[String]()
-    private val types      = mutable.Map[Name, TypeDeclaration]()
+    private final val moduleOpt  = Some(this)
+    private final val lowerNames = mutable.TreeSet[String]()
+    private final val types      = mutable.Map[Name, IModuleTypeDeclaration]()
 
     loadClasses()
 
@@ -129,27 +124,27 @@ object IPM extends TriHierarchy {
       decl match {
         case scoped: ModuleScoped =>
           decl.innerTypes.foreach(markModule)
-          scoped.module = Some(this)
+          scoped.module = moduleOpt
         case _ => ()
       }
     }
 
     private def insertClass(name: String, decl: TypeDeclaration): Unit = {
       lowerNames.add(name.toLowerCase)
-      types.put(Name(name), decl)
+      types.put(Name(name), decl.asInstanceOf[IModuleTypeDeclaration])
 
       decl match {
         case outer: ClassTypeDeclaration =>
           outer.innerTypes.foreach(inner => {
             val innerName = s"$name.${inner.id}"
             lowerNames.add(name.toLowerCase)
-            types.put(Name(innerName), inner)
+            types.put(Name(innerName), inner.asInstanceOf[IModuleTypeDeclaration])
           })
         case _ => ()
       }
     }
 
-    def findExactTypeId(name: String): Option[TypeDeclaration] = {
+    def findExactTypeId(name: String): Option[IModuleTypeDeclaration] = {
       types
         .get(Name(name))
         .orElse(baseModules.headOption.flatMap(_.findExactTypeId(name)))
@@ -159,7 +154,7 @@ object IPM extends TriHierarchy {
         )
     }
 
-    def fuzzyFindTypeId(name: String): Option[TypeDeclaration] = {
+    def fuzzyFindTypeId(name: String): Option[IModuleTypeDeclaration] = {
       if (name != null && name.nonEmpty) {
         val lower = name.toLowerCase
         lowerNames
@@ -177,9 +172,9 @@ object IPM extends TriHierarchy {
       }
     }
 
-    def fuzzyFindTypeIds(name: String): Seq[TypeDeclaration] = {
+    def fuzzyFindTypeIds(name: String): Seq[IModuleTypeDeclaration] = {
       if (name != null && name.nonEmpty) {
-        val accum = new mutable.HashMap[Name, TypeDeclaration]()
+        val accum = new mutable.HashMap[Name, IModuleTypeDeclaration]()
         accumFuzzyFindTypeIds(name, accum)
         accum.keys.toSeq.sortBy(_.value.length).flatMap(accum.get)
       } else {
@@ -189,7 +184,7 @@ object IPM extends TriHierarchy {
 
     private def accumFuzzyFindTypeIds(
       name: String,
-      accum: mutable.Map[Name, TypeDeclaration]
+      accum: mutable.Map[Name, IModuleTypeDeclaration]
     ): Unit = {
       // Accumulate lower layers first
       if (baseModules.isEmpty) {
@@ -212,9 +207,9 @@ object IPM extends TriHierarchy {
         })
     }
 
-    def findTypeIdsByNamespace(namespacePrefix: String): Seq[TypeDeclaration] = {
+    def findTypeIdsByNamespace(namespacePrefix: String): Seq[IModuleTypeDeclaration] = {
       if (namespacePrefix != null) {
-        val accum = new mutable.HashMap[Name, TypeDeclaration]()
+        val accum = new mutable.HashMap[Name, IModuleTypeDeclaration]()
         accumFindTypeIdsByNamespace(namespacePrefix, accum)
         accum.keys.toSeq.sortBy(_.value.length).flatMap(accum.get)
       } else {
@@ -224,7 +219,7 @@ object IPM extends TriHierarchy {
 
     private def accumFindTypeIdsByNamespace(
       namespacePrefix: String,
-      accum: mutable.Map[Name, TypeDeclaration]
+      accum: mutable.Map[Name, IModuleTypeDeclaration]
     ): Unit = {
       basePackages.headOption.foreach(
         _.orderedModules.headOption.foreach(_.accumFindTypeIdsByNamespace(namespacePrefix, accum))
@@ -242,19 +237,21 @@ object IPM extends TriHierarchy {
       }
     }
 
-    def getTypesByPath(path: String): Seq[TypeDeclaration] = {
+    def getTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
       findTypesByPathPredicate(t => t == path)
     }
 
-    def findTypesByPath(path: String): Seq[TypeDeclaration] = {
+    def findTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
       findTypesByPathPredicate(t => t.equalsIgnoreCase(path))
     }
 
-    def fuzzyFindTypesByPath(path: String): Seq[TypeDeclaration] = {
+    def fuzzyFindTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
       findTypesByPathPredicate(t => t.toLowerCase.startsWith(path.toLowerCase))
     }
 
-    private def findTypesByPathPredicate(predicate: String => Boolean): Seq[TypeDeclaration] = {
+    private def findTypesByPathPredicate(
+      predicate: String => Boolean
+    ): Seq[IModuleTypeDeclaration] = {
       var typesForPath = types.values.filter(t => t.paths.exists(p => predicate(p)))
       if (typesForPath.nonEmpty) return typesForPath.toSeq
 

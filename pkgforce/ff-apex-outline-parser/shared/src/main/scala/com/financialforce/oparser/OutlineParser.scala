@@ -33,7 +33,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
   private def parseHelper[T, R](
     discardCommentsAndWhitespace: Boolean,
     provider: () => T,
-    f: (T) => (Boolean, Option[R])
+    f: T => (Boolean, Option[R])
   ): Option[R] = {
 
     @tailrec
@@ -81,7 +81,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
 
   private def characterParseHelper[R](
     discardCommentsAndWhitespace: Boolean,
-    f: (Char) => (Boolean, Option[R])
+    f: Char => (Boolean, Option[R])
   ): Option[R] = {
     parseHelper[Char, R](discardCommentsAndWhitespace, () => currentChar, f)
   }
@@ -101,7 +101,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
 
   private def tokenParseHelper[R](
     discardCommentsAndWhitespace: Boolean,
-    f: (Option[Token]) => (Boolean, Option[R])
+    f: Option[Token] => (Boolean, Option[R])
   ): Option[R] = {
     parseHelper[Option[Token], R](discardCommentsAndWhitespace, () => consumeToken(), f)
   }
@@ -155,7 +155,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
           t.lowerCaseContents match {
             case Tokens.LBraceStr =>
               val classTypeDeclaration = factory.createClassTypeDeclaration(path, null)
-              Parse.parseClassType(classTypeDeclaration, tokens, path)
+              Parse.parseClassType(classTypeDeclaration, tokens)
               typeDeclaration = Some(classTypeDeclaration)
               val startLocation = Location.fromStart(tokens(0).get.location)
               tokens.clear()
@@ -256,7 +256,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
           t.lowerCaseContents match {
             case Tokens.RBraceStr => (false, None)
             case Tokens.LBraceStr =>
-              val pb = Parse.parsePropertyBlock(pd, tokens)
+              val pb = Parse.parsePropertyBlock(pd)
               if (pb.isDefined) {
                 pb.get.blockLocation = Some(tokens(0).get.location)
               }
@@ -268,7 +268,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
               }
               (true, None)
             case Tokens.SemicolonStr =>
-              val pb = Parse.parsePropertyBlock(pd, tokens)
+              val pb = Parse.parsePropertyBlock(pd)
               if (pb.isDefined) {
                 pb.get.blockLocation =
                   Some(Location.updateEnd(tokens(0).get.location, line, lineOffset, byteOffset))
@@ -283,7 +283,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
   private def consumeInnerType(ctd: ClassTypeDeclaration, token: Token): Unit = {
     if (token.matches(Tokens.ClassStr)) {
       val innerClass = factory.createClassTypeDeclaration(ctd.path, ctd)
-      Parse.parseClassType(innerClass, tokens, ctd.path)
+      Parse.parseClassType(innerClass, tokens)
       val startLocation = Location.fromStart(token.location)
       tokens.clear()
       consumeClassBody(innerClass)
@@ -291,7 +291,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
       ctd._innerTypes.append(innerClass)
     } else if (token.matches(Tokens.InterfaceStr)) {
       val innerInterface = factory.createInterfaceTypeDeclaration(ctd.path, ctd)
-      Parse.parseInterfaceType(innerInterface, tokens, ctd.path)
+      Parse.parseInterfaceType(innerInterface, tokens)
       val startLocation = Location.fromStart(token.location)
       tokens.clear()
       consumeInterfaceBody(innerInterface)
@@ -299,7 +299,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
       ctd._innerTypes.append(innerInterface)
     } else if (token.matches(Tokens.EnumStr)) {
       val innerEnum = factory.createEnumTypeDeclaration(ctd.path, ctd)
-      Parse.parseEnumType(innerEnum, tokens, ctd.path)
+      Parse.parseEnumType(innerEnum, tokens)
       val startLocation = Location.fromStart(token.location)
       tokens.clear()
       consumeEnumBody(innerEnum)
@@ -388,7 +388,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
           t.lowerCaseContents match {
             case Tokens.LBraceStr =>
               val interfaceTypeDeclaration = factory.createInterfaceTypeDeclaration(path, null)
-              Parse.parseInterfaceType(interfaceTypeDeclaration, tokens, path)
+              Parse.parseInterfaceType(interfaceTypeDeclaration, tokens)
               typeDeclaration = Some(interfaceTypeDeclaration)
               val startLocation = Location.fromStart(tokens(0).get.location)
               tokens.clear()
@@ -444,7 +444,7 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
           t.lowerCaseContents match {
             case Tokens.LBraceStr =>
               val enumTypeDeclaration = factory.createEnumTypeDeclaration(path, null)
-              Parse.parseEnumType(enumTypeDeclaration, tokens, path)
+              Parse.parseEnumType(enumTypeDeclaration, tokens)
               typeDeclaration = Some(enumTypeDeclaration)
               val startLocation = Location.fromStart(tokens(0).get.location)
               tokens.clear()
@@ -512,7 +512,6 @@ class OutlineParser(path: String, contents: String, factory: TypeDeclarationFact
       currentChar = contents(charOffset)
       byteBuffer.setLength(0)
 
-      // Hmmm
       val byteLength =
         if (currentChar.toInt < 128) 1
         else

@@ -3,11 +3,10 @@
  */
 package com.nawforce.pkgforce.types;
 
-import com.financialforce.oparser.TypeDeclaration;
 import com.financialforce.oparser.TypeRef;
 import com.nawforce.pkgforce.api.*;
+import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
-import com.nawforce.runtime.workspace.ModuleScoped$;
 import scala.collection.mutable.ArrayBuffer;
 
 import java.util.Arrays;
@@ -16,37 +15,41 @@ import java.util.Optional;
 
 // TODO: Annotations & enum constants as fields?
 public class ApexTypeAdapter implements ApexType {
-    final private TypeDeclaration td;
+    final private IModuleTypeDeclaration td;
 
-    public ApexTypeAdapter(TypeDeclaration td) {
+    public ApexTypeAdapter(IModuleTypeDeclaration td) {
         this.td = td;
     }
 
     @Override
     public ApexResourceFile getFile() {
+        if (td.paths().length != 1)
+            return null;
+
+        String path = td.paths()[0];
         Boolean hasErrors = index()
                 .map(index -> index.issues()
-                        .issuesForFiles(new String[]{td.path()}, false, 1).length > 0)
+                        .issuesForFiles(new String[]{path}, false, 1).length > 0)
                 .orElse(false);
-        return new ApexResourceFile(td.path(), getTypes(td), hasErrors);
+        return new ApexResourceFile(path, getTypes(td), hasErrors);
     }
 
-    private List<ApexType> getTypes(TypeDeclaration td) {
-        if (td.enclosing() != null)
-            return getTypes(td.enclosing());
+    private List<ApexType> getTypes(IModuleTypeDeclaration td) {
+        if (td.enclosing().nonEmpty())
+            return getTypes(td.enclosingModule().get());
 
         ApexType[] types = new ApexType[1 + td.innerTypes().length()];
         types[0] = new ApexTypeAdapter(td);
         for (int i = 0; i < td.innerTypes().length(); i++)
-            types[1 + i] = new ApexTypeAdapter(td.innerTypes().apply(i));
+            types[1 + i] = new ApexTypeAdapter(td.innerTypesModule().apply(i));
         return Arrays.asList(types);
     }
 
     @Override
     public String getApexName() {
         String name = td.id().toString();
-        if (td.enclosing() != null)
-            name = td.enclosing().id().toString() + "." + name;
+        if (td.enclosing().nonEmpty())
+            name = td.enclosing().get().id().toString() + "." + name;
         String ns = getApexNamespace();
         if (ns.length() != 0)
             name = ns + "." + name;
@@ -60,10 +63,10 @@ public class ApexTypeAdapter implements ApexType {
 
     @Override
     public ApexType getEnclosingType() {
-        if (!module().isPresent() || td.enclosing() == null)
+        if (!module().isPresent() || td.enclosing().isEmpty())
             return null;
 
-        return new ApexTypeAdapter(td.enclosing());
+        return new ApexTypeAdapter(td.enclosingModule().get());
     }
 
     @Override
@@ -131,7 +134,7 @@ public class ApexTypeAdapter implements ApexType {
     }
 
     private Optional<IPM.Module> module() {
-        return Optional.ofNullable(ModuleScoped$.MODULE$.module(td).getOrElse(null));
+        return Optional.ofNullable(td.module().getOrElse(null));
     }
 
     @Override
