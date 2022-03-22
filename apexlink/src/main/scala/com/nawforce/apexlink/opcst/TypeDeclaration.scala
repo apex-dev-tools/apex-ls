@@ -95,9 +95,9 @@ private[opcst] object OutlineParserClassDeclaration {
 
     val id = OutlineParserId.construct(ctd.id, source.path)
     val extendType =
-      ctd.extendsTypeRef.map(TypeReference.construct).getOrElse(TypeNames.InternalObject)
+      Option(ctd.extendsTypeRef).map(TypeReference.construct).getOrElse(TypeNames.InternalObject)
     val implementsType =
-      ctd.implementsTypeList.map(TypeList.construct).getOrElse(TypeNames.emptyTypeNames)
+      Option(ctd.implementsTypeList).map(TypeList.construct).getOrElse(TypeNames.emptyTypeNames)
 
     val typeContext = new RelativeTypeContext
 
@@ -178,9 +178,9 @@ private[opcst] object OutlineParserClassDeclaration {
     )
     stampLocation(
       declaration,
-      ctd.location.get.copy(
-        startLineOffset = ctd.location.get.startLineOffset - 1,
-        endLineOffset = ctd.location.get.endLineOffset + endLineOffset.getOrElse(0)
+      ctd.location.copy(
+        startLineOffset = ctd.location.startLineOffset - 1,
+        endLineOffset = ctd.location.endLineOffset + endLineOffset.getOrElse(0)
       ),
       source.path
     )
@@ -196,8 +196,8 @@ private[opcst] object OutlineParserClassDeclaration {
   ): Option[ClassDeclaration] = {
 
     val modifierResults =
-      classModifiers(path, ic.id.get, ic.annotations, ic.modifiers, outer = false)
-    val thisType = outerType.asInner(ic.id.get.id.contents)
+      classModifiers(path, ic.id, ic.annotations, ic.modifiers, outer = false)
+    val thisType = outerType.asInner(ic.id.id.contents)
     val rv = OutlineParserClassDeclaration.construct(
       path,
       ic,
@@ -220,9 +220,9 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     outerType: ThisType
   ): Option[InterfaceDeclaration] = {
 
-    val thisType = outerType.asInner(ii.id.get.id.contents)
+    val thisType = outerType.asInner(ii.id.id.contents)
     val modifierResults =
-      interfaceModifiers(path, ii.id.get, ii.annotations, ii.modifiers, outer = false)
+      interfaceModifiers(path, ii.id, ii.annotations, ii.modifiers, outer = false)
     val rv =
       construct(path, ii, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
@@ -239,7 +239,9 @@ private[opcst] object OutlineParserInterfaceDeclaration {
   ): InterfaceDeclaration = {
 
     val implementsType =
-      itd.extendsTypeList.map(TypeList.construct).getOrElse(ArraySeq(TypeNames.InternalInterface))
+      Option(itd.implementsTypeList)
+        .map(TypeList.construct)
+        .getOrElse(ArraySeq(TypeNames.InternalInterface))
     val typeContext = new RelativeTypeContext
     val id          = OutlineParserId.construct(itd.id, source.path)
 
@@ -269,9 +271,9 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     )
     stampLocation(
       declaration,
-      itd.location.get.copy(
-        startLineOffset = itd.location.get.startLineOffset - 1,
-        endLineOffset = itd.location.get.endLineOffset + endLineOffset.getOrElse(0)
+      itd.location.copy(
+        startLineOffset = itd.location.startLineOffset - 1,
+        endLineOffset = itd.location.endLineOffset + endLineOffset.getOrElse(0)
       ),
       source.path
     )
@@ -289,8 +291,8 @@ private[opcst] object OutlineParserEnumDeclaration {
     outerType: ThisType
   ): Option[EnumDeclaration] = {
     val modifierResults =
-      enumModifiers(path, ie.id.get, ie.annotations, ie.modifiers, outer = false)
-    val thisType = outerType.asInner(ie.id.get.id.contents)
+      enumModifiers(path, ie.id, ie.annotations, ie.modifiers, outer = false)
+    val thisType = outerType.asInner(ie.id.id.contents)
     val rv       = construct(ie, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
   }
@@ -325,9 +327,9 @@ private[opcst] object OutlineParserEnumDeclaration {
     )
     stampLocation(
       declaration,
-      etd.location.get.copy(
-        startLineOffset = etd.location.get.startLineOffset - 1,
-        endLineOffset = etd.location.get.endLineOffset + endLineOffset.getOrElse(0)
+      etd.location.copy(
+        startLineOffset = etd.location.startLineOffset - 1,
+        endLineOffset = etd.location.endLineOffset + endLineOffset.getOrElse(0)
       ),
       source.path
     )
@@ -499,9 +501,15 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults = fieldModifiers(path, fd.id, fd.annotations, fd.modifiers, isOuter)
-    val fieldTypeName   = TypeReference.construct(fd.typeRef.asInstanceOf[UnresolvedTypeRef])
-    val vd              = constructVariableDeclarator(fd, source, fieldTypeName, isOuter)
+    val modifierResults = fieldModifiers(
+      path,
+      fd.id,
+      ArraySeq.unsafeWrapArray(fd.annotations.toArray),
+      ArraySeq.unsafeWrapArray(fd.modifiers.toArray),
+      isOuter
+    )
+    val fieldTypeName = TypeReference.construct(fd.typeRef.asInstanceOf[UnresolvedTypeRef])
+    val vd            = constructVariableDeclarator(fd, source, fieldTypeName, isOuter)
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, fieldTypeName, vd)
     val location = OPLocation(
@@ -624,8 +632,14 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       }
     }
 
-    val modifierResults = fieldModifiers(path, pd.id, pd.annotations, pd.modifiers, isOuter)
-    val propertyBlocks  = ArraySeq.from(pd.propertyBlocks.flatMap(parsePropertyBlock))
+    val modifierResults = fieldModifiers(
+      path,
+      pd.id,
+      ArraySeq.unsafeWrapArray(pd.annotations.toArray),
+      ArraySeq.unsafeWrapArray(pd.modifiers.toArray),
+      isOuter
+    )
+    val propertyBlocks = ArraySeq.from(pd.propertyBlocks.flatMap(parsePropertyBlock))
 
     val declaration =
       ApexPropertyDeclaration(

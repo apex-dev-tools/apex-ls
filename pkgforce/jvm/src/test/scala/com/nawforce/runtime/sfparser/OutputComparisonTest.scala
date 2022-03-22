@@ -8,7 +8,7 @@ import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
-import com.nawforce.runtime.workspace.IPM
+import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
@@ -76,24 +76,25 @@ object OutputComparisonTest {
 
   private def getOutLineParserOutput(path: Path) = {
     val contentsString = getUTF8ContentsFromPath(path)
-    OutlineParser.parse(path.toString, contentsString)
+    val result = OutlineParser.parse(path.toString, contentsString)
+    (result._1, result._2, result._3.map(_.asInstanceOf[IModuleTypeDeclaration]))
   }
 
   private def findSfParserOutput(
     path: Path,
     output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
   ) = {
-    output._1.find(_.path == path.toString)
+    output._1.find(_.paths.head == path.toString)
   }
 
   private def compareResolved(
-    fromIndex: Option[TypeDeclaration],
-    fromSf: Option[TypeDeclaration]
+                               fromIndex: Option[IModuleTypeDeclaration],
+                               fromSf: Option[TypeDeclaration]
   ): Unit = {
     val comparator = SubsetComparator(
       fromIndex.get,
-      new TypeIdCollector(List.empty),
-      new TypeIdCollector(List.empty)
+      TypeIdCollector.fromIModuleTypeDecls(List.empty),
+      TypeIdCollector.fromTypeDecls(List.empty)
     )
     comparator.subsetOf(fromSf.get)
   }
@@ -113,7 +114,7 @@ object OutputComparisonTest {
       return
     }
     try {
-      val opResolver = new TypeIdCollector(List(opOut.get))
+      val opResolver = TypeIdCollector.fromIModuleTypeDecls(List(opOut.get))
       val comparator = SubsetComparator(opOut.get, opResolver, sfTypeIdResolver)
       comparator.subsetOf(sfTd.get)
       val warnings = comparator.getWarnings

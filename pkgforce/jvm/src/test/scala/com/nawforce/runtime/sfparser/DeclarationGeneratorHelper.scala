@@ -21,7 +21,7 @@ import com.financialforce.oparser.{
   UnresolvedTypeRef
 }
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.immutable.ArraySeq
 
 trait DeclarationGeneratorHelper {
   def toTypeRef(
@@ -114,8 +114,8 @@ trait DeclarationGeneratorHelper {
     parameters: FormalParameterList
   ): ConstructorDeclaration = {
     ConstructorDeclaration(
-      annotation.to(ArrayBuffer),
-      modifiers.to(ArrayBuffer),
+      ArraySeq.unsafeWrapArray(annotation),
+      ArraySeq.unsafeWrapArray(modifiers),
       toQName(names),
       parameters
     )
@@ -129,8 +129,8 @@ trait DeclarationGeneratorHelper {
     parameters: FormalParameterList
   ): MethodDeclaration = {
     MethodDeclaration(
-      annotation.to(ArrayBuffer),
-      modifiers.to(ArrayBuffer),
+      ArraySeq.unsafeWrapArray(annotation),
+      ArraySeq.unsafeWrapArray(modifiers),
       typeRef,
       id,
       parameters
@@ -143,7 +143,7 @@ trait DeclarationGeneratorHelper {
     typeRef: UnresolvedTypeRef,
     id: Id
   ): PropertyDeclaration = {
-    new PropertyDeclaration(annotation.to(ArrayBuffer), modifiers.to(ArrayBuffer), typeRef, id)
+    new PropertyDeclaration(ArraySeq.unsafeWrapArray(annotation), ArraySeq.unsafeWrapArray(modifiers), typeRef, id)
   }
 
   def toFieldDeclaration(
@@ -152,6 +152,6 @@ trait DeclarationGeneratorHelper {
     typeRef: UnresolvedTypeRef,
     id: Id
   ): FieldDeclaration = {
-    FieldDeclaration(annotation.to(ArrayBuffer), modifiers.to(ArrayBuffer), typeRef, id)
+    FieldDeclaration(ArraySeq.unsafeWrapArray(annotation), ArraySeq.unsafeWrapArray(modifiers), typeRef, id)
   }
 }

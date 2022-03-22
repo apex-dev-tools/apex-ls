@@ -7,6 +7,7 @@ import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStrea
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 
 import java.io.ByteArrayInputStream
+import scala.collection.compat.immutable.ArraySeq
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 object Antlr {
@@ -22,7 +23,7 @@ object Antlr {
     val tree   = parser.compilationUnit()
 
     if (Option(tree.typeDeclaration().classDeclaration()).isDefined) {
-      val ctd = new ClassTypeDeclaration("", None)
+      val ctd = new ClassTypeDeclaration("", null)
       tree
         .typeDeclaration()
         .modifier()
@@ -40,7 +41,7 @@ object Antlr {
       return Some(ctd)
     }
     if (Option(tree.typeDeclaration().interfaceDeclaration()).isDefined) {
-      val itd = new InterfaceTypeDeclaration("", None)
+      val itd = new InterfaceTypeDeclaration("", null)
       tree
         .typeDeclaration()
         .modifier()
@@ -58,7 +59,7 @@ object Antlr {
       return Some(itd)
     }
     if (Option(tree.typeDeclaration().enumDeclaration()).isDefined) {
-      val etd = new EnumTypeDeclaration("", None)
+      val etd = new EnumTypeDeclaration("", null)
       tree
         .typeDeclaration()
         .modifier()
@@ -164,7 +165,7 @@ object Antlr {
     ctd: ClassTypeDeclaration,
     ctx: ApexParser.ClassDeclarationContext
   ): Unit = {
-    ctd.id = Some(toId(ctx.id()))
+    ctd._id = toId(ctx.id())
 
     if (Option(ctx.typeRef()).isDefined) {
       antlrTypeRef(ctd, ctx.typeRef())
@@ -185,26 +186,26 @@ object Antlr {
           c.modifier().asScala.filter(_.annotation() == null).map(toModifier).foreach(md.add)
 
           Option(d.classDeclaration()).foreach(icd => {
-            val innerClassDeclaration = new ClassTypeDeclaration("", Some(ctd))
-            innerClassDeclaration.annotations.addAll(md.annotations)
-            innerClassDeclaration.modifiers.addAll(md.modifiers)
-            ctd.innerTypes.append(innerClassDeclaration)
+            val innerClassDeclaration = new ClassTypeDeclaration("", ctd)
+            innerClassDeclaration._annotations.addAll(md.annotations)
+            innerClassDeclaration._modifiers.addAll(md.modifiers)
+            ctd._innerTypes.append(innerClassDeclaration)
             antlrClassTypeDeclaration(innerClassDeclaration, icd)
           })
 
           Option(d.interfaceDeclaration()).foreach(iid => {
-            val innerInterfaceDeclaration = new InterfaceTypeDeclaration("", Some(ctd))
-            innerInterfaceDeclaration.annotations.addAll(md.annotations)
-            innerInterfaceDeclaration.modifiers.addAll(md.modifiers)
-            ctd.innerTypes.append(innerInterfaceDeclaration)
+            val innerInterfaceDeclaration = new InterfaceTypeDeclaration("", ctd)
+            innerInterfaceDeclaration._annotations.addAll(md.annotations)
+            innerInterfaceDeclaration._modifiers.addAll(md.modifiers)
+            ctd._innerTypes.append(innerInterfaceDeclaration)
             antlrInterfaceTypeDeclaration(innerInterfaceDeclaration, iid)
           })
 
           Option(d.enumDeclaration()).foreach(ied => {
-            val innerEnumDeclaration = new EnumTypeDeclaration("", Some(ctd))
-            innerEnumDeclaration.annotations.addAll(md.annotations)
-            innerEnumDeclaration.modifiers.addAll(md.modifiers)
-            ctd.innerTypes.append(innerEnumDeclaration)
+            val innerEnumDeclaration = new EnumTypeDeclaration("", ctd)
+            innerEnumDeclaration._annotations.addAll(md.annotations)
+            innerEnumDeclaration._modifiers.addAll(md.modifiers)
+            ctd._innerTypes.append(innerEnumDeclaration)
             antlrEnumTypeDeclaration(innerEnumDeclaration, ied)
           })
 
@@ -213,7 +214,7 @@ object Antlr {
           Option(d.propertyDeclaration()).foreach(antlrPropertyDeclaration(ctd, md, _))
           Option(d.fieldDeclaration()).foreach(antlrFieldDeclaration(ctd, md, _))
         })
-        Option(c.block()).foreach(i => {
+        Option(c.block()).foreach(_ => {
           ctd.add(Initializer(Option(c.STATIC()).isDefined))
         })
       }
@@ -224,7 +225,7 @@ object Antlr {
     itd: InterfaceTypeDeclaration,
     ctx: ApexParser.InterfaceDeclarationContext
   ): Unit = {
-    itd.id = Some(toId(ctx.id()))
+    itd._id = toId(ctx.id())
 
     if (Option(ctx.typeList()).isDefined) {
       antlrTypeList(itd, ctx.typeList())
@@ -251,7 +252,7 @@ object Antlr {
     etd: EnumTypeDeclaration,
     ctx: ApexParser.EnumDeclarationContext
   ): Unit = {
-    etd.id = Some(toId(ctx.id()))
+    etd._id = toId(ctx.id())
 
     ctx
       .enumConstants()
@@ -281,9 +282,9 @@ object Antlr {
       )
 
     val constructor =
-      ConstructorDeclaration(md.annotations, md.modifiers, qName, formalParameterList)
+      ConstructorDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), qName, formalParameterList)
 
-    ctd.constructors.append(constructor)
+    ctd._constructors.append(constructor)
   }
 
   def antlrMethodDeclaration(
@@ -311,7 +312,7 @@ object Antlr {
     }
 
     val method =
-      MethodDeclaration(md.annotations, md.modifiers, md.typeRef.get, id, formalParameterList)
+      MethodDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id, formalParameterList)
 
     res.add(method)
   }
@@ -341,7 +342,7 @@ object Antlr {
     }
 
     val method =
-      MethodDeclaration(md.annotations, md.modifiers, md.typeRef.get, id, formalParameterList)
+      MethodDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id, formalParameterList)
 
     res.add(method)
   }
@@ -373,9 +374,9 @@ object Antlr {
     antlrTypeRef(md, ctx.typeRef())
 
     val property =
-      new PropertyDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
+      new PropertyDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
 
-    ctd.properties.append(property)
+    ctd._properties.append(property)
   }
 
   def antlrFieldDeclaration(
@@ -389,8 +390,8 @@ object Antlr {
       .foreach(_.variableDeclarator().asScala.foreach(v => {
         val id = toId(v.id())
         val field =
-          FieldDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
-        ctd.fields.append(field)
+          FieldDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
+        ctd._fields.append(field)
       }))
   }
 }

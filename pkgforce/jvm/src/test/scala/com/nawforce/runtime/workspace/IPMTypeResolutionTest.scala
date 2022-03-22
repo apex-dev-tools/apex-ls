@@ -1,12 +1,11 @@
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.TypeDeclaration
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class IPMTypeResolutionTest extends AnyFunSuite {
-  def getType(typeId: String, index: IPM.Index): Option[TypeDeclaration] = {
+  def getType(typeId: String, index: IPM.Index): Option[IModuleTypeDeclaration] = {
     index.rootModule.get.findExactTypeId(typeId)
   }
 

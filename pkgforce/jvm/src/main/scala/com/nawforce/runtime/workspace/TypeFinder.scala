@@ -1,14 +1,13 @@
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{TypeDeclaration, TypeName, TypeRef, UnresolvedTypeRef}
-import com.nawforce.pkgforce.names.Name
+import com.financialforce.oparser.{ITypeDeclaration, TypeName, TypeRef, UnresolvedTypeRef}
 
 import scala.collection.mutable.ArrayBuffer
 
 trait TypeFinder {
   self: IPM.Module =>
 
-  def findType(typeRef: TypeRef, from: TypeDeclaration): Option[TypeDeclaration] = {
+  def findType(typeRef: TypeRef, from: ITypeDeclaration): Option[ITypeDeclaration] = {
     val typeNames = getUnresolvedTypeNames(typeRef)
     if (typeNames.flatMap(_.typeArguments).nonEmpty) {
       //TODO: Resolve types with arguments properly
@@ -31,30 +30,30 @@ trait TypeFinder {
     }
   }
 
-  private def getType(typeNames: ArrayBuffer[TypeName]): Option[TypeDeclaration] = {
+  private def getType(typeNames: ArrayBuffer[TypeName]): Option[ITypeDeclaration] = {
     self.findExactTypeId(asFullName(typeNames))
   }
 
-  private def findScalarType(typeNames: ArrayBuffer[TypeName]): Option[TypeDeclaration] = {
+  private def findScalarType(typeNames: ArrayBuffer[TypeName]): Option[ITypeDeclaration] = {
     //TODO
     //Would it return a TD?
     None
   }
 
-  private def getSystemTypes(typeNames: ArrayBuffer[TypeName]): Option[TypeDeclaration] = {
+  private def getSystemTypes(typeNames: ArrayBuffer[TypeName]): Option[ITypeDeclaration] = {
     //TODO
     None
   }
 
   private def findLocalTypeFor(
     typeNames: ArrayBuffer[TypeName],
-    from: TypeDeclaration
-  ): Option[TypeDeclaration] = {
+    from: ITypeDeclaration
+  ): Option[ITypeDeclaration] = {
     //Shortcut self reference
-    if (typeNames.nonEmpty && !isCompound(typeNames) && from.id.contains(typeNames.head.id))
+    if (typeNames.nonEmpty && !isCompound(typeNames) && from.id == typeNames.head.id)
       return Some(from)
     // Remove self reference but avoid false positive match against an inner
-    else if (isCompound(typeNames) && from.id.contains(typeNames.head.id) && from.enclosing.isEmpty)
+    else if (isCompound(typeNames) && from.id == typeNames.head.id && from.enclosing.isEmpty)
       findLocalTypeFor(typeNames.tail, from)
 
     getNestedType(typeNames, from)
@@ -66,8 +65,8 @@ trait TypeFinder {
 
   private def getNestedType(
     typeNames: ArrayBuffer[TypeName],
-    from: TypeDeclaration
-  ): Option[TypeDeclaration] = {
+    from: ITypeDeclaration
+  ): Option[ITypeDeclaration] = {
     if (isCompound(typeNames)) {
       None
     } else {
@@ -77,14 +76,14 @@ trait TypeFinder {
 
   private def getFromOuterType(
     typeNames: ArrayBuffer[TypeName],
-    from: TypeDeclaration
-  ): Option[TypeDeclaration] = {
+    from: ITypeDeclaration
+  ): Option[ITypeDeclaration] = {
     if (isCompound(typeNames) || from.enclosing.isEmpty) {
       None
     } else {
       val outerType = this.findLocalTypeFor(typeNames, from.enclosing.get)
       if (outerType.nonEmpty) {
-        if (outerType.get.id.contains(typeNames.head.id))
+        if (outerType.get.id == typeNames.head.id)
           outerType
         else
           findLocalTypeFor(typeNames, outerType.get)
@@ -94,21 +93,21 @@ trait TypeFinder {
     }
   }
 
-  private def findNestedType(from: TypeDeclaration, name: TypeName): Option[TypeDeclaration] = {
-    from.innerTypes.find(x => x.id.nonEmpty && x.id.get == name.id)
+  private def findNestedType(from: ITypeDeclaration, name: TypeName): Option[ITypeDeclaration] = {
+    from.innerTypes.find(x => x.id == name.id)
   }
 
   private def getFromSuperType(
     typeNames: ArrayBuffer[TypeName],
-    from: TypeDeclaration
-  ): Option[TypeDeclaration] = {
-    if (from.extendsTypeRef.isEmpty)
+    from: ITypeDeclaration
+  ): Option[ITypeDeclaration] = {
+    if (from.extendsTypeRef == null)
       return None
 
-    from.extendsTypeRef.get match {
-      case resolved: TypeDeclaration => findLocalTypeFor(typeNames, resolved)
+    from.extendsTypeRef match {
+      case resolved: ITypeDeclaration => findLocalTypeFor(typeNames, resolved)
       case _ =>
-        val superTypeTypeNames = getUnresolvedTypeNames(from.extendsTypeRef.get)
+        val superTypeTypeNames = getUnresolvedTypeNames(from.extendsTypeRef)
         if (typeNames == superTypeTypeNames)
           return None
 
