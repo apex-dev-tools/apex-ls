@@ -5,6 +5,7 @@ package com.nawforce.pkgforce.types;
 
 import com.financialforce.oparser.TypeDeclaration;
 import com.financialforce.oparser.TypeRef;
+import com.financialforce.oparser.UnresolvedTypeRef;
 import com.nawforce.pkgforce.api.*;
 import com.nawforce.runtime.workspace.IPM;
 import com.nawforce.runtime.workspace.ModuleScoped$;

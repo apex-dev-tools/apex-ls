@@ -4,12 +4,13 @@
 package com.financialforce.oparser
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object StringUtils {
 
   def asString[T](o: Option[T]): String = {
     o match {
-      case None => ""
+      case None    => ""
       case Some(o) => s"${o.toString}"
     }
   }
@@ -36,7 +37,7 @@ trait ModifierAssignable extends AnnotationAssignable {
 }
 
 trait TypeRefAssignable {
-  def add(tr: TypeRef): Unit
+  def add(tr: UnresolvedTypeRef): Unit
 }
 
 trait TypeNameAssignable {
@@ -71,8 +72,13 @@ trait PropertyBlockAssignable {
   def add(pb: PropertyBlock): Unit
 }
 
+trait TypeRef {
+  //Only used for comparison
+  def getFullName: String
+}
+
 trait Signature {
-  val typeRef: TypeRef
+  var typeRef: TypeRef
   val id: Id
   val annotations: mutable.ArrayBuffer[Annotation]
   val modifiers: mutable.ArrayBuffer[Modifier]
@@ -86,13 +92,13 @@ class MemberDeclaration extends ModifierAssignable with TypeRefAssignable {
 
   val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
   val modifiers: mutable.ArrayBuffer[Modifier]     = mutable.ArrayBuffer[Modifier]()
-  var typeRef: Option[TypeRef]                     = None
+  var typeRef: Option[UnresolvedTypeRef]           = None
 
   override def add(a: Annotation): Unit = annotations.append(a)
 
   override def add(m: Modifier): Unit = modifiers.append(m)
 
-  override def add(tr: TypeRef): Unit = typeRef = Some(tr)
+  override def add(tr: UnresolvedTypeRef): Unit = typeRef = Some(tr)
 }
 
 case class Annotation(qName: QualifiedName, parameters: Option[String]) {
@@ -151,7 +157,7 @@ class QualifiedName extends IdAssignable {
   }
 }
 
-class TypeRef extends TypeNameAssignable with ArraySubscriptsAssignable {
+class UnresolvedTypeRef extends TypeNameAssignable with ArraySubscriptsAssignable with TypeRef {
   val typeNames: mutable.ArrayBuffer[TypeName]              = mutable.ArrayBuffer[TypeName]()
   val arraySubscripts: mutable.ArrayBuffer[ArraySubscripts] = mutable.ArrayBuffer[ArraySubscripts]()
 
@@ -159,8 +165,14 @@ class TypeRef extends TypeNameAssignable with ArraySubscriptsAssignable {
 
   override def add(as: ArraySubscripts): Unit = arraySubscripts.append(as)
 
+  override def getFullName: String = {
+    toString
+  }
+
   override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[TypeRef]
+    if (!obj.isInstanceOf[UnresolvedTypeRef])
+      return false
+    val other = obj.asInstanceOf[UnresolvedTypeRef]
     other.typeNames == typeNames && other.arraySubscripts == arraySubscripts
   }
 
@@ -206,7 +218,7 @@ class TypeArguments extends TypeListAssignable {
 class TypeList extends TypeRefAssignable {
   val typeRefs: mutable.ArrayBuffer[TypeRef] = mutable.ArrayBuffer[TypeRef]()
 
-  override def add(tr: TypeRef): Unit = typeRefs.append(tr)
+  override def add(tr: UnresolvedTypeRef): Unit = typeRefs.append(tr)
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[TypeList]
@@ -234,7 +246,7 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
 
   override def add(m: Modifier): Unit = modifiers.append(m)
 
-  override def add(tr: TypeRef): Unit = typeRef = Some(tr)
+  override def add(tr: UnresolvedTypeRef): Unit = typeRef = Some(tr)
 
   override def add(i: Id): Unit = id = Some(i)
 
@@ -295,8 +307,8 @@ case class ConstructorDeclaration(
     val other = obj.asInstanceOf[ConstructorDeclaration]
     other.annotations.sameElements(annotations) &&
     other.modifiers.sameElements(modifiers) &&
-      other.qName == qName &&
-      other.formalParameterList == formalParameterList
+    other.qName == qName &&
+    other.formalParameterList == formalParameterList
   }
 
   override def toString: String = {
@@ -306,17 +318,18 @@ case class ConstructorDeclaration(
 }
 
 object ConstructorDeclaration {
-  final val emptyArrayBuffer: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer[ConstructorDeclaration]()
+  final val emptyArrayBuffer: mutable.ArrayBuffer[ConstructorDeclaration] =
+    mutable.ArrayBuffer[ConstructorDeclaration]()
 }
 
 case class MethodDeclaration(
-                              annotations: mutable.ArrayBuffer[Annotation],
-                              modifiers: mutable.ArrayBuffer[Modifier],
-                              typeRef: TypeRef,
-                              id: Id,
-                              formalParameterList: FormalParameterList
-                            ) extends BodyDeclaration
-  with SignatureWithParameterList {
+  annotations: mutable.ArrayBuffer[Annotation],
+  modifiers: mutable.ArrayBuffer[Modifier],
+  var typeRef: TypeRef,
+  id: Id,
+  formalParameterList: FormalParameterList
+) extends BodyDeclaration
+    with SignatureWithParameterList {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
@@ -326,8 +339,8 @@ case class MethodDeclaration(
     other.annotations.sameElements(annotations) &&
     other.modifiers.sameElements(modifiers) &&
     other.typeRef == typeRef &&
-      other.id == id &&
-      other.formalParameterList == formalParameterList
+    other.id == id &&
+    other.formalParameterList == formalParameterList
   }
 
   override def toString: String = {
@@ -337,17 +350,18 @@ case class MethodDeclaration(
 }
 
 object MethodDeclaration {
-  final val emptyArrayBuffer: mutable.ArrayBuffer[MethodDeclaration] = mutable.ArrayBuffer[MethodDeclaration]()
+  final val emptyArrayBuffer: mutable.ArrayBuffer[MethodDeclaration] =
+    mutable.ArrayBuffer[MethodDeclaration]()
 }
 
 class PropertyDeclaration(
-                           val annotations: mutable.ArrayBuffer[Annotation],
-                           val modifiers: mutable.ArrayBuffer[Modifier],
-                           val typeRef: TypeRef,
-                           val id: Id
-                         ) extends BodyDeclaration
-  with Signature
-  with PropertyBlockAssignable {
+  val annotations: mutable.ArrayBuffer[Annotation],
+  val modifiers: mutable.ArrayBuffer[Modifier],
+  var typeRef: TypeRef,
+  val id: Id
+) extends BodyDeclaration
+    with Signature
+    with PropertyBlockAssignable {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
@@ -371,13 +385,14 @@ class PropertyDeclaration(
 }
 
 object PropertyDeclaration {
-  final val emptyArrayBuffer: mutable.ArrayBuffer[PropertyDeclaration] = mutable.ArrayBuffer[PropertyDeclaration]()
+  final val emptyArrayBuffer: mutable.ArrayBuffer[PropertyDeclaration] =
+    mutable.ArrayBuffer[PropertyDeclaration]()
 }
 
 case class FieldDeclaration(
   annotations: mutable.ArrayBuffer[Annotation],
   modifiers: mutable.ArrayBuffer[Modifier],
-  typeRef: TypeRef,
+  var typeRef: TypeRef,
   id: Id
 ) extends BodyDeclaration
     with Signature {
@@ -400,7 +415,8 @@ case class FieldDeclaration(
 }
 
 object FieldDeclaration {
-  final val emptyArrayBuffer: mutable.ArrayBuffer[FieldDeclaration] = mutable.ArrayBuffer[FieldDeclaration]()
+  final val emptyArrayBuffer: mutable.ArrayBuffer[FieldDeclaration] =
+    mutable.ArrayBuffer[FieldDeclaration]()
 }
 
 object Initializer {
@@ -408,12 +424,12 @@ object Initializer {
 }
 
 case class Initializer(isStatic: Boolean) extends BodyDeclaration {
-  override val id: Id = Initializer.id
-  override var location: Option[Location] = None
+  override val id: Id                          = Initializer.id
+  override var location: Option[Location]      = None
   override var blockLocation: Option[Location] = None
 }
 
-sealed trait TypeDeclaration {
+sealed trait TypeDeclaration extends TypeRef {
   val path: String
   val enclosing: Option[ClassTypeDeclaration]
   var id: Option[Id]
@@ -428,18 +444,34 @@ sealed trait TypeDeclaration {
   val methods: mutable.ArrayBuffer[MethodDeclaration]
   val properties: mutable.ArrayBuffer[PropertyDeclaration]
   val fields: mutable.ArrayBuffer[FieldDeclaration]
+
+  override def getFullName: String = {
+    enclosing match {
+      case Some(enc) => s"${enc.id.get}.${id.get.id.contents}"
+      case None      => id.get.id.contents
+    }
+  }
 }
 
 class TypeDeclarationFactory {
-  def createClassTypeDeclaration(path: String, enclosing: Option[ClassTypeDeclaration]): ClassTypeDeclaration = {
+  def createClassTypeDeclaration(
+    path: String,
+    enclosing: Option[ClassTypeDeclaration]
+  ): ClassTypeDeclaration = {
     new ClassTypeDeclaration(path, enclosing)
   }
 
-  def createInterfaceTypeDeclaration(path: String, enclosing: Option[ClassTypeDeclaration]): InterfaceTypeDeclaration = {
+  def createInterfaceTypeDeclaration(
+    path: String,
+    enclosing: Option[ClassTypeDeclaration]
+  ): InterfaceTypeDeclaration = {
     new InterfaceTypeDeclaration(path, enclosing)
   }
 
-  def createEnumTypeDeclaration(path: String, enclosing: Option[ClassTypeDeclaration]): EnumTypeDeclaration = {
+  def createEnumTypeDeclaration(
+    path: String,
+    enclosing: Option[ClassTypeDeclaration]
+  ): EnumTypeDeclaration = {
     new EnumTypeDeclaration(path, enclosing)
   }
 }
@@ -449,7 +481,7 @@ object TypeDeclaration {
 }
 
 class ClassTypeDeclaration(val path: String, val enclosing: Option[ClassTypeDeclaration])
-  extends TypeDeclaration
+    extends TypeDeclaration
     with AnnotationAssignable
     with IdAssignable
     with ModifierAssignable
@@ -458,19 +490,24 @@ class ClassTypeDeclaration(val path: String, val enclosing: Option[ClassTypeDecl
     with MethodDeclarationAssignable
     with InitializerAssignable {
 
-  override var id: Option[Id] = None
-  override var location: Option[Location] = None
+  override var id: Option[Id]                           = None
+  override var location: Option[Location]               = None
   override val modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer[Modifier]()
-  override var extendsTypeRef: Option[TypeRef] = None
-  override var implementsTypeList: Option[TypeList] = None
+  override var extendsTypeRef: Option[TypeRef]          = None
+  override var implementsTypeList: Option[TypeList]     = None
 
-  override val innerTypes: mutable.ArrayBuffer[TypeDeclaration] = mutable.ArrayBuffer[TypeDeclaration]()
-  override val constructors: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer[ConstructorDeclaration]()
-  override val methods: mutable.ArrayBuffer[MethodDeclaration] = mutable.ArrayBuffer[MethodDeclaration]()
-  override val properties: mutable.ArrayBuffer[PropertyDeclaration] = mutable.ArrayBuffer[PropertyDeclaration]()
-  override val fields: mutable.ArrayBuffer[FieldDeclaration] = mutable.ArrayBuffer[FieldDeclaration]()
+  override val innerTypes: mutable.ArrayBuffer[TypeDeclaration] =
+    mutable.ArrayBuffer[TypeDeclaration]()
+  override val constructors: mutable.ArrayBuffer[ConstructorDeclaration] =
+    mutable.ArrayBuffer[ConstructorDeclaration]()
+  override val methods: mutable.ArrayBuffer[MethodDeclaration] =
+    mutable.ArrayBuffer[MethodDeclaration]()
+  override val properties: mutable.ArrayBuffer[PropertyDeclaration] =
+    mutable.ArrayBuffer[PropertyDeclaration]()
+  override val fields: mutable.ArrayBuffer[FieldDeclaration] =
+    mutable.ArrayBuffer[FieldDeclaration]()
 
-  val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
+  val annotations: mutable.ArrayBuffer[Annotation]   = mutable.ArrayBuffer[Annotation]()
   val initializers: mutable.ArrayBuffer[Initializer] = mutable.ArrayBuffer[Initializer]()
 
   override def add(a: Annotation): Unit = annotations.append(a)
@@ -479,7 +516,7 @@ class ClassTypeDeclaration(val path: String, val enclosing: Option[ClassTypeDecl
 
   override def add(m: Modifier): Unit = modifiers.append(m)
 
-  override def add(tr: TypeRef): Unit = extendsTypeRef = Some(tr)
+  override def add(tr: UnresolvedTypeRef): Unit = extendsTypeRef = Some(tr)
 
   override def add(tl: TypeList): Unit = implementsTypeList = Some(tl)
 
@@ -544,27 +581,30 @@ class ClassTypeDeclaration(val path: String, val enclosing: Option[ClassTypeDecl
 }
 
 class InterfaceTypeDeclaration(val path: String, val enclosing: Option[ClassTypeDeclaration])
-  extends TypeDeclaration
+    extends TypeDeclaration
     with AnnotationAssignable
     with IdAssignable
     with ModifierAssignable
     with TypeListAssignable
     with MethodDeclarationAssignable {
 
-  override var id: Option[Id] = None
-  override var location: Option[Location] = None
+  override var id: Option[Id]                           = None
+  override var location: Option[Location]               = None
   override val modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer[Modifier]()
-  override var extendsTypeRef: Option[TypeRef] = None
-  override var implementsTypeList: Option[TypeList] = None
+  override var extendsTypeRef: Option[TypeRef]          = None
+  override var implementsTypeList: Option[TypeList]     = None
 
   override val innerTypes: mutable.ArrayBuffer[TypeDeclaration] = TypeDeclaration.emptyArrayBuffer
-  override val constructors: mutable.ArrayBuffer[ConstructorDeclaration] = ConstructorDeclaration.emptyArrayBuffer
-  override val methods: mutable.ArrayBuffer[MethodDeclaration] = mutable.ArrayBuffer[MethodDeclaration]()
-  override val properties: mutable.ArrayBuffer[PropertyDeclaration] = PropertyDeclaration.emptyArrayBuffer
+  override val constructors: mutable.ArrayBuffer[ConstructorDeclaration] =
+    ConstructorDeclaration.emptyArrayBuffer
+  override val methods: mutable.ArrayBuffer[MethodDeclaration] =
+    mutable.ArrayBuffer[MethodDeclaration]()
+  override val properties: mutable.ArrayBuffer[PropertyDeclaration] =
+    PropertyDeclaration.emptyArrayBuffer
   override val fields: mutable.ArrayBuffer[FieldDeclaration] = FieldDeclaration.emptyArrayBuffer
 
   val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  var extendsTypeList: Option[TypeList] = None
+  var extendsTypeList: Option[TypeList]            = None
 
   override def add(a: Annotation): Unit = annotations.append(a)
 
@@ -592,24 +632,26 @@ class InterfaceTypeDeclaration(val path: String, val enclosing: Option[ClassType
 }
 
 class EnumTypeDeclaration(val path: String, val enclosing: Option[ClassTypeDeclaration])
-  extends TypeDeclaration
+    extends TypeDeclaration
     with IdAssignable
     with ModifierAssignable {
 
-  override var id: Option[Id] = None
-  override var location: Option[Location] = None
+  override var id: Option[Id]                           = None
+  override var location: Option[Location]               = None
   override val modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer[Modifier]()
-  override var extendsTypeRef: Option[TypeRef] = None
-  override var implementsTypeList: Option[TypeList] = None
+  override var extendsTypeRef: Option[TypeRef]          = None
+  override var implementsTypeList: Option[TypeList]     = None
 
   override val innerTypes: mutable.ArrayBuffer[TypeDeclaration] = TypeDeclaration.emptyArrayBuffer
-  override val constructors: mutable.ArrayBuffer[ConstructorDeclaration] = ConstructorDeclaration.emptyArrayBuffer
+  override val constructors: mutable.ArrayBuffer[ConstructorDeclaration] =
+    ConstructorDeclaration.emptyArrayBuffer
   override val methods: mutable.ArrayBuffer[MethodDeclaration] = MethodDeclaration.emptyArrayBuffer
-  override val properties: mutable.ArrayBuffer[PropertyDeclaration] = PropertyDeclaration.emptyArrayBuffer
+  override val properties: mutable.ArrayBuffer[PropertyDeclaration] =
+    PropertyDeclaration.emptyArrayBuffer
   override val fields: mutable.ArrayBuffer[FieldDeclaration] = FieldDeclaration.emptyArrayBuffer
 
   val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  val constants: mutable.ArrayBuffer[Id] = mutable.ArrayBuffer[Id]()
+  val constants: mutable.ArrayBuffer[Id]           = mutable.ArrayBuffer[Id]()
 
   override def add(a: Annotation): Unit = annotations.append(a)
 
@@ -633,7 +675,11 @@ class EnumTypeDeclaration(val path: String, val enclosing: Option[ClassTypeDecla
 
 object Parse {
 
-  def parseClassType(ctd: ClassTypeDeclaration, tokens: Tokens, path: String): ClassTypeDeclaration = {
+  def parseClassType(
+    ctd: ClassTypeDeclaration,
+    tokens: Tokens,
+    path: String
+  ): ClassTypeDeclaration = {
     var index = parseModifiers(0, tokens, ctd)
 
     if (!tokens(index).exists(_.matches(Tokens.ClassStr)))
@@ -653,7 +699,11 @@ object Parse {
     ctd
   }
 
-  def parseInterfaceType(itd: InterfaceTypeDeclaration, tokens: Tokens, path: String): InterfaceTypeDeclaration = {
+  def parseInterfaceType(
+    itd: InterfaceTypeDeclaration,
+    tokens: Tokens,
+    path: String
+  ): InterfaceTypeDeclaration = {
     var index = parseModifiers(0, tokens, itd)
 
     if (!tokens(index).exists(_.matches(Tokens.InterfaceStr)))
@@ -749,7 +799,7 @@ object Parse {
     Some(pb)
   }
 
-  private def toQualifiedName(tr: TypeRef): QualifiedName = {
+  private def toQualifiedName(tr: UnresolvedTypeRef): QualifiedName = {
     val qName = new QualifiedName
     tr.typeNames.foreach(tn => qName.add(tn.id))
     qName
@@ -969,7 +1019,7 @@ object Parse {
 
   private def parseTypeRef(startIndex: Int, tokens: Tokens, res: TypeRefAssignable): Int = {
 
-    val typeRef = new TypeRef
+    val typeRef = new UnresolvedTypeRef
     res.add(typeRef)
 
     var index = parseTypeName(startIndex, tokens, typeRef)

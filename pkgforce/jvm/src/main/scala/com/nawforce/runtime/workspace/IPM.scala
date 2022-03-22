@@ -6,9 +6,15 @@ package com.nawforce.runtime.workspace
 import com.financialforce.oparser.{
   ClassTypeDeclaration,
   EnumTypeDeclaration,
+  FieldDeclaration,
+  FormalParameterList,
   InterfaceTypeDeclaration,
+  PropertyDeclaration,
+  Signature,
+  SignatureWithParameterList,
   TypeDeclaration,
-  TypeDeclarationFactory
+  TypeDeclarationFactory,
+  UnresolvedTypeRef
 }
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex}
@@ -108,21 +114,26 @@ object IPM extends TriHierarchy {
     override val index: DocumentIndex,
     override val dependents: ArraySeq[Module],
     loadingPool: ExecutorService
-  ) extends TriModule {
+  ) extends TriModule
+      with TypeFinder {
 
-    private val lowerNames = mutable.TreeSet[String]()
-    private val types      = mutable.Map[Name, TypeDeclaration]()
+    private val lowerNames       = mutable.TreeSet[String]()
+    private[workspace] val types = mutable.Map[Name, TypeDeclaration]()
 
     loadClasses()
 
     private def loadClasses(): Unit = {
       val namespace = pkg.namespace
-      new ApexClassLoader(loadingPool, ModuleClassFactory)
+      val classes = new ApexClassLoader(loadingPool, ModuleClassFactory)
         .loadClasses(index.get(ApexNature), pkg.org.issues)
-        .foreach { docAndType =>
-          markModule(docAndType._2)
-          insertClass(docAndType._1.typeName(namespace).toString, docAndType._2)
-        }
+      classes.foreach { docAndType =>
+        markModule(docAndType._2)
+        insertClass(docAndType._1.typeName(namespace).toString, docAndType._2)
+      }
+      classes.foreach { docAndType =>
+        typeResolve(docAndType._2)
+        docAndType._2.innerTypes.foreach(typeResolve)
+      }
     }
 
     private def markModule(decl: TypeDeclaration): Unit = {
@@ -132,6 +143,34 @@ object IPM extends TriHierarchy {
           scoped.module = Some(this)
         case _ => ()
       }
+    }
+
+    private def typeResolve(decl: TypeDeclaration): Unit = {
+      def resolveSignature(body: Signature): Unit = {
+        body.typeRef = findType(body.typeRef, decl).getOrElse(body.typeRef)
+        body match {
+          case sfpl: SignatureWithParameterList => resolveParameterList(sfpl.formalParameterList)
+          case _                                =>
+        }
+      }
+
+      def resolveParameterList(fpl: FormalParameterList): Unit = {
+        fpl.formalParameters.foreach(fp => {
+          fp.typeRef = fp.typeRef.flatMap(tr => findType(tr, decl)).orElse(fp.typeRef)
+        })
+      }
+
+      decl.extendsTypeRef = decl.extendsTypeRef match {
+        case Some(etr) => findType(etr, decl).orElse(decl.extendsTypeRef)
+        case None      => None
+      }
+      decl.implementsTypeList.foreach(tl => {
+        tl.typeRefs.mapInPlace(tr => findType(tr, decl).getOrElse(tr))
+      })
+      decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
+      decl.properties.foreach(resolveSignature)
+      decl.fields.foreach(resolveSignature)
+      decl.methods.foreach(resolveSignature)
     }
 
     private def insertClass(name: String, decl: TypeDeclaration): Unit = {

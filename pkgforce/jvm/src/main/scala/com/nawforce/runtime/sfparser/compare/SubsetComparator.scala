@@ -222,7 +222,7 @@ class SubsetComparator(
     (false, ArrayBuffer(), ArrayBuffer())
   }
 
-  private def getTypeArgumentTypeRefs(typ: TypeRef): ArrayBuffer[TypeRef] = {
+  private def getTypeArgumentTypeRefs(typ: UnresolvedTypeRef): ArrayBuffer[TypeRef] = {
     typ.typeNames
       .flatMap(_.typeArguments)
       .flatMap(_.typeList)
@@ -242,7 +242,7 @@ class SubsetComparator(
   }
 
   private def compareTypeRef(first: TypeRef, second: TypeRef): Boolean = {
-    def checkTypeArguments(): Boolean = {
+    def checkTypeArguments(first: UnresolvedTypeRef, second: UnresolvedTypeRef): Boolean = {
       val firstTypArgumentTypeRefs  = getTypeArgumentTypeRefs(first)
       val secondTypArgumentTypeRefs = getTypeArgumentTypeRefs(second)
       (firstTypArgumentTypeRefs.isEmpty && secondTypArgumentTypeRefs.isEmpty) || areTypeRefsSubsets(
@@ -255,16 +255,26 @@ class SubsetComparator(
       return true
     }
 
+    first match {
+      case td: TypeDeclaration => return td.getFullName == second.getFullName
+      case _                   =>
+    }
+
+    val fUnresolvedType = first.asInstanceOf[UnresolvedTypeRef]
+    val sUnresolvedType = second.asInstanceOf[UnresolvedTypeRef]
     val fTypeNamesRemovedResolvedTypes =
-      first.typeNames.filterNot(f => fResolver.get.canBeResolved(f.id))
+      fUnresolvedType.typeNames.filterNot(f => fResolver.get.canBeResolved(f.id))
     val sTypeNamesRemovedResolvedTypes =
-      second.typeNames.filterNot(s => sResolver.get.canBeResolved(s.id))
+      sUnresolvedType.typeNames.filterNot(s => sResolver.get.canBeResolved(s.id))
     //if fTypeNamesRemovedResolvedTypes and sTypeNamesRemovedResolvedTypes are empty then all the types could be resolved
     var checks =
-      fTypeNamesRemovedResolvedTypes == sTypeNamesRemovedResolvedTypes && first.arraySubscripts == second.arraySubscripts
+      fTypeNamesRemovedResolvedTypes == sTypeNamesRemovedResolvedTypes && fUnresolvedType.arraySubscripts == sUnresolvedType.arraySubscripts
     if (sTypeNamesRemovedResolvedTypes.isEmpty && fTypeNamesRemovedResolvedTypes.nonEmpty) {
       // we have all resolved types in second
-      checks = checkTypeArguments() && first.arraySubscripts == second.arraySubscripts
+      checks = checkTypeArguments(
+        fUnresolvedType,
+        sUnresolvedType
+      ) && fUnresolvedType.arraySubscripts == sUnresolvedType.arraySubscripts
       if (checks)
         warnings.append(
           prettyWarnings(
@@ -275,9 +285,9 @@ class SubsetComparator(
         )
     }
     if (!checks) {
-      if (first.typeNames.map(_.id) == second.typeNames.map(_.id)) {
+      if (fUnresolvedType.typeNames.map(_.id) == sUnresolvedType.typeNames.map(_.id)) {
         //Type arguments for type names must have failed
-        checks = checkTypeArguments()
+        checks = checkTypeArguments(fUnresolvedType, sUnresolvedType)
       } else {
         checks = compareListAdnArraySubscriptIfAny(first, second)
         if (checks) {
@@ -296,25 +306,33 @@ class SubsetComparator(
 
   private def compareListAdnArraySubscriptIfAny(first: TypeRef, second: TypeRef): Boolean = {
     //Check if type is array subscript and the other has matching number of List type
+    first match {
+      case td: TypeDeclaration => return td.getFullName == second.getFullName
+      case _                   =>
+    }
     //TODO we need to compare typerefs again make sure the other are matching
-    if (first.arraySubscripts.nonEmpty) {
+    val fUnresolvedType = first.asInstanceOf[UnresolvedTypeRef]
+    val sUnresolvedType = second.asInstanceOf[UnresolvedTypeRef]
+
+    if (fUnresolvedType.arraySubscripts.nonEmpty) {
       val allTypeNames = ArrayBuffer[TypeName]()
       val typeRefQueue = mutable.Queue[TypeRef]()
 
-      getTypeArgumentTypeRefs(second).foreach(typeRefQueue.append)
-      second.typeNames.foreach(allTypeNames.append)
+      getTypeArgumentTypeRefs(sUnresolvedType).foreach(typeRefQueue.append)
+      sUnresolvedType.typeNames.foreach(allTypeNames.append)
       while (typeRefQueue.nonEmpty) {
         typeRefQueue
           .clone()
           .foreach(x => {
-            getTypeArgumentTypeRefs(x).foreach(typeRefQueue.append)
-            x.typeNames.foreach(allTypeNames.append)
+            val unresolvedX = x.asInstanceOf[UnresolvedTypeRef]
+            getTypeArgumentTypeRefs(unresolvedX).foreach(typeRefQueue.append)
+            unresolvedX.typeNames.foreach(allTypeNames.append)
             typeRefQueue.dequeue()
           })
       }
       return allTypeNames
         .map(_.id.id.lowerCaseContents)
-        .count(_.equalsIgnoreCase("list")) == first.arraySubscripts.length
+        .count(_.equalsIgnoreCase("list")) == fUnresolvedType.arraySubscripts.length
     }
     false
   }
