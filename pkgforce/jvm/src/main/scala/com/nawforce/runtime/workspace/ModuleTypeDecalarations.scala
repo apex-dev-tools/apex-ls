@@ -9,7 +9,9 @@ import com.nawforce.runtime.workspace.IPM.Module
 import scala.collection.immutable.ArraySeq
 
 trait ModuleScoped {
-  var module: Option[IPM.Module] = None
+  var _module: Option[IPM.Module] = None
+
+  def module: Option[IPM.Module] = _module
 }
 
 trait IModuleTypeDeclaration extends ITypeDeclaration with ModuleScoped {

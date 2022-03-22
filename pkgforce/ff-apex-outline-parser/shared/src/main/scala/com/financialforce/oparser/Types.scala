@@ -209,6 +209,18 @@ class TypeName(val id: Id) extends TypeArgumentsAssignable {
   }
 }
 
+object TypeName {
+  def apply(name: String): TypeName = {
+    new TypeName(Id(IdToken(name, Location.default)))
+  }
+
+  def apply(name: String, params: Array[String]): TypeName = {
+    val typeName = apply(name)
+    typeName.typeArguments = Some(TypeArguments(params))
+    typeName
+  }
+}
+
 class TypeArguments extends TypeListAssignable {
   var typeList: Option[TypeList] = None
 
@@ -222,6 +234,19 @@ class TypeArguments extends TypeListAssignable {
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[TypeArguments]
     other.typeList == typeList
+  }
+}
+
+object TypeArguments {
+  def apply(params: Array[String]): TypeArguments = {
+    val typeArguments = new TypeArguments
+    typeArguments.typeList = Some(new TypeList)
+    typeArguments.typeList.get.typeRefs.addAll(params.map(tp => {
+      val typeRef = new UnresolvedTypeRef()
+      typeRef.typeNames.append(new TypeName(Id(IdToken(tp, Location.default))))
+      typeRef
+    }))
+    typeArguments
   }
 }
 
@@ -444,6 +469,7 @@ trait ITypeDeclaration extends TypeRef {
   def location: Location
 
   def id: Id
+  def typeName: TypeName
   def enclosing: Option[ITypeDeclaration]
   def extendsTypeRef: TypeRef
   def implementsTypeList: TypeList
@@ -487,6 +513,7 @@ sealed class TypeDeclaration(val path: String, _enclosing: ClassTypeDeclaration)
   override def location: Location = _location
 
   override def id: Id = _id
+  override def typeName: TypeName = new TypeName(id)
   override def enclosing: Option[ClassTypeDeclaration] = Option(_enclosing)
   override def extendsTypeRef: TypeRef = _extendsTypeRef
   override def implementsTypeList: TypeList = _implementsTypeList

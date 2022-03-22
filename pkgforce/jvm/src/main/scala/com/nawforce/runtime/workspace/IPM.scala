@@ -129,7 +129,7 @@ object IPM extends TriHierarchy {
       decl match {
         case scoped: ModuleScoped =>
           decl.innerTypes.foreach(markModule)
-          scoped.module = moduleOpt
+          scoped._module = moduleOpt
         case _ => ()
       }
     }
