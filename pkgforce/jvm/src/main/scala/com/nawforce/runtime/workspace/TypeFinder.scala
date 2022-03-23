@@ -1,6 +1,6 @@
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{ITypeDeclaration, TypeName, TypeRef, UnresolvedTypeRef}
+import com.financialforce.oparser.{ITypeDeclaration, TypeNameSegment, TypeRef, UnresolvedTypeRef}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -23,30 +23,30 @@ trait TypeFinder {
       )
   }
 
-  private def getUnresolvedTypeNames(typeRef: TypeRef): ArrayBuffer[TypeName] = {
+  private def getUnresolvedTypeNames(typeRef: TypeRef): ArrayBuffer[TypeNameSegment] = {
     typeRef match {
-      case ur: UnresolvedTypeRef => ur.typeNames
+      case ur: UnresolvedTypeRef => ur.typeNameSegments
       case _                     => ArrayBuffer.empty
     }
   }
 
-  private def getType(typeNames: ArrayBuffer[TypeName]): Option[ITypeDeclaration] = {
+  private def getType(typeNames: ArrayBuffer[TypeNameSegment]): Option[ITypeDeclaration] = {
     self.findExactTypeId(asFullName(typeNames))
   }
 
-  private def findScalarType(typeNames: ArrayBuffer[TypeName]): Option[ITypeDeclaration] = {
+  private def findScalarType(typeNames: ArrayBuffer[TypeNameSegment]): Option[ITypeDeclaration] = {
     //TODO
     //Would it return a TD?
     None
   }
 
-  private def getSystemTypes(typeNames: ArrayBuffer[TypeName]): Option[ITypeDeclaration] = {
+  private def getSystemTypes(typeNames: ArrayBuffer[TypeNameSegment]): Option[ITypeDeclaration] = {
     //TODO
     None
   }
 
   private def findLocalTypeFor(
-    typeNames: ArrayBuffer[TypeName],
+    typeNames: ArrayBuffer[TypeNameSegment],
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
     //Shortcut self reference
@@ -64,7 +64,7 @@ trait TypeFinder {
   }
 
   private def getNestedType(
-    typeNames: ArrayBuffer[TypeName],
+    typeNames: ArrayBuffer[TypeNameSegment],
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
     if (isCompound(typeNames)) {
@@ -75,7 +75,7 @@ trait TypeFinder {
   }
 
   private def getFromOuterType(
-    typeNames: ArrayBuffer[TypeName],
+    typeNames: ArrayBuffer[TypeNameSegment],
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
     if (isCompound(typeNames) || from.enclosing.isEmpty) {
@@ -93,12 +93,15 @@ trait TypeFinder {
     }
   }
 
-  private def findNestedType(from: ITypeDeclaration, name: TypeName): Option[ITypeDeclaration] = {
+  private def findNestedType(
+    from: ITypeDeclaration,
+    name: TypeNameSegment
+  ): Option[ITypeDeclaration] = {
     from.innerTypes.find(x => x.id == name.id)
   }
 
   private def getFromSuperType(
-    typeNames: ArrayBuffer[TypeName],
+    typeNames: ArrayBuffer[TypeNameSegment],
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
     if (from.extendsTypeRef == null)
@@ -120,11 +123,11 @@ trait TypeFinder {
     }
   }
 
-  private def isCompound(typeNames: ArrayBuffer[TypeName]): Boolean = {
+  private def isCompound(typeNames: ArrayBuffer[TypeNameSegment]): Boolean = {
     typeNames.size > 1
   }
 
-  private def asFullName(typeNames: ArrayBuffer[TypeName]): String = {
+  private def asFullName(typeNames: ArrayBuffer[TypeNameSegment]): String = {
     typeNames.map(_.id.id.contents).mkString(".")
   }
 

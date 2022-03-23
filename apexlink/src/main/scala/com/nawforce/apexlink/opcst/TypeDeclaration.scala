@@ -440,8 +440,14 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     )
 
     val location = OPLocation(
-      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLine,
-      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLineOffset - 1,
+      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.id.location.startLine,
+      md.typeRef
+        .asInstanceOf[UnresolvedTypeRef]
+        .typeNameSegments(0)
+        .id
+        .id
+        .location
+        .startLineOffset - 1,
       0,
       md.location.get.endLine,
       md.location.get.endLineOffset - 1,
@@ -480,8 +486,14 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     )
 
     val location = OPLocation(
-      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLine,
-      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLineOffset - 1,
+      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.id.location.startLine,
+      md.typeRef
+        .asInstanceOf[UnresolvedTypeRef]
+        .typeNameSegments(0)
+        .id
+        .id
+        .location
+        .startLineOffset - 1,
       0,
       md.location.get.endLine,
       md.location.get.endLineOffset - 1,
@@ -513,8 +525,14 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, fieldTypeName, vd)
     val location = OPLocation(
-      fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLine,
-      fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLineOffset - 1,
+      fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.id.location.startLine,
+      fd.typeRef
+        .asInstanceOf[UnresolvedTypeRef]
+        .typeNameSegments(0)
+        .id
+        .id
+        .location
+        .startLineOffset - 1,
       0,
       if (fd.blockLocation.isDefined) fd.blockLocation.get.endLine else fd.id.id.location.endLine,
       if (fd.blockLocation.isDefined) fd.blockLocation.get.endLineOffset
@@ -651,8 +669,14 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       )
 
     val location = OPLocation(
-      pd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLine,
-      pd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNames(0).id.id.location.startLineOffset - 1,
+      pd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.id.location.startLine,
+      pd.typeRef
+        .asInstanceOf[UnresolvedTypeRef]
+        .typeNameSegments(0)
+        .id
+        .id
+        .location
+        .startLineOffset - 1,
       0,
       pd.location.get.endLine,
       pd.location.get.endLineOffset - 1,

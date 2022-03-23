@@ -16,7 +16,7 @@ import com.financialforce.oparser.{
   QualifiedName,
   TypeArguments,
   TypeList,
-  TypeName,
+  TypeNameSegment,
   TypeRef,
   UnresolvedTypeRef
 }
@@ -28,14 +28,14 @@ trait DeclarationGeneratorHelper {
     typeNameWithArguments: Map[String, Option[Array[UnresolvedTypeRef]]],
     totalSubscripts: Int = 0
   ): UnresolvedTypeRef = {
-    val typNames: Array[TypeName] = typeNameWithArguments map {
+    val typNames: Array[TypeNameSegment] = typeNameWithArguments map {
       case (name, args) => toTypeNames(name, args)
     } to Array
     toTypeRef(typNames, totalSubscripts)
   }
 
-  def toTypeNames(typeName: String, maybeArguments: Option[Array[UnresolvedTypeRef]]): TypeName = {
-    val tp = new TypeName(toId(typeName))
+  def toTypeNames(typeName: String, maybeArguments: Option[Array[UnresolvedTypeRef]]): TypeNameSegment = {
+    val tp = new TypeNameSegment(toId(typeName))
     maybeArguments match {
       case Some(arguments) => tp.add(toTypeArguments(Some(arguments)))
       case _               =>
@@ -58,7 +58,7 @@ trait DeclarationGeneratorHelper {
     tl
   }
 
-  def toTypeRef(typeNames: Array[TypeName], totalSubscripts: Int): UnresolvedTypeRef = {
+  def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {
     val tr = new UnresolvedTypeRef()
     typeNames.foreach(tr.add)
     Array.fill(totalSubscripts)(new ArraySubscripts).foreach(tr.add)

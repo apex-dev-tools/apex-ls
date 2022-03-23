@@ -15,11 +15,15 @@
 package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
-import com.nawforce.pkgforce.names.{DotName, Name, Names}
-import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{emptyPaths, getTypeName}
+import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, Nature}
+import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
+  emptyPaths,
+  emptyTypeDeclarations,
+  getTypeName
+}
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
-import java.lang.reflect.TypeVariable
 import java.nio.file.{FileSystemNotFoundException, FileSystems, Files, Paths}
 import java.util
 import scala.collection.immutable.{ArraySeq, HashMap}
@@ -34,7 +38,15 @@ class PlatformTypeDeclaration(
 
   final private val cls: java.lang.Class[_] = native.asInstanceOf[java.lang.Class[_]]
 
-  final private val typeInfo = getTypeName(cls)
+  final val nature: Nature = {
+    (cls.isEnum, cls.isInterface) match {
+      case (true, _) => ENUM_NATURE
+      case (_, true) => INTERFACE_NATURE
+      case _         => CLASS_NATURE
+    }
+  }
+
+  final val typeInfo: TypeInfo = getTypeName(cls)
 
   override def module: Option[IPM.Module] = None
 
@@ -42,9 +54,9 @@ class PlatformTypeDeclaration(
 
   override val location: Location = Location.default
 
-  override val id: Id = typeInfo._2.id
+  override val id: Id = typeInfo.typeName.id
 
-  override val typeName: TypeName = typeInfo._2
+  override val typeNameSegment: TypeNameSegment = typeInfo.typeName
 
   override def extendsTypeRef: TypeRef = null // TODO
 
@@ -56,7 +68,15 @@ class PlatformTypeDeclaration(
 
   override def initializers: ArraySeq[Initializer] = ArraySeq.empty // TODO
 
-  override def innerTypes: ArraySeq[ITypeDeclaration] = ArraySeq.empty // TODO
+  override def innerTypes: ArraySeq[ITypeDeclaration] = {
+    if (nature == CLASS_NATURE) {
+      ArraySeq.unsafeWrapArray(
+        cls.getClasses.map(nested => new PlatformTypeDeclaration(nested, Some(this)))
+      )
+    } else {
+      emptyTypeDeclarations
+    }
+  }
 
   override def constructors: ArraySeq[ConstructorDeclaration] = ArraySeq.empty // TODO
 
@@ -65,17 +85,18 @@ class PlatformTypeDeclaration(
   override def properties: ArraySeq[PropertyDeclaration] = ArraySeq.empty // TODO
 
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.empty // TODO
-
 }
 
 object PlatformTypeDeclaration {
-  final val emptyPaths: Array[String] = Array.empty
+  final val emptyPaths: Array[String]                         = Array.empty
+  final val emptyArgs: Array[String]                          = Array.empty
+  final val emptyTypeDeclarations: ArraySeq[ITypeDeclaration] = ArraySeq.empty
 
   /* Java package prefix for platform types */
   private val platformPackage = "com.nawforce.runforce"
 
   /* Cache of loaded platform declarations */
-  private val declarationCache = mutable.Map[Name, Option[PlatformTypeDeclaration]]()
+  private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
 
   /* Get a Path that leads to platform classes */
   lazy val platformPackagePath: java.nio.file.Path = {
@@ -93,23 +114,77 @@ object PlatformTypeDeclaration {
     }
   }
 
-  /* Get a type, in general don't call this direct, use TypeRequest which will delegate here. If needed this will
-   * construct a GenericPlatformTypeDeclaration to specialise a PlatformTypeDeclaration but you must provide from
-   * for that to be possible as this allows discovery of the correct type arguments.
-   */
-  def get(typeName: Name, from: Option[TypeDeclaration]): Option[PlatformTypeDeclaration] = {
-    getDeclaration(typeName)
+  def get(typeRef: UnresolvedTypeRef): Option[PlatformTypeDeclaration] = {
 
-    // TODO: Handle generic request
+    // Conversion will fail if typeRef has unresolved type arguments
+    val typeNameOpt = asTypeName(typeRef)
+    if (typeNameOpt.isEmpty)
+      return None
+
+    // Non-generic lookup
+    val typeName = typeNameOpt.get
+    val tdOpt    = getDeclaration(asDotName(typeName))
+    if (tdOpt.isEmpty && typeName.params.isEmpty)
+      return None
+
+    // Quick fail on wrong number of type variables
+    val td            = tdOpt.get
+    val typeArguments = td.typeNameSegment.getArguments
+    if (typeArguments.length != typeName.params.size)
+      return None
+
+    if (typeArguments.isEmpty) {
+      Some(td)
+    } else {
+      val resolvedArgs = typeArguments.collect { case td: IModuleTypeDeclaration => td }
+      Some(GenericPlatformTypeDeclaration.get(typeName, resolvedArgs, td))
+    }
+  }
+
+  /* Converts UnresolvedTypeRef to a TypeName, iff all type arguments are resolved */
+  private def asTypeName(typeRef: UnresolvedTypeRef): Option[TypeName] = {
+    asTypeName(typeRef.typeNameSegments.toList, None).map(fullTypeName => {
+      typeRef.arraySubscripts.foldLeft[TypeName](fullTypeName)((typeName, _) => {
+        new TypeName(Names.List$, Seq(typeName), Some(TypeName.System))
+      })
+    })
+  }
+
+  private def asTypeName(typeName: TypeNameSegment, outer: Option[TypeName]): Option[TypeName] = {
+    val resolvedSegments =
+      typeName.getArguments.collect { case td: IModuleTypeDeclaration => td }.map(_.typeName).toSeq
+    if (resolvedSegments.length != typeName.getArguments.length) {
+      None
+    } else {
+      val resolvedTypeNames: Seq[TypeName] =
+        resolvedSegments.flatMap(segments => asTypeName(segments.toList))
+      Some(new TypeName(Name(typeName.id.toString), resolvedTypeNames, outer))
+    }
+  }
+
+  def asTypeName(
+    typeNameSegments: List[TypeNameSegment],
+    outer: Option[TypeName] = None
+  ): Option[TypeName] = {
+    typeNameSegments match {
+      case hd :: tl => asTypeName(hd, outer).flatMap(converted => asTypeName(tl, Some(converted)))
+      case Nil      => outer
+    }
+  }
+
+  private def asDotName(typeName: TypeName): DotName = {
+    typeName.outer match {
+      case None    => DotName(Seq(typeName.name))
+      case Some(x) => asDotName(x).append(typeName.name)
+    }
   }
 
   /* Get a declaration for a class from a Name. */
-  private def getDeclaration(typeName: Name): Option[PlatformTypeDeclaration] = {
-    val dotName = DotName(typeName.value)
+  private def getDeclaration(dotName: DotName): Option[PlatformTypeDeclaration] = {
     declarationCache.getOrElseUpdate(
-      typeName, {
+      dotName, {
         val matched = classNameMap.get(dotName)
-        assert(matched.size < 2, s"Found multiple platform type matches for $typeName")
+        assert(matched.size < 2, s"Found multiple platform type matches for $dotName")
         matched.map(
           name =>
             new PlatformTypeDeclaration(
@@ -170,17 +245,32 @@ object PlatformTypeDeclaration {
       })
   }
 
-  def getTypeName(cls: java.lang.Class[_]): (String, TypeName) = {
+  def getTypeName(cls: java.lang.Class[_]): TypeInfo = {
     val cname = cls.getCanonicalName
     val names = cname.drop(platformPackage.length + 1).split('.').reverse
     // TODO: Remove this, just to be sure for now
     assert(names.length == 2)
     val params = cls.getTypeParameters.map(_.getName)
     if (params.nonEmpty) {
-      (names(1), TypeName(names.head, params))
+      TypeInfo(names(1), params, TypeNameSegment(names.head, params))
     } else {
-      (names(1), TypeName(names.head))
+      TypeInfo(names(1), emptyArgs, TypeNameSegment(names.head))
     }
   }
 
+  def createTypeName(name: String, params: Array[IModuleTypeDeclaration]): TypeNameSegment = {
+    val typeName = TypeNameSegment(name)
+    typeName.typeArguments = Some(createTypeArguments(params))
+    typeName
+  }
+
+  def createTypeArguments(params: Array[IModuleTypeDeclaration]): TypeArguments = {
+    val typeArguments = new TypeArguments
+    typeArguments.typeList = Some(new TypeList)
+    typeArguments.typeList.get.typeRefs.addAll(params)
+    typeArguments
+  }
+
 }
+
+case class TypeInfo(namespace: String, args: Array[String], typeName: TypeNameSegment)

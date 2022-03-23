@@ -41,7 +41,7 @@ import com.financialforce.oparser.{
   TypeArguments,
   TypeDeclaration,
   TypeList,
-  TypeName,
+  TypeNameSegment,
   UnresolvedTypeRef
 }
 import org.apache.commons.lang3.reflect.FieldUtils
@@ -440,7 +440,7 @@ class SFParser(source: Map[String, String]) {
           //TODO: Resolve array subscripts properly
           //Temporary work around for comparison work as something like String[][] resolves
           // into deep nested typeRef with string type arguments
-          typ.getNames.forEach(x => res.add(new TypeName(toId(x.getValue, x.getLoc))))
+          typ.getNames.forEach(x => res.add(new TypeNameSegment(toId(x.getValue, x.getLoc))))
           for (_ <- 0 to typ.toString.split("\\[").length - 2) {
             res.add(ArraySubscripts())
           }
@@ -457,7 +457,7 @@ class SFParser(source: Map[String, String]) {
             val ta = new TypeArguments
             val tl = toTypeList(typArguments.flatMap(x => toTypeRef(Some(x))))
             ta.add(tl)
-            res.typeNames.last.typeArguments = Some(ta)
+            res.typeNameSegments.last.typeArguments = Some(ta)
           }
         }
 
@@ -472,7 +472,7 @@ class SFParser(source: Map[String, String]) {
     name: String,
     location: apex.jorje.data.Location
   ) = {
-    val tp = new TypeName(toId(name, location))
+    val tp = new TypeNameSegment(toId(name, location))
     val tl = toTypeList(typeArguments.asScala.flatMap(x => toTypeRef(Some(x))))
     if (tl.typeRefs.nonEmpty) {
       val typeArgument = new TypeArguments()
@@ -487,7 +487,7 @@ class SFParser(source: Map[String, String]) {
     name: String,
     location: apex.jorje.data.Location
   ) = {
-    val tp = new TypeName(toId(name, location))
+    val tp = new TypeNameSegment(toId(name, location))
     val tl = toTypeList(typeArguments.asScala.map(toTypeRef))
     if (tl.typeRefs.nonEmpty) {
       val typeArgument = new TypeArguments()

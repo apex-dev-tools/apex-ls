@@ -5,7 +5,6 @@ package com.financialforce.oparser
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 object StringUtils {
 
@@ -50,8 +49,8 @@ trait TypeRefAssignable {
   def add(tr: UnresolvedTypeRef): Unit
 }
 
-trait TypeNameAssignable {
-  def add(tn: TypeName): Unit
+trait TypeNameSegmentAssignable {
+  def add(tn: TypeNameSegment): Unit
 }
 
 trait TypeListAssignable {
@@ -167,11 +166,11 @@ class QualifiedName extends IdAssignable {
   }
 }
 
-class UnresolvedTypeRef extends TypeNameAssignable with ArraySubscriptsAssignable with TypeRef {
-  val typeNames: mutable.ArrayBuffer[TypeName]              = mutable.ArrayBuffer[TypeName]()
+class UnresolvedTypeRef extends TypeNameSegmentAssignable with ArraySubscriptsAssignable with TypeRef {
+  val typeNameSegments: mutable.ArrayBuffer[TypeNameSegment] = mutable.ArrayBuffer[TypeNameSegment]()
   val arraySubscripts: mutable.ArrayBuffer[ArraySubscripts] = mutable.ArrayBuffer[ArraySubscripts]()
 
-  override def add(tn: TypeName): Unit = typeNames.append(tn)
+  override def add(tn: TypeNameSegment): Unit = typeNameSegments.append(tn)
 
   override def add(as: ArraySubscripts): Unit = arraySubscripts.append(as)
 
@@ -183,22 +182,26 @@ class UnresolvedTypeRef extends TypeNameAssignable with ArraySubscriptsAssignabl
     if (!obj.isInstanceOf[UnresolvedTypeRef])
       return false
     val other = obj.asInstanceOf[UnresolvedTypeRef]
-    other.typeNames == typeNames && other.arraySubscripts == arraySubscripts
+    other.typeNameSegments == typeNameSegments && other.arraySubscripts == arraySubscripts
   }
 
   override def toString: String = {
     import StringUtils._
-    s"${asString(typeNames, ".")}${asString(arraySubscripts, "")}"
+    s"${asString(typeNameSegments, ".")}${asString(arraySubscripts, "")}"
   }
 }
 
-class TypeName(val id: Id) extends TypeArgumentsAssignable {
+class TypeNameSegment(val id: Id) extends TypeArgumentsAssignable {
   var typeArguments: Option[TypeArguments] = None
 
   override def add(ta: TypeArguments): Unit = typeArguments = Some(ta)
 
+  def getArguments: Array[TypeRef] = {
+    typeArguments.flatMap(_.typeList).map(_.typeRefs.toArray).getOrElse(Array())
+  }
+
   override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[TypeName]
+    val other = obj.asInstanceOf[TypeNameSegment]
 
     id == other.id && typeArguments == other.typeArguments
   }
@@ -209,12 +212,12 @@ class TypeName(val id: Id) extends TypeArgumentsAssignable {
   }
 }
 
-object TypeName {
-  def apply(name: String): TypeName = {
-    new TypeName(Id(IdToken(name, Location.default)))
+object TypeNameSegment {
+  def apply(name: String): TypeNameSegment = {
+    new TypeNameSegment(Id(IdToken(name, Location.default)))
   }
 
-  def apply(name: String, params: Array[String]): TypeName = {
+  def apply(name: String, params: Array[String]): TypeNameSegment = {
     val typeName = apply(name)
     typeName.typeArguments = Some(TypeArguments(params))
     typeName
@@ -243,7 +246,7 @@ object TypeArguments {
     typeArguments.typeList = Some(new TypeList)
     typeArguments.typeList.get.typeRefs.addAll(params.map(tp => {
       val typeRef = new UnresolvedTypeRef()
-      typeRef.typeNames.append(new TypeName(Id(IdToken(tp, Location.default))))
+      typeRef.typeNameSegments.append(new TypeNameSegment(Id(IdToken(tp, Location.default))))
       typeRef
     }))
     typeArguments
@@ -469,7 +472,9 @@ trait ITypeDeclaration extends TypeRef {
   def location: Location
 
   def id: Id
-  def typeName: TypeName
+
+  def typeNameSegment: TypeNameSegment
+
   def enclosing: Option[ITypeDeclaration]
   def extendsTypeRef: TypeRef
   def implementsTypeList: TypeList
@@ -483,6 +488,13 @@ trait ITypeDeclaration extends TypeRef {
   def methods: ArraySeq[MethodDeclaration]
   def properties: ArraySeq[PropertyDeclaration]
   def fields: ArraySeq[FieldDeclaration]
+
+  def typeName: Array[TypeNameSegment] = {
+    enclosing match {
+      case Some(enc) => Array(enc.typeNameSegment, typeNameSegment)
+      case None      => Array(typeNameSegment)
+    }
+  }
 
   override def getFullName: String = {
     enclosing match {
@@ -513,7 +525,9 @@ sealed class TypeDeclaration(val path: String, _enclosing: ClassTypeDeclaration)
   override def location: Location = _location
 
   override def id: Id = _id
-  override def typeName: TypeName = new TypeName(id)
+
+  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id)
+
   override def enclosing: Option[ClassTypeDeclaration] = Option(_enclosing)
   override def extendsTypeRef: TypeRef = _extendsTypeRef
   override def implementsTypeList: TypeList = _implementsTypeList
@@ -812,7 +826,7 @@ object Parse {
 
   private def toQualifiedName(tr: UnresolvedTypeRef): QualifiedName = {
     val qName = new QualifiedName
-    tr.typeNames.foreach(tn => qName.add(tn.id))
+    tr.typeNameSegments.foreach(tn => qName.add(tn.id))
     qName
   }
 
@@ -990,10 +1004,10 @@ object Parse {
     }
   }
 
-  private def parseTypeName(startIndex: Int, tokens: Tokens, res: TypeNameAssignable): Int = {
+  private def parseTypeName(startIndex: Int, tokens: Tokens, res: TypeNameSegmentAssignable): Int = {
     tokens(startIndex) match {
       case Some(id: IdToken) =>
-        val tn = new TypeName(tokenToId(id))
+        val tn = new TypeNameSegment(tokenToId(id))
         res.add(tn)
         val nextIndex = parseTypeArguments(startIndex + 1, tokens, tn)
         nextIndex
