@@ -30,7 +30,7 @@ import scala.collection.mutable
  * List<T> presents as say a List<Foo>.
  */
 class GenericPlatformTypeDeclaration(
-  typeArgs: Array[IModuleTypeDeclaration],
+  typeArgs: ArraySeq[IModuleTypeDeclaration],
   genericDecl: PlatformTypeDeclaration
 ) extends PlatformTypeDeclaration(genericDecl.native, genericDecl.enclosing) {
   assert(genericDecl.typeInfo.args.length == typeArgs.length)
@@ -80,7 +80,7 @@ object GenericPlatformTypeDeclaration {
 
   def get(
     typeName: TypeName,
-    typeArgs: Array[IModuleTypeDeclaration],
+    typeArgs: ArraySeq[IModuleTypeDeclaration],
     td: PlatformTypeDeclaration
   ): GenericPlatformTypeDeclaration = {
     declarationCache.getOrElseUpdate(

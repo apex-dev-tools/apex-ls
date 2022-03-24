@@ -136,7 +136,9 @@ object PlatformTypeDeclaration {
     if (typeArguments.isEmpty) {
       Some(td)
     } else {
-      val resolvedArgs = typeArguments.collect { case td: IModuleTypeDeclaration => td }
+      val resolvedArgs = typeRef.typeNameSegments.last.getArguments.collect {
+        case td: IModuleTypeDeclaration => td
+      }
       Some(GenericPlatformTypeDeclaration.get(typeName, resolvedArgs, td))
     }
   }
@@ -152,7 +154,7 @@ object PlatformTypeDeclaration {
 
   private def asTypeName(typeName: TypeNameSegment, outer: Option[TypeName]): Option[TypeName] = {
     val resolvedSegments =
-      typeName.getArguments.collect { case td: IModuleTypeDeclaration => td }.map(_.typeName).toSeq
+      typeName.getArguments.collect { case td: IModuleTypeDeclaration => td }.map(_.typeName)
     if (resolvedSegments.length != typeName.getArguments.length) {
       None
     } else {
@@ -258,19 +260,11 @@ object PlatformTypeDeclaration {
     }
   }
 
-  def createTypeName(name: String, params: Array[IModuleTypeDeclaration]): TypeNameSegment = {
+  def createTypeName(name: String, params: ArraySeq[IModuleTypeDeclaration]): TypeNameSegment = {
     val typeName = TypeNameSegment(name)
-    typeName.typeArguments = Some(createTypeArguments(params))
+    typeName.typeArguments = Some(TypeArguments(params))
     typeName
   }
-
-  def createTypeArguments(params: Array[IModuleTypeDeclaration]): TypeArguments = {
-    val typeArguments = new TypeArguments
-    typeArguments.typeList = Some(new TypeList)
-    typeArguments.typeList.get.typeRefs.addAll(params)
-    typeArguments
-  }
-
 }
 
 case class TypeInfo(namespace: String, args: Array[String], typeName: TypeNameSegment)

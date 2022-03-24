@@ -191,13 +191,23 @@ class UnresolvedTypeRef extends TypeNameSegmentAssignable with ArraySubscriptsAs
   }
 }
 
+object UnresolvedTypeRef {
+  def apply(typeNameSegments: Array[TypeNameSegment], arraySubscripts: Int): UnresolvedTypeRef = {
+    val typeRef = new UnresolvedTypeRef
+    typeNameSegments.foreach(typeRef.add)
+    for (i <- 0 until arraySubscripts)
+      typeRef.add(ArraySubscripts())
+    typeRef
+  }
+}
+
 class TypeNameSegment(val id: Id) extends TypeArgumentsAssignable {
   var typeArguments: Option[TypeArguments] = None
 
   override def add(ta: TypeArguments): Unit = typeArguments = Some(ta)
 
-  def getArguments: Array[TypeRef] = {
-    typeArguments.flatMap(_.typeList).map(_.typeRefs.toArray).getOrElse(Array())
+  def getArguments: ArraySeq[TypeRef] = {
+    typeArguments.flatMap(_.typeList).map(tl => ArraySeq.unsafeWrapArray(tl.typeRefs.toArray)).getOrElse(ArraySeq())
   }
 
   override def equals(obj: Any): Boolean = {
@@ -208,7 +218,10 @@ class TypeNameSegment(val id: Id) extends TypeArgumentsAssignable {
 
   override def toString: String = {
     import StringUtils._
-    s"$id ${asString(typeArguments)}"
+    if (typeArguments.nonEmpty)
+      s"$id ${asString(typeArguments)}"
+    else
+      id.toString
   }
 }
 
@@ -249,6 +262,13 @@ object TypeArguments {
       typeRef.typeNameSegments.append(new TypeNameSegment(Id(IdToken(tp, Location.default))))
       typeRef
     }))
+    typeArguments
+  }
+
+  def apply(params: ArraySeq[ITypeDeclaration]): TypeArguments = {
+    val typeArguments = new TypeArguments
+    typeArguments.typeList = Some(new TypeList)
+    typeArguments.typeList.get.typeRefs.addAll(params)
     typeArguments
   }
 }
