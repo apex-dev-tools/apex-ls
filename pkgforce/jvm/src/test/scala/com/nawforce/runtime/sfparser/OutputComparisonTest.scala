@@ -4,7 +4,6 @@
 
 package com.nawforce.runtime.sfparser
 
-import apex.jorje.lsp.impl.symbols.ApexSymbolProvider
 import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
 import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
 
@@ -30,59 +29,46 @@ object OutputComparisonTest {
       )
       return
     }
+
     val absolutePath = Paths.get(Option(args.head).getOrElse("")).toAbsolutePath.normalize()
     val dbpath       = Paths.get(args.tail.headOption.getOrElse("")).toAbsolutePath.normalize()
 
-    SFLanguageServer.runAndExit(dbpath) { symbolProvider: ApexSymbolProvider =>
-      val files: Seq[Path] = getFilesFromPath(absolutePath)
-      val sources: Map[String, String] = files
-        .map(path => {
-          path.toString -> getUTF8ContentsFromPath(path)
-        })
-        .toMap
+    val files: Seq[Path] = getFilesFromPath(absolutePath)
+    val sources: Map[String, String] = files
+      .map(path => {
+        path.toString -> getUTF8ContentsFromPath(path)
+      })
+      .toMap
 
-      val sfParserOutput =
-        SFParser(sources).parseClassWithSymbolProvider(symbolProvider)
-      val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
-      if (sfParserOutput._2.nonEmpty) {
-        parseFailure = sfParserOutput._2.size
-        System.err.println(
-          s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
-        )
-      }
-
-      files
-        .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
-        .foreach(f => {
-          compareOutputs(f, sfParserOutput, sfTypeResolver)
-        })
-
-      def toPercentage(result: Int) = {
-        (result / files.size.toFloat) * 100
-      }
-
-      println(f"""
-             |Output Comparison Summary
-             |Total cls files processed: ${files.size}
-             |Total comparisons: $total
-             |Parse Failures: $parseFailure (${toPercentage(parseFailure)}%.0f%%)
-             |Exactly Equal: $exactlyEqual (${toPercentage(exactlyEqual)}%.0f%%)
-             |Files with comparison warnings: $withWarnings (${toPercentage(withWarnings)}%.0f%%)
-             |Files with comparison errors: $errors (${toPercentage(errors)}%.0f%%)
-             |""".stripMargin)
+    val sfParserOutput = SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
+    val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
+    if (sfParserOutput._2.nonEmpty) {
+      parseFailure = sfParserOutput._2.size
+      System.err.println(
+        s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
+      )
     }
-  }
 
-  private def getOutLineParserOutput(path: Path) = {
-    val contentsString = getUTF8ContentsFromPath(path)
-    OutlineParser.parse(path.toString, contentsString)
-  }
+    files
+      .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
+      .foreach(f => {
+        compareOutputs(f, sfParserOutput, sfTypeResolver)
+      })
 
-  private def findSfParserOutput(
-    path: Path,
-    output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
-  ) = {
-    output._1.find(_.path == path.toString)
+    def toPercentage(result: Int) = {
+      (result / files.size.toFloat) * 100
+    }
+
+    println(f"""
+         |Output Comparison Summary
+         |Total cls files processed: ${files.size}
+         |Total comparisons: $total
+         |Parse Failures: $parseFailure (${toPercentage(parseFailure)}%.0f%%)
+         |Exactly Equal: $exactlyEqual (${toPercentage(exactlyEqual)}%.0f%%)
+         |Files with comparison warnings: $withWarnings (${toPercentage(withWarnings)}%.0f%%)
+         |Files with comparison errors: $errors (${toPercentage(errors)}%.0f%%)
+         |""".stripMargin)
+
   }
 
   private def compareOutputs(
@@ -115,6 +101,18 @@ object OutputComparisonTest {
         errors += 1
         System.err.println(s"Failed output on $path due to ${ex.getMessage}")
     }
+  }
+
+  private def getOutLineParserOutput(path: Path) = {
+    val contentsString = getUTF8ContentsFromPath(path)
+    OutlineParser.parse(path.toString, contentsString)
+  }
+
+  private def findSfParserOutput(
+    path: Path,
+    output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
+  ) = {
+    output._1.find(_.path == path.toString)
   }
 
   private def getFilesFromPath(absolutePath: Path) = {
