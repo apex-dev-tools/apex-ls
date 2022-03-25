@@ -7,14 +7,14 @@ package com.nawforce.runtime.sfparser
 import apex.jorje.data.ast
 import apex.jorje.data.ast.TypeRefs.ArrayTypeRef
 import apex.jorje.semantic.ast.AstNode
-import apex.jorje.semantic.ast.compilation.{AnonymousClass, _}
+import apex.jorje.semantic.ast.compilation._
 import apex.jorje.semantic.ast.member.{Method, Parameter}
 import apex.jorje.semantic.ast.modifier.ModifierGroup
 import apex.jorje.semantic.ast.statement.BlockStatement
-import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor, Scope}
-import apex.jorje.semantic.compiler.{ApexCompiler, CodeUnit, SourceFile}
+import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
 import apex.jorje.semantic.compiler.parser.ParserEngine
 import apex.jorje.semantic.compiler.sfdc.SymbolProvider
+import apex.jorje.semantic.compiler.{CodeUnit, SourceFile}
 import apex.jorje.semantic.exception.Errors
 import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.member.Member
@@ -43,11 +43,12 @@ import com.financialforce.oparser.{
   TypeDeclaration,
   TypeList,
   TypeName,
-  TypeRef
+  UnresolvedTypeRef
 }
 import org.apache.commons.lang3.reflect.FieldUtils
 
 import java.util
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
@@ -167,7 +168,7 @@ class SFParser(source: Map[String, String]) {
     path: String,
     typeInfo: TypeInfo
   ): EnumTypeDeclaration = {
-    val etd                     = new EnumTypeDeclaration(path, None)
+    val etd                     = new EnumTypeDeclaration(path, null)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
     val constants               = constructFieldDeclarations(typeInfo).map(_.id)
 
@@ -184,13 +185,7 @@ class SFParser(source: Map[String, String]) {
     members: UserInterfaceMembers
   ): InterfaceTypeDeclaration = {
     val itd = getInterfaceTypeDeclaration(path, typeInfo)
-    //The parser returns abstract and access modifiers for each method
-    // so we can remove them for interface declarations
-    val methods = constructMethodDeclarationForInterface(members)
-    methods.foreach(x => {
-      x.modifiers.clear()
-      itd.add(x)
-    })
+    constructMethodDeclarationForInterface(members).foreach(itd.add)
     itd
   }
 
@@ -198,14 +193,14 @@ class SFParser(source: Map[String, String]) {
     path: String,
     typeInfo: TypeInfo
   ): InterfaceTypeDeclaration = {
-    val itd                     = new InterfaceTypeDeclaration(path, None)
+    val itd                     = new InterfaceTypeDeclaration(path, null)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
     itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     //We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
     modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).foreach(itd.add)
     modifiersAndAnnotations._2.foreach(itd.add)
-    itd.extendsTypeList = constructInterfaceTypeList(typeInfo)
+    itd._implementsTypeList = constructInterfaceTypeList(typeInfo).orNull
     itd
   }
 
@@ -215,14 +210,14 @@ class SFParser(source: Map[String, String]) {
     members: UserClassMembers
   ) = {
     val ctd = getClassTypesDeclaration(path, typeInfo)
-    getInnerTypes(members).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd.innerTypes.append)
-    getInitBlocks(members).foreach(ctd.initializers.append)
+    getInnerTypes(members).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd._innerTypes.append)
+    getInitBlocks(members).foreach(ctd._initializers.append)
     constructMethodDeclarationForClass(members).foreach(ctd.add)
     ctd
   }
 
   private def getClassTypesDeclaration(path: String, typeInfo: TypeInfo): ClassTypeDeclaration = {
-    val ctd = new ClassTypeDeclaration(path, None)
+    val ctd = new ClassTypeDeclaration(path, null)
 
     val constructors            = constructConstructorDeclaration(typeInfo)
     val fields                  = constructFieldDeclarations(typeInfo)
@@ -230,13 +225,13 @@ class SFParser(source: Map[String, String]) {
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
     ctd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    constructors.foreach(ctd.constructors.append)
+    constructors.foreach(ctd._constructors.append)
     modifiersAndAnnotations._1.foreach(ctd.add)
     modifiersAndAnnotations._2.foreach(ctd.add)
-    properties.foreach(ctd.properties.append)
-    fields.foreach(ctd.fields.append)
-    ctd.extendsTypeRef = constructExtendsTypeRef(typeInfo)
-    ctd.implementsTypeList = constructInterfaceTypeList(typeInfo)
+    properties.foreach(ctd._properties.append)
+    fields.foreach(ctd._fields.append)
+    ctd._extendsTypeRef = constructExtendsTypeRef(typeInfo).orNull
+    ctd._implementsTypeList = constructInterfaceTypeList(typeInfo).orNull
     ctd
   }
 
@@ -248,7 +243,7 @@ class SFParser(source: Map[String, String]) {
     if (tl.typeRefs.nonEmpty) Some(tl) else None
   }
 
-  private def constructExtendsTypeRef(typeInfo: TypeInfo): Option[TypeRef] = {
+  private def constructExtendsTypeRef(typeInfo: TypeInfo): Option[UnresolvedTypeRef] = {
     toTypeRef(typeInfo.getCodeUnitDetails.getSuperTypeRef.toScala)
   }
 
@@ -282,7 +277,7 @@ class SFParser(source: Map[String, String]) {
     members.getMethods.asScala
       .map(_.getMethodInfo)
       .filter(x => x.getGenerated.isUserDefined && !x.isConstructor)
-      .map(toMethodDeclaration)
+      .map(m => toMethodDeclaration(m))
   }
 
   private def constructMethodDeclarationForInterface(
@@ -295,7 +290,8 @@ class SFParser(source: Map[String, String]) {
     members.getMethods.asScala
       .map(_.getMethodInfo)
       .filter(x => x.getGenerated.isUserDefined && !x.isConstructor)
-      .map(toMethodDeclaration)
+      //The parser returns abstract and access modifiers for each method so we remove them for interface declarations
+      .map(m => toMethodDeclaration(m, noModifiers = true))
   }
 
   private def constructConstructorDeclaration(
@@ -312,8 +308,8 @@ class SFParser(source: Map[String, String]) {
   private def toProperties(from: FieldInfo): PropertyDeclaration = {
     val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     new PropertyDeclaration(
-      modifiersAndAnnotations._2,
-      modifiersAndAnnotations._1,
+      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray),
+      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray),
       toTypeRef(from.getType),
       toId(from.getName, from.getLoc)
     )
@@ -322,8 +318,8 @@ class SFParser(source: Map[String, String]) {
   private def toField(from: FieldInfo): FieldDeclaration = {
     val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     val fd = FieldDeclaration(
-      modifiersAndAnnotations._2,
-      modifiersAndAnnotations._1,
+      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray),
+      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray),
       toTypeRef(from.getType),
       toId(from.getName, from.getLoc)
     )
@@ -331,11 +327,15 @@ class SFParser(source: Map[String, String]) {
     fd
   }
 
-  private def toMethodDeclaration(from: MethodInfo): MethodDeclaration = {
+  private def toMethodDeclaration(
+    from: MethodInfo,
+    noModifiers: Boolean = false
+  ): MethodDeclaration = {
     val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     MethodDeclaration(
-      modifiersAndAnnotations._2,
-      modifiersAndAnnotations._1,
+      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray),
+      if (noModifiers) ArraySeq.empty
+      else ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray),
       toTypeRef(from.getReturnType),
       toId(from.getCanonicalName, from.getLoc),
       toFormalParameterList(from.getParameters)
@@ -346,8 +346,8 @@ class SFParser(source: Map[String, String]) {
   private def toConstructorDeclaration(from: MethodInfo): ConstructorDeclaration = {
     val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     ConstructorDeclaration(
-      modifiersAndAnnotations._2,
-      modifiersAndAnnotations._1,
+      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray),
+      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray),
       toQName(from.getName, from.getLoc),
       toFormalParameterList(from.getParameters)
     )
@@ -421,8 +421,8 @@ class SFParser(source: Map[String, String]) {
     IdToken(name, toLoc(loc, loc.getLine, loc.getColumn + name.length - 1))
   }
 
-  private def toTypeRef(from: TypeInfo): com.financialforce.oparser.TypeRef = {
-    val tr = new oparser.TypeRef
+  private def toTypeRef(from: TypeInfo): com.financialforce.oparser.UnresolvedTypeRef = {
+    val tr = new UnresolvedTypeRef
     //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
     from.getApexName
       .replaceAll("<.*>", "")
@@ -437,10 +437,10 @@ class SFParser(source: Map[String, String]) {
 
   private def toTypeRef(
     from: Option[apex.jorje.data.ast.TypeRef]
-  ): Option[com.financialforce.oparser.TypeRef] = {
+  ): Option[com.financialforce.oparser.UnresolvedTypeRef] = {
     from match {
       case Some(typ) =>
-        val res = new oparser.TypeRef()
+        val res = new UnresolvedTypeRef()
         //Things to note here,
         // if its a return type that has '[]' then parser will resolve '[]' to a list
         // but if its a in a typeArgument then it will resolve as ArrayTypeRef
@@ -505,7 +505,7 @@ class SFParser(source: Map[String, String]) {
     tp
   }
 
-  private def toTypeList(typRefs: Iterable[TypeRef]) = {
+  private def toTypeList(typRefs: Iterable[UnresolvedTypeRef]) = {
     val tl = new TypeList
     typRefs.foreach(tl.add)
     tl

@@ -4,11 +4,11 @@
 
 package com.nawforce.pkgforce.api;
 
-import com.financialforce.oparser.TypeDeclaration;
 import com.nawforce.pkgforce.diagnostics.IssuesManager;
 import com.nawforce.pkgforce.path.PathLike;
 import com.nawforce.pkgforce.types.ApexTypeAdapter;
 import com.nawforce.runtime.platform.Path;
+import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
 import scala.jdk.javaapi.CollectionConverters;
 import scala.jdk.javaapi.OptionConverters;
@@ -67,14 +67,16 @@ public class MDIndex implements IssuesCollection {
     public ApexResourceFile getResourceFile(String uriFilename) {
 
         final String filename = URIToPath(uriFilename);
-        List<TypeDeclaration> allTypes = rootModule
+        List<IModuleTypeDeclaration> allTypes = rootModule
                 .map(module -> CollectionConverters.asJava(module.getTypesByPath(filename)))
                 .filter(types -> !types.isEmpty())
                 .orElse(null);
+
         if (allTypes == null)
             return null;
 
-        String typePath = allTypes.get(0).path();
+        // Use primary path for the type
+        String typePath = allTypes.get(0).paths()[0];
         return new ApexResourceFile(typePath,
                 allTypes.stream().map(type -> (ApexType) new ApexTypeAdapter(type)).collect(Collectors.toList()),
                 issuesForFile(typePath).length > 0);
@@ -82,14 +84,16 @@ public class MDIndex implements IssuesCollection {
 
     public ApexResourceFile findResourceFile(String uriFilename) {
         final String filename = URIToPath(uriFilename);
-        List<TypeDeclaration> allTypes = rootModule
+        List<IModuleTypeDeclaration> allTypes = rootModule
                 .map(module -> CollectionConverters.asJava(module.findTypesByPath(filename)))
                 .filter(types -> !types.isEmpty())
                 .orElse(null);
-        if (allTypes == null)
+
+        if (allTypes == null || allTypes.size() != 1)
             return null;
 
-        String typePath = allTypes.get(0).path();
+        // Use primary path for the type
+        String typePath = allTypes.get(0).paths()[0];
         return new ApexResourceFile(typePath,
                 allTypes.stream().map(type -> (ApexType) new ApexTypeAdapter(type)).collect(Collectors.toList()),
                 issuesForFile(typePath).length > 0);
@@ -102,7 +106,8 @@ public class MDIndex implements IssuesCollection {
         return rootModule
                 .map(module -> CollectionConverters.asJava(module.fuzzyFindTypesByPath(filename))
                         .stream()
-                        .collect(Collectors.groupingBy(TypeDeclaration::path)))
+                        // Use primary path for the type
+                        .collect(Collectors.groupingBy(td -> td.paths()[0])))
                         .map(groups -> groups.entrySet()
                                 .stream()
                                 .map(group -> new ApexResourceFile(group.getKey(),

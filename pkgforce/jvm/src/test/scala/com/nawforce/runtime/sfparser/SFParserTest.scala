@@ -7,6 +7,7 @@ package com.nawforce.runtime.sfparser
 import com.financialforce.oparser._
 import com.nawforce.runtime.platform.Path
 import com.nawforce.runtime.sfparser.compare.SubsetComparator
+import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, ModuleClassTypeDeclaration}
 import org.scalatest.funsuite.AnyFunSuite
 
 class SFParserTest extends AnyFunSuite {
@@ -56,7 +57,7 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val op         = OutlineParser.parse(path.basename, content)._3.get.asInstanceOf[IModuleTypeDeclaration]
     val sfp        = SFParser(path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.subsetOf(sfp)
@@ -75,7 +76,7 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val op         = OutlineParser.parse(path.basename, content)._3.get.asInstanceOf[IModuleTypeDeclaration]
     val sfp        = SFParser(path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.subsetOf(sfp)
@@ -94,7 +95,7 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val op         = OutlineParser.parse(path.basename, content)._3.get.asInstanceOf[IModuleTypeDeclaration]
     val sfp        = SFParser(path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.subsetOf(sfp)
@@ -114,7 +115,7 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val op         = OutlineParser.parse(path.basename, content)._3.get.asInstanceOf[IModuleTypeDeclaration]
     val sfp        = SFParser(path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.subsetOf(sfp)
@@ -138,7 +139,7 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val op         = OutlineParser.parse(path.basename, content)._3.get.asInstanceOf[IModuleTypeDeclaration]
     val sfp        = SFParser(path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.subsetOf(sfp)
@@ -162,7 +163,7 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content)._3.get
+    val op         = OutlineParser.parse(path.basename, content)._3.get.asInstanceOf[IModuleTypeDeclaration]
     val sfp        = SFParser(path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.subsetOf(sfp)

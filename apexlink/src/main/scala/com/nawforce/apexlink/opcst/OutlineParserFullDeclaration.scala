@@ -60,7 +60,7 @@ object OutlineParserFullDeclaration {
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
 
     val modifierResults =
-      classModifiers(cls.path, ctd.id.get, ctd.annotations, ctd.modifiers, outerTypeName.isEmpty)
+      classModifiers(cls.path, ctd.id, ctd.annotations, ctd.modifiers, outerTypeName.isEmpty)
 
     val thisType =
       ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
@@ -87,13 +87,7 @@ object OutlineParserFullDeclaration {
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
 
     val modifierResults =
-      interfaceModifiers(
-        cls.path,
-        itd.id.get,
-        itd.annotations,
-        itd.modifiers,
-        outerTypeName.isEmpty
-      )
+      interfaceModifiers(cls.path, itd.id, itd.annotations, itd.modifiers, outerTypeName.isEmpty)
 
     val thisType =
       ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))
@@ -120,7 +114,7 @@ object OutlineParserFullDeclaration {
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
 
     val modifierResults =
-      enumModifiers(cls.path, etd.id.get, etd.annotations, etd.modifiers, outerTypeName.isEmpty)
+      enumModifiers(cls.path, etd.id, etd.annotations, etd.modifiers, outerTypeName.isEmpty)
 
     val thisType =
       ThisType(module, thisTypeNameWithNS, modifierResults.modifiers.contains(ISTEST_ANNOTATION))

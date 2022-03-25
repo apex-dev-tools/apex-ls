@@ -5,7 +5,10 @@
 package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
+import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
@@ -31,7 +34,7 @@ object OutputComparisonTest {
     }
 
     val absolutePath = Paths.get(Option(args.head).getOrElse("")).toAbsolutePath.normalize()
-    val dbpath       = Paths.get(args.tail.headOption.getOrElse("")).toAbsolutePath.normalize()
+    val dbpath = Paths.get(args.tail.headOption.getOrElse("")).toAbsolutePath.normalize()
 
     val files: Seq[Path] = getFilesFromPath(absolutePath)
     val sources: Map[String, String] = files
@@ -39,27 +42,31 @@ object OutputComparisonTest {
         path.toString -> getUTF8ContentsFromPath(path)
       })
       .toMap
-
     val sfParserOutput = SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
-    val sfTypeResolver = new TypeIdCollector(sfParserOutput._1.toList)
     if (sfParserOutput._2.nonEmpty) {
       parseFailure = sfParserOutput._2.size
       System.err.println(
         s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
       )
     }
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      files
+        .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
+        .foreach(f => {
+          val sf = findSfParserOutput(f.toAbsolutePath, sfParserOutput)
+          val op = index.rootModule.get.findExactTypeId(sf.get.getFullName)
+          compareResolved(op, sf)
+        })
 
-    files
-      .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
-      .foreach(f => {
-        compareOutputs(f, sfParserOutput, sfTypeResolver)
-      })
+    }
 
     def toPercentage(result: Int) = {
       (result / files.size.toFloat) * 100
     }
 
-    println(f"""
+    println(
+      f"""
          |Output Comparison Summary
          |Total cls files processed: ${files.size}
          |Total comparisons: $total
@@ -68,7 +75,31 @@ object OutputComparisonTest {
          |Files with comparison warnings: $withWarnings (${toPercentage(withWarnings)}%.0f%%)
          |Files with comparison errors: $errors (${toPercentage(errors)}%.0f%%)
          |""".stripMargin)
+  }
 
+  private def getOutLineParserOutput(path: Path) = {
+    val contentsString = getUTF8ContentsFromPath(path)
+    val result = OutlineParser.parse(path.toString, contentsString)
+    (result._1, result._2, result._3.map(_.asInstanceOf[IModuleTypeDeclaration]))
+  }
+
+  private def findSfParserOutput(
+    path: Path,
+    output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
+  ) = {
+    output._1.find(_.paths.head == path.toString)
+  }
+
+  private def compareResolved(
+                               fromIndex: Option[IModuleTypeDeclaration],
+                               fromSf: Option[TypeDeclaration]
+  ): Unit = {
+    val comparator = SubsetComparator(
+      fromIndex.get,
+      TypeIdCollector.fromIModuleTypeDecls(List.empty),
+      TypeIdCollector.fromTypeDecls(List.empty)
+    )
+    comparator.subsetOf(fromSf.get)
   }
 
   private def compareOutputs(
@@ -86,7 +117,7 @@ object OutputComparisonTest {
       return
     }
     try {
-      val opResolver = new TypeIdCollector(List(opOut.get))
+      val opResolver = TypeIdCollector.fromIModuleTypeDecls(List(opOut.get))
       val comparator = SubsetComparator(opOut.get, opResolver, sfTypeIdResolver)
       comparator.subsetOf(sfTd.get)
       val warnings = comparator.getWarnings
@@ -101,18 +132,6 @@ object OutputComparisonTest {
         errors += 1
         System.err.println(s"Failed output on $path due to ${ex.getMessage}")
     }
-  }
-
-  private def getOutLineParserOutput(path: Path) = {
-    val contentsString = getUTF8ContentsFromPath(path)
-    OutlineParser.parse(path.toString, contentsString)
-  }
-
-  private def findSfParserOutput(
-    path: Path,
-    output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
-  ) = {
-    output._1.find(_.path == path.toString)
   }
 
   private def getFilesFromPath(absolutePath: Path) = {
