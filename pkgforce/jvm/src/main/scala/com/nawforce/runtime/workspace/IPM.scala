@@ -10,6 +10,7 @@ import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
+import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
 
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.collection.immutable.ArraySeq
@@ -39,16 +40,25 @@ object IPM extends TriHierarchy {
         index: DocumentIndex,
         dependencies: ArraySeq[Module]
       ): Module = {
-        new Module(pkg, index, dependencies, loadingPool)
+        new MetadataModule(pkg, dependencies, index, loadingPool)
       }
 
       val logger = new CatchingLogger
+
+      // Fold over platform namespaces to create packages for each, these form a chain
+      val platform = PlatformTypeDeclaration.namespaces.foldLeft(ArraySeq[Package]())((acc, ns) => {
+        acc :+ new PlatformPackage(
+          this,
+          ns,
+          acc.headOption.map(pkg => ArraySeq(pkg)).getOrElse(ArraySeq.empty)
+        )
+      })
 
       // Fold over layers to create packages - with any package(namespace) dependencies linked to each package
       // The workspace layers form a deploy ordering, so each is dependent on all previously created
       val declared =
         workspace.layers.foldLeft(ArraySeq[Package]())((acc, pkgLayer) => {
-          acc :+ new Package(
+          acc :+ new MetadataPackage(
             this,
             pkgLayer.namespace,
             acc,
@@ -64,10 +74,20 @@ object IPM extends TriHierarchy {
       // If no unmanaged, create it
       val unmanaged =
         if (declared.isEmpty || declared.lastOption.exists(_.namespace.nonEmpty))
-          Seq(new Package(this, None, declared, workspace, ArraySeq.empty, createModule, logger))
+          Seq(
+            new MetadataPackage(
+              this,
+              None,
+              declared,
+              workspace,
+              ArraySeq.empty,
+              createModule,
+              logger
+            )
+          )
         else
           Seq.empty
-      ArraySeq.unsafeWrapArray((declared ++ unmanaged).toArray)
+      ArraySeq.unsafeWrapArray((unmanaged ++ declared ++ platform).toArray)
     }
 
     def rootModule: Option[Module] = {
@@ -75,7 +95,73 @@ object IPM extends TriHierarchy {
     }
   }
 
-  class Package(
+  trait Package extends TriPackage {
+    override val org: Index
+
+    def namespaceAsString: String = namespace.map(_.value).getOrElse("")
+  }
+
+  /* Module capabilities, not all of these will be supported by all module types, e.g. platform types don't have
+   * paths. */
+  trait Module extends TriModule {
+    override val pkg: Package
+
+    /* Find a type declaration from a type name. The name format is not as flexible as found in Apex, you can not
+     * use whitespace or array subscripts. In general namespaces should be used although System and Schema references
+     * can be resolved without a namespace. If there are TypeArguments they are resolved against the module, this
+     * means they can not be relative type names that must be resolved against a specific type. See TypeFinder
+     * for relative type resolving. */
+    def findExactTypeId(name: String): Option[IModuleTypeDeclaration] = {
+      UnresolvedTypeRef(name).toOption.flatMap(typeRef => {
+        // Pre-resolve segment type arguments within the typeRef, this is required so that generic types
+        // can be constructed without the need for a recursive call back to this module for type resolution.
+        typeRef.typeNameSegments.foreach(segment => {
+          val args = segment.getArguments
+          val newArgs = args.flatMap {
+            case unref: UnresolvedTypeRef => findExactTypeId(unref.toString, unref)
+            case other                    => Some(other)
+          }
+          if (args.nonEmpty && args.length == newArgs.length)
+            segment.replaceArguments(newArgs)
+        })
+        findExactTypeId(name, typeRef)
+      })
+    }
+
+    /* Implementation for exact finding, the name & typeRef refer to the same type name, both are provided to
+     * allow modules to use whichever is most suitable. */
+    def findExactTypeId(name: String, typeRef: UnresolvedTypeRef): Option[IModuleTypeDeclaration]
+
+    /* Find all types for which path contributes to the type declaration. THere should be at most one
+     * result for a path but uses a Seq just in case that changes. Paths are considered case-insensitive. */
+    def findTypesByPath(path: String): Seq[IModuleTypeDeclaration]
+
+    /* Find all types for which the path prefix matches a path which contributes to the type declaration. */
+    def fuzzyFindTypesByPath(pathPrefix: String): Seq[IModuleTypeDeclaration]
+
+    /* Find all types for which the predicate evaluates to true for a path that contributes to the type declaration. */
+    def findTypesByPathPredicate(predicate: String => Boolean): Seq[IModuleTypeDeclaration]
+
+    /* Find a type declaration that starts with the passed name. The name should include the namespace. Returns
+     * the first found. */
+    def fuzzyFindTypeId(name: String): Option[IModuleTypeDeclaration]
+
+    /* Find all type declarations that starts with the passed name. The name should include the namespace. */
+    def fuzzyFindTypeIds(name: String): Seq[IModuleTypeDeclaration]
+
+    def accumFuzzyFindTypeIds(name: String, accum: mutable.Map[Name, IModuleTypeDeclaration]): Unit
+
+    /* Find all type declarations within a namespaces that starts with the passed string. The namespace match is
+     * case insensitive.*/
+    def findTypeIdsByNamespace(namespacePrefix: String): Seq[IModuleTypeDeclaration]
+
+    def accumFindTypeIdsByNamespace(
+      namespacePrefix: String,
+      accum: mutable.Map[Name, IModuleTypeDeclaration]
+    ): Unit
+  }
+
+  class MetadataPackage(
     override val org: Index,
     override val namespace: Option[Name],
     override val basePackages: ArraySeq[Package],
@@ -83,7 +169,7 @@ object IPM extends TriHierarchy {
     layers: ArraySeq[ModuleLayer],
     mdlFactory: (Package, DocumentIndex, ArraySeq[Module]) => Module,
     logger: IssueLogger
-  ) extends TriPackage {
+  ) extends Package {
 
     val modules: ArraySeq[Module] =
       layers
@@ -93,19 +179,16 @@ object IPM extends TriHierarchy {
           val module = mdlFactory(this, issuesAndIndex.value, acc)
           acc :+ module
         })
-
-    def namespaceAsString: String = namespace.map(_.value).getOrElse("")
   }
 
-  class Module(
+  class MetadataModule(
     override val pkg: Package,
-    override val index: DocumentIndex,
     override val dependents: ArraySeq[Module],
+    val index: DocumentIndex,
     loadingPool: ExecutorService
-  ) extends TriModule
+  ) extends Module
       with TypeFinder {
 
-    private final val moduleOpt        = Some(this)
     private final val lowerNames       = mutable.TreeSet[String]()
     private[workspace] final val types = mutable.Map[Name, IModuleTypeDeclaration]()
 
@@ -127,9 +210,9 @@ object IPM extends TriHierarchy {
 
     private def markModule(decl: TypeDeclaration): Unit = {
       decl match {
-        case scoped: ModuleScoped =>
+        case scoped: IModuleTypeDeclaration =>
           decl.innerTypes.foreach(markModule)
-          scoped._module = moduleOpt
+          scoped.module = this
         case _ => ()
       }
     }
@@ -177,7 +260,14 @@ object IPM extends TriHierarchy {
       }
     }
 
-    def findExactTypeId(name: String): Option[IModuleTypeDeclaration] = {
+    override def isVisibleFile(path: PathLike): Boolean = {
+      index.isVisibleFile(path)
+    }
+
+    override def findExactTypeId(
+      name: String,
+      typeRef: UnresolvedTypeRef
+    ): Option[IModuleTypeDeclaration] = {
       types
         .get(Name(name))
         .orElse(baseModules.headOption.flatMap(_.findExactTypeId(name)))
@@ -215,7 +305,7 @@ object IPM extends TriHierarchy {
       }
     }
 
-    private def accumFuzzyFindTypeIds(
+    def accumFuzzyFindTypeIds(
       name: String,
       accum: mutable.Map[Name, IModuleTypeDeclaration]
     ): Unit = {
@@ -250,7 +340,7 @@ object IPM extends TriHierarchy {
       }
     }
 
-    private def accumFindTypeIdsByNamespace(
+    def accumFindTypeIdsByNamespace(
       namespacePrefix: String,
       accum: mutable.Map[Name, IModuleTypeDeclaration]
     ): Unit = {
@@ -270,10 +360,6 @@ object IPM extends TriHierarchy {
       }
     }
 
-    def getTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
-      findTypesByPathPredicate(t => t == path)
-    }
-
     def findTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
       findTypesByPathPredicate(t => t.equalsIgnoreCase(path))
     }
@@ -282,9 +368,7 @@ object IPM extends TriHierarchy {
       findTypesByPathPredicate(t => t.toLowerCase.startsWith(path.toLowerCase))
     }
 
-    private def findTypesByPathPredicate(
-      predicate: String => Boolean
-    ): Seq[IModuleTypeDeclaration] = {
+    def findTypesByPathPredicate(predicate: String => Boolean): Seq[IModuleTypeDeclaration] = {
       var typesForPath = types.values.filter(t => t.paths.exists(p => predicate(p)))
       if (typesForPath.nonEmpty) return typesForPath.toSeq
 
@@ -298,5 +382,63 @@ object IPM extends TriHierarchy {
         .getOrElse(Seq.empty)
       typesForPath.toSeq
     }
+
+    override def toString: String = s"Module(${index.path})"
   }
+
+  class PlatformPackage(
+    override val org: Index,
+    _namespace: Name,
+    override val basePackages: ArraySeq[Package]
+  ) extends Package {
+
+    override val namespace: Option[Name] = Some(_namespace)
+
+    val modules: ArraySeq[Module] = ArraySeq(new PlatformModule(this))
+  }
+
+  class PlatformModule(override val pkg: PlatformPackage) extends Module {
+
+    override val dependents: ArraySeq[Module] = ArraySeq.empty
+
+    override def isVisibleFile(path: PathLike): Boolean = false
+
+    override def findExactTypeId(
+      name: String,
+      typeRef: UnresolvedTypeRef
+    ): Option[IModuleTypeDeclaration] = {
+      if (
+        typeRef.typeNameSegments.head.id.id.contents.equalsIgnoreCase(namespace.get.value)
+        && typeRef.typeNameSegments.head.typeArguments.isEmpty
+      ) {
+        PlatformTypeDeclaration.get(this, typeRef)
+      } else {
+        None
+      }
+    }
+
+    def findTypesByPath(path: String): Seq[IModuleTypeDeclaration] = Seq.empty
+
+    def fuzzyFindTypesByPath(path: String): Seq[IModuleTypeDeclaration] = Seq.empty
+
+    def findTypesByPathPredicate(predicate: String => Boolean): Seq[IModuleTypeDeclaration] =
+      Seq.empty
+
+    def fuzzyFindTypeId(name: String): Option[IModuleTypeDeclaration] = None
+
+    def fuzzyFindTypeIds(name: String): Seq[IModuleTypeDeclaration] = Seq.empty
+
+    def accumFuzzyFindTypeIds(
+      name: String,
+      accum: mutable.Map[Name, IModuleTypeDeclaration]
+    ): Unit = {}
+
+    def findTypeIdsByNamespace(namespacePrefix: String): Seq[IModuleTypeDeclaration] = Seq.empty
+
+    def accumFindTypeIdsByNamespace(
+      namespacePrefix: String,
+      accum: mutable.Map[Name, IModuleTypeDeclaration]
+    ): Unit = {}
+  }
+
 }

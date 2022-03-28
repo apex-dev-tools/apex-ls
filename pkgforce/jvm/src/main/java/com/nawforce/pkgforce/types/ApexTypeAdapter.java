@@ -4,7 +4,6 @@
 package com.nawforce.pkgforce.types;
 
 import com.financialforce.oparser.TypeRef;
-import com.financialforce.oparser.UnresolvedTypeRef;
 import com.nawforce.pkgforce.api.*;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
@@ -135,7 +134,7 @@ public class ApexTypeAdapter implements ApexType {
     }
 
     private Optional<IPM.Module> module() {
-        return Optional.ofNullable(td.module().getOrElse(null));
+        return Optional.ofNullable(td.module());
     }
 
     @Override

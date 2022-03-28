@@ -22,7 +22,6 @@ import apex.jorje.semantic.symbol.member.variable.FieldInfo
 import com.financialforce.oparser
 import com.financialforce.oparser.{
   Annotation,
-  ArraySubscripts,
   ClassTypeDeclaration,
   ConstructorDeclaration,
   EnumTypeDeclaration,
@@ -442,7 +441,7 @@ class SFParser(source: Map[String, String]) {
           // into deep nested typeRef with string type arguments
           typ.getNames.forEach(x => res.add(new TypeNameSegment(toId(x.getValue, x.getLoc))))
           for (_ <- 0 to typ.toString.split("\\[").length - 2) {
-            res.add(ArraySubscripts())
+            res.addArraySubscript()
           }
         } else {
           //We add the type arguments to the last type and not for each name

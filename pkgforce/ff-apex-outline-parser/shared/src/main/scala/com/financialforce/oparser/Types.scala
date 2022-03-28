@@ -3,8 +3,11 @@
  */
 package com.financialforce.oparser
 
+import com.nawforce.pkgforce.names.{Identifier, Name, TypeName}
+
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object StringUtils {
 
@@ -62,7 +65,7 @@ trait TypeArgumentsAssignable {
 }
 
 trait ArraySubscriptsAssignable {
-  def add(as: ArraySubscripts): Unit
+  def addArraySubscript(): Unit
 }
 
 trait FormalParameterAssignable {
@@ -79,11 +82,6 @@ trait InitializerAssignable {
 
 trait PropertyBlockAssignable {
   def add(pb: PropertyBlock): Unit
-}
-
-trait TypeRef {
-  //Only used for comparison
-  def getFullName: String
 }
 
 trait Signature {
@@ -166,77 +164,6 @@ class QualifiedName extends IdAssignable {
   }
 }
 
-class UnresolvedTypeRef extends TypeNameSegmentAssignable with ArraySubscriptsAssignable with TypeRef {
-  val typeNameSegments: mutable.ArrayBuffer[TypeNameSegment] = mutable.ArrayBuffer[TypeNameSegment]()
-  val arraySubscripts: mutable.ArrayBuffer[ArraySubscripts] = mutable.ArrayBuffer[ArraySubscripts]()
-
-  override def add(tn: TypeNameSegment): Unit = typeNameSegments.append(tn)
-
-  override def add(as: ArraySubscripts): Unit = arraySubscripts.append(as)
-
-  override def getFullName: String = {
-    toString
-  }
-
-  override def equals(obj: Any): Boolean = {
-    if (!obj.isInstanceOf[UnresolvedTypeRef])
-      return false
-    val other = obj.asInstanceOf[UnresolvedTypeRef]
-    other.typeNameSegments == typeNameSegments && other.arraySubscripts == arraySubscripts
-  }
-
-  override def toString: String = {
-    import StringUtils._
-    s"${asString(typeNameSegments, ".")}${asString(arraySubscripts, "")}"
-  }
-}
-
-object UnresolvedTypeRef {
-  def apply(typeNameSegments: Array[TypeNameSegment], arraySubscripts: Int): UnresolvedTypeRef = {
-    val typeRef = new UnresolvedTypeRef
-    typeNameSegments.foreach(typeRef.add)
-    for (i <- 0 until arraySubscripts)
-      typeRef.add(ArraySubscripts())
-    typeRef
-  }
-}
-
-class TypeNameSegment(val id: Id) extends TypeArgumentsAssignable {
-  var typeArguments: Option[TypeArguments] = None
-
-  override def add(ta: TypeArguments): Unit = typeArguments = Some(ta)
-
-  def getArguments: ArraySeq[TypeRef] = {
-    typeArguments.flatMap(_.typeList).map(tl => ArraySeq.unsafeWrapArray(tl.typeRefs.toArray)).getOrElse(ArraySeq())
-  }
-
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[TypeNameSegment]
-
-    id == other.id && typeArguments == other.typeArguments
-  }
-
-  override def toString: String = {
-    import StringUtils._
-    if (typeArguments.nonEmpty)
-      s"$id ${asString(typeArguments)}"
-    else
-      id.toString
-  }
-}
-
-object TypeNameSegment {
-  def apply(name: String): TypeNameSegment = {
-    new TypeNameSegment(Id(IdToken(name, Location.default)))
-  }
-
-  def apply(name: String, params: Array[String]): TypeNameSegment = {
-    val typeName = apply(name)
-    typeName.typeArguments = Some(TypeArguments(params))
-    typeName
-  }
-}
-
 class TypeArguments extends TypeListAssignable {
   var typeList: Option[TypeList] = None
 
@@ -285,12 +212,8 @@ class TypeList extends TypeRefAssignable {
 
   override def toString: String = {
     import StringUtils._
-    asString(typeRefs, ", ")
+    asString(typeRefs, ",")
   }
-}
-
-case class ArraySubscripts() {
-  override def toString: String = "[]"
 }
 
 class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdAssignable {
@@ -1086,7 +1009,7 @@ object Parse {
       if (tokens(index + 1).exists(!_.matches(Tokens.RBrackStr))) {
         throw new Exception(s"Missing '${Tokens.RBrackStr}'")
       }
-      res.add(ArraySubscripts())
+      res.addArraySubscript()
       index += 2
     }
     index

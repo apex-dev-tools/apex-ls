@@ -142,7 +142,7 @@ object Antlr {
     ctx
       .RBRACK()
       .forEach(_ => {
-        res.add(new ArraySubscripts)
+        res.addArraySubscript()
       })
   }
 

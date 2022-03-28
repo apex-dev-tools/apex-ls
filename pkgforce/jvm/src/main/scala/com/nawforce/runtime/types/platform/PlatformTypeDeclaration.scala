@@ -32,9 +32,12 @@ import scala.jdk.CollectionConverters._
 
 /* Platform type declaration, a wrapper around a com.nawforce.platform Java classes */
 class PlatformTypeDeclaration(
+  _module: IPM.Module,
   val native: Any,
   override val enclosing: Option[PlatformTypeDeclaration]
 ) extends IModuleTypeDeclaration {
+
+  module = _module
 
   final private val cls: java.lang.Class[_] = native.asInstanceOf[java.lang.Class[_]]
 
@@ -47,8 +50,6 @@ class PlatformTypeDeclaration(
   }
 
   final val typeInfo: TypeInfo = getTypeName(cls)
-
-  override def module: Option[IPM.Module] = None
 
   override val paths: Array[String] = emptyPaths
 
@@ -71,7 +72,7 @@ class PlatformTypeDeclaration(
   override def innerTypes: ArraySeq[ITypeDeclaration] = {
     if (nature == CLASS_NATURE) {
       ArraySeq.unsafeWrapArray(
-        cls.getClasses.map(nested => new PlatformTypeDeclaration(nested, Some(this)))
+        cls.getClasses.map(nested => new PlatformTypeDeclaration(module, nested, Some(this)))
       )
     } else {
       emptyTypeDeclarations
@@ -95,9 +96,6 @@ object PlatformTypeDeclaration {
   /* Java package prefix for platform types */
   private val platformPackage = "com.nawforce.runforce"
 
-  /* Cache of loaded platform declarations */
-  private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
-
   /* Get a Path that leads to platform classes */
   lazy val platformPackagePath: java.nio.file.Path = {
     val path = "/" + platformPackage.replaceAll("\\.", "/")
@@ -114,7 +112,7 @@ object PlatformTypeDeclaration {
     }
   }
 
-  def get(typeRef: UnresolvedTypeRef): Option[PlatformTypeDeclaration] = {
+  def get(module: IPM.Module, typeRef: UnresolvedTypeRef): Option[PlatformTypeDeclaration] = {
 
     // Conversion will fail if typeRef has unresolved type arguments
     val typeNameOpt = asTypeName(typeRef)
@@ -123,7 +121,7 @@ object PlatformTypeDeclaration {
 
     // Non-generic lookup
     val typeName = typeNameOpt.get
-    val tdOpt    = getDeclaration(asDotName(typeName))
+    val tdOpt    = getDeclaration(module, asDotName(typeName))
     if (tdOpt.isEmpty && typeName.params.isEmpty)
       return None
 
@@ -139,16 +137,17 @@ object PlatformTypeDeclaration {
       val resolvedArgs = typeRef.typeNameSegments.last.getArguments.collect {
         case td: IModuleTypeDeclaration => td
       }
-      Some(GenericPlatformTypeDeclaration.get(typeName, resolvedArgs, td))
+      Some(GenericPlatformTypeDeclaration.get(td.module, resolvedArgs, td))
     }
   }
 
   /* Converts UnresolvedTypeRef to a TypeName, iff all type arguments are resolved */
   private def asTypeName(typeRef: UnresolvedTypeRef): Option[TypeName] = {
     asTypeName(typeRef.typeNameSegments.toList, None).map(fullTypeName => {
-      typeRef.arraySubscripts.foldLeft[TypeName](fullTypeName)((typeName, _) => {
-        new TypeName(Names.List$, Seq(typeName), Some(TypeName.System))
-      })
+      var wrapped = fullTypeName
+      for (i <- 0 until typeRef.arraySubscripts)
+        wrapped = new TypeName(Names.List$, Seq(wrapped), Some(TypeName.System))
+      wrapped
     })
   }
 
@@ -182,20 +181,20 @@ object PlatformTypeDeclaration {
   }
 
   /* Get a declaration for a class from a Name. */
-  private def getDeclaration(dotName: DotName): Option[PlatformTypeDeclaration] = {
-    declarationCache.getOrElseUpdate(
-      dotName, {
-        val matched = classNameMap.get(dotName)
-        assert(matched.size < 2, s"Found multiple platform type matches for $dotName")
-        matched.map(
-          name =>
-            new PlatformTypeDeclaration(
-              classOf[PlatformTypeDeclaration].getClassLoader
-                .loadClass(platformPackage + "." + name),
-              None
-            )
+  private def getDeclaration(
+    module: IPM.Module,
+    dotName: DotName
+  ): Option[PlatformTypeDeclaration] = {
+    val matched = classNameMap.get(dotName)
+    assert(matched.size < 2, s"Found multiple platform type matches for $dotName")
+    matched.map(
+      name =>
+        new PlatformTypeDeclaration(
+          module,
+          classOf[PlatformTypeDeclaration].getClassLoader
+            .loadClass(platformPackage + "." + name),
+          None
         )
-      }
     )
   }
 

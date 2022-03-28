@@ -311,7 +311,7 @@ class SubsetComparator(
     val fUnresolvedType = first.asInstanceOf[UnresolvedTypeRef]
     val sUnresolvedType = second.asInstanceOf[UnresolvedTypeRef]
 
-    if (fUnresolvedType.arraySubscripts.nonEmpty) {
+    if (fUnresolvedType.arraySubscripts != 0) {
       val allTypeNames = ArrayBuffer[TypeNameSegment]()
       val typeRefQueue = mutable.Queue[TypeRef]()
 
@@ -329,7 +329,7 @@ class SubsetComparator(
       }
       return allTypeNames
         .map(_.id.id.lowerCaseContents)
-        .count(_.equalsIgnoreCase("list")) == fUnresolvedType.arraySubscripts.length
+        .count(_.equalsIgnoreCase("list")) == fUnresolvedType.arraySubscripts
     }
     false
   }

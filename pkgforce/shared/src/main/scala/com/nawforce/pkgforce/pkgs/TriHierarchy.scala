@@ -81,9 +81,6 @@ abstract class TriHierarchy {
     /** The parent package that this module belongs to */
     val pkg: TPackage
 
-    /** Metadata document index for the module */
-    val index: DocumentIndex
-
     /** The modules that this module depends on deploy order */
     val dependents: ArraySeq[TModule]
 
@@ -94,12 +91,10 @@ abstract class TriHierarchy {
     lazy val basePackages: ArraySeq[TPackage] = pkg.basePackages.reverse
 
     /** The modules that this module depends on in reverse deploy order */
-    val baseModules: ArraySeq[TModule] = dependents.reverse
+    lazy val baseModules: ArraySeq[TModule] = dependents.reverse
 
     /** Test if a file is visible to this module, i.e. in scope & not ignored */
-    def isVisibleFile(path: PathLike): Boolean = {
-      index.isVisibleFile(path)
-    }
+    def isVisibleFile(path: PathLike): Boolean
 
     /* Transitive Modules (dependent modules for this modules & its dependents) */
     def transitiveModules: Set[TModule] = {
@@ -113,7 +108,5 @@ abstract class TriHierarchy {
 
     /* Check if a field name is ghosted in this module */
     def isGhostedFieldName(name: Name): Boolean = pkg.isGhostedFieldName(name)
-
-    override def toString: String = s"Module(${index.path})"
   }
 }

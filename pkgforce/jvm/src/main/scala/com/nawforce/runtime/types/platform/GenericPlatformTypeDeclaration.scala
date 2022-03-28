@@ -15,7 +15,7 @@
 package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.Name
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
   createTypeName,
   emptyPaths,
@@ -24,15 +24,15 @@ import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable
 
 /* Wrapper for the few generic types we support, this specialises the methods of the type so that
  * List<T> presents as say a List<Foo>.
  */
 class GenericPlatformTypeDeclaration(
+  _module: IPM.Module,
   typeArgs: ArraySeq[IModuleTypeDeclaration],
   genericDecl: PlatformTypeDeclaration
-) extends PlatformTypeDeclaration(genericDecl.native, genericDecl.enclosing) {
+) extends PlatformTypeDeclaration(_module, genericDecl.native, genericDecl.enclosing) {
   assert(genericDecl.typeInfo.args.length == typeArgs.length)
 
   final private val paramsMap: Map[Name, IModuleTypeDeclaration] = {
@@ -42,7 +42,8 @@ class GenericPlatformTypeDeclaration(
       .toMap
   }
 
-  override def module: Option[IPM.Module] = None
+  // TODO: Set module
+  // override def module: Option[IPM.Module] = None
 
   override val paths: Array[String] = emptyPaths
 
@@ -75,19 +76,12 @@ class GenericPlatformTypeDeclaration(
 
 object GenericPlatformTypeDeclaration {
 
-  /* Cache of constructed generic platform types */
-  private val declarationCache = mutable.Map[TypeName, GenericPlatformTypeDeclaration]()
-
   def get(
-    typeName: TypeName,
+    module: IPM.Module,
     typeArgs: ArraySeq[IModuleTypeDeclaration],
     td: PlatformTypeDeclaration
   ): GenericPlatformTypeDeclaration = {
-    declarationCache.getOrElseUpdate(
-      typeName, {
-        new GenericPlatformTypeDeclaration(typeArgs, td)
-      }
-    )
+    new GenericPlatformTypeDeclaration(module, typeArgs, td)
   }
 
 }

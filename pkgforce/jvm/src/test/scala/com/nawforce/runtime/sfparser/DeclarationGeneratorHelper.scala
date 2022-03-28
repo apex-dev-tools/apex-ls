@@ -2,7 +2,6 @@ package com.nawforce.runtime.sfparser
 
 import com.financialforce.oparser.{
   Annotation,
-  ArraySubscripts,
   ConstructorDeclaration,
   FieldDeclaration,
   FormalParameter,
@@ -61,7 +60,7 @@ trait DeclarationGeneratorHelper {
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {
     val tr = new UnresolvedTypeRef()
     typeNames.foreach(tr.add)
-    Array.fill(totalSubscripts)(new ArraySubscripts).foreach(tr.add)
+    tr.arraySubscripts = totalSubscripts
     tr
   }
 

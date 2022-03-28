@@ -91,10 +91,10 @@ object OPM extends TriHierarchy {
 
       def createModule(
         pkg: PackageImpl,
-        index: DocumentIndex,
-        dependencies: ArraySeq[Module]
+        dependencies: ArraySeq[Module],
+        index: DocumentIndex
       ): Module = {
-        new Module(pkg, index, dependencies)
+        new Module(pkg, dependencies, index)
       }
 
       OrgInfo.current.withValue(this) {
@@ -387,7 +387,7 @@ object OPM extends TriHierarchy {
     override val basePackages: ArraySeq[PackageImpl],
     workspace: Workspace,
     layers: ArraySeq[ModuleLayer],
-    mdlFactory: (PackageImpl, DocumentIndex, ArraySeq[Module]) => Module,
+    mdlFactory: (PackageImpl, ArraySeq[Module], DocumentIndex) => Module,
     logger: IssueLogger
   ) extends TriPackage
       with PackageAPI
@@ -399,7 +399,7 @@ object OPM extends TriHierarchy {
         .foldLeft(ArraySeq[Module]())((acc, layer) => {
           val issuesAndIndex = workspace.indexes(layer)
           logger.logAll(issuesAndIndex.issues)
-          val module = mdlFactory(this, issuesAndIndex.value, acc)
+          val module = mdlFactory(this, acc, issuesAndIndex.value)
           acc :+ module
         })
 
@@ -496,8 +496,8 @@ object OPM extends TriHierarchy {
 
   class Module(
     override val pkg: PackageImpl,
-    override val index: DocumentIndex,
-    override val dependents: ArraySeq[Module]
+    override val dependents: ArraySeq[Module],
+    val index: DocumentIndex
   ) extends TriModule
       with ModuleRefresh
       with ModuleFind
@@ -541,6 +541,10 @@ object OPM extends TriHierarchy {
       types.values.collect {
         case ac: ApexClassDeclaration if ac.inTest => ac
       }
+
+    override def isVisibleFile(path: PathLike): Boolean = {
+      index.isVisibleFile(path)
+    }
 
     /** Count of loaded types, for debug info */
     def typeCount: Int = types.size

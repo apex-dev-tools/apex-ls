@@ -37,7 +37,7 @@ private[opcst] object TypeReference {
     override def arraySubscriptsCount(): Int = {
       //TODO: is this actually right behaviour?
       typeReference match {
-        case utr: UnresolvedTypeRef => utr.arraySubscripts.length
+        case utr: UnresolvedTypeRef => utr.arraySubscripts
         case _                      => 0
       }
     }
