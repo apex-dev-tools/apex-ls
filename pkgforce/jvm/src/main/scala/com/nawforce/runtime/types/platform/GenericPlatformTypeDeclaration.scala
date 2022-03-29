@@ -63,7 +63,7 @@ class GenericPlatformTypeDeclaration(
 
   override def initializers: ArraySeq[Initializer] = ArraySeq.empty // TODO
 
-  override def innerTypes: ArraySeq[ITypeDeclaration] = emptyTypeDeclarations
+  override def innerTypes: ArraySeq[PlatformTypeDeclaration] = emptyTypeDeclarations
 
   override def constructors: ArraySeq[ConstructorDeclaration] = ArraySeq.empty // TODO
 

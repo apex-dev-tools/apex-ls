@@ -12,9 +12,9 @@ trait TypeRef {
   def getFullName: String
 }
 
-case class UnresolvedTypeRef(typeNameSegments: mutable.ArrayBuffer[TypeNameSegment] = mutable.ArrayBuffer[TypeNameSegment](),
-                        var arraySubscripts: Int = 0
-                       ) extends TypeNameSegmentAssignable with ArraySubscriptsAssignable with TypeRef {
+final case class UnresolvedTypeRef(typeNameSegments: mutable.ArrayBuffer[TypeNameSegment] = mutable.ArrayBuffer[TypeNameSegment](),
+                                   var arraySubscripts: Int = 0
+                                  ) extends TypeNameSegmentAssignable with ArraySubscriptsAssignable with TypeRef {
 
   override def add(tn: TypeNameSegment): Unit = typeNameSegments.append(tn)
 
@@ -98,7 +98,7 @@ object UnresolvedTypeRef {
   }
 }
 
-case class TypeNameSegment(id: Id, var typeArguments: Option[TypeArguments] = None) extends TypeArgumentsAssignable {
+final case class TypeNameSegment(id: Id, var typeArguments: Option[TypeArguments] = None) extends TypeArgumentsAssignable {
 
   override def add(ta: TypeArguments): Unit = typeArguments = Some(ta)
 
@@ -128,7 +128,7 @@ object TypeNameSegment {
   def apply(name: String, typeArguments: Array[UnresolvedTypeRef]): TypeNameSegment = {
     val segment = apply(name)
     segment.typeArguments = Some(new TypeArguments())
-    segment.typeArguments.get.typeList = Some(new TypeList())
+    segment.typeArguments.get.typeList = Some(TypeList())
     typeArguments.foreach(arg => segment.typeArguments.get.typeList.get.add(arg))
     segment
   }
@@ -139,5 +139,47 @@ object TypeNameSegment {
     typeName
   }
 }
+
+final case class TypeArguments(var typeList: Option[TypeList] = None) extends TypeListAssignable {
+
+  override def add(tl: TypeList): Unit = typeList = Some(tl)
+
+  override def toString: String = {
+    import StringUtils._
+    asString(typeList)
+  }
+}
+
+object TypeArguments {
+  def apply(params: Array[String]): TypeArguments = {
+    val typeArguments = new TypeArguments
+    typeArguments.typeList = Some(new TypeList)
+    typeArguments.typeList.get.typeRefs.addAll(params.map(tp => {
+      val typeRef = new UnresolvedTypeRef()
+      typeRef.typeNameSegments.append(new TypeNameSegment(Id(IdToken(tp, Location.default))))
+      typeRef
+    }))
+    typeArguments
+  }
+
+  def apply(params: ArraySeq[ITypeDeclaration]): TypeArguments = {
+    val typeArguments = new TypeArguments
+    typeArguments.typeList = Some(new TypeList)
+    typeArguments.typeList.get.typeRefs.addAll(params)
+    typeArguments
+  }
+}
+
+final case class TypeList(typeRefs: mutable.ArrayBuffer[TypeRef] = mutable.ArrayBuffer[TypeRef]())
+  extends TypeRefAssignable {
+
+  override def add(tr: UnresolvedTypeRef): Unit = typeRefs.append(tr)
+
+  override def toString: String = {
+    import StringUtils._
+    asString(typeRefs, ",")
+  }
+}
+
 
 

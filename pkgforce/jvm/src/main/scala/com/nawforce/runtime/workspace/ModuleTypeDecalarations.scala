@@ -4,10 +4,11 @@
 package com.nawforce.runtime.workspace
 
 import com.financialforce.oparser._
+import com.nawforce.pkgforce.memory.IdentityEquality
 
 import scala.collection.immutable.ArraySeq
 
-trait IModuleTypeDeclaration extends ITypeDeclaration {
+trait IModuleTypeDeclaration extends ITypeDeclaration with IdentityEquality {
 
   var module: IPM.Module = _
 

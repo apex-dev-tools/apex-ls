@@ -140,6 +140,8 @@ case class Id(id: IdToken) {
     val other = obj.asInstanceOf[Id]
     id.lowerCaseContents.equalsIgnoreCase(other.id.lowerCaseContents)
   }
+
+  override val hashCode: Int = id.lowerCaseContents.hashCode
 }
 
 class QualifiedName extends IdAssignable {
@@ -161,58 +163,6 @@ class QualifiedName extends IdAssignable {
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[QualifiedName]
     other.qName == qName
-  }
-}
-
-class TypeArguments extends TypeListAssignable {
-  var typeList: Option[TypeList] = None
-
-  override def add(tl: TypeList): Unit = typeList = Some(tl)
-
-  override def toString: String = {
-    import StringUtils._
-    asString(typeList)
-  }
-
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[TypeArguments]
-    other.typeList == typeList
-  }
-}
-
-object TypeArguments {
-  def apply(params: Array[String]): TypeArguments = {
-    val typeArguments = new TypeArguments
-    typeArguments.typeList = Some(new TypeList)
-    typeArguments.typeList.get.typeRefs.addAll(params.map(tp => {
-      val typeRef = new UnresolvedTypeRef()
-      typeRef.typeNameSegments.append(new TypeNameSegment(Id(IdToken(tp, Location.default))))
-      typeRef
-    }))
-    typeArguments
-  }
-
-  def apply(params: ArraySeq[ITypeDeclaration]): TypeArguments = {
-    val typeArguments = new TypeArguments
-    typeArguments.typeList = Some(new TypeList)
-    typeArguments.typeList.get.typeRefs.addAll(params)
-    typeArguments
-  }
-}
-
-class TypeList extends TypeRefAssignable {
-  val typeRefs: mutable.ArrayBuffer[TypeRef] = mutable.ArrayBuffer[TypeRef]()
-
-  override def add(tr: UnresolvedTypeRef): Unit = typeRefs.append(tr)
-
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[TypeList]
-    other.typeRefs == typeRefs
-  }
-
-  override def toString: String = {
-    import StringUtils._
-    asString(typeRefs, ",")
   }
 }
 

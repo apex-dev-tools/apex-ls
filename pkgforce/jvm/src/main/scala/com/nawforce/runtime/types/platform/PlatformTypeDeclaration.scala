@@ -69,7 +69,7 @@ class PlatformTypeDeclaration(
 
   override def initializers: ArraySeq[Initializer] = ArraySeq.empty // TODO
 
-  override def innerTypes: ArraySeq[ITypeDeclaration] = {
+  override def innerTypes: ArraySeq[PlatformTypeDeclaration] = {
     if (nature == CLASS_NATURE) {
       ArraySeq.unsafeWrapArray(
         cls.getClasses.map(nested => new PlatformTypeDeclaration(module, nested, Some(this)))
@@ -89,9 +89,10 @@ class PlatformTypeDeclaration(
 }
 
 object PlatformTypeDeclaration {
-  final val emptyPaths: Array[String]                         = Array.empty
-  final val emptyArgs: Array[String]                          = Array.empty
-  final val emptyTypeDeclarations: ArraySeq[ITypeDeclaration] = ArraySeq.empty
+  final val emptyPaths: Array[String]                                = Array.empty
+  final val emptyArgs: Array[String]                                 = Array.empty
+  final val emptyTypeDeclarations: ArraySeq[PlatformTypeDeclaration] = ArraySeq.empty
+  final val priorityNamespaces: Seq[Name]                            = Seq(Names.System, Names.Schema, Names.Database)
 
   /* Java package prefix for platform types */
   private val platformPackage = "com.nawforce.runforce"
@@ -122,8 +123,7 @@ object PlatformTypeDeclaration {
     // Non-generic lookup
     val typeName = typeNameOpt.get
     val tdOpt    = getDeclaration(module, asDotName(typeName))
-    if (tdOpt.isEmpty && typeName.params.isEmpty)
-      return None
+    if (tdOpt.isEmpty) return None
 
     // Quick fail on wrong number of type variables
     val td            = tdOpt.get
@@ -145,7 +145,7 @@ object PlatformTypeDeclaration {
   private def asTypeName(typeRef: UnresolvedTypeRef): Option[TypeName] = {
     asTypeName(typeRef.typeNameSegments.toList, None).map(fullTypeName => {
       var wrapped = fullTypeName
-      for (i <- 0 until typeRef.arraySubscripts)
+      for (_ <- 0 until typeRef.arraySubscripts)
         wrapped = new TypeName(Names.List$, Seq(wrapped), Some(TypeName.System))
       wrapped
     })
@@ -185,28 +185,39 @@ object PlatformTypeDeclaration {
     module: IPM.Module,
     dotName: DotName
   ): Option[PlatformTypeDeclaration] = {
-    val matched = classNameMap.get(dotName)
-    assert(matched.size < 2, s"Found multiple platform type matches for $dotName")
-    matched.map(
-      name =>
-        new PlatformTypeDeclaration(
-          module,
-          classOf[PlatformTypeDeclaration].getClassLoader
-            .loadClass(platformPackage + "." + name),
-          None
-        )
-    )
+    if (dotName.names.length == 3) {
+      val tailName = dotName.names.last.toString
+      getDeclaration(module, DotName(dotName.names.take(2))).flatMap(td => {
+        td.innerTypes.find(_.id.toString.equalsIgnoreCase(tailName))
+      })
+    } else if (dotName.names.length == 2) {
+      val matched = classNameMap.get(dotName)
+      assert(matched.size < 2, s"Found multiple platform type matches for $dotName")
+      matched.map(
+        name =>
+          new PlatformTypeDeclaration(
+            module,
+            classOf[PlatformTypeDeclaration].getClassLoader
+              .loadClass(platformPackage + "." + name),
+            None
+          )
+      )
+    } else {
+      None
+    }
   }
 
   /* Valid platform class names */
   lazy val classNames: Iterable[DotName] = classNameMap.keys
 
   /* All the namespaces - excluding our special ones! */
-  lazy val namespaces: Set[Name] = classNameMap.keys
+  lazy val namespaces: Seq[Name] = priorityNamespaces ++ classNameMap.keys
     .filter(_.isCompound)
     .map(_.firstName)
+    .toSeq
+    .distinct
     .filterNot(name => name == Names.SObjects || name == Names.Internal)
-    .toSet
+    .filterNot(priorityNamespaces.contains)
 
   /* Map of class names, it's a map just to allow easy recovery of the original case by looking at value */
   private lazy val classNameMap: HashMap[DotName, DotName] = {
@@ -247,10 +258,8 @@ object PlatformTypeDeclaration {
   }
 
   def getTypeName(cls: java.lang.Class[_]): TypeInfo = {
-    val cname = cls.getCanonicalName
-    val names = cname.drop(platformPackage.length + 1).split('.').reverse
-    // TODO: Remove this, just to be sure for now
-    assert(names.length == 2)
+    val cname  = cls.getCanonicalName
+    val names  = cname.drop(platformPackage.length + 1).split('.').reverse
     val params = cls.getTypeParameters.map(_.getName)
     if (params.nonEmpty) {
       TypeInfo(names(1), params, TypeNameSegment(names.head, params))

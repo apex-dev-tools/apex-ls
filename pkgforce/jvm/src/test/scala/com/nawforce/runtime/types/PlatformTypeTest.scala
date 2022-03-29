@@ -87,10 +87,10 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(td.innerTypes.isEmpty)
   }
 
-  test("Inner class not found") {
+  test("Inner class found") {
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("Messaging"), TypeNameSegment("InboundEmail"), TypeNameSegment("BinaryAttachment")), 0)
     val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
-    assert(tdOpt.isEmpty)
+    assert(tdOpt.nonEmpty)
   }
 
   test("Generic class found") {
