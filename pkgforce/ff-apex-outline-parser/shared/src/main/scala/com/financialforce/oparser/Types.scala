@@ -3,6 +3,8 @@
  */
 package com.financialforce.oparser
 
+import com.nawforce.pkgforce.names.{Identifier, Name, TypeName}
+
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -50,8 +52,8 @@ trait TypeRefAssignable {
   def add(tr: UnresolvedTypeRef): Unit
 }
 
-trait TypeNameAssignable {
-  def add(tn: TypeName): Unit
+trait TypeNameSegmentAssignable {
+  def add(tn: TypeNameSegment): Unit
 }
 
 trait TypeListAssignable {
@@ -63,7 +65,7 @@ trait TypeArgumentsAssignable {
 }
 
 trait ArraySubscriptsAssignable {
-  def add(as: ArraySubscripts): Unit
+  def addArraySubscript(): Unit
 }
 
 trait FormalParameterAssignable {
@@ -80,11 +82,6 @@ trait InitializerAssignable {
 
 trait PropertyBlockAssignable {
   def add(pb: PropertyBlock): Unit
-}
-
-trait TypeRef {
-  //Only used for comparison
-  def getFullName: String
 }
 
 trait Signature {
@@ -143,6 +140,8 @@ case class Id(id: IdToken) {
     val other = obj.asInstanceOf[Id]
     id.lowerCaseContents.equalsIgnoreCase(other.id.lowerCaseContents)
   }
+
+  override val hashCode: Int = id.lowerCaseContents.hashCode
 }
 
 class QualifiedName extends IdAssignable {
@@ -165,84 +164,6 @@ class QualifiedName extends IdAssignable {
     val other = obj.asInstanceOf[QualifiedName]
     other.qName == qName
   }
-}
-
-class UnresolvedTypeRef extends TypeNameAssignable with ArraySubscriptsAssignable with TypeRef {
-  val typeNames: mutable.ArrayBuffer[TypeName]              = mutable.ArrayBuffer[TypeName]()
-  val arraySubscripts: mutable.ArrayBuffer[ArraySubscripts] = mutable.ArrayBuffer[ArraySubscripts]()
-
-  override def add(tn: TypeName): Unit = typeNames.append(tn)
-
-  override def add(as: ArraySubscripts): Unit = arraySubscripts.append(as)
-
-  override def getFullName: String = {
-    toString
-  }
-
-  override def equals(obj: Any): Boolean = {
-    if (!obj.isInstanceOf[UnresolvedTypeRef])
-      return false
-    val other = obj.asInstanceOf[UnresolvedTypeRef]
-    other.typeNames == typeNames && other.arraySubscripts == arraySubscripts
-  }
-
-  override def toString: String = {
-    import StringUtils._
-    s"${asString(typeNames, ".")}${asString(arraySubscripts, "")}"
-  }
-}
-
-class TypeName(val id: Id) extends TypeArgumentsAssignable {
-  var typeArguments: Option[TypeArguments] = None
-
-  override def add(ta: TypeArguments): Unit = typeArguments = Some(ta)
-
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[TypeName]
-
-    id == other.id && typeArguments == other.typeArguments
-  }
-
-  override def toString: String = {
-    import StringUtils._
-    s"$id ${asString(typeArguments)}"
-  }
-}
-
-class TypeArguments extends TypeListAssignable {
-  var typeList: Option[TypeList] = None
-
-  override def add(tl: TypeList): Unit = typeList = Some(tl)
-
-  override def toString: String = {
-    import StringUtils._
-    asString(typeList)
-  }
-
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[TypeArguments]
-    other.typeList == typeList
-  }
-}
-
-class TypeList extends TypeRefAssignable {
-  val typeRefs: mutable.ArrayBuffer[TypeRef] = mutable.ArrayBuffer[TypeRef]()
-
-  override def add(tr: UnresolvedTypeRef): Unit = typeRefs.append(tr)
-
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[TypeList]
-    other.typeRefs == typeRefs
-  }
-
-  override def toString: String = {
-    import StringUtils._
-    asString(typeRefs, ", ")
-  }
-}
-
-case class ArraySubscripts() {
-  override def toString: String = "[]"
 }
 
 class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdAssignable {
@@ -444,6 +365,9 @@ trait ITypeDeclaration extends TypeRef {
   def location: Location
 
   def id: Id
+
+  def typeNameSegment: TypeNameSegment
+
   def enclosing: Option[ITypeDeclaration]
   def extendsTypeRef: TypeRef
   def implementsTypeList: TypeList
@@ -457,6 +381,13 @@ trait ITypeDeclaration extends TypeRef {
   def methods: ArraySeq[MethodDeclaration]
   def properties: ArraySeq[PropertyDeclaration]
   def fields: ArraySeq[FieldDeclaration]
+
+  def typeName: Array[TypeNameSegment] = {
+    enclosing match {
+      case Some(enc) => Array(enc.typeNameSegment, typeNameSegment)
+      case None      => Array(typeNameSegment)
+    }
+  }
 
   override def getFullName: String = {
     enclosing match {
@@ -487,6 +418,9 @@ sealed class TypeDeclaration(val path: String, _enclosing: ClassTypeDeclaration)
   override def location: Location = _location
 
   override def id: Id = _id
+
+  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id)
+
   override def enclosing: Option[ClassTypeDeclaration] = Option(_enclosing)
   override def extendsTypeRef: TypeRef = _extendsTypeRef
   override def implementsTypeList: TypeList = _implementsTypeList
@@ -785,7 +719,7 @@ object Parse {
 
   private def toQualifiedName(tr: UnresolvedTypeRef): QualifiedName = {
     val qName = new QualifiedName
-    tr.typeNames.foreach(tn => qName.add(tn.id))
+    tr.typeNameSegments.foreach(tn => qName.add(tn.id))
     qName
   }
 
@@ -963,10 +897,10 @@ object Parse {
     }
   }
 
-  private def parseTypeName(startIndex: Int, tokens: Tokens, res: TypeNameAssignable): Int = {
+  private def parseTypeName(startIndex: Int, tokens: Tokens, res: TypeNameSegmentAssignable): Int = {
     tokens(startIndex) match {
       case Some(id: IdToken) =>
-        val tn = new TypeName(tokenToId(id))
+        val tn = new TypeNameSegment(tokenToId(id))
         res.add(tn)
         val nextIndex = parseTypeArguments(startIndex + 1, tokens, tn)
         nextIndex
@@ -1025,7 +959,7 @@ object Parse {
       if (tokens(index + 1).exists(!_.matches(Tokens.RBrackStr))) {
         throw new Exception(s"Missing '${Tokens.RBrackStr}'")
       }
-      res.add(ArraySubscripts())
+      res.addArraySubscript()
       index += 2
     }
     index

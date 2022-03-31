@@ -4,29 +4,19 @@
 package com.nawforce.runtime.workspace
 
 import com.financialforce.oparser._
-import com.nawforce.runtime.workspace.IPM.Module
+import com.nawforce.pkgforce.memory.IdentityEquality
 
 import scala.collection.immutable.ArraySeq
 
-trait ModuleScoped {
-  var module: Option[IPM.Module] = None
-}
+trait IModuleTypeDeclaration extends ITypeDeclaration with IdentityEquality {
 
-trait IModuleTypeDeclaration extends ITypeDeclaration with ModuleScoped {
+  var module: IPM.Module = _
+
   /* TODO: Remove these hacks, think we need generics in Outline parser */
   def enclosingModule: Option[IModuleTypeDeclaration] =
     enclosing.map(td => td.asInstanceOf[IModuleTypeDeclaration])
   def innerTypesModule: ArraySeq[IModuleTypeDeclaration] =
     innerTypes.map(td => td.asInstanceOf[IModuleTypeDeclaration])
-}
-
-object ModuleScoped {
-  def module(td: TypeDeclaration): Option[Module] = {
-    td match {
-      case scoped: ModuleScoped => scoped.module
-      case _                    => None
-    }
-  }
 }
 
 class ModuleClassTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)

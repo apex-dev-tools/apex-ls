@@ -48,6 +48,10 @@ case class ModuleLayer(
 
   val path: PathLike = projectPath.join(relativePath)
 
+  def pathRelativeTo(root: PathLike): String = {
+    path.toString.substring(root.toString.length)
+  }
+
   def index(namespace: Option[Name]): IssuesAnd[DocumentIndex] = {
     val logger = new CatchingLogger
     val index  = DocumentIndex(logger, namespace, projectPath, path)

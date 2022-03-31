@@ -40,6 +40,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         assert(logger.issues.isEmpty)
         assert(project.nonEmpty)
         assert(project.get.layers(logger).isEmpty)
+        assert(project.get.metadataGlobs.isEmpty)
         assert(
           logger.issues == ArraySeq(
             Issue(
@@ -69,7 +70,8 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             if projectPath == root && path == dir =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 1)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
     }
   }
 
@@ -97,7 +99,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith("bar/"))
     }
   }
 
@@ -125,7 +129,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith("bar/"))
     }
   }
 
@@ -148,7 +154,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith(".apexlink/gulp/ns1/"))
     }
   }
 
@@ -175,7 +183,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             ) if projectPath1 == root && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith(".apexlink/gulp/unmanaged/"))
     }
   }
 
@@ -207,6 +217,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
           )
         )
       )
+
+      assert(project.get.metadataGlobs.size == 1)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
     }
   }
 
@@ -226,7 +239,8 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             if projectPath == root && path == dir =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 1)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
     }
   }
 
@@ -261,7 +275,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith("bar/"))
     }
   }
 
@@ -301,7 +317,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             if path1 == dir1 && path2 == dir2 && path3 == dir1 && projectPath1 == root && projectPath2 == root && projectPath3 == root =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith("bar/"))
     }
   }
 
@@ -354,6 +372,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         )
       )
 
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith("bar/"))
     }
   }
 
@@ -393,7 +414,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             if path1 == dir1 && path2 == dir2 && path3 == dir1 && projectPath1 == root && projectPath2 == root && projectPath3 == root =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith("bar/"))
     }
   }
 
@@ -426,7 +449,8 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             ) if path1 == dir1 && projectPath == root =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 1)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
     }
   }
 
@@ -459,7 +483,8 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             ) if path1 == dir1 && projectPath1 == root && projectPath2 == root.join("bar") =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
     }
   }
 
@@ -500,7 +525,9 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
             ) if path1 == dir1 && projectPath1 == root && projectPath2 == root.join("pkg") =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 2)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith("pkg/bar/"))
     }
   }
 
@@ -537,7 +564,10 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
               projectPath2 == root.join("bar") && projectPath3 == root.join("baz") =>
       }
 
-      assert(logger.issues.isEmpty)
+      assert(project.get.metadataGlobs.size == 3)
+      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobs(1).startsWith("bar/"))
+      assert(project.get.metadataGlobs(2).startsWith("baz/"))
     }
   }
 }

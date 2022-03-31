@@ -445,7 +445,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       val sCon = getBasicConstructor("TestVisible", "private", "Dummy", "Foo", "f")
       sCon.formalParameterList.formalParameters.head.typeRef.get
         .asInstanceOf[UnresolvedTypeRef]
-        .typeNames
+        .typeNameSegments
         .prepend(toTypeNames("ResolvedName", None))
       second._constructors.append(sCon)
 

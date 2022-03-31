@@ -68,7 +68,7 @@ public class MDIndex implements IssuesCollection {
 
         final String filename = URIToPath(uriFilename);
         List<IModuleTypeDeclaration> allTypes = rootModule
-                .map(module -> CollectionConverters.asJava(module.getTypesByPath(filename)))
+                .map(module -> CollectionConverters.asJava(module.findTypesByPath(filename)))
                 .filter(types -> !types.isEmpty())
                 .orElse(null);
 

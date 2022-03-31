@@ -4,7 +4,7 @@ import com.financialforce.oparser.{
   UnresolvedTypeRef,
   TypeArguments => OPTypeArguments,
   TypeList => OPTypeList,
-  TypeName => OPTypeName,
+  TypeNameSegment => OPTypeName,
   TypeRef => OPTypeReference
 }
 import com.nawforce.pkgforce.names.TypeName
@@ -37,7 +37,7 @@ private[opcst] object TypeReference {
     override def arraySubscriptsCount(): Int = {
       //TODO: is this actually right behaviour?
       typeReference match {
-        case utr: UnresolvedTypeRef => utr.arraySubscripts.length
+        case utr: UnresolvedTypeRef => utr.arraySubscripts
         case _                      => 0
       }
     }
@@ -46,7 +46,7 @@ private[opcst] object TypeReference {
       //TODO: is this actually right behaviour?
       typeReference match {
         case utr: UnresolvedTypeRef =>
-          ArraySeq.from(utr.typeNames.map(new OutlineParserTypeName(_)))
+          ArraySeq.from(utr.typeNameSegments.map(new OutlineParserTypeName(_)))
         case _ => ArraySeq.empty
       }
     }

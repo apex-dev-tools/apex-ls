@@ -121,12 +121,12 @@ object Antlr {
       res.add(typeArguments)
   }
 
-  def antlrTypeName(res: TypeNameAssignable, ctx: ApexParser.TypeNameContext): Unit = {
+  def antlrTypeName(res: TypeNameSegmentAssignable, ctx: ApexParser.TypeNameContext): Unit = {
     val tnOpt = Option(ctx.LIST())
-      .map(l => new TypeName(Id(IdToken(l.toString, Location.default))))
-      .orElse(Option(ctx.SET()).map(l => new TypeName(Id(IdToken(l.toString, Location.default)))))
-      .orElse(Option(ctx.MAP()).map(l => new TypeName(Id(IdToken(l.toString, Location.default)))))
-      .orElse(Option(ctx.id()).map(l => new TypeName(toId(l))))
+      .map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default))))
+      .orElse(Option(ctx.SET()).map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default)))))
+      .orElse(Option(ctx.MAP()).map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default)))))
+      .orElse(Option(ctx.id()).map(l => new TypeNameSegment(toId(l))))
 
     if (tnOpt.isEmpty)
       throw new Exception("Missing type name")
@@ -142,7 +142,7 @@ object Antlr {
     ctx
       .RBRACK()
       .forEach(_ => {
-        res.add(new ArraySubscripts)
+        res.addArraySubscript()
       })
   }
 
@@ -308,7 +308,7 @@ object Antlr {
       antlrTypeRef(md, ctx.typeRef())
     } else {
       md.typeRef = Some(new UnresolvedTypeRef)
-      md.typeRef.get.add(new TypeName(toId("void")))
+      md.typeRef.get.add(new TypeNameSegment(toId("void")))
     }
 
     val method =
@@ -338,7 +338,7 @@ object Antlr {
       antlrTypeRef(md, ctx.typeRef())
     } else {
       md.typeRef = Some(new UnresolvedTypeRef)
-      md.typeRef.get.add(new TypeName(toId("void")))
+      md.typeRef.get.add(new TypeNameSegment(toId("void")))
     }
 
     val method =
