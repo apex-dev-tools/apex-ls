@@ -26,13 +26,15 @@ object OutputComparisonTest {
       System.err.println(s"No workspace directory argument provided.")
       return
     }
-    if (args.length > 1) {
+    if (args.length < 2) {
       System.err.println(
-        s"Multiple arguments provided, expected workspace directory, '${args.mkString(", ")}'}"
+        s"Not enough arguments provided, expected workspace directory and apex db path, '${args.mkString(", ")}'}"
       )
       return
     }
+
     val absolutePath = Paths.get(Option(args.head).getOrElse("")).toAbsolutePath.normalize()
+    val dbpath = Paths.get(args.tail.headOption.getOrElse("")).toAbsolutePath.normalize()
 
     val files: Seq[Path] = getFilesFromPath(absolutePath)
     val sources: Map[String, String] = files
@@ -40,7 +42,7 @@ object OutputComparisonTest {
         path.toString -> getUTF8ContentsFromPath(path)
       })
       .toMap
-    val sfParserOutput = SFParser(sources).parse
+    val sfParserOutput = SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
     if (sfParserOutput._2.nonEmpty) {
       parseFailure = sfParserOutput._2.size
       System.err.println(
@@ -63,7 +65,8 @@ object OutputComparisonTest {
       (result / files.size.toFloat) * 100
     }
 
-    println(f"""
+    println(
+      f"""
          |Output Comparison Summary
          |Total cls files processed: ${files.size}
          |Total comparisons: $total

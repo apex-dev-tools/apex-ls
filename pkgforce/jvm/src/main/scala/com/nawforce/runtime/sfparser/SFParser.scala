@@ -13,6 +13,7 @@ import apex.jorje.semantic.ast.modifier.ModifierGroup
 import apex.jorje.semantic.ast.statement.BlockStatement
 import apex.jorje.semantic.ast.visitor.{AdditionalPassScope, AstVisitor}
 import apex.jorje.semantic.compiler.parser.ParserEngine
+import apex.jorje.semantic.compiler.sfdc.SymbolProvider
 import apex.jorje.semantic.compiler.{CodeUnit, SourceFile}
 import apex.jorje.semantic.exception.Errors
 import apex.jorje.semantic.symbol.`type`.TypeInfo
@@ -65,11 +66,18 @@ class SFParser(source: Map[String, String]) {
     parse(ParserEngine.Type.ANONYMOUS)
   }
 
+  def parseClassWithSymbolProvider(
+    symbolProvider: SymbolProvider
+  ): (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]) = {
+    parse(ParserEngine.Type.NAMED, symbolProvider)
+  }
+
   private def parse(
-    parserEngineType: ParserEngine.Type = ParserEngine.Type.NAMED
+    parserEngineType: ParserEngine.Type = ParserEngine.Type.NAMED,
+    symbolProvider: SymbolProvider = EmptySymbolProvider()
   ): (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]) = {
     val (_, cu) =
-      CompilerService.visitAstFromString(toSourceFiles, parserEngineType)
+      CompilerService.compile(toSourceFiles, parserEngineType, symbolProvider)
     source.keys.foreach(path => {
       getTypeDeclaration(path, cu) match {
         case Some(value) => typeDeclarations.append(value)
@@ -529,6 +537,7 @@ class SFParser(source: Map[String, String]) {
 }
 
 object SFParser {
+
   import java.util.logging.LogManager
 
   // Stop Jorje logging a startup message
