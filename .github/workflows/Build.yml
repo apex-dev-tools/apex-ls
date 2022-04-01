@@ -286,9 +286,6 @@ jobs:
     - name: Automated-Testing-for-Force
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose samples/Automated-Testing-for-Force/Automated-Testing-for-Force
 
-    - name: Batch-Entry-for-Salesforce
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose samples/Batch-Entry-for-Salesforce/Batch-Entry-for-Salesforce
-
     - name: CustomMetadataLoader
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose samples/CustomMetadataLoader/CustomMetadataLoader
 
@@ -603,9 +600,6 @@ jobs:
 
     - name: Automated-Testing-for-Force (Outline Parser)
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Automated-Testing-for-Force/Automated-Testing-for-Force
-
-    - name: Batch-Entry-for-Salesforce (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Batch-Entry-for-Salesforce/Batch-Entry-for-Salesforce
 
     - name: CustomMetadataLoader (Outline Parser)
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/CustomMetadataLoader/CustomMetadataLoader
