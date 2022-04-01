@@ -49,6 +49,10 @@ class PlatformTypeDeclaration(
     }
   }
 
+  override def getFullName: String = {
+    s"${typeInfo.namespace}.${typeInfo.typeName.id}"
+  }
+
   final val typeInfo: TypeInfo = getTypeName(cls)
 
   override val paths: Array[String] = emptyPaths

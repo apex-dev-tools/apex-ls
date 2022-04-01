@@ -4,22 +4,26 @@ import com.financialforce.oparser.{ITypeDeclaration, TypeNameSegment, TypeRef, U
 
 import scala.collection.mutable.ArrayBuffer
 
-trait TypeFinder {
-  self: IPM.Module =>
+object TypeFinder {
 
-  def findType(typeRef: TypeRef, from: ITypeDeclaration): Option[ITypeDeclaration] = {
+  /**
+    * Will try and find the type in this order
+    * 1) Check if the type is a scalar type
+    * 2) Check if the type is from the local declaration including nested types and super types
+    * 3) Find the type from the baseModule and will push down the search all the way down to platform types
+    * Returns None if it cant resolve the type
+    */
+  def get(
+    baseModule: IPM.Module,
+    typeRef: TypeRef,
+    from: ITypeDeclaration
+  ): Option[ITypeDeclaration] = {
     val typeNames = getUnresolvedTypeNames(typeRef)
-    if (typeNames.flatMap(_.typeArguments).nonEmpty) {
-      //TODO: Resolve types with arguments properly
-      return None
-    }
+
     findScalarType(typeNames)
       .orElse(
-        findLocalTypeFor(typeNames, from)
-          .orElse(
-            getType(typeNames)
-              .orElse(getSystemTypes(typeNames))
-          )
+        findLocalTypeFor(baseModule, typeNames, from)
+          .orElse(getType(baseModule, typeNames))
       )
   }
 
@@ -30,22 +34,20 @@ trait TypeFinder {
     }
   }
 
-  private def getType(typeNames: ArrayBuffer[TypeNameSegment]): Option[ITypeDeclaration] = {
-    self.findExactTypeId(asFullName(typeNames))
+  private def getType(
+    baseModule: IPM.Module,
+    typeNames: ArrayBuffer[TypeNameSegment]
+  ): Option[ITypeDeclaration] = {
+    baseModule.findExactTypeId(asFullName(typeNames))
   }
 
   private def findScalarType(typeNames: ArrayBuffer[TypeNameSegment]): Option[ITypeDeclaration] = {
-    //TODO
-    //Would it return a TD?
-    None
-  }
-
-  private def getSystemTypes(typeNames: ArrayBuffer[TypeNameSegment]): Option[ITypeDeclaration] = {
     //TODO
     None
   }
 
   private def findLocalTypeFor(
+    baseModule: IPM.Module,
     typeNames: ArrayBuffer[TypeNameSegment],
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
@@ -54,12 +56,12 @@ trait TypeFinder {
       return Some(from)
     // Remove self reference but avoid false positive match against an inner
     else if (isCompound(typeNames) && from.id == typeNames.head.id && from.enclosing.isEmpty)
-      findLocalTypeFor(typeNames.tail, from)
+      findLocalTypeFor(baseModule, typeNames.tail, from)
 
     getNestedType(typeNames, from)
       .orElse(
-        getFromOuterType(typeNames, from)
-          .orElse(getFromSuperType(typeNames, from))
+        getFromOuterType(baseModule, typeNames, from)
+          .orElse(getFromSuperType(baseModule, typeNames, from))
       )
   }
 
@@ -75,18 +77,19 @@ trait TypeFinder {
   }
 
   private def getFromOuterType(
+    baseModule: IPM.Module,
     typeNames: ArrayBuffer[TypeNameSegment],
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
     if (isCompound(typeNames) || from.enclosing.isEmpty) {
       None
     } else {
-      val outerType = this.findLocalTypeFor(typeNames, from.enclosing.get)
+      val outerType = findLocalTypeFor(baseModule, typeNames, from.enclosing.get)
       if (outerType.nonEmpty) {
         if (outerType.get.id == typeNames.head.id)
           outerType
         else
-          findLocalTypeFor(typeNames, outerType.get)
+          findLocalTypeFor(baseModule, typeNames, outerType.get)
       } else {
         None
       }
@@ -101,6 +104,7 @@ trait TypeFinder {
   }
 
   private def getFromSuperType(
+    baseModule: IPM.Module,
     typeNames: ArrayBuffer[TypeNameSegment],
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
@@ -108,18 +112,18 @@ trait TypeFinder {
       return None
 
     from.extendsTypeRef match {
-      case resolved: ITypeDeclaration => findLocalTypeFor(typeNames, resolved)
+      case resolved: ITypeDeclaration => findLocalTypeFor(baseModule, typeNames, resolved)
       case _ =>
         val superTypeTypeNames = getUnresolvedTypeNames(from.extendsTypeRef)
         if (typeNames == superTypeTypeNames)
           return None
 
-        val superType = findLocalTypeFor(superTypeTypeNames, from).orElse({
-          self.findExactTypeId(asFullName(superTypeTypeNames))
+        val superType = findLocalTypeFor(baseModule, superTypeTypeNames, from).orElse({
+          baseModule.findExactTypeId(asFullName(superTypeTypeNames))
         })
 
         //TODO: check namespaces?
-        superType.flatMap(st => findLocalTypeFor(typeNames, st))
+        superType.flatMap(st => findLocalTypeFor(baseModule, typeNames, st))
     }
   }
 
@@ -128,7 +132,7 @@ trait TypeFinder {
   }
 
   private def asFullName(typeNames: ArrayBuffer[TypeNameSegment]): String = {
-    typeNames.map(_.id.id.contents).mkString(".")
+    typeNames.map(_.toString).mkString(".")
   }
 
 }

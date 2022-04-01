@@ -127,12 +127,12 @@ object IPM extends TriHierarchy {
         // can be constructed without the need for a recursive call back to this module for type resolution.
         typeRef.typeNameSegments.foreach(segment => {
           val args = segment.getArguments
-          val newArgs = args.map {
+          val newArgs = args.flatMap {
             case unref: UnresolvedTypeRef => findExactTypeId(unref.toString, unref)
             case other                    => Some(other)
           }
           if (args.nonEmpty && args.length == newArgs.length)
-            segment.replaceArguments(newArgs.map(_.get))
+            segment.replaceArguments(newArgs)
         })
         findExactTypeId(name, typeRef)
       })
@@ -215,8 +215,7 @@ object IPM extends TriHierarchy {
     override val dependents: ArraySeq[Module],
     val index: DocumentIndex,
     loadingPool: ExecutorService
-  ) extends Module
-      with TypeFinder {
+  ) extends Module {
 
     private final val lowerNames = mutable.TreeSet[String]()
     private final val types      = mutable.Map[Name, IModuleTypeDeclaration]()
@@ -262,8 +261,12 @@ object IPM extends TriHierarchy {
     }
 
     private def typeResolve(decl: TypeDeclaration): Unit = {
+      def resolve(typeRef: TypeRef): Option[ITypeDeclaration] = {
+        TypeFinder.get(this, typeRef, decl)
+      }
+
       def resolveSignature(body: Signature): Unit = {
-        body.typeRef = findType(body.typeRef, decl).getOrElse(body.typeRef)
+        body.typeRef = resolve(body.typeRef).getOrElse(body.typeRef)
         body match {
           case sfpl: SignatureWithParameterList => resolveParameterList(sfpl.formalParameterList)
           case _                                =>
@@ -272,16 +275,16 @@ object IPM extends TriHierarchy {
 
       def resolveParameterList(fpl: FormalParameterList): Unit = {
         fpl.formalParameters.foreach(fp => {
-          fp.typeRef = fp.typeRef.flatMap(tr => findType(tr, decl)).orElse(fp.typeRef)
+          fp.typeRef = fp.typeRef.flatMap(resolve).orElse(fp.typeRef)
         })
       }
 
       decl._extendsTypeRef = Option(decl.extendsTypeRef) match {
-        case Some(etr) => findType(etr, decl).orNull
+        case Some(etr) => resolve(etr).orNull
         case None      => null
       }
       Option(decl.implementsTypeList).foreach(tl => {
-        tl.typeRefs.mapInPlace(tr => findType(tr, decl).getOrElse(tr))
+        tl.typeRefs.mapInPlace(tr => resolve(tr).getOrElse(tr))
       })
       decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
       decl.properties.foreach(resolveSignature)
