@@ -5,12 +5,12 @@ package com.nawforce.runtime.workspace
 
 import com.financialforce.oparser._
 import com.nawforce.pkgforce.diagnostics._
-import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex}
+import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex, SObjectNature}
 import com.nawforce.pkgforce.names.{Name, Names}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
-import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
+import com.nawforce.runtime.types.platform.{PlatformTypeDeclaration, SObjectTypeDeclaration}
 
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.collection.immutable.ArraySeq
@@ -221,7 +221,22 @@ object IPM extends TriHierarchy {
     private final val lowerNames = mutable.TreeSet[String]()
     private final val types      = mutable.Map[Name, IModuleTypeDeclaration]()
 
+    loadSObjects()
     loadClasses()
+
+    private def loadSObjects(): Unit = {
+      val namespace = pkg.namespace
+
+      index
+        .get(SObjectNature)
+        .foreach(md => {
+          val td           = SObjectTypeDeclaration(this, md)
+          val absoluteName = md.typeName(namespace).toString
+          val name         = md.name.value
+          insertSObject(absoluteName, td)
+          insertSObject(name, td)
+        })
+    }
 
     private def loadClasses(): Unit = {
       val namespace = pkg.namespace
@@ -287,6 +302,11 @@ object IPM extends TriHierarchy {
           })
         case _ => ()
       }
+    }
+
+    private def insertSObject(name: String, decl: SObjectTypeDeclaration): Unit = {
+      lowerNames.add(name.toLowerCase)
+      types.put(Name(name), decl)
     }
 
     override def isVisibleFile(path: PathLike): Boolean = {
@@ -395,7 +415,7 @@ object IPM extends TriHierarchy {
 
     override val namespace: Option[Name] = Some(_namespace)
 
-    val modules: ArraySeq[Module] = ArraySeq(new PlatformModule(this))
+    val modules: ArraySeq[Module] = ArraySeq(PlatformModule(_namespace, this))
   }
 
   /* Module for platform types. Only exact searching is supported on platform types. */
@@ -491,6 +511,19 @@ object IPM extends TriHierarchy {
       namespacePrefix: String,
       accum: mutable.Map[Name, IModuleTypeDeclaration]
     ): Unit = {}
+  }
+
+  class SchemaPlatformModule(override val pkg: PlatformPackage) extends PlatformModule(pkg) {
+    //TODO:
+  }
+
+  object PlatformModule {
+    def apply(namespace: Name, pkg: PlatformPackage): PlatformModule = {
+      namespace match {
+        case Names.Schema => new SchemaPlatformModule(pkg)
+        case _            => new PlatformModule(pkg)
+      }
+    }
   }
 
 }
