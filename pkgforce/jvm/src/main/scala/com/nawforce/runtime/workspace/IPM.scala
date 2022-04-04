@@ -128,8 +128,10 @@ object IPM extends TriHierarchy {
         typeRef.typeNameSegments.foreach(segment => {
           val args = segment.getArguments
           val newArgs = args.flatMap {
-            case unref: UnresolvedTypeRef => findExactTypeId(unref.toString, unref)
-            case other                    => Some(other)
+            case unref: UnresolvedTypeRef =>
+              findExactTypeId(unref.toString, unref)
+                .orElse(findExactTypeId(unref.toString))
+            case other => Some(other)
           }
           if (args.nonEmpty && args.length == newArgs.length)
             segment.replaceArguments(newArgs)

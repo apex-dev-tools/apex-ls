@@ -23,7 +23,7 @@ object TypeFinder {
     findScalarType(typeNames)
       .orElse(
         findLocalTypeFor(baseModule, typeNames, from)
-          .orElse(getType(baseModule, typeNames))
+          .orElse(getType(baseModule, typeNames, from))
       )
   }
 
@@ -36,8 +36,22 @@ object TypeFinder {
 
   private def getType(
     baseModule: IPM.Module,
-    typeNames: ArrayBuffer[TypeNameSegment]
+    typeNames: ArrayBuffer[TypeNameSegment],
+    from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
+    //Pre resolve relative type arguments
+    //TODO: check efficiency of this, we are resolving all the arguments to just to turn into string and resolve
+    // it again in findExactTypeId
+    typeNames.foreach(segment => {
+      val args = segment.getArguments
+      val newArgs = args.flatMap {
+        case unref: UnresolvedTypeRef =>
+          get(baseModule, unref, from)
+        case other => Some(other)
+      }
+      if (args.nonEmpty && args.length == newArgs.length)
+        segment.replaceArguments(newArgs)
+    })
     baseModule.findExactTypeId(asFullName(typeNames))
   }
 
@@ -56,8 +70,7 @@ object TypeFinder {
       return Some(from)
     // Remove self reference but avoid false positive match against an inner
     else if (isCompound(typeNames) && from.id == typeNames.head.id && from.enclosing.isEmpty)
-      findLocalTypeFor(baseModule, typeNames.tail, from)
-
+      return findLocalTypeFor(baseModule, typeNames.tail, from)
     getNestedType(typeNames, from)
       .orElse(
         getFromOuterType(baseModule, typeNames, from)
@@ -108,22 +121,33 @@ object TypeFinder {
     typeNames: ArrayBuffer[TypeNameSegment],
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
+    def isTypeFromInner(toCheck: ITypeDeclaration, from: ITypeDeclaration): Boolean = {
+      val outerTypeNames = toCheck.enclosing.map(x => x.typeName)
+      outerTypeNames.nonEmpty && outerTypeNames.get.contains(from.typeNameSegment)
+    }
+
     if (from.extendsTypeRef == null)
       return None
 
     from.extendsTypeRef match {
-      case resolved: ITypeDeclaration => findLocalTypeFor(baseModule, typeNames, resolved)
+      case resolved: ITypeDeclaration =>
+        if (!isTypeFromInner(resolved, from)) {
+          return findLocalTypeFor(baseModule, typeNames, resolved)
+        }
+        None
       case _ =>
         val superTypeTypeNames = getUnresolvedTypeNames(from.extendsTypeRef)
         if (typeNames == superTypeTypeNames)
           return None
 
         val superType = findLocalTypeFor(baseModule, superTypeTypeNames, from).orElse({
-          baseModule.findExactTypeId(asFullName(superTypeTypeNames))
+          getType(baseModule, superTypeTypeNames, from)
         })
 
         //TODO: check namespaces?
-        superType.flatMap(st => findLocalTypeFor(baseModule, typeNames, st))
+        if (superType.nonEmpty && !isTypeFromInner(superType.get, from))
+          return superType.flatMap(st => findLocalTypeFor(baseModule, typeNames, st))
+        None
     }
   }
 
