@@ -8,13 +8,15 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 trait TypeRef {
-  //Only used for comparison
   def getFullName: String
 }
 
-final case class UnresolvedTypeRef(typeNameSegments: mutable.ArrayBuffer[TypeNameSegment] = mutable.ArrayBuffer[TypeNameSegment](),
-                                   var arraySubscripts: Int = 0
-                                  ) extends TypeNameSegmentAssignable with ArraySubscriptsAssignable with TypeRef {
+final case class UnresolvedTypeRef(
+  typeNameSegments: mutable.ArrayBuffer[TypeNameSegment] = mutable.ArrayBuffer[TypeNameSegment](),
+  var arraySubscripts: Int = 0
+) extends TypeNameSegmentAssignable
+    with ArraySubscriptsAssignable
+    with TypeRef {
 
   override def add(tn: TypeNameSegment): Unit = typeNameSegments.append(tn)
 
@@ -70,10 +72,12 @@ object UnresolvedTypeRef {
   /* Split a list of comma delimited type names */
   private def buildTypeNames(value: String): Either[String, Array[UnresolvedTypeRef]] = {
     val args =
-      safeSplit(value, ',').foldLeft(ArrayBuffer[Either[String, UnresolvedTypeRef]]())((acc, arg) => {
-        acc.append(apply(arg))
-        acc
-      })
+      safeSplit(value, ',').foldLeft(ArrayBuffer[Either[String, UnresolvedTypeRef]]())(
+        (acc, arg) => {
+          acc.append(apply(arg))
+          acc
+        }
+      )
 
     args
       .collectFirst { case Left(err) => err }
@@ -84,8 +88,8 @@ object UnresolvedTypeRef {
   /** Split a string at 'separator' but ignoring if within '<...>' blocks. */
   private def safeSplit(value: String, separator: Char): List[String] = {
     var parts: List[String] = Nil
-    var current = new StringBuffer()
-    var depth = 0
+    var current             = new StringBuffer()
+    var depth               = 0
     value.foreach {
       case '<' => depth += 1; current.append('<')
       case '>' => depth -= 1; current.append('>')
@@ -98,12 +102,16 @@ object UnresolvedTypeRef {
   }
 }
 
-final case class TypeNameSegment(id: Id, var typeArguments: Option[TypeArguments] = None) extends TypeArgumentsAssignable {
+final case class TypeNameSegment(id: Id, var typeArguments: Option[TypeArguments] = None)
+    extends TypeArgumentsAssignable {
 
   override def add(ta: TypeArguments): Unit = typeArguments = Some(ta)
 
   def getArguments: ArraySeq[TypeRef] = {
-    typeArguments.flatMap(_.typeList).map(tl => ArraySeq.unsafeWrapArray(tl.typeRefs.toArray)).getOrElse(ArraySeq())
+    typeArguments
+      .flatMap(_.typeList)
+      .map(tl => ArraySeq.unsafeWrapArray(tl.typeRefs.toArray))
+      .getOrElse(ArraySeq())
   }
 
   def replaceArguments(args: ArraySeq[TypeRef]): Unit = {
@@ -112,10 +120,9 @@ final case class TypeNameSegment(id: Id, var typeArguments: Option[TypeArguments
   }
 
   override def toString: String = {
-    import StringUtils._
-    if (typeArguments.nonEmpty)
-      s"$id<${asString(typeArguments)}>"
-    else
+    if (typeArguments.nonEmpty) {
+      s"$id<${getArguments.map(_.getFullName).mkString(",")}>"
+    } else
       id.toString
   }
 }
@@ -171,7 +178,7 @@ object TypeArguments {
 }
 
 final case class TypeList(typeRefs: mutable.ArrayBuffer[TypeRef] = mutable.ArrayBuffer[TypeRef]())
-  extends TypeRefAssignable {
+    extends TypeRefAssignable {
 
   override def add(tr: UnresolvedTypeRef): Unit = typeRefs.append(tr)
 
@@ -180,6 +187,3 @@ final case class TypeList(typeRefs: mutable.ArrayBuffer[TypeRef] = mutable.Array
     asString(typeRefs, ",")
   }
 }
-
-
-

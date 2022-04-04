@@ -72,6 +72,10 @@ class GenericPlatformTypeDeclaration(
   override def properties: ArraySeq[PropertyDeclaration] = ArraySeq.empty // TODO
 
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.empty // TODO
+
+  override def getFullName: String = {
+    s"${typeInfo.namespace}.${typeInfo.typeName.id}<${typeArgs.map(_.getFullName).mkString(",")}>"
+  }
 }
 
 object GenericPlatformTypeDeclaration {

@@ -254,13 +254,13 @@ object ConstructorDeclaration {
 }
 
 case class MethodDeclaration(
-                              annotations: ArraySeq[Annotation],
-                              modifiers: ArraySeq[Modifier],
-                              var typeRef: TypeRef,
-                              id: Id,
-                              formalParameterList: FormalParameterList
-                            ) extends BodyDeclaration
-  with SignatureWithParameterList {
+  annotations: ArraySeq[Annotation],
+  modifiers: ArraySeq[Modifier],
+  var typeRef: TypeRef,
+  id: Id,
+  formalParameterList: FormalParameterList
+) extends BodyDeclaration
+    with SignatureWithParameterList {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
@@ -391,61 +391,73 @@ trait ITypeDeclaration extends TypeRef {
 
   override def getFullName: String = {
     enclosing match {
-      case Some(enc) => s"${enc.id}.${id.id.contents}"
+      case Some(enc) => s"${enc.getFullName}.${id.id.contents}"
       case None      => id.id.contents
     }
   }
 }
 
-sealed class TypeDeclaration(val path: String, _enclosing: ClassTypeDeclaration) extends ITypeDeclaration {
+sealed class TypeDeclaration(val path: String, _enclosing: ClassTypeDeclaration)
+    extends ITypeDeclaration {
   var _location: Location = null
 
-  var _id: Id = null
-  var _extendsTypeRef: TypeRef = null
+  var _id: Id                       = null
+  var _extendsTypeRef: TypeRef      = null
   var _implementsTypeList: TypeList = null
 
-  var _modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer()
-  var _annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer()
+  var _modifiers: mutable.ArrayBuffer[Modifier]       = mutable.ArrayBuffer()
+  var _annotations: mutable.ArrayBuffer[Annotation]   = mutable.ArrayBuffer()
   var _initializers: mutable.ArrayBuffer[Initializer] = mutable.ArrayBuffer()
 
-  var _innerTypes: mutable.ArrayBuffer[TypeDeclaration]= mutable.ArrayBuffer()
-  var _constructors: mutable.ArrayBuffer[ConstructorDeclaration]= mutable.ArrayBuffer()
-  var _methods: mutable.ArrayBuffer[MethodDeclaration]= mutable.ArrayBuffer()
-  var _properties: mutable.ArrayBuffer[PropertyDeclaration]= mutable.ArrayBuffer()
-  var _fields: mutable.ArrayBuffer[FieldDeclaration]= mutable.ArrayBuffer()
+  var _innerTypes: mutable.ArrayBuffer[TypeDeclaration]          = mutable.ArrayBuffer()
+  var _constructors: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer()
+  var _methods: mutable.ArrayBuffer[MethodDeclaration]           = mutable.ArrayBuffer()
+  var _properties: mutable.ArrayBuffer[PropertyDeclaration]      = mutable.ArrayBuffer()
+  var _fields: mutable.ArrayBuffer[FieldDeclaration]             = mutable.ArrayBuffer()
 
   override def paths: Array[String] = Array(path)
-  override def location: Location = _location
+  override def location: Location   = _location
 
   override def id: Id = _id
 
   override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id)
 
   override def enclosing: Option[ClassTypeDeclaration] = Option(_enclosing)
-  override def extendsTypeRef: TypeRef = _extendsTypeRef
-  override def implementsTypeList: TypeList = _implementsTypeList
+  override def extendsTypeRef: TypeRef                 = _extendsTypeRef
+  override def implementsTypeList: TypeList            = _implementsTypeList
 
-  override def modifiers: ArraySeq[Modifier]= ArraySeq.unsafeWrapArray(_modifiers.toArray)
-  override def annotations: ArraySeq[Annotation]= ArraySeq.unsafeWrapArray(_annotations.toArray)
-  override def initializers: ArraySeq[Initializer]= ArraySeq.unsafeWrapArray(_initializers.toArray)
+  override def modifiers: ArraySeq[Modifier]       = ArraySeq.unsafeWrapArray(_modifiers.toArray)
+  override def annotations: ArraySeq[Annotation]   = ArraySeq.unsafeWrapArray(_annotations.toArray)
+  override def initializers: ArraySeq[Initializer] = ArraySeq.unsafeWrapArray(_initializers.toArray)
 
   override def innerTypes: ArraySeq[TypeDeclaration] = ArraySeq.unsafeWrapArray(_innerTypes.toArray)
-  override def constructors: ArraySeq[ConstructorDeclaration]= ArraySeq.unsafeWrapArray(_constructors.toArray)
-  override def methods: ArraySeq[MethodDeclaration]= ArraySeq.unsafeWrapArray(_methods.toArray)
-  override def properties: ArraySeq[PropertyDeclaration]= ArraySeq.unsafeWrapArray(_properties.toArray)
-  override def fields: ArraySeq[FieldDeclaration]= ArraySeq.unsafeWrapArray(_fields.toArray)
+  override def constructors: ArraySeq[ConstructorDeclaration] =
+    ArraySeq.unsafeWrapArray(_constructors.toArray)
+  override def methods: ArraySeq[MethodDeclaration] = ArraySeq.unsafeWrapArray(_methods.toArray)
+  override def properties: ArraySeq[PropertyDeclaration] =
+    ArraySeq.unsafeWrapArray(_properties.toArray)
+  override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 }
 
 class TypeDeclarationFactory {
-  def createClassTypeDeclaration(path: String, enclosing: ClassTypeDeclaration): ClassTypeDeclaration = {
+  def createClassTypeDeclaration(
+    path: String,
+    enclosing: ClassTypeDeclaration
+  ): ClassTypeDeclaration = {
     new ClassTypeDeclaration(path, enclosing)
   }
 
-  def createInterfaceTypeDeclaration(path: String, enclosing: ClassTypeDeclaration): InterfaceTypeDeclaration = {
+  def createInterfaceTypeDeclaration(
+    path: String,
+    enclosing: ClassTypeDeclaration
+  ): InterfaceTypeDeclaration = {
     new InterfaceTypeDeclaration(path, enclosing)
   }
 
-  def createEnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration): EnumTypeDeclaration = {
+  def createEnumTypeDeclaration(
+    path: String,
+    enclosing: ClassTypeDeclaration
+  ): EnumTypeDeclaration = {
     new EnumTypeDeclaration(path, enclosing)
   }
 }
@@ -455,7 +467,7 @@ object TypeDeclaration {
 }
 
 class ClassTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
-  extends TypeDeclaration(path, enclosing)
+    extends TypeDeclaration(path, enclosing)
     with AnnotationAssignable
     with IdAssignable
     with ModifierAssignable
@@ -535,7 +547,7 @@ class ClassTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
 }
 
 class InterfaceTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
-  extends TypeDeclaration(path, enclosing)
+    extends TypeDeclaration(path, enclosing)
     with AnnotationAssignable
     with IdAssignable
     with ModifierAssignable
@@ -568,7 +580,7 @@ class InterfaceTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
 }
 
 class EnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
-  extends TypeDeclaration(path, enclosing)
+    extends TypeDeclaration(path, enclosing)
     with IdAssignable
     with ModifierAssignable {
 
@@ -596,10 +608,7 @@ class EnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
 
 object Parse {
 
-  def parseClassType(
-    ctd: ClassTypeDeclaration,
-    tokens: Tokens
-  ): ClassTypeDeclaration = {
+  def parseClassType(ctd: ClassTypeDeclaration, tokens: Tokens): ClassTypeDeclaration = {
     var index = parseModifiers(0, tokens, ctd)
 
     if (!tokens(index).exists(_.matches(Tokens.ClassStr)))
@@ -709,9 +718,7 @@ object Parse {
     Seq(constant)
   }
 
-  def parsePropertyBlock(
-    propertyDeclaration: PropertyDeclaration
-  ): Option[PropertyBlock] = {
+  def parsePropertyBlock(propertyDeclaration: PropertyDeclaration): Option[PropertyBlock] = {
     val pb = new PropertyBlock
     propertyDeclaration.add(pb)
     Some(pb)
@@ -771,7 +778,13 @@ object Parse {
       throw new Exception(s"Unrecognised method ${tokens.toString()}")
     }
     val method =
-      MethodDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id, formalParameterList)
+      MethodDeclaration(
+        ArraySeq.unsafeWrapArray(md.annotations.toArray),
+        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
+        md.typeRef.get,
+        id,
+        formalParameterList
+      )
     res.add(method)
     Some(method)
   }
@@ -791,7 +804,12 @@ object Parse {
     }
 
     val property =
-      new PropertyDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
+      new PropertyDeclaration(
+        ArraySeq.unsafeWrapArray(md.annotations.toArray),
+        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
+        md.typeRef.get,
+        id
+      )
     ctd._properties.append(property)
     Some(property)
   }
@@ -854,7 +872,12 @@ object Parse {
     while (index < tokens.length()) {
       val id = tokenToId(tokens(index).get)
 
-      val field = FieldDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
+      val field = FieldDeclaration(
+        ArraySeq.unsafeWrapArray(md.annotations.toArray),
+        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
+        md.typeRef.get,
+        id
+      )
       ctd._fields.append(field)
       fields.append(field)
 
@@ -897,7 +920,11 @@ object Parse {
     }
   }
 
-  private def parseTypeName(startIndex: Int, tokens: Tokens, res: TypeNameSegmentAssignable): Int = {
+  private def parseTypeName(
+    startIndex: Int,
+    tokens: Tokens,
+    res: TypeNameSegmentAssignable
+  ): Int = {
     tokens(startIndex) match {
       case Some(id: IdToken) =>
         val tn = new TypeNameSegment(tokenToId(id))
@@ -1148,7 +1175,9 @@ object Compare {
     }
 
     if (first._extendsTypeRef != second._extendsTypeRef) {
-      throw new Exception(s"Different extends ${first._extendsTypeRef} != ${second._extendsTypeRef}")
+      throw new Exception(
+        s"Different extends ${first._extendsTypeRef} != ${second._extendsTypeRef}"
+      )
     }
 
     if (first._implementsTypeList != second._implementsTypeList) {
@@ -1158,11 +1187,15 @@ object Compare {
     }
 
     if (first._initializers.length != second._initializers.length) {
-      throw new Exception(s"Different initializers ${first._initializers} != ${second._initializers}")
+      throw new Exception(
+        s"Different initializers ${first._initializers} != ${second._initializers}"
+      )
     }
 
     if (first._constructors != second._constructors) {
-      throw new Exception(s"Different constructors ${first._constructors} != ${second._constructors}")
+      throw new Exception(
+        s"Different constructors ${first._constructors} != ${second._constructors}"
+      )
     }
 
     if (first._methods != second._methods) {
