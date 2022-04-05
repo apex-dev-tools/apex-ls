@@ -391,7 +391,7 @@ trait ITypeDeclaration extends TypeRef {
 
   override def getFullName: String = {
     enclosing match {
-      case Some(enc) => s"${enc.id}.${id.id.contents}"
+      case Some(enc) => s"${enc.getFullName}.${id.id.contents}"
       case None      => id.id.contents
     }
   }
