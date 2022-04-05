@@ -120,9 +120,9 @@ final case class TypeNameSegment(id: Id, var typeArguments: Option[TypeArguments
   }
 
   override def toString: String = {
-    if (typeArguments.nonEmpty) {
+    if (typeArguments.nonEmpty)
       s"$id<${getArguments.map(_.getFullName).mkString(",")}>"
-    } else
+    else
       id.toString
   }
 }
