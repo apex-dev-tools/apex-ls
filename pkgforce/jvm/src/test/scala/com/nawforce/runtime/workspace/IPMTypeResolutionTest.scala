@@ -114,4 +114,17 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       assert(dummyField.typeRef.getFullName == "System.Map<System.String,System.List<Dummy.Bar>>")
     }
   }
+
+  test("Resolves Platform type") {
+    val sources =
+      Map("Dummy.cls" -> "public class Dummy { private Object func(){}}")
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      val dummy = getType("Dummy", index)
+
+      val dummyField = dummy.get.methods.head
+      println(dummyField.typeRef.getClass)
+      println(dummyField.typeRef.getFullName)
+    }
+  }
 }
