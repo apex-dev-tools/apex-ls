@@ -4,11 +4,11 @@
 
 package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.financialforce.oparser.OutlineParser
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
-import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
+import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM, ModuleClassFactory, TypeDeclaration}
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
@@ -42,7 +42,7 @@ object OutputComparisonTest {
         path.toString -> getUTF8ContentsFromPath(path)
       })
       .toMap
-    val sfParserOutput = SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
+    val sfParserOutput = SFParser(null, sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
     if (sfParserOutput._2.nonEmpty) {
       parseFailure = sfParserOutput._2.size
       System.err.println(
@@ -79,8 +79,8 @@ object OutputComparisonTest {
 
   private def getOutLineParserOutput(path: Path) = {
     val contentsString = getUTF8ContentsFromPath(path)
-    val result = OutlineParser.parse(path.toString, contentsString)
-    (result._1, result._2, result._3.map(_.asInstanceOf[IModuleTypeDeclaration]))
+    val result = OutlineParser.parse(path.toString, contentsString, ModuleClassFactory, ctx = null)
+    (result._1, result._2, result._3)
   }
 
   private def findSfParserOutput(

@@ -5,7 +5,13 @@
 package com.nawforce.runtime.sfparser.compare
 
 import com.financialforce.oparser._
-import com.nawforce.runtime.workspace.IModuleTypeDeclaration
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  EnumTypeDeclaration,
+  IModuleTypeDeclaration,
+  InterfaceTypeDeclaration,
+  TypeDeclaration
+}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -191,10 +197,10 @@ class SubsetComparator(
     }
 
     if (
-      !(first.constants
-        .forall(second.constants.contains) && second.constants.forall(first.constants.contains))
+      !(first.fields
+        .forall(second.fields.contains) && second.fields.forall(first.fields.contains))
     ) {
-      throw new Exception(s"Different constants ${first.constants} != ${second.constants}")
+      throw new Exception(s"Different constants ${first.fields} != ${second.fields}")
     }
   }
 

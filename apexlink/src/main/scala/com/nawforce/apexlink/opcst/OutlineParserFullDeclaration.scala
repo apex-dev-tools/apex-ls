@@ -1,11 +1,12 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser.{
-  OutlineParser,
+import com.nawforce.runtime.workspace.{
+  ModuleClassFactory,
   ClassTypeDeclaration => OPClassTypeDeclaration,
   EnumTypeDeclaration => OPEnumTypeDeclaration,
   InterfaceTypeDeclaration => OPInterfaceTypeDeclaration
 }
+import com.financialforce.oparser.OutlineParser
 import com.nawforce.apexlink.cst.{ClassDeclaration, EnumDeclaration, InterfaceDeclaration}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM
@@ -17,8 +18,8 @@ import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.runtime.parsers.{Source, SourceData}
 import com.nawforce.runtime.platform.OutlineParserModifierOps.{
   classModifiers,
-  interfaceModifiers,
-  enumModifiers
+  enumModifiers,
+  interfaceModifiers
 }
 
 object OutlineParserFullDeclaration {
@@ -31,7 +32,8 @@ object OutlineParserFullDeclaration {
 
     val contentsString: String = srcData.asString
 
-    val (success, reason, td) = OutlineParser.parse(cls.path.toString, contentsString)
+    val (success, reason, td) =
+      OutlineParser.parse(cls.path.toString, contentsString, ModuleClassFactory, null)
     val rv =
       if (!success) {
         LoggerOps.info(s"FAILED to parse ${cls.path.toString} $reason")

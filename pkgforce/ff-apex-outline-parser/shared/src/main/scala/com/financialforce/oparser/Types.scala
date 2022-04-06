@@ -3,11 +3,8 @@
  */
 package com.financialforce.oparser
 
-import com.nawforce.pkgforce.names.{Identifier, Name, TypeName}
-
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 object StringUtils {
 
@@ -190,9 +187,9 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
     val other = obj.asInstanceOf[FormalParameter]
 
     other.annotations == annotations &&
-    other.modifiers == modifiers &&
-    other.typeRef == typeRef &&
-    other.id == id
+      other.modifiers == modifiers &&
+      other.typeRef.map(_.getFullName).getOrElse("").equalsIgnoreCase(typeRef.map(_.getFullName).getOrElse("")) &&
+      other.id == id
   }
 }
 
@@ -268,10 +265,10 @@ case class MethodDeclaration(
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[MethodDeclaration]
     other.annotations == annotations &&
-    other.modifiers == modifiers &&
-    other.typeRef == typeRef &&
-    other.id == id &&
-    other.formalParameterList == formalParameterList
+      other.modifiers == modifiers &&
+      other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
+      other.id == id &&
+      other.formalParameterList == formalParameterList
   }
 
   override def toString: String = {
@@ -302,9 +299,9 @@ class PropertyDeclaration(
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[PropertyDeclaration]
     other.annotations == annotations &&
-    other.modifiers == modifiers &&
-    other.typeRef == typeRef &&
-    other.id == id
+      other.modifiers == modifiers &&
+      other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
+      other.id == id
   }
 
   override def toString: String = {
@@ -334,9 +331,9 @@ case class FieldDeclaration(
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[FieldDeclaration]
     other.annotations == annotations &&
-    other.modifiers == modifiers &&
-    other.typeRef == typeRef &&
-    other.id == id
+      other.modifiers == modifiers &&
+      other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
+      other.id == id
   }
 
   override def toString: String = {
@@ -360,246 +357,12 @@ case class Initializer(isStatic: Boolean) extends BodyDeclaration {
   override var blockLocation: Option[Location] = None
 }
 
-trait ITypeDeclaration extends TypeRef {
-  def paths: Array[String]
-  def location: Location
-
-  def id: Id
-
-  def typeNameSegment: TypeNameSegment
-
-  def enclosing: Option[ITypeDeclaration]
-  def extendsTypeRef: TypeRef
-  def implementsTypeList: TypeList
-
-  def modifiers: ArraySeq[Modifier]
-  def annotations: ArraySeq[Annotation]
-  def initializers: ArraySeq[Initializer]
-
-  def innerTypes: ArraySeq[ITypeDeclaration]
-  def constructors: ArraySeq[ConstructorDeclaration]
-  def methods: ArraySeq[MethodDeclaration]
-  def properties: ArraySeq[PropertyDeclaration]
-  def fields: ArraySeq[FieldDeclaration]
-
-  def typeName: Array[TypeNameSegment] = {
-    enclosing match {
-      case Some(enc) => Array(enc.typeNameSegment, typeNameSegment)
-      case None      => Array(typeNameSegment)
-    }
-  }
-
-  override def getFullName: String = {
-    enclosing match {
-      case Some(enc) => s"${enc.id}.${id.id.contents}"
-      case None      => id.id.contents
-    }
-  }
-}
-
-sealed class TypeDeclaration(val path: String, _enclosing: ClassTypeDeclaration) extends ITypeDeclaration {
-  var _location: Location = null
-
-  var _id: Id = null
-  var _extendsTypeRef: TypeRef = null
-  var _implementsTypeList: TypeList = null
-
-  var _modifiers: mutable.ArrayBuffer[Modifier] = mutable.ArrayBuffer()
-  var _annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer()
-  var _initializers: mutable.ArrayBuffer[Initializer] = mutable.ArrayBuffer()
-
-  var _innerTypes: mutable.ArrayBuffer[TypeDeclaration]= mutable.ArrayBuffer()
-  var _constructors: mutable.ArrayBuffer[ConstructorDeclaration]= mutable.ArrayBuffer()
-  var _methods: mutable.ArrayBuffer[MethodDeclaration]= mutable.ArrayBuffer()
-  var _properties: mutable.ArrayBuffer[PropertyDeclaration]= mutable.ArrayBuffer()
-  var _fields: mutable.ArrayBuffer[FieldDeclaration]= mutable.ArrayBuffer()
-
-  override def paths: Array[String] = Array(path)
-  override def location: Location = _location
-
-  override def id: Id = _id
-
-  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id)
-
-  override def enclosing: Option[ClassTypeDeclaration] = Option(_enclosing)
-  override def extendsTypeRef: TypeRef = _extendsTypeRef
-  override def implementsTypeList: TypeList = _implementsTypeList
-
-  override def modifiers: ArraySeq[Modifier]= ArraySeq.unsafeWrapArray(_modifiers.toArray)
-  override def annotations: ArraySeq[Annotation]= ArraySeq.unsafeWrapArray(_annotations.toArray)
-  override def initializers: ArraySeq[Initializer]= ArraySeq.unsafeWrapArray(_initializers.toArray)
-
-  override def innerTypes: ArraySeq[TypeDeclaration] = ArraySeq.unsafeWrapArray(_innerTypes.toArray)
-  override def constructors: ArraySeq[ConstructorDeclaration]= ArraySeq.unsafeWrapArray(_constructors.toArray)
-  override def methods: ArraySeq[MethodDeclaration]= ArraySeq.unsafeWrapArray(_methods.toArray)
-  override def properties: ArraySeq[PropertyDeclaration]= ArraySeq.unsafeWrapArray(_properties.toArray)
-  override def fields: ArraySeq[FieldDeclaration]= ArraySeq.unsafeWrapArray(_fields.toArray)
-}
-
-class TypeDeclarationFactory {
-  def createClassTypeDeclaration(path: String, enclosing: ClassTypeDeclaration): ClassTypeDeclaration = {
-    new ClassTypeDeclaration(path, enclosing)
-  }
-
-  def createInterfaceTypeDeclaration(path: String, enclosing: ClassTypeDeclaration): InterfaceTypeDeclaration = {
-    new InterfaceTypeDeclaration(path, enclosing)
-  }
-
-  def createEnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration): EnumTypeDeclaration = {
-    new EnumTypeDeclaration(path, enclosing)
-  }
-}
-
-object TypeDeclaration {
-  final val emptyArrayBuffer = mutable.ArrayBuffer[TypeDeclaration]()
-}
-
-class ClassTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
-  extends TypeDeclaration(path, enclosing)
-    with AnnotationAssignable
-    with IdAssignable
-    with ModifierAssignable
-    with TypeRefAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable
-    with InitializerAssignable {
-
-  override def add(a: Annotation): Unit = _annotations.append(a)
-
-  override def add(i: Id): Unit = _id = i
-
-  override def add(m: Modifier): Unit = _modifiers.append(m)
-
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-
-  override def add(init: Initializer): Unit = _initializers.append(init)
-
-  override def toString: String = {
-    import StringUtils._
-    val base =
-      s"""Class:      $id
-         |Path:       $path
-         |Location:   ${id.id.location}
-         |Annotation: ${asString(_annotations)}
-         |Modifiers:  ${asString(_modifiers)}
-         |Extends:    ${_extendsTypeRef}
-         |Implements: ${_implementsTypeList}
-         |""".stripMargin
-
-    val c =
-      if (_constructors.isEmpty) ""
-      else
-        s"""
-           |Constructors:
-           |${_constructors.mkString("\n")}
-           |""".stripMargin
-
-    val m =
-      if (_methods.isEmpty) ""
-      else
-        s"""
-           |Methods:
-           |${_methods.mkString("\n")}
-           |""".stripMargin
-
-    val p =
-      if (_properties.isEmpty) ""
-      else
-        s"""
-           |Properties:
-           |${_properties.mkString("\n")}
-           |""".stripMargin
-
-    val f =
-      if (_fields.isEmpty) ""
-      else
-        s"""
-           |Fields:
-           |${_fields.mkString("\n")}
-           |""".stripMargin
-
-    val i =
-      if (innerTypes.isEmpty) ""
-      else
-        s"""
-           |Inner types:
-           |${innerTypes.mkString("\n")}
-           |""".stripMargin
-
-    base + c + m + p + f + i
-  }
-}
-
-class InterfaceTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
-  extends TypeDeclaration(path, enclosing)
-    with AnnotationAssignable
-    with IdAssignable
-    with ModifierAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable {
-
-  override def add(a: Annotation): Unit = _annotations.append(a)
-
-  override def add(i: Id): Unit = _id = i
-
-  override def add(m: Modifier): Unit = _modifiers.append(m)
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-
-  override def toString: String = {
-    import StringUtils._
-    s"""Interface:  $id
-       |Path:       $path
-       |Location:   ${id.id.location}
-       |Annotation: ${asString(_annotations)}
-       |Modifiers:  ${asString(_modifiers)}
-       |Implements: ${_implementsTypeList}
-       |Methods:
-       |${methods.mkString("\n")}
-       |
-       |""".stripMargin
-  }
-}
-
-class EnumTypeDeclaration(path: String, enclosing: ClassTypeDeclaration)
-  extends TypeDeclaration(path, enclosing)
-    with IdAssignable
-    with ModifierAssignable {
-
-  val constants: mutable.ArrayBuffer[Id] = mutable.ArrayBuffer[Id]()
-
-  override def add(a: Annotation): Unit = _annotations.append(a)
-
-  override def add(i: Id): Unit = _id = i
-
-  override def add(m: Modifier): Unit = _modifiers.append(m)
-
-  override def toString: String = {
-    import StringUtils._
-    s"""Enum:       $id
-       |Path:       $path
-       |Location:   ${id.id.location}
-       |Annotation: ${asString(_annotations)}
-       |Modifiers:  ${asString(_modifiers)}
-       |Constants:
-       |${constants.map(i => s"${i.id.location} ${i.id.contents}").mkString("\n")}
-       |
-       |""".stripMargin
-  }
-}
-
 object Parse {
 
   def parseClassType(
-    ctd: ClassTypeDeclaration,
-    tokens: Tokens
-  ): ClassTypeDeclaration = {
+                      ctd: IMutableTypeDeclaration,
+                      tokens: Tokens
+                    ): IMutableTypeDeclaration = {
     var index = parseModifiers(0, tokens, ctd)
 
     if (!tokens(index).exists(_.matches(Tokens.ClassStr)))
@@ -620,9 +383,9 @@ object Parse {
   }
 
   def parseInterfaceType(
-    itd: InterfaceTypeDeclaration,
-    tokens: Tokens
-  ): InterfaceTypeDeclaration = {
+                          itd: IMutableTypeDeclaration,
+                          tokens: Tokens
+                        ): IMutableTypeDeclaration = {
     var index = parseModifiers(0, tokens, itd)
 
     if (!tokens(index).exists(_.matches(Tokens.InterfaceStr)))
@@ -638,7 +401,7 @@ object Parse {
     itd
   }
 
-  def parseEnumType(etd: EnumTypeDeclaration, tokens: Tokens): EnumTypeDeclaration = {
+  def parseEnumType(etd: IMutableTypeDeclaration, tokens: Tokens): IMutableTypeDeclaration = {
     var index = parseModifiers(0, tokens, etd)
 
     if (!tokens(index).exists(_.matches(Tokens.EnumStr)))
@@ -656,16 +419,16 @@ object Parse {
   }
 
   def parseClassMember(
-    ctd: ClassTypeDeclaration,
-    tokens: Tokens,
-    nextToken: Token
-  ): (Boolean, Seq[BodyDeclaration]) = {
+                        ctd: IMutableTypeDeclaration,
+                        tokens: Tokens,
+                        nextToken: Token
+                      ): (Boolean, Seq[BodyDeclaration]) = {
 
     if (tokens.isEmpty()) {
       return (true, addInitializer(ctd, isStatic = false).toSeq)
     }
 
-    val md    = new MemberDeclaration
+    val md = new MemberDeclaration
     var index = parseModifiers(0, tokens, md)
 
     if (index >= tokens.length()) {
@@ -692,20 +455,21 @@ object Parse {
     }
   }
 
-  def parseInterfaceMember(itd: InterfaceTypeDeclaration, tokens: Tokens): Seq[BodyDeclaration] = {
+  def parseInterfaceMember(itd: IMutableTypeDeclaration, tokens: Tokens): Seq[BodyDeclaration] = {
     if (tokens.isEmpty()) return Seq.empty
 
-    val md    = new MemberDeclaration
+    val md = new MemberDeclaration
     var index = parseModifiers(0, tokens, md)
     index = parseTypeRef(index, tokens, md)
     addMethod(index, tokens, md, itd).toSeq
   }
 
-  def parseEnumMember(etd: EnumTypeDeclaration, tokens: Tokens): Seq[Id] = {
+  def parseEnumMember(etd: IMutableTypeDeclaration, tokens: Tokens): Seq[Id] = {
     if (tokens.isEmpty()) return Seq.empty
 
     val constant = tokenToId(tokens(0).get)
-    etd.constants.append(constant)
+    val field = new FieldDeclaration(ArraySeq(), ArraySeq(Modifier(IdToken("static", constant.id.location))), etd, constant)
+    etd.appendField(field)
     Seq(constant)
   }
 
@@ -723,18 +487,18 @@ object Parse {
     qName
   }
 
-  private def addInitializer(ctd: ClassTypeDeclaration, isStatic: Boolean): Option[Initializer] = {
+  private def addInitializer(ctd: IMutableTypeDeclaration, isStatic: Boolean): Option[Initializer] = {
     val initializer = Initializer(isStatic)
     ctd.add(initializer)
     Some(initializer)
   }
 
   private def addConstructor(
-    startIndex: Int,
-    tokens: Tokens,
-    md: MemberDeclaration,
-    ctd: ClassTypeDeclaration
-  ): Option[ConstructorDeclaration] = {
+                              startIndex: Int,
+                              tokens: Tokens,
+                              md: MemberDeclaration,
+                              ctd: IMutableTypeDeclaration
+                            ): Option[ConstructorDeclaration] = {
 
     val formalParameterList = new FormalParameterList
     val index               = parseFormalParameterList(startIndex, tokens, formalParameterList)
@@ -747,7 +511,7 @@ object Parse {
       toQualifiedName(md.typeRef.get),
       formalParameterList
     )
-    ctd._constructors.append(constructor)
+    ctd.appendConstructor(constructor)
     Some(constructor)
   }
 
@@ -777,11 +541,11 @@ object Parse {
   }
 
   private def addProperty(
-    startIndex: Int,
-    tokens: Tokens,
-    md: MemberDeclaration,
-    ctd: ClassTypeDeclaration
-  ): Option[PropertyDeclaration] = {
+                           startIndex: Int,
+                           tokens: Tokens,
+                           md: MemberDeclaration,
+                           ctd: IMutableTypeDeclaration
+                         ): Option[PropertyDeclaration] = {
 
     val id    = tokenToId(tokens(startIndex).get)
     val index = startIndex + 1
@@ -792,27 +556,27 @@ object Parse {
 
     val property =
       new PropertyDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
-    ctd._properties.append(property)
+    ctd.appendProperty(property)
     Some(property)
   }
 
   private def addFields(
-    startIndex: Int,
-    tokens: Tokens,
-    md: MemberDeclaration,
-    ctd: ClassTypeDeclaration,
-    nextToken: Token
-  ): Seq[FieldDeclaration] = {
+                         startIndex: Int,
+                         tokens: Tokens,
+                         md: MemberDeclaration,
+                         ctd: IMutableTypeDeclaration,
+                         nextToken: Token
+                       ): Seq[FieldDeclaration] = {
 
     val fields = mutable.ArrayBuffer[FieldDeclaration]()
 
     def skipToNextField(startIndex: Int): (Location, Int) = {
       var nestedParenthesis = 0
-      var angleBrackets     = 0
-      var squareBrackets    = 0
-      var index             = startIndex
-      var found             = false
-      var endLocation       = nextToken.location
+      var angleBrackets = 0
+      var squareBrackets = 0
+      var index = startIndex
+      var found = false
+      var endLocation = nextToken.location
       while (!found && index < tokens.length()) {
         tokens(index) match {
           case Some(t: NonIdToken) =>
@@ -855,7 +619,7 @@ object Parse {
       val id = tokenToId(tokens(index).get)
 
       val field = FieldDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
-      ctd._fields.append(field)
+      ctd.appendField(field)
       fields.append(field)
 
       index += 1
@@ -1068,175 +832,5 @@ object Parse {
     }
     if (tokens(index).exists(_.matches(Tokens.RParenStr))) index += 1
     index
-  }
-}
-
-object Compare {
-
-  def compareClassTypeDeclarations(
-    first: ClassTypeDeclaration,
-    second: ClassTypeDeclaration
-  ): Unit = {
-
-    def innerClassTypeDeclarations(o: ClassTypeDeclaration): Seq[ClassTypeDeclaration] = {
-      o.innerTypes
-        .filter(_.isInstanceOf[ClassTypeDeclaration])
-        .map(_.asInstanceOf[ClassTypeDeclaration])
-    }
-
-    def innerInterfaceTypeDeclarations(o: ClassTypeDeclaration): Seq[InterfaceTypeDeclaration] = {
-      o.innerTypes
-        .filter(_.isInstanceOf[InterfaceTypeDeclaration])
-        .map(_.asInstanceOf[InterfaceTypeDeclaration])
-    }
-
-    def innerEnumTypeDeclarations(o: ClassTypeDeclaration): Seq[EnumTypeDeclaration] = {
-      o.innerTypes
-        .filter(_.isInstanceOf[EnumTypeDeclaration])
-        .map(_.asInstanceOf[EnumTypeDeclaration])
-    }
-
-    def compareInnerClasses(
-      fst: Seq[ClassTypeDeclaration],
-      snd: Seq[ClassTypeDeclaration]
-    ): Unit = {
-
-      fst.foreach(f => {
-        val sOpt = snd.find(_.id == f.id)
-        if (sOpt.isEmpty) {
-          throw new Exception(s"Inner class not found ${f.id} in ${first.id}")
-        }
-        compareClassTypeDeclarations(f, sOpt.get)
-      })
-    }
-
-    def compareInnerInterfaces(
-      fst: Seq[InterfaceTypeDeclaration],
-      snd: Seq[InterfaceTypeDeclaration]
-    ): Unit = {
-
-      fst.foreach(f => {
-        val sOpt = snd.find(_.id == f.id)
-        if (sOpt.isEmpty) {
-          throw new Exception(s"Inner interface not found ${f.id} in ${first.id}")
-        }
-        compareInterfaceTypeDeclarations(f, sOpt.get)
-      })
-    }
-
-    def compareInnerEnums(fst: Seq[EnumTypeDeclaration], snd: Seq[EnumTypeDeclaration]): Unit = {
-
-      fst.foreach(f => {
-        val sOpt = snd.find(_.id == f.id)
-        if (sOpt.isEmpty) {
-          throw new Exception(s"Inner enum not found ${f.id} in ${first.id}")
-        }
-        compareEnumTypeDeclarations(f, sOpt.get)
-      })
-    }
-
-    if (first._annotations != second._annotations) {
-      throw new Exception(s"Different annotation ${first._annotations} != ${second._annotations}")
-    }
-
-    if (first._modifiers != second._modifiers) {
-      throw new Exception(s"Different modifiers ${first._modifiers} != ${second._modifiers}")
-    }
-
-    if (first.id != second.id) {
-      throw new Exception(s"Different or empty class id ${first.id} != ${second.id}")
-    }
-
-    if (first._extendsTypeRef != second._extendsTypeRef) {
-      throw new Exception(s"Different extends ${first._extendsTypeRef} != ${second._extendsTypeRef}")
-    }
-
-    if (first._implementsTypeList != second._implementsTypeList) {
-      throw new Exception(
-        s"Different implements ${first._implementsTypeList} != ${second._implementsTypeList}"
-      )
-    }
-
-    if (first._initializers.length != second._initializers.length) {
-      throw new Exception(s"Different initializers ${first._initializers} != ${second._initializers}")
-    }
-
-    if (first._constructors != second._constructors) {
-      throw new Exception(s"Different constructors ${first._constructors} != ${second._constructors}")
-    }
-
-    if (first._methods != second._methods) {
-      throw new Exception(s"Different methods ${first._methods} != ${second._methods}")
-    }
-
-    if (first._properties != second._properties) {
-      throw new Exception(s"Different properties ${first._properties} != ${second._properties}")
-    }
-
-    if (first._fields.toSet != second._fields.toSet) {
-      throw new Exception(s"Different fields ${first._fields} != ${second._fields}")
-    }
-
-    compareInnerClasses(innerClassTypeDeclarations(first), innerClassTypeDeclarations(second))
-    compareInnerClasses(innerClassTypeDeclarations(second), innerClassTypeDeclarations(first))
-
-    compareInnerInterfaces(
-      innerInterfaceTypeDeclarations(first),
-      innerInterfaceTypeDeclarations(second)
-    )
-    compareInnerInterfaces(
-      innerInterfaceTypeDeclarations(second),
-      innerInterfaceTypeDeclarations(first)
-    )
-
-    compareInnerEnums(innerEnumTypeDeclarations(first), innerEnumTypeDeclarations(second))
-    compareInnerEnums(innerEnumTypeDeclarations(second), innerEnumTypeDeclarations(first))
-  }
-
-  def compareInterfaceTypeDeclarations(
-    first: InterfaceTypeDeclaration,
-    second: InterfaceTypeDeclaration
-  ): Unit = {
-
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
-    }
-
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
-    }
-
-    if (first.id != second.id) {
-      throw new Exception(s"Different or empty interface id ${first.id} != ${second.id}")
-    }
-
-    if (first._implementsTypeList != second._implementsTypeList) {
-      throw new Exception(
-        s"Different extends ${first._implementsTypeList} != ${second._implementsTypeList}"
-      )
-    }
-
-    if (first.methods != second.methods) {
-      throw new Exception(s"Different methods ${first.methods} != ${second.methods}")
-    }
-  }
-
-  def compareEnumTypeDeclarations(first: EnumTypeDeclaration, second: EnumTypeDeclaration): Unit = {
-
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
-    }
-
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
-    }
-
-    if (first.id != second.id) {
-      throw new Exception(s"Different or empty enum id ${first.id} != ${second.id}")
-    }
-
-    if (first.constants.toSet != second.constants.toSet) {
-      throw new Exception(s"Different constants ${first.constants} != ${second.constants}")
-    }
   }
 }

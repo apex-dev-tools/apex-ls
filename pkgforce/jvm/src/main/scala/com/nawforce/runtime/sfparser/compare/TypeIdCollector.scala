@@ -1,7 +1,11 @@
 package com.nawforce.runtime.sfparser.compare
 
-import com.financialforce.oparser.{ClassTypeDeclaration, Id, TypeDeclaration}
-import com.nawforce.runtime.workspace.IModuleTypeDeclaration
+import com.financialforce.oparser.Id
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  IModuleTypeDeclaration,
+  TypeDeclaration
+}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -26,7 +30,7 @@ object TypeIdCollector {
     acc.append(td.id)
     td match {
       case cls: ClassTypeDeclaration =>
-        cls.innerTypesModule.foreach(appendToIds(_, acc))
+        cls.innerTypes.foreach(appendToIds(_, acc))
       case _ =>
     }
   }
@@ -35,15 +39,6 @@ object TypeIdCollector {
     val allIds: ArrayBuffer[Id] = ArrayBuffer()
     tds.foreach(td => appendToIds(td, allIds))
     new TypeIdCollector(allIds)
-  }
-
-  private def appendToIds(td: TypeDeclaration, acc: ArrayBuffer[Id]): Unit = {
-    acc.append(td.id)
-    td match {
-      case cls: ClassTypeDeclaration =>
-        cls.innerTypes.foreach(appendToIds(_, acc))
-      case _ =>
-    }
   }
 
 }

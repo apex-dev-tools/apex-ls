@@ -3,6 +3,8 @@
  */
 package com.financialforce.oparser
 
+import com.nawforce.runtime.cmds.Antlr
+
 import java.nio.file.{Files, Path, Paths}
 import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.ExecutionContext.Implicits.global

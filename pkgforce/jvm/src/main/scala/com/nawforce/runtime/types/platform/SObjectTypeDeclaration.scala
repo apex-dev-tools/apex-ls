@@ -21,13 +21,12 @@ import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
 import scala.collection.immutable.ArraySeq
 
-class SObjectTypeDeclaration(_module: IPM.Module, md: MetadataDocument)
+class SObjectTypeDeclaration(override val module: IPM.Module, md: MetadataDocument)
     extends IModuleTypeDeclaration {
-  module = _module
 
   final val typeInfo = getTypeInfo(md)
 
-  override def enclosing: Option[ITypeDeclaration] = None
+  override def enclosing: Option[IModuleTypeDeclaration] = None
 
   override val paths: Array[String] = emptyPaths //TODO: potentially use md.path
 
@@ -47,7 +46,7 @@ class SObjectTypeDeclaration(_module: IPM.Module, md: MetadataDocument)
 
   override def initializers: ArraySeq[Initializer] = ArraySeq.empty // TODO
 
-  override def innerTypes: ArraySeq[ITypeDeclaration] = ArraySeq.empty
+  override def innerTypes: ArraySeq[IModuleTypeDeclaration] = ArraySeq.empty
 
   override def constructors: ArraySeq[ConstructorDeclaration] = ArraySeq.empty // TODO
 

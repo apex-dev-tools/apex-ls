@@ -14,8 +14,7 @@
 
 package com.nawforce.runtime.types
 
-import com.financialforce.oparser.{TypeArguments, TypeNameSegment, UnresolvedTypeRef}
-import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE}
+import com.financialforce.oparser.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, TypeArguments, TypeNameSegment, UnresolvedTypeRef}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
 import org.scalatest.funsuite.AnyFunSuite
 

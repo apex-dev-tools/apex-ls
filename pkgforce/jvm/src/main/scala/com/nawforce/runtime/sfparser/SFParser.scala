@@ -20,29 +20,32 @@ import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.member.Member
 import apex.jorje.semantic.symbol.member.method.MethodInfo
 import apex.jorje.semantic.symbol.member.variable.FieldInfo
-import com.financialforce.oparser
 import com.financialforce.oparser.{
   Annotation,
-  ClassTypeDeclaration,
   ConstructorDeclaration,
-  EnumTypeDeclaration,
   FieldDeclaration,
   FormalParameter,
   FormalParameterList,
   Id,
   IdToken,
   Initializer,
-  InterfaceTypeDeclaration,
   Location,
   MethodDeclaration,
   Modifier,
   PropertyDeclaration,
   QualifiedName,
   TypeArguments,
-  TypeDeclaration,
   TypeList,
   TypeNameSegment,
   UnresolvedTypeRef
+}
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  EnumTypeDeclaration,
+  IMutableModuleTypeDeclaration,
+  IPM,
+  InterfaceTypeDeclaration,
+  TypeDeclaration
 }
 import org.apache.commons.lang3.reflect.FieldUtils
 
@@ -53,7 +56,7 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
 import scala.language.postfixOps
 
-class SFParser(source: Map[String, String]) {
+class SFParser(module: IPM.Module, source: Map[String, String]) {
   private val typeDeclarations: ArrayBuffer[TypeDeclaration] = ArrayBuffer()
   private val parseFailures: ArrayBuffer[String]             = ArrayBuffer()
 
@@ -96,7 +99,7 @@ class SFParser(source: Map[String, String]) {
     cu.find(_.getSourceFile.getKnownName == path) match {
       case Some(cu) =>
         if (cu != null) {
-          getTypeDeclaration(cu.getNode, path)
+          getTypeDeclaration(cu.getNode, path, enclosing = null)
         } else {
           throw new RuntimeException(s"No code unit found for type $path")
         }
@@ -104,7 +107,11 @@ class SFParser(source: Map[String, String]) {
     }
   }
 
-  private def getTypeDeclaration(root: Compilation, path: String): Option[TypeDeclaration] = {
+  private def getTypeDeclaration(
+    root: Compilation,
+    path: String,
+    enclosing: IMutableModuleTypeDeclaration
+  ): Option[TypeDeclaration] = {
     def getMembers[T](root: Compilation): T = {
       //This is seems very hacky but its the easiest way to expose innerTypes and initializer blocks and unresolved methods
       FieldUtils
@@ -119,14 +126,24 @@ class SFParser(source: Map[String, String]) {
     //TODO: figure out td location? Check if we can use root.bodyLoc
     root.getClass match {
       case `userClass` =>
-        val ctd = constructClassTypeDeclaration(path, typeInfo, getMembers[UserClassMembers](root))
+        val ctd = constructClassTypeDeclaration(
+          path,
+          typeInfo,
+          getMembers[UserClassMembers](root),
+          enclosing
+        )
         return Some(ctd)
       case `userInterface` =>
         val itd =
-          constructInterfaceTypeDeclaration(path, typeInfo, getMembers[UserInterfaceMembers](root))
+          constructInterfaceTypeDeclaration(
+            path,
+            typeInfo,
+            getMembers[UserInterfaceMembers](root),
+            enclosing
+          )
         return Some(itd)
       case `userEnum` =>
-        val etd = constructEnumTypeDeclaration(path, typeInfo)
+        val etd = constructEnumTypeDeclaration(path, typeInfo, enclosing)
         return Some(etd)
       case _ =>
     }
@@ -165,34 +182,47 @@ class SFParser(source: Map[String, String]) {
 
   private def constructEnumTypeDeclaration(
     path: String,
-    typeInfo: TypeInfo
+    typeInfo: TypeInfo,
+    enclosing: IMutableModuleTypeDeclaration
   ): EnumTypeDeclaration = {
-    val etd                     = new EnumTypeDeclaration(path, null)
+    val etd                     = new EnumTypeDeclaration(module, path, enclosing)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
     val constants               = constructFieldDeclarations(typeInfo).map(_.id)
 
     etd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     modifiersAndAnnotations._1.foreach(etd.add)
     modifiersAndAnnotations._2.foreach(etd.add)
-    constants.foreach(etd.constants.append)
+    constants.foreach(
+      id =>
+        etd.appendField(
+          new FieldDeclaration(
+            ArraySeq(),
+            ArraySeq(Modifier(IdToken("static", id.id.location))),
+            etd,
+            id
+          )
+        )
+    )
     etd
   }
 
   private def constructInterfaceTypeDeclaration(
     path: String,
     typeInfo: TypeInfo,
-    members: UserInterfaceMembers
+    members: UserInterfaceMembers,
+    enclosing: IMutableModuleTypeDeclaration
   ): InterfaceTypeDeclaration = {
-    val itd = getInterfaceTypeDeclaration(path, typeInfo)
+    val itd = getInterfaceTypeDeclaration(path, typeInfo, enclosing)
     constructMethodDeclarationForInterface(members).foreach(itd.add)
     itd
   }
 
   private def getInterfaceTypeDeclaration(
     path: String,
-    typeInfo: TypeInfo
+    typeInfo: TypeInfo,
+    enclosing: IMutableModuleTypeDeclaration
   ): InterfaceTypeDeclaration = {
-    val itd                     = new InterfaceTypeDeclaration(path, null)
+    val itd                     = new InterfaceTypeDeclaration(module, path, enclosing)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
     itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
@@ -206,17 +236,24 @@ class SFParser(source: Map[String, String]) {
   private def constructClassTypeDeclaration(
     path: String,
     typeInfo: TypeInfo,
-    members: UserClassMembers
+    members: UserClassMembers,
+    enclosing: IMutableModuleTypeDeclaration
   ) = {
-    val ctd = getClassTypesDeclaration(path, typeInfo)
-    getInnerTypes(members).flatMap(x => getTypeDeclaration(x, path)).foreach(ctd._innerTypes.append)
+    val ctd = getClassTypesDeclaration(path, typeInfo, enclosing)
+    getInnerTypes(members)
+      .flatMap(x => getTypeDeclaration(x, path, ctd))
+      .foreach(ctd._innerTypes.append)
     getInitBlocks(members).foreach(ctd._initializers.append)
     constructMethodDeclarationForClass(members).foreach(ctd.add)
     ctd
   }
 
-  private def getClassTypesDeclaration(path: String, typeInfo: TypeInfo): ClassTypeDeclaration = {
-    val ctd = new ClassTypeDeclaration(path, null)
+  private def getClassTypesDeclaration(
+    path: String,
+    typeInfo: TypeInfo,
+    enclosing: IMutableModuleTypeDeclaration
+  ): ClassTypeDeclaration = {
+    val ctd = new ClassTypeDeclaration(module, path, enclosing)
 
     val constructors            = constructConstructorDeclaration(typeInfo)
     val fields                  = constructFieldDeclarations(typeInfo)
@@ -542,11 +579,11 @@ object SFParser {
   // Stop Jorje logging a startup message
   LogManager.getLogManager.reset()
 
-  def apply(path: String, contents: String): SFParser = {
-    new SFParser(Map(path -> contents))
+  def apply(module: IPM.Module, path: String, contents: String): SFParser = {
+    new SFParser(module, Map(path -> contents))
   }
 
-  def apply(sources: Map[String, String]): SFParser = {
-    new SFParser(sources)
+  def apply(module: IPM.Module, sources: Map[String, String]): SFParser = {
+    new SFParser(module, sources)
   }
 }
