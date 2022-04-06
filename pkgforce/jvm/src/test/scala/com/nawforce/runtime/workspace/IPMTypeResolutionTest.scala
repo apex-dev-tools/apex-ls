@@ -2,6 +2,7 @@ package com.nawforce.runtime.workspace
 
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
+import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
 import org.scalatest.funsuite.AnyFunSuite
 
 class IPMTypeResolutionTest extends AnyFunSuite {
@@ -115,16 +116,17 @@ class IPMTypeResolutionTest extends AnyFunSuite {
     }
   }
 
-  test("Resolves Platform type") {
+  test("Resolves Internal Object type") {
     val sources =
-      Map("Dummy.cls" -> "public class Dummy { private Object func(){}}")
+      Map("Dummy.cls" -> "public class Dummy { private ObJeCt func(){}}")
     FileSystemHelper.run(sources) { root: PathLike =>
       val index = new IPM.Index(root)
       val dummy = getType("Dummy", index)
 
-      val dummyField = dummy.get.methods.head
-      println(dummyField.typeRef.getClass)
-      println(dummyField.typeRef.getFullName)
+      val dummyMethod = dummy.get.methods.head
+      assert(dummyMethod.typeRef.isInstanceOf[PlatformTypeDeclaration])
+      assert(dummyMethod.typeRef.getFullName == "Internal.Object$")
+      assert(dummyMethod.typeRef.toString == "Object")
     }
   }
 }

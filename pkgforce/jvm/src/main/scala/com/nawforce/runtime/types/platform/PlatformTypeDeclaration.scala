@@ -57,6 +57,17 @@ class PlatformTypeDeclaration(
     s"${typeInfo.namespace}.${typeInfo.typeName.id}$args"
   }
 
+  override def toString: String = {
+    val args = if (typeInfo.args.nonEmpty) typeInfo.args.mkString("<", ",", ">") else ""
+    val rawNames =
+      if (enclosing.nonEmpty)
+        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName, typeInfo.namespace)
+      else Seq(typeInfo.typeName.id.toString, typeInfo.namespace)
+    val name = TypeName(rawNames.map(Name(_)))
+
+    s"$name$args"
+  }
+
   final val typeInfo: TypeInfo = getTypeName(cls)
 
   override val paths: Array[String] = emptyPaths
