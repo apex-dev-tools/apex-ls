@@ -1,5 +1,6 @@
 package com.nawforce.runtime.workspace
 
+import com.financialforce.oparser.FieldDeclaration
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
@@ -8,6 +9,9 @@ import org.scalatest.funsuite.AnyFunSuite
 class IPMTypeResolutionTest extends AnyFunSuite {
   def getType(typeId: String, index: IPM.Index): Option[IModuleTypeDeclaration] = {
     index.rootModule.get.findExactTypeId(typeId)
+  }
+  def getField(td: IModuleTypeDeclaration, name: String): FieldDeclaration = {
+    td.fields.filter(_.id.id.contents.equalsIgnoreCase(name)).head
   }
 
   test("Resolves nested type") {
@@ -127,6 +131,39 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       assert(dummyMethod.typeRef.isInstanceOf[PlatformTypeDeclaration])
       assert(dummyMethod.typeRef.getFullName == "Internal.Object$")
       assert(dummyMethod.typeRef.toString == "Object")
+    }
+  }
+
+  test("Ambiguous type resolve") {
+    val sources =
+      Map(
+        "Dummy.cls" -> "public class Dummy { BusinessHours b; Site s; Location l; Approval a; Address ad;}"
+      )
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      val dummy = getType("Dummy", index).get
+
+      assert(getField(dummy, "b").typeRef.getFullName == "SObjects.BusinessHours")
+      assert(getField(dummy, "s").typeRef.getFullName == "SObjects.Site")
+      assert(getField(dummy, "l").typeRef.getFullName == "System.Location")
+      assert(getField(dummy, "a").typeRef.getFullName == "System.Approval")
+      assert(getField(dummy, "ad").typeRef.getFullName == "System.Address")
+    }
+  }
+
+  test("Shadowing Ambiguous type") {
+    val sources =
+      Map(
+        "Location.cls" -> "public class Location {}",
+        "Dummy.cls"    -> "public class Dummy { Location l; System.Location sl; Schema.Location scl; }"
+      )
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      val dummy = getType("Dummy", index).get
+
+      assert(getField(dummy, "l").typeRef.isInstanceOf[ModuleClassTypeDeclaration])
+      assert(getField(dummy, "sl").typeRef.getFullName == "System.Location")
+      assert(getField(dummy, "scl").typeRef.getFullName == "SObjects.Location")
     }
   }
 }

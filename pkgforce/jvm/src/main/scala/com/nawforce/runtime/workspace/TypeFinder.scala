@@ -40,7 +40,7 @@ object TypeFinder {
     from: ITypeDeclaration
   ): Option[ITypeDeclaration] = {
     //Pre resolve relative type arguments
-    //TODO: check efficiency of this, we are resolving all the arguments to just to turn into string and resolve
+    //TODO: check efficiency of this, we are resolving all the arguments to just to turn into a string and resolve
     // it again in findExactTypeId
     typeNames.foreach(segment => {
       val args = segment.getArguments
@@ -56,7 +56,8 @@ object TypeFinder {
   }
 
   private def findScalarType(typeNames: ArrayBuffer[TypeNameSegment]): Option[ITypeDeclaration] = {
-    //TODO
+    //TODO: We should implement this to gain some perf improvement but not needed to function properly as we
+    // will push the search down to System package through findExactTypeId anyway
     None
   }
 

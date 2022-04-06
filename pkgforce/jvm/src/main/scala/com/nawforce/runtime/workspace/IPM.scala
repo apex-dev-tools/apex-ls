@@ -6,7 +6,8 @@ package com.nawforce.runtime.workspace
 import com.financialforce.oparser._
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex, SObjectNature}
-import com.nawforce.pkgforce.names.{Name, Names}
+import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
+import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
@@ -478,8 +479,10 @@ object IPM extends TriHierarchy {
       name: String,
       typeRef: UnresolvedTypeRef
     ): (String, UnresolvedTypeRef) = {
+      //This will stop defaulting names for ambiguous names so we can resolve them correctly in TypeFinder
+      val isNameAmbiguous = ambiguousAliasMap.contains(TypeName(Name(name)))
       if (
-        !defaultNamespace ||
+        !defaultNamespace || isNameAmbiguous ||
         (typeRef.typeNameSegments.length > 1 &&
         typeRef.typeNameSegments.head.id.id.lowerCaseContents.equalsIgnoreCase(namespace.get.value))
       ) {
