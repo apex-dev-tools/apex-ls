@@ -74,9 +74,10 @@ class GenericPlatformTypeDeclaration(
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.empty // TODO
 
   override def getFullName: String = {
+    val args = s"${typeArgs.map(_.getFullName).mkString("<", ",", ">")}"
     if (enclosing.nonEmpty)
-      return s"${typeInfo.namespace}.${enclosing.get.getFullName}.${typeInfo.typeName.toString}"
-    s"${typeInfo.namespace}.${typeInfo.typeName.toString}"
+      return s"${typeInfo.namespace}.${enclosing.get.getFullName}.${typeInfo.typeName.id}$args"
+    s"${typeInfo.namespace}.${typeInfo.typeName.id}$args"
   }
 
   override def toString: String = {
