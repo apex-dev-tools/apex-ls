@@ -15,7 +15,7 @@
 package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
-import com.nawforce.pkgforce.names.Name
+import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
   createTypeName,
   emptyPaths,
@@ -72,6 +72,24 @@ class GenericPlatformTypeDeclaration(
   override def properties: ArraySeq[PropertyDeclaration] = ArraySeq.empty // TODO
 
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.empty // TODO
+
+  override def getFullName: String = {
+    val args = s"${typeArgs.map(_.getFullName).mkString("<", ",", ">")}"
+    if (enclosing.nonEmpty)
+      return s"${typeInfo.namespace}.${enclosing.get.getFullName}.${typeInfo.typeName.id}$args"
+    s"${typeInfo.namespace}.${typeInfo.typeName.id}$args"
+  }
+
+  override def toString: String = {
+    val args = s"${typeArgs.map(_.getFullName).mkString("<", ",", ">")}"
+    val rawNames =
+      if (enclosing.nonEmpty)
+        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName, typeInfo.namespace)
+      else Seq(typeInfo.typeName.id.toString, typeInfo.namespace)
+    val name = TypeName(rawNames.map(Name(_)))
+
+    s"$name$args"
+  }
 }
 
 object GenericPlatformTypeDeclaration {

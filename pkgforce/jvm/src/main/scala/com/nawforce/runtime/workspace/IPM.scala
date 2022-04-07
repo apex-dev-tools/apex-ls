@@ -6,7 +6,8 @@ package com.nawforce.runtime.workspace
 import com.financialforce.oparser._
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex, SObjectNature}
-import com.nawforce.pkgforce.names.{Name, Names}
+import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
+import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
@@ -127,12 +128,14 @@ object IPM extends TriHierarchy {
         // can be constructed without the need for a recursive call back to this module for type resolution.
         typeRef.typeNameSegments.foreach(segment => {
           val args = segment.getArguments
-          val newArgs = args.map {
-            case unref: UnresolvedTypeRef => findExactTypeId(unref.toString, unref)
-            case other                    => Some(other)
+          val newArgs = args.flatMap {
+            case unref: UnresolvedTypeRef =>
+              findExactTypeId(unref.toString, unref)
+                .orElse(findExactTypeId(unref.toString))
+            case other => Some(other)
           }
           if (args.nonEmpty && args.length == newArgs.length)
-            segment.replaceArguments(newArgs.map(_.get))
+            segment.replaceArguments(newArgs)
         })
         findExactTypeId(name, typeRef)
       })
@@ -215,8 +218,7 @@ object IPM extends TriHierarchy {
     override val dependents: ArraySeq[Module],
     val index: DocumentIndex,
     loadingPool: ExecutorService
-  ) extends Module
-      with TypeFinder {
+  ) extends Module {
 
     private final val lowerNames = mutable.TreeSet[String]()
     private final val types      = mutable.Map[Name, IModuleTypeDeclaration]()
@@ -262,8 +264,12 @@ object IPM extends TriHierarchy {
     }
 
     private def typeResolve(decl: TypeDeclaration): Unit = {
+      def resolve(typeRef: TypeRef): Option[ITypeDeclaration] = {
+        TypeFinder.get(this, typeRef, decl)
+      }
+
       def resolveSignature(body: Signature): Unit = {
-        body.typeRef = findType(body.typeRef, decl).getOrElse(body.typeRef)
+        body.typeRef = resolve(body.typeRef).getOrElse(body.typeRef)
         body match {
           case sfpl: SignatureWithParameterList => resolveParameterList(sfpl.formalParameterList)
           case _                                =>
@@ -272,16 +278,16 @@ object IPM extends TriHierarchy {
 
       def resolveParameterList(fpl: FormalParameterList): Unit = {
         fpl.formalParameters.foreach(fp => {
-          fp.typeRef = fp.typeRef.flatMap(tr => findType(tr, decl)).orElse(fp.typeRef)
+          fp.typeRef = fp.typeRef.flatMap(resolve).orElse(fp.typeRef)
         })
       }
 
       decl._extendsTypeRef = Option(decl.extendsTypeRef) match {
-        case Some(etr) => findType(etr, decl).orNull
+        case Some(etr) => resolve(etr).orNull
         case None      => null
       }
       Option(decl.implementsTypeList).foreach(tl => {
-        tl.typeRefs.mapInPlace(tr => findType(tr, decl).getOrElse(tr))
+        tl.typeRefs.mapInPlace(tr => resolve(tr).getOrElse(tr))
       })
       decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
       decl.properties.foreach(resolveSignature)
@@ -473,8 +479,10 @@ object IPM extends TriHierarchy {
       name: String,
       typeRef: UnresolvedTypeRef
     ): (String, UnresolvedTypeRef) = {
+      //This will stop defaulting names for ambiguous names so we can resolve them correctly in TypeFinder
+      val isNameAmbiguous = ambiguousAliasMap.contains(TypeName(Name(name)))
       if (
-        !defaultNamespace ||
+        !defaultNamespace || isNameAmbiguous ||
         (typeRef.typeNameSegments.length > 1 &&
         typeRef.typeNameSegments.head.id.id.lowerCaseContents.equalsIgnoreCase(namespace.get.value))
       ) {

@@ -4,20 +4,21 @@
 
 package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{OutlineParser, TypeDeclaration}
+import com.financialforce.oparser.{OutlineParser, TypeDeclaration, UnresolvedTypeRef}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
 import java.nio.file.{Files, Path, Paths}
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 
 object OutputComparisonTest {
   var exactlyEqual = 0
   var withWarnings = 0
-  var errors       = 0
-  var total        = 0
+  var errors = 0
+  var total = 0
   var parseFailure = 0
 
   def main(args: Array[String]): Unit = {
@@ -42,24 +43,23 @@ object OutputComparisonTest {
         path.toString -> getUTF8ContentsFromPath(path)
       })
       .toMap
-    val sfParserOutput = SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
-    if (sfParserOutput._2.nonEmpty) {
-      parseFailure = sfParserOutput._2.size
-      System.err.println(
-        s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
-      )
-    }
-    FileSystemHelper.run(sources) { root: PathLike =>
-      val index = new IPM.Index(root)
-      files
-        .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
-        .foreach(f => {
-          val sf = findSfParserOutput(f.toAbsolutePath, sfParserOutput)
-          val op = index.rootModule.get.findExactTypeId(sf.get.getFullName)
-          compareResolved(op, sf)
-        })
-
-    }
+    //    val sfParserOutput = SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
+    //    if (sfParserOutput._2.nonEmpty) {
+    //      parseFailure = sfParserOutput._2.size
+    //      System.err.println(
+    //        s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
+    //      )
+    //    }
+    checkOPResolutions(sources)
+    //    FileSystemHelper.run(sources) { root: PathLike =>
+    //      val index = new IPM.Index(root)
+    //      files
+    //        .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
+    //        .foreach(f => {
+    //          val sf = findSfParserOutput(f.toAbsolutePath, sfParserOutput)
+    //          val op = index.rootModule.get.findExactTypeId(sf.get.getFullName)
+    //          compareResolved(op, sf)
+    //        })
 
     def toPercentage(result: Int) = {
       (result / files.size.toFloat) * 100
@@ -77,6 +77,74 @@ object OutputComparisonTest {
          |""".stripMargin)
   }
 
+  //Temp
+  private def checkOPResolutions(sources: Map[String, String]) = {
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      sources.keys
+        .filter(_.endsWith("cls"))
+        .filterNot(_.contains(".sfdx/tools/"))
+        .foreach(f => {
+          val file = index.rootModule.get.findTypesByPath(f)
+          if (file.nonEmpty) {
+            val op = file.head
+            val ex = op.extendsTypeRef match {
+              case un: UnresolvedTypeRef => Some(un)
+              case _ => None
+            }
+            val impl = if (op.implementsTypeList != null) op.implementsTypeList.typeRefs collect {
+              case un: UnresolvedTypeRef => un
+            }
+            else ArrayBuffer.empty
+            val cons = op.constructors.filter(
+              x =>
+                x.formalParameterList.formalParameters
+                  .flatMap(_.typeRef)
+                  .collect({ case un: UnresolvedTypeRef => un })
+                  .nonEmpty
+            )
+            val meths = op.methods.filter(
+              x =>
+                x.formalParameterList.formalParameters
+                  .flatMap(_.typeRef)
+                  .collect({ case un: UnresolvedTypeRef => un })
+                  .nonEmpty
+            )
+            val props = op.properties.filter(x => x.typeRef.isInstanceOf[UnresolvedTypeRef])
+            val fi = op.fields.filter(x => x.typeRef.isInstanceOf[UnresolvedTypeRef])
+
+            if (
+              ex.nonEmpty ||
+                impl.nonEmpty ||
+                cons.nonEmpty ||
+                meths.nonEmpty ||
+                props.nonEmpty ||
+                fi.nonEmpty
+            ) {
+              println(f)
+              if (ex.nonEmpty) println(ex.map(_.getFullName))
+              if (impl.nonEmpty) println(impl.map(_.getFullName))
+              if (cons.nonEmpty)
+                println(
+                  cons
+                    .map(_.formalParameterList.formalParameters.flatMap(_.typeRef).map(_.getFullName))
+                )
+              if (meths.nonEmpty)
+                println(
+                  meths
+                    .map(_.formalParameterList.formalParameters.flatMap(_.typeRef).map(_.getFullName))
+                )
+              if (props.nonEmpty) println(props.map(_.typeRef.getFullName))
+              if (fi.nonEmpty) println(fi.map(_.typeRef.getFullName))
+              println(" ")
+
+            }
+          }
+        })
+
+    }
+  }
+
   private def getOutLineParserOutput(path: Path) = {
     val contentsString = getUTF8ContentsFromPath(path)
     val result = OutlineParser.parse(path.toString, contentsString)
@@ -84,16 +152,16 @@ object OutputComparisonTest {
   }
 
   private def findSfParserOutput(
-    path: Path,
-    output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
-  ) = {
+                                  path: Path,
+                                  output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
+                                ) = {
     output._1.find(_.paths.head == path.toString)
   }
 
   private def compareResolved(
                                fromIndex: Option[IModuleTypeDeclaration],
                                fromSf: Option[TypeDeclaration]
-  ): Unit = {
+                             ): Unit = {
     val comparator = SubsetComparator(
       fromIndex.get,
       TypeIdCollector.fromIModuleTypeDecls(List.empty),
@@ -103,12 +171,12 @@ object OutputComparisonTest {
   }
 
   private def compareOutputs(
-    path: Path,
-    sfOutput: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]),
-    sfTypeIdResolver: TypeIdCollector
-  ): Unit = {
+                              path: Path,
+                              sfOutput: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]),
+                              sfTypeIdResolver: TypeIdCollector
+                            ): Unit = {
     val (success, reason, opOut) = getOutLineParserOutput(path)
-    val sfTd                     = findSfParserOutput(path, sfOutput)
+    val sfTd = findSfParserOutput(path, sfOutput)
 
     total += 1
     if (!success) {
@@ -139,7 +207,11 @@ object OutputComparisonTest {
       println("Directory")
       val s = Files.walk(absolutePath)
       s.filter(file => !Files.isDirectory(file))
-        .filter(file => file.getFileName.toString.toLowerCase.endsWith("cls"))
+        .filter(
+          file =>
+            file.getFileName.toString.toLowerCase
+              .endsWith("cls") || file.getFileName.toString.toLowerCase.endsWith("-meta.xml")
+        )
         .toArray
         .map(_.asInstanceOf[Path])
         .toIndexedSeq
