@@ -1,0 +1,95 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.github.financialforcedev</groupId>
+  <artifactId>ff-apex-outline-parser_2.13</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>ff-apex-outline-parser</name>
+  <description>Salesforce Apex Outline Parser</description>
+  <url>https://github.com/financialforcedev/ff-apex-outline-parser</url>
+  <scm>
+    <connection>scm:git:git://github.com/financialforcedev/ff-apex-outline-parser.git</connection>
+    <developerConnection>scm:git:git://github.com/financialforcedev/ff-apex-outline-parser.git</developerConnection>
+    <url>https://github.com/financialforcedev/ff-apex-outline-parser.git</url>
+  </scm>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+  </dependencies>
+
+  <build>
+    <finalName>${project.artifactId}</finalName>
+    <sourceDirectory>shared/src/main/scala</sourceDirectory>
+    <testSourceDirectory>shared/src/test/scala</testSourceDirectory>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>net.alchim31.maven</groupId>
+          <artifactId>scala-maven-plugin</artifactId>
+          <version>4.3.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.5.1</version>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+          </configuration>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>com.google.code.sbtrun-maven-plugin</groupId>
+        <artifactId>sbtrun-maven-plugin</artifactId>
+        <version>1.0.1</version>
+        <executions>
+          <execution>
+            <id>compile-outline-parser</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <args>parserJS/publishM2 parserJVM/publishM2</args>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.antipathy</groupId>
+        <artifactId>mvn-scalafmt_2.13</artifactId>
+        <version>1.1.1640084764.9f463a9</version>
+        <configuration>
+          <configLocation>${project.basedir}/.scalafmt.conf</configLocation>
+          <sourceDirectories>
+            <param>${project.basedir}/shared/src/main/scala</param>
+            <param>${project.basedir}/js/src/main/scala</param>
+            <param>${project.basedir}/jvm/src/main/scala</param>
+          </sourceDirectories>
+          <showReformattedOnly>true</showReformattedOnly>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+</project>

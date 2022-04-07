@@ -187,9 +187,12 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
     val other = obj.asInstanceOf[FormalParameter]
 
     other.annotations == annotations &&
-      other.modifiers == modifiers &&
-      other.typeRef.map(_.getFullName).getOrElse("").equalsIgnoreCase(typeRef.map(_.getFullName).getOrElse("")) &&
-      other.id == id
+    other.modifiers == modifiers &&
+    other.typeRef
+      .map(_.getFullName)
+      .getOrElse("")
+      .equalsIgnoreCase(typeRef.map(_.getFullName).getOrElse("")) &&
+    other.id == id
   }
 }
 
@@ -251,13 +254,13 @@ object ConstructorDeclaration {
 }
 
 case class MethodDeclaration(
-                              annotations: ArraySeq[Annotation],
-                              modifiers: ArraySeq[Modifier],
-                              var typeRef: TypeRef,
-                              id: Id,
-                              formalParameterList: FormalParameterList
-                            ) extends BodyDeclaration
-  with SignatureWithParameterList {
+  annotations: ArraySeq[Annotation],
+  modifiers: ArraySeq[Modifier],
+  var typeRef: TypeRef,
+  id: Id,
+  formalParameterList: FormalParameterList
+) extends BodyDeclaration
+    with SignatureWithParameterList {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
@@ -265,10 +268,10 @@ case class MethodDeclaration(
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[MethodDeclaration]
     other.annotations == annotations &&
-      other.modifiers == modifiers &&
-      other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
-      other.id == id &&
-      other.formalParameterList == formalParameterList
+    other.modifiers == modifiers &&
+    other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
+    other.id == id &&
+    other.formalParameterList == formalParameterList
   }
 
   override def toString: String = {
@@ -299,9 +302,9 @@ class PropertyDeclaration(
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[PropertyDeclaration]
     other.annotations == annotations &&
-      other.modifiers == modifiers &&
-      other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
-      other.id == id
+    other.modifiers == modifiers &&
+    other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
+    other.id == id
   }
 
   override def toString: String = {
@@ -331,9 +334,9 @@ case class FieldDeclaration(
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[FieldDeclaration]
     other.annotations == annotations &&
-      other.modifiers == modifiers &&
-      other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
-      other.id == id
+    other.modifiers == modifiers &&
+    other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
+    other.id == id
   }
 
   override def toString: String = {
@@ -359,10 +362,7 @@ case class Initializer(isStatic: Boolean) extends BodyDeclaration {
 
 object Parse {
 
-  def parseClassType(
-                      ctd: IMutableTypeDeclaration,
-                      tokens: Tokens
-                    ): IMutableTypeDeclaration = {
+  def parseClassType(ctd: IMutableTypeDeclaration, tokens: Tokens): IMutableTypeDeclaration = {
     var index = parseModifiers(0, tokens, ctd)
 
     if (!tokens(index).exists(_.matches(Tokens.ClassStr)))
@@ -382,10 +382,7 @@ object Parse {
     ctd
   }
 
-  def parseInterfaceType(
-                          itd: IMutableTypeDeclaration,
-                          tokens: Tokens
-                        ): IMutableTypeDeclaration = {
+  def parseInterfaceType(itd: IMutableTypeDeclaration, tokens: Tokens): IMutableTypeDeclaration = {
     var index = parseModifiers(0, tokens, itd)
 
     if (!tokens(index).exists(_.matches(Tokens.InterfaceStr)))
@@ -419,16 +416,16 @@ object Parse {
   }
 
   def parseClassMember(
-                        ctd: IMutableTypeDeclaration,
-                        tokens: Tokens,
-                        nextToken: Token
-                      ): (Boolean, Seq[BodyDeclaration]) = {
+    ctd: IMutableTypeDeclaration,
+    tokens: Tokens,
+    nextToken: Token
+  ): (Boolean, Seq[BodyDeclaration]) = {
 
     if (tokens.isEmpty()) {
       return (true, addInitializer(ctd, isStatic = false).toSeq)
     }
 
-    val md = new MemberDeclaration
+    val md    = new MemberDeclaration
     var index = parseModifiers(0, tokens, md)
 
     if (index >= tokens.length()) {
@@ -458,7 +455,7 @@ object Parse {
   def parseInterfaceMember(itd: IMutableTypeDeclaration, tokens: Tokens): Seq[BodyDeclaration] = {
     if (tokens.isEmpty()) return Seq.empty
 
-    val md = new MemberDeclaration
+    val md    = new MemberDeclaration
     var index = parseModifiers(0, tokens, md)
     index = parseTypeRef(index, tokens, md)
     addMethod(index, tokens, md, itd).toSeq
@@ -468,14 +465,17 @@ object Parse {
     if (tokens.isEmpty()) return Seq.empty
 
     val constant = tokenToId(tokens(0).get)
-    val field = new FieldDeclaration(ArraySeq(), ArraySeq(Modifier(IdToken("static", constant.id.location))), etd, constant)
+    val field = new FieldDeclaration(
+      ArraySeq(),
+      ArraySeq(Modifier(IdToken("static", constant.id.location))),
+      etd,
+      constant
+    )
     etd.appendField(field)
     Seq(constant)
   }
 
-  def parsePropertyBlock(
-    propertyDeclaration: PropertyDeclaration
-  ): Option[PropertyBlock] = {
+  def parsePropertyBlock(propertyDeclaration: PropertyDeclaration): Option[PropertyBlock] = {
     val pb = new PropertyBlock
     propertyDeclaration.add(pb)
     Some(pb)
@@ -487,18 +487,21 @@ object Parse {
     qName
   }
 
-  private def addInitializer(ctd: IMutableTypeDeclaration, isStatic: Boolean): Option[Initializer] = {
+  private def addInitializer(
+    ctd: IMutableTypeDeclaration,
+    isStatic: Boolean
+  ): Option[Initializer] = {
     val initializer = Initializer(isStatic)
     ctd.add(initializer)
     Some(initializer)
   }
 
   private def addConstructor(
-                              startIndex: Int,
-                              tokens: Tokens,
-                              md: MemberDeclaration,
-                              ctd: IMutableTypeDeclaration
-                            ): Option[ConstructorDeclaration] = {
+    startIndex: Int,
+    tokens: Tokens,
+    md: MemberDeclaration,
+    ctd: IMutableTypeDeclaration
+  ): Option[ConstructorDeclaration] = {
 
     val formalParameterList = new FormalParameterList
     val index               = parseFormalParameterList(startIndex, tokens, formalParameterList)
@@ -535,17 +538,23 @@ object Parse {
       throw new Exception(s"Unrecognised method ${tokens.toString()}")
     }
     val method =
-      MethodDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id, formalParameterList)
+      MethodDeclaration(
+        ArraySeq.unsafeWrapArray(md.annotations.toArray),
+        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
+        md.typeRef.get,
+        id,
+        formalParameterList
+      )
     res.add(method)
     Some(method)
   }
 
   private def addProperty(
-                           startIndex: Int,
-                           tokens: Tokens,
-                           md: MemberDeclaration,
-                           ctd: IMutableTypeDeclaration
-                         ): Option[PropertyDeclaration] = {
+    startIndex: Int,
+    tokens: Tokens,
+    md: MemberDeclaration,
+    ctd: IMutableTypeDeclaration
+  ): Option[PropertyDeclaration] = {
 
     val id    = tokenToId(tokens(startIndex).get)
     val index = startIndex + 1
@@ -555,28 +564,33 @@ object Parse {
     }
 
     val property =
-      new PropertyDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
+      new PropertyDeclaration(
+        ArraySeq.unsafeWrapArray(md.annotations.toArray),
+        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
+        md.typeRef.get,
+        id
+      )
     ctd.appendProperty(property)
     Some(property)
   }
 
   private def addFields(
-                         startIndex: Int,
-                         tokens: Tokens,
-                         md: MemberDeclaration,
-                         ctd: IMutableTypeDeclaration,
-                         nextToken: Token
-                       ): Seq[FieldDeclaration] = {
+    startIndex: Int,
+    tokens: Tokens,
+    md: MemberDeclaration,
+    ctd: IMutableTypeDeclaration,
+    nextToken: Token
+  ): Seq[FieldDeclaration] = {
 
     val fields = mutable.ArrayBuffer[FieldDeclaration]()
 
     def skipToNextField(startIndex: Int): (Location, Int) = {
       var nestedParenthesis = 0
-      var angleBrackets = 0
-      var squareBrackets = 0
-      var index = startIndex
-      var found = false
-      var endLocation = nextToken.location
+      var angleBrackets     = 0
+      var squareBrackets    = 0
+      var index             = startIndex
+      var found             = false
+      var endLocation       = nextToken.location
       while (!found && index < tokens.length()) {
         tokens(index) match {
           case Some(t: NonIdToken) =>
@@ -618,7 +632,12 @@ object Parse {
     while (index < tokens.length()) {
       val id = tokenToId(tokens(index).get)
 
-      val field = FieldDeclaration(ArraySeq.unsafeWrapArray(md.annotations.toArray), ArraySeq.unsafeWrapArray(md.modifiers.toArray), md.typeRef.get, id)
+      val field = FieldDeclaration(
+        ArraySeq.unsafeWrapArray(md.annotations.toArray),
+        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
+        md.typeRef.get,
+        id
+      )
       ctd.appendField(field)
       fields.append(field)
 
@@ -661,7 +680,11 @@ object Parse {
     }
   }
 
-  private def parseTypeName(startIndex: Int, tokens: Tokens, res: TypeNameSegmentAssignable): Int = {
+  private def parseTypeName(
+    startIndex: Int,
+    tokens: Tokens,
+    res: TypeNameSegmentAssignable
+  ): Int = {
     tokens(startIndex) match {
       case Some(id: IdToken) =>
         val tn = new TypeNameSegment(tokenToId(id))
