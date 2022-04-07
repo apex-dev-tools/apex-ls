@@ -51,10 +51,9 @@ class PlatformTypeDeclaration(
   }
 
   override def getFullName: String = {
-    val args = if (typeInfo.args.nonEmpty) typeInfo.args.mkString("<", ",", ">") else ""
     if (enclosing.nonEmpty)
-      return s"${typeInfo.namespace}.${enclosing.get.getFullName}.${typeInfo.typeName.id}$args"
-    s"${typeInfo.namespace}.${typeInfo.typeName.id}$args"
+      return s"${typeInfo.namespace}.${enclosing.get.getFullName}.${typeInfo.typeName.toString}"
+    s"${typeInfo.namespace}.${typeInfo.typeName.toString}"
   }
 
   override def toString: String = {
