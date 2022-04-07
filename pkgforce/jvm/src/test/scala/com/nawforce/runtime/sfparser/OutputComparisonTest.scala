@@ -4,14 +4,12 @@
 
 package com.nawforce.runtime.sfparser
 
-import com.financialforce.oparser.{OutlineParser, TypeDeclaration, UnresolvedTypeRef}
+import com.financialforce.oparser.UnresolvedTypeRef
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
-import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
-import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
+import com.nawforce.runtime.workspace.IPM
 
 import java.nio.file.{Files, Path, Paths}
-import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 
 object OutputComparisonTest {
@@ -35,7 +33,6 @@ object OutputComparisonTest {
     }
 
     val absolutePath = Paths.get(Option(args.head).getOrElse("")).toAbsolutePath.normalize()
-    val dbpath = Paths.get(args.tail.headOption.getOrElse("")).toAbsolutePath.normalize()
 
     val files: Seq[Path] = getFilesFromPath(absolutePath)
     val sources: Map[String, String] = files
@@ -43,23 +40,7 @@ object OutputComparisonTest {
         path.toString -> getUTF8ContentsFromPath(path)
       })
       .toMap
-    //    val sfParserOutput = SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
-    //    if (sfParserOutput._2.nonEmpty) {
-    //      parseFailure = sfParserOutput._2.size
-    //      System.err.println(
-    //        s"Some files will not be compared due to parse failure: ${sfParserOutput._2.mkString(", ")}"
-    //      )
-    //    }
     checkOPResolutions(sources)
-    //    FileSystemHelper.run(sources) { root: PathLike =>
-    //      val index = new IPM.Index(root)
-    //      files
-    //        .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
-    //        .foreach(f => {
-    //          val sf = findSfParserOutput(f.toAbsolutePath, sfParserOutput)
-    //          val op = index.rootModule.get.findExactTypeId(sf.get.getFullName)
-    //          compareResolved(op, sf)
-    //        })
 
     def toPercentage(result: Int) = {
       (result / files.size.toFloat) * 100
@@ -78,7 +59,7 @@ object OutputComparisonTest {
   }
 
   //Temp
-  private def checkOPResolutions(sources: Map[String, String]) = {
+  private def checkOPResolutions(sources: Map[String, String]): Unit = {
     FileSystemHelper.run(sources) { root: PathLike =>
       val index = new IPM.Index(root)
       sources.keys
@@ -142,63 +123,6 @@ object OutputComparisonTest {
           }
         })
 
-    }
-  }
-
-  private def getOutLineParserOutput(path: Path) = {
-    val contentsString = getUTF8ContentsFromPath(path)
-    val result = OutlineParser.parse(path.toString, contentsString)
-    (result._1, result._2, result._3.map(_.asInstanceOf[IModuleTypeDeclaration]))
-  }
-
-  private def findSfParserOutput(
-                                  path: Path,
-                                  output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
-                                ) = {
-    output._1.find(_.paths.head == path.toString)
-  }
-
-  private def compareResolved(
-                               fromIndex: Option[IModuleTypeDeclaration],
-                               fromSf: Option[TypeDeclaration]
-                             ): Unit = {
-    val comparator = SubsetComparator(
-      fromIndex.get,
-      TypeIdCollector.fromIModuleTypeDecls(List.empty),
-      TypeIdCollector.fromTypeDecls(List.empty)
-    )
-    comparator.subsetOf(fromSf.get)
-  }
-
-  private def compareOutputs(
-                              path: Path,
-                              sfOutput: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]),
-                              sfTypeIdResolver: TypeIdCollector
-                            ): Unit = {
-    val (success, reason, opOut) = getOutLineParserOutput(path)
-    val sfTd = findSfParserOutput(path, sfOutput)
-
-    total += 1
-    if (!success) {
-      parseFailure += 1
-      System.err.println(s"Parse Failure $path $reason")
-      return
-    }
-    try {
-      val opResolver = TypeIdCollector.fromIModuleTypeDecls(List(opOut.get))
-      val comparator = SubsetComparator(opOut.get, opResolver, sfTypeIdResolver)
-      comparator.subsetOf(sfTd.get)
-      val warnings = comparator.getWarnings
-      if (warnings.nonEmpty) {
-        withWarnings += 1
-        //TODO: Process warnings?
-      } else {
-        exactlyEqual += 1
-      }
-    } catch {
-      case ex: Throwable =>
-        errors += 1
-        System.err.println(s"Failed output on $path due to ${ex.getMessage}")
     }
   }
 

@@ -17,7 +17,6 @@ package com.nawforce.runtime.types.platform
 import com.financialforce.oparser._
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
-import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, Nature}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
   emptyPaths,
   emptyTypeDeclarations,
@@ -33,12 +32,10 @@ import scala.jdk.CollectionConverters._
 
 /* Platform type declaration, a wrapper around a com.nawforce.platform Java classes */
 class PlatformTypeDeclaration(
-  _module: IPM.Module,
+  val module: IPM.Module,
   val native: Any,
   override val enclosing: Option[PlatformTypeDeclaration]
 ) extends IModuleTypeDeclaration {
-
-  module = _module
 
   final private val cls: java.lang.Class[_] = native.asInstanceOf[java.lang.Class[_]]
 

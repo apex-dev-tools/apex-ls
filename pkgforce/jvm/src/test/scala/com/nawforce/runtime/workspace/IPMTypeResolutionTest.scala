@@ -165,7 +165,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val index = new IPM.Index(root)
       val dummy = getType("Dummy", index).get
 
-      assert(getField(dummy, "l").typeRef.isInstanceOf[ModuleClassTypeDeclaration])
+      assert(getField(dummy, "l").typeRef.isInstanceOf[IModuleTypeDeclaration])
       assert(getField(dummy, "sl").typeRef.getFullName == "System.Location")
       assert(getField(dummy, "scl").typeRef.getFullName == "SObjects.Location")
     }

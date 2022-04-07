@@ -242,10 +242,9 @@ object IPM extends TriHierarchy {
 
     private def loadClasses(): Unit = {
       val namespace = pkg.namespace
-      val classes = new ApexClassLoader(loadingPool, ModuleClassFactory)
+      val classes = new ApexClassLoader(loadingPool, this, ModuleClassFactory)
         .loadClasses(index.get(ApexNature), pkg.org.issues)
       classes.foreach { docAndType =>
-        markModule(docAndType._2)
         insertClass(docAndType._1.typeName(namespace).toString, docAndType._2)
       }
       classes.foreach { docAndType =>
@@ -254,16 +253,7 @@ object IPM extends TriHierarchy {
       }
     }
 
-    private def markModule(decl: TypeDeclaration): Unit = {
-      decl match {
-        case scoped: IModuleTypeDeclaration =>
-          decl.innerTypes.foreach(markModule)
-          scoped.module = this
-        case _ => ()
-      }
-    }
-
-    private def typeResolve(decl: TypeDeclaration): Unit = {
+    private def typeResolve(decl: IMutableTypeDeclaration): Unit = {
       def resolve(typeRef: TypeRef): Option[ITypeDeclaration] = {
         TypeFinder.get(this, typeRef, decl)
       }
@@ -282,10 +272,10 @@ object IPM extends TriHierarchy {
         })
       }
 
-      decl._extendsTypeRef = Option(decl.extendsTypeRef) match {
+      decl.setExtends(Option(decl.extendsTypeRef) match {
         case Some(etr) => resolve(etr).orNull
         case None      => null
-      }
+      })
       Option(decl.implementsTypeList).foreach(tl => {
         tl.typeRefs.mapInPlace(tr => resolve(tr).getOrElse(tr))
       })
@@ -295,16 +285,16 @@ object IPM extends TriHierarchy {
       decl.methods.foreach(resolveSignature)
     }
 
-    private def insertClass(name: String, decl: TypeDeclaration): Unit = {
+    private def insertClass(name: String, decl: IMutableModuleTypeDeclaration): Unit = {
       lowerNames.add(name.toLowerCase)
-      types.put(Name(name), decl.asInstanceOf[IModuleTypeDeclaration])
+      types.put(Name(name), decl)
 
       decl match {
         case outer: ClassTypeDeclaration =>
           outer.innerTypes.foreach(inner => {
             val innerName = s"$name.${inner.id}"
             lowerNames.add(name.toLowerCase)
-            types.put(Name(innerName), inner.asInstanceOf[IModuleTypeDeclaration])
+            types.put(Name(innerName), inner.asInstanceOf[IMutableModuleTypeDeclaration])
           })
         case _ => ()
       }
@@ -328,7 +318,7 @@ object IPM extends TriHierarchy {
         .orElse(nextModule.flatMap(_.findExactTypeId(name, typeRef)))
     }
 
-    def fuzzyFindTypeId(name: String): Option[IModuleTypeDeclaration] = {
+    override def fuzzyFindTypeId(name: String): Option[IModuleTypeDeclaration] = {
       if (name != null && name.nonEmpty) {
         val lower = name.toLowerCase
         lowerNames
@@ -342,7 +332,7 @@ object IPM extends TriHierarchy {
       }
     }
 
-    def accumFuzzyFindTypeIds(
+    override def accumFuzzyFindTypeIds(
       name: String,
       accum: mutable.Map[Name, IModuleTypeDeclaration]
     ): Unit = {
@@ -367,7 +357,7 @@ object IPM extends TriHierarchy {
         })
     }
 
-    def accumFindTypeIdsByNamespace(
+    override def accumFindTypeIdsByNamespace(
       namespacePrefix: String,
       accum: mutable.Map[Name, IModuleTypeDeclaration]
     ): Unit = {
@@ -387,15 +377,17 @@ object IPM extends TriHierarchy {
       }
     }
 
-    def findTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
+    override def findTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
       findTypesByPathPredicate(t => t.equalsIgnoreCase(path))
     }
 
-    def fuzzyFindTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
+    override def fuzzyFindTypesByPath(path: String): Seq[IModuleTypeDeclaration] = {
       findTypesByPathPredicate(t => t.toLowerCase.startsWith(path.toLowerCase))
     }
 
-    def findTypesByPathPredicate(predicate: String => Boolean): Seq[IModuleTypeDeclaration] = {
+    override def findTypesByPathPredicate(
+      predicate: String => Boolean
+    ): Seq[IModuleTypeDeclaration] = {
       var typesForPath = types.values.filter(t => t.paths.exists(p => predicate(p)))
       if (typesForPath.nonEmpty) return typesForPath.toSeq
 
@@ -497,18 +489,18 @@ object IPM extends TriHierarchy {
 
     override def isVisibleFile(path: PathLike): Boolean = false
 
-    override def findTypesByPath(path: String): Seq[IModuleTypeDeclaration] = Seq.empty
+    override def findTypesByPath(path: String): Seq[IMutableModuleTypeDeclaration] = Seq.empty
 
-    override def fuzzyFindTypesByPath(path: String): Seq[IModuleTypeDeclaration] = Seq.empty
+    override def fuzzyFindTypesByPath(path: String): Seq[IMutableModuleTypeDeclaration] = Seq.empty
 
     override def findTypesByPathPredicate(
       predicate: String => Boolean
-    ): Seq[IModuleTypeDeclaration] =
+    ): Seq[IMutableModuleTypeDeclaration] =
       Seq.empty
 
     /* Fuzzy searching has not been implemented for platform types */
 
-    override def fuzzyFindTypeId(name: String): Option[IModuleTypeDeclaration] = None
+    override def fuzzyFindTypeId(name: String): Option[IMutableModuleTypeDeclaration] = None
 
     override def accumFuzzyFindTypeIds(
       name: String,

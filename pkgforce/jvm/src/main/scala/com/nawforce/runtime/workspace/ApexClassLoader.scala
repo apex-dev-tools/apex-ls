@@ -13,13 +13,17 @@ import java.util.concurrent.ExecutorService
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 
-final class ApexClassLoader(loadingPool: ExecutorService, factory: TypeDeclarationFactory) {
+final class ApexClassLoader(
+  loadingPool: ExecutorService,
+  module: IPM.Module,
+  factory: TypeDeclFactory[IMutableModuleTypeDeclaration, IPM.Module]
+) {
   private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(loadingPool)
 
   def loadClasses(
     documents: Iterator[MetadataDocument],
     logger: IssueLogger
-  ): Array[(MetadataDocument, TypeDeclaration)] = {
+  ): Array[(MetadataDocument, IMutableModuleTypeDeclaration)] = {
 
     val loadFutures = Future.traverse(documents)(document => {
 
@@ -48,9 +52,10 @@ final class ApexClassLoader(loadingPool: ExecutorService, factory: TypeDeclarati
   private def parseSource(
     document: MetadataDocument,
     source: SourceData
-  ): Future[Either[Option[Issue], (MetadataDocument, TypeDeclaration)]] = {
+  ): Future[Either[Option[Issue], (MetadataDocument, IMutableModuleTypeDeclaration)]] = {
     Future {
-      val (_, reason, td) = OutlineParser.parse(document.path.toString, source.asString, factory)
+      val (_, reason, td) =
+        OutlineParser.parse(document.path.toString, source.asString, factory, module)
       td
         .map(td => Right(document, td))
         .getOrElse(

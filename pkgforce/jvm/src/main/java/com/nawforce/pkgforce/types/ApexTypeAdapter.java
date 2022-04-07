@@ -6,6 +6,7 @@ package com.nawforce.pkgforce.types;
 import com.financialforce.oparser.TypeRef;
 import com.nawforce.pkgforce.api.*;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
+import com.nawforce.runtime.workspace.IMutableModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
 import scala.collection.mutable.ArrayBuffer;
 
@@ -36,12 +37,12 @@ public class ApexTypeAdapter implements ApexType {
 
     private List<ApexType> getTypes(IModuleTypeDeclaration td) {
         if (td.enclosing().nonEmpty())
-            return getTypes(td.enclosingModule().get());
+            return getTypes(td.enclosing().get());
 
         ApexType[] types = new ApexType[1 + td.innerTypes().length()];
         types[0] = new ApexTypeAdapter(td);
         for (int i = 0; i < td.innerTypes().length(); i++)
-            types[1 + i] = new ApexTypeAdapter(td.innerTypesModule().apply(i));
+            types[1 + i] = new ApexTypeAdapter(td.innerTypes().apply(i));
         return Arrays.asList(types);
     }
 
@@ -66,7 +67,7 @@ public class ApexTypeAdapter implements ApexType {
         if (!module().isPresent() || td.enclosing().isEmpty())
             return null;
 
-        return new ApexTypeAdapter(td.enclosingModule().get());
+        return new ApexTypeAdapter(td.enclosing().get());
     }
 
     @Override

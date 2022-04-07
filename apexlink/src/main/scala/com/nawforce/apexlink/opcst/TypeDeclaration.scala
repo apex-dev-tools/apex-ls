@@ -1,15 +1,18 @@
 package com.nawforce.apexlink.opcst
 
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration => OPClassTypeDeclaration,
+  EnumTypeDeclaration => OPEnumTypeDeclaration,
+  InterfaceTypeDeclaration => OPInterfaceTypeDeclaration
+}
+
 import com.financialforce.oparser.{
   UnresolvedTypeRef,
-  ClassTypeDeclaration => OPClassTypeDeclaration,
   ConstructorDeclaration => OPConstructorDeclaration,
-  EnumTypeDeclaration => OPEnumTypeDeclaration,
   FieldDeclaration => OPFieldDeclaration,
   FormalParameter => OPFormalParameter,
   Id => OPId,
   Initializer => OPInitializer,
-  InterfaceTypeDeclaration => OPInterfaceTypeDeclaration,
   Location => OPLocation,
   MethodDeclaration => OPMethodDeclaration,
   PropertyBlock => OPPropertyBlock,
@@ -310,8 +313,8 @@ private[opcst] object OutlineParserEnumDeclaration {
 
     val typeContext = new RelativeTypeContext
 
-    val fields = etd.constants.flatMap(
-      c => constructEnumConstant(c, source, thisType, outerTypeName.isDefined)
+    val fields = etd.fields.flatMap(
+      f => constructEnumConstant(f.id, source, thisType, outerTypeName.isDefined)
     )
 
     val declaration = EnumDeclaration(

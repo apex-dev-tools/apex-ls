@@ -3,8 +3,6 @@
  */
 package com.nawforce.pkgforce.api;
 
-import com.financialforce.oparser.TypeDeclaration;
-
 import java.util.List;
 
 public class ApexResourceFile {

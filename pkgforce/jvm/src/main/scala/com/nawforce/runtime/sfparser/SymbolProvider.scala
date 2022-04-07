@@ -139,10 +139,10 @@ object SymbolProvider {
   private class SFModuleWithDb(dbPath: Path) extends ApexLanguageServerModule {
 
     /**
-     * This is exact copy of ApexLanguageServerModule
-     * where the only difference is we provide our own ApexIndexProvider
-     * so that we can make use of the DB that gets passed in.
-     */
+      * This is exact copy of ApexLanguageServerModule
+      * where the only difference is we provide our own ApexIndexProvider
+      * so that we can make use of the DB that gets passed in.
+      */
     override def configure(): Unit = {
 
       this.install((new FactoryModuleBuilder).build(classOf[CompletionActivationFactory]))
