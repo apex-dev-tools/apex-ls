@@ -106,12 +106,6 @@ class MemberDeclaration extends ModifierAssignable with TypeRefAssignable {
 }
 
 case class Annotation(qName: QualifiedName, parameters: Option[String]) {
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[Annotation]
-    qName == other.qName
-    // TODO: Are parameters required?
-  }
-
   override def toString: String = {
     if (parameters.isDefined) s"@$qName(${parameters.get})" else s"@$qName"
   }
@@ -766,7 +760,6 @@ object Parse {
     val parameters = if (tokens(index).exists(_.matches(Tokens.LParenStr))) {
       val builder      = new StringBuilder()
       var nestingCount = 1
-      //builder.append(tokens(index).get.contents)
       index += 1
       while (nestingCount > 0 && index < tokens.length()) {
         if (tokens(index).get.matches(Tokens.RParenStr)) {

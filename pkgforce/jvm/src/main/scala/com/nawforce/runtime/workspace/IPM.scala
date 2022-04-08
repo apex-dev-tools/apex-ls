@@ -102,6 +102,7 @@ object IPM extends TriHierarchy {
   trait Package extends TriPackage {
     override val org: Index
 
+    // Helper to save from dealing with Option in Java
     def namespaceAsString: String = namespace.map(_.value).getOrElse("")
   }
 
@@ -109,6 +110,9 @@ object IPM extends TriHierarchy {
    * paths. */
   trait Module extends TriModule {
     override val pkg: Package
+
+    // Helper to save from dealing with Option in Java
+    def namespaceAsString: String = pkg.namespaceAsString
 
     /* Find next module in search order */
     def nextModule: Option[Module] = {
@@ -253,7 +257,7 @@ object IPM extends TriHierarchy {
       }
     }
 
-    private def typeResolve(decl: IMutableTypeDeclaration): Unit = {
+    private def typeResolve(decl: IMutableModuleTypeDeclaration): Unit = {
       def resolve(typeRef: TypeRef): Option[ITypeDeclaration] = {
         TypeFinder.get(this, typeRef, decl)
       }

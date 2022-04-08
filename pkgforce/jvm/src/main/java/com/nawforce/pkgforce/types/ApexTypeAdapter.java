@@ -4,6 +4,7 @@
 package com.nawforce.pkgforce.types;
 
 import com.financialforce.oparser.TypeRef;
+import com.financialforce.oparser.UnresolvedTypeRef;
 import com.nawforce.pkgforce.api.*;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
@@ -77,11 +78,12 @@ public class ApexTypeAdapter implements ApexType {
 
     @Override
     public ApexTypeId getParent() {
-        if (td.extendsTypeRef() == null)
+        TypeRef parent = td.extendsTypeRef();
+        if (!(parent instanceof IModuleTypeDeclaration))
             return null;
 
-        // TODO: Namespace handling
-        return new NameApexTypeId(td.extendsTypeRef().toString(), "");
+        IModuleTypeDeclaration parentTD = (IModuleTypeDeclaration)parent;
+        return new NameApexTypeId(parentTD.getFullName(), parentTD.namespaceAsString());
     }
 
     @Override

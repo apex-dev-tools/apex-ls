@@ -39,7 +39,7 @@ class PlatformTypeDeclaration(
 
   final private val cls: java.lang.Class[_] = native.asInstanceOf[java.lang.Class[_]]
 
-  final val nature: Nature = {
+  final val nature: TypeNature = {
     (cls.isEnum, cls.isInterface) match {
       case (true, _) => ENUM_NATURE
       case (_, true) => INTERFACE_NATURE

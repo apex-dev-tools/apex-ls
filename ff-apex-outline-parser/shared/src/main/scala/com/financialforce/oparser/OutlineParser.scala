@@ -5,14 +5,14 @@ package com.financialforce.oparser
 
 import scala.annotation.tailrec
 
-sealed abstract class Nature(val value: String)
+sealed abstract class TypeNature(val value: String)
 
-case object CLASS_NATURE     extends Nature("class")
-case object INTERFACE_NATURE extends Nature("interface")
-case object ENUM_NATURE      extends Nature("enum")
+case object CLASS_NATURE     extends TypeNature("class")
+case object INTERFACE_NATURE extends TypeNature("interface")
+case object ENUM_NATURE      extends TypeNature("enum")
 
 trait TypeDeclFactory[TypeDecl <: IMutableTypeDeclaration, Ctx] {
-  def create(ctx: Ctx, nature: Nature, path: String, enclosing: Option[TypeDecl]): TypeDecl
+  def create(ctx: Ctx, nature: TypeNature, path: String, enclosing: Option[TypeDecl]): TypeDecl
 }
 
 final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](

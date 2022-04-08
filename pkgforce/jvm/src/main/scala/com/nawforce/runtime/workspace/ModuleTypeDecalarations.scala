@@ -12,6 +12,9 @@ import scala.collection.mutable
 trait IModuleTypeDeclaration extends ITypeDeclaration {
   val module: IPM.Module
 
+  // Helper to save from dealing with Option in Java
+  def namespaceAsString: String = module.namespaceAsString
+
   override def enclosing: Option[IModuleTypeDeclaration]
   override def innerTypes: ArraySeq[IModuleTypeDeclaration]
 }
@@ -27,7 +30,7 @@ trait IMutableModuleTypeDeclaration
 sealed class TypeDeclaration(
   val module: IPM.Module,
   val path: String,
-  val nature: Nature,
+  val nature: TypeNature,
   _enclosing: IMutableModuleTypeDeclaration
 ) extends IMutableModuleTypeDeclaration {
   var _location: Location = _
@@ -245,7 +248,7 @@ class EnumTypeDeclaration(
 object ModuleClassFactory extends TypeDeclFactory[IMutableModuleTypeDeclaration, IPM.Module] {
   override def create(
     module: IPM.Module,
-    nature: Nature,
+    nature: TypeNature,
     path: String,
     enclosing: Option[IMutableModuleTypeDeclaration]
   ): IMutableModuleTypeDeclaration = {
