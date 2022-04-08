@@ -129,6 +129,13 @@ case class Modifier(token: Token) {
     token.lowerCaseContents == other.token.lowerCaseContents
   }
 }
+object Modifiers {
+  final val PUBLIC_MODIFIER: Modifier   = Modifier(IdToken(Tokens.PublicStr, Location.default))
+  final val STATIC_MODIFIER: Modifier   = Modifier(IdToken(Tokens.StaticStr, Location.default))
+  final val VIRTUAL_MODIFIER: Modifier  = Modifier(IdToken(Tokens.VirtualStr, Location.default))
+  final val ABSTRACT_MODIFIER: Modifier = Modifier(IdToken(Tokens.AbstractStr, Location.default))
+  final val FINAL_MODIFIER: Modifier    = Modifier(IdToken(Tokens.FinalStr, Location.default))
+}
 
 case class Id(id: IdToken) {
   override def toString: String = id.contents
@@ -468,7 +475,12 @@ object Parse {
     if (tokens.isEmpty()) return Seq.empty
 
     val constant = tokenToId(tokens(0).get)
-    val field = new FieldDeclaration(ArraySeq(), ArraySeq(Modifier(IdToken("static", constant.id.location))), etd, constant)
+    val field = new FieldDeclaration(
+      ArraySeq(),
+      ArraySeq(Modifier(IdToken(Tokens.StaticStr, constant.id.location))),
+      etd,
+      constant
+    )
     etd.appendField(field)
     Seq(constant)
   }

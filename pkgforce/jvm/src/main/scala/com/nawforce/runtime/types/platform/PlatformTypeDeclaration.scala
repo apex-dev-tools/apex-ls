@@ -14,12 +14,18 @@
 
 package com.nawforce.runtime.types.platform
 
-import com.financialforce.oparser._
+import com.financialforce.oparser.{FormalParameterList, QualifiedName, _}
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
+  decodeName,
+  emptyAnnotations,
+  emptyInitializers,
   emptyPaths,
+  emptyProperties,
   emptyTypeDeclarations,
-  getTypeName
+  getTypeName,
+  platformPackage,
+  preResolveArguments
 }
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
@@ -46,6 +52,18 @@ class PlatformTypeDeclaration(
     }
   }
 
+  protected def getSuperClassTypeInfo: Option[TypeInfo] = {
+    if (cls.getSuperclass != null) {
+      cls.getSuperclass.getCanonicalName match {
+        case "java.lang.Object" => None
+        case "java.lang.Enum"   => None
+        case _                  => Some(getTypeName(cls.getSuperclass))
+      }
+    } else {
+      None
+    }
+  }
+
   final val typeInfo: TypeInfo = getTypeName(cls)
 
   override val paths: Array[String] = emptyPaths
@@ -56,15 +74,27 @@ class PlatformTypeDeclaration(
 
   override val typeNameSegment: TypeNameSegment = typeInfo.typeName
 
-  override def extendsTypeRef: TypeRef = null // TODO
+  override def extendsTypeRef: TypeRef =
+    getSuperClassTypeInfo
+      .flatMap(_.asOptionalUnresolved)
+      .orNull
 
-  override def implementsTypeList: TypeList = null // TODO
+  override def implementsTypeList: TypeList = {
+    val interfaces = cls.getGenericInterfaces
+    if (interfaces.nonEmpty) {
+      val tl = TypeList()
+      interfaces.map(i => getTypeName(i.getClass)).flatMap(_.asOptionalUnresolved).foreach(tl.add)
+      return if (tl.typeRefs.nonEmpty) tl else null
+    }
+    null
+  }
 
-  override def modifiers: ArraySeq[Modifier] = ArraySeq.empty // TODO
+  override def modifiers: ArraySeq[Modifier] =
+    PlatformModifiers.typeModifiers(cls.getModifiers, nature)
 
-  override def annotations: ArraySeq[Annotation] = ArraySeq.empty // TODO
+  override def annotations: ArraySeq[Annotation] = emptyAnnotations
 
-  override def initializers: ArraySeq[Initializer] = ArraySeq.empty // TODO
+  override def initializers: ArraySeq[Initializer] = emptyInitializers
 
   override def innerTypes: ArraySeq[PlatformTypeDeclaration] = {
     if (nature == CLASS_NATURE) {
@@ -76,19 +106,117 @@ class PlatformTypeDeclaration(
     }
   }
 
-  override def constructors: ArraySeq[ConstructorDeclaration] = ArraySeq.empty // TODO
+  override def constructors: ArraySeq[ConstructorDeclaration] =
+    ArraySeq
+      .unsafeWrapArray(cls.getConstructors)
+      .filterNot(_.isSynthetic)
+      .map(c => toConstructorDeclaration(c, this))
 
-  override def methods: ArraySeq[MethodDeclaration] = ArraySeq.empty // TODO
+  override def methods: ArraySeq[MethodDeclaration] = {
+    nature match {
+      case ENUM_NATURE => ArraySeq.empty //TODO
+      case _           => getMethods
+    }
+  }
 
-  override def properties: ArraySeq[PropertyDeclaration] = ArraySeq.empty // TODO
+  override def properties: ArraySeq[PropertyDeclaration] = emptyProperties
 
-  override def fields: ArraySeq[FieldDeclaration] = ArraySeq.empty // TODO
+  override def fields: ArraySeq[FieldDeclaration] = getFields
+
+  private def getMethods: ArraySeq[MethodDeclaration] = {
+    ArraySeq
+      .unsafeWrapArray(cls.getMethods)
+      .filter(
+        _.getDeclaringClass.getCanonicalName.startsWith(PlatformTypeDeclaration.platformPackage)
+      )
+      .filterNot(_.isSynthetic)
+      .map(toMethodDeclaration)
+  }
+
+  private def getFields: ArraySeq[FieldDeclaration] = {
+    ArraySeq.unsafeWrapArray(collectFields(cls).values.toArray)
+  }
+
+  private def collectFields(
+    cls: Class[_],
+    accum: mutable.Map[Name, FieldDeclaration] = mutable.Map()
+  ): mutable.Map[Name, FieldDeclaration] = {
+    if (cls.getCanonicalName.startsWith(PlatformTypeDeclaration.platformPackage)) {
+      cls.getDeclaredFields
+        .filterNot(_.isSynthetic)
+        .foreach(f => {
+          val name = Name(f.getName)
+          if (!accum.contains(name))
+            accum.put(name, toFieldDeclaration(f))
+        })
+      Option(cls.getSuperclass).foreach(superClass => collectFields(superClass, accum))
+    }
+    accum
+  }
+
+  private def toConstructorDeclaration(
+    ctor: java.lang.reflect.Constructor[_],
+    td: PlatformTypeDeclaration
+  ): ConstructorDeclaration = {
+    val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
+    val name      = new QualifiedName()
+    name.add(Id(IdToken(td.id.id.contents, Location.default)))
+    ConstructorDeclaration(
+      ArraySeq.empty,
+      modifiers,
+      name,
+      toFormalParameterList(ctor.getParameters)
+    )
+  }
+
+  private def toMethodDeclaration(method: java.lang.reflect.Method): MethodDeclaration = {
+    new MethodDeclaration(
+      emptyAnnotations,
+      PlatformModifiers.fieldOrMethodModifiers(method.getModifiers),
+      getPlatformTypeDeclFromType(method.getGenericReturnType),
+      Id(IdToken(decodeName(method.getName), Location.default)),
+      toFormalParameterList(method.getParameters)
+    )
+  }
+
+  private def toFieldDeclaration(field: java.lang.reflect.Field) = {
+    new FieldDeclaration(
+      emptyAnnotations,
+      PlatformModifiers.fieldOrMethodModifiers(field.getModifiers),
+      getPlatformTypeDeclFromType(field.getGenericType),
+      Id(IdToken(decodeName(field.getName), Location.default))
+    )
+  }
+
+  private def toFormalParameterList(params: Array[java.lang.reflect.Parameter]) = {
+    val fpl = new FormalParameterList()
+    params.map(toFormalParameter).foreach(fpl.add)
+    fpl
+  }
+
+  private def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
+    val typeInfo = getTypeName(parameter.getType)
+    val p        = new FormalParameter
+    typeInfo.asOptionalUnresolved.foreach(p.add)
+    p.add(Id(IdToken(parameter.getName, Location.default)))
+    p
+  }
+
+  private def getPlatformTypeDeclFromType(from: java.lang.reflect.Type): PlatformTypeDeclaration = {
+    val typeRefNameWithGenerics = from.getTypeName.replace(s"$platformPackage.", "")
+    val unresolvedTypeRef       = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
+    preResolveArguments(unresolvedTypeRef, module)
+    PlatformTypeDeclaration.get(module, unresolvedTypeRef.get).get
+  }
 }
 
 object PlatformTypeDeclaration {
   final val emptyPaths: Array[String]                                = Array.empty
   final val emptyArgs: Array[String]                                 = Array.empty
   final val emptyTypeDeclarations: ArraySeq[PlatformTypeDeclaration] = ArraySeq.empty
+  final val emptyAnnotations: ArraySeq[Annotation]                   = ArraySeq.empty
+  final val emptyInitializers: ArraySeq[Initializer]                 = ArraySeq.empty
+  final val emptyProperties: ArraySeq[PropertyDeclaration]           = ArraySeq.empty
   final val priorityNamespaces: Seq[Name]                            = Seq(Names.System, Names.Schema, Names.Database)
 
   /* Java package prefix for platform types */
@@ -270,6 +398,33 @@ object PlatformTypeDeclaration {
     typeName.typeArguments = Some(TypeArguments(params))
     typeName
   }
+
+  private def decodeName(name: String): String = {
+    if (name.endsWith("$"))
+      name.substring(0, name.length - 1)
+    else
+      name
+  }
+
+  private def preResolveArguments(un: Option[UnresolvedTypeRef], module: IPM.Module): Unit = {
+    if (un.nonEmpty) {
+      un.get.typeNameSegments
+        .filter(tns => tns.typeArguments.nonEmpty)
+        .foreach(tns => {
+          val args = tns.getArguments
+          val newArgs = args.flatMap {
+            case unref: UnresolvedTypeRef => PlatformTypeDeclaration.get(module, unref)
+            case other                    => Some(other)
+          }
+          if (args.nonEmpty && args.length == newArgs.length)
+            tns.replaceArguments(newArgs)
+        })
+    }
+  }
 }
 
-case class TypeInfo(namespace: String, args: Array[String], typeName: TypeNameSegment)
+case class TypeInfo(namespace: String, args: Array[String], typeName: TypeNameSegment) {
+  def asOptionalUnresolved: Option[UnresolvedTypeRef] = {
+    UnresolvedTypeRef(s"${namespace}.${typeName.toString}").toOption
+  }
+}
