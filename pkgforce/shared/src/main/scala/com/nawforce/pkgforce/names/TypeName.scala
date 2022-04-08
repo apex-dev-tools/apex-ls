@@ -218,15 +218,20 @@ object TypeName {
   }
 
   // Package private to avoid accidental use in apex-link
+  val Void: TypeName      = TypeName(Names.Void)
+  val ApexPages: TypeName = TypeName(Names.ApexPages)
+
+  val System: TypeName   = TypeName(Names.System)
   val Internal: TypeName = TypeName(Names.Internal)
-  val Null: TypeName     = TypeName(Names.Null$, Nil, Some(TypeName.Internal))
-  val Any: TypeName      = TypeName(Names.Any$, Nil, Some(TypeName.Internal))
+
+  val Null: TypeName   = TypeName(Names.Null$, Nil, Some(TypeName.Internal))
+  val Any: TypeName    = TypeName(Names.Any$, Nil, Some(TypeName.Internal))
+  val Object: TypeName = TypeName(Names.Object, Nil, Some(TypeName.System))
   val InternalObject: TypeName =
     TypeName(Names.Object$, Nil, Some(TypeName.Internal))
   val InternalInterface: TypeName =
     TypeName(Names.Interface$, Nil, Some(TypeName.Internal))
 
-  val System: TypeName  = TypeName(Names.System)
   val SObject: TypeName = TypeName(Names.SObject, Nil, Some(TypeName.System))
   val RecordSet: TypeName =
     TypeName(Names.RecordSet$, Seq(TypeName.SObject), Some(TypeName.Internal))
@@ -240,6 +245,10 @@ object TypeName {
   val Interview: TypeName = TypeName(Names.Interview, Nil, Some(TypeName.Flow))
   val Page: TypeName      = TypeName(Names.Page, Nil, None)
 
+  val PageReference: TypeName = TypeName(Names.PageReference, Nil, Some(TypeName.System))
+  val ApexPagesPageReference: TypeName =
+    TypeName(Names.PageReference, Nil, Some(TypeName.ApexPages))
+
   val SObjectTypeFields$ : TypeName =
     TypeName(Names.SObjectTypeFields$, Nil, Some(TypeName.Internal))
   val SObjectTypeFieldSets$ : TypeName =
@@ -252,4 +261,12 @@ object TypeName {
   def sObjectTypeRowClause$(typeName: TypeName): TypeName =
     new TypeName(SObjectFieldRowCause$.name, Seq(typeName), SObjectFieldRowCause$.outer)
 
+  /** Mapping for Ambiguous type names which can resolve to SObject of platform classes. */
+  val ambiguousAliasMap: Map[TypeName, TypeName] = Map(
+    TypeName(Name("BusinessHours")) -> TypeName(Name("BusinessHours"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("Site"))          -> TypeName(Name("Site"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("Location"))      -> TypeName(Name("Location"), Nil, Some(TypeName.System)),
+    TypeName(Name("Approval"))      -> TypeName(Name("Approval"), Nil, Some(TypeName.System)),
+    TypeName(Name("Address"))       -> TypeName(Name("Address"), Nil, Some(TypeName.System))
+  )
 }

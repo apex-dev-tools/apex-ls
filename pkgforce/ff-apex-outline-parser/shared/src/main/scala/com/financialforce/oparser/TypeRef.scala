@@ -8,7 +8,6 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 trait TypeRef {
-  //Only used for comparison
   def getFullName: String
 }
 
@@ -112,9 +111,8 @@ final case class TypeNameSegment(id: Id, var typeArguments: Option[TypeArguments
   }
 
   override def toString: String = {
-    import StringUtils._
     if (typeArguments.nonEmpty)
-      s"$id<${asString(typeArguments)}>"
+      s"$id<${getArguments.map(_.getFullName).mkString(",")}>"
     else
       id.toString
   }

@@ -14,7 +14,8 @@
 
 package com.nawforce.runtime.types.platform
 
-import com.financialforce.oparser.{FormalParameterList, QualifiedName, _}
+import com.financialforce.oparser._
+import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
   decodeName,
@@ -123,6 +124,23 @@ class PlatformTypeDeclaration(
 
   override def fields: ArraySeq[FieldDeclaration] = getFields
 
+  override def getFullName: String = {
+    if (enclosing.nonEmpty)
+      return s"${typeInfo.namespace}.${enclosing.get.getFullName}.${typeInfo.typeName.toString}"
+    s"${typeInfo.namespace}.${typeInfo.typeName.toString}"
+  }
+
+  override def toString: String = {
+    val args = if (typeInfo.args.nonEmpty) typeInfo.args.mkString("<", ",", ">") else ""
+    val rawNames =
+      if (enclosing.nonEmpty)
+        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName, typeInfo.namespace)
+      else Seq(typeInfo.typeName.id.toString, typeInfo.namespace)
+    val name = TypeName(rawNames.map(Name(_)))
+
+    s"$name$args"
+  }
+
   private def getMethods: ArraySeq[MethodDeclaration] = {
     ArraySeq
       .unsafeWrapArray(cls.getMethods)
@@ -208,6 +226,7 @@ class PlatformTypeDeclaration(
     preResolveArguments(unresolvedTypeRef, module)
     PlatformTypeDeclaration.get(module, unresolvedTypeRef.get).get
   }
+
 }
 
 object PlatformTypeDeclaration {
@@ -246,14 +265,14 @@ object PlatformTypeDeclaration {
       return None
 
     // Non-generic lookup
-    val typeName = typeNameOpt.get
-    val tdOpt    = getDeclaration(module, asDotName(typeName))
+    val aliasedTypeName = typeAliasMap.getOrElse(typeNameOpt.get, typeNameOpt.get)
+    val tdOpt           = getDeclaration(module, asDotName(aliasedTypeName))
     if (tdOpt.isEmpty) return None
 
     // Quick fail on wrong number of type variables
     val td            = tdOpt.get
     val typeArguments = td.typeNameSegment.getArguments
-    if (typeArguments.length != typeName.params.size)
+    if (typeArguments.length != aliasedTypeName.params.size)
       return None
 
     if (typeArguments.isEmpty) {
@@ -266,7 +285,7 @@ object PlatformTypeDeclaration {
     }
   }
 
-  /* Converts UnresolvedTypeRef to a TypeName, iff all type arguments are resolved */
+  /* Converts UnresolvedTypeRef to a TypeName, if all type arguments are resolved */
   private def asTypeName(typeRef: UnresolvedTypeRef): Option[TypeName] = {
     asTypeName(typeRef.typeNameSegments.toList, None).map(fullTypeName => {
       var wrapped = fullTypeName
@@ -398,6 +417,11 @@ object PlatformTypeDeclaration {
     typeName.typeArguments = Some(TypeArguments(params))
     typeName
   }
+
+  private val typeAliasMap: Map[TypeName, TypeName] = Map(
+    TypeName.Object                 -> TypeName.InternalObject,
+    TypeName.ApexPagesPageReference -> TypeName.PageReference
+  ) ++ ambiguousAliasMap
 
   private def decodeName(name: String): String = {
     if (name.endsWith("$"))
