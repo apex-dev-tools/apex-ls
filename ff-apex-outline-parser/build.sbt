@@ -30,10 +30,7 @@ lazy val parser = crossProject(JVMPlatform, JSPlatform).in(file(".")).
   ).
   jvmSettings(
     build := buildJVM.value,
-    assembly / mainClass := Some("com.financialforce.oparser.JVMParser"),
-    artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
-      artifact.name + "-" + module.revision + "." + artifact.extension
-    }
+    assembly / mainClass := Some("com.financialforce.oparser.JVMParser")
   ).
   jsSettings(
     build := buildJS.value,
