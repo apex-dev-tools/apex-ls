@@ -1,9 +1,16 @@
 /*
  * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved.
  */
-package com.financialforce.oparser
+package com.nawforce.runtime.cmds
 
-import com.nawforce.runtime.cmds.Antlr
+import com.financialforce.oparser.OutlineParser
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  Compare,
+  EnumTypeDeclaration,
+  InterfaceTypeDeclaration,
+  ModuleClassFactory
+}
 
 import java.nio.file.{Files, Path, Paths}
 import java.util.concurrent.atomic.AtomicLong
@@ -20,12 +27,12 @@ object JVMParser {
 
 object Parser {
   def run(args: Array[String]): Int = {
-    val options = Set("-seq", "-notest", "-display", "-antlr")
+    val options    = Set("-seq", "-notest", "-display", "-antlr")
     val sequential = args.contains("-seq")
-    val test = !args.contains("-notest") && !args.contains("-antlr")
-    val display = args.contains("-display")
-    val onlyANTLR = args.contains("-antlr")
-    val paths = args.filterNot(options.contains)
+    val test       = !args.contains("-notest") && !args.contains("-antlr")
+    val display    = args.contains("-display")
+    val onlyANTLR  = args.contains("-antlr")
+    val paths      = args.filterNot(options.contains)
 
     if (paths.isEmpty) {
       System.err.println(s"No paths provided to search for Apex classes")
@@ -170,7 +177,7 @@ object Parser {
   }
 
   private def parseFile(display: Boolean, test: Boolean, onlyANTLR: Boolean, path: Path): Unit = {
-    var start = System.currentTimeMillis()
+    var start         = System.currentTimeMillis()
     val contentsBytes = Files.readAllBytes(path)
     addReadFileTime(System.currentTimeMillis() - start)
     start = System.currentTimeMillis()
@@ -179,7 +186,8 @@ object Parser {
 
     val td = if (test || !onlyANTLR) {
       start = System.currentTimeMillis()
-      val (success, reason, decl) = OutlineParser.parse(path.toString, contentsString)
+      val (success, reason, decl) =
+        OutlineParser.parse(path.toString, contentsString, ModuleClassFactory, null)
       if (!success)
         println(s"Error parsing $path ${reason.get}")
       addParseTime(System.currentTimeMillis() - start)

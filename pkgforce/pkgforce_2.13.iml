@@ -14,6 +14,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="ff-apex-outline-parser" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.0" level="project" />
     <orderEntry type="library" name="Maven: com.github.nawforce:uber-apex-jorje:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.13.3" level="project" />

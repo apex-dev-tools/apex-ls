@@ -42,14 +42,15 @@ trait ITypeDeclaration extends TypeRef {
   }
 }
 
-trait IMutableTypeDeclaration extends ITypeDeclaration
-  with AnnotationAssignable
-  with IdAssignable
-  with ModifierAssignable
-  with TypeRefAssignable
-  with TypeListAssignable
-  with MethodDeclarationAssignable
-  with InitializerAssignable {
+trait IMutableTypeDeclaration
+    extends ITypeDeclaration
+    with AnnotationAssignable
+    with IdAssignable
+    with ModifierAssignable
+    with TypeRefAssignable
+    with TypeListAssignable
+    with MethodDeclarationAssignable
+    with InitializerAssignable {
 
   def setLocation(location: Location): Unit
   def setExtends(typeRef: TypeRef): Unit
@@ -61,4 +62,3 @@ trait IMutableTypeDeclaration extends ITypeDeclaration
   def appendProperty(prop: PropertyDeclaration): Unit
   def appendField(prop: FieldDeclaration): Unit
 }
-
