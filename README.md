@@ -7,7 +7,7 @@ Refactoring is focusing on two broad areas:
 * Adding support for an apex.db like model inside the pkgforce library that uses the outline parser.
 * Introducing the Apex Jorje parser as an alternative to the ‘apex-parser’ module.
 
-The outline parser has been directly embedded into pkgforce for this work; we expect to open source this as a separate module later. The Apex Jorje jar is being pulled in via a maven artefact. 
+We have also pulled in the outline parser for this work; we expect to open source this as a separate module later. The Apex Jorje jar is being pulled in via a maven artefact. 
 
 ### apex.db alternative
 
