@@ -9,10 +9,18 @@ import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents.ClassDocument
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.names.TypeName
-import com.nawforce.pkgforce.types.ModuleClassFactory
 import com.nawforce.runtime.parsers.{Source, SourceData}
-import com.nawforce.runtime.platform.OutlineParserModifierOps.{classModifiers, enumModifiers, interfaceModifiers}
-import com.nawforce.runtime.workspace.{ClassTypeDeclaration, EnumTypeDeclaration, InterfaceTypeDeclaration, ModuleClassFactory}
+import com.nawforce.runtime.platform.OutlineParserModifierOps.{
+  classModifiers,
+  enumModifiers,
+  interfaceModifiers
+}
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  EnumTypeDeclaration,
+  InterfaceTypeDeclaration,
+  ModuleClassFactory
+}
 
 object OutlineParserFullDeclaration {
 
@@ -36,18 +44,18 @@ object OutlineParserFullDeclaration {
           case itd: InterfaceTypeDeclaration =>
             toInterfaceDeclaration(itd, cls, srcData, module, None)
           case etd: EnumTypeDeclaration => toEnumDeclaration(etd, cls, srcData, module, None)
-          case _                          => None
+          case _                        => None
         }
       }
     rv
   }
 
   private def toClassDeclaration(
-                                  ctd: ClassTypeDeclaration,
-                                  cls: ClassDocument,
-                                  srcData: SourceData,
-                                  module: OPM.Module,
-                                  outerTypeName: Option[TypeName]
+    ctd: ClassTypeDeclaration,
+    cls: ClassDocument,
+    srcData: SourceData,
+    module: OPM.Module,
+    outerTypeName: Option[TypeName]
   ): Option[ClassDeclaration] = {
 
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
@@ -71,11 +79,11 @@ object OutlineParserFullDeclaration {
   }
 
   private def toInterfaceDeclaration(
-                                      itd: InterfaceTypeDeclaration,
-                                      cls: ClassDocument,
-                                      srcData: SourceData,
-                                      module: OPM.Module,
-                                      outerTypeName: Option[TypeName]
+    itd: InterfaceTypeDeclaration,
+    cls: ClassDocument,
+    srcData: SourceData,
+    module: OPM.Module,
+    outerTypeName: Option[TypeName]
   ): Option[InterfaceDeclaration] = {
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
@@ -98,11 +106,11 @@ object OutlineParserFullDeclaration {
   }
 
   private def toEnumDeclaration(
-                                 etd: EnumTypeDeclaration,
-                                 cls: ClassDocument,
-                                 srcData: SourceData,
-                                 module: OPM.Module,
-                                 outerTypeName: Option[TypeName]
+    etd: EnumTypeDeclaration,
+    cls: ClassDocument,
+    srcData: SourceData,
+    module: OPM.Module,
+    outerTypeName: Option[TypeName]
   ): Option[EnumDeclaration] = {
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)

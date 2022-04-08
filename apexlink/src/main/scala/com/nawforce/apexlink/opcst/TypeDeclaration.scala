@@ -1,7 +1,36 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser.{UnresolvedTypeRef, ConstructorDeclaration => OPConstructorDeclaration, FieldDeclaration => OPFieldDeclaration, FormalParameter => OPFormalParameter, Id => OPId, Initializer => OPInitializer, Location => OPLocation, MethodDeclaration => OPMethodDeclaration, PropertyBlock => OPPropertyBlock, PropertyDeclaration => OPPropertyDeclaration}
-import com.nawforce.apexlink.cst.{ApexConstructorDeclaration, ApexFieldDeclaration, ApexInitializerBlock, ApexMethodDeclaration, ApexPropertyDeclaration, CST, ClassBodyDeclaration, ClassDeclaration, EnumDeclaration, Expression, FormalParameter, Id, InterfaceDeclaration, LazyBlock, PropertyBlock, QualifiedName, VariableDeclarator}
+import com.financialforce.oparser.{
+  UnresolvedTypeRef,
+  ConstructorDeclaration => OPConstructorDeclaration,
+  FieldDeclaration => OPFieldDeclaration,
+  FormalParameter => OPFormalParameter,
+  Id => OPId,
+  Initializer => OPInitializer,
+  Location => OPLocation,
+  MethodDeclaration => OPMethodDeclaration,
+  PropertyBlock => OPPropertyBlock,
+  PropertyDeclaration => OPPropertyDeclaration
+}
+import com.nawforce.apexlink.cst.{
+  ApexConstructorDeclaration,
+  ApexFieldDeclaration,
+  ApexInitializerBlock,
+  ApexMethodDeclaration,
+  ApexPropertyDeclaration,
+  CST,
+  ClassBodyDeclaration,
+  ClassDeclaration,
+  EnumDeclaration,
+  Expression,
+  FormalParameter,
+  Id,
+  InterfaceDeclaration,
+  LazyBlock,
+  PropertyBlock,
+  QualifiedName,
+  VariableDeclarator
+}
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
@@ -11,11 +40,25 @@ import com.nawforce.apexparser.ApexParser.BlockContext
 import com.nawforce.pkgforce.modifiers.{MethodOwnerNature, ModifierResults}
 import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.pkgforce.types.EnumTypeDeclaration
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
 import com.nawforce.runtime.platform.OutlineParserLocationOps.{extendLocation, stampLocation}
-import com.nawforce.runtime.platform.OutlineParserModifierOps.{classMethodModifiers, classModifiers, constructorModifiers, enumConstantModifiers, enumModifiers, fieldModifiers, initializerBlockModifiers, interfaceMethodModifiers, interfaceModifiers, parameterModifiers}
-import com.nawforce.runtime.workspace.{ClassTypeDeclaration, EnumTypeDeclaration, InterfaceTypeDeclaration}
+import com.nawforce.runtime.platform.OutlineParserModifierOps.{
+  classMethodModifiers,
+  classModifiers,
+  constructorModifiers,
+  enumConstantModifiers,
+  enumModifiers,
+  fieldModifiers,
+  initializerBlockModifiers,
+  interfaceMethodModifiers,
+  interfaceModifiers,
+  parameterModifiers
+}
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  EnumTypeDeclaration,
+  InterfaceTypeDeclaration
+}
 
 import java.lang.ref.WeakReference
 import scala.collection.immutable.ArraySeq
@@ -43,13 +86,13 @@ private[opcst] object OutlineParserId {
 private[opcst] object OutlineParserClassDeclaration {
 
   def construct(
-                 path: PathLike,
-                 ctd: ClassTypeDeclaration,
-                 source: Source,
-                 thisType: ThisType,
-                 outerTypeName: Option[TypeName],
-                 modifierResults: ModifierResults,
-                 endLineOffset: Option[Int] = None
+    path: PathLike,
+    ctd: ClassTypeDeclaration,
+    source: Source,
+    thisType: ThisType,
+    outerTypeName: Option[TypeName],
+    modifierResults: ModifierResults,
+    endLineOffset: Option[Int] = None
   ): ClassDeclaration = {
 
     val id = OutlineParserId.construct(ctd.id, source.path)
@@ -148,10 +191,10 @@ private[opcst] object OutlineParserClassDeclaration {
   }
 
   private def constructInner(
-                              path: PathLike,
-                              ic: ClassTypeDeclaration,
-                              source: Source,
-                              outerType: ThisType
+    path: PathLike,
+    ic: ClassTypeDeclaration,
+    source: Source,
+    outerType: ThisType
   ): Option[ClassDeclaration] = {
 
     val modifierResults =
@@ -173,10 +216,10 @@ private[opcst] object OutlineParserClassDeclaration {
 private[opcst] object OutlineParserInterfaceDeclaration {
 
   def constructInner(
-                      path: PathLike,
-                      ii: InterfaceTypeDeclaration,
-                      source: Source,
-                      outerType: ThisType
+    path: PathLike,
+    ii: InterfaceTypeDeclaration,
+    source: Source,
+    outerType: ThisType
   ): Option[InterfaceDeclaration] = {
 
     val thisType = outerType.asInner(ii.id.id.contents)
@@ -188,13 +231,13 @@ private[opcst] object OutlineParserInterfaceDeclaration {
   }
 
   def construct(
-                 path: PathLike,
-                 itd: InterfaceTypeDeclaration,
-                 source: Source,
-                 thisType: ThisType,
-                 outerTypeName: Option[TypeName],
-                 modifierResults: ModifierResults,
-                 endLineOffset: Option[Int] = None
+    path: PathLike,
+    itd: InterfaceTypeDeclaration,
+    source: Source,
+    thisType: ThisType,
+    outerTypeName: Option[TypeName],
+    modifierResults: ModifierResults,
+    endLineOffset: Option[Int] = None
   ): InterfaceDeclaration = {
 
     val implementsType =
@@ -244,10 +287,10 @@ private[opcst] object OutlineParserInterfaceDeclaration {
 private[opcst] object OutlineParserEnumDeclaration {
 
   def constructInner(
-                      path: PathLike,
-                      ie: EnumTypeDeclaration,
-                      source: Source,
-                      outerType: ThisType
+    path: PathLike,
+    ie: EnumTypeDeclaration,
+    source: Source,
+    outerType: ThisType
   ): Option[EnumDeclaration] = {
     val modifierResults =
       enumModifiers(path, ie.id, ie.annotations, ie.modifiers, outer = false)
@@ -257,12 +300,12 @@ private[opcst] object OutlineParserEnumDeclaration {
   }
 
   def construct(
-                 etd: EnumTypeDeclaration,
-                 source: Source,
-                 thisType: ThisType,
-                 outerTypeName: Option[TypeName],
-                 modifierResults: ModifierResults,
-                 endLineOffset: Option[Int] = None
+    etd: EnumTypeDeclaration,
+    source: Source,
+    thisType: ThisType,
+    outerTypeName: Option[TypeName],
+    modifierResults: ModifierResults,
+    endLineOffset: Option[Int] = None
   ): EnumDeclaration = {
 
     val id = OutlineParserId.construct(etd.id, source.path)
