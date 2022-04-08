@@ -25,8 +25,7 @@ import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
   emptyProperties,
   emptyTypeDeclarations,
   getTypeName,
-  platformPackage,
-  preResolveArguments
+  platformPackage
 }
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
@@ -213,20 +212,18 @@ class PlatformTypeDeclaration(
   }
 
   private def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
-    val typeInfo = getTypeName(parameter.getType)
-    val p        = new FormalParameter
-    typeInfo.asOptionalUnresolved.foreach(p.add)
+    val p = new FormalParameter
+    p.typeRef = getPlatformTypeDeclFromType(parameter.getType)
     p.add(Id(IdToken(parameter.getName, Location.default)))
     p
   }
 
   private def getPlatformTypeDeclFromType(
     from: java.lang.reflect.Type
-  ): Option[PlatformTypeDeclaration] = {
+  ): Option[IModuleTypeDeclaration] = {
     val typeRefNameWithGenerics = from.getTypeName.replace(s"$platformPackage.", "")
-    val unresolvedTypeRef       = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
-    preResolveArguments(unresolvedTypeRef, module)
-    PlatformTypeDeclaration.get(module, unresolvedTypeRef.get)
+    //Callback to module to so we can get the type from cache if it exits
+    module.findExactTypeId(typeRefNameWithGenerics)
   }
 
 }
@@ -432,21 +429,6 @@ object PlatformTypeDeclaration {
       name
   }
 
-  private def preResolveArguments(un: Option[UnresolvedTypeRef], module: IPM.Module): Unit = {
-    if (un.nonEmpty) {
-      un.get.typeNameSegments
-        .filter(tns => tns.typeArguments.nonEmpty)
-        .foreach(tns => {
-          val args = tns.getArguments
-          val newArgs = args.flatMap {
-            case unref: UnresolvedTypeRef => PlatformTypeDeclaration.get(module, unref)
-            case other                    => Some(other)
-          }
-          if (args.nonEmpty && args.length == newArgs.length)
-            tns.replaceArguments(newArgs)
-        })
-    }
-  }
 }
 
 case class TypeInfo(namespace: String, args: Array[String], typeName: TypeNameSegment) {
