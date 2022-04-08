@@ -188,7 +188,7 @@ class PlatformTypeDeclaration(
   }
 
   private def toMethodDeclaration(method: java.lang.reflect.Method): MethodDeclaration = {
-    new MethodDeclaration(
+    MethodDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(method.getModifiers),
       getPlatformTypeDeclFromType(method.getGenericReturnType),
@@ -198,10 +198,10 @@ class PlatformTypeDeclaration(
   }
 
   private def toFieldDeclaration(field: java.lang.reflect.Field) = {
-    new FieldDeclaration(
+    FieldDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(field.getModifiers),
-      getPlatformTypeDeclFromType(field.getGenericType),
+      getPlatformTypeDeclFromType(field.getGenericType).get,
       Id(IdToken(decodeName(field.getName), Location.default))
     )
   }
@@ -220,11 +220,13 @@ class PlatformTypeDeclaration(
     p
   }
 
-  private def getPlatformTypeDeclFromType(from: java.lang.reflect.Type): PlatformTypeDeclaration = {
+  private def getPlatformTypeDeclFromType(
+    from: java.lang.reflect.Type
+  ): Option[PlatformTypeDeclaration] = {
     val typeRefNameWithGenerics = from.getTypeName.replace(s"$platformPackage.", "")
     val unresolvedTypeRef       = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
     preResolveArguments(unresolvedTypeRef, module)
-    PlatformTypeDeclaration.get(module, unresolvedTypeRef.get).get
+    PlatformTypeDeclaration.get(module, unresolvedTypeRef.get)
   }
 
 }
@@ -449,6 +451,6 @@ object PlatformTypeDeclaration {
 
 case class TypeInfo(namespace: String, args: Array[String], typeName: TypeNameSegment) {
   def asOptionalUnresolved: Option[UnresolvedTypeRef] = {
-    UnresolvedTypeRef(s"${namespace}.${typeName.toString}").toOption
+    UnresolvedTypeRef(s"$namespace.${typeName.toString}").toOption
   }
 }

@@ -260,10 +260,13 @@ object IPM extends TriHierarchy {
 
       def resolveSignature(body: Signature): Unit = {
         body.typeRef = resolve(body.typeRef).getOrElse(body.typeRef)
-        body match {
-          case sfpl: SignatureWithParameterList => resolveParameterList(sfpl.formalParameterList)
-          case _                                =>
-        }
+      }
+
+      def resolveMethods(methodDeclaration: MethodDeclaration): Unit = {
+        if (methodDeclaration.typeRef.nonEmpty)
+          methodDeclaration.typeRef =
+            resolve(methodDeclaration.typeRef.get).orElse(methodDeclaration.typeRef)
+        resolveParameterList(methodDeclaration.formalParameterList)
       }
 
       def resolveParameterList(fpl: FormalParameterList): Unit = {
@@ -282,7 +285,7 @@ object IPM extends TriHierarchy {
       decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
       decl.properties.foreach(resolveSignature)
       decl.fields.foreach(resolveSignature)
-      decl.methods.foreach(resolveSignature)
+      decl.methods.foreach(resolveMethods)
     }
 
     private def insertClass(name: String, decl: IMutableModuleTypeDeclaration): Unit = {

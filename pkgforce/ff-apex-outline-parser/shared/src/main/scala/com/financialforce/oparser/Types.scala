@@ -88,10 +88,6 @@ trait Signature {
   val modifiers: ArraySeq[Modifier]
 }
 
-trait SignatureWithParameterList extends Signature {
-  val formalParameterList: FormalParameterList
-}
-
 class MemberDeclaration extends ModifierAssignable with TypeRefAssignable {
 
   val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
@@ -258,13 +254,12 @@ object ConstructorDeclaration {
 }
 
 case class MethodDeclaration(
-                              annotations: ArraySeq[Annotation],
-                              modifiers: ArraySeq[Modifier],
-                              var typeRef: TypeRef,
-                              id: Id,
-                              formalParameterList: FormalParameterList
-                            ) extends BodyDeclaration
-  with SignatureWithParameterList {
+  annotations: ArraySeq[Annotation],
+  modifiers: ArraySeq[Modifier],
+  var typeRef: Option[TypeRef],
+  id: Id,
+  formalParameterList: FormalParameterList
+) extends BodyDeclaration {
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
@@ -272,10 +267,11 @@ case class MethodDeclaration(
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[MethodDeclaration]
     other.annotations == annotations &&
-      other.modifiers == modifiers &&
-      other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
-      other.id == id &&
-      other.formalParameterList == formalParameterList
+    other.modifiers == modifiers &&
+    other.typeRef.nonEmpty && typeRef.nonEmpty &&
+    other.typeRef.get.getFullName.equalsIgnoreCase(typeRef.get.getFullName) &&
+    other.id == id &&
+    other.formalParameterList == formalParameterList
   }
 
   override def toString: String = {
@@ -287,6 +283,26 @@ case class MethodDeclaration(
 object MethodDeclaration {
   final val emptyArrayBuffer: mutable.ArrayBuffer[MethodDeclaration] =
     mutable.ArrayBuffer[MethodDeclaration]()
+
+  def apply(
+    annotations: ArraySeq[Annotation],
+    modifiers: ArraySeq[Modifier],
+    typeRef: Option[TypeRef],
+    id: Id,
+    formalParameterList: FormalParameterList
+  ): MethodDeclaration = {
+    new MethodDeclaration(annotations, modifiers, typeRef, id, formalParameterList)
+  }
+
+  def apply(
+    annotations: ArraySeq[Annotation],
+    modifiers: ArraySeq[Modifier],
+    typeRef: TypeRef,
+    id: Id,
+    formalParameterList: FormalParameterList
+  ): MethodDeclaration = {
+    new MethodDeclaration(annotations, modifiers, Some(typeRef), id, formalParameterList)
+  }
 }
 
 class PropertyDeclaration(

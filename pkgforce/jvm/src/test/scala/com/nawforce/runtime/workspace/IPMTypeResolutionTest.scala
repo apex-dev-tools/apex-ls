@@ -132,8 +132,8 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val dummy = getType("Dummy", index)
 
       val dummyMethod = dummy.get.methods.head
-      assert(dummyMethod.typeRef.isInstanceOf[PlatformTypeDeclaration])
-      assert(dummyMethod.typeRef.getFullName == "Internal.Object$")
+      assert(dummyMethod.typeRef.get.isInstanceOf[PlatformTypeDeclaration])
+      assert(dummyMethod.typeRef.get.getFullName == "Internal.Object$")
       assert(dummyMethod.typeRef.toString == "Object")
     }
   }
