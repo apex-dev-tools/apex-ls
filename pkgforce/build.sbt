@@ -33,7 +33,6 @@ ThisBuild / publishTo := {
   if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
   else Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
-ThisBuild / resolvers += Resolver.mavenLocal
 
 lazy val buildNPM = Def.task {
 
@@ -86,7 +85,7 @@ lazy val root = project.in(file(".")).
 lazy val pkgforce = crossProject(JSPlatform, JVMPlatform).in(file(".")).
   settings(
     scalacOptions += "-deprecation",
-    libraryDependencies += "com.github.financialforcedev" % "ff-apex-outline-parser" % "1.0.0-SNAPSHOT",
+    libraryDependencies += "com.github.financialforcedev" %%% "ff-apex-outline-parser" % "1.0.0-SNAPSHOT",
     libraryDependencies += "com.lihaoyi" %%% "upickle" % "1.2.0",
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.0" % Test,
   ).
@@ -96,6 +95,8 @@ lazy val pkgforce = crossProject(JSPlatform, JVMPlatform).in(file(".")).
     libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.0.0",
     libraryDependencies += "com.github.nawforce" % "apex-parser" % "2.12.1",
     libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.8-1",
+    libraryDependencies += "com.github.nawforce" % "runforce" % "53.1.2",
+    libraryDependencies += "com.github.nawforce" % "uber-apex-jorje" % "1.0.0",
     libraryDependencies += "com.google.jimfs" % "jimfs" % "1.1" % Test
   ).
   jsSettings(

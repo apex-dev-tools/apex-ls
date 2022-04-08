@@ -1,11 +1,5 @@
 package com.nawforce.apexlink.opcst
 
-import com.nawforce.runtime.workspace.{
-  ModuleClassFactory,
-  ClassTypeDeclaration => OPClassTypeDeclaration,
-  EnumTypeDeclaration => OPEnumTypeDeclaration,
-  InterfaceTypeDeclaration => OPInterfaceTypeDeclaration
-}
 import com.financialforce.oparser.OutlineParser
 import com.nawforce.apexlink.cst.{ClassDeclaration, EnumDeclaration, InterfaceDeclaration}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
@@ -15,12 +9,10 @@ import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents.ClassDocument
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.names.TypeName
+import com.nawforce.pkgforce.types.ModuleClassFactory
 import com.nawforce.runtime.parsers.{Source, SourceData}
-import com.nawforce.runtime.platform.OutlineParserModifierOps.{
-  classModifiers,
-  enumModifiers,
-  interfaceModifiers
-}
+import com.nawforce.runtime.platform.OutlineParserModifierOps.{classModifiers, enumModifiers, interfaceModifiers}
+import com.nawforce.runtime.workspace.{ClassTypeDeclaration, EnumTypeDeclaration, InterfaceTypeDeclaration, ModuleClassFactory}
 
 object OutlineParserFullDeclaration {
 
@@ -40,10 +32,10 @@ object OutlineParserFullDeclaration {
         None
       } else {
         td.get match {
-          case ctd: OPClassTypeDeclaration => toClassDeclaration(ctd, cls, srcData, module, None)
-          case itd: OPInterfaceTypeDeclaration =>
+          case ctd: ClassTypeDeclaration => toClassDeclaration(ctd, cls, srcData, module, None)
+          case itd: InterfaceTypeDeclaration =>
             toInterfaceDeclaration(itd, cls, srcData, module, None)
-          case etd: OPEnumTypeDeclaration => toEnumDeclaration(etd, cls, srcData, module, None)
+          case etd: EnumTypeDeclaration => toEnumDeclaration(etd, cls, srcData, module, None)
           case _                          => None
         }
       }
@@ -51,11 +43,11 @@ object OutlineParserFullDeclaration {
   }
 
   private def toClassDeclaration(
-    ctd: OPClassTypeDeclaration,
-    cls: ClassDocument,
-    srcData: SourceData,
-    module: OPM.Module,
-    outerTypeName: Option[TypeName]
+                                  ctd: ClassTypeDeclaration,
+                                  cls: ClassDocument,
+                                  srcData: SourceData,
+                                  module: OPM.Module,
+                                  outerTypeName: Option[TypeName]
   ): Option[ClassDeclaration] = {
 
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
@@ -79,11 +71,11 @@ object OutlineParserFullDeclaration {
   }
 
   private def toInterfaceDeclaration(
-    itd: OPInterfaceTypeDeclaration,
-    cls: ClassDocument,
-    srcData: SourceData,
-    module: OPM.Module,
-    outerTypeName: Option[TypeName]
+                                      itd: InterfaceTypeDeclaration,
+                                      cls: ClassDocument,
+                                      srcData: SourceData,
+                                      module: OPM.Module,
+                                      outerTypeName: Option[TypeName]
   ): Option[InterfaceDeclaration] = {
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
@@ -106,11 +98,11 @@ object OutlineParserFullDeclaration {
   }
 
   private def toEnumDeclaration(
-    etd: OPEnumTypeDeclaration,
-    cls: ClassDocument,
-    srcData: SourceData,
-    module: OPM.Module,
-    outerTypeName: Option[TypeName]
+                                 etd: EnumTypeDeclaration,
+                                 cls: ClassDocument,
+                                 srcData: SourceData,
+                                 module: OPM.Module,
+                                 outerTypeName: Option[TypeName]
   ): Option[EnumDeclaration] = {
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)

@@ -61,7 +61,7 @@
               <goal>run</goal>
             </goals>
             <configuration>
-              <args>parserJS/publishM2 parserJVM/publishM2</args>
+              <args>publishLocal publishM2</args>
             </configuration>
           </execution>
         </executions>

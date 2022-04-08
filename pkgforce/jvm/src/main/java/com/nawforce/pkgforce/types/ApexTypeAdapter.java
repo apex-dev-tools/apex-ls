@@ -6,7 +6,6 @@ package com.nawforce.pkgforce.types;
 import com.financialforce.oparser.TypeRef;
 import com.nawforce.pkgforce.api.*;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
-import com.nawforce.runtime.workspace.IMutableModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
 import scala.collection.mutable.ArrayBuffer;
 
