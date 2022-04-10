@@ -106,6 +106,7 @@ object OPM extends TriHierarchy {
             acc :+ new PackageImpl(
               this,
               pkgLayer.namespace,
+              pkgLayer.isGulped,
               acc,
               workspace,
               ArraySeq.unsafeWrapArray(pkgLayer.layers.toArray),
@@ -121,6 +122,7 @@ object OPM extends TriHierarchy {
               new PackageImpl(
                 this,
                 None,
+                isGulped = false,
                 declared,
                 workspace,
                 ArraySeq.empty,
@@ -382,8 +384,9 @@ object OPM extends TriHierarchy {
   }
 
   class PackageImpl(
-    val org: OrgImpl,
-    val namespace: Option[Name],
+    override val org: OrgImpl,
+    override val namespace: Option[Name],
+    override val isGulped: Boolean,
     override val basePackages: ArraySeq[PackageImpl],
     workspace: Workspace,
     layers: ArraySeq[ModuleLayer],
@@ -505,6 +508,8 @@ object OPM extends TriHierarchy {
       with ModuleCompletions {
 
     def namespaces: Set[Name] = pkg.namespaces
+
+    val isGulped: Boolean = pkg.isGulped
 
     private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
     private val schemaManager   = SchemaSObjectType(this)
