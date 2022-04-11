@@ -65,6 +65,7 @@ object IPM extends TriHierarchy {
           acc :+ new MetadataPackage(
             this,
             pkgLayer.namespace,
+            pkgLayer.isGulped,
             if (acc.isEmpty) ArraySeq(platform.head) else acc,
             workspace,
             ArraySeq.unsafeWrapArray(pkgLayer.layers.toArray),
@@ -82,6 +83,7 @@ object IPM extends TriHierarchy {
             new MetadataPackage(
               this,
               None,
+              isGulped = false,
               declared,
               workspace,
               ArraySeq.empty,
@@ -200,6 +202,7 @@ object IPM extends TriHierarchy {
   class MetadataPackage(
     override val org: Index,
     override val namespace: Option[Name],
+    override val isGulped: Boolean,
     override val basePackages: ArraySeq[Package],
     workspace: Workspace,
     layers: ArraySeq[ModuleLayer],
@@ -416,6 +419,8 @@ object IPM extends TriHierarchy {
   ) extends Package {
 
     override val namespace: Option[Name] = Some(_namespace)
+
+    override val isGulped: Boolean = false
 
     val modules: ArraySeq[Module] = ArraySeq(PlatformModule(_namespace, this))
   }

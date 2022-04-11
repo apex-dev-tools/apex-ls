@@ -66,7 +66,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir = "foo"
       project.get.layers(logger) should matchPattern {
-        case List(NamespaceLayer(None, List(ModuleLayer(projectPath, path, List()))))
+        case List(NamespaceLayer(None, false, List(ModuleLayer(projectPath, path, List()))))
             if projectPath == root && path == dir =>
       }
 
@@ -91,6 +91,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         case List(
               NamespaceLayer(
                 None,
+                false,
                 List(
                   ModuleLayer(projectPath1, path1, List()),
                   ModuleLayer(projectPath2, path2, List())
@@ -121,6 +122,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         case List(
               NamespaceLayer(
                 None,
+                false,
                 List(
                   ModuleLayer(projectPath1, path1, List()),
                   ModuleLayer(projectPath2, path2, List())
@@ -149,8 +151,12 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       val dir2 = "foo"
       project.get.layers(logger) should matchPattern {
         case List(
-              NamespaceLayer(Some(Name("ns1")), List(ModuleLayer(projectPath1, path1, List()))),
-              NamespaceLayer(None, List(ModuleLayer(projectPath2, path2, List())))
+              NamespaceLayer(
+                Some(Name("ns1")),
+                true,
+                List(ModuleLayer(projectPath1, path1, List()))
+              ),
+              NamespaceLayer(None, false, List(ModuleLayer(projectPath2, path2, List())))
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
@@ -175,6 +181,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         case List(
               NamespaceLayer(
                 None,
+                false,
                 List(
                   ModuleLayer(projectPath1, ".apexlink/gulp/unmanaged", List()),
                   ModuleLayer(projectPath2, path2, List())
@@ -201,7 +208,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir = "foo"
       project.get.layers(logger) should matchPattern {
-        case List(NamespaceLayer(None, List(ModuleLayer(projectPath, path, List()))))
+        case List(NamespaceLayer(None, false, List(ModuleLayer(projectPath, path, List()))))
             if projectPath == root && path == dir =>
       }
 
@@ -235,7 +242,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir = "foo"
       project.get.layers(logger) should matchPattern {
-        case List(NamespaceLayer(None, List(ModuleLayer(projectPath, path, List()))))
+        case List(NamespaceLayer(None, false, List(ModuleLayer(projectPath, path, List()))))
             if projectPath == root && path == dir =>
       }
 
@@ -267,6 +274,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         case List(
               NamespaceLayer(
                 None,
+                false,
                 List(
                   ModuleLayer(projectPath1, path1, List()),
                   ModuleLayer(projectPath2, path2, List())
@@ -308,6 +316,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         case List(
               NamespaceLayer(
                 None,
+                false,
                 List(
                   ModuleLayer(projectPath1, path1, List()),
                   ModuleLayer(projectPath2, path2, List(ModuleLayer(projectPath3, path3, List())))
@@ -350,6 +359,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         case List(
               NamespaceLayer(
                 None,
+                false,
                 List(
                   ModuleLayer(projectPath1, path1, List()),
                   ModuleLayer(projectPath2, path2, List(ModuleLayer(projectPath3, path3, List())))
@@ -405,6 +415,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         case List(
               NamespaceLayer(
                 None,
+                false,
                 List(
                   ModuleLayer(projectPath1, path1, List()),
                   ModuleLayer(projectPath2, path2, List(ModuleLayer(projectPath3, path3, List())))
@@ -444,8 +455,8 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       val dir1 = "foo"
       project.get.layers(logger) should matchPattern {
         case List(
-              NamespaceLayer(Some(Name("ext")), List()),
-              NamespaceLayer(None, List(ModuleLayer(projectPath, path1, List())))
+              NamespaceLayer(Some(Name("ext")), false, List()),
+              NamespaceLayer(None, false, List(ModuleLayer(projectPath, path1, List())))
             ) if path1 == dir1 && projectPath == root =>
       }
 
@@ -478,8 +489,8 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       val dir1 = "foo"
       project.get.layers(logger) should matchPattern {
         case List(
-              NamespaceLayer(Some(Name("ext")), List(ModuleLayer(projectPath2, ".", Seq()))),
-              NamespaceLayer(None, List(ModuleLayer(projectPath1, path1, List())))
+              NamespaceLayer(Some(Name("ext")), false, List(ModuleLayer(projectPath2, ".", Seq()))),
+              NamespaceLayer(None, false, List(ModuleLayer(projectPath1, path1, List())))
             ) if path1 == dir1 && projectPath1 == root && projectPath2 == root.join("bar") =>
       }
 
@@ -520,8 +531,12 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       val dir1 = "foo"
       project.get.layers(logger) should matchPattern {
         case List(
-              NamespaceLayer(Some(Name("pkg")), List(ModuleLayer(projectPath2, "bar", Seq()))),
-              NamespaceLayer(None, List(ModuleLayer(projectPath1, path1, List())))
+              NamespaceLayer(
+                Some(Name("pkg")),
+                false,
+                List(ModuleLayer(projectPath2, "bar", Seq()))
+              ),
+              NamespaceLayer(None, false, List(ModuleLayer(projectPath1, path1, List())))
             ) if path1 == dir1 && projectPath1 == root && projectPath2 == root.join("pkg") =>
       }
 
@@ -556,9 +571,17 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       val dir1 = "foo"
       project.get.layers(logger) should matchPattern {
         case List(
-              NamespaceLayer(Some(Name("ext1")), List(ModuleLayer(projectPath2, ".", Seq()))),
-              NamespaceLayer(Some(Name("ext2")), List(ModuleLayer(projectPath3, ".", Seq()))),
-              NamespaceLayer(None, List(ModuleLayer(projectPath1, path1, List())))
+              NamespaceLayer(
+                Some(Name("ext1")),
+                false,
+                List(ModuleLayer(projectPath2, ".", Seq()))
+              ),
+              NamespaceLayer(
+                Some(Name("ext2")),
+                false,
+                List(ModuleLayer(projectPath3, ".", Seq()))
+              ),
+              NamespaceLayer(None, false, List(ModuleLayer(projectPath1, path1, List())))
             )
             if path1 == dir1 && projectPath1 == root &&
               projectPath2 == root.join("bar") && projectPath3 == root.join("baz") =>
