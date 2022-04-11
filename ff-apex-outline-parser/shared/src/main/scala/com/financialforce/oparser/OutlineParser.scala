@@ -7,23 +7,28 @@ import scala.annotation.tailrec
 
 sealed abstract class Nature(val value: String)
 
-case object CLASS_NATURE extends Nature("class")
+case object CLASS_NATURE     extends Nature("class")
 case object INTERFACE_NATURE extends Nature("interface")
-case object ENUM_NATURE extends Nature("enum")
+case object ENUM_NATURE      extends Nature("enum")
 
 trait TypeDeclFactory[TypeDecl <: IMutableTypeDeclaration, Ctx] {
   def create(ctx: Ctx, nature: Nature, path: String, enclosing: Option[TypeDecl]): TypeDecl
 }
 
-final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String, contents: String, factory: TypeDeclFactory[TypeDecl, Ctx], ctx: Ctx) {
+final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
+  path: String,
+  contents: String,
+  factory: TypeDeclFactory[TypeDecl, Ctx],
+  ctx: Ctx
+) {
 
-  private var charOffset = 0
-  private var byteOffset = 0
-  private var currentChar: Char = 0
-  private var line = 0
-  private var lineOffset = 0
-  private val length = contents.length
-  private var finished = false
+  private var charOffset                        = 0
+  private var byteOffset                        = 0
+  private var currentChar: Char                 = 0
+  private var line                              = 0
+  private var lineOffset                        = 0
+  private val length                            = contents.length
+  private var finished                          = false
   private var typeDeclaration: Option[TypeDecl] = None
 
   private val buffer = new Buffer(contents)
@@ -98,11 +103,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String
     initialState: S,
     f: (Char, S) => (Boolean, S, Option[R])
   ): Option[R] = {
-    statefulParseHelper[Char, S, R](
-      initialState,
-      () => currentChar,
-      f
-    )
+    statefulParseHelper[Char, S, R](initialState, () => currentChar, f)
   }
 
   private def tokenParseHelper[R](
@@ -116,11 +117,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String
     initialState: S,
     f: (Option[Token], S) => (Boolean, S, Option[R])
   ): Option[R] = {
-    statefulParseHelper[Option[Token], S, R](
-      initialState,
-      () => consumeToken(),
-      f
-    )
+    statefulParseHelper[Option[Token], S, R](initialState, () => consumeToken(), f)
   }
 
   private def parseTypeDeclaration(): Option[TypeDecl] = {
@@ -165,7 +162,8 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String
               tokens.clear()
               consumeClassBody(classTypeDeclaration)
               classTypeDeclaration.setLocation(
-                Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+                Location.updateEnd(startLocation, line, lineOffset, byteOffset)
+              )
               (false, Some(classTypeDeclaration))
             case _ =>
               tokens.append(t); (true, None)
@@ -394,7 +392,9 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String
               val startLocation = Location.fromStart(tokens(0).get.location)
               tokens.clear()
               consumeInterfaceBody(interfaceTypeDeclaration)
-              interfaceTypeDeclaration.setLocation(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+              interfaceTypeDeclaration.setLocation(
+                Location.updateEnd(startLocation, line, lineOffset, byteOffset)
+              )
               (false, Some(interfaceTypeDeclaration))
             case _ =>
               tokens.append(t); (true, None)
@@ -419,7 +419,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String
             case Tokens.SemicolonStr =>
               val ims = Parse.parseInterfaceMember(interfaceTypeDeclaration, tokens)
               if (ims.nonEmpty) {
-                val sl = tokens(0).get.location
+                val sl       = tokens(0).get.location
                 val location = Location.updateEnd(sl, line, lineOffset, byteOffset)
                 ims.foreach(im => im.location = Some(location))
               }
@@ -450,7 +450,9 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String
               val startLocation = Location.fromStart(tokens(0).get.location)
               tokens.clear()
               consumeEnumBody(enumTypeDeclaration)
-              enumTypeDeclaration.setLocation(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+              enumTypeDeclaration.setLocation(
+                Location.updateEnd(startLocation, line, lineOffset, byteOffset)
+              )
               (false, Some(enumTypeDeclaration))
             case _ =>
               tokens.append(t); (true, None)
@@ -745,8 +747,12 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String
 }
 
 object OutlineParser {
-  def parse[TypeDecl <: IMutableTypeDeclaration, Ctx](path: String, contents: String, factory: TypeDeclFactory[TypeDecl, Ctx], ctx: Ctx)
-  : (Boolean, Option[String], Option[TypeDecl]) = {
+  def parse[TypeDecl <: IMutableTypeDeclaration, Ctx](
+    path: String,
+    contents: String,
+    factory: TypeDeclFactory[TypeDecl, Ctx],
+    ctx: Ctx
+  ): (Boolean, Option[String], Option[TypeDecl]) = {
     new OutlineParser(path, contents, factory, ctx).parse()
   }
 }

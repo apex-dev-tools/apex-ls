@@ -92,7 +92,8 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
     if (relativeTypeName != TypeNames.Void) {
       typeContext.resolve(relativeTypeName) match {
         case Some(Left(error)) =>
-          context.log(error.asIssue(location))
+          if (!context.module.isGulped)
+            context.log(error.asIssue(location))
         case Some(Right(td)) =>
           context.addDependency(td)
           td.typeName.params.foreach(

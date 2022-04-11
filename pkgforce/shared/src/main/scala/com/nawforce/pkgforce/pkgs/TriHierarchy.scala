@@ -4,11 +4,9 @@
 
 package com.nawforce.pkgforce.pkgs
 
-import com.nawforce.pkgforce.documents.DocumentIndex
 import com.nawforce.pkgforce.names.TypeNameFuncs.TypeNameFuncs
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 
 import scala.collection.immutable.ArraySeq
 
@@ -39,6 +37,9 @@ abstract class TriHierarchy {
 
     /** Namespace for the package, None=unmanaged */
     val namespace: Option[Name]
+
+    /** Was this package loaded from gulped metadata */
+    val isGulped: Boolean
 
     /** The packages this package depends on */
     val basePackages: ArraySeq[TPackage]

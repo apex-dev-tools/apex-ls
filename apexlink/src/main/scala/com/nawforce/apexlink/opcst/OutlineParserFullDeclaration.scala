@@ -1,11 +1,5 @@
 package com.nawforce.apexlink.opcst
 
-import com.nawforce.runtime.workspace.{
-  ModuleClassFactory,
-  ClassTypeDeclaration => OPClassTypeDeclaration,
-  EnumTypeDeclaration => OPEnumTypeDeclaration,
-  InterfaceTypeDeclaration => OPInterfaceTypeDeclaration
-}
 import com.financialforce.oparser.OutlineParser
 import com.nawforce.apexlink.cst.{ClassDeclaration, EnumDeclaration, InterfaceDeclaration}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
@@ -20,6 +14,12 @@ import com.nawforce.runtime.platform.OutlineParserModifierOps.{
   classModifiers,
   enumModifiers,
   interfaceModifiers
+}
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  EnumTypeDeclaration,
+  InterfaceTypeDeclaration,
+  ModuleClassFactory
 }
 
 object OutlineParserFullDeclaration {
@@ -40,18 +40,18 @@ object OutlineParserFullDeclaration {
         None
       } else {
         td.get match {
-          case ctd: OPClassTypeDeclaration => toClassDeclaration(ctd, cls, srcData, module, None)
-          case itd: OPInterfaceTypeDeclaration =>
+          case ctd: ClassTypeDeclaration => toClassDeclaration(ctd, cls, srcData, module, None)
+          case itd: InterfaceTypeDeclaration =>
             toInterfaceDeclaration(itd, cls, srcData, module, None)
-          case etd: OPEnumTypeDeclaration => toEnumDeclaration(etd, cls, srcData, module, None)
-          case _                          => None
+          case etd: EnumTypeDeclaration => toEnumDeclaration(etd, cls, srcData, module, None)
+          case _                        => None
         }
       }
     rv
   }
 
   private def toClassDeclaration(
-    ctd: OPClassTypeDeclaration,
+    ctd: ClassTypeDeclaration,
     cls: ClassDocument,
     srcData: SourceData,
     module: OPM.Module,
@@ -79,7 +79,7 @@ object OutlineParserFullDeclaration {
   }
 
   private def toInterfaceDeclaration(
-    itd: OPInterfaceTypeDeclaration,
+    itd: InterfaceTypeDeclaration,
     cls: ClassDocument,
     srcData: SourceData,
     module: OPM.Module,
@@ -106,7 +106,7 @@ object OutlineParserFullDeclaration {
   }
 
   private def toEnumDeclaration(
-    etd: OPEnumTypeDeclaration,
+    etd: EnumTypeDeclaration,
     cls: ClassDocument,
     srcData: SourceData,
     module: OPM.Module,

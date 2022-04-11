@@ -5,15 +5,15 @@ package com.financialforce.oparser
 
 class Buffer(backing: String) {
 
-  private var startLine = 0
+  private var startLine       = 0
   private var startLineOffset = 0
-  private var endLine = 0
-  private var endLineOffset = 0
+  private var endLine         = 0
+  private var endLineOffset   = 0
   private var startCharOffset = 0
-  private var endCharOffset = 0
+  private var endCharOffset   = 0
   private var startByteOffset = 0
-  private var endByteOffset = 0
-  private var capturing = false
+  private var endByteOffset   = 0
+  private var capturing       = false
 
   private val emptyString = ""
 

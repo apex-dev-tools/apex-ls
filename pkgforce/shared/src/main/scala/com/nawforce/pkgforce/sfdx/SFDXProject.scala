@@ -194,7 +194,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
           .getOrElse(None)
         None
       case Right(path) if ns != namespace =>
-        Some(NamespaceLayer(ns, Seq(ModuleLayer(projectPath, path, Seq()))))
+        Some(NamespaceLayer(ns, isGulped = true, Seq(ModuleLayer(projectPath, path, Seq()))))
       case Right(_) => None
     }
   })
@@ -246,7 +246,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
       else
         Seq()
 
-    val localPackage = NamespaceLayer(namespace, gulpLocalModule ++ localModules)
+    val localPackage = NamespaceLayer(namespace, isGulped = false, gulpLocalModule ++ localModules)
 
     if (!validatePackagePathsLocal(localPackage.layers, logger))
       return Seq.empty
@@ -333,11 +333,12 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
         )
         Seq.empty
       case (true, false) =>
-        Seq(NamespaceLayer(dependent.namespace, Nil))
+        Seq(NamespaceLayer(dependent.namespace, isGulped = false, Nil))
       case (true, true) =>
         Seq(
           NamespaceLayer(
             dependent.namespace,
+            isGulped = false,
             Seq(ModuleLayer(projectPath.join(dependent.relativePath.get), ".", Seq.empty))
           )
         )

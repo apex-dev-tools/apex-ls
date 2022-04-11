@@ -1,11 +1,5 @@
 package com.nawforce.apexlink.opcst
 
-import com.nawforce.runtime.workspace.{
-  ClassTypeDeclaration => OPClassTypeDeclaration,
-  EnumTypeDeclaration => OPEnumTypeDeclaration,
-  InterfaceTypeDeclaration => OPInterfaceTypeDeclaration
-}
-
 import com.financialforce.oparser.{
   UnresolvedTypeRef,
   ConstructorDeclaration => OPConstructorDeclaration,
@@ -60,6 +54,11 @@ import com.nawforce.runtime.platform.OutlineParserModifierOps.{
   interfaceModifiers,
   parameterModifiers
 }
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  EnumTypeDeclaration,
+  InterfaceTypeDeclaration
+}
 
 import java.lang.ref.WeakReference
 import scala.collection.immutable.ArraySeq
@@ -88,7 +87,7 @@ private[opcst] object OutlineParserClassDeclaration {
 
   def construct(
     path: PathLike,
-    ctd: OPClassTypeDeclaration,
+    ctd: ClassTypeDeclaration,
     source: Source,
     thisType: ThisType,
     outerTypeName: Option[TypeName],
@@ -154,10 +153,10 @@ private[opcst] object OutlineParserClassDeclaration {
     )
 
     val innerTypes = ctd.innerTypes.flatMap {
-      case ic: OPClassTypeDeclaration => constructInner(path, ic, source, thisType)
-      case ii: OPInterfaceTypeDeclaration =>
+      case ic: ClassTypeDeclaration => constructInner(path, ic, source, thisType)
+      case ii: InterfaceTypeDeclaration =>
         OutlineParserInterfaceDeclaration.constructInner(path, ii, source, thisType)
-      case ie: OPEnumTypeDeclaration =>
+      case ie: EnumTypeDeclaration =>
         OutlineParserEnumDeclaration.constructInner(path, ie, source, thisType)
       case _ => None
     }
@@ -193,7 +192,7 @@ private[opcst] object OutlineParserClassDeclaration {
 
   private def constructInner(
     path: PathLike,
-    ic: OPClassTypeDeclaration,
+    ic: ClassTypeDeclaration,
     source: Source,
     outerType: ThisType
   ): Option[ClassDeclaration] = {
@@ -218,7 +217,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
 
   def constructInner(
     path: PathLike,
-    ii: OPInterfaceTypeDeclaration,
+    ii: InterfaceTypeDeclaration,
     source: Source,
     outerType: ThisType
   ): Option[InterfaceDeclaration] = {
@@ -233,7 +232,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
 
   def construct(
     path: PathLike,
-    itd: OPInterfaceTypeDeclaration,
+    itd: InterfaceTypeDeclaration,
     source: Source,
     thisType: ThisType,
     outerTypeName: Option[TypeName],
@@ -289,7 +288,7 @@ private[opcst] object OutlineParserEnumDeclaration {
 
   def constructInner(
     path: PathLike,
-    ie: OPEnumTypeDeclaration,
+    ie: EnumTypeDeclaration,
     source: Source,
     outerType: ThisType
   ): Option[EnumDeclaration] = {
@@ -301,7 +300,7 @@ private[opcst] object OutlineParserEnumDeclaration {
   }
 
   def construct(
-    etd: OPEnumTypeDeclaration,
+    etd: EnumTypeDeclaration,
     source: Source,
     thisType: ThisType,
     outerTypeName: Option[TypeName],
