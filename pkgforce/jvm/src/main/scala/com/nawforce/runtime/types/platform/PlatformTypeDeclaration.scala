@@ -63,10 +63,8 @@ class PlatformTypeDeclaration(
       None
     }
   }
-  //Used for generics
-  protected def getNameFromGenericType(name: String): String = {
-    name
-  }
+
+  protected def genericToType(name: String): String = name
 
   final val typeInfo: TypeInfo = getTypeName(cls)
 
@@ -136,7 +134,7 @@ class PlatformTypeDeclaration(
 
   override def toString: String = {
     val args =
-      if (typeInfo.args.nonEmpty) typeInfo.args.map(getNameFromGenericType).mkString("<", ",", ">")
+      if (typeInfo.args.nonEmpty) typeInfo.args.map(genericToType).mkString("<", ",", ">")
       else ""
     var rawNames =
       if (enclosing.nonEmpty)
@@ -224,7 +222,7 @@ class PlatformTypeDeclaration(
 
   protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
     val p = new FormalParameter
-    p.typeRef = getPlatformTypeDeclFromType(parameter.getType)
+    p.typeRef = getPlatformTypeDeclFromType(parameter.getParameterizedType)
     p.add(Id(IdToken(parameter.getName, Location.default)))
     p
   }
@@ -239,13 +237,13 @@ class PlatformTypeDeclaration(
   private def getTypeStringFromType(from: java.lang.reflect.Type): String = {
     from match {
       case cls: Class[_]                         => getTypeName(cls).toString
-      case tv: java.lang.reflect.TypeVariable[_] => getNameFromGenericType(tv.getName)
+      case tv: java.lang.reflect.TypeVariable[_] => genericToType(tv.getName)
       case pt: java.lang.reflect.ParameterizedType =>
         val cname = pt.getRawType.getTypeName
         assert(cname.startsWith(platformPackage), s"Reference to non-platform type $cname")
         val names = cname.drop(platformPackage.length + 1)
         val params =
-          pt.getActualTypeArguments.map(getTypeStringFromType).map(getNameFromGenericType)
+          pt.getActualTypeArguments.map(getTypeStringFromType).map(genericToType)
         s"${names}<${params.mkString(",")}>"
     }
   }
@@ -254,7 +252,7 @@ class PlatformTypeDeclaration(
     from: java.lang.reflect.Type
   ): Option[IModuleTypeDeclaration] = {
     val typeRefNameWithGenerics = getTypeStringFromType(from)
-    val unresolvedTypeRef = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
+    val unresolvedTypeRef       = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
     if (unresolvedTypeRef.nonEmpty) {
       preResolveArguments(unresolvedTypeRef, module)
       return PlatformTypeDeclaration.get(module, unresolvedTypeRef.get)
@@ -269,8 +267,10 @@ class PlatformTypeDeclaration(
         .foreach(tns => {
           val args = tns.getArguments
           val newArgs = args.flatMap {
-            case unref: UnresolvedTypeRef => PlatformTypeDeclaration.get(module, unref)
-            case other                    => Some(other)
+            case unref: UnresolvedTypeRef =>
+              preResolveArguments(Some(unref), module)
+              PlatformTypeDeclaration.get(module, unref)
+            case other => Some(other)
           }
           if (args.nonEmpty && args.length == newArgs.length)
             tns.replaceArguments(newArgs)
@@ -293,7 +293,7 @@ class PlatformTypeDeclaration(
     }
 
     val names  = cname.drop(platformPackage.length + 1).split('.').reverse
-    val params = cls.getTypeParameters.map(_.getName).map(getNameFromGenericType)
+    val params = cls.getTypeParameters.map(_.getName).map(genericToType)
     if (params.nonEmpty) {
       TypeInfo(Some(names(1)), params, TypeNameSegment(names.head, params))
     } else {

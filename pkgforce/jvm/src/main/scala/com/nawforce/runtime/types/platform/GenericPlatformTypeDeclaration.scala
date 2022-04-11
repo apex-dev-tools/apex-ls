@@ -15,12 +15,10 @@
 package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.Name
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
   createTypeName,
-  emptyAnnotations,
   emptyPaths,
-  emptyTypeDeclarations
 }
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
@@ -47,7 +45,7 @@ class GenericPlatformTypeDeclaration(
   // TODO: Set module
   // override def module: Option[IPM.Module] = None
 
-  override protected def getNameFromGenericType(name: String): String = {
+  override protected def genericToType(name: String): String = {
     val decl = paramsMap.get(Name(name))
     if (decl.nonEmpty) decl.get.getFullName else name
   }
