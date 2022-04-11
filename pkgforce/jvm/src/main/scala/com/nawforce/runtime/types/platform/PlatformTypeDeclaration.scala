@@ -222,8 +222,24 @@ class PlatformTypeDeclaration(
     from: java.lang.reflect.Type
   ): Option[IModuleTypeDeclaration] = {
     val typeRefNameWithGenerics = from.getTypeName.replace(s"$platformPackage.", "")
-    //Callback to module to so we can get the type from cache if it exits
-    module.findExactTypeId(typeRefNameWithGenerics)
+    val unresolvedTypeRef       = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
+    preResolveArguments(unresolvedTypeRef, module)
+    PlatformTypeDeclaration.get(module, unresolvedTypeRef.get)
+  }
+  private def preResolveArguments(un: Option[UnresolvedTypeRef], module: IPM.Module): Unit = {
+    if (un.nonEmpty) {
+      un.get.typeNameSegments
+        .filter(tns => tns.typeArguments.nonEmpty)
+        .foreach(tns => {
+          val args = tns.getArguments
+          val newArgs = args.flatMap {
+            case unref: UnresolvedTypeRef => PlatformTypeDeclaration.get(module, unref)
+            case other                    => Some(other)
+          }
+          if (args.nonEmpty && args.length == newArgs.length)
+            tns.replaceArguments(newArgs)
+        })
+    }
   }
 
 }
@@ -239,6 +255,9 @@ object PlatformTypeDeclaration {
 
   /* Java package prefix for platform types */
   private val platformPackage = "com.nawforce.runforce"
+
+  /* Cache of loaded platform declarations */
+  private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
 
   /* Get a Path that leads to platform classes */
   lazy val platformPackagePath: java.nio.file.Path = {
@@ -334,16 +353,20 @@ object PlatformTypeDeclaration {
         td.innerTypes.find(_.id.toString.equalsIgnoreCase(tailName))
       })
     } else if (dotName.names.length == 2) {
-      val matched = classNameMap.get(dotName)
-      assert(matched.size < 2, s"Found multiple platform type matches for $dotName")
-      matched.map(
-        name =>
-          new PlatformTypeDeclaration(
-            module,
-            classOf[PlatformTypeDeclaration].getClassLoader
-              .loadClass(platformPackage + "." + name),
-            None
+      declarationCache.getOrElseUpdate(
+        dotName, {
+          val matched = classNameMap.get(dotName)
+          assert(matched.size < 2, s"Found multiple platform type matches for $dotName")
+          matched.map(
+            name =>
+              new PlatformTypeDeclaration(
+                module,
+                classOf[PlatformTypeDeclaration].getClassLoader
+                  .loadClass(platformPackage + "." + name),
+                None
+              )
           )
+        }
       )
     } else {
       None
