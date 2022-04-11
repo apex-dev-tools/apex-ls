@@ -18,11 +18,13 @@ import com.financialforce.oparser._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
   createTypeName,
+  emptyAnnotations,
   emptyPaths,
   emptyTypeDeclarations
 }
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
+import java.lang.reflect.Method
 import scala.collection.immutable.ArraySeq
 
 /* Wrapper for the few generic types we support, this specialises the methods of the type so that
@@ -35,7 +37,7 @@ class GenericPlatformTypeDeclaration(
 ) extends PlatformTypeDeclaration(_module, genericDecl.native, genericDecl.enclosing) {
   assert(genericDecl.typeInfo.args.length == typeArgs.length)
 
-  final private val paramsMap: Map[Name, IModuleTypeDeclaration] = {
+  final lazy private val paramsMap: Map[Name, IModuleTypeDeclaration] = {
     genericDecl.typeInfo.args
       .zip(typeArgs)
       .map(p => (Name(p._1), p._2))
@@ -45,51 +47,19 @@ class GenericPlatformTypeDeclaration(
   // TODO: Set module
   // override def module: Option[IPM.Module] = None
 
+  override protected def getNameFromGenericType(name: String): String = {
+    val decl = paramsMap.get(Name(name))
+    if (decl.nonEmpty) decl.get.getFullName else name
+  }
+
   override val paths: Array[String] = emptyPaths
 
   override val location: Location = Location.default
 
   override val id: Id = typeInfo.typeName.id
 
-  override val typeNameSegment: TypeNameSegment = createTypeName(genericDecl.id.toString, typeArgs)
-
-  override def extendsTypeRef: TypeRef = null // TODO
-
-  override def implementsTypeList: TypeList = null // TODO
-
-  override def modifiers: ArraySeq[Modifier] = ArraySeq.empty // TODO
-
-  override def annotations: ArraySeq[Annotation] = ArraySeq.empty // TODO
-
-  override def initializers: ArraySeq[Initializer] = ArraySeq.empty // TODO
-
-  override def innerTypes: ArraySeq[PlatformTypeDeclaration] = emptyTypeDeclarations
-
-  override def constructors: ArraySeq[ConstructorDeclaration] = ArraySeq.empty // TODO
-
-  override def methods: ArraySeq[MethodDeclaration] = ArraySeq.empty // TODO
-
-  override def properties: ArraySeq[PropertyDeclaration] = ArraySeq.empty // TODO
-
-  override def fields: ArraySeq[FieldDeclaration] = ArraySeq.empty // TODO
-
-  override def getFullName: String = {
-    val args = s"${typeArgs.map(_.getFullName).mkString("<", ",", ">")}"
-    if (enclosing.nonEmpty)
-      return s"${typeInfo.namespace}.${enclosing.get.getFullName}.${typeInfo.typeName.id}$args"
-    s"${typeInfo.namespace}.${typeInfo.typeName.id}$args"
-  }
-
-  override def toString: String = {
-    val args = s"${typeArgs.map(_.getFullName).mkString("<", ",", ">")}"
-    val rawNames =
-      if (enclosing.nonEmpty)
-        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName, typeInfo.namespace)
-      else Seq(typeInfo.typeName.id.toString, typeInfo.namespace)
-    val name = TypeName(rawNames.map(Name(_)))
-
-    s"$name$args"
-  }
+  override val typeNameSegment: TypeNameSegment =
+    createTypeName(genericDecl.id.toString, Some(typeArgs))
 }
 
 object GenericPlatformTypeDeclaration {

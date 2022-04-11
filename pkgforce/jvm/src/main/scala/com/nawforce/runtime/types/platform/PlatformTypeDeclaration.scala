@@ -18,13 +18,13 @@ import com.financialforce.oparser._
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
-  decodeName,
+  createTypeName,
   emptyAnnotations,
+  emptyArgs,
   emptyInitializers,
   emptyPaths,
   emptyProperties,
   emptyTypeDeclarations,
-  getTypeName,
   platformPackage
 }
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
@@ -62,6 +62,10 @@ class PlatformTypeDeclaration(
     } else {
       None
     }
+  }
+  //Used for generics
+  protected def getNameFromGenericType(name: String): String = {
+    name
   }
 
   final val typeInfo: TypeInfo = getTypeName(cls)
@@ -124,19 +128,24 @@ class PlatformTypeDeclaration(
   override def fields: ArraySeq[FieldDeclaration] = getFields
 
   override def getFullName: String = {
+    val ns = if (typeInfo.namespace.nonEmpty) s"${typeInfo.namespace.get}." else ""
     if (enclosing.nonEmpty)
-      return s"${typeInfo.namespace}.${enclosing.get.getFullName}.${typeInfo.typeName.toString}"
-    s"${typeInfo.namespace}.${typeInfo.typeName.toString}"
+      return s"$ns${enclosing.get.getFullName}.${typeInfo.typeName.toString}"
+    s"$ns${typeInfo.typeName.toString}"
   }
 
   override def toString: String = {
-    val args = if (typeInfo.args.nonEmpty) typeInfo.args.mkString("<", ",", ">") else ""
-    val rawNames =
+    val args =
+      if (typeInfo.args.nonEmpty) typeInfo.args.map(getNameFromGenericType).mkString("<", ",", ">")
+      else ""
+    var rawNames =
       if (enclosing.nonEmpty)
-        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName, typeInfo.namespace)
-      else Seq(typeInfo.typeName.id.toString, typeInfo.namespace)
+        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName)
+      else Seq(typeInfo.typeName.id.toString)
+    if (typeInfo.namespace.nonEmpty) {
+      rawNames = rawNames :+ typeInfo.namespace.get
+    }
     val name = TypeName(rawNames.map(Name(_)))
-
     s"$name$args"
   }
 
@@ -186,7 +195,7 @@ class PlatformTypeDeclaration(
     )
   }
 
-  private def toMethodDeclaration(method: java.lang.reflect.Method): MethodDeclaration = {
+  protected def toMethodDeclaration(method: java.lang.reflect.Method): MethodDeclaration = {
     MethodDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(method.getModifiers),
@@ -196,7 +205,7 @@ class PlatformTypeDeclaration(
     )
   }
 
-  private def toFieldDeclaration(field: java.lang.reflect.Field) = {
+  protected def toFieldDeclaration(field: java.lang.reflect.Field): FieldDeclaration = {
     FieldDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(field.getModifiers),
@@ -205,27 +214,54 @@ class PlatformTypeDeclaration(
     )
   }
 
-  private def toFormalParameterList(params: Array[java.lang.reflect.Parameter]) = {
+  protected def toFormalParameterList(
+    params: Array[java.lang.reflect.Parameter]
+  ): FormalParameterList = {
     val fpl = new FormalParameterList()
     params.map(toFormalParameter).foreach(fpl.add)
     fpl
   }
 
-  private def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
+  protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
     val p = new FormalParameter
     p.typeRef = getPlatformTypeDeclFromType(parameter.getType)
     p.add(Id(IdToken(parameter.getName, Location.default)))
     p
   }
 
-  private def getPlatformTypeDeclFromType(
+  protected def decodeName(name: String): String = {
+    if (name.endsWith("$"))
+      name.substring(0, name.length - 1)
+    else
+      name
+  }
+
+  private def getTypeStringFromType(from: java.lang.reflect.Type): String = {
+    from match {
+      case cls: Class[_]                         => getTypeName(cls).toString
+      case tv: java.lang.reflect.TypeVariable[_] => getNameFromGenericType(tv.getName)
+      case pt: java.lang.reflect.ParameterizedType =>
+        val cname = pt.getRawType.getTypeName
+        assert(cname.startsWith(platformPackage), s"Reference to non-platform type $cname")
+        val names = cname.drop(platformPackage.length + 1)
+        val params =
+          pt.getActualTypeArguments.map(getTypeStringFromType).map(getNameFromGenericType)
+        s"${names}<${params.mkString(",")}>"
+    }
+  }
+
+  protected def getPlatformTypeDeclFromType(
     from: java.lang.reflect.Type
   ): Option[IModuleTypeDeclaration] = {
-    val typeRefNameWithGenerics = from.getTypeName.replace(s"$platformPackage.", "")
-    val unresolvedTypeRef       = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
-    preResolveArguments(unresolvedTypeRef, module)
-    PlatformTypeDeclaration.get(module, unresolvedTypeRef.get)
+    val typeRefNameWithGenerics = getTypeStringFromType(from)
+    val unresolvedTypeRef = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
+    if (unresolvedTypeRef.nonEmpty) {
+      preResolveArguments(unresolvedTypeRef, module)
+      return PlatformTypeDeclaration.get(module, unresolvedTypeRef.get)
+    }
+    None
   }
+
   private def preResolveArguments(un: Option[UnresolvedTypeRef], module: IPM.Module): Unit = {
     if (un.nonEmpty) {
       un.get.typeNameSegments
@@ -239,6 +275,29 @@ class PlatformTypeDeclaration(
           if (args.nonEmpty && args.length == newArgs.length)
             tns.replaceArguments(newArgs)
         })
+    }
+  }
+
+  def getTypeName(cls: java.lang.Class[_]): TypeInfo = {
+    val cname = cls.getCanonicalName
+    if (cname == "void") {
+      return TypeInfo(None, Array.empty, createTypeName("void", None))
+    }
+    if (cname == "java.lang.Object") {
+      return TypeInfo(
+        Some(TypeName.InternalObject.outer.get.name.value),
+        Array(),
+        createTypeName(Names.Internal.value, None)
+      )
+
+    }
+
+    val names  = cname.drop(platformPackage.length + 1).split('.').reverse
+    val params = cls.getTypeParameters.map(_.getName).map(getNameFromGenericType)
+    if (params.nonEmpty) {
+      TypeInfo(Some(names(1)), params, TypeNameSegment(names.head, params))
+    } else {
+      TypeInfo(Some(names(1)), emptyArgs, TypeNameSegment(names.head))
     }
   }
 
@@ -423,20 +482,13 @@ object PlatformTypeDeclaration {
       })
   }
 
-  def getTypeName(cls: java.lang.Class[_]): TypeInfo = {
-    val cname  = cls.getCanonicalName
-    val names  = cname.drop(platformPackage.length + 1).split('.').reverse
-    val params = cls.getTypeParameters.map(_.getName)
-    if (params.nonEmpty) {
-      TypeInfo(names(1), params, TypeNameSegment(names.head, params))
-    } else {
-      TypeInfo(names(1), emptyArgs, TypeNameSegment(names.head))
-    }
-  }
-
-  def createTypeName(name: String, params: ArraySeq[IModuleTypeDeclaration]): TypeNameSegment = {
+  def createTypeName(
+    name: String,
+    params: Option[ArraySeq[IModuleTypeDeclaration]]
+  ): TypeNameSegment = {
     val typeName = TypeNameSegment(name)
-    typeName.typeArguments = Some(TypeArguments(params))
+    if (params.nonEmpty)
+      typeName.typeArguments = Some(TypeArguments(params.get))
     typeName
   }
 
@@ -445,17 +497,17 @@ object PlatformTypeDeclaration {
     TypeName.ApexPagesPageReference -> TypeName.PageReference
   ) ++ ambiguousAliasMap
 
-  private def decodeName(name: String): String = {
-    if (name.endsWith("$"))
-      name.substring(0, name.length - 1)
-    else
-      name
-  }
-
 }
 
-case class TypeInfo(namespace: String, args: Array[String], typeName: TypeNameSegment) {
+case class TypeInfo(namespace: Option[String], args: Array[String], typeName: TypeNameSegment) {
+
   def asOptionalUnresolved: Option[UnresolvedTypeRef] = {
-    UnresolvedTypeRef(s"$namespace.${typeName.toString}").toOption
+    UnresolvedTypeRef(toString).toOption
+  }
+
+  override def toString: String = {
+    val argStr = if (args.nonEmpty) args.mkString("<", ",", ">") else ""
+    if (namespace.nonEmpty) s"${namespace.get}.${typeName.toString}$argStr"
+    else s"${typeName.toString}$argStr"
   }
 }
