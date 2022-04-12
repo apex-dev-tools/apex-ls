@@ -21,14 +21,12 @@ public class ApexMethodParameterAdapter  implements ApexMethodParameter {
 
     @Override
     public String getModifier() {
-        // TODO: Annotations
-        return fp.modifiers().mkString(" ");
+        return fp.annotationsAndModifiers();
     }
 
     @Override
     public ApexTypeId getArgumentTypeId() {
-        // TODO: Fix namespace handling
-        return new NameApexTypeId(fp.typeRef().get().toString(), "");
+        return NameApexTypeId.apply(fp.typeRef());
     }
 
     @Override

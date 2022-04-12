@@ -4,8 +4,8 @@
 package com.nawforce.pkgforce.types;
 
 import com.financialforce.oparser.TypeRef;
-import com.financialforce.oparser.UnresolvedTypeRef;
 import com.nawforce.pkgforce.api.*;
+import com.nawforce.runtime.types.platform.SObjectTypeDeclaration;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
 import scala.collection.mutable.ArrayBuffer;
@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-// TODO: Annotations & enum constants as fields?
 public class ApexTypeAdapter implements ApexType {
     final private IModuleTypeDeclaration td;
 
@@ -71,19 +70,18 @@ public class ApexTypeAdapter implements ApexType {
     }
 
     @Override
+    public boolean isResolved() {
+        return true;
+    }
+
+    @Override
     public boolean isSObject() {
-        // TODO: This is determined by how the type was loaded, we will want something better
-        return false;
+        return td instanceof SObjectTypeDeclaration;
     }
 
     @Override
     public ApexTypeId getParent() {
-        TypeRef parent = td.extendsTypeRef();
-        if (!(parent instanceof IModuleTypeDeclaration))
-            return null;
-
-        IModuleTypeDeclaration parentTD = (IModuleTypeDeclaration)parent;
-        return new NameApexTypeId(parentTD.getFullName(), parentTD.namespaceAsString());
+        return NameApexTypeId.apply(td.extendsTypeRef());
     }
 
     @Override
@@ -94,15 +92,14 @@ public class ApexTypeAdapter implements ApexType {
         ArrayBuffer<TypeRef> refs = td.implementsTypeList().typeRefs();
         NameApexTypeId[] interfaces = new NameApexTypeId[refs.length()];
         int entry = 0;
-        for (int i = 0; i < td.constructors().length(); i++)
-            // TODO: Fix namespace
-            interfaces[entry++] = new NameApexTypeId(refs.apply(i).toString(), "");
+        for (int i = 0; i < refs.length(); i++)
+            interfaces[entry++] = NameApexTypeId.apply(refs.apply(i));
         return Arrays.asList(interfaces);
     }
 
     @Override
     public String getModifiers() {
-        return td.modifiers().mkString(" ");
+        return td.annotationsAndModifiers();
     }
 
     @Override

@@ -35,14 +35,12 @@ public class ApexMethodAdapter implements ApexMethod {
 
     @Override
     public String getModifiers() {
-        // TODO: Annotations
-        return md.modifiers().mkString(" ");
+        return md.annotationsAndModifiers();
     }
 
     @Override
     public ApexTypeId getReturnType() {
-        // TODO: Type resolving
-        return null;
+        return NameApexTypeId.apply(md.typeRef());
     }
 
     @Override

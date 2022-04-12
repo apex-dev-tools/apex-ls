@@ -28,9 +28,7 @@ class MDIndexPlatformTest extends AnyFunSuite {
 
   test("Platform class is loaded (SFDX)") {
     FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}] }",
-      )
+      Map("sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}] }")
     ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
@@ -40,9 +38,7 @@ class MDIndexPlatformTest extends AnyFunSuite {
 
   test("Unknown platform class is not loaded (SFDX)") {
     FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}] }",
-      )
+      Map("sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}] }")
     ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)

@@ -27,6 +27,8 @@ trait ITypeDeclaration extends TypeRef {
   def properties: ArraySeq[PropertyDeclaration]
   def fields: ArraySeq[FieldDeclaration]
 
+  def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
+
   def typeName: Array[TypeNameSegment] = {
     enclosing match {
       case Some(enc) => Array(enc.typeNameSegment, typeNameSegment)
@@ -36,7 +38,7 @@ trait ITypeDeclaration extends TypeRef {
 
   override def getFullName: String = {
     enclosing match {
-      case Some(enc) => s"${enc.getFullName}.${id.id.contents}"
+      case Some(enc) => s"${enc.id.toString}.${id.toString}"
       case None      => id.id.contents
     }
   }

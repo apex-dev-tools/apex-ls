@@ -14,7 +14,14 @@
 
 package com.nawforce.runtime.types
 
-import com.financialforce.oparser.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, TypeArguments, TypeNameSegment, UnresolvedTypeRef}
+import com.financialforce.oparser.{
+  CLASS_NATURE,
+  ENUM_NATURE,
+  INTERFACE_NATURE,
+  TypeArguments,
+  TypeNameSegment,
+  UnresolvedTypeRef
+}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -29,12 +36,12 @@ class PlatformTypeTest extends AnyFunSuite {
 
   test("Unscoped class not found") {
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("String")), 0)
-    assert(PlatformTypeDeclaration.get(null,typeRef).isEmpty)
+    assert(PlatformTypeDeclaration.get(null, typeRef).isEmpty)
   }
 
   test("Scoped class found") {
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("String")), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null, typeRef)
+    val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.nonEmpty)
 
     val td = tdOpt.get
@@ -48,19 +55,20 @@ class PlatformTypeTest extends AnyFunSuite {
 
   test("Case insensitive class name") {
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("StrIng")), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.nonEmpty)
   }
 
   test("Case insensitive namespace") {
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("SyStem"), TypeNameSegment("StrIng")), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.nonEmpty)
   }
 
   test("Interface found") {
-    val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("Callable")), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val typeRef =
+      UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("Callable")), 0)
+    val tdOpt = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.nonEmpty)
 
     val td = tdOpt.get
@@ -73,8 +81,9 @@ class PlatformTypeTest extends AnyFunSuite {
   }
 
   test("Enum found") {
-    val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("RoundingMode")), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val typeRef =
+      UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("RoundingMode")), 0)
+    val tdOpt = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.nonEmpty)
 
     val td = tdOpt.get
@@ -87,41 +96,57 @@ class PlatformTypeTest extends AnyFunSuite {
   }
 
   test("Inner class found") {
-    val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("Messaging"), TypeNameSegment("InboundEmail"), TypeNameSegment("BinaryAttachment")), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val typeRef = UnresolvedTypeRef(
+      Array(
+        TypeNameSegment("Messaging"),
+        TypeNameSegment("InboundEmail"),
+        TypeNameSegment("BinaryAttachment")
+      ),
+      0
+    )
+    val tdOpt = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.nonEmpty)
   }
 
   test("Generic class found") {
-    val stringTD = PlatformTypeDeclaration.get(null,UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("String")), 0))
+    val stringTD = PlatformTypeDeclaration.get(
+      null,
+      UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("String")), 0)
+    )
     assert(stringTD.nonEmpty)
 
     val listTS = TypeNameSegment("List")
     listTS.typeArguments = Some(TypeArguments(ArraySeq(stringTD.get)))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.nonEmpty)
   }
 
   test("Non-Generic class with type arguments") {
-    val stringTD = PlatformTypeDeclaration.get(null,UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("String")), 0))
+    val stringTD = PlatformTypeDeclaration.get(
+      null,
+      UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("String")), 0)
+    )
     assert(stringTD.nonEmpty)
 
     val integerTS = TypeNameSegment("Integer")
     integerTS.typeArguments = Some(TypeArguments(ArraySeq(stringTD.get)))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), integerTS), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
   }
 
   test("Generic class with too many type arguments") {
-    val stringTD = PlatformTypeDeclaration.get(null,UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("String")), 0))
+    val stringTD = PlatformTypeDeclaration.get(
+      null,
+      UnresolvedTypeRef(Array(TypeNameSegment("System"), TypeNameSegment("String")), 0)
+    )
     assert(stringTD.nonEmpty)
 
     val listTS = TypeNameSegment("List")
     listTS.typeArguments = Some(TypeArguments(ArraySeq(stringTD.get, stringTD.get)))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
   }
 
@@ -129,7 +154,7 @@ class PlatformTypeTest extends AnyFunSuite {
     val listTS = TypeNameSegment("List")
     listTS.typeArguments = Some(TypeArguments(ArraySeq()))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
   }
 
@@ -137,7 +162,7 @@ class PlatformTypeTest extends AnyFunSuite {
     val listTS = TypeNameSegment("List")
     listTS.typeArguments = Some(TypeArguments(Array("String")))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
-    val tdOpt = PlatformTypeDeclaration.get(null,typeRef)
+    val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
   }
 }

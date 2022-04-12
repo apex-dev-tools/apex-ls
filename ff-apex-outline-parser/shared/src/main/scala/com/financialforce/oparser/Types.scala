@@ -164,6 +164,8 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
   var typeRef: Option[TypeRef]                     = None
   var id: Option[Id]                               = None
 
+  def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
+
   override def add(a: Annotation): Unit = annotations.append(a)
 
   override def add(m: Modifier): Unit = modifiers.append(m)
@@ -228,6 +230,8 @@ case class ConstructorDeclaration(
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
 
+  def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
+
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[ConstructorDeclaration]
     other.annotations == annotations &&
@@ -258,6 +262,8 @@ case class MethodDeclaration(
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
+
+  def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[MethodDeclaration]

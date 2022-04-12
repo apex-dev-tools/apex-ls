@@ -12,11 +12,19 @@ import scala.collection.mutable
 trait IModuleTypeDeclaration extends ITypeDeclaration {
   val module: IPM.Module
 
+  override def enclosing: Option[IModuleTypeDeclaration]
+  override def innerTypes: ArraySeq[IModuleTypeDeclaration]
+
   // Helper to save from dealing with Option in Java
   def namespaceAsString: String = module.namespaceAsString
 
-  override def enclosing: Option[IModuleTypeDeclaration]
-  override def innerTypes: ArraySeq[IModuleTypeDeclaration]
+  // Override to include namespace
+  override def getFullName: String = {
+    Option(module)
+      .flatMap(_.namespace)
+      .map(ns => s"$ns.${super.getFullName}")
+      .getOrElse(super.getFullName)
+  }
 }
 
 trait IMutableModuleTypeDeclaration

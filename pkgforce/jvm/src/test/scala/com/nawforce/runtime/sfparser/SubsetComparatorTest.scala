@@ -170,7 +170,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       second.add(toAnnotation(Array("QualifiedName", "TestAnnotation"), None))
       //When
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("QualifiedName")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("QualifiedName"))
+        )
 
       //Then
       val caught = intercept[Exception] {
@@ -227,7 +231,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       )
       //When
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("fflib_BatchJob")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("fflib_BatchJob"))
+        )
       comparator.subsetOf(second)
 
       //Then
@@ -451,7 +459,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
       //When
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("ResolvedName")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("ResolvedName"))
+        )
 
       //Then
       val caught = intercept[Exception] {
@@ -527,7 +539,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
       //When
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("ResolvedName")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("ResolvedName"))
+        )
       comparator.subsetOf(second)
 
       //Then
@@ -550,7 +566,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       )
 
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("ResolvedName")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("ResolvedName"))
+        )
       comparator.subsetOf(second)
 
       //Then
@@ -585,7 +605,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       )
 
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("ResolvedName", "Bar")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("ResolvedName", "Bar"))
+        )
       comparator.subsetOf(second)
 
       //Then
@@ -640,7 +664,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
         )
       )
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("ResolvedName")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("ResolvedName"))
+        )
       comparator.subsetOf(second)
 
       //Then
@@ -675,7 +703,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       )
 
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("ResolvedName")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("ResolvedName"))
+        )
       comparator.subsetOf(second)
 
       //Then
@@ -744,7 +776,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
       //When
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("Foo")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("Foo"))
+        )
       comparator.subsetOf(second)
 
       //Then
@@ -811,7 +847,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
       //When
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("Foo")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("Foo"))
+        )
       comparator.subsetOf(second)
 
       //Then
@@ -863,7 +903,11 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       second._innerTypes.append(sInner)
       //When
       val comparator =
-        SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration], getMockResolver(), getMockResolver(Array("Bar")))
+        SubsetComparator(
+          first.asInstanceOf[IMutableModuleTypeDeclaration],
+          getMockResolver(),
+          getMockResolver(Array("Bar"))
+        )
       comparator.subsetOf(second)
 
       //Then

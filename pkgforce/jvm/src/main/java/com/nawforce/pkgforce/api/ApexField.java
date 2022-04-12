@@ -3,8 +3,6 @@
  */
 package com.nawforce.pkgforce.api;
 
-import com.nawforce.pkgforce.types.ApexLocationAdapter;
-
 public interface ApexField {
     ApexType getOwner();
     String getFieldName();

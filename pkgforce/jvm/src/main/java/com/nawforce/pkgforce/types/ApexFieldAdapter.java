@@ -39,7 +39,6 @@ public class ApexFieldAdapter implements ApexField {
 
     @Override
     public ApexTypeId getType() {
-        // TODO: Fix namespace
-        return new NameApexTypeId(fd.typeRef().toString(), "");
+        return NameApexTypeId.apply(fd.typeRef());
     }
 }

@@ -21,13 +21,13 @@ import scala.scalajs.js.annotation.JSImport
 @js.native
 trait Volume extends Fs {
   def fromJSON(json: js.Dynamic, cwd: String = ""): Unit = js.native
-  def toJSON(): js.Object = js.native
-  def reset(): Unit = js.native
+  def toJSON(): js.Object                                = js.native
+  def reset(): Unit                                      = js.native
 }
 
 @js.native
 trait Memfs extends js.Object {
-  val vol: Volume = js.native
+  val vol: Volume   = js.native
   val fs: js.Object = js.native
 }
 
