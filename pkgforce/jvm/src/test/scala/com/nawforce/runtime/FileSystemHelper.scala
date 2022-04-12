@@ -16,7 +16,7 @@ object FileSystemHelper {
       .toBuilder
       .setWorkingDirectory("/")
       .build()
-    val fs = Jimfs.newFileSystem(config)
+    val fs      = Jimfs.newFileSystem(config)
     val rootDir = fs.getRootDirectories.iterator().next()
     files.foreach(kv => {
       val path = rootDir.resolve(kv._1)
@@ -33,7 +33,8 @@ object FileSystemHelper {
 
   // Temp directory based model
   def runTempDir[T](files: Map[String, String], setupCache: Boolean = false)(
-    verify: PathLike => T): T = {
+    verify: PathLike => T
+  ): T = {
     val tempDir = Files.createTempDirectory("apexlinktest")
     files.foreach(kv => {
       val path = tempDir.resolve(kv._1)

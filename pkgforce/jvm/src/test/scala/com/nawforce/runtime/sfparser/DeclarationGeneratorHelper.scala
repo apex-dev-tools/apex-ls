@@ -33,7 +33,10 @@ trait DeclarationGeneratorHelper {
     toTypeRef(typNames, totalSubscripts)
   }
 
-  def toTypeNames(typeName: String, maybeArguments: Option[Array[UnresolvedTypeRef]]): TypeNameSegment = {
+  def toTypeNames(
+    typeName: String,
+    maybeArguments: Option[Array[UnresolvedTypeRef]]
+  ): TypeNameSegment = {
     val tp = new TypeNameSegment(toId(typeName))
     maybeArguments match {
       case Some(arguments) => tp.add(toTypeArguments(Some(arguments)))
@@ -142,7 +145,12 @@ trait DeclarationGeneratorHelper {
     typeRef: UnresolvedTypeRef,
     id: Id
   ): PropertyDeclaration = {
-    new PropertyDeclaration(ArraySeq.unsafeWrapArray(annotation), ArraySeq.unsafeWrapArray(modifiers), typeRef, id)
+    new PropertyDeclaration(
+      ArraySeq.unsafeWrapArray(annotation),
+      ArraySeq.unsafeWrapArray(modifiers),
+      typeRef,
+      id
+    )
   }
 
   def toFieldDeclaration(
@@ -151,6 +159,11 @@ trait DeclarationGeneratorHelper {
     typeRef: UnresolvedTypeRef,
     id: Id
   ): FieldDeclaration = {
-    FieldDeclaration(ArraySeq.unsafeWrapArray(annotation), ArraySeq.unsafeWrapArray(modifiers), typeRef, id)
+    FieldDeclaration(
+      ArraySeq.unsafeWrapArray(annotation),
+      ArraySeq.unsafeWrapArray(modifiers),
+      typeRef,
+      id
+    )
   }
 }

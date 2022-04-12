@@ -18,7 +18,7 @@ import scala.scalajs.js.annotation.JSImport
 
 @js.native
 trait FSMonkey extends js.Object {
-  def patchRequire(vol: js.Object): Unit = js.native
+  def patchRequire(vol: js.Object): Unit          = js.native
   def patchFs(vol: js.Object): js.Function0[Unit] = js.native
 }
 

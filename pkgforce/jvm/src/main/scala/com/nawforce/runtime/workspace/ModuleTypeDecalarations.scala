@@ -14,6 +14,17 @@ trait IModuleTypeDeclaration extends ITypeDeclaration {
 
   override def enclosing: Option[IModuleTypeDeclaration]
   override def innerTypes: ArraySeq[IModuleTypeDeclaration]
+
+  // Helper to save from dealing with Option in Java
+  def namespaceAsString: String = module.namespaceAsString
+
+  // Override to include namespace
+  override def getFullName: String = {
+    Option(module)
+      .flatMap(_.namespace)
+      .map(ns => s"$ns.${super.getFullName}")
+      .getOrElse(super.getFullName)
+  }
 }
 
 trait IMutableModuleTypeDeclaration
@@ -27,7 +38,7 @@ trait IMutableModuleTypeDeclaration
 sealed class TypeDeclaration(
   val module: IPM.Module,
   val path: String,
-  val nature: Nature,
+  val nature: TypeNature,
   _enclosing: IMutableModuleTypeDeclaration
 ) extends IMutableModuleTypeDeclaration {
   var _location: Location = _
@@ -245,7 +256,7 @@ class EnumTypeDeclaration(
 object ModuleClassFactory extends TypeDeclFactory[IMutableModuleTypeDeclaration, IPM.Module] {
   override def create(
     module: IPM.Module,
-    nature: Nature,
+    nature: TypeNature,
     path: String,
     enclosing: Option[IMutableModuleTypeDeclaration]
   ): IMutableModuleTypeDeclaration = {

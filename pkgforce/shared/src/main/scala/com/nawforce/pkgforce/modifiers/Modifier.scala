@@ -171,8 +171,8 @@ object ModifierOps {
   }
 }
 
-// TODO: Validate arguments of the annotations
-// TODO: Cross modifier/annotation checking
+// FUTURE: Validate arguments of the annotations
+// FUTURE: Cross modifier/annotation checking
 
 object ApexModifiers {
   val visibilityModifiers =

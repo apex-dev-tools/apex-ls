@@ -15,8 +15,8 @@ import scala.collection.mutable.ArrayBuffer
 object OutputComparisonTest {
   var exactlyEqual = 0
   var withWarnings = 0
-  var errors = 0
-  var total = 0
+  var errors       = 0
+  var total        = 0
   var parseFailure = 0
 
   def main(args: Array[String]): Unit = {
@@ -46,8 +46,7 @@ object OutputComparisonTest {
       (result / files.size.toFloat) * 100
     }
 
-    println(
-      f"""
+    println(f"""
          |Output Comparison Summary
          |Total cls files processed: ${files.size}
          |Total comparisons: $total
@@ -71,7 +70,7 @@ object OutputComparisonTest {
             val op = file.head
             val ex = op.extendsTypeRef match {
               case un: UnresolvedTypeRef => Some(un)
-              case _ => None
+              case _                     => None
             }
             val impl = if (op.implementsTypeList != null) op.implementsTypeList.typeRefs collect {
               case un: UnresolvedTypeRef => un
@@ -92,15 +91,15 @@ object OutputComparisonTest {
                   .nonEmpty
             )
             val props = op.properties.filter(x => x.typeRef.isInstanceOf[UnresolvedTypeRef])
-            val fi = op.fields.filter(x => x.typeRef.isInstanceOf[UnresolvedTypeRef])
+            val fi    = op.fields.filter(x => x.typeRef.isInstanceOf[UnresolvedTypeRef])
 
             if (
               ex.nonEmpty ||
-                impl.nonEmpty ||
-                cons.nonEmpty ||
-                meths.nonEmpty ||
-                props.nonEmpty ||
-                fi.nonEmpty
+              impl.nonEmpty ||
+              cons.nonEmpty ||
+              meths.nonEmpty ||
+              props.nonEmpty ||
+              fi.nonEmpty
             ) {
               println(f)
               if (ex.nonEmpty) println(ex.map(_.getFullName))
@@ -108,12 +107,16 @@ object OutputComparisonTest {
               if (cons.nonEmpty)
                 println(
                   cons
-                    .map(_.formalParameterList.formalParameters.flatMap(_.typeRef).map(_.getFullName))
+                    .map(
+                      _.formalParameterList.formalParameters.flatMap(_.typeRef).map(_.getFullName)
+                    )
                 )
               if (meths.nonEmpty)
                 println(
                   meths
-                    .map(_.formalParameterList.formalParameters.flatMap(_.typeRef).map(_.getFullName))
+                    .map(
+                      _.formalParameterList.formalParameters.flatMap(_.typeRef).map(_.getFullName)
+                    )
                 )
               if (props.nonEmpty) println(props.map(_.typeRef.getFullName))
               if (fi.nonEmpty) println(fi.map(_.typeRef.getFullName))
