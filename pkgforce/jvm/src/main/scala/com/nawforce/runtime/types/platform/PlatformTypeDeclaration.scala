@@ -55,9 +55,9 @@ class PlatformTypeDeclaration(
   protected def getSuperClassTypeInfo: Option[TypeInfo] = {
     if (cls.getSuperclass != null) {
       cls.getSuperclass.getCanonicalName match {
-        case "java.lang.Object" => None
-        case "java.lang.Enum"   => None
-        case _                  => Some(getTypeName(cls.getSuperclass))
+        case PlatformTypeDeclaration.javaLangObject => None
+        case PlatformTypeDeclaration.javaLangEnum   => None
+        case _                                      => Some(getTypeName(cls.getSuperclass))
       }
     } else {
       None
@@ -79,16 +79,19 @@ class PlatformTypeDeclaration(
   override def extendsTypeRef: TypeRef =
     getSuperClassTypeInfo
       .flatMap(_.asOptionalUnresolved)
+      .flatMap(PlatformTypeDeclaration.get(module, _))
       .orNull
 
   override def implementsTypeList: TypeList = {
-    val interfaces = cls.getGenericInterfaces
+    val interfaces = cls.getInterfaces
     if (interfaces.nonEmpty) {
-      val tl = TypeList()
-      interfaces.map(i => getTypeName(i.getClass)).flatMap(_.asOptionalUnresolved).foreach(tl.add)
-      return if (tl.typeRefs.nonEmpty) tl else null
-    }
-    null
+      val tl  = TypeList()
+      val trs = interfaces.flatMap(getPlatformTypeDeclFromType)
+      assert(interfaces.length == trs.length)
+      trs.foreach(tl.typeRefs.append)
+      tl
+    } else
+      null
   }
 
   override def modifiers: ArraySeq[Modifier] =
@@ -154,7 +157,7 @@ class PlatformTypeDeclaration(
         _.getDeclaringClass.getCanonicalName.startsWith(PlatformTypeDeclaration.platformPackage)
       )
       .filterNot(_.isSynthetic)
-      .map(toMethodDeclaration)
+      .map(toMethodDeclaration(_, this))
   }
 
   private def getFields: ArraySeq[FieldDeclaration] = {
@@ -184,7 +187,9 @@ class PlatformTypeDeclaration(
   ): ConstructorDeclaration = {
     val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
     val name      = new QualifiedName()
-    name.add(Id(IdToken(td.id.id.contents, Location.default)))
+    (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.id.contents))
+      .map(s => Id(IdToken(s, Location.default)))
+      .foreach(name.add)
     ConstructorDeclaration(
       ArraySeq.empty,
       modifiers,
@@ -193,11 +198,17 @@ class PlatformTypeDeclaration(
     )
   }
 
-  protected def toMethodDeclaration(method: java.lang.reflect.Method): MethodDeclaration = {
+  protected def toMethodDeclaration(
+    method: java.lang.reflect.Method,
+    td: PlatformTypeDeclaration
+  ): MethodDeclaration = {
+    val rtType =
+      if (method.getGenericReturnType.getTypeName.equalsIgnoreCase(Names.Void.value)) None
+      else getPlatformTypeDeclFromType(method.getGenericReturnType)
     MethodDeclaration(
       emptyAnnotations,
-      PlatformModifiers.fieldOrMethodModifiers(method.getModifiers),
-      getPlatformTypeDeclFromType(method.getGenericReturnType),
+      PlatformModifiers.methodModifiers(method.getModifiers, td.nature),
+      rtType,
       Id(IdToken(decodeName(method.getName), Location.default)),
       toFormalParameterList(method.getParameters)
     )
@@ -254,43 +265,33 @@ class PlatformTypeDeclaration(
     val typeRefNameWithGenerics = getTypeStringFromType(from)
     val unresolvedTypeRef       = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
     if (unresolvedTypeRef.nonEmpty) {
-      preResolveArguments(unresolvedTypeRef, module)
+      preResolveArguments(unresolvedTypeRef.get, module)
       return PlatformTypeDeclaration.get(module, unresolvedTypeRef.get)
     }
     None
   }
 
-  private def preResolveArguments(un: Option[UnresolvedTypeRef], module: IPM.Module): Unit = {
-    if (un.nonEmpty) {
-      un.get.typeNameSegments
-        .filter(tns => tns.typeArguments.nonEmpty)
-        .foreach(tns => {
-          val args = tns.getArguments
-          val newArgs = args.flatMap {
-            case unref: UnresolvedTypeRef =>
-              preResolveArguments(Some(unref), module)
-              PlatformTypeDeclaration.get(module, unref)
-            case other => Some(other)
-          }
-          if (args.nonEmpty && args.length == newArgs.length)
-            tns.replaceArguments(newArgs)
-        })
-    }
+  private def preResolveArguments(un: UnresolvedTypeRef, module: IPM.Module): Unit = {
+    un.typeNameSegments
+      .filter(tns => tns.typeArguments.nonEmpty)
+      .foreach(tns => {
+        val args = tns.getArguments
+        val newArgs = args.flatMap {
+          case unref: UnresolvedTypeRef =>
+            preResolveArguments(unref, module)
+            PlatformTypeDeclaration.get(module, unref)
+          case other => Some(other)
+        }
+        if (args.nonEmpty && args.length == newArgs.length)
+          tns.replaceArguments(newArgs)
+      })
+
   }
 
   def getTypeName(cls: java.lang.Class[_]): TypeInfo = {
     val cname = cls.getCanonicalName
-    if (cname == "void") {
-      return TypeInfo(None, Array.empty, createTypeName("void", None))
-    }
-    if (cname == "java.lang.Object") {
-      return TypeInfo(
-        Some(TypeName.InternalObject.outer.get.name.value),
-        Array(),
-        createTypeName(Names.Internal.value, None)
-      )
-
-    }
+    if (cname == PlatformTypeDeclaration.javaLangObject)
+      return TypeInfo.InternalObject
 
     val names  = cname.drop(platformPackage.length + 1).split('.').reverse
     val params = cls.getTypeParameters.map(_.getName).map(genericToType)
@@ -311,6 +312,8 @@ object PlatformTypeDeclaration {
   final val emptyInitializers: ArraySeq[Initializer]                 = ArraySeq.empty
   final val emptyProperties: ArraySeq[PropertyDeclaration]           = ArraySeq.empty
   final val priorityNamespaces: Seq[Name]                            = Seq(Names.System, Names.Schema, Names.Database)
+  final val javaLangObject: String                                   = "java.lang.Object".intern()
+  final val javaLangEnum: String                                     = "java.lang.Enum".intern()
 
   /* Java package prefix for platform types */
   private val platformPackage = "com.nawforce.runforce"
@@ -335,6 +338,9 @@ object PlatformTypeDeclaration {
   }
 
   def get(module: IPM.Module, typeRef: UnresolvedTypeRef): Option[PlatformTypeDeclaration] = {
+    //Exit early for void
+    if (typeRef.getFullName.equalsIgnoreCase(Names.Void.value))
+      return None
 
     // Conversion will fail if typeRef has unresolved type arguments
     val typeNameOpt = asTypeName(typeRef)
@@ -506,8 +512,14 @@ case class TypeInfo(namespace: Option[String], args: Array[String], typeName: Ty
   }
 
   override def toString: String = {
-    val argStr = if (args.nonEmpty) args.mkString("<", ",", ">") else ""
-    if (namespace.nonEmpty) s"${namespace.get}.${typeName.toString}$argStr"
-    else s"${typeName.toString}$argStr"
+    if (namespace.nonEmpty) s"${namespace.get}.${typeName.toString}"
+    else s"${typeName.toString}"
   }
+}
+object TypeInfo {
+  final val InternalObject = TypeInfo(
+    Some(TypeName.InternalObject.outer.get.name.value),
+    Array(),
+    createTypeName(Names.Internal.value, None)
+  )
 }
