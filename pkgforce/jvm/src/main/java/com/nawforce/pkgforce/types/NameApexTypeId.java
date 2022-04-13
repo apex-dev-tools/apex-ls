@@ -3,8 +3,13 @@
  */
 package com.nawforce.pkgforce.types;
 
+import com.financialforce.oparser.TypeRef;
 import com.nawforce.pkgforce.api.ApexTypeId;
 import com.nawforce.pkgforce.names.TypeName;
+import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
+import scala.Option;
+
+import java.util.Objects;
 
 /*
  * An ApexTypeId just constructed from a name. The apexName is required to include the namespace. The namespace may
@@ -14,11 +19,29 @@ import com.nawforce.pkgforce.names.TypeName;
 public class NameApexTypeId implements ApexTypeId {
     final private String apexName;
     final private String namespace;
+    final private boolean isResolved;
 
-    public NameApexTypeId(String apexName, String namespace) {
+    public NameApexTypeId(String apexName, String namespace, boolean isResolved) {
         assert namespace.length() == 0 || apexName.startsWith(namespace + '.');
         this.apexName = apexName;
         this.namespace = namespace;
+        this.isResolved = isResolved;
+    }
+
+    public static NameApexTypeId apply(TypeRef typeRef) {
+        if (typeRef == null)
+            return null;
+        if (typeRef instanceof IModuleTypeDeclaration) {
+            IModuleTypeDeclaration td = (IModuleTypeDeclaration)typeRef;
+            return new NameApexTypeId(td.getFullName(), td.namespaceAsString(), true);
+        } else {
+            return new NameApexTypeId(typeRef.getFullName(), "", false);
+        }
+    }
+
+    public static NameApexTypeId apply(Option<TypeRef> typeRef) {
+        if (typeRef.isEmpty()) return null;
+        return apply(typeRef.get());
     }
 
     @Override
@@ -38,7 +61,12 @@ public class NameApexTypeId implements ApexTypeId {
         if (typeName == null || typeName.outer().isEmpty())
             return null;
 
-        return new NameApexTypeId(typeName.outer().get().toString(), namespace);
+        return new NameApexTypeId(typeName.outer().get().toString(), namespace, isResolved);
+    }
+
+    @Override
+    public boolean isResolved() {
+        return isResolved;
     }
 
     @Override
@@ -46,12 +74,14 @@ public class NameApexTypeId implements ApexTypeId {
         if (this == other) return true;
         if (other == null) return false;
         if (getClass() != other.getClass()) return false;
-        return apexName.equals(((NameApexTypeId) other).apexName);
+        NameApexTypeId otherTypeId = (NameApexTypeId) other;
+        return isResolved == otherTypeId.isResolved &&
+                apexName.equals(otherTypeId.apexName);
     }
 
     @Override
     public int hashCode() {
-        return apexName.hashCode();
+        return Objects.hash(isResolved, apexName);
     }
 
 }

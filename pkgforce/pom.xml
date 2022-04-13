@@ -433,8 +433,11 @@
           <configLocation>${project.basedir}/.scalafmt.conf</configLocation>
           <sourceDirectories>
             <param>${project.basedir}/shared/src/main/scala</param>
+            <param>${project.basedir}/shared/src/test/scala</param>
             <param>${project.basedir}/js/src/main/scala</param>
+            <param>${project.basedir}/js/src/test/scala</param>
             <param>${project.basedir}/jvm/src/main/scala</param>
+            <param>${project.basedir}/jvm/src/test/scala</param>
           </sourceDirectories>
           <showReformattedOnly>true</showReformattedOnly>
         </configuration>

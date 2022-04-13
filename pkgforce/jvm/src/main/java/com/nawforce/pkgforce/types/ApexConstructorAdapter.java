@@ -35,14 +35,12 @@ public class ApexConstructorAdapter implements ApexMethod {
 
     @Override
     public String getModifiers() {
-        // TODO: Annotations
-        return cd.modifiers().mkString(" ");
+        return cd.annotationsAndModifiers();
     }
 
     @Override
     public ApexTypeId getReturnType() {
-        // TODO: Type resolving
-        return null;
+        return definingType;
     }
 
     @Override

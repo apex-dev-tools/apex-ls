@@ -29,7 +29,8 @@ object FileSystemHelper {
 
     // Load files into memfs
     Memfs.vol.fromJSON(
-      files.map(kv => ("/" + kv._1, kv._2)).toJSDictionary.asInstanceOf[js.Dynamic])
+      files.map(kv => ("/" + kv._1, kv._2)).toJSDictionary.asInstanceOf[js.Dynamic]
+    )
 
     // Make a cache directory so don't need home access
     if (setupCache) {
@@ -58,7 +59,8 @@ object FileSystemHelper {
 
   // Temp directory based model
   def runTempDir[T](files: Map[String, String], setupCache: Boolean = false)(
-    verify: PathLike => T): T = {
+    verify: PathLike => T
+  ): T = {
     val tempDir = Path(OS.tmpdir()).join("apexlinktest")
     files.foreach(kv => {
       val path = tempDir.join(kv._1)

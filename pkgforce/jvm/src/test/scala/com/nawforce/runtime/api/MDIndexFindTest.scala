@@ -8,7 +8,7 @@ import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
-class MDIndexTest extends AnyFunSuite {
+class MDIndexFindTest extends AnyFunSuite {
 
   test("Empty org") {
     FileSystemHelper.run(Map()) { root: PathLike =>
@@ -19,25 +19,22 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("File with error") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "",
-      "Bar.cls" -> "public class Bar {}"
-    )) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index != null)
-      assert(index.getFilesWithErrors.toArray sameElements Array(root.join("Foo.cls").toString))
+    FileSystemHelper.run(Map("Foo.cls" -> "", "Bar.cls" -> "public class Bar {}")) {
+      root: PathLike =>
+        val index = new MDIndex(root)
+        assert(index != null)
+        assert(index.getFilesWithErrors.toArray sameElements Array(root.join("Foo.cls").toString))
     }
   }
 
   test("Files with error") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "",
-      "Bar.cls" -> ""
-    )) { root: PathLike =>
+    FileSystemHelper.run(Map("Foo.cls" -> "", "Bar.cls" -> "")) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index != null)
-      assert(index.getFilesWithErrors.toArray sameElements
-        Array(root.join("Bar.cls").toString, root.join("Foo.cls").toString))
+      assert(
+        index.getFilesWithErrors.toArray sameElements
+          Array(root.join("Bar.cls").toString, root.join("Foo.cls").toString)
+      )
     }
   }
 
@@ -86,19 +83,22 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("Nested class is loaded") {
-    FileSystemHelper.run(Map("Foo.cls" -> "public class Foo { public class Bar {} }")) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("Foo") != null)
-      assert(index.findExactTypeId("Foo.Bar") != null)
+    FileSystemHelper.run(Map("Foo.cls" -> "public class Foo { public class Bar {} }")) {
+      root: PathLike =>
+        val index = new MDIndex(root)
+        assert(index.hasUpdatedIssues.isEmpty)
+        assert(index.findExactTypeId("Foo") != null)
+        assert(index.findExactTypeId("Foo.Bar") != null)
     }
   }
 
   test("MDAPI fuzzy find") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "public class Foo { }",
-      "FooBar.cls" -> "public class FooBar { public class Bar {} }"
-    )) { root: PathLike =>
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"    -> "public class Foo { }",
+        "FooBar.cls" -> "public class FooBar { public class Bar {} }"
+      )
+    ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
       assert(index.fuzzyFindTypeId("Foo").getApexName == "Foo")
@@ -115,8 +115,8 @@ class MDIndexTest extends AnyFunSuite {
   test("SFDX namespaced fuzzy find") {
     FileSystemHelper.run(
       Map(
-        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls" -> "public class Foo {}",
+        "sfdx-project.json"  -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+        "sources/Foo.cls"    -> "public class Foo {}",
         "sources/FooBar.cls" -> "public class FooBar { public class Bar {} }"
       )
     ) { root: PathLike =>
@@ -133,10 +133,12 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("MDAPI fuzzy find list") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "public class Foo { }",
-      "FooBar.cls" -> "public class FooBar { public class Bar {} }"
-    )) { root: PathLike =>
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"    -> "public class Foo { }",
+        "FooBar.cls" -> "public class FooBar { public class Bar {} }"
+      )
+    ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
 
@@ -157,8 +159,8 @@ class MDIndexTest extends AnyFunSuite {
   test("SFDX namespaced fuzzy find list") {
     FileSystemHelper.run(
       Map(
-        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls" -> "public class Foo {}",
+        "sfdx-project.json"  -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+        "sources/Foo.cls"    -> "public class Foo {}",
         "sources/FooBar.cls" -> "public class FooBar { public class Bar {} }"
       )
     ) { root: PathLike =>
@@ -180,10 +182,12 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("MDAPI find by namespace") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "public class Foo { }",
-      "FooBar.cls" -> "public class FooBar { public class Bar {} }"
-    )) { root: PathLike =>
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"    -> "public class Foo { }",
+        "FooBar.cls" -> "public class FooBar { public class Bar {} }"
+      )
+    ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
 
@@ -200,8 +204,8 @@ class MDIndexTest extends AnyFunSuite {
   test("SFDX find by namespace") {
     FileSystemHelper.run(
       Map(
-        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls" -> "public class Foo {}",
+        "sfdx-project.json"  -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+        "sources/Foo.cls"    -> "public class Foo {}",
         "sources/FooBar.cls" -> "public class FooBar { public class Bar {} }"
       )
     ) { root: PathLike =>
@@ -229,13 +233,13 @@ class MDIndexTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources1\"}, {\"path\": \"sources2\"}] }",
-        "sources1/Foo.cls" -> "public class Foo {}",
-        "sources1/Bar.cls" -> "public class Bar {}",
-        "sources2/Foo.cls" -> "public class Foo {}",
-        "sources2/Baz.cls" -> "public class Baz { public class Bar {} }",
+        "sources1/Foo.cls"  -> "public class Foo {}",
+        "sources1/Bar.cls"  -> "public class Bar {}",
+        "sources2/Foo.cls"  -> "public class Foo {}",
+        "sources2/Baz.cls"  -> "public class Baz { public class Bar {} }"
       )
     ) { root: PathLike =>
-      val index = new MDIndex(root)
+      val index           = new MDIndex(root)
       val sources1BarPath = root.join("sources1").join("Bar.cls").toString
       val sources2FooPath = root.join("sources2").join("Foo.cls").toString
       val sources2BazPath = root.join("sources2").join("Baz.cls").toString
@@ -285,10 +289,10 @@ class MDIndexTest extends AnyFunSuite {
         "sources1/Foo.cls" -> "public class Foo {}",
         "sources1/Bar.cls" -> "public class Bar {}",
         "sources2/Foo.cls" -> "public class Foo {}",
-        "sources2/Baz.cls" -> "public class Baz { public class Bar {} }",
+        "sources2/Baz.cls" -> "public class Baz { public class Bar {} }"
       )
     ) { root: PathLike =>
-      val index = new MDIndex(root)
+      val index           = new MDIndex(root)
       val sources1BarPath = root.join("sources1").join("Bar.cls").toString
       val sources2FooPath = root.join("sources2").join("Foo.cls").toString
       val sources2BazPath = root.join("sources2").join("Baz.cls").toString
@@ -321,15 +325,17 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("SFDX get resource file") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "public class Foo { }",
-      "FooBar.cls" -> "public class FooBar { public class Bar {} }"
-    )) { root: PathLike =>
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"    -> "public class Foo { }",
+        "FooBar.cls" -> "public class FooBar { public class Bar {} }"
+      )
+    ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
 
-      val fooPath = root.join("Foo.cls").toString
-      val fooBarPath = root.join("FooBar.cls").toString
+      val fooPath     = root.join("Foo.cls").toString
+      val fooBarPath  = root.join("FooBar.cls").toString
       val missingPath = root.join("Missing.cls").toString
 
       val fooResource = index.getResourceFile(fooPath)
@@ -346,15 +352,13 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("SFDX find resource file") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "public class Foo { }",
-    )) { root: PathLike =>
+    FileSystemHelper.run(Map("Foo.cls" -> "public class Foo { }")) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
 
       val expectedFooPath = root.join("Foo.cls").toString
 
-      var fooPath = root.join("foo.cls").toString
+      var fooPath     = root.join("foo.cls").toString
       var fooResource = index.findResourceFile(fooPath)
       assert(fooResource != null)
       assert(fooResource.getTypes.size() == 1)
@@ -369,14 +373,16 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("SFDX fuzzy find resource file") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "public class Foo { public class Zig {} }",
-      "FooBar.cls" -> "public class FooBar { public class Bar {} }"
-    )) { root: PathLike =>
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"    -> "public class Foo { public class Zig {} }",
+        "FooBar.cls" -> "public class FooBar { public class Bar {} }"
+      )
+    ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
 
-      val searchPath = root.join("Foo").toString
+      val searchPath   = root.join("Foo").toString
       val fooResources = index.fuzzyFindResourceFile(searchPath)
       assert(fooResources.size() == 2)
 
@@ -395,47 +401,48 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("MDAPI ApexType") {
-    FileSystemHelper.run(Map(
-      "Foo.cls" -> "public class Foo { public class Bar {} }"
-    )) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
+    FileSystemHelper.run(Map("Foo.cls" -> "public class Foo { public class Bar {} }")) {
+      root: PathLike =>
+        val index = new MDIndex(root)
+        assert(index.hasUpdatedIssues.isEmpty)
 
-      val foo = index.findExactTypeId("Foo")
-      assert(foo != null)
-      assert(foo.getApexName == "Foo")
-      assert(foo.getApexNamespace == "")
-      assert(foo.getEnclosingType == null)
+        val foo = index.findExactTypeId("Foo")
+        assert(foo != null)
+        assert(foo.getApexName == "Foo")
+        assert(foo.getApexNamespace == "")
+        assert(foo.getEnclosingType == null)
 
-      val bar = index.findExactTypeId("Foo.Bar")
-      assert(bar != null)
-      assert(bar.getApexName == "Foo.Bar")
-      assert(bar.getApexNamespace == "")
-      assert(bar.getEnclosingType.getApexName == "Foo")
+        val bar = index.findExactTypeId("Foo.Bar")
+        assert(bar != null)
+        assert(bar.getApexName == "Foo.Bar")
+        assert(bar.getApexNamespace == "")
+        assert(bar.getEnclosingType.getApexName == "Foo")
 
-      val fooFile = foo.getFile
-      assert(fooFile != null)
-      assert(fooFile.getFilename == "/Foo.cls")
-      assert(!fooFile.hasError)
-      assert(fooFile.getTypes.size() == 2)
-      assert(fooFile.getTypes.contains(foo))
-      assert(fooFile.getTypes.contains(bar))
+        val fooFile = foo.getFile
+        assert(fooFile != null)
+        assert(fooFile.getFilename == "/Foo.cls")
+        assert(!fooFile.hasError)
+        assert(fooFile.getTypes.size() == 2)
+        assert(fooFile.getTypes.contains(foo))
+        assert(fooFile.getTypes.contains(bar))
 
-      val barFile = bar.getFile
-      assert(barFile != null)
-      assert(barFile.getFilename == "/Foo.cls")
-      assert(!barFile.hasError)
-      assert(barFile.getTypes.size() == 2)
-      assert(fooFile.getTypes.contains(foo))
-      assert(fooFile.getTypes.contains(bar))
+        val barFile = bar.getFile
+        assert(barFile != null)
+        assert(barFile.getFilename == "/Foo.cls")
+        assert(!barFile.hasError)
+        assert(barFile.getTypes.size() == 2)
+        assert(fooFile.getTypes.contains(foo))
+        assert(fooFile.getTypes.contains(bar))
     }
   }
 
   test("SFDX ApexType (no namespace)") {
-    FileSystemHelper.run(Map(
-      "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}]}",
-      "sources/Foo.cls" -> "public class Foo { public class Bar {} }"
-    )) { root: PathLike =>
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}]}",
+        "sources/Foo.cls"   -> "public class Foo { public class Bar {} }"
+      )
+    ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
 
@@ -470,10 +477,12 @@ class MDIndexTest extends AnyFunSuite {
   }
 
   test("SFDX ApexType (namespaced)") {
-    FileSystemHelper.run(Map(
-      "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-      "sources/Foo.cls" -> "public class Foo { public class Bar {} }"
-    )) { root: PathLike =>
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+        "sources/Foo.cls"   -> "public class Foo { public class Bar {} }"
+      )
+    ) { root: PathLike =>
       val index = new MDIndex(root)
       assert(index.hasUpdatedIssues.isEmpty)
 
@@ -507,107 +516,4 @@ class MDIndexTest extends AnyFunSuite {
     }
   }
 
-  test("Platform class is loaded (MDAPI)") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System.String") != null)
-    }
-  }
-
-  test("Unknown platform class is not loaded (MDAPI)") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System.Foo") == null)
-    }
-  }
-
-  test("Platform class is loaded (SFDX)") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}] }",
-      )
-    ) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System.String") != null)
-    }
-  }
-
-  test("Unknown platform class is not loaded (SFDX)") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}] }",
-      )
-    ) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System.Foo") == null)
-    }
-  }
-
-  test("Platform generic class is loaded") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System.List<System.String>") != null)
-    }
-  }
-
-  test("Platform generic with bad name is not loaded") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System.Listy<System.String>") == null)
-    }
-  }
-
-  test("Platform generic with wrong type args is not loaded") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System.List<System.String,System.String>") == null)
-    }
-  }
-
-  test("Platform generic with multiple args is loaded") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System.Map<System.String,System.String>") != null)
-    }
-  }
-
-  test("System platform class without namespace is loaded") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("String") != null)
-    }
-  }
-
-  test("System platform generic class without namespace is loaded") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("List<String>") != null)
-    }
-  }
-
-  test("Platform system class is loaded") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("System") != null)
-    }
-  }
-
-  test("Platform inner class is loaded") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
-      val index = new MDIndex(root)
-      assert(index.hasUpdatedIssues.isEmpty)
-      assert(index.findExactTypeId("Database.DMLOptions.EmailHeader") != null)
-    }
-  }
 }

@@ -4,7 +4,7 @@
 
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{ITypeDeclaration, TypeNameSegment, TypeRef, UnresolvedTypeRef}
+import com.financialforce.oparser.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -20,8 +20,8 @@ object TypeFinder {
   def get(
     baseModule: IPM.Module,
     typeRef: TypeRef,
-    from: ITypeDeclaration
-  ): Option[ITypeDeclaration] = {
+    from: IModuleTypeDeclaration
+  ): Option[IModuleTypeDeclaration] = {
     val typeNames = getUnresolvedTypeNames(typeRef)
 
     findScalarType(typeNames)
@@ -41,8 +41,8 @@ object TypeFinder {
   private def getType(
     baseModule: IPM.Module,
     typeNames: ArrayBuffer[TypeNameSegment],
-    from: ITypeDeclaration
-  ): Option[ITypeDeclaration] = {
+    from: IModuleTypeDeclaration
+  ): Option[IModuleTypeDeclaration] = {
     //Pre resolve relative type arguments
     //TODO: check efficiency of this, we are resolving all the arguments to just to turn into a string and resolve
     // it again in findExactTypeId
@@ -56,10 +56,17 @@ object TypeFinder {
       if (args.nonEmpty && args.length == newArgs.length)
         segment.replaceArguments(newArgs)
     })
-    baseModule.findExactTypeId(asFullName(typeNames))
+
+    // If we have a ns, try it first before falling back to without for injected types that carry their own ns
+    val fullName = asFullName(typeNames)
+    from.module.namespace
+      .flatMap(ns => baseModule.findExactTypeId(ns.value + "." + fullName))
+      .orElse(baseModule.findExactTypeId(fullName))
   }
 
-  private def findScalarType(typeNames: ArrayBuffer[TypeNameSegment]): Option[ITypeDeclaration] = {
+  private def findScalarType(
+    typeNames: ArrayBuffer[TypeNameSegment]
+  ): Option[IModuleTypeDeclaration] = {
     //TODO: We should implement this to gain some perf improvement but not needed to function properly as we
     // will push the search down to System package through findExactTypeId anyway
     None
@@ -68,8 +75,8 @@ object TypeFinder {
   private def findLocalTypeFor(
     baseModule: IPM.Module,
     typeNames: ArrayBuffer[TypeNameSegment],
-    from: ITypeDeclaration
-  ): Option[ITypeDeclaration] = {
+    from: IModuleTypeDeclaration
+  ): Option[IModuleTypeDeclaration] = {
     //Shortcut self reference
     if (typeNames.nonEmpty && !isCompound(typeNames) && from.id == typeNames.head.id)
       return Some(from)
@@ -85,8 +92,8 @@ object TypeFinder {
 
   private def getNestedType(
     typeNames: ArrayBuffer[TypeNameSegment],
-    from: ITypeDeclaration
-  ): Option[ITypeDeclaration] = {
+    from: IModuleTypeDeclaration
+  ): Option[IModuleTypeDeclaration] = {
     if (isCompound(typeNames)) {
       None
     } else {
@@ -97,8 +104,8 @@ object TypeFinder {
   private def getFromOuterType(
     baseModule: IPM.Module,
     typeNames: ArrayBuffer[TypeNameSegment],
-    from: ITypeDeclaration
-  ): Option[ITypeDeclaration] = {
+    from: IModuleTypeDeclaration
+  ): Option[IModuleTypeDeclaration] = {
     if (isCompound(typeNames) || from.enclosing.isEmpty) {
       None
     } else {
@@ -115,18 +122,18 @@ object TypeFinder {
   }
 
   private def findNestedType(
-    from: ITypeDeclaration,
+    from: IModuleTypeDeclaration,
     name: TypeNameSegment
-  ): Option[ITypeDeclaration] = {
+  ): Option[IModuleTypeDeclaration] = {
     from.innerTypes.find(x => x.id == name.id)
   }
 
   private def getFromSuperType(
     baseModule: IPM.Module,
     typeNames: ArrayBuffer[TypeNameSegment],
-    from: ITypeDeclaration
-  ): Option[ITypeDeclaration] = {
-    def isTypeFromInner(toCheck: ITypeDeclaration, from: ITypeDeclaration): Boolean = {
+    from: IModuleTypeDeclaration
+  ): Option[IModuleTypeDeclaration] = {
+    def isTypeFromInner(toCheck: IModuleTypeDeclaration, from: IModuleTypeDeclaration): Boolean = {
       val outerTypeNames = toCheck.enclosing.map(x => x.typeName)
       outerTypeNames.nonEmpty && outerTypeNames.get.contains(from.typeNameSegment)
     }
@@ -135,7 +142,7 @@ object TypeFinder {
       return None
 
     from.extendsTypeRef match {
-      case resolved: ITypeDeclaration =>
+      case resolved: IModuleTypeDeclaration =>
         if (!isTypeFromInner(resolved, from)) {
           return findLocalTypeFor(baseModule, typeNames, resolved)
         }

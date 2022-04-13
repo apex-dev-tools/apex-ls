@@ -121,12 +121,6 @@ class MemberDeclaration extends ModifierAssignable with TypeRefAssignable {
 }
 
 case class Annotation(qName: QualifiedName, parameters: Option[String]) {
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[Annotation]
-    qName == other.qName
-    // TODO: Are parameters required?
-  }
-
   override def toString: String = {
     if (parameters.isDefined) s"@$qName(${parameters.get})" else s"@$qName"
   }
@@ -191,6 +185,8 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
   val modifiers: mutable.ArrayBuffer[Modifier]     = mutable.ArrayBuffer[Modifier]()
   var typeRef: Option[TypeRef]                     = None
   var id: Option[Id]                               = None
+
+  def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
   override def add(a: Annotation): Unit = annotations.append(a)
 
@@ -259,6 +255,8 @@ case class ConstructorDeclaration(
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
 
+  def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
+
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[ConstructorDeclaration]
     other.annotations == annotations &&
@@ -288,6 +286,8 @@ case class MethodDeclaration(
 
   var location: Option[Location]      = None
   var blockLocation: Option[Location] = None
+
+  def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[MethodDeclaration]
@@ -811,7 +811,6 @@ object Parse {
     val parameters = if (tokens(index).exists(_.matches(Tokens.LParenStr))) {
       val builder      = new StringBuilder()
       var nestingCount = 1
-      //builder.append(tokens(index).get.contents)
       index += 1
       while (nestingCount > 0 && index < tokens.length()) {
         if (tokens(index).get.matches(Tokens.RParenStr)) {
