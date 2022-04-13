@@ -266,9 +266,12 @@ object IPM extends TriHierarchy {
       }
 
       def resolveMethods(methodDeclaration: MethodDeclaration): Unit = {
-        if (methodDeclaration.typeRef.nonEmpty)
+        if (methodDeclaration.typeRef.nonEmpty) {
+          val isVoid = methodDeclaration.typeRef.get.getFullName.equalsIgnoreCase(Names.Void.value)
           methodDeclaration.typeRef =
-            resolve(methodDeclaration.typeRef.get).orElse(methodDeclaration.typeRef)
+            if (isVoid) None
+            else resolve(methodDeclaration.typeRef.get).orElse(methodDeclaration.typeRef)
+        }
         resolveParameterList(methodDeclaration.formalParameterList)
       }
 
