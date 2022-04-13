@@ -21,7 +21,13 @@ import com.financialforce.oparser.Modifiers.{
   STATIC_MODIFIER,
   VIRTUAL_MODIFIER
 }
-import com.financialforce.oparser.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, Modifier, Nature}
+import com.financialforce.oparser.{
+  CLASS_NATURE,
+  ENUM_NATURE,
+  INTERFACE_NATURE,
+  Modifier,
+  TypeNature
+}
 
 import scala.collection.immutable.ArraySeq
 import java.lang.reflect.{Modifier => JavaModifier}
@@ -39,7 +45,7 @@ object PlatformModifiers {
   private val modPublicFinalStatic: ArraySeq[Modifier] =
     ArraySeq(PUBLIC_MODIFIER, FINAL_MODIFIER, STATIC_MODIFIER)
 
-  def typeModifiers(javaBits: Int, nature: Nature): ArraySeq[Modifier] = {
+  def typeModifiers(javaBits: Int, nature: TypeNature): ArraySeq[Modifier] = {
     assert(JavaModifier.isPublic(javaBits))
     if (nature != ENUM_NATURE) assert(!JavaModifier.isFinal(javaBits))
     assert(!JavaModifier.isTransient(javaBits))
@@ -92,7 +98,7 @@ object PlatformModifiers {
     }
   }
 
-  def methodModifiers(javaBits: Int, nature: Nature): ArraySeq[Modifier] = {
+  def methodModifiers(javaBits: Int, nature: TypeNature): ArraySeq[Modifier] = {
     assert(JavaModifier.isPublic(javaBits))
     if (nature == INTERFACE_NATURE)
       assert(JavaModifier.isAbstract(javaBits))

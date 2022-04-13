@@ -16,10 +16,7 @@ package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
 import com.nawforce.pkgforce.names.Name
-import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
-  createTypeName,
-  emptyPaths,
-}
+import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{createTypeName, emptyPaths}
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
 import java.lang.reflect.Method
