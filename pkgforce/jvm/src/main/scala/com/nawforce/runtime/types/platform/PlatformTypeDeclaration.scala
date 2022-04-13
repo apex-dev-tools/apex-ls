@@ -128,8 +128,26 @@ class PlatformTypeDeclaration(
 
   override lazy val fields: ArraySeq[FieldDeclaration] = getFields
 
+  override def getFullName: String = {
+    val ns = if (typeInfo.namespace.nonEmpty) s"${typeInfo.namespace.get}." else ""
+    if (enclosing.nonEmpty)
+      return s"$ns${enclosing.get.getFullName}.${typeInfo.typeName.toString}"
+    s"$ns${typeInfo.typeName.toString}"
+  }
+
   override def toString: String = {
-    getFullName
+    val args =
+      if (typeInfo.args.nonEmpty) typeInfo.args.map(genericToType).mkString("<", ",", ">")
+      else ""
+    var rawNames =
+      if (enclosing.nonEmpty)
+        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName)
+      else Seq(typeInfo.typeName.id.toString)
+    if (typeInfo.namespace.nonEmpty) {
+      rawNames = rawNames :+ typeInfo.namespace.get
+    }
+    val name = TypeName(rawNames.map(Name(_)))
+    s"$name$args"
   }
 
   private def getMethods: ArraySeq[MethodDeclaration] = {
