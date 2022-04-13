@@ -1,6 +1,6 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
-ThisBuild / version := "1.0.0-SNAPSHOT"
+ThisBuild / version := "1.0.0"
 ThisBuild / organization := "com.github.financialforcedev"
 ThisBuild / scalaVersion := "2.13.3"
 ThisBuild / isSnapshot := true
