@@ -18,12 +18,13 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
+import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
-import com.nawforce.pkgforce.parsers.Nature
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE, Nature}
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, Location, PathLocation}
 
 import scala.collection.immutable.ArraySeq
@@ -116,6 +117,7 @@ trait ApexFieldLike extends FieldDeclaration with IdLocatable {
 trait ApexDeclaration extends DependentType with IdLocatable {
   val sourceHash: Int
   val module: OPM.Module
+  val isEntryPoint: Boolean
 
   def summary: TypeSummary
 }
@@ -130,7 +132,9 @@ trait ApexFullDeclaration extends ApexDeclaration {
 }
 
 /** Apex defined trigger of either full or summary type */
-trait ApexTriggerDeclaration extends ApexDeclaration
+trait ApexTriggerDeclaration extends ApexDeclaration {
+  override val isEntryPoint: Boolean = true
+}
 
 /** Apex defined classes, interfaces, enum of either full or summary type */
 trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
@@ -211,6 +215,28 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       case Some(td: ApexClassDeclaration) => td.staticMethods
       case _                              => MethodDeclaration.emptyMethodDeclarations
     }
+  }
+
+  lazy val isPageController: Boolean = {
+    getTypeDependencyHolders.toIterable.exists(
+      tid => tid.typeName == TypeNames.Page || tid.typeName == TypeNames.Component
+    )
+  }
+
+  lazy val hasExternalMembers: Boolean = {
+    localMethods.exists(_.isExternallyVisible) || localFields.exists(_.isExternallyVisible)
+  }
+
+  lazy val isAsync: Boolean = {
+    Seq(
+      TypeName(Name("Batchable"), Nil, Some(TypeNames.Database)),
+      TypeName(Name("Schedulable"), Nil, Some(TypeNames.System)),
+      TypeName(Name("Queueable"), Nil, Some(TypeNames.System))
+    ).exists(t => extendsOrImplements(t))
+  }
+
+  override lazy val isEntryPoint: Boolean = {
+    outerTypeName.isEmpty && isExternallyVisible || hasExternalMembers || isPageController || isAsync
   }
 
   def methodMap: MethodMap = {

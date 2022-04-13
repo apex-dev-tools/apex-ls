@@ -17,9 +17,9 @@ package com.nawforce.apexlink.deps
 import com.nawforce.apexlink.api.Org
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration}
-import com.nawforce.apexlink.types.core.DependencyHolder
+import com.nawforce.apexlink.types.core.{DependencyHolder, TypeDeclaration}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier}
-import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE, TRIGGER_NATURE}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -29,6 +29,7 @@ case class NodeData(
   id: TypeIdentifier,
   nature: String,
   transitiveCount: Int,
+  isEntryPoint: Boolean,
   extending: Array[TypeIdentifier],
   implementing: Array[TypeIdentifier],
   using: Array[TypeIdentifier]
@@ -127,14 +128,23 @@ class DownWalker(org: Org, apexOnly: Boolean) {
           .filterNot(output.contains)
           .filterNot(id => typeId.contains(id))
           .filterNot(id => ignoring.contains(id))
+
         NodeData(
           id,
           td.nature.value,
           transitiveCollector.count(id, ignoring),
+          isEntryNode(td),
           extending.toArray,
           implementing.toArray,
           uses
         )
       })
+  }
+
+  private def isEntryNode(td: TypeDeclaration): Boolean = {
+    td match {
+      case ad: ApexDeclaration => ad.isEntryPoint
+      case _                   => false
+    }
   }
 }

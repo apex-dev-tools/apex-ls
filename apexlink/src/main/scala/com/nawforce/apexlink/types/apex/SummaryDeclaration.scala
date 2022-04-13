@@ -26,7 +26,7 @@ import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.Modifier
 import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier, TypeName}
-import com.nawforce.pkgforce.parsers.Nature
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, Nature}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import upickle.default._
 

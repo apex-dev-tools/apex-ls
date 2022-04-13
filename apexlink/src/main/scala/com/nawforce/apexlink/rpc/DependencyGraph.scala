@@ -34,11 +34,11 @@ case class DependencyNode(
   size: Long,                          // Size of metadata in bytes
   nature: String,                      // Nature of types, class, interface or enum
   transitiveCount: Int,                // Sum of all dependant types
+  isEntryPoint: Boolean,               // Type is available for external use
   extending: Array[TypeIdentifier],    // Types that this type extends
   implementing: Array[TypeIdentifier], // Types that this type implements
-  using: Array[TypeIdentifier]
-) // Other types that this type depends on
-{
+  using: Array[TypeIdentifier]         // Other types that this type depends on
+) {
   override def equals(that: Any): Boolean = {
     that match {
       case other: DependencyNode =>
@@ -53,6 +53,7 @@ case class DependencyNode(
     identifier == other.identifier &&
     size == other.size &&
     transitiveCount == other.transitiveCount &&
+    isEntryPoint == other.isEntryPoint &&
     extending.sameElements(other.extending) &&
     implementing.sameElements(other.implementing) &&
     using.sameElements(other.using)
