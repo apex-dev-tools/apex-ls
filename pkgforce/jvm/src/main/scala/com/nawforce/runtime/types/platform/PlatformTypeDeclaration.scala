@@ -76,13 +76,13 @@ class PlatformTypeDeclaration(
 
   override val typeNameSegment: TypeNameSegment = typeInfo.typeName
 
-  override def extendsTypeRef: TypeRef =
+  override lazy val extendsTypeRef: TypeRef =
     getSuperClassTypeInfo
       .flatMap(_.asOptionalUnresolved)
       .flatMap(PlatformTypeDeclaration.get(module, _))
       .orNull
 
-  override def implementsTypeList: TypeList = {
+  override lazy val implementsTypeList: TypeList = {
     val interfaces = cls.getInterfaces
     if (interfaces.nonEmpty) {
       val tl  = TypeList()
@@ -94,14 +94,14 @@ class PlatformTypeDeclaration(
       null
   }
 
-  override def modifiers: ArraySeq[Modifier] =
+  override lazy val modifiers: ArraySeq[Modifier] =
     PlatformModifiers.typeModifiers(cls.getModifiers, nature)
 
-  override def annotations: ArraySeq[Annotation] = emptyAnnotations
+  override lazy val annotations: ArraySeq[Annotation] = emptyAnnotations
 
-  override def initializers: ArraySeq[Initializer] = emptyInitializers
+  override lazy val initializers: ArraySeq[Initializer] = emptyInitializers
 
-  override def innerTypes: ArraySeq[PlatformTypeDeclaration] = {
+  override lazy val innerTypes: ArraySeq[PlatformTypeDeclaration] = {
     if (nature == CLASS_NATURE) {
       ArraySeq.unsafeWrapArray(
         cls.getClasses.map(nested => new PlatformTypeDeclaration(module, nested, Some(this)))
@@ -111,13 +111,13 @@ class PlatformTypeDeclaration(
     }
   }
 
-  override def constructors: ArraySeq[ConstructorDeclaration] =
+  override lazy val constructors: ArraySeq[ConstructorDeclaration] =
     ArraySeq
       .unsafeWrapArray(cls.getConstructors)
       .filterNot(_.isSynthetic)
       .map(c => toConstructorDeclaration(c, this))
 
-  override def methods: ArraySeq[MethodDeclaration] = {
+  override lazy val methods: ArraySeq[MethodDeclaration] = {
     nature match {
       case ENUM_NATURE => ArraySeq.empty //TODO
       case _           => getMethods
@@ -126,7 +126,7 @@ class PlatformTypeDeclaration(
 
   override def properties: ArraySeq[PropertyDeclaration] = emptyProperties
 
-  override def fields: ArraySeq[FieldDeclaration] = getFields
+  override lazy val fields: ArraySeq[FieldDeclaration] = getFields
 
   override def toString: String = {
     getFullName
