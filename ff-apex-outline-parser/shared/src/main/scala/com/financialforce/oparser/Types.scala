@@ -31,6 +31,25 @@ object StringUtils {
     a.map(_.toString).mkString(separator)
   }
 
+  def asAnnotationAndModifierString(a: ArraySeq[Annotation], m: ArraySeq[Modifier]): String = {
+    val mod        = if (m.nonEmpty) s"${m.mkString(" ")}" else ""
+    val annotation = if (a.nonEmpty) s"${a.mkString(" ")} " else ""
+    s"$annotation$mod"
+  }
+
+  def asSignatureString(a: Signature): String = {
+    s"${asAnnotationAndModifierString(a.annotations, a.modifiers)} ${a.typeRef.getFullName} ${a.id}"
+  }
+
+  def asMethodSignatureString(a: MethodDeclaration): String = {
+    val withVoid = if (a.typeRef.isEmpty) Tokens.VoidStr else a.typeRef.get.getFullName
+    s"${asAnnotationAndModifierString(a.annotations, a.modifiers)} $withVoid ${a.id}(${a.formalParameterList})"
+  }
+
+  def asConstructorSignatureString(a: ConstructorDeclaration): String = {
+    s"${asAnnotationAndModifierString(a.annotations, a.modifiers)} ${a.qName}(${a.formalParameterList})"
+  }
+
 }
 
 trait IdAssignable {
@@ -183,7 +202,10 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
 
   override def toString: String = {
     import StringUtils._
-    s"${asString(annotations)} ${asString(modifiers)} ${asString(typeRef)} ${asString(id)}"
+    s"${asAnnotationAndModifierString(
+      ArraySeq.unsafeWrapArray(annotations.toArray),
+      ArraySeq.unsafeWrapArray(modifiers.toArray)
+    )}${asString(typeRef)} ${asString(id)}"
   }
 
   override def equals(obj: Any): Boolean = {
@@ -207,7 +229,7 @@ class FormalParameterList extends FormalParameterAssignable {
 
   override def toString: String = {
     import StringUtils._
-    asString(formalParameters, ",")
+    asString(formalParameters, ", ")
   }
 
   override def equals(obj: Any): Boolean = {
@@ -247,7 +269,7 @@ case class ConstructorDeclaration(
 
   override def toString: String = {
     import StringUtils._
-    s"${qName.location} ${asString(annotations)} ${asString(modifiers)} $qName $formalParameterList"
+    s"${qName.location} ${asAnnotationAndModifierString(annotations, modifiers)} $qName $formalParameterList"
   }
 }
 
@@ -279,7 +301,7 @@ case class MethodDeclaration(
 
   override def toString: String = {
     import StringUtils._
-    s"${id.id.location} ${asString(annotations)} ${asString(modifiers)} $typeRef $id $formalParameterList"
+    s"${id.id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typeRef $id $formalParameterList"
   }
 }
 
@@ -332,7 +354,7 @@ class PropertyDeclaration(
 
   override def toString: String = {
     import StringUtils._
-    s"${id.id.location} ${asString(annotations)} ${asString(modifiers)} $typeRef $id"
+    s"${id.id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typeRef $id"
   }
 
   override def add(pb: PropertyBlock): Unit = propertyBlocks.append(pb)
@@ -364,7 +386,7 @@ case class FieldDeclaration(
 
   override def toString: String = {
     import StringUtils._
-    s"${id.id.location} ${asString(annotations)} ${asString(modifiers)} $typeRef $id"
+    s"${id.id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typeRef $id"
   }
 }
 
