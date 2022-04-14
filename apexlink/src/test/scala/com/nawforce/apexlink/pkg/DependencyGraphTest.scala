@@ -31,6 +31,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             32,
             "class",
             3,
+            isEntryPoint = false,
             Array(TypeIdentifier(None, TypeName(Name("B")))),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -40,6 +41,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             2,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -49,6 +51,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             1,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("D"))))
@@ -88,6 +91,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             32,
             "class",
             3,
+            isEntryPoint = false,
             Array(TypeIdentifier(None, TypeName(Name("B")))),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -97,6 +101,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             2,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -106,6 +111,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             1,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("D"))))
@@ -115,6 +121,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             17,
             "class",
             0,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array()
@@ -155,6 +162,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             32,
             "class",
             2,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -164,6 +172,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             1,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("D"))))
@@ -173,6 +182,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             17,
             "class",
             0,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array()

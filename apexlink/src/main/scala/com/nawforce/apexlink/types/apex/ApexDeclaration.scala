@@ -24,7 +24,7 @@ import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
-import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE, Nature}
+import com.nawforce.pkgforce.parsers.Nature
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, Location, PathLocation}
 
 import scala.collection.immutable.ArraySeq
@@ -228,11 +228,11 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   }
 
   lazy val isAsync: Boolean = {
-    Seq(
+    !isAbstract && Seq(
       TypeName(Name("Batchable"), Nil, Some(TypeNames.Database)),
       TypeName(Name("Schedulable"), Nil, Some(TypeNames.System)),
       TypeName(Name("Queueable"), Nil, Some(TypeNames.System))
-    ).exists(t => extendsOrImplements(t))
+    ).exists(tn => implements(tn))
   }
 
   override lazy val isEntryPoint: Boolean = {
