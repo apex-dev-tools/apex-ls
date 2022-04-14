@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ApexMethodAdapter implements ApexMethod {
+    final private static NameApexTypeId VOID_APEX_TYPE_ID = new NameApexTypeId("void", "", false);
+
     final private MethodDeclaration md;
     final private ApexTypeAdapter definingType;
 
@@ -40,6 +42,7 @@ public class ApexMethodAdapter implements ApexMethod {
 
     @Override
     public ApexTypeId getReturnType() {
+        if (md.typeRef().isEmpty()) return VOID_APEX_TYPE_ID;
         return NameApexTypeId.apply(md.typeRef());
     }
 
