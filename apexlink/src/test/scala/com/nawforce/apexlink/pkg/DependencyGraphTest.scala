@@ -268,22 +268,17 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
   }
 
   test("Detects trigger entry points") {
-    FileSystemHelper.run(
-      Map(
-        "A.cls"           -> "public class A { Entry__c t; }",
-        "Entry__c.object" -> customObject("Entry", Seq()),
-        "T.trigger"       -> "trigger T on Entry__c (before insert) {}"
-      )
-    ) { root: PathLike =>
-      val org = createOrg(root)
-      val result = org.getDependencyGraph(
-        Array(TypeIdentifier(None, TypeName(Name("A")))),
-        1,
-        apexOnly = true,
-        Array()
-      )
-      assert(result.nodeData.length == 2)
-      assert(result.nodeData.forall(_.isEntryPoint))
+    FileSystemHelper.run(Map("T.trigger" -> "trigger T on Account (before insert) {}")) {
+      root: PathLike =>
+        val org = createOrg(root)
+        val result = org.getDependencyGraph(
+          Array(TypeIdentifier(None, TypeName(Name("__sfdc_trigger/T")))),
+          1,
+          apexOnly = true,
+          Array()
+        )
+        assert(result.nodeData.length == 1)
+        assert(result.nodeData.forall(_.isEntryPoint))
     }
   }
 }
