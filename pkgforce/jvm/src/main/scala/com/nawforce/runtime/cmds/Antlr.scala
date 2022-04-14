@@ -2,12 +2,10 @@ package com.nawforce.runtime.cmds
 
 import com.financialforce.oparser._
 import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
-import com.nawforce.runtime.workspace.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration,
-  TypeDeclaration
-}
+import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
+import com.nawforce.runtime.parsers.CollectingErrorListener
+import com.nawforce.runtime.workspace.{ClassTypeDeclaration, EnumTypeDeclaration, InterfaceTypeDeclaration, TypeDeclaration}
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 
 import java.io.ByteArrayInputStream
@@ -16,7 +14,7 @@ import scala.jdk.CollectionConverters._
 
 object Antlr {
 
-  def parse(source: Array[Byte]): Option[TypeDeclaration] = {
+  def parse(path: PathLike, source: Array[Byte]): Option[TypeDeclaration] = {
     val cis: CaseInsensitiveInputStream = new CaseInsensitiveInputStream(
       CharStreams.fromStream(new ByteArrayInputStream(source, 0, source.length))
     )
@@ -24,7 +22,14 @@ object Antlr {
     tokenStream.fill()
 
     val parser = new ApexParser(tokenStream)
+    val listener = new CollectingErrorListener(path)
+    parser.removeErrorListeners()
+    parser.addErrorListener(listener)
+
     val tree   = parser.compilationUnit()
+
+    if (listener.issues.nonEmpty)
+      throw new Exception(listener.issues.head.toString)
 
     if (Option(tree.typeDeclaration().classDeclaration()).isDefined) {
       val ctd = new ClassTypeDeclaration(null, "", null)
@@ -88,7 +93,7 @@ object Antlr {
   }
 
   def toId(ctx: ApexParser.IdContext): Id = {
-    Id(IdToken(ctx.children.asScala.mkString(" "), Location.default))
+    Id(IdToken(ctx.children.asScala.mkString(" "), location(ctx)))
   }
 
   def toId(text: String): Id = {
@@ -102,7 +107,10 @@ object Antlr {
   def antlrAnnotation(a: AnnotationAssignable, ctx: ApexParser.AnnotationContext): Unit = {
     val qName = new QualifiedName
     ctx.qualifiedName().id().asScala.foreach(id => antlrId(qName, id))
-    a.add(Annotation(qName, None))
+    val args = Option(ctx.elementValue()).map(_.getText)
+      .orElse(Option(ctx.elementValuePairs()).map(_.getText))
+      .orElse(if (ctx.getText.endsWith("()")) Some("") else None)
+    a.add(Annotation(qName, args))
   }
 
   def antlrTypeList(res: TypeListAssignable, ctx: ApexParser.TypeListContext): Unit = {
@@ -436,5 +444,16 @@ object Antlr {
           )
         ctd._fields.append(field)
       }))
+  }
+
+  def location(context: ParserRuleContext): Location = {
+    Location(
+      context.start.getLine,
+      context.start.getCharPositionInLine,
+      context.start.getStartIndex,
+      context.stop.getLine,
+      context.stop.getCharPositionInLine + context.stop.getText.length,
+      context.stop.getStopIndex
+    )
   }
 }

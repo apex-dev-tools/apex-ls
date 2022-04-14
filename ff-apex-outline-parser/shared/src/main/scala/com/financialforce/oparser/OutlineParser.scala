@@ -209,6 +209,8 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               }
               (true, None)
             case Tokens.RBraceStr =>
+              if (!tokens.isEmpty())
+                throw new Exception("Unexpected '}'")
               (false, None)
             case _ =>
               tokens.append(t); (true, None)
