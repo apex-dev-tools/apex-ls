@@ -197,4 +197,93 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
       )
     }
   }
+
+  test("Detects global entry points") {
+    FileSystemHelper.run(
+      Map(
+        "A.cls" -> "global class A { }",
+        "B.cls" ->
+          """public class B {
+            | @AuraEnabled(cacheable=true)
+            | public static Account getAccount() {}
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      val result = org.getDependencyGraph(
+        Array(TypeIdentifier(None, TypeName(Name("A"))), TypeIdentifier(None, TypeName(Name("B")))),
+        1,
+        apexOnly = true,
+        Array()
+      )
+      assert(result.nodeData.length == 2)
+      assert(result.nodeData.forall(_.isEntryPoint))
+    }
+  }
+
+  test("Detects page controller entry points") {
+    FileSystemHelper.run(
+      Map("C.cls" -> "public class C {}", "VF.page" -> "<apex:page controller=\"C\"></apex:page>")
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      val result = org.getDependencyGraph(
+        Array(TypeIdentifier(None, TypeName(Name("C")))),
+        1,
+        apexOnly = true,
+        Array()
+      )
+      assert(result.nodeData.length == 1)
+      assert(result.nodeData.forall(_.isEntryPoint))
+    }
+  }
+
+  test("Detects async entry points") {
+    FileSystemHelper.run(
+      Map(
+        "D.cls" -> "public class D implements Queueable {}",
+        "E.cls" -> "abstract class E implements Database.Batchable {}",
+        "F.cls" -> "public class F extends E {}"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      val result = org.getDependencyGraph(
+        Array(
+          TypeIdentifier(None, TypeName(Name("D"))),
+          TypeIdentifier(None, TypeName(Name("E"))),
+          TypeIdentifier(None, TypeName(Name("F")))
+        ),
+        1,
+        apexOnly = true,
+        Array()
+      )
+      assert(result.nodeData.length == 3)
+      assert(
+        result.nodeData.map(d => (d.identifier.toString(), d.isEntryPoint)) sameElements Array(
+          ("D", true),
+          ("E", false),
+          ("F", true)
+        )
+      )
+    }
+  }
+
+  test("Detects trigger entry points") {
+    FileSystemHelper.run(
+      Map(
+        "A.cls"           -> "public class A { Entry__c t; }",
+        "Entry__c.object" -> customObject("Entry", Seq()),
+        "T.trigger"       -> "trigger T on Entry__c (before insert) {}"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      val result = org.getDependencyGraph(
+        Array(TypeIdentifier(None, TypeName(Name("A")))),
+        1,
+        apexOnly = true,
+        Array()
+      )
+      assert(result.nodeData.length == 2)
+      assert(result.nodeData.forall(_.isEntryPoint))
+    }
+  }
 }
