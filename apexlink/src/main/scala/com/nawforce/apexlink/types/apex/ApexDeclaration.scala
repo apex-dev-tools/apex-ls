@@ -23,7 +23,7 @@ import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.Nature
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, Location, PathLocation}
 
@@ -229,10 +229,14 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
 
   lazy val isAsync: Boolean = {
     !isAbstract && Seq(
-      TypeName(Name("Batchable"), Nil, Some(TypeNames.Database)),
-      TypeName(Name("Schedulable"), Nil, Some(TypeNames.System)),
-      TypeName(Name("Queueable"), Nil, Some(TypeNames.System))
-    ).exists(tn => implements(tn))
+      TypeName(Seq(Names.Batchable, Names.Database)),
+      TypeName(Names.Schedulable),
+      TypeName(Seq(Names.Schedulable, Names.System)),
+      TypeName(Names.Queueable),
+      TypeName(Seq(Names.Queueable, Names.System)),
+      TypeName(Names.Finalizer),
+      TypeName(Seq(Names.Finalizer, Names.System))
+    ).exists(implements)
   }
 
   override lazy val isEntryPoint: Boolean = {
