@@ -135,6 +135,8 @@ class PlatformTypeDeclaration(
     s"$ns${typeInfo.typeName.toString}"
   }
 
+  //We have to convert typeInfo into a TypeName so we can take advantage of the custom handling of toString
+  //This is so types like Internal.Object$ can be displayed as Object instead
   override def toString: String = {
     val args =
       if (typeInfo.args.nonEmpty) typeInfo.args.map(genericToType).mkString("<", ",", ">")
