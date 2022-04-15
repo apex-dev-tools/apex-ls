@@ -36,7 +36,9 @@ object OutlineParserFullDeclaration {
       OutlineParser.parse(cls.path.toString, contentsString, ModuleClassFactory, null)
     val rv =
       if (!success) {
-        LoggerOps.info(s"FAILED to parse ${cls.path.toString} $reason")
+        LoggerOps.info(
+          s"FAILED to parse ${cls.path.toString}: ${reason.getOrElse("Unknown reason")}"
+        )
         None
       } else {
         td.get match {

@@ -376,7 +376,7 @@ object Compare {
       throw new Exception(s"Different properties ${first._properties} != ${second._properties}")
     }
 
-    if (first._fields.toSet != second._fields.toSet) {
+    if (first._fields != second._fields) {
       throw new Exception(s"Different fields ${first._fields} != ${second._fields}")
     }
 
@@ -438,7 +438,7 @@ object Compare {
       throw new Exception(s"Different or empty enum id ${first.id} != ${second.id}")
     }
 
-    if (first.fields.toSet != second.fields.toSet) {
+    if (first.fields != second.fields) {
       throw new Exception(s"Different constants ${first.fields} != ${second.fields}")
     }
   }

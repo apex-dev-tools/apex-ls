@@ -4,6 +4,7 @@
 package com.nawforce.runtime.cmds
 
 import com.financialforce.oparser.OutlineParser
+import com.nawforce.pkgforce.path.PathFactory
 import com.nawforce.runtime.workspace.{
   ClassTypeDeclaration,
   Compare,
@@ -189,7 +190,7 @@ object Parser {
       val (success, reason, decl) =
         OutlineParser.parse(path.toString, contentsString, ModuleClassFactory, null)
       if (!success)
-        println(s"Error parsing $path ${reason.get}")
+        println(s"outline-parser failed: $path ${reason.get}")
       addParseTime(System.currentTimeMillis() - start)
 
       if (display) {
@@ -200,13 +201,19 @@ object Parser {
     } else None
 
     val antlrType = if (test || onlyANTLR) {
-      start = System.currentTimeMillis()
-      val decl = Antlr.parse(contentsBytes)
-      addAntlrTime(System.currentTimeMillis() - start)
-      decl
+      try {
+        start = System.currentTimeMillis()
+        val decl = Antlr.parse(PathFactory(path.toString), contentsBytes)
+        addAntlrTime(System.currentTimeMillis() - start)
+        decl
+      } catch {
+        case ex: Exception =>
+          println(s"apex-parser failed: $path $ex")
+          None
+      }
     } else None
 
-    if (test) {
+    if (test && td.nonEmpty && antlrType.nonEmpty) {
       td.get match {
         case cls: ClassTypeDeclaration =>
           Compare.compareClassTypeDeclarations(
