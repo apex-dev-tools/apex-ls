@@ -19,7 +19,7 @@ import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration}
 import com.nawforce.apexlink.types.core.{DependencyHolder, TypeDeclaration}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier}
-import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE, TRIGGER_NATURE}
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
