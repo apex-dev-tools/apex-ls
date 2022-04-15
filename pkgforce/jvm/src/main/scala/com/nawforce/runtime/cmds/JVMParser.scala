@@ -5,7 +5,13 @@ package com.nawforce.runtime.cmds
 
 import com.financialforce.oparser.OutlineParser
 import com.nawforce.pkgforce.path.PathFactory
-import com.nawforce.runtime.workspace.{ClassTypeDeclaration, Compare, EnumTypeDeclaration, InterfaceTypeDeclaration, ModuleClassFactory}
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  Compare,
+  EnumTypeDeclaration,
+  InterfaceTypeDeclaration,
+  ModuleClassFactory
+}
 
 import java.nio.file.{Files, Path, Paths}
 import java.util.concurrent.atomic.AtomicLong

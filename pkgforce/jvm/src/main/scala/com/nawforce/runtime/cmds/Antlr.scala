@@ -5,7 +5,12 @@ import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStrea
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
 import com.nawforce.runtime.parsers.CollectingErrorListener
-import com.nawforce.runtime.workspace.{ClassTypeDeclaration, EnumTypeDeclaration, InterfaceTypeDeclaration, TypeDeclaration}
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  EnumTypeDeclaration,
+  InterfaceTypeDeclaration,
+  TypeDeclaration
+}
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 
 import java.io.ByteArrayInputStream
@@ -21,12 +26,12 @@ object Antlr {
     val tokenStream = new CommonTokenStream(new ApexLexer(cis))
     tokenStream.fill()
 
-    val parser = new ApexParser(tokenStream)
+    val parser   = new ApexParser(tokenStream)
     val listener = new CollectingErrorListener(path)
     parser.removeErrorListeners()
     parser.addErrorListener(listener)
 
-    val tree   = parser.compilationUnit()
+    val tree = parser.compilationUnit()
 
     if (listener.issues.nonEmpty)
       throw new Exception(listener.issues.head.toString)
@@ -107,7 +112,8 @@ object Antlr {
   def antlrAnnotation(a: AnnotationAssignable, ctx: ApexParser.AnnotationContext): Unit = {
     val qName = new QualifiedName
     ctx.qualifiedName().id().asScala.foreach(id => antlrId(qName, id))
-    val args = Option(ctx.elementValue()).map(_.getText)
+    val args = Option(ctx.elementValue())
+      .map(_.getText)
       .orElse(Option(ctx.elementValuePairs()).map(_.getText))
       .orElse(if (ctx.getText.endsWith("()")) Some("") else None)
     a.add(Annotation(qName, args))
