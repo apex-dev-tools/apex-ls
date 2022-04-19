@@ -685,6 +685,18 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Local var not unused when in upsert stmt") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { {Account a; upsert new List<Account>{a}; } }",
+        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
   test("Instance field not unused when bound in SOQL literal") {
     FileSystemHelper.run(
       Map(
