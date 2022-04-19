@@ -139,6 +139,22 @@ class IPMTypeResolutionTest extends AnyFunSuite {
     }
   }
 
+  test("Resolves Internal Object param type") {
+    val sources =
+      Map("Dummy.cls" -> "public class Dummy { private Map<List<Object>,String> test;}")
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      val dummy = getType("Dummy", index)
+
+      val dummyField = dummy.get.fields.head
+      assert(dummyField.typeRef.isInstanceOf[PlatformTypeDeclaration])
+      assert(
+        dummyField.typeRef.getFullName == "System.Map<System.List<Internal.Object$>,System.String>"
+      )
+      assert(dummyField.typeRef.toString == "System.Map<System.List<Object>,System.String>")
+    }
+  }
+
   test("Ambiguous type resolve") {
     val sources =
       Map(

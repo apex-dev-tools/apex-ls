@@ -139,7 +139,8 @@ class PlatformTypeDeclaration(
   //This is so types like Internal.Object$ can be displayed as Object instead
   override def toString: String = {
     val args =
-      if (typeInfo.args.nonEmpty) typeInfo.args.map(genericToType).mkString("<", ",", ">")
+      if (typeNameSegment.getArguments.nonEmpty)
+        typeNameSegment.getArguments.map(_.toString).mkString("<", ",", ">")
       else ""
     var rawNames =
       if (enclosing.nonEmpty)

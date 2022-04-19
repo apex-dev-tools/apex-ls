@@ -4,7 +4,7 @@
 
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
+import com.financialforce.oparser.{ITypeDeclaration, TypeNameSegment, TypeRef, UnresolvedTypeRef}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -22,20 +22,18 @@ object TypeFinder {
     typeRef: TypeRef,
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
-    val typeNames = getUnresolvedTypeNames(typeRef)
-
-    findScalarType(typeNames)
-      .orElse(
-        findLocalTypeFor(baseModule, typeNames, from)
-          .orElse(getType(baseModule, typeNames, from))
-      )
-  }
-
-  private def getUnresolvedTypeNames(typeRef: TypeRef): ArrayBuffer[TypeNameSegment] = {
     typeRef match {
-      case ur: UnresolvedTypeRef => ur.typeNameSegments
-      case _                     => ArrayBuffer.empty
+      case declaration: IModuleTypeDeclaration => Some(declaration)
+      case unresolved: UnresolvedTypeRef =>
+        val typeNames = unresolved.typeNameSegments
+        findScalarType(typeNames)
+          .orElse(
+            findLocalTypeFor(baseModule, typeNames, from)
+              .orElse(getType(baseModule, typeNames, from))
+          )
+      case _ => None
     }
+
   }
 
   private def getType(
@@ -44,8 +42,6 @@ object TypeFinder {
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
     //Pre resolve relative type arguments
-    //TODO: check efficiency of this, we are resolving all the arguments to just to turn into a string and resolve
-    // it again in findExactTypeId
     typeNames.foreach(segment => {
       val args = segment.getArguments
       val newArgs = args.flatMap {
@@ -58,10 +54,13 @@ object TypeFinder {
     })
 
     // If we have a ns, try it first before falling back to without for injected types that carry their own ns
-    val fullName = asFullName(typeNames)
+    val unresolved = UnresolvedTypeRef(typeNames)
     from.module.namespace
-      .flatMap(ns => baseModule.findExactTypeId(ns.value + "." + fullName))
-      .orElse(baseModule.findExactTypeId(fullName))
+      .flatMap(
+        ns => baseModule.findExactTypeId(ns.value + "." + unresolved.getFullName, unresolved)
+      )
+      .orElse(baseModule.findExactTypeId(unresolved.getFullName, unresolved))
+      .orElse(baseModule.findExactTypeId(unresolved.getFullName))
   }
 
   private def findScalarType(
@@ -147,8 +146,8 @@ object TypeFinder {
           return findLocalTypeFor(baseModule, typeNames, resolved)
         }
         None
-      case _ =>
-        val superTypeTypeNames = getUnresolvedTypeNames(from.extendsTypeRef)
+      case unresolvedTypeRef: UnresolvedTypeRef =>
+        val superTypeTypeNames = unresolvedTypeRef.typeNameSegments
         if (typeNames == superTypeTypeNames)
           return None
 
