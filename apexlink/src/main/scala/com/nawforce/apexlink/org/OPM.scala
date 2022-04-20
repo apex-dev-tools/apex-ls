@@ -13,7 +13,7 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.api.{BuildInfo, Org, Package, ServerOps, TypeSummary}
+import com.nawforce.apexlink.api.{AvailableParser, BuildInfo, Org, Package, ServerOps, TypeSummary}
 import com.nawforce.apexlink.cst.CompilationUnit
 import com.nawforce.apexlink.deps.{DownWalker, TransitiveCollector}
 import com.nawforce.apexlink.finding.TypeFinder
@@ -85,6 +85,13 @@ object OPM extends TriHierarchy {
     /** The Org flusher. */
     private val flusher =
       if (autoFlush) new CacheFlusher(this, parsedCache) else new Flusher(this, parsedCache)
+
+    /* Parser type to use for org */
+    lazy val getParserType: AvailableParser = {
+      val parserType = ServerOps.getCurrentParser
+      LoggerOps.info(s"Using $parserType")
+      parserType
+    }
 
     /** Packages in org in deploy order, the last entry is the unmanaged package identified by namespace = None */
     override val packages: ArraySeq[PackageImpl] = {
@@ -632,6 +639,10 @@ object OPM extends TriHierarchy {
             dependencies.put(td.typeName.toString, depends.map(_.typeName.toString).toArray)
         case _ => ()
       }
+    }
+
+    override def toString: String = {
+      s"Module(${index.path}}"
     }
   }
 }

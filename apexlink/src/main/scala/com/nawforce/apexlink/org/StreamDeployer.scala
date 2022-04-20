@@ -134,19 +134,18 @@ class StreamDeployer(
       docs.filterNot(doc => types.contains(TypeName(doc.name).withNamespace(module.namespace)))
     LoggerOps.debug(s"${missingClasses.length} of ${docs.length} classes not available from cache")
 
-    if (ServerOps.getCurrentParser == ANTLRParser) {
-      parseAndValidateClasses(missingClasses)
-    } else {
-      val failures = loadClassesWithOutlineParser(ServerOps.getCurrentParser, missingClasses)
-      if (failures.nonEmpty)
-        parseAndValidateClasses(failures)
+    module.pkg.org.getParserType match {
+      case ANTLRParser =>
+        parseAndValidateClasses(missingClasses)
+      case OutlineParserSingleThreaded | OutlineParserMultithreaded =>
+        val failures = loadClassesWithOutlineParser(ServerOps.getCurrentParser, missingClasses)
+        if (failures.nonEmpty)
+          parseAndValidateClasses(failures)
     }
   }
 
   /** Parse a collection of Apex classes, insert them and validate them. */
   private def parseAndValidateClasses(docs: ArraySeq[ClassDocument]): Unit = {
-    LoggerOps.info("Using ANTLR parser")
-
     LoggerOps.debugTime(s"Parsed ${docs.length} classes", docs.nonEmpty) {
       val classTypes = docs
         .flatMap(
@@ -249,13 +248,6 @@ class StreamDeployer(
     selectedParser: AvailableParser,
     classes: ArraySeq[ClassDocument]
   ): ArraySeq[ClassDocument] = {
-    selectedParser match {
-      case OutlineParserMultithreaded | OutlineParserSingleThreaded =>
-        LoggerOps.info(s"Using $selectedParser")
-      case _ =>
-        LoggerOps.info(s"Unsupported parser $selectedParser")
-        return classes
-    }
 
     val localAccum      = new ConcurrentHashMap[TypeName, FullDeclaration]()
     val failedDocuments = new ConcurrentLinkedQueue[ClassDocument]()
@@ -267,8 +259,8 @@ class StreamDeployer(
       clsItr.foreach(cls => {
         cls.path.readSourceData() match {
           case Left(error) =>
-            LoggerOps.info(s"Failed reading source ${error}")
-          case Right(srcData) => {
+            LoggerOps.info(s"Failed reading source $error")
+          case Right(srcData) =>
             LoggerOps.debugTime(s"Parsed ${cls.path}") {
               val td = OutlineParserFullDeclaration
                 .toFullDeclaration(cls, srcData, module)
@@ -277,7 +269,6 @@ class StreamDeployer(
                 })
               if (td.isEmpty) failedDocuments.add(cls)
             }
-          }
         }
       })
       localAccum.entrySet.forEach(kv => {
