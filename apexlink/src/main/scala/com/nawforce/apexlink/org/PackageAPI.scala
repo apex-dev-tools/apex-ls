@@ -318,7 +318,9 @@ trait PackageAPI extends Package {
       })
 
     // Then batched invalidation
-    reValidate(references.toSet ++ getTypesWithMissingIssues.toSet)
+    val handled     = requests.keySet
+    val withMissing = org.issues.getMissing.filterNot(handled.contains).flatMap(findTypeIdOfPath)
+    reValidate(references.toSet ++ withMissing)
 
     // Close any open plugins
     org.pluginsManager.closePlugins()
@@ -351,11 +353,6 @@ trait PackageAPI extends Package {
       td.preReValidate()
     })
     tds.foreach(_.validate())
-  }
-
-  private def getTypesWithMissingIssues: Seq[TypeId] = {
-    org.issues.getMissing
-      .flatMap(path => findTypeIdOfPath(path))
   }
 
   private def findTypeIdOfPath(path: PathLike): Option[TypeId] = {
