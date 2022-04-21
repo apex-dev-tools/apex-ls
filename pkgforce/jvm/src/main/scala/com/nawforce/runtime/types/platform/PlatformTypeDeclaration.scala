@@ -140,7 +140,11 @@ class PlatformTypeDeclaration(
   override def toString: String = {
     val args =
       if (typeNameSegment.getArguments.nonEmpty)
-        typeNameSegment.getArguments.map(_.toString).mkString("<", ",", ">")
+        typeNameSegment.getArguments
+          .map(
+            arg => if (arg.isInstanceOf[PlatformTypeDeclaration]) arg.toString else arg.getFullName
+          )
+          .mkString("<", ",", ">")
       else ""
     var rawNames =
       if (enclosing.nonEmpty)
