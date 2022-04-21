@@ -233,7 +233,7 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       TypeName(Seq(Names.Schedulable, Names.System)),
       TypeName(Seq(Names.Queueable, Names.System)),
       TypeName(Seq(Names.Finalizer, Names.System))
-    ).exists(implements)
+    ).exists(implements(_, ignoreGenerics = true))
   }
 
   override lazy val isEntryPoint: Boolean = {
