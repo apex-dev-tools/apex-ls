@@ -230,11 +230,8 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   lazy val isAsync: Boolean = {
     !isAbstract && Seq(
       TypeName(Seq(Names.Batchable, Names.Database)),
-      TypeName(Names.Schedulable),
       TypeName(Seq(Names.Schedulable, Names.System)),
-      TypeName(Names.Queueable),
       TypeName(Seq(Names.Queueable, Names.System)),
-      TypeName(Names.Finalizer),
       TypeName(Seq(Names.Finalizer, Names.System))
     ).exists(implements)
   }
