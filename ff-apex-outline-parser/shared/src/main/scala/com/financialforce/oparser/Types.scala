@@ -201,7 +201,7 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
     s"${asAnnotationAndModifierString(
       ArraySeq.unsafeWrapArray(annotations.toArray),
       ArraySeq.unsafeWrapArray(modifiers.toArray)
-    )}${asString(typeRef)} ${asString(id)}"
+    )}${typeRef.get.getFullName} ${asString(id)}"
   }
 
   override def equals(obj: Any): Boolean = {
@@ -301,7 +301,11 @@ case class MethodDeclaration(
 
   override def toString: String = {
     import StringUtils._
-    s"${id.id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typeRef $id $formalParameterList"
+    val typRefString = typeRef match {
+      case Some(tr) => tr.getFullName
+      case _        => ""
+    }
+    s"${id.id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typRefString $id $formalParameterList"
   }
 }
 

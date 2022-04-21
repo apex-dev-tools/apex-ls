@@ -60,7 +60,7 @@ class SFParserTest extends AnyFunSuite {
     val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
     val sfp        = SFParser(null, path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
-    comparator.subsetOf(sfp)
+    comparator.unresolvedSubsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
 
@@ -79,7 +79,7 @@ class SFParserTest extends AnyFunSuite {
     val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
     val sfp        = SFParser(null, path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
-    comparator.subsetOf(sfp)
+    comparator.unresolvedSubsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
@@ -98,7 +98,7 @@ class SFParserTest extends AnyFunSuite {
     val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
     val sfp        = SFParser(null, path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
-    comparator.subsetOf(sfp)
+    comparator.unresolvedSubsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
@@ -118,7 +118,7 @@ class SFParserTest extends AnyFunSuite {
     val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
     val sfp        = SFParser(null, path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
-    comparator.subsetOf(sfp)
+    comparator.unresolvedSubsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
@@ -142,7 +142,7 @@ class SFParserTest extends AnyFunSuite {
     val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
     val sfp        = SFParser(null, path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
-    comparator.subsetOf(sfp)
+    comparator.unresolvedSubsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }
@@ -166,7 +166,7 @@ class SFParserTest extends AnyFunSuite {
     val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
     val sfp        = SFParser(null, path.basename, content).parse._1.head
     val comparator = SubsetComparator(op)
-    comparator.subsetOf(sfp)
+    comparator.unresolvedSubsetOf(sfp)
 
     assert(comparator.getWarnings.isEmpty, "Warnings are not empty")
   }

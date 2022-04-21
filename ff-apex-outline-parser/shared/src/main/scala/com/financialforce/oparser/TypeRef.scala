@@ -9,6 +9,9 @@ import scala.collection.mutable.ArrayBuffer
 
 trait TypeRef {
   def getFullName: String
+  override def toString: String = {
+    getFullName
+  }
 }
 
 final case class UnresolvedTypeRef(
