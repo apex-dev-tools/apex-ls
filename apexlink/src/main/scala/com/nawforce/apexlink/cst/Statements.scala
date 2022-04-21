@@ -535,10 +535,10 @@ final case class UpsertStatement(expression: Expression, field: Option[Qualified
 object UpsertStatement {
   def construct(statement: UpsertStatementContext): Option[UpsertStatement] = {
     val expression = Expression.construct(statement.expression())
-    CodeParser
+    val qualifiedName = CodeParser
       .toScala(statement.qualifiedName())
-      .map(qualifiedName => QualifiedName.construct(qualifiedName))
-      .map(qualifiedName => UpsertStatement(expression, qualifiedName))
+      .flatMap(qualifiedName => QualifiedName.construct(qualifiedName))
+    Some(UpsertStatement(expression, qualifiedName))
   }
 }
 

@@ -434,7 +434,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       modifierResults,
       RelativeTypeName(
         typeContext,
-        TypeReference.construct(md.typeRef.asInstanceOf[UnresolvedTypeRef])
+        TypeReference.construct(md.typeRef.asInstanceOf[Option[UnresolvedTypeRef]])
       ),
       OutlineParserId.construct(md.id, source.path),
       parameters,
@@ -442,9 +442,17 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     )
 
     val location = OPLocation(
-      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.id.location.startLine,
       md.typeRef
-        .asInstanceOf[UnresolvedTypeRef]
+        .asInstanceOf[Option[UnresolvedTypeRef]]
+        .get
+        .typeNameSegments(0)
+        .id
+        .id
+        .location
+        .startLine,
+      md.typeRef
+        .asInstanceOf[Option[UnresolvedTypeRef]]
+        .get
         .typeNameSegments(0)
         .id
         .id
@@ -480,7 +488,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       modifierResults,
       RelativeTypeName(
         typeContext,
-        TypeReference.construct(md.typeRef.asInstanceOf[UnresolvedTypeRef])
+        TypeReference.construct(md.typeRef.asInstanceOf[Option[UnresolvedTypeRef]])
       ),
       OutlineParserId.construct(md.id, source.path),
       parameters,
@@ -488,9 +496,17 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     )
 
     val location = OPLocation(
-      md.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.id.location.startLine,
       md.typeRef
-        .asInstanceOf[UnresolvedTypeRef]
+        .asInstanceOf[Option[UnresolvedTypeRef]]
+        .get
+        .typeNameSegments(0)
+        .id
+        .id
+        .location
+        .startLine,
+      md.typeRef
+        .asInstanceOf[Option[UnresolvedTypeRef]]
+        .get
         .typeNameSegments(0)
         .id
         .id
@@ -703,7 +719,7 @@ private[opcst] object OutlineParserFormalParameter {
 
     val fp = FormalParameter(
       parameterModifiers(path, src.id.get, src.annotations, src.modifiers),
-      RelativeTypeName(typeContext, TypeReference.construct(src.typeRef.get)),
+      RelativeTypeName(typeContext, TypeReference.construct(src.typeRef)),
       OutlineParserId.construct(src.id, source.path)
     )
     Some(fp)

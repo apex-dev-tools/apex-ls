@@ -4,7 +4,8 @@
 
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.FieldDeclaration
+import com.financialforce.oparser.StringUtils.asMethodSignatureString
+import com.financialforce.oparser.{FieldDeclaration, UnresolvedTypeRef}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
@@ -132,9 +133,25 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val dummy = getType("Dummy", index)
 
       val dummyMethod = dummy.get.methods.head
-      assert(dummyMethod.typeRef.isInstanceOf[PlatformTypeDeclaration])
-      assert(dummyMethod.typeRef.getFullName == "Internal.Object$")
-      assert(dummyMethod.typeRef.toString == "Object")
+      assert(dummyMethod.typeRef.get.isInstanceOf[PlatformTypeDeclaration])
+      assert(dummyMethod.typeRef.get.getFullName == "Internal.Object$")
+      assert(dummyMethod.typeRef.get.toString == "Object")
+    }
+  }
+
+  test("Resolves Internal Object param type") {
+    val sources =
+      Map("Dummy.cls" -> "public class Dummy { private Map<List<Object>,String> test;}")
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      val dummy = getType("Dummy", index)
+
+      val dummyField = dummy.get.fields.head
+      assert(dummyField.typeRef.isInstanceOf[PlatformTypeDeclaration])
+      assert(
+        dummyField.typeRef.getFullName == "System.Map<System.List<Internal.Object$>,System.String>"
+      )
+      assert(dummyField.typeRef.toString == "System.Map<System.List<Object>,System.String>")
     }
   }
 
@@ -168,6 +185,54 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       assert(getField(dummy, "l").typeRef.isInstanceOf[IModuleTypeDeclaration])
       assert(getField(dummy, "sl").typeRef.getFullName == "System.Location")
       assert(getField(dummy, "scl").typeRef.getFullName == "SObjects.Location")
+    }
+  }
+
+  test("Handles nested generics with methods") {
+    val sources =
+      Map("Dummy.cls" -> "public class Dummy { Iterable<List<String>> it; }")
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index   = new IPM.Index(root)
+      val dummy   = getType("Dummy", index).get
+      val itField = getField(dummy, "it")
+
+      assert(itField.typeRef.isInstanceOf[PlatformTypeDeclaration])
+
+      assert(
+        itField.typeRef
+          .asInstanceOf[PlatformTypeDeclaration]
+          .methods
+          .map(asMethodSignatureString)
+          .sorted
+          .mkString("\n") == Seq(
+          "public virtual System.Iterator<System.List<System.String>> iterator()"
+        ).sorted
+          .mkString("\n")
+      )
+    }
+  }
+
+  test("Handles void return type") {
+    val sources =
+      Map("Dummy.cls" -> "public class Dummy { void func(){} }")
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index = new IPM.Index(root)
+      val dummy = getType("Dummy", index).get
+
+      assert(dummy.methods.head.typeRef.isEmpty)
+    }
+  }
+
+  test("Handles unknown return type") {
+    val sources =
+      Map("Dummy.cls" -> "public class Dummy { voids func(){} }")
+    FileSystemHelper.run(sources) { root: PathLike =>
+      val index  = new IPM.Index(root)
+      val dummy  = getType("Dummy", index).get
+      val rtType = dummy.methods.head.typeRef
+      assert(rtType.nonEmpty)
+      assert(rtType.get.isInstanceOf[UnresolvedTypeRef])
+      assert(rtType.get.getFullName.equalsIgnoreCase("voids"))
     }
   }
 }

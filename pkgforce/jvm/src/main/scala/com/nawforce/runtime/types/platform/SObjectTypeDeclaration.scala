@@ -74,6 +74,6 @@ object SObjectTypeDeclaration {
     val typeName = md.typeName(None)
     val ns       = typeName.outer.map(_.name.value).get
     val name     = TypeNameSegment(typeName.name.value)
-    TypeInfo(ns, emptyArgs, name)
+    TypeInfo(Some(ns), emptyArgs, name)
   }
 }
