@@ -38,8 +38,8 @@ trait ITypeDeclaration extends TypeRef {
 
   override def getFullName: String = {
     enclosing match {
-      case Some(enc) => s"${enc.id.toString}.${id.toString}"
-      case None      => id.id.contents
+      case Some(enc) => s"${enc.id.toString}.${typeNameSegment.toString}"
+      case None      => typeNameSegment.toString
     }
   }
 }

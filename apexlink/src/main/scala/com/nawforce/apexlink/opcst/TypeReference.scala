@@ -19,8 +19,12 @@ import com.nawforce.apexlink.cst.{
 
 private[opcst] object TypeReference {
 
-  def construct(tr: OPTypeReference): TypeName = {
+  def construct(tr: Option[OPTypeReference]): TypeName = {
     CSTTypeReference.construct(Some(new OutlineParserTypeReference(tr)))
+  }
+
+  def construct(tr: OPTypeReference): TypeName = {
+    CSTTypeReference.construct(Some(new OutlineParserTypeReference(Some(tr))))
   }
 
   private class OutlineParserTypeName(typeName: OPTypeName) extends CSTTypeName {
@@ -32,20 +36,20 @@ private[opcst] object TypeReference {
     override def getIdText: Option[String] = Option(typeName.id.id.contents)
   }
 
-  private class OutlineParserTypeReference(typeReference: OPTypeReference)
+  private class OutlineParserTypeReference(typeReference: Option[OPTypeReference])
       extends CSTTypeReference {
     override def arraySubscriptsCount(): Int = {
       //TODO: is this actually right behaviour?
       typeReference match {
-        case utr: UnresolvedTypeRef => utr.arraySubscripts
-        case _                      => 0
+        case Some(utr: UnresolvedTypeRef) => utr.arraySubscripts
+        case _                            => 0
       }
     }
 
     override def typeNames(): ArraySeq[CSTTypeName] = {
       //TODO: is this actually right behaviour?
       typeReference match {
-        case utr: UnresolvedTypeRef =>
+        case Some(utr: UnresolvedTypeRef) =>
           ArraySeq.from(utr.typeNameSegments.map(new OutlineParserTypeName(_)))
         case _ => ArraySeq.empty
       }
@@ -54,13 +58,15 @@ private[opcst] object TypeReference {
 
   private class OutlineParserTypeArgument(typeArguments: OPTypeArguments) extends CSTTypeArguments {
     override def typeRefs(): ArraySeq[CSTTypeReference] =
-      ArraySeq.from(typeArguments.typeList.get.typeRefs.map(new OutlineParserTypeReference(_)))
+      ArraySeq.from(
+        typeArguments.typeList.get.typeRefs.map(tr => new OutlineParserTypeReference(Some(tr)))
+      )
   }
 }
 
 private[opcst] object TypeList {
   def construct(typeList: OPTypeList): ArraySeq[TypeName] = {
     val types = typeList.typeRefs
-    ArraySeq.from(types.map(t => TypeReference.construct(t)))
+    ArraySeq.from(types.map(t => TypeReference.construct(Some(t))))
   }
 }
