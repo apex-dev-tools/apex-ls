@@ -241,7 +241,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "D.cls" -> "public class D implements Queueable {}",
-        "E.cls" -> "abstract class E implements Database.Batchable {}",
+        "E.cls" -> "public abstract class E implements Database.Batchable<SObject> {}",
         "F.cls" -> "public class F extends E {}"
       )
     ) { root: PathLike =>
