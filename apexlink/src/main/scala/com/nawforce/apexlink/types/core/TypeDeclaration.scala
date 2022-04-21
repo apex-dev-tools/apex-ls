@@ -512,10 +512,12 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
   }
 
   def extendsOrImplements(typeName: TypeName): Boolean = {
-    superClass.contains(typeName) ||
-    interfaces.contains(typeName) ||
-    superClassDeclaration.exists(_.extendsOrImplements(typeName)) ||
-    interfaceDeclarations.exists(_.extendsOrImplements(typeName))
+    val superclasses = superClassDeclaration
+    val interfaces   = interfaceDeclarations
+    superclasses.exists(_.typeName == typeName) ||
+    interfaces.exists(_.typeName == typeName) ||
+    superclasses.exists(_.extendsOrImplements(typeName)) ||
+    interfaces.exists(_.extendsOrImplements(typeName))
   }
 
   def superTypes(): List[TypeName] = {
