@@ -15,13 +15,13 @@
 package com.nawforce.apexlink.rpc
 
 import com.nawforce.apexlink.ParserHelper
-import com.nawforce.apexlink.api.{ANTLRParser, ServerOps}
+import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.platform.{Environment, Path}
-import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatest.funsuite.AsyncFunSuite
+import org.scalatest.{Assertion, BeforeAndAfterEach}
 
 import scala.concurrent.Future
 
@@ -157,27 +157,13 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       assert(result.error.isEmpty && result.namespaces.sameElements(Array("sfdx_test", "")))
     }
 
-    val issues: Future[Assertion] =
-      ServerOps.getCurrentParser == ANTLRParser match {
-        case false =>
-          pkg flatMap { _ =>
-            orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
-              assert(issuesResult.issues.length == 5)
-              assert(issuesResult.issues.count(_.path.toString.contains("SingleError")) == 1)
-              assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 3)
-            }
-          }
-        case true =>
-          pkg flatMap { _ =>
-            orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
-              assert(issuesResult.issues.length == 4)
-              assert(issuesResult.issues.count(_.path.toString.contains("SingleError")) == 1)
-              assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 2)
-            }
-          }
+    pkg flatMap { _ =>
+      orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
+        assert(issuesResult.issues.length == 4)
+        assert(issuesResult.issues.count(_.path.toString.contains("SingleError")) == 1)
+        assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 2)
       }
-
-    issues
+    }
   }
 
   test("Get Dependency Graph (zero depth)") {

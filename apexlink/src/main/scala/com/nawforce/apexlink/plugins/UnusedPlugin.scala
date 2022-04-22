@@ -24,7 +24,7 @@ import com.nawforce.apexlink.types.core.{
   MethodDeclaration,
   TypeDeclaration
 }
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, UNUSED_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue, UNUSED_CATEGORY}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.parsers.{FIELD_NATURE, PROPERTY_NATURE}
 
@@ -41,11 +41,17 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
 
   private def reportUnused(td: FullDeclaration): Seq[DependentType] = {
     if (td.outerTypeName.isEmpty) {
-      // We don't want to overwrite unused within blocks
-      val localUnused = td.module.pkg.org.issues
-        .issuesForFileInternal(td.paths.head)
-        .filter(_.diagnostic.message.startsWith("Unused local variable"))
-      td.module.pkg.org.issues.replaceUnusedIssues(td.paths.head, td.unusedIssues ++ localUnused)
+      // Only update if we don't have errors, to reduce noise
+      val existingIssues = td.module.pkg.org.issues.issuesForFileInternal(td.paths.head)
+      val hasErrors =
+        existingIssues.exists(issue => DiagnosticCategory.isErrorType(issue.diagnostic.category))
+      if (hasErrors) {
+        td.module.pkg.org.issues.replaceUnusedIssues(td.paths.head, Seq())
+      } else {
+        val localUnused =
+          existingIssues.filter(_.diagnostic.message.startsWith("Unused local variable"))
+        td.module.pkg.org.issues.replaceUnusedIssues(td.paths.head, td.unusedIssues ++ localUnused)
+      }
 
       val dependents = mutable.Set[Dependent]()
       td.collectDependencies(dependents)
