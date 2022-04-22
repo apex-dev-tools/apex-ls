@@ -35,7 +35,7 @@ object TypeIdCollector {
     }
   }
 
-  def fromTypeDecls(tds: List[TypeDeclaration]): TypeIdCollector = {
+  def fromTypeDecls(tds: ArrayBuffer[TypeDeclaration]): TypeIdCollector = {
     val allIds: ArrayBuffer[Id] = ArrayBuffer()
     tds.foreach(td => appendToIds(td, allIds))
     new TypeIdCollector(allIds)

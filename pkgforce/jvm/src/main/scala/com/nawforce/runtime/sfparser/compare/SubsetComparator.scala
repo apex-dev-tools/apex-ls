@@ -9,8 +9,7 @@ import com.nawforce.runtime.workspace.{
   ClassTypeDeclaration,
   EnumTypeDeclaration,
   IModuleTypeDeclaration,
-  InterfaceTypeDeclaration,
-  TypeDeclaration
+  InterfaceTypeDeclaration
 }
 
 import scala.collection.immutable.ArraySeq
@@ -32,12 +31,12 @@ class SubsetComparator(
     warnings.clear()
   }
 
-  def subsetOf(secondTd: TypeDeclaration): Unit = {
+  def unresolvedSubsetOf(secondTd: IModuleTypeDeclaration): Unit = {
     if (fResolver.isEmpty) {
       fResolver = Some(TypeIdCollector.fromIModuleTypeDecls(List(firstTd)))
     }
     if (sResolver.isEmpty) {
-      sResolver = Some(TypeIdCollector.fromTypeDecls(List(secondTd)))
+      sResolver = Some(TypeIdCollector.fromIModuleTypeDecls(List(secondTd)))
     }
     firstTd match {
       case cls: ClassTypeDeclaration =>
@@ -149,8 +148,8 @@ class SubsetComparator(
       throw new Exception(s"Different initializers ${first.initializers} != ${second.initializers}")
 
     checkAndThrowIfDiff("Different constructors", first.constructors, second.constructors)
-    //TODO
-//    checkAndThrowIfDiffForSignatures("Different methods", first.methods, second.methods)
+
+    checkAndThrowIfDiffForMethods(first.methods, second.methods)
     checkAndThrowIfDiffForSignatures("Different properties", first.properties, second.properties)
     checkAndThrowIfDiffForSignatures("Different fields", first.fields, second.fields)
 
@@ -182,8 +181,8 @@ class SubsetComparator(
         s"Different extends ${first.implementsTypeList} != ${second.implementsTypeList}"
       )
     }
-    //TODO:
-//    checkAndThrowIfDiffForSignatures("Different methods", first.methods, second.methods)
+
+    checkAndThrowIfDiffForMethods(first.methods, second.methods)
   }
 
   private def compareEnumTypeDeclarations(
@@ -259,8 +258,8 @@ class SubsetComparator(
     }
 
     first match {
-      case td: TypeDeclaration => return td.getFullName == second.getFullName
-      case _                   =>
+      case td: IModuleTypeDeclaration => return td.getFullName == second.getFullName
+      case _                          =>
     }
 
     val fUnresolvedType = first.asInstanceOf[UnresolvedTypeRef]
@@ -312,8 +311,8 @@ class SubsetComparator(
   private def compareListAdnArraySubscriptIfAny(first: TypeRef, second: TypeRef): Boolean = {
     //Check if type is array subscript and the other has matching number of List type
     first match {
-      case td: TypeDeclaration => return td.getFullName == second.getFullName
-      case _                   =>
+      case td: IModuleTypeDeclaration => return td.getFullName == second.getFullName
+      case _                          =>
     }
     //TODO we need to compare typerefs again make sure the other are matching
     val fUnresolvedType = first.asInstanceOf[UnresolvedTypeRef]
@@ -385,17 +384,11 @@ class SubsetComparator(
     firstSig: T,
     secondDiff: ArraySeq[T]
   ): Boolean = {
-
-    firstSig match {
-      case fMethod: MethodDeclaration =>
-        findAndCompareMethods(fMethod, secondDiff.asInstanceOf[ArraySeq[MethodDeclaration]])
-      case _ =>
-        secondDiff.find(firstSig.id == _.id) match {
-          case Some(secondSig) =>
-            val typeRefIdCheck = compareTypeRef(firstSig.typeRef, secondSig.typeRef)
-            typeRefIdCheck && firstSig.annotations == secondSig.annotations && firstSig.modifiers == secondSig.modifiers
-          case _ => false
-        }
+    secondDiff.find(firstSig.id == _.id) match {
+      case Some(secondSig) =>
+        val typeRefIdCheck = compareTypeRef(firstSig.typeRef, secondSig.typeRef)
+        typeRefIdCheck && firstSig.annotations == secondSig.annotations && firstSig.modifiers == secondSig.modifiers
+      case _ => false
     }
   }
 
@@ -435,6 +428,28 @@ class SubsetComparator(
       })
     }
     second.formalParameters.isEmpty
+  }
+
+  private def checkAndThrowIfDiffForMethods(
+    first: ArraySeq[MethodDeclaration],
+    second: ArraySeq[MethodDeclaration]
+  ): Unit = {
+    val (_, firstDiff, secondDiff) = getDiffIfThereIsAny(first, second)
+    var check                      = firstDiff.isEmpty && secondDiff.isEmpty
+    if (check) {
+      return
+    }
+    check = firstDiff.forall(m => findAndCompareMethods(m, second))
+    if (!check)
+      throw new Exception(s"Different methods $firstDiff != $secondDiff")
+    else
+      warnings.append(
+        prettyWarnings(
+          "Warning: Some Types are not strictly equal, but are subsets",
+          firstDiff,
+          secondDiff
+        )
+      )
   }
 
   private def checkAndThrowIfDiffForSignatures[T <: Signature](
