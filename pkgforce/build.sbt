@@ -2,7 +2,7 @@ import sbt.Keys.libraryDependencies
 import sbt.url
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
-ThisBuild / version := "2.4.0"
+ThisBuild / version := "2.5.0"
 ThisBuild / isSnapshot := true
 
 ThisBuild / scalaVersion := "2.13.3"
@@ -85,7 +85,7 @@ lazy val root = project.in(file(".")).
 lazy val pkgforce = crossProject(JSPlatform, JVMPlatform).in(file(".")).
   settings(
     scalacOptions += "-deprecation",
-    libraryDependencies += "com.github.financialforcedev" %%% "ff-apex-outline-parser" % "1.0.0-SNAPSHOT",
+    libraryDependencies += "com.github.financialforcedev" %%% "ff-apex-outline-parser" % "1.0.0",
     libraryDependencies += "com.lihaoyi" %%% "upickle" % "1.2.0",
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.0" % Test,
   ).
