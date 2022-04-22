@@ -14,8 +14,7 @@ import com.financialforce.oparser.{
   PropertyDeclaration,
   Signature,
   TypeList,
-  TypeRef,
-  UnresolvedTypeRef
+  TypeRef
 }
 import com.nawforce.pkgforce.names.Names
 import com.nawforce.pkgforce.path.PathLike
@@ -68,7 +67,7 @@ object ResolvedOutputComparisonTest {
         val op = index.rootModule.get.findExactTypeId(sf.get.getFullName)
         compareResolved(sf, op)
       })
-    println(s"Number of errors ${errors} out of ${total}")
+    println(s"Number of errors $errors out of $total")
   }
 
   private def findSfParserOutput(
@@ -88,79 +87,9 @@ object ResolvedOutputComparisonTest {
     } catch {
       case ex: Throwable =>
         errors += 1
-        System.err.println(s"Failed output on ${fromSf.get.getFullName} due to ${ex.getMessage}")
+        System.err.println(s"Failed output on ${fromSf.get.getFullName}. Reason: ${ex.getMessage}")
     }
 
-  }
-
-  //Temp
-  private def checkOPResolutions(sources: Map[String, String]): Unit = {
-    FileSystemHelper.run(sources) { root: PathLike =>
-      val index = new IPM.Index(root)
-      sources.keys
-        .filter(_.endsWith("cls"))
-        .filterNot(_.contains(".sfdx/tools/"))
-        .foreach(f => {
-          val file = index.rootModule.get.findTypesByPath(f)
-          if (file.nonEmpty) {
-            val op = file.head
-            val ex = op.extendsTypeRef match {
-              case un: UnresolvedTypeRef => Some(un)
-              case _                     => None
-            }
-            val impl = if (op.implementsTypeList != null) op.implementsTypeList.typeRefs collect {
-              case un: UnresolvedTypeRef => un
-            }
-            else ArrayBuffer.empty
-            val cons = op.constructors.filter(
-              x =>
-                x.formalParameterList.formalParameters
-                  .flatMap(_.typeRef)
-                  .collect({ case un: UnresolvedTypeRef => un })
-                  .nonEmpty
-            )
-            val meths = op.methods.filter(
-              x =>
-                x.formalParameterList.formalParameters
-                  .flatMap(_.typeRef)
-                  .collect({ case un: UnresolvedTypeRef => un })
-                  .nonEmpty
-            )
-            val props = op.properties.filter(x => x.typeRef.isInstanceOf[UnresolvedTypeRef])
-            val fi    = op.fields.filter(x => x.typeRef.isInstanceOf[UnresolvedTypeRef])
-
-            if (
-              ex.nonEmpty ||
-              impl.nonEmpty ||
-              cons.nonEmpty ||
-              meths.nonEmpty ||
-              props.nonEmpty ||
-              fi.nonEmpty
-            ) {
-              println(f)
-              if (ex.nonEmpty) println(ex.map(_.getFullName))
-              if (impl.nonEmpty) println(impl.map(_.getFullName))
-              if (cons.nonEmpty)
-                println(
-                  cons
-                    .map(
-                      _.formalParameterList.formalParameters.flatMap(_.typeRef).map(_.getFullName)
-                    )
-                )
-              if (meths.nonEmpty)
-                println(
-                  meths
-                    .map(
-                      _.formalParameterList.formalParameters.flatMap(_.typeRef).map(_.getFullName)
-                    )
-                )
-              if (props.nonEmpty) println(props.map(_.typeRef.getFullName))
-              if (fi.nonEmpty) println(fi.map(_.typeRef.getFullName))
-              println(" ")
-            }
-          }
-        })
-    }
   }
 
   private def getUTF8ContentsFromPath(absolutePath: Path): String = {
@@ -200,7 +129,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       if (first == null && second == null)
         return (true, "")
       (
-        first != null && second != null && rules.atLeastOne(first, second),
+        first != null && second != null && compareTypeRef(first, second),
         s"Diff Extends ${first.getFullName} != ${second.getFullName}"
       )
     }
@@ -210,7 +139,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
         return (true, "")
       (
         first != null && second != null &&
-          !first.typeRefs.forall(f => second.typeRefs.exists(s => rules.atLeastOne(f, s))),
+          first.typeRefs.forall(f => second.typeRefs.exists(s => compareTypeRef(f, s))),
         s"Diff implementsTypeList ${first.typeRefs
           .map(_.getFullName)} != ${second.typeRefs.map(_.getFullName)}"
       )
@@ -410,7 +339,6 @@ object RuleSets {
       Array(new ModifierRule),
       Array(new AnnotationRule),
       Array(
-        new TypeRefRule,
         new TypeRefNamesAreEqual,
         new TypeRefNamesAreEqualForPlatformTypes,
         new IgnoreSystemNamespace,
@@ -420,35 +348,38 @@ object RuleSets {
   }
 }
 
-case class TypeRefNamesAreEqual() extends TypeRefRule {
-  override def evaluate(first: Option[TypeRef], second: Option[TypeRef]): Boolean =
+class TypeRefNamesAreEqual() extends TypeRefRule {
+  override def evaluate(first: Option[TypeRef], second: Option[TypeRef]): Boolean = {
     first match {
-      case Some(tr) => second.nonEmpty && tr.getFullName == second.get.getFullName
-      case None     => second.isEmpty
+      case Some(tr) =>
+        val check = second.nonEmpty && tr.getFullName.equalsIgnoreCase(processSecond(second.get))
+        check
+      case None => second.isEmpty
     }
+  }
+  def processSecond(second: TypeRef): String = {
+    second.getFullName
+  }
+
 }
 
-case class TypeRefNamesAreEqualForPlatformTypes() extends TypeRefRule {
+class TypeRefNamesAreEqualForPlatformTypes() extends TypeRefNamesAreEqual {
   //We have to use toString for platform as getFullName will give the internal name
-  override def evaluate(first: Option[TypeRef], second: Option[TypeRef]): Boolean = {
+  override def processSecond(second: TypeRef): String = {
     second match {
-      case Some(decl: PlatformTypeDeclaration) =>
-        first.nonEmpty && decl.toString == first.get.getFullName
-      case _ => false
+      case decl: PlatformTypeDeclaration => decl.toString
+      case _                             => second.getFullName
     }
   }
 }
 
-case class IgnoreSystemNamespace() extends TypeRefRule {
-  override def evaluate(first: Option[TypeRef], second: Option[TypeRef]): Boolean = {
-    first match {
-      case Some(tr) =>
-        if (second.nonEmpty && second.get.getFullName.contains("System.")) {
-          return tr.getFullName == second.get.getFullName.replaceAll("System.", "")
-        }
-        false
-      case None => second.isEmpty
+class IgnoreSystemNamespace() extends TypeRefNamesAreEqualForPlatformTypes {
+  override def processSecond(second: TypeRef): String = {
+    val processed = super.processSecond(second)
+    if (processed.contains("System.")) {
+      return processed.replaceAll("System.", "")
     }
+    processed
   }
 }
 
