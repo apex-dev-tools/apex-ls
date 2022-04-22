@@ -31,6 +31,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             32,
             "class",
             3,
+            isEntryPoint = false,
             Array(TypeIdentifier(None, TypeName(Name("B")))),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -40,6 +41,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             2,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -49,6 +51,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             1,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("D"))))
@@ -88,6 +91,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             32,
             "class",
             3,
+            isEntryPoint = false,
             Array(TypeIdentifier(None, TypeName(Name("B")))),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -97,6 +101,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             2,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -106,6 +111,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             1,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("D"))))
@@ -115,6 +121,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             17,
             "class",
             0,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array()
@@ -155,6 +162,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             32,
             "class",
             2,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("C"))))
@@ -164,6 +172,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             21,
             "class",
             1,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("D"))))
@@ -173,6 +182,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
             17,
             "class",
             0,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array()
@@ -185,6 +195,90 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
           DependencyLink(1, 2, "uses")
         )
       )
+    }
+  }
+
+  test("Detects global entry points") {
+    FileSystemHelper.run(
+      Map(
+        "A.cls" -> "global class A { }",
+        "B.cls" ->
+          """public class B {
+            | @AuraEnabled(cacheable=true)
+            | public static Account getAccount() {}
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      val result = org.getDependencyGraph(
+        Array(TypeIdentifier(None, TypeName(Name("A"))), TypeIdentifier(None, TypeName(Name("B")))),
+        1,
+        apexOnly = true,
+        Array()
+      )
+      assert(result.nodeData.length == 2)
+      assert(result.nodeData.forall(_.isEntryPoint))
+    }
+  }
+
+  test("Detects page controller entry points") {
+    FileSystemHelper.run(
+      Map("C.cls" -> "public class C {}", "VF.page" -> "<apex:page controller=\"C\"></apex:page>")
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      val result = org.getDependencyGraph(
+        Array(TypeIdentifier(None, TypeName(Name("C")))),
+        1,
+        apexOnly = true,
+        Array()
+      )
+      assert(result.nodeData.length == 1)
+      assert(result.nodeData.forall(_.isEntryPoint))
+    }
+  }
+
+  test("Detects async entry points") {
+    FileSystemHelper.run(
+      Map(
+        "D.cls" -> "public class D implements Queueable {}",
+        "E.cls" -> "public abstract class E implements Database.Batchable<SObject> {}",
+        "F.cls" -> "public class F extends E {}"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      val result = org.getDependencyGraph(
+        Array(
+          TypeIdentifier(None, TypeName(Name("D"))),
+          TypeIdentifier(None, TypeName(Name("E"))),
+          TypeIdentifier(None, TypeName(Name("F")))
+        ),
+        1,
+        apexOnly = true,
+        Array()
+      )
+      assert(result.nodeData.length == 3)
+      assert(
+        result.nodeData.map(d => (d.identifier.toString(), d.isEntryPoint)) sameElements Array(
+          ("D", true),
+          ("E", false),
+          ("F", true)
+        )
+      )
+    }
+  }
+
+  test("Detects trigger entry points") {
+    FileSystemHelper.run(Map("T.trigger" -> "trigger T on Account (before insert) {}")) {
+      root: PathLike =>
+        val org = createOrg(root)
+        val result = org.getDependencyGraph(
+          Array(TypeIdentifier(None, TypeName(Name("__sfdc_trigger/T")))),
+          1,
+          apexOnly = true,
+          Array()
+        )
+        assert(result.nodeData.length == 1)
+        assert(result.nodeData.forall(_.isEntryPoint))
     }
   }
 }

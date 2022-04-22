@@ -204,6 +204,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
             85,
             "class",
             1,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array(TypeIdentifier(None, TypeName(Name("World"))))
@@ -213,6 +214,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
             71,
             "class",
             0,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array()
@@ -243,6 +245,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
             85,
             "class",
             0,
+            isEntryPoint = false,
             Array(),
             Array(),
             Array()

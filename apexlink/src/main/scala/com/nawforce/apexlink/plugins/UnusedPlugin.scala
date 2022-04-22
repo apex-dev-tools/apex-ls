@@ -14,7 +14,6 @@
 package com.nawforce.apexlink.plugins
 
 import com.nawforce.apexlink.cst._
-import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.plugins.UnusedPlugin._
 import com.nawforce.apexlink.types.apex.{ApexFieldLike, ApexMethodLike, FullDeclaration}
@@ -168,11 +167,6 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
         })
     }
 
-    def isPageController: Boolean = {
-      td.getTypeDependencyHolders.toIterable.exists(
-        tid => tid.typeName == TypeNames.Page || tid.typeName == TypeNames.Component
-      )
-    }
   }
 
   private implicit class FieldOps(field: ApexFieldLike) {

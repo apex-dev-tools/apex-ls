@@ -232,6 +232,7 @@ object OPM extends TriHierarchy {
               nodeFileSize(n.id),
               n.nature,
               n.transitiveCount,
+              n.isEntryPoint,
               n.extending,
               n.implementing,
               n.using

@@ -54,9 +54,10 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
   val readAccess: Modifier
   val writeAccess: Modifier
 
-  def isStatic: Boolean = modifiers.contains(STATIC_MODIFIER)
-
+  def isStatic: Boolean  = modifiers.contains(STATIC_MODIFIER)
   def isPrivate: Boolean = modifiers.contains(PRIVATE_MODIFIER)
+  lazy val isExternallyVisible: Boolean =
+    modifiers.exists(FieldDeclaration.externalFieldModifiers.contains)
 
   override def toString: String =
     modifiers.map(_.toString).mkString(" ") + " " + typeName.toString + " " + name.toString
@@ -113,6 +114,8 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
 
 object FieldDeclaration {
   val emptyFieldDeclarations: ArraySeq[FieldDeclaration] = ArraySeq()
+  val externalFieldModifiers: Set[Modifier] =
+    Set(GLOBAL_MODIFIER, INVOCABLE_VARIABLE_ANNOTATION)
 }
 
 trait ParameterDeclaration {
@@ -167,6 +170,8 @@ trait MethodDeclaration extends DependencyHolder with Dependent {
   def isTestVisible: Boolean       = modifiers.contains(TEST_VISIBLE_ANNOTATION)
   def isVirtualOrOverride: Boolean = isVirtual || isOverride
   def isVirtualOrAbstract: Boolean = isVirtual || isAbstract
+  lazy val isExternallyVisible: Boolean =
+    modifiers.exists(MethodDeclaration.externalMethodModifiers.contains)
 
   override def toString: String = {
     val modifierStr = if (modifiers.nonEmpty) modifiers.map(_.toString).mkString(" ") + " " else ""
@@ -308,6 +313,18 @@ trait MethodDeclaration extends DependencyHolder with Dependent {
 object MethodDeclaration {
   val emptyMethodDeclarations: ArraySeq[MethodDeclaration] = ArraySeq()
   val emptyMethodDeclarationsSet: Set[MethodDeclaration]   = Set()
+  val externalMethodModifiers: Set[Modifier] =
+    Set(
+      GLOBAL_MODIFIER,
+      WEBSERVICE_MODIFIER,
+      AURA_ENABLED_ANNOTATION,
+      INVOCABLE_METHOD_ANNOTATION,
+      HTTP_DELETE_ANNOTATION,
+      HTTP_GET_ANNOTATION,
+      HTTP_PATCH_ANNOTATION,
+      HTTP_POST_ANNOTATION,
+      HTTP_PUT_ANNOTATION
+    )
 }
 
 trait AbstractTypeDeclaration {
@@ -358,7 +375,8 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
   def methods: ArraySeq[MethodDeclaration]
 
   def isComplete: Boolean
-  lazy val isExternallyVisible: Boolean  = modifiers.contains(GLOBAL_MODIFIER)
+  lazy val isExternallyVisible: Boolean =
+    modifiers.exists(TypeDeclaration.externalTypeModifiers.contains)
   lazy val isAbstract: Boolean           = modifiers.contains(ABSTRACT_MODIFIER)
   lazy val isFieldConstructed: Boolean   = isSObject || isApexPagesComponent
   lazy val isSObject: Boolean            = superClass.contains(TypeNames.SObject)
@@ -487,10 +505,20 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
     }
   }
 
+  def implements(typeName: TypeName, ignoreGenerics: Boolean): Boolean = {
+    val interfaces = interfaceDeclarations
+    interfaces.exists(_.typeName match {
+      case TypeName(typeName.name, _, typeName.outer) if ignoreGenerics => true
+      case tn                                                           => tn == typeName
+    }) ||
+    interfaces.exists(_.implements(typeName, ignoreGenerics)) ||
+    superClassDeclaration.exists(_.implements(typeName, ignoreGenerics))
+  }
+
   def extendsOrImplements(typeName: TypeName): Boolean = {
     val superclasses = superClassDeclaration
     val interfaces   = interfaceDeclarations
-    superClassDeclaration.exists(_.typeName == typeName) ||
+    superclasses.exists(_.typeName == typeName) ||
     interfaces.exists(_.typeName == typeName) ||
     superclasses.exists(_.extendsOrImplements(typeName)) ||
     interfaces.exists(_.extendsOrImplements(typeName))
@@ -510,4 +538,6 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
 object TypeDeclaration {
   val emptyTypeDeclarations: ArraySeq[TypeDeclaration]   = ArraySeq()
   val emptyTypeDeclarationsArray: Array[TypeDeclaration] = Array()
+  val externalTypeModifiers: Set[Modifier] =
+    Set(GLOBAL_MODIFIER, REST_RESOURCE_ANNOTATION)
 }
