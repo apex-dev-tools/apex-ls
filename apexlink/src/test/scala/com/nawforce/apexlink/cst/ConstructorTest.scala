@@ -62,4 +62,13 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
           "Error: line 1 at 65-70: Constructor is a duplicate of an earlier constructor at line 1 at 27-32\n"
     )
   }
+
+  test("Test") {
+    typeDeclarations(
+      Map(
+        "Foo.cls" -> "public class Foo { public Foo(){} public class Dummy extends Foo {public Dummy(){super(1);} }}"
+      )
+    )
+    println(dummyIssues)
+  }
 }
