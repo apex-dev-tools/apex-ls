@@ -1,4 +1,5 @@
 package com.nawforce.apexlink.cst
+import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
@@ -24,13 +25,36 @@ final case class ConstructorMap(
     ArraySeq.unsafeWrapArray(buffer.toArray)
   }
 
-  def findConstructorByParams(params: ArraySeq[TypeName]): Option[ConstructorDeclaration] = {
-    None
+  def findConstructorByParams(
+    params: ArraySeq[TypeName],
+    context: VerifyContext
+  ): Option[ConstructorDeclaration] = {
+    val matched = constructorsByParam.get(params.length)
+    if (matched.isEmpty) {
+      return None
+    }
+    val assignable = matched.get.filter(c => {
+      val argZip = c.parameters.map(_.typeName).zip(params)
+      argZip.forall(argPair => isAssignable(argPair._1, argPair._2, false, context))
+    })
+    if (assignable.isEmpty)
+      None
+    else if (assignable.length == 1)
+      Some(assignable.head)
+    else {
+      //TODO: use matched.get.find(_.isMoreSpecific(params, context))?
+      None
+    }
   }
 }
 
 object ConstructorMap {
-  type WorkingMap = mutable.HashMap[Int, ArraySeq[ConstructorDeclaration]]
+  type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
+
+  def apply(td: TypeDeclaration): ConstructorMap = {
+    //TODO
+    ConstructorMap.empty
+  }
 
   def apply(
     td: TypeDeclaration,
@@ -46,7 +70,7 @@ object ConstructorMap {
     deduped.foreach(ctor => {
       val key     = ctor.parameters.length
       val matched = workingMap.getOrElse(key, Nil)
-      matched.appended(ctor)
+      workingMap.put(key, ctor :: matched)
     })
 
     td match {

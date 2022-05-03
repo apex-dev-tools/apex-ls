@@ -194,7 +194,8 @@ final case class MethodMap(
           .find(
             method =>
               assignable.forall(
-                m => m == method || method.isMoreSpecific(m, params, context).contains(true)
+                m =>
+                  m == method || method.isMoreSpecific(m.parameters, params, context).contains(true)
               )
           )
           .map(Right(_))
