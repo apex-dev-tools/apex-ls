@@ -87,7 +87,7 @@ final case class ClassDeclaration(
     localIssues.foreach(context.log)
 
     // This should likely be handled by method mapping, but constructors are not currently methods
-    constructors
+    localConstructors
       .duplicates(_.parameters.map(_.typeName.toString()).mkString(","))
       .foreach(duplicates => {
         duplicates._2.map(dup => {

@@ -88,7 +88,7 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   override lazy val modifiers: ArraySeq[Modifier] =
     PlatformModifiers.typeModifiers(cls.getModifiers, nature)
 
-  override lazy val constructors: ArraySeq[PlatformConstructor] = {
+  override lazy val localConstructors: ArraySeq[PlatformConstructor] = {
     ArraySeq
       .unsafeWrapArray(cls.getConstructors)
       .filterNot(_.isSynthetic)
@@ -143,6 +143,11 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
       case ENUM_NATURE => PlatformTypeDeclaration.enumMethods(typeName)
       case _           => getMethods
     }
+  }
+
+  override lazy val constructors: ArraySeq[ConstructorDeclaration] = {
+    //TODO
+    ConstructorDeclaration.emptyConstructorDeclarations
   }
 
   protected def getMethods: ArraySeq[PlatformMethod] = {

@@ -106,7 +106,7 @@ final case class SObjectDeclaration(
 
   override def nestedTypes: ArraySeq[TypeDeclaration] = TypeDeclaration.emptyTypeDeclarations
 
-  override val constructors: ArraySeq[ConstructorDeclaration] =
+  override val localConstructors: ArraySeq[ConstructorDeclaration] =
     ConstructorDeclaration.emptyConstructorDeclarations
   override val blocks: ArraySeq[BlockDeclaration] = BlockDeclaration.emptyBlockDeclarations
 
@@ -153,6 +153,8 @@ final case class SObjectDeclaration(
   }
 
   override val methods: ArraySeq[MethodDeclaration] = MethodDeclaration.emptyMethodDeclarations
+  override val constructors: ArraySeq[ConstructorDeclaration] =
+    ConstructorDeclaration.emptyConstructorDeclarations
 
   override def findMethod(
     name: Name,
