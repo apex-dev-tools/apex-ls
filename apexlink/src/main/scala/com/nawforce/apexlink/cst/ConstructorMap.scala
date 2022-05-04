@@ -1,9 +1,10 @@
 package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
-import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike, ApexDeclaration}
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
+import com.nawforce.pkgforce.modifiers.PRIVATE_MODIFIER
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLocation
 
@@ -28,21 +29,48 @@ final case class ConstructorMap(
   def findConstructorByParams(
     params: ArraySeq[TypeName],
     context: VerifyContext
-  ): Option[ConstructorDeclaration] = {
+  ): Either[String, ConstructorDeclaration] = {
     val matched = constructorsByParam.get(params.length)
     if (matched.isEmpty) {
-      return None
+      return Left(s"No constructor defined with ${params.length} arguments")
     }
     val assignable = matched.get.filter(c => {
       val argZip = c.parameters.map(_.typeName).zip(params)
-      argZip.forall(argPair => isAssignable(argPair._1, argPair._2, false, context))
+      argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict = false, context))
     })
-    if (assignable.isEmpty)
-      None
-    else if (assignable.length == 1)
-      Some(assignable.head)
-    else {
-      assignable.find(ctor => ctor.isMoreSpecific(ctor.parameters, params, context).contains(true))
+    val potential =
+      if (assignable.isEmpty)
+        None
+      else if (assignable.length == 1)
+        Some(assignable.head)
+      else {
+        assignable.find(
+          ctor => ctor.isMoreSpecific(ctor.parameters, params, context).contains(true)
+        )
+      }
+
+    potential match {
+      case Some(ctor) =>
+        val isReallyPrivate =
+          ctor.visibility == PRIVATE_MODIFIER && !areInSameApexFile(ctor, context.thisType)
+        if (!isReallyPrivate) Right(ctor)
+        else Left(s"Constructor is not visible: ${ctor.toString}")
+      case _ =>
+        typeName match {
+          case Some(name) =>
+            Left(s"Constructor not defined: void $name.<constructor>(${params.mkString(",")})")
+          case None => Left(s"Constructor not defined: void <constructor>(${params.mkString(",")})")
+        }
+    }
+  }
+
+  private def areInSameApexFile(
+    ctor: ConstructorDeclaration,
+    calledFrom: TypeDeclaration
+  ): Boolean = {
+    (ctor, calledFrom) match {
+      case (acl: ApexConstructorLike, ad: ApexDeclaration) => ad.location.path == acl.location.path
+      case _                                               => false
     }
   }
 }

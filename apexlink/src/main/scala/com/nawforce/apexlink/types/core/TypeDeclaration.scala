@@ -220,6 +220,10 @@ trait Parameters {
 trait ConstructorDeclaration extends DependencyHolder with Parameters {
   val modifiers: ArraySeq[Modifier]
 
+  //TODO: check is this is correct for ctors
+  def visibility: Modifier =
+    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
+
   def hasSameParameters(
     other: ConstructorDeclaration,
     allowPlatformGenericEquivalence: Boolean
