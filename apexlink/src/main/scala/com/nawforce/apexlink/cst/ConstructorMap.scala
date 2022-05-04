@@ -42,8 +42,7 @@ final case class ConstructorMap(
     else if (assignable.length == 1)
       Some(assignable.head)
     else {
-      //TODO: use matched.get.find(_.isMoreSpecific(params, context))?
-      None
+      assignable.find(ctor => ctor.isMoreSpecific(ctor.parameters, params, context).contains(true))
     }
   }
 }

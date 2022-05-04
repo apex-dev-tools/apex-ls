@@ -400,7 +400,9 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
 final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression])
     extends MethodCall {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
-
+    def mkCtorString(args: ArraySeq[TypeName]): String = {
+      s"void constructor(${args.mkString(",")})"
+    }
     // Verify args so vars don't show as unused and map to typeNames
     val args = arguments
       .map(_.verify(input, context))
@@ -411,18 +413,23 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
         case Some(at: ApexClassDeclaration) =>
           val found = at.constructorMap.findConstructorByParams(args, context)
           if (found.isEmpty) {
-            context.logError(
-              location,
-              s"No super constructor found with the type arguments ${args.mkString(",")}"
-            )
+            context.logError(location, s"No super constructor defined: ${mkCtorString(args)}")
             return ExprContext.empty
           }
           ExprContext(None, None, found.get)
         case None => ExprContext.empty
       }
     } else {
-      //TODO: Can this ever be a non supper call?
-      ExprContext.empty
+      context.thisType match {
+        case at: ApexClassDeclaration =>
+          val found = at.constructorMap.findConstructorByParams(args, context)
+          if (found.isEmpty) {
+            context.logError(location, s"No local constructor defined: ${mkCtorString(args)}")
+            return ExprContext.empty
+          }
+          ExprContext(None, None, found.get)
+        case _ => ExprContext.empty
+      }
     }
   }
 }
