@@ -281,11 +281,11 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     val errorLocation = Some(idPathLocation)
     val ctors = superClassDeclaration match {
       case Some(at: ApexClassDeclaration) =>
-        ConstructorMap(this, errorLocation, localConstructors, Some(at.constructorMap))
+        ConstructorMap(this, errorLocation, localConstructors, at.constructorMap)
       case Some(td: TypeDeclaration) =>
-        ConstructorMap(this, errorLocation, localConstructors, Some(ConstructorMap(td)))
+        ConstructorMap(this, errorLocation, localConstructors, ConstructorMap(td))
       case _ =>
-        ConstructorMap(this, errorLocation, localConstructors, Some(ConstructorMap.empty))
+        ConstructorMap(this, errorLocation, localConstructors, ConstructorMap.empty)
     }
     ctors.errors.foreach(OrgInfo.log)
     ctors

@@ -4,7 +4,7 @@ import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLi
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
-import com.nawforce.pkgforce.modifiers.PRIVATE_MODIFIER
+import com.nawforce.pkgforce.modifiers.{ModifierResults, PRIVATE_MODIFIER, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLocation
 
@@ -38,6 +38,7 @@ final case class ConstructorMap(
       val argZip = c.parameters.map(_.typeName).zip(params)
       argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict = false, context))
     })
+
     val potential =
       if (assignable.isEmpty)
         None
@@ -77,17 +78,23 @@ final case class ConstructorMap(
 
 object ConstructorMap {
   type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
+  val emptyIssues: ArraySeq[Issue]           = ArraySeq.empty
+  val emptyParams: ArraySeq[FormalParameter] = ArraySeq.empty
 
   def apply(td: TypeDeclaration): ConstructorMap = {
-    //TODO
-    ConstructorMap.empty
+    val workingMap = new WorkingMap()
+    td.constructors.foreach(ctor => {
+      val key = ctor.parameters.length
+      workingMap.put(key, ctor :: workingMap.getOrElse(key, Nil))
+    })
+    new ConstructorMap(Some(td.typeName), None, toMap(workingMap), None, Nil)
   }
 
   def apply(
     td: TypeDeclaration,
     location: Option[PathLocation],
     ctors: ArraySeq[ConstructorDeclaration],
-    superClassMap: Option[ConstructorMap]
+    superClassMap: ConstructorMap
   ): ConstructorMap = {
     val workingMap = new WorkingMap()
     val errors     = mutable.Buffer[Issue]()
@@ -100,22 +107,45 @@ object ConstructorMap {
       workingMap.put(key, ctor :: matched)
     })
 
+    injectDefaultConstructorIfNeeded(td, workingMap)
+
     td match {
       case td: ApexClassDeclaration =>
         new ConstructorMap(
           Some(td.typeName),
           Some(td),
           toMap(workingMap),
-          superClassMap,
+          Some(superClassMap),
           errors.toList
         )
       case td: TypeDeclaration =>
-        new ConstructorMap(Some(td.typeName), None, toMap(workingMap), superClassMap, errors.toList)
+        new ConstructorMap(
+          Some(td.typeName),
+          None,
+          toMap(workingMap),
+          Some(superClassMap),
+          errors.toList
+        )
     }
   }
 
   def empty: ConstructorMap = {
     new ConstructorMap(None, None, Map(), None, Nil)
+  }
+
+  private def injectDefaultConstructorIfNeeded(td: TypeDeclaration, workingMap: WorkingMap) = {
+    if (workingMap.keys.isEmpty) {
+      val qNames = td.outerTypeName.map(x => List(x.name)).getOrElse(Nil) ++ List(td.name)
+
+      val dCtor = ApexConstructorDeclaration(
+        new ModifierResults(ArraySeq(PUBLIC_MODIFIER), emptyIssues),
+        QualifiedName(qNames),
+        emptyParams,
+        td.inTest,
+        EagerBlock.empty
+      )
+      workingMap.put(0, List(dCtor))
+    }
   }
 
   private def deDupeConstructors(
@@ -149,10 +179,10 @@ object ConstructorMap {
     constructor match {
       case ac: ApexConstructorLike =>
         errors.append(new Issue(ac.location.path, Diagnostic(ERROR_CATEGORY, ac.idLocation, error)))
-//    case pc: PlatformConstructor =>  errors.append(new Issue(TODO, Diagnostic(ERROR_CATEGORY, TODO, error)))
-      case _ => ()
+      case _ =>
     }
   }
+
   private def toMap(workingMap: WorkingMap): Map[Int, Array[ConstructorDeclaration]] = {
     workingMap.map(kv => (kv._1, kv._2.toArray)).toMap
   }

@@ -145,11 +145,6 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
     }
   }
 
-  override lazy val constructors: ArraySeq[ConstructorDeclaration] = {
-    //TODO
-    ConstructorDeclaration.emptyConstructorDeclarations
-  }
-
   protected def getMethods: ArraySeq[PlatformMethod] = {
     val localMethods =
       cls.getMethods
