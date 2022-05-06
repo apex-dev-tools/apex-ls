@@ -135,11 +135,11 @@ trait ParameterDeclaration {
 
 trait Parameters {
   val parameters: ArraySeq[ParameterDeclaration]
-  //TODO: Fix comments
-  /** Test if this method has params compatible with those passed. Ideally this would just be a comparison of type names
+
+  /** Test if this params are compatible with those passed. Ideally this would just be a comparison of type names
     * but there is a quirk in how platform generic interfaces are handled.
     */
-  def hasParameters(
+  def hasCompatibleParameters(
     params: ArraySeq[TypeName],
     allowPlatformGenericEquivalence: Boolean
   ): Boolean = {
@@ -159,11 +159,11 @@ trait Parameters {
     }
   }
 
-  /** Determine if this method is a more specific version of the passed method. For this to be true all the parameters
-    * of this method must be assignable to the corresponding parameter of the other method. However when dealing with
+  /** Determine if this params is a more specific version of the passed params. For this to be true all the parameters
+    * of this parameters must be assignable to the corresponding parameter of the other method. However when dealing with
     * RecordSets (SOQL results) we also prioritise degrees of specificness and use those to select as well.
     */
-  def isMoreSpecific(
+  def hasMoreSpecificParams(
     otherParams: ArraySeq[ParameterDeclaration],
     params: ArraySeq[TypeName],
     context: VerifyContext
@@ -184,7 +184,7 @@ trait Parameters {
     }))
   }
 
-  /** Determine if parameter type names are considered the same. During method calls some platform generics are
+  /** Determine if parameter type names are considered the same. During method and constructor calls some platform generics are
     * considered equivalent regardless of the type parameters used. Yeah, its a mess of a language.
     */
   protected def areSameGenericTypes(param: TypeName, other: TypeName): Boolean = {
@@ -224,11 +224,14 @@ trait ConstructorDeclaration extends DependencyHolder with Parameters {
   def visibility: Modifier =
     modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
 
+  /** Test if the passed constructor has params compatible with this method. Ideally this would just be a comparison of
+    * type names but there is a quirk in how platform generic interfaces are handled.
+    */
   def hasSameParameters(
     other: ConstructorDeclaration,
     allowPlatformGenericEquivalence: Boolean
   ): Boolean = {
-    hasParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
+    hasCompatibleParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
   }
 
   override def toString: String =
@@ -289,7 +292,7 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
     other: MethodDeclaration,
     allowPlatformGenericEquivalence: Boolean
   ): Boolean = {
-    hasParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
+    hasCompatibleParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
   }
 
   /** Test if this method matches the provided params when fulfilling an interface method. This is more involved than

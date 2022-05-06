@@ -405,7 +405,8 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
       .map(_.verify(input, context))
       .map(arg => if (arg.isDefined) arg.typeName else TypeNames.Any)
 
-    val ctorSearchContext = if (isSuper) context.superType.get else Some(context.thisType)
+    val ctorSearchContext = if (isSuper) context.superType else Some(context.thisType)
+
     ctorSearchContext match {
       case Some(at: ApexClassDeclaration) =>
         at.constructorMap.findConstructorByParams(args, context) match {

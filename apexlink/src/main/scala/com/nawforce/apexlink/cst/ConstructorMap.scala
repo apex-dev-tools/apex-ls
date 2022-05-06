@@ -46,7 +46,7 @@ final case class ConstructorMap(
         Some(assignable.head)
       else {
         assignable.find(
-          ctor => ctor.isMoreSpecific(ctor.parameters, params, context).contains(true)
+          ctor => ctor.hasMoreSpecificParams(ctor.parameters, params, context).contains(true)
         )
       }
 
@@ -102,9 +102,15 @@ object ConstructorMap {
     val deduped = deDupeConstructors(ctors, errors)
 
     deduped.foreach(ctor => {
-      val key     = ctor.parameters.length
-      val matched = workingMap.getOrElse(key, Nil)
-      workingMap.put(key, ctor :: matched)
+      val key                      = ctor.parameters.length
+      val ctorsWithSameParamLength = workingMap.getOrElse(key, Nil)
+      val platformGenericDupes =
+        ctorsWithSameParamLength.find(
+          x => x.hasSameParameters(ctor, allowPlatformGenericEquivalence = true)
+        )
+      if (platformGenericDupes.nonEmpty)
+        setConstructorDuplicateError(ctor, platformGenericDupes.head, errors)
+      workingMap.put(key, ctor :: ctorsWithSameParamLength)
     })
 
     injectDefaultConstructorIfNeeded(td, workingMap)
@@ -152,33 +158,32 @@ object ConstructorMap {
     ctors: ArraySeq[ConstructorDeclaration],
     errors: mutable.Buffer[Issue]
   ): ArraySeq[ConstructorDeclaration] = {
-    val dupes = ctors.duplicates(_.parameters.map(_.typeName.toString()).mkString(","));
+    val dupes = ctors.duplicates(_.parameters.map(_.typeName.toString()).mkString(","))
     dupes.foreach(duplicates => {
       duplicates._2.foreach(dup => {
-        duplicates._1 match {
-          case ac: ApexConstructorLike =>
-            setConstructorError(
-              dup,
-              s"Constructor is a duplicate of an earlier constructor at ${ac.idLocation.displayPosition}",
-              errors
-            )
-          case _ =>
-            //TODO: Im pretty sure this will never hit, so should probably remove this
-            setConstructorError(dup, s"Constructor is a duplicate of another constructor", errors)
-        }
+        setConstructorDuplicateError(dup, duplicates._1, errors)
       })
     })
-    ctors.filterNot(dupes.keys.toArray.contains)
+    ctors.filterNot(dupes.values.flatten.toSeq.contains)
   }
 
-  private def setConstructorError(
+  private def setConstructorDuplicateError(
     constructor: ConstructorDeclaration,
-    error: String,
+    duplicateOf: ConstructorDeclaration,
     errors: mutable.Buffer[Issue]
   ): Unit = {
-    constructor match {
-      case ac: ApexConstructorLike =>
-        errors.append(new Issue(ac.location.path, Diagnostic(ERROR_CATEGORY, ac.idLocation, error)))
+    (constructor, duplicateOf) match {
+      case (ac: ApexConstructorLike, dup: ApexConstructorLike) =>
+        errors.append(
+          new Issue(
+            ac.location.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              ac.idLocation,
+              s"Constructor is a duplicate of an earlier constructor at ${dup.idLocation.displayPosition}"
+            )
+          )
+        )
       case _ =>
     }
   }

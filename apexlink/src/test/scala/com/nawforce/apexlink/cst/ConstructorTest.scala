@@ -10,6 +10,17 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Constructor with args") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {}",
+        "Bar.cls"   -> "public class Bar { public Bar(String s){} }",
+        "Dummy.cls" -> "public class Dummy {Dummy() {this(new Foo(), new Bar('s'));} Dummy(Foo f, Bar b){} }"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("Bad name constructor") {
     typeDeclaration("public class Dummy {public Foo() {}}")
     assert(
@@ -60,6 +71,60 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       dummyIssues ==
         "Error: line 1 at 46-51: Constructor is a duplicate of an earlier constructor at line 1 at 27-32\n" +
           "Error: line 1 at 65-70: Constructor is a duplicate of an earlier constructor at line 1 at 27-32\n"
+    )
+  }
+
+  test("Call to invalid new constructor") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo { public Foo(Integer i) {}}",
+        "Dummy.cls" -> "public class Dummy { public Dummy(String s){new Foo();} }"
+      )
+    )
+    assert(dummyIssues == "Error: line 1 at 51-53: No constructor defined with 0 arguments\n")
+  }
+
+  test("Call to private constructor") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo { Foo(){} private Foo(Integer i) {}}",
+        "Dummy.cls" -> "public class Dummy { public Dummy(String s){new Foo(1);} }"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: private constructor(System.Integer i)\n"
+    )
+  }
+
+  test("Call to invalid super constructor") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "virtual class Foo {public Foo(Integer l) {}}",
+        "Dummy.cls" -> "public class Dummy extends Foo{ public Dummy(String s){super('s');} }"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 55-65: Constructor not defined: void Foo.<constructor>(System.String)\n"
+    )
+  }
+
+  test("Call to invalid this constructor") {
+    typeDeclarations(
+      Map("Dummy.cls" -> "public class Dummy { public Dummy(Integer i){this('s');} }")
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 45-54: Constructor not defined: void Dummy.<constructor>(System.String)\n"
+    )
+  }
+
+  test("Duplicate platform generics") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" -> "public class Dummy {Dummy(Database.Batchable<String> arg) {} Dummy(Database.Batchable<SObject> arg) {}}"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 61-66: Constructor is a duplicate of an earlier constructor at line 1 at 20-25\n"
     )
   }
 }
