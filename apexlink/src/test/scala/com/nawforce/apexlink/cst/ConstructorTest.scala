@@ -96,6 +96,16 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Call to private TestVisible constructors") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo { Foo(){} @TestVisible private Foo(Integer i) {}}",
+        "Dummy.cls" -> "@isTest public class Dummy { public Dummy(String s){new Foo(1);} }"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("Call to invalid super constructor") {
     typeDeclarations(
       Map(

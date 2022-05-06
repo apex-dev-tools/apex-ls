@@ -223,6 +223,7 @@ trait ConstructorDeclaration extends DependencyHolder with Parameters {
   //TODO: check is this is correct for ctors
   def visibility: Modifier =
     modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
+  def isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
 
   /** Test if the passed constructor has params compatible with this method. Ideally this would just be a comparison of
     * type names but there is a quirk in how platform generic interfaces are handled.

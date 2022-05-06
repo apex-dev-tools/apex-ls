@@ -55,6 +55,7 @@ final case class ConstructorMap(
         val isReallyPrivate =
           ctor.visibility == PRIVATE_MODIFIER && !areInSameApexFile(ctor, context.thisType)
         if (!isReallyPrivate) Right(ctor)
+        else if (ctor.isTestVisible && context.thisType.inTest) Right(ctor)
         else Left(s"Constructor is not visible: ${ctor.toString}")
       case _ =>
         typeName match {
