@@ -167,10 +167,13 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
   ): Unit = {
     val hasError = input match {
       case Some(at: ApexClassDeclaration) =>
-        at.constructorMap.findConstructorByParams(arguments, context) match {
-          case Left(error) => Some(error)
-          case _           => None
-        }
+        //TODO: Remove Temp bypass for exception
+        if (at.superClass.nonEmpty && at.superClass.get.name.value.endsWith("Exception")) None
+        else
+          at.constructorMap.findConstructorByParams(arguments, context) match {
+            case Left(error) => Some(error)
+            case _           => None
+          }
       case _ => None //TODO: handle other types?
     }
     if (hasError.nonEmpty) {
