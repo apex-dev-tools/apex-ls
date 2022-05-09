@@ -1,11 +1,17 @@
 package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
-import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike, ApexDeclaration}
+import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
+import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.types.apex.{
+  ApexClassDeclaration,
+  ApexConstructorLike,
+  ApexDeclaration
+}
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{ModifierResults, PRIVATE_MODIFIER, PUBLIC_MODIFIER}
-import com.nawforce.pkgforce.names.TypeName
+import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.PathLocation
 
 import scala.collection.immutable.ArraySeq
@@ -30,10 +36,12 @@ final case class ConstructorMap(
     params: ArraySeq[TypeName],
     context: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
-    val matched = constructorsByParam.get(params.length)
-    if (matched.isEmpty) {
+    val matched = constructorsByParam
+      .get(params.length)
+
+    if (matched.isEmpty)
       return Left(s"No constructor defined with ${params.length} arguments")
-    }
+
     val assignable = matched.get.filter(c => {
       val argZip = c.parameters.map(_.typeName).zip(params)
       argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict = false, context))
@@ -81,6 +89,7 @@ object ConstructorMap {
   type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
   val emptyIssues: ArraySeq[Issue]           = ArraySeq.empty
   val emptyParams: ArraySeq[FormalParameter] = ArraySeq.empty
+  val publicModifierResult                   = new ModifierResults(ArraySeq(PUBLIC_MODIFIER), emptyIssues)
 
   def apply(td: TypeDeclaration): ConstructorMap = {
     val workingMap = new WorkingMap()
@@ -114,7 +123,7 @@ object ConstructorMap {
       workingMap.put(key, ctor :: ctorsWithSameParamLength)
     })
 
-    injectDefaultConstructorIfNeeded(td, workingMap)
+    applySyntheticsCtors(td, workingMap)
 
     td match {
       case td: ApexClassDeclaration =>
@@ -140,18 +149,48 @@ object ConstructorMap {
     new ConstructorMap(None, None, Map(), None, Nil)
   }
 
-  private def injectDefaultConstructorIfNeeded(td: TypeDeclaration, workingMap: WorkingMap) = {
-    if (workingMap.keys.isEmpty) {
-      val qNames = td.outerTypeName.map(x => List(x.name)).getOrElse(Nil) ++ List(td.name)
-
-      val dCtor = ApexConstructorDeclaration(
-        new ModifierResults(ArraySeq(PUBLIC_MODIFIER), emptyIssues),
+  private def applySyntheticsCtors(td: TypeDeclaration, workingMap: WorkingMap): Unit = {
+    def toCtor(
+      qNames: List[Name],
+      params: ArraySeq[FormalParameter] = emptyParams
+    ): ApexConstructorDeclaration = {
+      ApexConstructorDeclaration(
+        publicModifierResult,
         QualifiedName(qNames),
-        emptyParams,
+        params,
         td.inTest,
         EagerBlock.empty
       )
-      workingMap.put(0, List(dCtor))
+    }
+    def toParam(id: String, typeCntxt: RelativeTypeContext, typeName: TypeName): FormalParameter = {
+      FormalParameter(publicModifierResult, RelativeTypeName(typeCntxt, typeName), Id(Name(id)))
+    }
+
+    lazy val qNames = td.outerTypeName.map(x => List(x.name)).getOrElse(Nil) ++ List(td.name)
+    if (workingMap.keys.isEmpty && !td.isCustomException)
+      workingMap.put(0, List(toCtor(qNames)))
+
+    if (td.isCustomException) {
+      val synthetics = td match {
+        case cd: ClassDeclaration =>
+          ArraySeq(
+            toCtor(qNames),
+            toCtor(qNames, ArraySeq(toParam("param1", cd.typeContext, TypeNames.String))),
+            toCtor(qNames, ArraySeq(toParam("param1", cd.typeContext, TypeNames.Exception))),
+            toCtor(
+              qNames,
+              ArraySeq(
+                toParam("param1", cd.typeContext, TypeNames.String),
+                toParam("param2", cd.typeContext, TypeNames.Exception)
+              )
+            )
+          )
+        case _ => ArraySeq.empty
+      }
+      synthetics.foreach(s => {
+        val key = s.parameters.length
+        workingMap.put(key, s :: workingMap.getOrElse(key, Nil))
+      })
     }
   }
 

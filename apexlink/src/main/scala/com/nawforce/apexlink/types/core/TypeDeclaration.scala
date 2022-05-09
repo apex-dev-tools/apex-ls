@@ -363,6 +363,8 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
 
   def inTest: Boolean = false // Is type defined only for test code
 
+  def isCustomException: Boolean = false
+
   val moduleDeclaration: Option[
     OPM.Module
   ] // Module that owns this types, None for none-adopted platform types

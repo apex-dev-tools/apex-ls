@@ -19,6 +19,7 @@ import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.finding.{RelativeTypeContext, TypeResolver}
 import com.nawforce.apexlink.memory.Monitor
+import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
@@ -61,6 +62,9 @@ abstract class FullDeclaration(
   override val idLocation: Location                  = id.location.location
   override val nature: Nature
   override val inTest: Boolean = _inTest
+
+  override val isCustomException: Boolean =
+    name.endsWith(Names.Exception) || superClass.contains(TypeNames.Exception)
 
   // Track if this has been flushed to cache yet
   private var flushedToCache = false

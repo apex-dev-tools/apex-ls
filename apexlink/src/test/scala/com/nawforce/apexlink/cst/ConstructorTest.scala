@@ -137,4 +137,14 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       dummyIssues == "Error: line 1 at 61-66: Constructor is a duplicate of an earlier constructor at line 1 at 20-25\n"
     )
   }
+
+  test("Custom exceptions") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {public class TestException extends Exception {}}",
+        "Dummy.cls" -> "public class Dummy { Dummy(){ throw new Foo.TestException('Error'); }}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
 }

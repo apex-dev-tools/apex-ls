@@ -27,6 +27,8 @@ final case class Name(value: String) {
 
   def canEqual(that: Any): Boolean = that.isInstanceOf[Name]
 
+  def endsWith(name: Name): Boolean = value.endsWith(name.value)
+
   override def equals(that: Any): Boolean = {
     that match {
       case otherName: Name =>
