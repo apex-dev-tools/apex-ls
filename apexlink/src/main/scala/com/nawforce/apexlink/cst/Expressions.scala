@@ -411,7 +411,7 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
       case Some(at: ApexClassDeclaration) =>
         //TODO: Remove Temp bypass for exception
         if (
-          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("Exception")
+          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("exception")
         )
           ExprContext.empty
         else

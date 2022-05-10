@@ -169,7 +169,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
       case Some(at: ApexClassDeclaration) =>
         //TODO: Remove Temp bypass for exception
         if (
-          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("Exception")
+          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("exception")
         ) None
         else
           at.constructorMap.findConstructorByParams(arguments, context) match {
