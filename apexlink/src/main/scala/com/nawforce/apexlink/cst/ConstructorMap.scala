@@ -43,6 +43,15 @@ final case class ConstructorMap(
       argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict = false, context))
     })
 
+    findPotentialMatch(assignable, params, context)
+
+  }
+
+  private def findPotentialMatch(
+    assignable: Array[ConstructorDeclaration],
+    params: ArraySeq[TypeName],
+    context: VerifyContext
+  ): Either[String, ConstructorDeclaration] = {
     val potential =
       if (assignable.isEmpty)
         None
@@ -50,17 +59,28 @@ final case class ConstructorMap(
         Some(assignable.head)
       else {
         assignable.find(
-          ctor => ctor.hasMoreSpecificParams(ctor.parameters, params, context).contains(true)
+          ctor =>
+            assignable.forall(
+              c =>
+                c == ctor || ctor
+                  .hasMoreSpecificParams(c.parameters, params, context)
+                  .contains(true)
+            )
         )
       }
-
     potential match {
       case Some(ctor) =>
         val isReallyPrivate =
           ctor.visibility == PRIVATE_MODIFIER && !areInSameApexFile(ctor, context.thisType)
         if (!isReallyPrivate) Right(ctor)
         else if (ctor.isTestVisible && context.thisType.inTest) Right(ctor)
-        else Left(s"Constructor is not visible: ${ctor.toString}")
+        else {
+          //Check the rest of 'assignable' for accessible ctors, if not revert to the original error
+          findPotentialMatch(assignable.filterNot(_ == ctor), params, context) match {
+            case Right(ctor) => Right(ctor)
+            case _           => Left(s"Constructor is not visible: ${ctor.toString}")
+          }
+        }
       case _ =>
         typeName match {
           case Some(name) =>

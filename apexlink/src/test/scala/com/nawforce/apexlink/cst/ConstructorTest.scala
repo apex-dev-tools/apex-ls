@@ -138,6 +138,28 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Ambiguous private calls") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {private Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
+        "Dummy.cls" -> "public class Dummy { Dummy(){new Foo('abc'); }}"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 36-43: Constructor is not visible: private constructor(System.String s)\n"
+    )
+  }
+
+  test("Ambiguous private calls with loose assignable") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {public Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
+        "Dummy.cls" -> "public class Dummy { Dummy(){new Foo('abc'); }}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("Custom exceptions") {
     typeDeclarations(
       Map(
