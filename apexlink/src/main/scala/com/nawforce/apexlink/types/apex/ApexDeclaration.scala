@@ -313,6 +313,12 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     methodMap.findMethod(name, params, staticContext, verifyContext)
   }
 
+  override def findConstructor(
+    params: ArraySeq[TypeName],
+    verifyContext: VerifyContext
+  ): Either[String, ConstructorDeclaration] =
+    constructorMap.findConstructorByParams(params, verifyContext)
+
   def bombScore(total: Int): (Int, Int, Double) = {
     val magicScale = 1.7306 // Places score 0-100
 

@@ -408,8 +408,8 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
     val ctorSearchContext = if (isSuper) context.superType else Some(context.thisType)
 
     ctorSearchContext match {
-      case Some(at: ApexClassDeclaration) =>
-        at.constructorMap.findConstructorByParams(args, context) match {
+      case Some(td) =>
+        td.findConstructor(args, context) match {
           case Left(error) =>
             context.logError(location, error)
             ExprContext.empty

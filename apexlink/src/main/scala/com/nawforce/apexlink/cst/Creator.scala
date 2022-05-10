@@ -166,12 +166,12 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     context: ExpressionVerifyContext
   ): Unit = {
     val hasError = input match {
-      case Some(at: ApexClassDeclaration) =>
-        at.constructorMap.findConstructorByParams(arguments, context) match {
+      case Some(td) =>
+        td.findConstructor(arguments, context) match {
           case Left(error) => Some(error)
           case _           => None
         }
-      case _ => None //TODO: handle other types?
+      case _ => None
     }
     if (hasError.nonEmpty) {
       OrgInfo.logError(location, hasError.get)

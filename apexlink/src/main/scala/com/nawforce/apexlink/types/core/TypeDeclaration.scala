@@ -356,6 +356,11 @@ trait AbstractTypeDeclaration {
 
   def findNestedType(name: Name): Option[AbstractTypeDeclaration]
 
+  def findConstructor(
+    params: ArraySeq[TypeName],
+    verifyContext: VerifyContext
+  ): Either[String, ConstructorDeclaration]
+
 }
 
 trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
@@ -446,6 +451,16 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
 
   private lazy val methodMap: MethodMap =
     MethodMap(this, None, MethodMap.empty(), methods, ArraySeq())
+
+  private lazy val constructorMap: ConstructorMap =
+    ConstructorMap(this, None, constructors, ConstructorMap.empty)
+
+  override def findConstructor(
+    params: ArraySeq[TypeName],
+    verifyContext: VerifyContext
+  ): Either[String, ConstructorDeclaration] = {
+    constructorMap.findConstructorByParams(params, verifyContext)
+  }
 
   override def findMethod(
     name: Name,
