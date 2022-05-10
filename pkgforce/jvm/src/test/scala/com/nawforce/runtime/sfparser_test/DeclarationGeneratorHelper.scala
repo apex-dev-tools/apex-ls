@@ -1,24 +1,6 @@
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_test
 
-import com.financialforce.oparser.{
-  Annotation,
-  ConstructorDeclaration,
-  FieldDeclaration,
-  FormalParameter,
-  FormalParameterList,
-  Id,
-  IdToken,
-  Location,
-  MethodDeclaration,
-  Modifier,
-  PropertyDeclaration,
-  QualifiedName,
-  TypeArguments,
-  TypeList,
-  TypeNameSegment,
-  TypeRef,
-  UnresolvedTypeRef
-}
+import com.financialforce.oparser._
 
 import scala.collection.immutable.ArraySeq
 

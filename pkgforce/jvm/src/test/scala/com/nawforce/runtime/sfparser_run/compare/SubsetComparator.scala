@@ -2,15 +2,10 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.runtime.sfparser.compare
+package com.nawforce.runtime.sfparser_run.compare
 
 import com.financialforce.oparser._
-import com.nawforce.runtime.workspace.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  IModuleTypeDeclaration,
-  InterfaceTypeDeclaration
-}
+import com.nawforce.runtime.workspace.{ClassTypeDeclaration, EnumTypeDeclaration, IModuleTypeDeclaration, InterfaceTypeDeclaration}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable

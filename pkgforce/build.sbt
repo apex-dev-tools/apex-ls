@@ -96,7 +96,7 @@ lazy val pkgforce = crossProject(JSPlatform, JVMPlatform).in(file(".")).
     libraryDependencies += "com.github.nawforce" % "apex-parser" % "2.13.0",
     libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.8-1",
     libraryDependencies += "com.github.nawforce" % "runforce" % "55.0.0",
-    libraryDependencies += "com.github.nawforce" % "uber-apex-jorje" % "1.0.0",
+    libraryDependencies += "com.github.nawforce" % "uber-apex-jorje" % "1.0.0" % Test,
     libraryDependencies += "com.google.jimfs" % "jimfs" % "1.1" % Test
   ).
   jsSettings(
