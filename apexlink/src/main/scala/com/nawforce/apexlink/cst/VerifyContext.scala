@@ -334,6 +334,8 @@ abstract class BlockVerifyContext(parentContext: VerifyContext) extends VerifyCo
 
   def isStatic: Boolean
 
+  def returnType: Option[TypeName]
+
   override def isSaving: Boolean = parentContext.isSaving
 
   override def saveResult(cst: CST, altLocation: Location)(op: => ExprContext): ExprContext = {
@@ -355,18 +357,25 @@ abstract class BlockVerifyContext(parentContext: VerifyContext) extends VerifyCo
   }
 }
 
-final class OuterBlockVerifyContext(parentContext: VerifyContext, isStaticContext: Boolean)
-    extends BlockVerifyContext(parentContext) {
+final class OuterBlockVerifyContext(
+  parentContext: VerifyContext,
+  isStaticContext: Boolean,
+  returnTypeName: Option[TypeName] = None
+) extends BlockVerifyContext(parentContext) {
 
   assert(!parentContext.isInstanceOf[BlockVerifyContext])
 
   override val isStatic: Boolean = isStaticContext
+
+  override def returnType: Option[TypeName] = returnTypeName
 }
 
 final class InnerBlockVerifyContext(parentContext: BlockVerifyContext)
     extends BlockVerifyContext(parentContext) {
 
   override def isStatic: Boolean = parentContext.isStatic
+
+  override def returnType: Option[TypeName] = parentContext.returnType
 
   override def collectVars(accum: mutable.Map[Name, VarTypeAndDefinition]): Unit = {
     parentContext.collectVars(accum)

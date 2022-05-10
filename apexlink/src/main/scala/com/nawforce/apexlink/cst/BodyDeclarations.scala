@@ -277,7 +277,8 @@ class ApexMethodDeclaration(
     returnTypeName.dependOn(id.location, context)
     parameters.foreach(_.verify(context))
 
-    val blockContext = new OuterBlockVerifyContext(context, modifiers.contains(STATIC_MODIFIER))
+    val blockContext =
+      new OuterBlockVerifyContext(context, modifiers.contains(STATIC_MODIFIER), Some(typeName))
     parameters.foreach(param => param.addVar(blockContext))
     block.foreach(block => {
       block.verify(blockContext)
