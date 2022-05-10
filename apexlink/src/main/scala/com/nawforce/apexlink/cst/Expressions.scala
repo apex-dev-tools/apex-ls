@@ -410,7 +410,9 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
     ctorSearchContext match {
       case Some(at: ApexClassDeclaration) =>
         //TODO: Remove Temp bypass for exception
-        if (at.superClass.nonEmpty && at.superClass.get.name.value.endsWith("Exception"))
+        if (
+          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("Exception")
+        )
           ExprContext.empty
         else
           at.constructorMap.findConstructorByParams(args, context) match {

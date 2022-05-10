@@ -168,7 +168,9 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     val hasError = input match {
       case Some(at: ApexClassDeclaration) =>
         //TODO: Remove Temp bypass for exception
-        if (at.superClass.nonEmpty && at.superClass.get.name.value.endsWith("Exception")) None
+        if (
+          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("Exception")
+        ) None
         else
           at.constructorMap.findConstructorByParams(arguments, context) match {
             case Left(error) => Some(error)
