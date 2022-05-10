@@ -1,4 +1,4 @@
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_run
 
 import apex.jorje.lsp.ApexLanguageServerLauncher
 import apex.jorje.lsp.api.codeActions.{CodeActionsProvider, QuickFixProvider}
@@ -20,31 +20,17 @@ import apex.jorje.lsp.api.telemetry.TelemetryHandler
 import apex.jorje.lsp.api.tests.TestService
 import apex.jorje.lsp.api.utils.SymbolPrinter
 import apex.jorje.lsp.api.visitors.VisitorFactory
-import apex.jorje.lsp.api.workspace.{
-  ApexDocumentService,
-  DependentCompilationTracker,
-  WorkspaceChangeListener
-}
+import apex.jorje.lsp.api.workspace.{ApexDocumentService, DependentCompilationTracker, WorkspaceChangeListener}
 import apex.jorje.lsp.impl.codeActions.quickFix.DeclareMissingMethodProvider
 import apex.jorje.lsp.impl.codeActions.{ApexCodeActionsProvider, CodeActionsProviderAggregator}
-import apex.jorje.lsp.impl.codeLens.{
-  AnonymousApexCodeLensesProvider,
-  ApexTestRunCodeLensesProvider,
-  CodeLensesProviderAggregator
-}
+import apex.jorje.lsp.impl.codeLens.{AnonymousApexCodeLensesProvider, ApexTestRunCodeLensesProvider, CodeLensesProviderAggregator}
 import apex.jorje.lsp.impl.completions._
 import apex.jorje.lsp.impl.completions.soql.EmbeddedSoqlCompletionStrategy
-import apex.jorje.lsp.impl.completions.triggers.{
-  TriggerContextVariablesCompletionStrategy,
-  TriggerKeywordCompletionStrategy
-}
+import apex.jorje.lsp.impl.completions.triggers.{TriggerContextVariablesCompletionStrategy, TriggerKeywordCompletionStrategy}
 import apex.jorje.lsp.impl.concurrency.ExecutorServiceProvider
 import apex.jorje.lsp.impl.connection.StandardIoProvider
 import apex.jorje.lsp.impl.debug.ApexDebuggerService
-import apex.jorje.lsp.impl.definition.{
-  ApexDefinitionStrategyAggregator,
-  StandardSymbolsDefinitionStrategy
-}
+import apex.jorje.lsp.impl.definition.{ApexDefinitionStrategyAggregator, StandardSymbolsDefinitionStrategy}
 import apex.jorje.lsp.impl.diagnostics.DiagnosticsReporter
 import apex.jorje.lsp.impl.document.DocumentLifecycleDispatcher
 import apex.jorje.lsp.impl.error.StandardErrorHandler
@@ -53,11 +39,7 @@ import apex.jorje.lsp.impl.index.converter.TypeInfoConverter
 import apex.jorje.lsp.impl.index.node._
 import apex.jorje.lsp.impl.index.{ApexIndex, ApexIndexer}
 import apex.jorje.lsp.impl.injection.ApexLanguageServerModule
-import apex.jorje.lsp.impl.references.{
-  ApexReferenceStrategyAggregator,
-  DBBackedReferenceProvider,
-  TrackedUsageReferenceStrategy
-}
+import apex.jorje.lsp.impl.references.{ApexReferenceStrategyAggregator, DBBackedReferenceProvider, TrackedUsageReferenceStrategy}
 import apex.jorje.lsp.impl.rename.StandardRenameProvider
 import apex.jorje.lsp.impl.search.StandardMemberDefinitionLocator
 import apex.jorje.lsp.impl.services._
@@ -67,26 +49,16 @@ import apex.jorje.lsp.impl.tests.StandardTestService
 import apex.jorje.lsp.impl.typings.TypeDefinitionLifecycleHandler
 import apex.jorje.lsp.impl.utils.{SfdxProjects, StandardSymbolPrinter, Symbols}
 import apex.jorje.lsp.impl.visitors.StandardDocumentSymbolVisitor
-import apex.jorje.lsp.impl.workspace.{
-  ServerSetup,
-  StandardApexDocumentService,
-  StandardDependentCompilationTracker,
-  WorkspaceChangeListenerDispatcher
-}
+import apex.jorje.lsp.impl.workspace.{ServerSetup, StandardApexDocumentService, StandardDependentCompilationTracker, WorkspaceChangeListenerDispatcher}
 import apex.jorje.semantic.ast.visitor.{AstVisitor, Scope}
 import com.google.common.util.concurrent.ServiceManager
 import com.google.inject.assistedinject.FactoryModuleBuilder
 import com.google.inject.multibindings.Multibinder
 import com.google.inject.{Guice, Injector, Provider, Singleton}
-import com.nawforce.runtime.sfparser.SymbolProvider.SFModuleWithDb
+import com.nawforce.runtime.sfparser_run.SymbolProvider.SFModuleWithDb
 import org.eclipse.jdt.internal.core.nd.db.{ChunkCache, Database}
 import org.eclipse.jdt.internal.core.nd.{Nd, NdNode, NdNodeTypeRegistry}
-import org.eclipse.lsp4j.services.{
-  LanguageClient,
-  LanguageServer,
-  TextDocumentService,
-  WorkspaceService
-}
+import org.eclipse.lsp4j.services.{LanguageClient, LanguageServer, TextDocumentService, WorkspaceService}
 
 import java.nio.file.Path
 import java.util.concurrent.ExecutorService

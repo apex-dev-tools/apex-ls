@@ -2,7 +2,7 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_run
 
 import apex.jorje.data.ast
 import apex.jorje.data.ast.TypeRefs.ArrayTypeRef
@@ -20,33 +20,8 @@ import apex.jorje.semantic.symbol.`type`.TypeInfo
 import apex.jorje.semantic.symbol.member.Member
 import apex.jorje.semantic.symbol.member.method.MethodInfo
 import apex.jorje.semantic.symbol.member.variable.FieldInfo
-import com.financialforce.oparser.{
-  Annotation,
-  ConstructorDeclaration,
-  FieldDeclaration,
-  FormalParameter,
-  FormalParameterList,
-  Id,
-  IdToken,
-  Initializer,
-  Location,
-  MethodDeclaration,
-  Modifier,
-  PropertyDeclaration,
-  QualifiedName,
-  TypeArguments,
-  TypeList,
-  TypeNameSegment,
-  UnresolvedTypeRef
-}
-import com.nawforce.runtime.workspace.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  IMutableModuleTypeDeclaration,
-  IPM,
-  InterfaceTypeDeclaration,
-  TypeDeclaration
-}
+import com.financialforce.oparser._
+import com.nawforce.runtime.workspace._
 import org.apache.commons.lang3.reflect.FieldUtils
 
 import java.util

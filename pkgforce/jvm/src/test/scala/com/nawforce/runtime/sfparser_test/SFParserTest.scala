@@ -2,11 +2,12 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_test
 
 import com.financialforce.oparser._
 import com.nawforce.runtime.platform.Path
-import com.nawforce.runtime.sfparser.compare.SubsetComparator
+import com.nawforce.runtime.sfparser_run.SFParser
+import com.nawforce.runtime.sfparser_run.compare.SubsetComparator
 import com.nawforce.runtime.workspace.ModuleClassFactory
 import org.scalatest.funsuite.AnyFunSuite
 

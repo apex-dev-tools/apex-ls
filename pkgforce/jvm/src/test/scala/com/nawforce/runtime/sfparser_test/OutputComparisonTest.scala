@@ -2,21 +2,14 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_test
 
-import com.financialforce.oparser.{OutlineParser, UnresolvedTypeRef}
-import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.FileSystemHelper
-import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdCollector}
-import com.nawforce.runtime.workspace.{
-  IModuleTypeDeclaration,
-  IPM,
-  ModuleClassFactory,
-  TypeDeclaration
-}
+import com.financialforce.oparser.OutlineParser
+import com.nawforce.runtime.sfparser_run.compare.{SubsetComparator, TypeIdCollector}
+import com.nawforce.runtime.sfparser_run.{SFParser, SymbolProvider}
+import com.nawforce.runtime.workspace.{ModuleClassFactory, TypeDeclaration}
 
 import java.nio.file.{Files, Path, Paths}
-import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ArrayBuffer
 
 object OutputComparisonTest {
