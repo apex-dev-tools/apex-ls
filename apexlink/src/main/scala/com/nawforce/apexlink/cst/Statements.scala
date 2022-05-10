@@ -15,9 +15,12 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.cst.stmts.SwitchStatement
+import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
+import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
@@ -430,7 +433,26 @@ object CatchClause {
 
 final case class ReturnStatement(expression: Option[Expression]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.foreach(_.verify(context))
+    expression.foreach(e => {
+      assertReturnType(context, e.verify(context)).foreach(
+        msg => context.log(Issue(e.location.path, ERROR_CATEGORY, e.location.location, msg))
+      )
+    })
+  }
+
+  private def assertReturnType(context: BlockVerifyContext, expr: ExprContext): Option[String] = {
+    val expectedType = context.returnType.get
+
+    if (context.returnType.isEmpty)
+      Some(s"Return statement not available in this context")
+    else if (expr.declaration.isEmpty && expectedType != TypeNames.Void)
+      Some(s"Missing return value of type '$expectedType'")
+    else if (
+      expr.isDefined && !isAssignable(expectedType, expr.typeDeclaration, strict = false, context)
+    )
+      Some(s"Incompatible return type, '${expr.typeName}' is not assignable to '$expectedType'")
+    else
+      None
   }
 }
 
