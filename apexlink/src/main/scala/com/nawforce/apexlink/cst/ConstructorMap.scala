@@ -2,11 +2,7 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.types.apex.{
-  ApexClassDeclaration,
-  ApexConstructorLike,
-  ApexDeclaration
-}
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike, ApexDeclaration}
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
