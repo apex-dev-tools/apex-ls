@@ -137,4 +137,26 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       dummyIssues == "Error: line 1 at 61-66: Constructor is a duplicate of an earlier constructor at line 1 at 20-25\n"
     )
   }
+
+  test("Ambiguous private calls") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {private Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
+        "Dummy.cls" -> "public class Dummy { Dummy(){new Foo('abc'); }}"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 36-43: Constructor is not visible: private constructor(System.String s)\n"
+    )
+  }
+
+  test("Ambiguous private calls with loose assignable") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {public Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
+        "Dummy.cls" -> "public class Dummy { Dummy(){new Foo('abc'); }}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
 }
