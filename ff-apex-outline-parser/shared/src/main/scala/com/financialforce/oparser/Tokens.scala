@@ -102,7 +102,7 @@ case class IdToken(contents: String, location: Location) extends Token
 
 case class NonIdToken(contents: String, location: Location) extends Token
 
-class Tokens {
+final class Tokens {
 
   private val tokens = mutable.ArrayBuffer[Token]()
 
@@ -114,16 +114,23 @@ class Tokens {
     tokens(index)
   }
 
+  def matches(index: Int, value: String): Boolean = {
+    if (index < tokens.length)
+      tokens(index).matches(value)
+    else
+      false
+  }
+
   def apply(index: Int): Option[Token] = {
     // Avoid lift() here, it's expensive
     if (index >= tokens.length) None else Some(tokens(index))
   }
 
-  def length(): Int = {
+  def length: Int = {
     tokens.length
   }
 
-  def isEmpty(): Boolean = {
+  def isEmpty: Boolean = {
     tokens.isEmpty
   }
 
@@ -144,17 +151,12 @@ class Tokens {
   }
 
   def findIndex(f: Token => Boolean): Int = {
-    var index = 0
-    while (index < tokens.toArray.length) {
-      if (f(tokens(index))) return index
-      index += 1
-    }
-    -1
+    findIndex(0, f)
   }
 
   def findIndex(startIndex: Int, f: Token => Boolean): Int = {
     var index = startIndex
-    while (index < tokens.toArray.length) {
+    while (index < tokens.length) {
       if (f(tokens(index))) return index
       index += 1
     }

@@ -6,7 +6,7 @@ package com.financialforce.oparser
 import com.financialforce.oparser.OutlineParser.singleCharacterTokens
 
 import scala.annotation.tailrec
-import scala.collection.mutable
+import scala.collection.{BitSet, mutable}
 
 sealed abstract class TypeNature(val value: String)
 
@@ -95,13 +95,6 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
     loop(initialState)
   }
 
-  private def characterParseHelper[R](
-    discardCommentsAndWhitespace: Boolean,
-    f: Char => (Boolean, Option[R])
-  ): Option[R] = {
-    parseHelper[Char, R](discardCommentsAndWhitespace, () => currentChar, f)
-  }
-
   private def tokenParseHelper[R](
     discardCommentsAndWhitespace: Boolean,
     f: Option[Token] => (Boolean, Option[R])
@@ -184,7 +177,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
             case Tokens.LBrackStr =>
               tokens.append(t); collectSquareBracketFragment(); (true, None)
             case Tokens.SemicolonStr =>
-              if (!tokens.isEmpty()) {
+              if (!tokens.isEmpty) {
                 Parse.parseClassMember(classTypeDeclaration, tokens, t) match {
                   case (_, cms) =>
                     if (cms.nonEmpty) {
@@ -205,7 +198,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               }
               (true, None)
             case Tokens.RBraceStr =>
-              if (!tokens.isEmpty())
+              if (!tokens.isEmpty)
                 throw new Exception("Unexpected '}'")
               (false, None)
             case _ =>
@@ -361,8 +354,10 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
     while (continue) {
       val currentOffset = charOffset
 
-      consumeCommentOrWhitespace()
       currentChar match {
+        case Tokens.ForwardSlash =>
+          if (!consumeComment())
+            consumeCharacter(capture = false)
         case Tokens.SingleQuote =>
           consumeStringLiteral()
         case Tokens.LBrace =>
@@ -754,18 +749,20 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
 }
 
 object OutlineParser {
-  val singleCharacterTokens: Set[Char] = Set(
-    Tokens.Semicolon,
-    Tokens.Comma,
-    Tokens.LParen,
-    Tokens.RParen,
-    Tokens.LessThan,
-    Tokens.GreaterThan,
-    Tokens.LBrace,
-    Tokens.RBrace,
-    Tokens.LBrack,
-    Tokens.RBrack
-  )
+  val singleCharacterTokens: BitSet = {
+    BitSet(
+      Tokens.Semicolon,
+      Tokens.Comma,
+      Tokens.LParen,
+      Tokens.RParen,
+      Tokens.LessThan,
+      Tokens.GreaterThan,
+      Tokens.LBrace,
+      Tokens.RBrace,
+      Tokens.LBrack,
+      Tokens.RBrack
+    )
+  }
 
   def parse[TypeDecl <: IMutableTypeDeclaration, Ctx](
     path: String,
