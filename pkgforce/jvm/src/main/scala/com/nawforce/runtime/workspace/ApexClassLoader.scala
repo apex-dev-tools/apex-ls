@@ -26,15 +26,14 @@ final class ApexClassLoader(
   ): Array[(MetadataDocument, IMutableModuleTypeDeclaration)] = {
 
     val loadFutures = Future.traverse(documents)(document => {
-
-      val source = document.path.readSourceData()
-      source match {
-        case Left(err) =>
-          Future.successful(
+      Future {
+        val source = document.path.readSourceData()
+        source match {
+          case Left(err) =>
             Left(Some(new Issue(document.path, Diagnostic(ERROR_CATEGORY, Location.empty, err))))
-          )
-        case Right(source) =>
-          parseSource(document, source)
+          case Right(source) =>
+            parseSource(document, source)
+        }
       }
     })
 
@@ -52,17 +51,14 @@ final class ApexClassLoader(
   private def parseSource(
     document: MetadataDocument,
     source: SourceData
-  ): Future[Either[Option[Issue], (MetadataDocument, IMutableModuleTypeDeclaration)]] = {
-    Future {
-      val (_, reason, td) =
-        OutlineParser.parse(document.path.toString, source.asString, factory, module)
-      td
-        .map(td => Right(document, td))
-        .getOrElse(
-          Left(
-            Some(new Issue(document.path, Diagnostic(ERROR_CATEGORY, Location.empty, reason.get)))
-          )
-        )
-    }
+  ): Either[Option[Issue], (MetadataDocument, IMutableModuleTypeDeclaration)] = {
+    val (_, reason, td) =
+      OutlineParser.parse(document.path.toString, source.asString, factory, module)
+    td
+      .map(td => Right(document, td))
+      .getOrElse(
+        Left(Some(new Issue(document.path, Diagnostic(ERROR_CATEGORY, Location.empty, reason.get))))
+      )
   }
+
 }

@@ -33,6 +33,9 @@ final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeN
 
   /** Provide custom handling to toString to deal with internal type display */
   override def toString: String = {
+    if (params.isEmpty && outer.isEmpty)
+      return name.value
+
     this match {
       case TypeName.Null                                                 => "null"
       case TypeName.Any                                                  => "any"
@@ -132,7 +135,7 @@ object TypeName {
   }
 
   def fromStringOrNull(typeName: String): TypeName = {
-    apply(typeName).getOrElse(null);
+    apply(typeName).getOrElse(null)
   }
 
   /** Create a type name from a sequence of names, these should be provided in inner->outer order */

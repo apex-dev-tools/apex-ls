@@ -151,7 +151,7 @@ case class Id(id: IdToken) {
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[Id]
-    id.lowerCaseContents.equalsIgnoreCase(other.id.lowerCaseContents)
+    id.lowerCaseContents.equals(other.id.lowerCaseContents)
   }
 
   override val hashCode: Int = id.lowerCaseContents.hashCode
@@ -513,7 +513,7 @@ object Parse {
   def parseEnumMember(etd: IMutableTypeDeclaration, tokens: Tokens): Seq[Id] = {
     if (tokens.isEmpty()) return Seq.empty
 
-    val constant = tokenToId(tokens(0).get)
+    val constant = tokenToId(tokens.head)
     val field = new FieldDeclaration(
       ArraySeq(),
       ArraySeq(Modifier(IdToken(Tokens.StaticStr, constant.id.location))),
@@ -578,7 +578,7 @@ object Parse {
       throw new Exception(s"Unrecognised method ${tokens.toString()}")
     }
 
-    val id    = tokenToId(tokens(startIndex).get)
+    val id    = tokenToId(tokens.get(startIndex))
     var index = startIndex + 1
 
     val formalParameterList = new FormalParameterList
@@ -605,7 +605,7 @@ object Parse {
     ctd: IMutableTypeDeclaration
   ): Option[PropertyDeclaration] = {
 
-    val id    = tokenToId(tokens(startIndex).get)
+    val id    = tokenToId(tokens.get(startIndex))
     val index = startIndex + 1
 
     if (index < tokens.length()) {
@@ -679,7 +679,7 @@ object Parse {
     var startLocation: Option[Location] = None
     var endLocation                     = Location.default
     while (index < tokens.length()) {
-      val id = tokenToId(tokens(index).get)
+      val id = tokenToId(tokens.get(index))
 
       val field = FieldDeclaration(
         ArraySeq.unsafeWrapArray(md.annotations.toArray),
@@ -721,8 +721,8 @@ object Parse {
   private def parseId(startIndex: Int, tokens: Tokens, res: IdAssignable): Int = {
     if (startIndex >= tokens.length()) {
       startIndex
-    } else if (tokens(startIndex).get.isInstanceOf[IdToken]) {
-      res.add(tokenToId(tokens(startIndex).get))
+    } else if (tokens.get(startIndex).isInstanceOf[IdToken]) {
+      res.add(tokenToId(tokens.get(startIndex)))
       startIndex + 1
     } else {
       startIndex
@@ -750,7 +750,7 @@ object Parse {
     res: TypeArgumentsAssignable
   ): Int = {
     if (startIndex >= tokens.length()) return startIndex
-    if (!tokens(startIndex).get.matches(Tokens.LessThanStr)) return startIndex
+    if (!tokens.get(startIndex).matches(Tokens.LessThanStr)) return startIndex
 
     val ta = new TypeArguments
 
@@ -764,7 +764,7 @@ object Parse {
   private def parseTypeList(startIndex: Int, tokens: Tokens, res: TypeListAssignable): Int = {
     val typeList = new TypeList
     var index    = parseTypeRef(startIndex, tokens, typeList)
-    while (index < tokens.length() && tokens(index).get.matches(Tokens.CommaStr)) {
+    while (index < tokens.length() && tokens.get(index).matches(Tokens.CommaStr)) {
       index = parseTypeRef(index + 1, tokens, typeList)
     }
     if (typeList.typeRefs.nonEmpty) res.add(typeList)
@@ -778,7 +778,7 @@ object Parse {
 
     var index = parseTypeName(startIndex, tokens, typeRef)
 
-    while (index < tokens.length() && tokens(index).get.matches(Tokens.DotStr)) {
+    while (index < tokens.length() && tokens.get(index).matches(Tokens.DotStr)) {
       index = parseTypeName(index + 1, tokens, typeRef)
     }
 
@@ -791,7 +791,7 @@ object Parse {
     res: ArraySubscriptsAssignable
   ): Int = {
     var index = startIndex
-    while (index < tokens.length() && tokens(index).get.matches(Tokens.LBrackStr)) {
+    while (index < tokens.length() && tokens.get(index).matches(Tokens.LBrackStr)) {
       if (tokens(index + 1).exists(!_.matches(Tokens.RBrackStr))) {
         throw new Exception(s"Missing '${Tokens.RBrackStr}'")
       }
@@ -808,21 +808,21 @@ object Parse {
 
     var index = parseId(startIndex + 1, tokens, qName)
 
-    while (index < tokens.length() && tokens(index).get.matches(Tokens.DotStr)) {
+    while (index < tokens.length() && tokens.get(index).matches(Tokens.DotStr)) {
       index = parseId(index + 1, tokens, qName)
     }
 
     val parameters = if (tokens(index).exists(_.matches(Tokens.LParenStr))) {
-      val builder      = new StringBuilder()
+      val builder      = new mutable.StringBuilder()
       var nestingCount = 1
       index += 1
       while (nestingCount > 0 && index < tokens.length()) {
-        if (tokens(index).get.matches(Tokens.RParenStr)) {
+        if (tokens.get(index).matches(Tokens.RParenStr)) {
           nestingCount -= 1
-        } else if (tokens(index).get.matches(Tokens.LParenStr)) {
+        } else if (tokens.get(index).matches(Tokens.LParenStr)) {
           nestingCount += 1
         }
-        if (nestingCount > 0) builder.append(tokens(index).get.contents)
+        if (nestingCount > 0) builder.append(tokens.get(index).contents)
         index += 1
       }
       Some(builder.toString())
@@ -854,21 +854,21 @@ object Parse {
     var index    = startIndex
     var continue = true
     while (continue && index < tokens.length()) {
-      if (tokens(index).get.matches(Tokens.AtSignStr)) {
+      if (tokens.get(index).matches(Tokens.AtSignStr)) {
         index = parseAnnotation(index, tokens, res)
-      } else if (modifierTokenStrs.contains(tokens(index).get.contents.toLowerCase)) {
-        res.add(tokenToModifier(tokens(index).get))
+      } else if (modifierTokenStrs.contains(tokens.get(index).contents.toLowerCase)) {
+        res.add(tokenToModifier(tokens.get(index)))
         index += 1
       } else if (
-        sharingModifiers.contains(tokens(index).get.contents.toLowerCase())
+        sharingModifiers.contains(tokens.get(index).contents.toLowerCase())
         && tokens(index + 1).exists(_.matches(Tokens.SharingStr))
       ) {
         // Combine to make sharing modifier
         res.add(
           Modifier(
             IdToken(
-              s"${tokens(index).get.contents} ${tokens(index + 1).get.contents}",
-              Location.from(tokens(index).get.location, tokens(index + 1).get.location)
+              s"${tokens.get(index).contents} ${tokens.get(index + 1).contents}",
+              Location.from(tokens.get(index).location, tokens.get(index + 1).location)
             )
           )
         )
@@ -891,7 +891,7 @@ object Parse {
     var indexAtStart = startIndex
     while (
       indexAtStart != index && index < tokens
-        .length() && !tokens(index).get.matches(Tokens.RParenStr)
+        .length() && !tokens.get(index).matches(Tokens.RParenStr)
     ) {
       indexAtStart = index
       val formalParameter = new FormalParameter

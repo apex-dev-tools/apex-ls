@@ -3,7 +3,10 @@
  */
 package com.financialforce.oparser
 
+import com.financialforce.oparser.OutlineParser.singleCharacterTokens
+
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 sealed abstract class TypeNature(val value: String)
 
@@ -99,13 +102,6 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
     parseHelper[Char, R](discardCommentsAndWhitespace, () => currentChar, f)
   }
 
-  private def characterParseHelper[R, S](
-    initialState: S,
-    f: (Char, S) => (Boolean, S, Option[R])
-  ): Option[R] = {
-    statefulParseHelper[Char, S, R](initialState, () => currentChar, f)
-  }
-
   private def tokenParseHelper[R](
     discardCommentsAndWhitespace: Boolean,
     f: Option[Token] => (Boolean, Option[R])
@@ -158,7 +154,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               val classTypeDeclaration = factory.create(ctx, CLASS_NATURE, path, None)
               Parse.parseClassType(classTypeDeclaration, tokens)
               typeDeclaration = Some(classTypeDeclaration)
-              val startLocation = Location.fromStart(tokens(0).get.location)
+              val startLocation = Location.fromStart(tokens.head.location)
               tokens.clear()
               consumeClassBody(classTypeDeclaration)
               classTypeDeclaration.setLocation(
@@ -192,7 +188,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
                 Parse.parseClassMember(classTypeDeclaration, tokens, t) match {
                   case (_, cms) =>
                     if (cms.nonEmpty) {
-                      val location = Location.from(tokens(0).get.location, t.location)
+                      val location = Location.from(tokens.head.location, t.location)
                       cms.foreach(m => m.location = Some(location))
                     }
                 }
@@ -262,7 +258,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
             case Tokens.LBraceStr =>
               val pb = Parse.parsePropertyBlock(pd)
               if (pb.isDefined) {
-                pb.get.blockLocation = Some(tokens(0).get.location)
+                pb.get.blockLocation = Some(tokens.head.location)
               }
               tokens.clear()
               consumeBlock()
@@ -275,7 +271,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               val pb = Parse.parsePropertyBlock(pd)
               if (pb.isDefined) {
                 pb.get.blockLocation =
-                  Some(Location.updateEnd(tokens(0).get.location, line, lineOffset, byteOffset))
+                  Some(Location.updateEnd(tokens.head.location, line, lineOffset, byteOffset))
               }
               tokens.clear()
               (true, None)
@@ -359,22 +355,34 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
   }
 
   private def consumeBlock(): Unit = {
-    // opening brace consumed
-    characterParseHelper(
-      1: Int,
-      (char: Char, nesting: Int) => {
-        char match {
-          case Tokens.SingleQuote =>
-            consumeStringLiteral(); (true, nesting, None)
-          case Tokens.LBrace =>
-            consumeCharacter(false); (true, nesting + 1, None)
-          case Tokens.RBrace =>
-            consumeCharacter(false); (nesting > 1, nesting - 1, None)
-          case _ =>
-            consumeCharacter(false); (true, nesting, None)
-        }
+    var continue = true
+    var indent   = 1
+
+    while (continue) {
+      val currentOffset = charOffset
+
+      consumeCommentOrWhitespace()
+      currentChar match {
+        case Tokens.SingleQuote =>
+          consumeStringLiteral()
+        case Tokens.LBrace =>
+          consumeCharacter(capture = false)
+          indent += 1
+        case Tokens.RBrace =>
+          consumeCharacter(capture = false)
+          continue = indent > 1
+          indent -= 1
+        case _ =>
+          consumeCharacter(capture = false)
       }
-    )
+
+      if (continue) {
+        if (atEnd())
+          throw new Exception("End of file")
+        else if (currentOffset == charOffset)
+          throw new Exception("No Progress")
+      }
+    }
   }
 
   private def consumeInterfaceDeclaration(): Option[TypeDecl] = {
@@ -391,7 +399,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               val interfaceTypeDeclaration = factory.create(ctx, INTERFACE_NATURE, path, None)
               Parse.parseInterfaceType(interfaceTypeDeclaration, tokens)
               typeDeclaration = Some(interfaceTypeDeclaration)
-              val startLocation = Location.fromStart(tokens(0).get.location)
+              val startLocation = Location.fromStart(tokens.head.location)
               tokens.clear()
               consumeInterfaceBody(interfaceTypeDeclaration)
               interfaceTypeDeclaration.setLocation(
@@ -421,7 +429,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
             case Tokens.SemicolonStr =>
               val ims = Parse.parseInterfaceMember(interfaceTypeDeclaration, tokens)
               if (ims.nonEmpty) {
-                val sl       = tokens(0).get.location
+                val sl       = tokens.head.location
                 val location = Location.updateEnd(sl, line, lineOffset, byteOffset)
                 ims.foreach(im => im.location = Some(location))
               }
@@ -449,7 +457,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               val enumTypeDeclaration = factory.create(ctx, ENUM_NATURE, path, None)
               Parse.parseEnumType(enumTypeDeclaration, tokens)
               typeDeclaration = Some(enumTypeDeclaration)
-              val startLocation = Location.fromStart(tokens(0).get.location)
+              val startLocation = Location.fromStart(tokens.head.location)
               tokens.clear()
               consumeEnumBody(enumTypeDeclaration)
               enumTypeDeclaration.setLocation(
@@ -507,7 +515,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
     charOffset + 1 < length && contents(charOffset + 1) == peek
   }
 
-  private val byteBuffer = new StringBuilder(4)
+  private val byteBuffer = new mutable.StringBuilder(4)
   private def consumeCharacter(capture: Boolean = true): Unit = {
     if (capture)
       buffer.append(byteOffset, charOffset, line, lineOffset)
@@ -517,16 +525,17 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
     else {
       charOffset += 1
       currentChar = contents(charOffset)
-      byteBuffer.setLength(0)
 
       val byteLength =
         if (currentChar.toInt < 128) 1
-        else
+        else {
+          byteBuffer.setLength(0)
           byteBuffer
             .append(currentChar)
             .toString()
             .getBytes("UTF-8")
             .length
+        }
 
       byteOffset += byteLength
       lineOffset += 1
@@ -665,21 +674,30 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
     buffer.clear()
     consumeCharacter(capture)
 
-    characterParseHelper(
-      discardCommentsAndWhitespace = false,
-      {
+    var continue = true
+    while (continue) {
+      val currentOffset = charOffset
+
+      currentChar match {
         case Tokens.SingleQuote =>
-          consumeCharacter(capture); (false, None)
+          consumeCharacter(capture)
+          continue = false
         case Tokens.BackSlash =>
           consumeCharacter(capture)
           if (currentChar == Tokens.SingleQuote || currentChar == Tokens.BackSlash) {
             consumeCharacter(capture)
           }
-          (true, None)
         case _ =>
-          consumeCharacter(capture); (true, None)
+          consumeCharacter(capture);
       }
-    )
+
+      if (continue) {
+        if (atEnd()) {
+          throw new Exception("End of file")
+        } else if (currentOffset == charOffset)
+          throw new Exception("No Progress")
+      }
+    }
   }
 
   /**
@@ -697,19 +715,6 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       val b = buffer.captured()
       IdToken(b._1, b._2)
     }
-
-    val singleCharacterTokens = Set(
-      Tokens.Semicolon,
-      Tokens.Comma,
-      Tokens.LParen,
-      Tokens.RParen,
-      Tokens.LessThan,
-      Tokens.GreaterThan,
-      Tokens.LBrace,
-      Tokens.RBrace,
-      Tokens.LBrack,
-      Tokens.RBrack
-    )
 
     def consumeNonIdToken(): NonIdToken = {
       buffer.clear()
@@ -749,6 +754,19 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
 }
 
 object OutlineParser {
+  val singleCharacterTokens: Set[Char] = Set(
+    Tokens.Semicolon,
+    Tokens.Comma,
+    Tokens.LParen,
+    Tokens.RParen,
+    Tokens.LessThan,
+    Tokens.GreaterThan,
+    Tokens.LBrace,
+    Tokens.RBrace,
+    Tokens.LBrack,
+    Tokens.RBrack
+  )
+
   def parse[TypeDecl <: IMutableTypeDeclaration, Ctx](
     path: String,
     contents: String,

@@ -106,8 +106,17 @@ class Tokens {
 
   private val tokens = mutable.ArrayBuffer[Token]()
 
+  def head: Token = {
+    tokens.head
+  }
+
+  def get(index: Int): Token = {
+    tokens(index)
+  }
+
   def apply(index: Int): Option[Token] = {
-    tokens.lift(index)
+    // Avoid lift() here, it's expensive
+    if (index >= tokens.length) None else Some(tokens(index))
   }
 
   def length(): Int = {
