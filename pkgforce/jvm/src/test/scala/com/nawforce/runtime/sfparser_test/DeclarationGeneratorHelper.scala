@@ -37,7 +37,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toTypeList(types: Array[UnresolvedTypeRef]): TypeList = {
-    val tl = new TypeList()
+    val tl = TypeList()
     types.foreach(tl.add)
     tl
   }
@@ -56,8 +56,8 @@ trait DeclarationGeneratorHelper {
     id: Option[Id] = None
   ): FormalParameter = {
     val fp = new FormalParameter()
-    modifiers.foreach(fp.add)
-    annotations.foreach(fp.add)
+    fp.setModifiers(ArraySeq.unsafeWrapArray(modifiers))
+    fp.setAnnotations(ArraySeq.unsafeWrapArray(annotations))
     fp.typeRef = typeRef
     fp.id = id
     fp
@@ -86,9 +86,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toParameterList(fps: Array[FormalParameter]): FormalParameterList = {
-    val fpl = new FormalParameterList()
-    fps.foreach(fpl.add)
-    fpl
+    FormalParameterList(ArraySeq.unsafeWrapArray(fps))
   }
 
   def toConstructor(

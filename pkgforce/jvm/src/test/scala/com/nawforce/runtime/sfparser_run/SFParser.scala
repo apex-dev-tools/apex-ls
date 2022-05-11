@@ -165,8 +165,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val constants               = constructFieldDeclarations(typeInfo).map(_.id)
 
     etd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    modifiersAndAnnotations._1.foreach(etd.add)
-    modifiersAndAnnotations._2.foreach(etd.add)
+    etd.setModifiers(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray))
+    etd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
     constants.foreach(
       id =>
         etd.appendField(
@@ -201,9 +201,13 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
     itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    //We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
-    modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).foreach(itd.add)
-    modifiersAndAnnotations._2.foreach(itd.add)
+    // We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
+    itd.setModifiers(
+      ArraySeq.unsafeWrapArray(
+        modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).toArray
+      )
+    )
+    itd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
     itd._implementsTypeList = constructInterfaceTypeList(typeInfo).orNull
     itd
   }
@@ -237,8 +241,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
 
     ctd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     constructors.foreach(ctd._constructors.append)
-    modifiersAndAnnotations._1.foreach(ctd.add)
-    modifiersAndAnnotations._2.foreach(ctd.add)
+    ctd.setModifiers(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray))
+    ctd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
     properties.foreach(ctd._properties.append)
     fields.foreach(ctd._fields.append)
     ctd._extendsTypeRef = constructExtendsTypeRef(typeInfo).orNull
@@ -372,9 +376,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   }
 
   private def toFormalParameterList(pl: java.util.List[Parameter]): FormalParameterList = {
-    val fpl = new FormalParameterList
-    pl.asScala.foreach(p => fpl.add(toFormalParameter(p)))
-    fpl
+    FormalParameterList(ArraySeq.unsafeWrapArray(pl.asScala.map(toFormalParameter).toArray))
   }
 
   private def toFormalParameter(p: Parameter): FormalParameter = {
@@ -382,8 +384,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val fp    = new FormalParameter()
     fp.add(toId(p.getName.getValue, p.getLoc))
     toTypeRef(Some(p.getTypeRef)).foreach(fp.add)
-    aAndM._1.foreach(fp.add)
-    aAndM._2.foreach(fp.add)
+    fp.setModifiers(ArraySeq.unsafeWrapArray(aAndM._1.toArray))
+    fp.setAnnotations(ArraySeq.unsafeWrapArray(aAndM._2.toArray))
     fp
   }
 

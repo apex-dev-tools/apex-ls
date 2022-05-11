@@ -12,7 +12,6 @@ import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.OutlineParserLocationOps.extendLocation
 
 import scala.collection.compat.immutable.ArraySeq
-import scala.collection.mutable.ArrayBuffer
 
 object OutlineParserModifierOps {
 
@@ -120,16 +119,12 @@ object OutlineParserModifierOps {
   def parameterModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArrayBuffer[OPAnnotation],
-    src: ArrayBuffer[OPModifier]
+    annotations: ArraySeq[OPAnnotation],
+    src: ArraySeq[OPModifier]
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods = toModifiers(
-      path,
-      ArraySeq.unsafeWrapArray(annotations.toArray),
-      ArraySeq.unsafeWrapArray(src.toArray)
-    )
+    val mods   = toModifiers(path, annotations, src)
     ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, id.id.location))
   }
 

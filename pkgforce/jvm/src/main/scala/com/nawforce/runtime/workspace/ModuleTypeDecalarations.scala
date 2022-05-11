@@ -47,8 +47,8 @@ sealed class TypeDeclaration(
   var _extendsTypeRef: TypeRef      = _
   var _implementsTypeList: TypeList = _
 
-  var _modifiers: mutable.ArrayBuffer[Modifier]       = mutable.ArrayBuffer()
-  var _annotations: mutable.ArrayBuffer[Annotation]   = mutable.ArrayBuffer()
+  var _modifiers: ArraySeq[Modifier]                  = Modifiers.emptyArraySeq
+  var _annotations: ArraySeq[Annotation]              = Annotations.emptyArraySeq
   var _initializers: mutable.ArrayBuffer[Initializer] = mutable.ArrayBuffer()
 
   var _innerTypes: mutable.ArrayBuffer[TypeDeclaration]          = mutable.ArrayBuffer()
@@ -68,8 +68,8 @@ sealed class TypeDeclaration(
   override def extendsTypeRef: TypeRef                          = _extendsTypeRef
   override def implementsTypeList: TypeList                     = _implementsTypeList
 
-  override def modifiers: ArraySeq[Modifier]       = ArraySeq.unsafeWrapArray(_modifiers.toArray)
-  override def annotations: ArraySeq[Annotation]   = ArraySeq.unsafeWrapArray(_annotations.toArray)
+  override def modifiers: ArraySeq[Modifier]       = _modifiers
+  override def annotations: ArraySeq[Annotation]   = _annotations
   override def initializers: ArraySeq[Initializer] = ArraySeq.unsafeWrapArray(_initializers.toArray)
 
   override def innerTypes: ArraySeq[TypeDeclaration] = ArraySeq.unsafeWrapArray(_innerTypes.toArray)
@@ -80,8 +80,10 @@ sealed class TypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
-  override def setLocation(location: Location): Unit = _location = location
-  override def setExtends(typeRef: TypeRef): Unit    = _extendsTypeRef = typeRef
+  override def setLocation(location: Location): Unit                   = _location = location
+  override def setExtends(typeRef: TypeRef): Unit                      = _extendsTypeRef = typeRef
+  override def setModifiers(modifiers: ArraySeq[Modifier]): Unit       = _modifiers = modifiers
+  override def setAnnotations(annotations: ArraySeq[Annotation]): Unit = _annotations = annotations
 
   override def appendInnerType(inner: IMutableTypeDeclaration): Unit = {
     // This is rather messy, we need to accept IMutableTypeDeclaration for the caller(s) but only want to
@@ -92,14 +94,11 @@ sealed class TypeDeclaration(
   override def appendProperty(prop: PropertyDeclaration): Unit       = _properties.append(prop)
   override def appendField(field: FieldDeclaration): Unit            = _fields.append(field)
 
-  override def add(m: Modifier): Unit           = _modifiers.append(m)
-  override def add(a: Annotation): Unit         = _annotations.append(a)
   override def add(tl: TypeList): Unit          = _implementsTypeList = tl
   override def add(md: MethodDeclaration): Unit = _methods.append(md)
   override def add(init: Initializer): Unit     = _initializers.append(init)
   override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
   override def add(i: Id): Unit                 = _id = id
-
 }
 
 object TypeDeclaration {
@@ -111,19 +110,13 @@ class ClassTypeDeclaration(
   path: String,
   enclosing: IMutableModuleTypeDeclaration
 ) extends TypeDeclaration(_module, path, CLASS_NATURE, enclosing)
-    with AnnotationAssignable
     with IdAssignable
-    with ModifierAssignable
     with TypeRefAssignable
     with TypeListAssignable
     with MethodDeclarationAssignable
     with InitializerAssignable {
 
-  override def add(a: Annotation): Unit = _annotations.append(a)
-
   override def add(i: Id): Unit = _id = i
-
-  override def add(m: Modifier): Unit = _modifiers.append(m)
 
   override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
 
@@ -194,17 +187,11 @@ class InterfaceTypeDeclaration(
   path: String,
   enclosing: IMutableModuleTypeDeclaration
 ) extends TypeDeclaration(_module, path, INTERFACE_NATURE, enclosing)
-    with AnnotationAssignable
     with IdAssignable
-    with ModifierAssignable
     with TypeListAssignable
     with MethodDeclarationAssignable {
 
-  override def add(a: Annotation): Unit = _annotations.append(a)
-
   override def add(i: Id): Unit = _id = i
-
-  override def add(m: Modifier): Unit = _modifiers.append(m)
 
   override def add(tl: TypeList): Unit = _implementsTypeList = tl
 
@@ -230,14 +217,9 @@ class EnumTypeDeclaration(
   path: String,
   enclosing: IMutableModuleTypeDeclaration
 ) extends TypeDeclaration(_module, path, ENUM_NATURE, enclosing)
-    with IdAssignable
-    with ModifierAssignable {
-
-  override def add(a: Annotation): Unit = _annotations.append(a)
+    with IdAssignable {
 
   override def add(i: Id): Unit = _id = i
-
-  override def add(m: Modifier): Unit = _modifiers.append(m)
 
   override def toString: String = {
     import StringUtils._

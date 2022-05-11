@@ -46,9 +46,7 @@ trait ITypeDeclaration extends TypeRef {
 
 trait IMutableTypeDeclaration
     extends ITypeDeclaration
-    with AnnotationAssignable
     with IdAssignable
-    with ModifierAssignable
     with TypeRefAssignable
     with TypeListAssignable
     with MethodDeclarationAssignable
@@ -56,6 +54,8 @@ trait IMutableTypeDeclaration
 
   def setLocation(location: Location): Unit
   def setExtends(typeRef: TypeRef): Unit
+  def setModifiers(modifiers: ArraySeq[Modifier]): Unit
+  def setAnnotations(annotations: ArraySeq[Annotation]): Unit
 
   def innerTypes: ArraySeq[IMutableTypeDeclaration]
   def appendInnerType(inner: IMutableTypeDeclaration): Unit

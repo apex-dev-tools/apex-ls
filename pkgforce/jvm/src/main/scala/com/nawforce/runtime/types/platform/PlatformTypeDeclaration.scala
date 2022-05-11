@@ -233,9 +233,7 @@ class PlatformTypeDeclaration(
   protected def toFormalParameterList(
     params: Array[java.lang.reflect.Parameter]
   ): FormalParameterList = {
-    val fpl = new FormalParameterList()
-    params.map(toFormalParameter).foreach(fpl.add)
-    fpl
+    new FormalParameterList(ArraySeq.unsafeWrapArray(params.map(toFormalParameter)))
   }
 
   protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {

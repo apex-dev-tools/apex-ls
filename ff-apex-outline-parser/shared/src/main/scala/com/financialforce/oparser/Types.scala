@@ -56,14 +56,6 @@ trait IdAssignable {
   def add(i: Id): Unit
 }
 
-trait AnnotationAssignable {
-  def add(a: Annotation): Unit
-}
-
-trait ModifierAssignable extends AnnotationAssignable {
-  def add(m: Modifier): Unit
-}
-
 trait TypeRefAssignable {
   def add(tr: UnresolvedTypeRef): Unit
 }
@@ -82,10 +74,6 @@ trait TypeArgumentsAssignable {
 
 trait ArraySubscriptsAssignable {
   def addArraySubscript(): Unit
-}
-
-trait FormalParameterAssignable {
-  def add(fp: FormalParameter): Unit
 }
 
 trait MethodDeclarationAssignable {
@@ -107,15 +95,14 @@ trait Signature {
   val modifiers: ArraySeq[Modifier]
 }
 
-class MemberDeclaration extends ModifierAssignable with TypeRefAssignable {
+class MemberDeclaration extends TypeRefAssignable {
 
-  val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  val modifiers: mutable.ArrayBuffer[Modifier]     = mutable.ArrayBuffer[Modifier]()
-  var typeRef: Option[UnresolvedTypeRef]           = None
+  var modifiers: ArraySeq[Modifier]      = Modifiers.emptyArraySeq
+  var annotations: ArraySeq[Annotation]  = Annotations.emptyArraySeq
+  var typeRef: Option[UnresolvedTypeRef] = None
 
-  override def add(a: Annotation): Unit = annotations.append(a)
-
-  override def add(m: Modifier): Unit = modifiers.append(m)
+  def setModifiers(modifiers: ArraySeq[Modifier]): Unit       = this.modifiers = modifiers
+  def setAnnotations(annotations: ArraySeq[Annotation]): Unit = this.annotations = annotations
 
   override def add(tr: UnresolvedTypeRef): Unit = typeRef = Some(tr)
 }
@@ -124,6 +111,10 @@ case class Annotation(qName: QualifiedName, parameters: Option[String]) {
   override def toString: String = {
     if (parameters.isDefined) s"@$qName(${parameters.get})" else s"@$qName"
   }
+}
+
+object Annotations {
+  final val emptyArraySeq = ArraySeq[Annotation]()
 }
 
 case class Modifier(token: Token) {
@@ -138,7 +129,9 @@ case class Modifier(token: Token) {
     token.lowerCaseContents == other.token.lowerCaseContents
   }
 }
+
 object Modifiers {
+  final val emptyArraySeq               = ArraySeq[Modifier]()
   final val PUBLIC_MODIFIER: Modifier   = Modifier(IdToken(Tokens.PublicStr, Location.default))
   final val STATIC_MODIFIER: Modifier   = Modifier(IdToken(Tokens.StaticStr, Location.default))
   final val VIRTUAL_MODIFIER: Modifier  = Modifier(IdToken(Tokens.VirtualStr, Location.default))
@@ -179,22 +172,22 @@ class QualifiedName extends IdAssignable {
   }
 }
 
-class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdAssignable {
+class FormalParameter extends TypeRefAssignable with IdAssignable {
 
-  val annotations: mutable.ArrayBuffer[Annotation] = mutable.ArrayBuffer[Annotation]()
-  val modifiers: mutable.ArrayBuffer[Modifier]     = mutable.ArrayBuffer[Modifier]()
-  var typeRef: Option[TypeRef]                     = None
-  var id: Option[Id]                               = None
+  var annotations: ArraySeq[Annotation] = Annotations.emptyArraySeq
+  var modifiers: ArraySeq[Modifier]     = Modifiers.emptyArraySeq
+  var typeRef: Option[TypeRef]          = None
+  var id: Option[Id]                    = None
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
-
-  override def add(a: Annotation): Unit = annotations.append(a)
-
-  override def add(m: Modifier): Unit = modifiers.append(m)
 
   override def add(tr: UnresolvedTypeRef): Unit = typeRef = Some(tr)
 
   override def add(i: Id): Unit = id = Some(i)
+
+  def setModifiers(modifiers: ArraySeq[Modifier]): Unit = this.modifiers = modifiers
+
+  def setAnnotations(annotations: ArraySeq[Annotation]): Unit = this.annotations = annotations
 
   override def toString: String = {
     import StringUtils._
@@ -217,12 +210,7 @@ class FormalParameter extends ModifierAssignable with TypeRefAssignable with IdA
   }
 }
 
-class FormalParameterList extends FormalParameterAssignable {
-  val formalParameters: mutable.ArrayBuffer[FormalParameter] =
-    mutable.ArrayBuffer[FormalParameter]()
-
-  override def add(fp: FormalParameter): Unit = formalParameters.append(fp)
-
+final case class FormalParameterList(formalParameters: ArraySeq[FormalParameter]) {
   override def toString: String = {
     import StringUtils._
     asString(formalParameters, ", ")
@@ -232,6 +220,10 @@ class FormalParameterList extends FormalParameterAssignable {
     val other = obj.asInstanceOf[FormalParameterList]
     other.formalParameters == formalParameters
   }
+}
+
+object FormalParameterList {
+  final val empty = FormalParameterList(ArraySeq())
 }
 
 class PropertyBlock {
@@ -412,7 +404,9 @@ case class Initializer(isStatic: Boolean) extends BodyDeclaration {
 object Parse {
 
   def parseClassType(ctd: IMutableTypeDeclaration, tokens: Tokens): IMutableTypeDeclaration = {
-    var index = parseModifiers(0, tokens, ctd)
+    var (index, modifiers, annotations) = parseModifiersAndAnnotations(0, tokens)
+    ctd.setModifiers(modifiers)
+    ctd.setAnnotations(annotations)
 
     if (!tokens.matches(index, Tokens.ClassStr))
       throw new Exception(s"Missing '${Tokens.ClassStr}'")
@@ -432,7 +426,9 @@ object Parse {
   }
 
   def parseInterfaceType(itd: IMutableTypeDeclaration, tokens: Tokens): IMutableTypeDeclaration = {
-    var index = parseModifiers(0, tokens, itd)
+    var (index, modifiers, annotations) = parseModifiersAndAnnotations(0, tokens)
+    itd.setModifiers(modifiers)
+    itd.setAnnotations(annotations)
 
     if (!tokens.matches(index, Tokens.InterfaceStr))
       throw new Exception(s"Missing '${Tokens.InterfaceStr}'")
@@ -448,7 +444,9 @@ object Parse {
   }
 
   def parseEnumType(etd: IMutableTypeDeclaration, tokens: Tokens): IMutableTypeDeclaration = {
-    var index = parseModifiers(0, tokens, etd)
+    var (index, modifiers, annotations) = parseModifiersAndAnnotations(0, tokens)
+    etd.setModifiers(modifiers)
+    etd.setAnnotations(annotations)
 
     if (!tokens.matches(index, Tokens.EnumStr))
       throw new Exception(s"Missing '${Tokens.EnumStr}'")
@@ -474,8 +472,10 @@ object Parse {
       return (true, addInitializer(ctd, isStatic = false).toSeq)
     }
 
-    val md    = new MemberDeclaration
-    var index = parseModifiers(0, tokens, md)
+    val md                              = new MemberDeclaration
+    var (index, modifiers, annotations) = parseModifiersAndAnnotations(0, tokens)
+    md.setModifiers(modifiers)
+    md.setAnnotations(annotations)
 
     if (index >= tokens.length) {
       val isStatic = tokens.hasToken(Set(Tokens.StaticStr)).isDefined
@@ -504,8 +504,10 @@ object Parse {
   def parseInterfaceMember(itd: IMutableTypeDeclaration, tokens: Tokens): Seq[BodyDeclaration] = {
     if (tokens.isEmpty) return Seq.empty
 
-    val md    = new MemberDeclaration
-    var index = parseModifiers(0, tokens, md)
+    val md                              = new MemberDeclaration
+    var (index, modifiers, annotations) = parseModifiersAndAnnotations(0, tokens)
+    md.setModifiers(modifiers)
+    md.setAnnotations(annotations)
     index = parseTypeRef(index, tokens, md)
     addMethod(index, tokens, md, itd).toSeq
   }
@@ -552,16 +554,16 @@ object Parse {
     ctd: IMutableTypeDeclaration
   ): Option[ConstructorDeclaration] = {
 
-    val formalParameterList = new FormalParameterList
-    val index               = parseFormalParameterList(startIndex, tokens, formalParameterList)
-    if (index < tokens.length) {
+    val (index, formalParameterList) = parseFormalParameterList(startIndex, tokens)
+    if (index < tokens.length || formalParameterList.isEmpty) {
       throw new Exception(s"Unrecognised constructor ${tokens.toString()}")
     }
+
     val constructor = ConstructorDeclaration(
       ArraySeq.unsafeWrapArray(md.annotations.toArray),
       ArraySeq.unsafeWrapArray(md.modifiers.toArray),
       toQualifiedName(md.typeRef.get),
-      formalParameterList
+      formalParameterList.get
     )
     ctd.appendConstructor(constructor)
     Some(constructor)
@@ -578,12 +580,9 @@ object Parse {
       throw new Exception(s"Unrecognised method ${tokens.toString()}")
     }
 
-    val id    = tokenToId(tokens.get(startIndex))
-    var index = startIndex + 1
-
-    val formalParameterList = new FormalParameterList
-    index = parseFormalParameterList(index, tokens, formalParameterList)
-    if (index < tokens.length) {
+    val id                           = tokenToId(tokens.get(startIndex))
+    val (index, formalParameterList) = parseFormalParameterList(startIndex + 1, tokens)
+    if (index < tokens.length || formalParameterList.isEmpty) {
       throw new Exception(s"Unrecognised method ${tokens.toString()}")
     }
     val method =
@@ -592,7 +591,7 @@ object Parse {
         ArraySeq.unsafeWrapArray(md.modifiers.toArray),
         md.typeRef.get,
         id,
-        formalParameterList
+        formalParameterList.get
       )
     res.add(method)
     Some(method)
@@ -801,7 +800,11 @@ object Parse {
     index
   }
 
-  private def parseAnnotation(startIndex: Int, tokens: Tokens, res: AnnotationAssignable): Int = {
+  private def parseAnnotation(
+    startIndex: Int,
+    tokens: Tokens,
+    accum: mutable.ArrayBuffer[Annotation]
+  ): Int = {
     if (!tokens(startIndex).exists(_.matches(Tokens.AtSignStr))) return startIndex
 
     val qName = new QualifiedName
@@ -828,7 +831,7 @@ object Parse {
       Some(builder.toString())
     } else None
 
-    res.add(Annotation(qName, parameters))
+    accum.append(Annotation(qName, parameters))
 
     index
   }
@@ -850,21 +853,33 @@ object Parse {
 
   private val sharingModifiers = Set(Tokens.WithStr, Tokens.WithoutStr, Tokens.InheritedStr)
 
-  private def parseModifiers(startIndex: Int, tokens: Tokens, res: ModifierAssignable): Int = {
+  private def parseModifiersAndAnnotations(
+    startIndex: Int,
+    tokens: Tokens
+  ): (Int, ArraySeq[Modifier], ArraySeq[Annotation]) = {
+    var modifiers: mutable.ArrayBuffer[Modifier]     = null
+    var annotations: mutable.ArrayBuffer[Annotation] = null
+
     var index    = startIndex
     var continue = true
     while (continue && index < tokens.length) {
       if (tokens.get(index).matches(Tokens.AtSignStr)) {
-        index = parseAnnotation(index, tokens, res)
+        if (annotations == null)
+          annotations = new mutable.ArrayBuffer[Annotation]()
+        index = parseAnnotation(index, tokens, annotations)
       } else if (modifierTokenStrs.contains(tokens.get(index).contents.toLowerCase)) {
-        res.add(tokenToModifier(tokens.get(index)))
+        if (modifiers == null)
+          modifiers = new mutable.ArrayBuffer[Modifier]()
+        modifiers.append(tokenToModifier(tokens.get(index)))
         index += 1
       } else if (
         sharingModifiers.contains(tokens.get(index).contents.toLowerCase())
         && tokens(index + 1).exists(_.matches(Tokens.SharingStr))
       ) {
         // Combine to make sharing modifier
-        res.add(
+        if (modifiers == null)
+          modifiers = new mutable.ArrayBuffer[Modifier]()
+        modifiers.append(
           Modifier(
             IdToken(
               s"${tokens.get(index).contents} ${tokens.get(index + 1).contents}",
@@ -877,30 +892,48 @@ object Parse {
         continue = false
       }
     }
-    index
+
+    (
+      index,
+      if (modifiers == null) Modifiers.emptyArraySeq
+      else ArraySeq.unsafeWrapArray(modifiers.toArray),
+      if (annotations == null) Annotations.emptyArraySeq
+      else ArraySeq.unsafeWrapArray(annotations.toArray)
+    )
   }
 
   private def parseFormalParameterList(
     startIndex: Int,
-    tokens: Tokens,
-    res: FormalParameterList
-  ): Int = {
-    if (!tokens(startIndex).exists(_.matches(Tokens.LParenStr))) return startIndex
+    tokens: Tokens
+  ): (Int, Option[FormalParameterList]) = {
+    if (!tokens(startIndex).exists(_.matches(Tokens.LParenStr))) return (startIndex, None)
 
-    var index        = startIndex + 1
-    var indexAtStart = startIndex
+    var formalParameters: mutable.ArrayBuffer[FormalParameter] = null
+    var index                                                  = startIndex + 1
+    var indexAtStart                                           = startIndex
     while (
       indexAtStart != index && index < tokens.length && !tokens.get(index).matches(Tokens.RParenStr)
     ) {
       indexAtStart = index
-      val formalParameter = new FormalParameter
-      index = parseModifiers(index, tokens, formalParameter)
+      val formalParameter                    = new FormalParameter
+      val (newIndex, modifiers, annotations) = parseModifiersAndAnnotations(index, tokens)
+      index = newIndex
+      formalParameter.setModifiers(modifiers)
+      formalParameter.setAnnotations(annotations)
       index = parseTypeRef(index, tokens, formalParameter)
       index = parseId(index, tokens, formalParameter)
       if (tokens(index).exists(_.matches(Tokens.CommaStr))) index += 1
-      res.add(formalParameter)
+      if (formalParameters == null)
+        formalParameters = mutable.ArrayBuffer()
+      formalParameters.append(formalParameter)
     }
     if (tokens(index).exists(_.matches(Tokens.RParenStr))) index += 1
-    index
+    (
+      index,
+      Some(
+        if (formalParameters == null) FormalParameterList.empty
+        else new FormalParameterList(ArraySeq.unsafeWrapArray(formalParameters.toArray))
+      )
+    )
   }
 }
