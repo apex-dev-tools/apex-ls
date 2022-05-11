@@ -102,10 +102,11 @@ final case class ConstructorMap(
 }
 
 object ConstructorMap {
+  private val emptyIssues: ArraySeq[Issue]           = ArraySeq.empty
+  private val emptyParams: ArraySeq[FormalParameter] = ArraySeq.empty
+  private val publicModifierResult                   = new ModifierResults(ArraySeq(PUBLIC_MODIFIER), emptyIssues)
+
   type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
-  val emptyIssues: ArraySeq[Issue]           = ArraySeq.empty
-  val emptyParams: ArraySeq[FormalParameter] = ArraySeq.empty
-  val publicModifierResult                   = new ModifierResults(ArraySeq(PUBLIC_MODIFIER), emptyIssues)
 
   def apply(td: TypeDeclaration): ConstructorMap = {
     val workingMap = new WorkingMap()
