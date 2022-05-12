@@ -52,12 +52,19 @@ final case class ConstructorMap(
     params: ArraySeq[TypeName],
     context: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
+    def getCtorString = {
+      typeName match {
+        case Some(name) =>
+          s"void $name.<constructor>(${params.mkString(",")})"
+        case None => s"void <constructor>(${params.mkString(",")})"
+      }
+    }
     val potential =
       if (assignable.isEmpty)
         None
       else if (assignable.length == 1)
         Some(assignable.head)
-      else {
+      else
         assignable.find(
           ctor =>
             assignable.forall(
@@ -67,7 +74,7 @@ final case class ConstructorMap(
                   .contains(true)
             )
         )
-      }
+
     potential match {
       case Some(ctor) =>
         val isReallyPrivate =
@@ -75,18 +82,13 @@ final case class ConstructorMap(
         if (!isReallyPrivate) Right(ctor)
         else if (ctor.isTestVisible && context.thisType.inTest) Right(ctor)
         else {
-          //Check the rest of 'assignable' for accessible ctors, if not revert to the original error
+          //Check the rest of assignable for accessible ctors, if not revert to the original error
           findPotentialMatch(assignable.filterNot(_ == ctor), params, context) match {
             case Right(ctor) => Right(ctor)
-            case _           => Left(s"Constructor is not visible: ${ctor.toString}")
+            case _           => Left(s"Constructor is not visible: $getCtorString")
           }
         }
-      case _ =>
-        typeName match {
-          case Some(name) =>
-            Left(s"Constructor not defined: void $name.<constructor>(${params.mkString(",")})")
-          case None => Left(s"Constructor not defined: void <constructor>(${params.mkString(",")})")
-        }
+      case _ => Left(s"Constructor not defined: $getCtorString")
     }
   }
 
@@ -140,7 +142,7 @@ object ConstructorMap {
       workingMap.put(key, ctor :: ctorsWithSameParamLength)
     })
 
-    applySyntheticsCtors(td, workingMap)
+    applySyntheticsCtors(td, workingMap, superClassMap, errors)
 
     td match {
       case td: ApexClassDeclaration =>
@@ -166,36 +168,53 @@ object ConstructorMap {
     new ConstructorMap(None, None, Map(), None, Nil)
   }
 
-  private def applySyntheticsCtors(td: TypeDeclaration, workingMap: WorkingMap): Unit = {
-    def toCtor(
-      qNames: List[Name],
-      params: ArraySeq[FormalParameter] = emptyParams
-    ): ApexConstructorDeclaration = {
-      ApexConstructorDeclaration(
-        publicModifierResult,
-        QualifiedName(qNames),
-        params,
-        td.inTest,
-        EagerBlock.empty
-      )
+  private def applySyntheticsCtors(
+    td: TypeDeclaration,
+    workingMap: WorkingMap,
+    superClassMap: ConstructorMap,
+    errors: mutable.Buffer[Issue]
+  ): Unit = {
+    applyDefaultCtor(td, workingMap, superClassMap, errors)
+    applyCustomExceptionsCtors(td, workingMap)
+  }
+
+  private def applyDefaultCtor(
+    td: TypeDeclaration,
+    workingMap: WorkingMap,
+    superClassMap: ConstructorMap,
+    errors: mutable.Buffer[Issue]
+  ) = {
+    if (workingMap.keys.isEmpty && !td.isCustomException) {
+      td match {
+        case ad: ApexDeclaration =>
+          superClassMap
+            .findConstructorByParams(ArraySeq.empty, new TypeVerifyContext(None, ad, None)) match {
+            case Left(error) =>
+              val msg =
+                if (superClassMap.constructorsByParam.contains(0)) error
+                else
+                  s"No default constructor available in super type: ${superClassMap.typeName.get}"
+              setClassError(td, errors, msg)
+            case _ => workingMap.put(0, List(toCtor(td)))
+          }
+        case _ =>
+      }
     }
+  }
+
+  private def applyCustomExceptionsCtors(td: TypeDeclaration, workingMap: WorkingMap): Unit = {
     def toParam(id: String, typeCntxt: RelativeTypeContext, typeName: TypeName): FormalParameter = {
       FormalParameter(publicModifierResult, RelativeTypeName(typeCntxt, typeName), Id(Name(id)))
     }
-
-    lazy val qNames = td.outerTypeName.map(x => List(x.name)).getOrElse(Nil) ++ List(td.name)
-    if (workingMap.keys.isEmpty && !td.isCustomException)
-      workingMap.put(0, List(toCtor(qNames)))
-
     if (td.isCustomException) {
       val synthetics = td match {
         case cd: ClassDeclaration =>
           ArraySeq(
-            toCtor(qNames),
-            toCtor(qNames, ArraySeq(toParam("param1", cd.typeContext, TypeNames.String))),
-            toCtor(qNames, ArraySeq(toParam("param1", cd.typeContext, TypeNames.Exception))),
+            toCtor(td),
+            toCtor(td, ArraySeq(toParam("param1", cd.typeContext, TypeNames.String))),
+            toCtor(td, ArraySeq(toParam("param1", cd.typeContext, TypeNames.Exception))),
             toCtor(
-              qNames,
+              td,
               ArraySeq(
                 toParam("param1", cd.typeContext, TypeNames.String),
                 toParam("param2", cd.typeContext, TypeNames.Exception)
@@ -204,6 +223,7 @@ object ConstructorMap {
           )
         case _ => ArraySeq.empty
       }
+
       synthetics.foreach(s => {
         val key = s.parameters.length
         workingMap.put(key, s :: workingMap.getOrElse(key, Nil))
@@ -243,6 +263,30 @@ object ConstructorMap {
         )
       case _ =>
     }
+  }
+
+  private def setClassError(td: TypeDeclaration, errors: mutable.Buffer[Issue], message: String) = {
+    td match {
+      case ad: ApexDeclaration =>
+        errors.append(
+          new Issue(ad.location.path, Diagnostic(ERROR_CATEGORY, ad.idLocation, message))
+        )
+      case _ =>
+    }
+  }
+
+  private def toCtor(
+    td: TypeDeclaration,
+    params: ArraySeq[FormalParameter] = emptyParams
+  ): ApexConstructorDeclaration = {
+    lazy val qNames = td.outerTypeName.map(x => List(x.name)).getOrElse(Nil) ++ List(td.name)
+    ApexConstructorDeclaration(
+      publicModifierResult,
+      QualifiedName(qNames),
+      params,
+      td.inTest,
+      EagerBlock.empty
+    )
   }
 
   private def toMap(workingMap: WorkingMap): Map[Int, Array[ConstructorDeclaration]] = {
