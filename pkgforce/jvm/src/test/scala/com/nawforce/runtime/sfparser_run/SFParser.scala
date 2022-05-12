@@ -251,8 +251,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   private def constructInterfaceTypeList(typeInfo: TypeInfo): Option[TypeList] = {
     val interfaceRef =
       typeInfo.getCodeUnitDetails.getInterfaceTypeRefs.asScala.map(x => toTypeRef(Some(x)))
-    val tl = new TypeList
-    interfaceRef.flatten.foreach(tl.add)
+    val tl = new TypeList(ArraySeq.unsafeWrapArray(interfaceRef.flatten.toArray))
     if (tl.typeRefs.nonEmpty) Some(tl) else None
   }
 
@@ -508,10 +507,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     )
   }
 
-  private def toTypeList(typRefs: Iterable[UnresolvedTypeRef]) = {
-    val tl = new TypeList
-    typRefs.foreach(tl.add)
-    tl
+  private def toTypeList(typeRefs: Iterable[UnresolvedTypeRef]) = {
+    new TypeList(ArraySeq.unsafeWrapArray(typeRefs.toArray))
   }
 
   private class BlockStatementVisitor extends AstVisitor[AdditionalPassScope] {

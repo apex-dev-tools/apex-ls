@@ -14,6 +14,10 @@ trait TypeRef {
   }
 }
 
+object TypeRef {
+  final val emptyArraySeq: ArraySeq[TypeRef] = ArraySeq()
+}
+
 // TODO: Make immutable
 final case class UnresolvedTypeRef(
   typeNameSegments: mutable.ArrayBuffer[TypeNameSegment] = mutable.ArrayBuffer[TypeNameSegment](),
@@ -106,9 +110,8 @@ final case class TypeNameSegment(id: Id, typeArguments: TypeArguments) {
     ArraySeq.unsafeWrapArray(typeArguments.typeList.typeRefs.toArray)
   }
 
-  def replaceArguments(args: ArraySeq[TypeRef]): Unit = {
-    typeArguments.typeList.typeRefs.clear()
-    typeArguments.typeList.typeRefs.addAll(args)
+  def replaceArguments(args: ArraySeq[TypeRef]): TypeNameSegment = {
+    TypeNameSegment(id, TypeArguments(TypeList(args)))
   }
 
   override def toString: String = {
@@ -129,9 +132,10 @@ object TypeNameSegment {
   }
 
   def apply(name: String, typeArguments: Array[UnresolvedTypeRef]): TypeNameSegment = {
-    val tl = TypeList()
-    typeArguments.foreach(tl.add)
-    new TypeNameSegment(Id(IdToken(name, Location.default)), TypeArguments(tl))
+    new TypeNameSegment(
+      Id(IdToken(name, Location.default)),
+      TypeArguments(TypeList(ArraySeq.unsafeWrapArray(typeArguments)))
+    )
   }
 
   def apply(name: String, params: Array[String]): TypeNameSegment = {
@@ -150,29 +154,19 @@ object TypeArguments {
   final val empty = TypeArguments(TypeList.empty)
 
   def apply(params: Array[String]): TypeArguments = {
-    val typeList = new TypeList
-    typeList.typeRefs.addAll(params.map(tp => {
+    val typeArguments = ArraySeq.unsafeWrapArray(params.map(tp => {
       val typeRef = new UnresolvedTypeRef()
       typeRef.typeNameSegments.append(
         new TypeNameSegment(Id(IdToken(tp, Location.default)), TypeArguments.empty)
       )
       typeRef
     }))
-    TypeArguments(typeList)
-  }
 
-  def apply(params: ArraySeq[ITypeDeclaration]): TypeArguments = {
-    val typeList = new TypeList
-    typeList.typeRefs.addAll(params)
-    TypeArguments(typeList)
+    TypeArguments(TypeList(typeArguments))
   }
 }
 
-// TODO: Make immutable
-final case class TypeList(typeRefs: mutable.ArrayBuffer[TypeRef] = mutable.ArrayBuffer[TypeRef]())
-    extends TypeRefAssignable {
-
-  override def add(tr: UnresolvedTypeRef): Unit = typeRefs.append(tr)
+final case class TypeList(typeRefs: ArraySeq[TypeRef]) {
 
   override def toString: String = {
     import StringUtils._
@@ -181,5 +175,5 @@ final case class TypeList(typeRefs: mutable.ArrayBuffer[TypeRef] = mutable.Array
 }
 
 object TypeList {
-  final val empty = TypeList()
+  final val empty = TypeList(TypeRef.emptyArraySeq)
 }

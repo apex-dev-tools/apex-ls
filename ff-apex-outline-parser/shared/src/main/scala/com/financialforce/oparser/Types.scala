@@ -403,7 +403,9 @@ object Parse {
 
     index = tokens.findIndex(t => t.matches(Tokens.ExtendsStr))
     if (index != -1) {
-      index = parseTypeRef(index + 1, tokens, ctd)
+      val (newIndex, typeRef) = parseTypeRef(index + 1, tokens)
+      index = newIndex
+      ctd.add(typeRef)
     }
 
     index = tokens.findIndex(t => t.matches(Tokens.ImplementsStr))
@@ -472,7 +474,9 @@ object Parse {
       return (true, addInitializer(ctd, isStatic).toSeq)
     }
 
-    index = parseTypeRef(index, tokens, md)
+    val (newIndex, typeRef) = parseTypeRef(index, tokens)
+    index = newIndex
+    md.add(typeRef)
 
     if (tokens.matches(index, Tokens.LParenStr)) {
       (true, addConstructor(index, tokens, md, ctd).toSeq)
@@ -498,7 +502,9 @@ object Parse {
     var (index, modifiers, annotations) = parseModifiersAndAnnotations(0, tokens)
     md.setModifiers(modifiers)
     md.setAnnotations(annotations)
-    index = parseTypeRef(index, tokens, md)
+    val (newIndex, typeRef) = parseTypeRef(index, tokens)
+    index = newIndex
+    md.add(typeRef)
     addMethod(index, tokens, md, itd).toSeq
   }
 
@@ -742,22 +748,23 @@ object Parse {
   }
 
   private def parseTypeList(startIndex: Int, tokens: Tokens): (Int, TypeList) = {
-    val typeList = new TypeList
-    var index    = parseTypeRef(startIndex, tokens, typeList)
+    val typeRefs         = mutable.ArrayBuffer[TypeRef]()
+    var (index, typeRef) = parseTypeRef(startIndex, tokens)
+    typeRefs.append(typeRef)
     while (index < tokens.length && tokens.get(index).matches(Tokens.CommaStr)) {
-      index = parseTypeRef(index + 1, tokens, typeList)
+      val (newIndex, typeRef) = parseTypeRef(index + 1, tokens)
+      index = newIndex
+      typeRefs.append(typeRef)
     }
-    if (typeList.typeRefs.nonEmpty)
-      (index, typeList)
+    if (typeRefs.nonEmpty)
+      (index, TypeList(ArraySeq.unsafeWrapArray(typeRefs.toArray)))
     else
       (index, TypeList.empty)
   }
 
-  private def parseTypeRef(startIndex: Int, tokens: Tokens, res: TypeRefAssignable): Int = {
+  private def parseTypeRef(startIndex: Int, tokens: Tokens): (Int, UnresolvedTypeRef) = {
 
-    val typeRef = new UnresolvedTypeRef
-    res.add(typeRef)
-
+    val typeRef                  = new UnresolvedTypeRef
     var (index, typeNameSegment) = parseTypeNameSegment(startIndex, tokens)
     if (typeNameSegment.isEmpty) {
       throw new Exception(s"Missing Identifier")
@@ -776,7 +783,7 @@ object Parse {
 
     val (newIndex, count) = parseArraySubscripts(index, tokens)
     typeRef.arraySubscripts = count
-    newIndex
+    (newIndex, typeRef)
   }
 
   private def parseArraySubscripts(startIndex: Int, tokens: Tokens): (Int, Int) = {
@@ -912,7 +919,9 @@ object Parse {
       index = newIndex
       formalParameter.setModifiers(modifiers)
       formalParameter.setAnnotations(annotations)
-      index = parseTypeRef(index, tokens, formalParameter)
+      val (newIndex2, typeRef) = parseTypeRef(index, tokens)
+      index = newIndex2
+      formalParameter.add(typeRef)
       index = parseId(index, tokens, formalParameter)
       if (tokens(index).exists(_.matches(Tokens.CommaStr))) index += 1
       if (formalParameters == null)

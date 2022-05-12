@@ -32,9 +32,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toTypeList(types: Array[UnresolvedTypeRef]): TypeList = {
-    val tl = TypeList()
-    types.foreach(tl.add)
-    tl
+    TypeList(ArraySeq.unsafeWrapArray(types))
   }
 
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {

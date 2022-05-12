@@ -54,6 +54,7 @@ trait IMutableTypeDeclaration
 
   def setLocation(location: Location): Unit
   def setExtends(typeRef: TypeRef): Unit
+  def setImplements(typeList: TypeList): Unit
   def setModifiers(modifiers: ArraySeq[Modifier]): Unit
   def setAnnotations(annotations: ArraySeq[Annotation]): Unit
 

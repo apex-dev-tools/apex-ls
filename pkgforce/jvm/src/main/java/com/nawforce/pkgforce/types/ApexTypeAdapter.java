@@ -8,7 +8,7 @@ import com.nawforce.pkgforce.api.*;
 import com.nawforce.runtime.types.platform.SObjectTypeDeclaration;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
-import scala.collection.mutable.ArrayBuffer;
+import scala.collection.immutable.ArraySeq;
 
 import java.util.Arrays;
 import java.util.List;
@@ -89,7 +89,7 @@ public class ApexTypeAdapter implements ApexType {
         if (td.implementsTypeList() == null)
             return null;
 
-        ArrayBuffer<TypeRef> refs = td.implementsTypeList().typeRefs();
+        ArraySeq<TypeRef> refs = td.implementsTypeList().typeRefs();
         NameApexTypeId[] interfaces = new NameApexTypeId[refs.length()];
         int entry = 0;
         for (int i = 0; i < refs.length(); i++)

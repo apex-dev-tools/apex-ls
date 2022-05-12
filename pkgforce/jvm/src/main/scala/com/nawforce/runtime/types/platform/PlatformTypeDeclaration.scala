@@ -85,11 +85,9 @@ class PlatformTypeDeclaration(
   override lazy val implementsTypeList: TypeList = {
     val interfaces = cls.getInterfaces
     if (interfaces.nonEmpty) {
-      val tl  = TypeList()
       val trs = interfaces.flatMap(getPlatformTypeDeclFromType)
       assert(interfaces.length == trs.length)
-      trs.foreach(tl.typeRefs.append)
-      tl
+      TypeList(ArraySeq.unsafeWrapArray(trs))
     } else
       null
   }
@@ -260,7 +258,7 @@ class PlatformTypeDeclaration(
         val names = cname.drop(platformPackage.length + 1)
         val params =
           pt.getActualTypeArguments.map(getTypeStringFromType).map(genericToType)
-        s"${names}<${params.mkString(",")}>"
+        s"$names<${params.mkString(",")}>"
     }
   }
 
@@ -270,27 +268,28 @@ class PlatformTypeDeclaration(
     val typeRefNameWithGenerics = getTypeStringFromType(from)
     val unresolvedTypeRef       = UnresolvedTypeRef(typeRefNameWithGenerics).toOption
     if (unresolvedTypeRef.nonEmpty) {
-      preResolveArguments(unresolvedTypeRef.get, module)
-      return PlatformTypeDeclaration.get(module, unresolvedTypeRef.get)
+      val resolved = preResolveArguments(unresolvedTypeRef.get, module)
+      return PlatformTypeDeclaration.get(module, resolved)
     }
     None
   }
 
-  private def preResolveArguments(un: UnresolvedTypeRef, module: IPM.Module): Unit = {
-    un.typeNameSegments
-      .filter(tns => tns.typeArguments.typeList.typeRefs.nonEmpty)
-      .foreach(tns => {
-        val args = tns.getArguments
+  private def preResolveArguments(un: UnresolvedTypeRef, module: IPM.Module): UnresolvedTypeRef = {
+    val segments = un.typeNameSegments
+      .map(segment => {
+        val args = segment.getArguments
         val newArgs = args.flatMap {
           case unref: UnresolvedTypeRef =>
-            preResolveArguments(unref, module)
-            PlatformTypeDeclaration.get(module, unref)
+            val newUnref = preResolveArguments(unref, module)
+            PlatformTypeDeclaration.get(module, newUnref)
           case other => Some(other)
         }
         if (args.nonEmpty && args.length == newArgs.length)
-          tns.replaceArguments(newArgs)
+          segment.replaceArguments(newArgs)
+        else
+          segment
       })
-
+    UnresolvedTypeRef(segments)
   }
 
   def getTypeName(cls: java.lang.Class[_]): TypeInfo = {
@@ -499,7 +498,7 @@ object PlatformTypeDeclaration {
   ): TypeNameSegment = {
     val typeArguments =
       if (params.nonEmpty)
-        TypeArguments(params.get)
+        TypeArguments(TypeList(params.get))
       else
         TypeArguments.empty
     TypeNameSegment(Id(IdToken(name, Location.default)), typeArguments)

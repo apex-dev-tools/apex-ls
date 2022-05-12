@@ -153,13 +153,15 @@ object Antlr {
   }
 
   def antlrTypeList(ctx: ApexParser.TypeListContext): TypeList = {
-    val typeList = new TypeList
-    ctx
-      .typeRef()
-      .forEach(tr => {
-        antlrTypeRef(typeList, tr)
-      })
-    typeList
+    new TypeList(
+      ArraySeq.unsafeWrapArray(
+        ctx
+          .typeRef()
+          .asScala
+          .map(tr => antlrTypeRef(tr))
+          .toArray
+      )
+    )
   }
 
   def antlrTypeArguments(ctx: ApexParser.TypeArgumentsContext): TypeArguments = {
@@ -187,22 +189,15 @@ object Antlr {
     typeRef.typeNameSegments.append(tn)
   }
 
-  def antlrTypeRef(res: TypeRefAssignable, ctx: ApexParser.TypeRefContext): Unit = {
-
+  def antlrTypeRef(ctx: ApexParser.TypeRefContext): UnresolvedTypeRef = {
     val typeRef = new UnresolvedTypeRef
-    res.add(typeRef)
-
+    typeRef.arraySubscripts = Option(ctx.arraySubscripts()).map(_.RBRACK().size()).getOrElse(0)
     ctx
       .typeName()
       .forEach(tn => {
         antlrTypeName(typeRef, tn)
       })
-    if (Option(ctx.arraySubscripts()).isDefined) {
-      typeRef.arraySubscripts = ctx
-        .arraySubscripts()
-        .RBRACK()
-        .size()
-    }
+    typeRef
   }
 
   def antlrClassTypeDeclaration(
@@ -212,7 +207,7 @@ object Antlr {
     ctd._id = toId(ctx.id())
 
     if (Option(ctx.typeRef()).isDefined) {
-      antlrTypeRef(ctd, ctx.typeRef())
+      ctd.add(antlrTypeRef(ctx.typeRef()))
     }
 
     if (Option(ctx.typeList()).isDefined) {
@@ -393,7 +388,7 @@ object Antlr {
     )
 
     if (Option(ctx.typeRef()).isDefined) {
-      antlrTypeRef(md, ctx.typeRef())
+      md.add(antlrTypeRef(ctx.typeRef()))
     } else {
       md.typeRef = Some(new UnresolvedTypeRef)
       md.typeRef.get.typeNameSegments.append(new TypeNameSegment(toId("void"), TypeArguments.empty))
@@ -436,7 +431,7 @@ object Antlr {
     )
 
     if (Option(ctx.typeRef()).isDefined) {
-      antlrTypeRef(md, ctx.typeRef())
+      md.add(antlrTypeRef(ctx.typeRef()))
     } else {
       md.typeRef = Some(new UnresolvedTypeRef)
       md.typeRef.get.typeNameSegments.append(new TypeNameSegment(toId("void"), TypeArguments.empty))
@@ -473,7 +468,7 @@ object Antlr {
       )
     )
 
-    antlrTypeRef(fp, ctx.typeRef())
+    fp.add(antlrTypeRef(ctx.typeRef()))
     fp.add(toId(ctx.id()))
     fp
   }
@@ -485,7 +480,7 @@ object Antlr {
   ): Unit = {
 
     val id = toId(ctx.id())
-    antlrTypeRef(md, ctx.typeRef())
+    md.add(antlrTypeRef(ctx.typeRef()))
 
     val property =
       new PropertyDeclaration(
@@ -503,7 +498,7 @@ object Antlr {
     md: MemberDeclaration,
     ctx: ApexParser.FieldDeclarationContext
   ): Unit = {
-    antlrTypeRef(md, ctx.typeRef())
+    md.add(antlrTypeRef(ctx.typeRef()))
 
     Option(ctx.variableDeclarators())
       .foreach(_.variableDeclarator().asScala.foreach(v => {

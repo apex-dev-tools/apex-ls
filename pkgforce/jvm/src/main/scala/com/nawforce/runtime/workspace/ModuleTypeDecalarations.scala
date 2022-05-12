@@ -82,6 +82,7 @@ sealed class TypeDeclaration(
 
   override def setLocation(location: Location): Unit                   = _location = location
   override def setExtends(typeRef: TypeRef): Unit                      = _extendsTypeRef = typeRef
+  override def setImplements(typeList: TypeList): Unit                 = _implementsTypeList = typeList
   override def setModifiers(modifiers: ArraySeq[Modifier]): Unit       = _modifiers = modifiers
   override def setAnnotations(annotations: ArraySeq[Annotation]): Unit = _annotations = annotations
 

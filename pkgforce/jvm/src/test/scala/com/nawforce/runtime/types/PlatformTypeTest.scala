@@ -24,6 +24,7 @@ import com.financialforce.oparser.{
   ENUM_NATURE,
   INTERFACE_NATURE,
   TypeArguments,
+  TypeList,
   TypeNameSegment,
   UnresolvedTypeRef
 }
@@ -302,7 +303,7 @@ class PlatformTypeTest extends AnyFunSuite {
     )
     assert(stringTD.nonEmpty)
 
-    val listTS  = TypeNameSegment("List", TypeArguments(ArraySeq(stringTD.get)))
+    val listTS  = TypeNameSegment("List", TypeArguments(TypeList(ArraySeq(stringTD.get))))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
     val td      = PlatformTypeDeclaration.get(null, typeRef)
 
@@ -354,7 +355,7 @@ class PlatformTypeTest extends AnyFunSuite {
     )
     assert(stringTD.nonEmpty)
 
-    val integerTS = TypeNameSegment("Integer", TypeArguments(ArraySeq(stringTD.get)))
+    val integerTS = TypeNameSegment("Integer", TypeArguments(TypeList(ArraySeq(stringTD.get))))
     val typeRef   = UnresolvedTypeRef(Array(TypeNameSegment("System"), integerTS), 0)
     val tdOpt     = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
@@ -367,14 +368,15 @@ class PlatformTypeTest extends AnyFunSuite {
     )
     assert(stringTD.nonEmpty)
 
-    val listTS  = TypeNameSegment("List", TypeArguments(ArraySeq(stringTD.get, stringTD.get)))
+    val listTS =
+      TypeNameSegment("List", TypeArguments(TypeList(ArraySeq(stringTD.get, stringTD.get))))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
     val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
   }
 
   test("Generic class with too few type arguments") {
-    val listTS  = TypeNameSegment("List", TypeArguments(ArraySeq()))
+    val listTS  = TypeNameSegment("List", TypeArguments(TypeList(ArraySeq())))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
     val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
