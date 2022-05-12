@@ -60,20 +60,8 @@ trait TypeRefAssignable {
   def add(tr: UnresolvedTypeRef): Unit
 }
 
-trait TypeNameSegmentAssignable {
-  def add(tn: TypeNameSegment): Unit
-}
-
 trait TypeListAssignable {
   def add(tl: TypeList): Unit
-}
-
-trait TypeArgumentsAssignable {
-  def add(ta: TypeArguments): Unit
-}
-
-trait ArraySubscriptsAssignable {
-  def addArraySubscript(): Unit
 }
 
 trait MethodDeclarationAssignable {
@@ -420,7 +408,8 @@ object Parse {
 
     index = tokens.findIndex(t => t.matches(Tokens.ImplementsStr))
     if (index != -1) {
-      index = parseTypeList(index + 1, tokens, ctd)
+      val (newIndex, typeList) = parseTypeList(index + 1, tokens)
+      ctd.add(typeList)
     }
     ctd
   }
@@ -437,7 +426,8 @@ object Parse {
 
     index = tokens.findIndex(t => t.matches(Tokens.ExtendsStr))
     if (index != -1) {
-      index = parseTypeList(index + 1, tokens, itd)
+      val (newIndex, typeList) = parseTypeList(index + 1, tokens)
+      itd.add(typeList)
     }
 
     itd
@@ -728,46 +718,39 @@ object Parse {
     }
   }
 
-  private def parseTypeName(
+  private def parseTypeNameSegment(
     startIndex: Int,
-    tokens: Tokens,
-    res: TypeNameSegmentAssignable
-  ): Int = {
+    tokens: Tokens
+  ): (Int, Option[TypeNameSegment]) = {
     tokens(startIndex) match {
-      case Some(id: IdToken) =>
-        val tn = new TypeNameSegment(tokenToId(id))
-        res.add(tn)
-        val nextIndex = parseTypeArguments(startIndex + 1, tokens, tn)
-        nextIndex
-      case _ => startIndex
+      case Some(token: IdToken) =>
+        val id                         = tokenToId(token)
+        val (nextIndex, typeArguments) = parseTypeArguments(startIndex + 1, tokens)
+        (nextIndex, Some(TypeNameSegment(id, typeArguments)))
+      case _ => (startIndex, None)
     }
   }
 
-  private def parseTypeArguments(
-    startIndex: Int,
-    tokens: Tokens,
-    res: TypeArgumentsAssignable
-  ): Int = {
-    if (startIndex >= tokens.length) return startIndex
-    if (!tokens.get(startIndex).matches(Tokens.LessThanStr)) return startIndex
+  private def parseTypeArguments(startIndex: Int, tokens: Tokens): (Int, TypeArguments) = {
+    if (startIndex >= tokens.length) return (startIndex, TypeArguments.empty)
+    if (!tokens.get(startIndex).matches(Tokens.LessThanStr))
+      return (startIndex, TypeArguments.empty)
 
-    val ta = new TypeArguments
-
-    var index = startIndex
-    index = parseTypeList(index + 1, tokens, ta)
-    if (ta.typeList.isDefined) res.add(ta)
+    val (index, typeList) = parseTypeList(startIndex + 1, tokens)
     if (!tokens(index).exists(_.matches(Tokens.GreaterThanStr))) throw new Exception("Missing >")
-    index + 1
+    (index + 1, TypeArguments(typeList))
   }
 
-  private def parseTypeList(startIndex: Int, tokens: Tokens, res: TypeListAssignable): Int = {
+  private def parseTypeList(startIndex: Int, tokens: Tokens): (Int, TypeList) = {
     val typeList = new TypeList
     var index    = parseTypeRef(startIndex, tokens, typeList)
     while (index < tokens.length && tokens.get(index).matches(Tokens.CommaStr)) {
       index = parseTypeRef(index + 1, tokens, typeList)
     }
-    if (typeList.typeRefs.nonEmpty) res.add(typeList)
-    index
+    if (typeList.typeRefs.nonEmpty)
+      (index, typeList)
+    else
+      (index, TypeList.empty)
   }
 
   private def parseTypeRef(startIndex: Int, tokens: Tokens, res: TypeRefAssignable): Int = {
@@ -775,29 +758,38 @@ object Parse {
     val typeRef = new UnresolvedTypeRef
     res.add(typeRef)
 
-    var index = parseTypeName(startIndex, tokens, typeRef)
+    var (index, typeNameSegment) = parseTypeNameSegment(startIndex, tokens)
+    if (typeNameSegment.isEmpty) {
+      throw new Exception(s"Missing Identifier")
+    }
+    typeRef.typeNameSegments.append(typeNameSegment.get)
 
     while (index < tokens.length && tokens.get(index).matches(Tokens.DotStr)) {
-      index = parseTypeName(index + 1, tokens, typeRef)
+      val (newIndex, typeNameSegment) = parseTypeNameSegment(index + 1, tokens)
+      index = newIndex
+
+      if (typeNameSegment.isEmpty) {
+        throw new Exception(s"Missing Identifier")
+      }
+      typeRef.typeNameSegments.append(typeNameSegment.get)
     }
 
-    parseArraySubscripts(index, tokens, typeRef)
+    val (newIndex, count) = parseArraySubscripts(index, tokens)
+    typeRef.arraySubscripts = count
+    newIndex
   }
 
-  private def parseArraySubscripts(
-    startIndex: Int,
-    tokens: Tokens,
-    res: ArraySubscriptsAssignable
-  ): Int = {
+  private def parseArraySubscripts(startIndex: Int, tokens: Tokens): (Int, Int) = {
     var index = startIndex
+    var count = 0
     while (index < tokens.length && tokens.get(index).matches(Tokens.LBrackStr)) {
       if (tokens(index + 1).exists(!_.matches(Tokens.RBrackStr))) {
         throw new Exception(s"Missing '${Tokens.RBrackStr}'")
       }
-      res.addArraySubscript()
+      count += 1
       index += 2
     }
-    index
+    (index, count)
   }
 
   private def parseAnnotation(

@@ -129,6 +129,8 @@ final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeN
 object TypeName {
   implicit val rw: RW[TypeName] = macroRW
 
+  final val emptySeq: Seq[TypeName] = Seq[TypeName]()
+
   /** Helper for construction from Java, outer may be null */
   def fromJava(name: Name, params: Array[TypeName], outer: TypeName): TypeName = {
     new TypeName(name, new ofRef(params), Option(outer))

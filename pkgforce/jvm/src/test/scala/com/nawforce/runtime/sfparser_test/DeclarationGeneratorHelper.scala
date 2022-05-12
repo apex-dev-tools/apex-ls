@@ -19,21 +19,16 @@ trait DeclarationGeneratorHelper {
     typeName: String,
     maybeArguments: Option[Array[UnresolvedTypeRef]]
   ): TypeNameSegment = {
-    val tp = new TypeNameSegment(toId(typeName))
-    maybeArguments match {
-      case Some(arguments) => tp.add(toTypeArguments(Some(arguments)))
-      case _               =>
-    }
-    tp
+    new TypeNameSegment(
+      toId(typeName),
+      maybeArguments
+        .map(arguments => toTypeArguments(Some(arguments)))
+        .getOrElse(TypeArguments.empty)
+    )
   }
 
   def toTypeArguments(maybeTypes: Option[Array[UnresolvedTypeRef]]): TypeArguments = {
-    val ta = new TypeArguments()
-    maybeTypes match {
-      case Some(types) => ta.typeList = Some(toTypeList(types))
-      case _           =>
-    }
-    ta
+    new TypeArguments(maybeTypes.map(types => toTypeList(types)).getOrElse(TypeList.empty))
   }
 
   def toTypeList(types: Array[UnresolvedTypeRef]): TypeList = {
@@ -44,7 +39,7 @@ trait DeclarationGeneratorHelper {
 
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {
     val tr = new UnresolvedTypeRef()
-    typeNames.foreach(tr.add)
+    typeNames.foreach(tr.typeNameSegments.append)
     tr.arraySubscripts = totalSubscripts
     tr
   }

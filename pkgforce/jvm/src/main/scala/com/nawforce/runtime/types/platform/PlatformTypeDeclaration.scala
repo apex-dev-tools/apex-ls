@@ -278,7 +278,7 @@ class PlatformTypeDeclaration(
 
   private def preResolveArguments(un: UnresolvedTypeRef, module: IPM.Module): Unit = {
     un.typeNameSegments
-      .filter(tns => tns.typeArguments.nonEmpty)
+      .filter(tns => tns.typeArguments.typeList.typeRefs.nonEmpty)
       .foreach(tns => {
         val args = tns.getArguments
         val newArgs = args.flatMap {
@@ -497,10 +497,12 @@ object PlatformTypeDeclaration {
     name: String,
     params: Option[ArraySeq[IModuleTypeDeclaration]]
   ): TypeNameSegment = {
-    val typeName = TypeNameSegment(name)
-    if (params.nonEmpty)
-      typeName.typeArguments = Some(TypeArguments(params.get))
-    typeName
+    val typeArguments =
+      if (params.nonEmpty)
+        TypeArguments(params.get)
+      else
+        TypeArguments.empty
+    TypeNameSegment(Id(IdToken(name, Location.default)), typeArguments)
   }
 
   private val typeAliasMap: Map[TypeName, TypeName] = Map(

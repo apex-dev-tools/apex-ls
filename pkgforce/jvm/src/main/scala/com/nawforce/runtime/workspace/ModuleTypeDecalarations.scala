@@ -62,7 +62,7 @@ sealed class TypeDeclaration(
 
   override def id: Id = _id
 
-  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id)
+  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeArguments.empty)
 
   override def enclosing: Option[IMutableModuleTypeDeclaration] = Option(_enclosing)
   override def extendsTypeRef: TypeRef                          = _extendsTypeRef

@@ -226,8 +226,8 @@ class SubsetComparator(
 
   private def getTypeArgumentTypeRefs(typ: UnresolvedTypeRef): ArrayBuffer[TypeRef] = {
     typ.typeNameSegments
-      .flatMap(_.typeArguments)
-      .flatMap(_.typeList)
+      .map(_.typeArguments)
+      .map(_.typeList)
       .flatMap(_.typeRefs)
   }
 

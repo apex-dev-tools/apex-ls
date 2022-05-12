@@ -4,7 +4,6 @@
 
 package com.nawforce.runtime.sfparser_run
 
-import apex.jorje.data.ast
 import apex.jorje.data.ast.TypeRefs.ArrayTypeRef
 import apex.jorje.semantic.ast.AstNode
 import apex.jorje.semantic.ast.compilation._
@@ -24,7 +23,6 @@ import com.financialforce.oparser._
 import com.nawforce.runtime.workspace._
 import org.apache.commons.lang3.reflect.FieldUtils
 
-import java.util
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
@@ -442,7 +440,9 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
       .split("\\.")
       .foreach(
         n =>
-          tr.add(toTypeNameFromTypeInfo(from.getTypeArguments, n, from.getCodeUnitDetails.getLoc))
+          tr.typeNameSegments.append(
+            toTypeNameFromTypeInfo(from.getTypeArguments, n, from.getCodeUnitDetails.getLoc)
+          )
       )
 
     tr
@@ -461,25 +461,34 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
           //TODO: Resolve array subscripts properly
           //Temporary work around for comparison work as something like String[][] resolves
           // into deep nested typeRef with string type arguments
-          typ.getNames.forEach(x => res.add(new TypeNameSegment(toId(x.getValue, x.getLoc))))
+          typ.getNames.forEach(
+            x =>
+              res.typeNameSegments
+                .append(new TypeNameSegment(toId(x.getValue, x.getLoc), TypeArguments.empty))
+          )
+          res.arraySubscripts = 0
           for (_ <- 0 to typ.toString.split("\\[").length - 2) {
-            res.addArraySubscript()
+            res.arraySubscripts += 1
           }
         } else {
           //We add the type arguments to the last type and not for each name
           val typArguments = typ.getTypeArguments.asScala
+          val typeArguments =
+            if (typArguments.nonEmpty)
+              TypeArguments(toTypeList(typArguments.flatMap(x => toTypeRef(Some(x)))))
+            else
+              TypeArguments.empty
+
+          val last = typ.getNames.get(typ.getNames.size() - 1)
           typ.getNames.forEach(
             t =>
-              res.add({
-                toTypeNameFromTypeRef(new util.ArrayList[ast.TypeRef](), t.getValue, t.getLoc)
-              })
+              res.typeNameSegments.append(
+                if (t eq last)
+                  new TypeNameSegment(toId(t.getValue, t.getLoc), typeArguments)
+                else
+                  new TypeNameSegment(toId(t.getValue, t.getLoc), TypeArguments.empty)
+              )
           )
-          if (typArguments.nonEmpty) {
-            val ta = new TypeArguments
-            val tl = toTypeList(typArguments.flatMap(x => toTypeRef(Some(x))))
-            ta.add(tl)
-            res.typeNameSegments.last.typeArguments = Some(ta)
-          }
         }
 
         return Some(res)
@@ -488,34 +497,15 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     None
   }
 
-  private def toTypeNameFromTypeRef(
-    typeArguments: java.util.List[apex.jorje.data.ast.TypeRef],
-    name: String,
-    location: apex.jorje.data.Location
-  ) = {
-    val tp = new TypeNameSegment(toId(name, location))
-    val tl = toTypeList(typeArguments.asScala.flatMap(x => toTypeRef(Some(x))))
-    if (tl.typeRefs.nonEmpty) {
-      val typeArgument = new TypeArguments()
-      typeArgument.typeList = Some(tl)
-      tp.typeArguments = Some(typeArgument)
-    }
-    tp
-  }
-
   private def toTypeNameFromTypeInfo(
     typeArguments: java.util.List[apex.jorje.semantic.symbol.`type`.TypeInfo],
     name: String,
     location: apex.jorje.data.Location
-  ) = {
-    val tp = new TypeNameSegment(toId(name, location))
-    val tl = toTypeList(typeArguments.asScala.map(toTypeRef))
-    if (tl.typeRefs.nonEmpty) {
-      val typeArgument = new TypeArguments()
-      typeArgument.typeList = Some(tl)
-      tp.typeArguments = Some(typeArgument)
-    }
-    tp
+  ): TypeNameSegment = {
+    new TypeNameSegment(
+      toId(name, location),
+      TypeArguments(toTypeList(typeArguments.asScala.map(toTypeRef)))
+    )
   }
 
   private def toTypeList(typRefs: Iterable[UnresolvedTypeRef]) = {

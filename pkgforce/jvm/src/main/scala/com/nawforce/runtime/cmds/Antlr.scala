@@ -152,53 +152,39 @@ object Antlr {
     Annotation(qName, args)
   }
 
-  def antlrTypeList(res: TypeListAssignable, ctx: ApexParser.TypeListContext): Unit = {
+  def antlrTypeList(ctx: ApexParser.TypeListContext): TypeList = {
     val typeList = new TypeList
     ctx
       .typeRef()
       .forEach(tr => {
         antlrTypeRef(typeList, tr)
       })
-    if (typeList.typeRefs.nonEmpty) res.add(typeList)
+    typeList
   }
 
-  def antlrTypeArguments(
-    res: TypeArgumentsAssignable,
-    ctx: ApexParser.TypeArgumentsContext
-  ): Unit = {
-    val typeArguments = new TypeArguments
-    antlrTypeList(typeArguments, ctx.typeList())
-    if (typeArguments.typeList.isDefined)
-      res.add(typeArguments)
+  def antlrTypeArguments(ctx: ApexParser.TypeArgumentsContext): TypeArguments = {
+    new TypeArguments(antlrTypeList(ctx.typeList()))
   }
 
-  def antlrTypeName(res: TypeNameSegmentAssignable, ctx: ApexParser.TypeNameContext): Unit = {
+  def antlrTypeName(typeRef: UnresolvedTypeRef, ctx: ApexParser.TypeNameContext): Unit = {
+    val typeArguments =
+      Option(ctx.typeArguments()).map(ta => antlrTypeArguments(ta)).getOrElse(TypeArguments.empty)
     val tnOpt = Option(ctx.LIST())
-      .map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default))))
+      .map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default)), typeArguments))
       .orElse(
-        Option(ctx.SET()).map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default))))
+        Option(ctx.SET())
+          .map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default)), typeArguments))
       )
       .orElse(
-        Option(ctx.MAP()).map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default))))
+        Option(ctx.MAP())
+          .map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default)), typeArguments))
       )
-      .orElse(Option(ctx.id()).map(l => new TypeNameSegment(toId(l))))
+      .orElse(Option(ctx.id()).map(l => new TypeNameSegment(toId(l), typeArguments)))
 
     if (tnOpt.isEmpty)
       throw new Exception("Missing type name")
     val tn = tnOpt.get
-    res.add(tn)
-    Option(ctx.typeArguments()).foreach(ta => antlrTypeArguments(tn, ta))
-  }
-
-  def antlrArraySubscripts(
-    res: ArraySubscriptsAssignable,
-    ctx: ApexParser.ArraySubscriptsContext
-  ): Unit = {
-    ctx
-      .RBRACK()
-      .forEach(_ => {
-        res.addArraySubscript()
-      })
+    typeRef.typeNameSegments.append(tn)
   }
 
   def antlrTypeRef(res: TypeRefAssignable, ctx: ApexParser.TypeRefContext): Unit = {
@@ -212,7 +198,10 @@ object Antlr {
         antlrTypeName(typeRef, tn)
       })
     if (Option(ctx.arraySubscripts()).isDefined) {
-      antlrArraySubscripts(typeRef, ctx.arraySubscripts())
+      typeRef.arraySubscripts = ctx
+        .arraySubscripts()
+        .RBRACK()
+        .size()
     }
   }
 
@@ -227,7 +216,7 @@ object Antlr {
     }
 
     if (Option(ctx.typeList()).isDefined) {
-      antlrTypeList(ctd, ctx.typeList())
+      ctd.add(antlrTypeList(ctx.typeList()))
     }
 
     ctx.classBody().classBodyDeclaration.forEach { c =>
@@ -292,7 +281,7 @@ object Antlr {
     itd._id = toId(ctx.id())
 
     if (Option(ctx.typeList()).isDefined) {
-      antlrTypeList(itd, ctx.typeList())
+      itd.add(antlrTypeList(ctx.typeList()))
     }
 
     ctx
@@ -407,7 +396,7 @@ object Antlr {
       antlrTypeRef(md, ctx.typeRef())
     } else {
       md.typeRef = Some(new UnresolvedTypeRef)
-      md.typeRef.get.add(new TypeNameSegment(toId("void")))
+      md.typeRef.get.typeNameSegments.append(new TypeNameSegment(toId("void"), TypeArguments.empty))
     }
 
     val method =
@@ -450,7 +439,7 @@ object Antlr {
       antlrTypeRef(md, ctx.typeRef())
     } else {
       md.typeRef = Some(new UnresolvedTypeRef)
-      md.typeRef.get.add(new TypeNameSegment(toId("void")))
+      md.typeRef.get.typeNameSegments.append(new TypeNameSegment(toId("void"), TypeArguments.empty))
     }
 
     val method =

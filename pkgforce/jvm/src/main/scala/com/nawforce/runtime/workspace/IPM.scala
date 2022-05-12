@@ -456,7 +456,7 @@ object IPM extends TriHierarchy {
 
       // Default namespace if needed and get declaration
       val defaultedNameAndRef = defaultName(name, typeRef)
-      val isGeneric           = typeRef.typeNameSegments.exists(_.typeArguments.nonEmpty)
+      val isGeneric           = typeRef.typeNameSegments.exists(_.typeArguments.typeList.typeRefs.nonEmpty)
       val result =
         if (!isGeneric) {
           types.getOrElseUpdate(
