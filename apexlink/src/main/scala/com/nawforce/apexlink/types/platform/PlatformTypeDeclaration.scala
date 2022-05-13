@@ -88,11 +88,8 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   override lazy val modifiers: ArraySeq[Modifier] =
     PlatformModifiers.typeModifiers(cls.getModifiers, nature)
 
-  override lazy val localConstructors: ArraySeq[PlatformConstructor] = {
-    ArraySeq
-      .unsafeWrapArray(cls.getConstructors)
-      .filterNot(_.isSynthetic)
-      .map(c => new PlatformConstructor(c, this))
+  override lazy val localConstructors: ArraySeq[ConstructorDeclaration] = {
+    getCtors
   }
 
   override lazy val nestedTypes: ArraySeq[TypeDeclaration] = {
@@ -162,6 +159,13 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
       case _ =>
         ArraySeq.unsafeWrapArray(localMethods.map(m => new PlatformMethod(m, this)))
     }
+  }
+
+  protected def getCtors: ArraySeq[PlatformConstructor] = {
+    ArraySeq
+      .unsafeWrapArray(cls.getConstructors)
+      .filterNot(_.isSynthetic)
+      .map(c => new PlatformConstructor(c, this))
   }
 
   override def validate(): Unit = {

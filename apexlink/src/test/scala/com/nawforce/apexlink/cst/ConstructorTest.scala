@@ -171,6 +171,15 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Generic platform type constructors") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" -> "public class Dummy { Dummy(){ new Set<String>(new List<String>()); new Map<String,String>();}}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("No default super constructor") {
     typeDeclarations(
       Map(
