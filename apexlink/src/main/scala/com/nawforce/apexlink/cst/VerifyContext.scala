@@ -18,6 +18,7 @@ import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.memory.SkinnySet
+import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.Plugin
 import com.nawforce.apexlink.types.apex._
@@ -334,7 +335,7 @@ abstract class BlockVerifyContext(parentContext: VerifyContext) extends VerifyCo
 
   def isStatic: Boolean
 
-  def returnType: Option[TypeName]
+  def returnType: TypeName
 
   override def isSaving: Boolean = parentContext.isSaving
 
@@ -360,14 +361,14 @@ abstract class BlockVerifyContext(parentContext: VerifyContext) extends VerifyCo
 final class OuterBlockVerifyContext(
   parentContext: VerifyContext,
   isStaticContext: Boolean,
-  returnTypeName: Option[TypeName] = None
+  returnTypeName: TypeName = TypeNames.Void
 ) extends BlockVerifyContext(parentContext) {
 
   assert(!parentContext.isInstanceOf[BlockVerifyContext])
 
   override val isStatic: Boolean = isStaticContext
 
-  override def returnType: Option[TypeName] = returnTypeName
+  override def returnType: TypeName = returnTypeName
 }
 
 final class InnerBlockVerifyContext(parentContext: BlockVerifyContext)
@@ -375,7 +376,7 @@ final class InnerBlockVerifyContext(parentContext: BlockVerifyContext)
 
   override def isStatic: Boolean = parentContext.isStatic
 
-  override def returnType: Option[TypeName] = parentContext.returnType
+  override def returnType: TypeName = parentContext.returnType
 
   override def collectVars(accum: mutable.Map[Name, VarTypeAndDefinition]): Unit = {
     parentContext.collectVars(accum)

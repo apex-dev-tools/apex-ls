@@ -442,7 +442,7 @@ final case class ReturnStatement(expression: Option[Expression]) extends CST wit
     context: BlockVerifyContext,
     expr: Option[ExprContext]
   ): Option[String] = {
-    val expectedType = context.returnType.getOrElse(TypeNames.Void)
+    val expectedType = context.returnType
 
     if (expr.isEmpty && expectedType != TypeNames.Void)
       Some(s"Missing return value of type '$expectedType'")
