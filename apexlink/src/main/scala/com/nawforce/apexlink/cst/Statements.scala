@@ -23,6 +23,7 @@ import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import java.lang.ref.WeakReference
@@ -431,28 +432,35 @@ object CatchClause {
   }
 }
 
-final case class ReturnStatement(expression: Option[Expression]) extends Statement {
+final case class ReturnStatement(expression: Option[Expression]) extends CST with Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.foreach(e => {
-      assertReturnType(context, e.verify(context)).foreach(
-        msg => context.log(Issue(e.location.path, ERROR_CATEGORY, e.location.location, msg))
-      )
-    })
+    assertReturnType(context, expression.map(_.verify(context)))
+      .foreach(msg => context.log(Issue(this.location.path, ERROR_CATEGORY, locateKeyword(), msg)))
   }
 
-  private def assertReturnType(context: BlockVerifyContext, expr: ExprContext): Option[String] = {
-    val expectedType = context.returnType.get
+  private def assertReturnType(
+    context: BlockVerifyContext,
+    expr: Option[ExprContext]
+  ): Option[String] = {
+    val expectedType = context.returnType.getOrElse(TypeNames.Void)
 
     if (context.returnType.isEmpty)
       Some(s"Return statement not available in this context")
-    else if (expr.declaration.isEmpty && expectedType != TypeNames.Void)
+    else if (expr.isEmpty && expectedType != TypeNames.Void)
       Some(s"Missing return value of type '$expectedType'")
-    else if (
-      expr.isDefined && !isAssignable(expectedType, expr.typeDeclaration, strict = false, context)
-    )
-      Some(s"Incompatible return type, '${expr.typeName}' is not assignable to '$expectedType'")
-    else
-      None
+    else {
+      expr.flatMap(e => {
+        if (e.isDefined && !isAssignable(expectedType, e.typeDeclaration, strict = false, context))
+          Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
+        else
+          None
+      })
+    }
+  }
+
+  private def locateKeyword(): Location = {
+    val loc = this.location.location
+    Location(loc.startLine, loc.startPosition, loc.startLine, loc.startPosition + 6)
   }
 }
 
@@ -462,7 +470,7 @@ object ReturnStatement {
       CodeParser
         .toScala(statement.expression())
         .map(e => Expression.construct(e))
-    )
+    ).withContext(statement)
   }
 }
 
