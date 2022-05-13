@@ -166,15 +166,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     etd.setModifiers(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray))
     etd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
     constants.foreach(
-      id =>
-        etd.appendField(
-          new FieldDeclaration(
-            ArraySeq(),
-            ArraySeq(Modifier(IdToken("static", id.id.location))),
-            etd,
-            id
-          )
-        )
+      id => etd.appendField(new FieldDeclaration(ArraySeq(), ArraySeq(Modifier("static")), etd, id))
     )
     etd
   }
@@ -392,10 +384,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val builder = from.copy()
     val modifiers = builder.getModifiers.asScala
       .filterNot(m => m.getModifierType.getApexName == "explicitStatementExecuted")
-      .map(
-        m =>
-          Modifier(toIdToken(correctSharingNameIfRequired(m.getModifierType.getApexName), m.getLoc))
-      )
+      .map(m => Modifier(correctSharingNameIfRequired(m.getModifierType.getApexName)))
       .to(ArrayBuffer)
     val annotations = builder.getAnnotations.asScala.map(toAnnotation).to(ArrayBuffer)
     (modifiers, annotations)

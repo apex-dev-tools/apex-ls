@@ -57,7 +57,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toModifier(m: String): Modifier = {
-    Modifier(toIdToken(m))
+    Modifier(m)
   }
 
   def toIdToken(token: String): IdToken = {

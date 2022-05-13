@@ -40,13 +40,12 @@ object Tokens {
   val ForwardSlash           = '/'
   val BackSlash              = '\\'
   val Asterisk               = '*'
-  //val AtSign = '@'
+  val SingleQuote            = '\''
+  val Semicolon              = ';'
+
   val AtSignStr    = "@"
-  val Dot          = '.'
   val DotStr       = "."
-  val SingleQuote  = '\''
   val SemicolonStr = ";"
-  val Semicolon    = ';'
 
   val ClassStr     = "class"
   val EnumStr      = "enum"
@@ -91,14 +90,22 @@ sealed trait Token {
   val contents: String
   val location: Location
 
-  val lowerCaseContents: String = contents.toLowerCase
+  def lowerCaseContents: String = contents.toLowerCase
 
   def matches(other: String): Boolean = {
-    lowerCaseContents == other.toLowerCase
+    contents.equalsIgnoreCase(other)
   }
 }
 
-case class IdToken(contents: String, location: Location) extends Token
+case class IdToken private (contents: String, location: Location) extends Token
+
+object IdToken {
+  private val stringCache = new InternCache[String]()
+
+  def apply(contents: String, location: Location): IdToken = {
+    new IdToken(stringCache.intern(contents), location)
+  }
+}
 
 case class NonIdToken(contents: String, location: Location) extends Token
 

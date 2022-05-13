@@ -105,26 +105,22 @@ object Annotations {
   final val emptyArraySeq = ArraySeq[Annotation]()
 }
 
-case class Modifier(token: Token) {
-  def text: String = token.contents
-
-  def location: Location = token.location
-
-  override def toString: String = text
-
+case class Modifier(text: String) {
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[Modifier]
-    token.lowerCaseContents == other.token.lowerCaseContents
+    text.equalsIgnoreCase(other.text)
   }
+
+  override def toString: String = text
 }
 
 object Modifiers {
   final val emptyArraySeq               = ArraySeq[Modifier]()
-  final val PUBLIC_MODIFIER: Modifier   = Modifier(IdToken(Tokens.PublicStr, Location.default))
-  final val STATIC_MODIFIER: Modifier   = Modifier(IdToken(Tokens.StaticStr, Location.default))
-  final val VIRTUAL_MODIFIER: Modifier  = Modifier(IdToken(Tokens.VirtualStr, Location.default))
-  final val ABSTRACT_MODIFIER: Modifier = Modifier(IdToken(Tokens.AbstractStr, Location.default))
-  final val FINAL_MODIFIER: Modifier    = Modifier(IdToken(Tokens.FinalStr, Location.default))
+  final val PUBLIC_MODIFIER: Modifier   = Modifier(Tokens.PublicStr)
+  final val STATIC_MODIFIER: Modifier   = Modifier(Tokens.StaticStr)
+  final val VIRTUAL_MODIFIER: Modifier  = Modifier(Tokens.VirtualStr)
+  final val ABSTRACT_MODIFIER: Modifier = Modifier(Tokens.AbstractStr)
+  final val FINAL_MODIFIER: Modifier    = Modifier(Tokens.FinalStr)
 }
 
 case class Id(id: IdToken) {
@@ -512,12 +508,8 @@ object Parse {
     if (tokens.isEmpty) return Seq.empty
 
     val constant = tokenToId(tokens.head)
-    val field = new FieldDeclaration(
-      ArraySeq(),
-      ArraySeq(Modifier(IdToken(Tokens.StaticStr, constant.id.location))),
-      etd,
-      constant
-    )
+    val field =
+      new FieldDeclaration(ArraySeq(), ArraySeq(Modifier(Tokens.StaticStr)), etd, constant)
     etd.appendField(field)
     Seq(constant)
   }
@@ -709,7 +701,7 @@ object Parse {
     fields.toSeq
   }
 
-  private def tokenToModifier(token: Token): Modifier = Modifier(token)
+  private def tokenToModifier(token: Token): Modifier = Modifier(token.contents)
 
   private def tokenToId(token: Token): Id = Id(IdToken(token.contents, token.location))
 
@@ -879,12 +871,7 @@ object Parse {
         if (modifiers == null)
           modifiers = new mutable.ArrayBuffer[Modifier]()
         modifiers.append(
-          Modifier(
-            IdToken(
-              s"${tokens.get(index).contents} ${tokens.get(index + 1).contents}",
-              Location.from(tokens.get(index).location, tokens.get(index + 1).location)
-            )
-          )
+          Modifier(s"${tokens.get(index).contents} ${tokens.get(index + 1).contents}")
         )
         index += 2
       } else {

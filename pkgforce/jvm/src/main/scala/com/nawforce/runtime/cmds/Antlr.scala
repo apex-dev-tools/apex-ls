@@ -139,7 +139,7 @@ object Antlr {
   }
 
   def toModifier(ctx: ApexParser.ModifierContext): Modifier = {
-    Modifier(IdToken(ctx.children.asScala.mkString(" "), Location.default))
+    Modifier(ctx.children.asScala.mkString(" "))
   }
 
   def antlrAnnotation(ctx: ApexParser.AnnotationContext): Annotation = {
@@ -316,14 +316,7 @@ object Antlr {
       .asScala
       .foreach(ictx => {
         val id = toId(ictx)
-        etd.appendField(
-          new FieldDeclaration(
-            ArraySeq(),
-            ArraySeq(Modifier(IdToken("static", id.id.location))),
-            etd,
-            id
-          )
-        )
+        etd.appendField(new FieldDeclaration(ArraySeq(), ArraySeq(Modifier("static")), etd, id))
       })
   }
 
