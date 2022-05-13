@@ -131,7 +131,7 @@ final case class GetterPropertyBlock(modifiers: ModifierResults, block: Option[B
     propertyType: TypeDeclaration
   ): Unit = {
     block.foreach(block => {
-      val blockContext = new OuterBlockVerifyContext(context, isStatic)
+      val blockContext = new OuterBlockVerifyContext(context, isStatic, Some(propertyType.typeName))
       block.verify(blockContext)
       context.typePlugin.onBlockValidated(block, isStatic, blockContext)
     })
