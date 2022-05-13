@@ -444,9 +444,7 @@ final case class ReturnStatement(expression: Option[Expression]) extends CST wit
   ): Option[String] = {
     val expectedType = context.returnType.getOrElse(TypeNames.Void)
 
-    if (context.returnType.isEmpty)
-      Some(s"Return statement not available in this context")
-    else if (expr.isEmpty && expectedType != TypeNames.Void)
+    if (expr.isEmpty && expectedType != TypeNames.Void)
       Some(s"Missing return value of type '$expectedType'")
     else {
       expr.flatMap(e => {
