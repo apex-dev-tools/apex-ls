@@ -10,7 +10,7 @@ import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLi
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
-import com.nawforce.pkgforce.modifiers.{ModifierResults, PRIVATE_MODIFIER, PUBLIC_MODIFIER}
+import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.PathLocation
 
@@ -80,12 +80,10 @@ final case class ConstructorMap(
 
     potential match {
       case Some(ctor) =>
-        val isReallyPrivate =
-          ctor.visibility == PRIVATE_MODIFIER && !areInSameApexFile(ctor, context.thisType)
-        if (!isReallyPrivate) Right(ctor)
-        else if (ctor.isTestVisible && context.thisType.inTest) Right(ctor)
-        else {
-          //Check the rest of assignable for accessible ctors, if not revert to the original error
+        if (canAccessCtor(ctor, context)) {
+          Right(ctor)
+        } else {
+          //Check the rest of assignable for accessible ctors, if not return the original error
           findPotentialMatch(assignable.filterNot(_ == ctor), params, context) match {
             case Right(ctor) => Right(ctor)
             case _           => Left(s"Constructor is not visible: $getCtorString")
@@ -104,6 +102,23 @@ final case class ConstructorMap(
       case _                                               => false
     }
   }
+
+  private def canAccessCtor(ctor: ConstructorDeclaration, context: VerifyContext): Boolean = {
+    lazy val isTestVisible           = ctor.isTestVisible && context.thisType.inTest
+    lazy val isAccessedInThisContext = areInSameApexFile(ctor, context.thisType)
+    lazy val isAccessedInSuperContext =
+      context.superType.nonEmpty && areInSameApexFile(ctor, context.superType.get)
+
+    ctor.visibility match {
+      case PUBLIC_MODIFIER => true
+      case GLOBAL_MODIFIER => true
+      case PROTECTED_MODIFIER =>
+        isAccessedInThisContext || isAccessedInSuperContext || isTestVisible
+      case PRIVATE_MODIFIER => isAccessedInThisContext || isTestVisible
+      case _                => false
+    }
+  }
+
 }
 
 object ConstructorMap {

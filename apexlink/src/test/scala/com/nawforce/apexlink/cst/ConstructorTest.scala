@@ -204,6 +204,37 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Protected constructor call") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo { protected Foo(String s) {}}",
+        "Dummy.cls" -> "public class Dummy { public Dummy(String s){new Foo(s);} }"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: void Foo.<constructor>(System.String)\n"
+    )
+  }
+
+  test("Protected super constructor call") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "virtual public class Foo { protected Foo(String s) {}}",
+        "Dummy.cls" -> "public class Dummy extends Foo { public Dummy(String s){super(s);} }"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Protected constructor call from inner") {
+    typeDeclarations(
+      Map(
+        "Foo.cls" -> "public class Foo { protected Foo(String s) {} class Bar{ public Bar(){ new Foo('s'); }}}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("Private TestVisible default super constructor") {
     typeDeclarations(
       Map(
