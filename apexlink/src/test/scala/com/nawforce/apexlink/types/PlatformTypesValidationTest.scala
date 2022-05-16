@@ -155,7 +155,7 @@ class PlatformTypesValidationTest extends AnyFunSuite {
     }
 
     // Constructors (make sure we can decompose them via toString)
-    typeDeclaration.localConstructors.map(_.toString)
+    typeDeclaration.constructors.map(_.toString)
 
     // Methods (make sure we can decompose them via toString)
     typeDeclaration.methods.map(_.toString)

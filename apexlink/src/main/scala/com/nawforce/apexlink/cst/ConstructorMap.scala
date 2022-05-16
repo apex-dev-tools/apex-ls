@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved
+ */
+
 package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
@@ -174,8 +178,8 @@ object ConstructorMap {
     superClassMap: ConstructorMap,
     errors: mutable.Buffer[Issue]
   ): Unit = {
-    applyDefaultCtor(td, workingMap, superClassMap, errors)
-    applyCustomExceptionsCtors(td, workingMap)
+    if (td.isCustomException) applyCustomExceptionsCtors(td, workingMap)
+    else applyDefaultCtor(td, workingMap, superClassMap, errors)
   }
 
   private def applyDefaultCtor(
@@ -184,19 +188,25 @@ object ConstructorMap {
     superClassMap: ConstructorMap,
     errors: mutable.Buffer[Issue]
   ) = {
-    if (workingMap.keys.isEmpty && !td.isCustomException) {
+    if (workingMap.keys.isEmpty) {
       td match {
         case ad: ApexDeclaration =>
-          superClassMap
-            .findConstructorByParams(ArraySeq.empty, new TypeVerifyContext(None, ad, None)) match {
-            case Left(error) =>
-              val msg =
-                if (superClassMap.constructorsByParam.contains(0)) error
-                else
-                  s"No default constructor available in super type: ${superClassMap.typeName.get}"
-              setClassError(td, errors, msg)
-            case _ => workingMap.put(0, List(toCtor(td)))
-          }
+          if (superClassMap.td.isEmpty)
+            workingMap.put(0, List(toCtor(td)))
+          else
+            superClassMap
+              .findConstructorByParams(
+                ArraySeq.empty,
+                new TypeVerifyContext(None, ad, None)
+              ) match {
+              case Left(error) =>
+                val msg =
+                  if (superClassMap.constructorsByParam.contains(0)) error
+                  else
+                    s"No default constructor available in super type: ${superClassMap.typeName.get}"
+                setClassError(td, errors, msg)
+              case _ => workingMap.put(0, List(toCtor(td)))
+            }
         case _ =>
       }
     }
@@ -206,29 +216,28 @@ object ConstructorMap {
     def toParam(id: String, typeCntxt: RelativeTypeContext, typeName: TypeName): FormalParameter = {
       FormalParameter(publicModifierResult, RelativeTypeName(typeCntxt, typeName), Id(Name(id)))
     }
-    if (td.isCustomException) {
-      val synthetics = td match {
-        case cd: ClassDeclaration =>
-          ArraySeq(
-            toCtor(td),
-            toCtor(td, ArraySeq(toParam("param1", cd.typeContext, TypeNames.String))),
-            toCtor(td, ArraySeq(toParam("param1", cd.typeContext, TypeNames.Exception))),
-            toCtor(
-              td,
-              ArraySeq(
-                toParam("param1", cd.typeContext, TypeNames.String),
-                toParam("param2", cd.typeContext, TypeNames.Exception)
-              )
+    val synthetics = td match {
+      case cd: ClassDeclaration =>
+        ArraySeq(
+          toCtor(td),
+          toCtor(td, ArraySeq(toParam("param1", cd.typeContext, TypeNames.String))),
+          toCtor(td, ArraySeq(toParam("param1", cd.typeContext, TypeNames.Exception))),
+          toCtor(
+            td,
+            ArraySeq(
+              toParam("param1", cd.typeContext, TypeNames.String),
+              toParam("param2", cd.typeContext, TypeNames.Exception)
             )
           )
-        case _ => ArraySeq.empty
-      }
-
-      synthetics.foreach(s => {
-        val key = s.parameters.length
-        workingMap.put(key, s :: workingMap.getOrElse(key, Nil))
-      })
+        )
+      case _ => ArraySeq.empty
     }
+
+    synthetics.foreach(s => {
+      val key = s.parameters.length
+      workingMap.put(key, s :: workingMap.getOrElse(key, Nil))
+    })
+
   }
 
   private def deDupeConstructors(

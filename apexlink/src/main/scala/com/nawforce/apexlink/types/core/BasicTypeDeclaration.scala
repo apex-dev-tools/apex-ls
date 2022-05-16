@@ -41,8 +41,7 @@ class BasicTypeDeclaration(
 
   override val blocks: ArraySeq[BlockDeclaration] = BlockDeclaration.emptyBlockDeclarations
   override val fields: ArraySeq[FieldDeclaration] = FieldDeclaration.emptyFieldDeclarations
-  override val localConstructors: ArraySeq[ConstructorDeclaration] =
-    ConstructorDeclaration.emptyConstructorDeclarations
+
   override val methods: ArraySeq[MethodDeclaration] = MethodDeclaration.emptyMethodDeclarations
   override val constructors: ArraySeq[ConstructorDeclaration] =
     ConstructorDeclaration.emptyConstructorDeclarations

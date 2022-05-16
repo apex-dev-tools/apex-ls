@@ -88,7 +88,7 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   override lazy val modifiers: ArraySeq[Modifier] =
     PlatformModifiers.typeModifiers(cls.getModifiers, nature)
 
-  override lazy val localConstructors: ArraySeq[ConstructorDeclaration] = {
+  override lazy val constructors: ArraySeq[ConstructorDeclaration] = {
     getCtors
   }
 

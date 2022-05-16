@@ -145,6 +145,7 @@ trait ApexTriggerDeclaration extends ApexDeclaration {
 trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   val localFields: ArraySeq[ApexFieldLike]
   val localMethods: ArraySeq[ApexMethodLike]
+  val localConstructors: ArraySeq[ApexConstructorLike]
 
   override def nestedTypes: ArraySeq[ApexClassDeclaration]
 
