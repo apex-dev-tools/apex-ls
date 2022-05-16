@@ -14,7 +14,6 @@
 
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.memory.Monitor
 import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.memory.Cleanable
 import com.nawforce.pkgforce.path.PathLike
@@ -62,7 +61,6 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
           }
         })
 
-        Monitor.reportDuplicateTypes()
         Cleanable.clean()
         refreshQueue.clear()
         refreshed
