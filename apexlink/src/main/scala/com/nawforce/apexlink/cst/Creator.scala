@@ -18,8 +18,8 @@ import com.nawforce.apexlink.cst.AssignableSupport.couldBeEqual
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.OrgInfo
-import com.nawforce.apexlink.types.apex.ApexClassDeclaration
 import com.nawforce.apexlink.types.core.TypeDeclaration
+import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.names._
 import com.nawforce.runtime.parsers.CodeParser
@@ -167,10 +167,14 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
   ): Unit = {
     val hasError = input match {
       case Some(td) =>
-        td.findConstructor(arguments, context) match {
-          case Left(error) => Some(error)
-          case _           => None
-        }
+        //TODO: remove this once we get full validation for constructors
+        if (PlatformTypeDeclaration.constructorIgnoreTypes.exists(td.superTypes().contains(_)))
+          None
+        else
+          td.findConstructor(arguments, context) match {
+            case Left(error) => Some(error)
+            case _           => None
+          }
       case _ => None
     }
     if (hasError.nonEmpty) {

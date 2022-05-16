@@ -409,12 +409,16 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
 
     ctorSearchContext match {
       case Some(td) =>
-        td.findConstructor(args, context) match {
-          case Left(error) =>
-            context.logError(location, error)
-            ExprContext.empty
-          case Right(ctor) => ExprContext(None, None, ctor)
-        }
+        //TODO: remove this once we get full validation for constructors
+        if (PlatformTypeDeclaration.constructorIgnoreTypes.exists(td.superTypes().contains(_)))
+          ExprContext.empty
+        else
+          td.findConstructor(args, context) match {
+            case Left(error) =>
+              context.logError(location, error)
+              ExprContext.empty
+            case Right(ctor) => ExprContext(None, None, ctor)
+          }
       case _ => ExprContext.empty
     }
   }
