@@ -31,11 +31,11 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
   }
 
   def queue(request: RefreshRequest): Unit = {
-    org.refreshLock.synchronized {
-      if (request.highPriority && refreshQueue.isEmpty) {
+    if (!request.highPriority || refreshQueue.nonEmpty) {
+      refreshQueue.enqueue(request)
+    } else {
+      org.refreshLock.synchronized {
         request.pkg.refreshBatched(Seq(request))
-      } else {
-        refreshQueue.enqueue(request)
       }
     }
   }
@@ -43,16 +43,19 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
   def refreshAndFlush(): Boolean = {
     OrgInfo.current.withValue(org) {
       org.refreshLock.synchronized {
+        var updated  = false
         val packages = org.packages
 
-        val refreshed = packages
-          .map(pkg => {
-            pkg.refreshBatched(refreshQueue.filter(_.pkg == pkg).toSeq)
-          })
-          .foldLeft(false) {
-            _ || _
-          }
+        // Process in chunks, new requests may be queued during processing
+        while (refreshQueue.nonEmpty) {
+          val toProcess = refreshQueue.dequeueAll(_ => true)
+          packages
+            .foreach(pkg => {
+              updated |= pkg.refreshBatched(toProcess.filter(_.pkg == pkg))
+            })
+        }
 
+        // Flush to cache
         parsedCache.foreach(pc => {
           packages.foreach(pkg => {
             pkg.flush(pc)
@@ -63,9 +66,9 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
           }
         })
 
+        // Clean registered caches to reduce memory
         Cleanable.clean()
-        refreshQueue.clear()
-        refreshed
+        updated
       }
     }
   }
