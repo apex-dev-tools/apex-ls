@@ -36,13 +36,14 @@ import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, TEST_METHOD_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
-import com.nawforce.pkgforce.path.{PathLike, PathLocation}
+import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
 
+import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
 import java.util
 import scala.collection.immutable.ArraySeq
@@ -640,6 +641,18 @@ object OPM extends TriHierarchy {
             dependencies.put(td.typeName.toString, depends.map(_.typeName.toString).toArray)
         case _ => ()
       }
+    }
+
+    def log(issue: Issue): Unit = {
+      pkg.org.issueManager.log(issue)
+    }
+
+    def log(path: PathLike, message: String, ex: Throwable): Unit = {
+      val writer = new StringWriter
+      writer.append(message)
+      writer.append(": ")
+      ex.printStackTrace(new PrintWriter(writer))
+      log(Issue(path, ERROR_CATEGORY, Location.empty, writer.toString))
     }
 
     override def toString: String = {

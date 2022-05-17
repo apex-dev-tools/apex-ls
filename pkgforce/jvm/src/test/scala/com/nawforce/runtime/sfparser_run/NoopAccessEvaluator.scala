@@ -2,10 +2,10 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_run
 
-import apex.jorje.semantic.compiler.{Namespace, StructuredVersion}
 import apex.jorje.semantic.compiler.sfdc.{AccessEvaluator, PlaceholderOrgPerm}
+import apex.jorje.semantic.compiler.{Namespace, StructuredVersion}
 import apex.jorje.semantic.symbol.`type`.{SObjectTypeInfo, TypeInfo}
 
 /**

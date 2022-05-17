@@ -3,31 +3,25 @@
  */
 package com.nawforce.pkgforce.types;
 
-import apex.jorje.data.Location;
-
-public class ApexLocationAdapter implements Location {
+public class ApexLocationAdapter {
     final private com.financialforce.oparser.Location location;
 
     public ApexLocationAdapter(com.financialforce.oparser.Location location) {
         this.location = location;
     }
 
-    @Override
     public int getStartIndex() {
         return location.startByteOffset();
     }
 
-    @Override
     public int getEndIndex() {
         return location.endByteOffset();
     }
 
-    @Override
     public int getLine() {
         return location.startLine();
     }
 
-    @Override
     public int getColumn() {
         return location.startLineOffset();
     }
@@ -36,8 +30,8 @@ public class ApexLocationAdapter implements Location {
     public boolean equals(Object other) {
         if (this == other) return true;
         if (other == null) return false;
-        if (!(other instanceof Location)) return false;
-        Location otherLocation = (Location) other;
+        if (!(other instanceof ApexLocationAdapter)) return false;
+        ApexLocationAdapter otherLocation = (ApexLocationAdapter) other;
         return getStartIndex() == otherLocation.getStartIndex() &&
                 getEndIndex() == otherLocation.getEndIndex() &&
                 getLine() == otherLocation.getLine() &&
