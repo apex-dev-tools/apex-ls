@@ -74,9 +74,11 @@ final case class TriggerDeclaration(
 
   override val blocks: ArraySeq[BlockDeclaration] = BlockDeclaration.emptyBlockDeclarations
   override val fields: ArraySeq[FieldDeclaration] = FieldDeclaration.emptyFieldDeclarations
-  override val constructors: ArraySeq[ConstructorDeclaration] =
+  override val localConstructors: ArraySeq[ConstructorDeclaration] =
     ConstructorDeclaration.emptyConstructorDeclarations
   override val methods: ArraySeq[MethodDeclaration] = MethodDeclaration.emptyMethodDeclarations
+  override val constructors: ArraySeq[ConstructorDeclaration] =
+    ConstructorDeclaration.emptyConstructorDeclarations
 
   private var depends: Option[SkinnySet[Dependent]] = None
   private val objectTypeName                        = TypeName(objectNameId.name, Nil, Some(TypeNames.Schema))

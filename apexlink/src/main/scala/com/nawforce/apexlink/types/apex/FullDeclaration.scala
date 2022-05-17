@@ -89,7 +89,7 @@ abstract class FullDeclaration(
     }
   }
 
-  override lazy val constructors: ArraySeq[ApexConstructorDeclaration] = {
+  override lazy val localConstructors: ArraySeq[ApexConstructorDeclaration] = {
     bodyDeclarations.flatMap {
       case x: ApexConstructorDeclaration => Some(x)
       case _                             => None
@@ -291,7 +291,7 @@ abstract class FullDeclaration(
       interfaces,
       blocks.map(_.summary),
       localFields.map(_.summary).sortBy(_.name),
-      constructors.map(_.summary).sortBy(_.parameters.length),
+      localConstructors.map(_.summary).sortBy(_.parameters.length),
       localMethods.map(_.summary).sortBy(_.name),
       nestedTypes.map(_.summary).sortBy(_.name),
       dependencySummary()
