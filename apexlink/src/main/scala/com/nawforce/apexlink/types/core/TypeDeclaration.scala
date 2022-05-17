@@ -509,7 +509,7 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
     val interfaces = interfaceDeclarations
     interfaces.exists(
       in =>
-        (ignoreGenerics && in.typeName.equalsIgnoreParamTypes(typeName)) ||
+        (ignoreGenerics && in.typeName.equalsNamesOnly(typeName)) ||
           in.typeName == typeName
     ) ||
     interfaces.exists(_.implements(typeName, ignoreGenerics)) ||

@@ -414,6 +414,12 @@ object TypeNames extends InternCache[TypeName] {
       typeName.outer.forall(_.equalsIgnoreParamTypes(other.outer.get))
     }
 
+    def equalsNamesOnly(other: TypeName): Boolean = {
+      typeName.name == other.name &&
+      typeName.outer.nonEmpty == other.outer.nonEmpty &&
+      typeName.outer.forall(_.equalsNamesOnly(other.outer.get))
+    }
+
     def decodedExtendedGeneric(): Option[TypeName] = {
       val parts = typeName.name.value.split('_')
       if (typeName.params.isEmpty && parts.length > 1) {
