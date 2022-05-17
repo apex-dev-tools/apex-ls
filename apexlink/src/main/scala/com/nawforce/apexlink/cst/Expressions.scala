@@ -407,9 +407,7 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
     extends MethodCall {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     // Verify args so vars don't show as unused and map to typeNames
-    val args = arguments
-      .map(_.verify(input, context))
-
+    val args = arguments.map(_.verify(input, context))
     if (args.forall(_.isDefined)) {
       val ctorSearchContext = if (isSuper) context.superType else Some(context.thisType)
 
@@ -427,7 +425,7 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
             }
         case _ => ExprContext.empty
       }
-    }
+    } else ExprContext.empty
   }
 }
 
