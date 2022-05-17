@@ -435,7 +435,9 @@ object CatchClause {
 final case class ReturnStatement(expression: Option[Expression]) extends CST with Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     assertReturnType(context, expression.map(_.verify(context)))
-      .foreach(msg => context.log(Issue(this.location.path, ERROR_CATEGORY, locateKeyword(), msg)))
+      .foreach(
+        msg => context.log(Issue(this.location.path, ERROR_CATEGORY, this.location.location, msg))
+      )
   }
 
   private def assertReturnType(
@@ -454,11 +456,6 @@ final case class ReturnStatement(expression: Option[Expression]) extends CST wit
           None
       })
     }
-  }
-
-  private def locateKeyword(): Location = {
-    val loc = this.location.location
-    Location(loc.startLine, loc.startPosition, loc.startLine, loc.startPosition + 6)
   }
 }
 
