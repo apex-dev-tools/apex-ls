@@ -85,8 +85,9 @@ object AssignableSupport {
     if (toType.params.size == fromType.typeName.params.size) {
       isAssignableName(toType, fromType) && hasAssignableParams(toType, fromType.typeName, context)
     } else if (toType.params.isEmpty || fromType.typeName.params.isEmpty) {
-      // e.g. Object a = List<A> or Iterable<A> a = new CustomIterator()
-      fromType.extendsOrImplements(toType)
+      // e.g. Object a = List<A> | Iterable<A> a = new CustomIterator() | Iterable<A> a = QueryLocator
+      fromType.extendsOrImplements(toType) ||
+      isQueryLocatorAssignable(toType, fromType.typeName, context)
     } else {
       false
     }
@@ -139,6 +140,19 @@ object AssignableSupport {
         case Left(_)              => false
         case Right(toDeclaration) => toDeclaration.isSObject
       }
+    } else {
+      // SObject s = SObject
+      fromType == TypeNames.SObject
+    }
+  }
+
+  private def isQueryLocatorAssignable(
+    toType: TypeName,
+    fromType: TypeName,
+    context: VerifyContext
+  ): Boolean = {
+    if (fromType == TypeNames.QueryLocator && toType.isIterable && toType.params.nonEmpty) {
+      isAssignable(toType.params.head, TypeNames.SObject, strict = false, context)
     } else {
       false
     }
