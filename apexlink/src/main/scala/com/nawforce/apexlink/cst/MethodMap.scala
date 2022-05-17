@@ -128,7 +128,7 @@ final case class MethodMap(
 
     // Try for an exact match first
     val exactMatches =
-      testMatches.filter(_.hasParameters(params, allowPlatformGenericEquivalence = true))
+      testMatches.filter(_.hasCompatibleParameters(params, allowPlatformGenericEquivalence = true))
     if (exactMatches.length == 1)
       return Right(exactMatches.head)
     else if (exactMatches.length > 1)
@@ -194,7 +194,10 @@ final case class MethodMap(
           .find(
             method =>
               assignable.forall(
-                m => m == method || method.isMoreSpecific(m, params, context).contains(true)
+                m =>
+                  m == method || method
+                    .hasMoreSpecificParams(m.parameters, params, context)
+                    .contains(true)
               )
           )
           .map(Right(_))
