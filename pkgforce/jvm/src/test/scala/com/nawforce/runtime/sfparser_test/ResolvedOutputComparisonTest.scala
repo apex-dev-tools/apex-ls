@@ -1,24 +1,14 @@
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_test
 import com.financialforce.oparser.StringUtils.{
   asConstructorSignatureString,
   asMethodSignatureString,
   asSignatureString
 }
-import com.financialforce.oparser.{
-  Annotation,
-  ConstructorDeclaration,
-  FieldDeclaration,
-  FormalParameterList,
-  MethodDeclaration,
-  Modifier,
-  PropertyDeclaration,
-  Signature,
-  TypeList,
-  TypeRef
-}
+import com.financialforce.oparser._
 import com.nawforce.pkgforce.names.Names
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
+import com.nawforce.runtime.sfparser_run.{SFParser, SymbolProvider}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM, TypeDeclaration}
 

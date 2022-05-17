@@ -1,4 +1,4 @@
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_run
 
 import apex.jorje.lsp.ApexLanguageServerLauncher
 import apex.jorje.lsp.api.codeActions.{CodeActionsProvider, QuickFixProvider}
@@ -78,7 +78,7 @@ import com.google.common.util.concurrent.ServiceManager
 import com.google.inject.assistedinject.FactoryModuleBuilder
 import com.google.inject.multibindings.Multibinder
 import com.google.inject.{Guice, Injector, Provider, Singleton}
-import com.nawforce.runtime.sfparser.SymbolProvider.SFModuleWithDb
+import com.nawforce.runtime.sfparser_run.SymbolProvider.SFModuleWithDb
 import org.eclipse.jdt.internal.core.nd.db.{ChunkCache, Database}
 import org.eclipse.jdt.internal.core.nd.{Nd, NdNode, NdNodeTypeRegistry}
 import org.eclipse.lsp4j.services.{

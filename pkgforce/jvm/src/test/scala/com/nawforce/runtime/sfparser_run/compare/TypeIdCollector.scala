@@ -1,4 +1,4 @@
-package com.nawforce.runtime.sfparser.compare
+package com.nawforce.runtime.sfparser_run.compare
 
 import com.financialforce.oparser.Id
 import com.nawforce.runtime.workspace.{

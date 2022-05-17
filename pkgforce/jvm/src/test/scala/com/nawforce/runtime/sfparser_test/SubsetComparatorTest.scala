@@ -1,7 +1,7 @@
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_test
 
 import com.financialforce.oparser._
-import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdResolver}
+import com.nawforce.runtime.sfparser_run.compare.{SubsetComparator, TypeIdResolver}
 import com.nawforce.runtime.workspace.{ClassTypeDeclaration, IMutableModuleTypeDeclaration}
 import org.scalatest.funspec.AnyFunSpec
 
