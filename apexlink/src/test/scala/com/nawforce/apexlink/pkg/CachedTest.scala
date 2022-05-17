@@ -710,7 +710,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
         assert(getMessages(org2) == "")
       }
 
-      pkg2.refresh(root.join("MyConcrete.cls"))
+      pkg2.refresh(root.join("MyConcrete.cls"), highPriority = false)
 
       {
         assert(org2.issues.isEmpty)

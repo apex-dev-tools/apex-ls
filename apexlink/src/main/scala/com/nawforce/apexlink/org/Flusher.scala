@@ -21,7 +21,7 @@ import com.nawforce.pkgforce.path.PathLike
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.mutable
 
-case class RefreshRequest(pkg: OPM.PackageImpl, path: PathLike)
+case class RefreshRequest(pkg: OPM.PackageImpl, path: PathLike, highPriority: Boolean)
 
 class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
   protected val lock         = new ReentrantLock(true)
@@ -34,7 +34,11 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
 
   def queue(request: RefreshRequest): Unit = {
     lock.synchronized {
-      refreshQueue.enqueue(request)
+      if (request.highPriority && refreshQueue.isEmpty) {
+        request.pkg.refreshBatched(Seq(request))
+      } else {
+        refreshQueue.enqueue(request)
+      }
     }
   }
 
@@ -87,7 +91,7 @@ class CacheFlusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache])
       var stable = false
       while (!stable) {
         val start = queueSize
-        Thread.sleep(250)
+        Thread.sleep(1000)
         val end = queueSize
         stable = start > 0 && start == end
       }

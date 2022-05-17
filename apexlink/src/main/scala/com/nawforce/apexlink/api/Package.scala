@@ -123,5 +123,5 @@ trait Package {
     * If there is no file at the given path then any previous contribution to the package metadata from this file
     * will be removed so you call this after file deletion.
     */
-  def refresh(path: String): Unit
+  def refresh(path: String, highPriority: Boolean): Unit
 }

@@ -235,12 +235,14 @@ trait PackageAPI extends Package {
     })
   }
 
-  override def refresh(path: String): Unit = {
-    refresh(Path(path))
+  override def refresh(path: String, highPriority: Boolean): Unit = {
+    refresh(Path(path), highPriority)
   }
 
-  private[nawforce] def refresh(path: PathLike): Unit = {
-    org.queueMetadataRefresh(RefreshRequest(this, path))
+  private[nawforce] def refresh(path: PathLike, highPriority: Boolean): Unit = {
+    OrgInfo.current.withValue(org) {
+      org.queueMetadataRefresh(RefreshRequest(this, path, highPriority))
+    }
   }
 
   /* Replace a path, returns the TypeId of the type that was updated and a Set of TypeIds for the dependency
