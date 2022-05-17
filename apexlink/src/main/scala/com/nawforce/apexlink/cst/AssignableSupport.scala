@@ -85,7 +85,7 @@ object AssignableSupport {
     if (toType.params.size == fromType.typeName.params.size) {
       isAssignableName(toType, fromType) && hasAssignableParams(toType, fromType.typeName, context)
     } else if (toType.params.isEmpty || fromType.typeName.params.isEmpty) {
-      // e.g. Object a = List<A>
+      // e.g. Object a = List<A> or Iterable<A> a = new CustomIterator()
       fromType.extendsOrImplements(toType)
     } else {
       false
