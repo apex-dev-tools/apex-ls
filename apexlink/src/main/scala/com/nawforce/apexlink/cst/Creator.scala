@@ -152,10 +152,9 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
       creating.typeDeclaration.validateFieldConstructorArguments(input, arguments, context)
       creating
     } else {
-      val args = arguments
-        .map(_.verify(input, context))
-        .map(arg => if (arg.isDefined) arg.typeName else TypeNames.Any)
-      validateConstructor(creating.declaration, args, context)
+      val args = arguments.map(_.verify(input, context))
+      if (args.forall(_.isDefined))
+        validateConstructor(creating.declaration, args.map(arg => arg.typeName), context)
       creating
     }
   }
