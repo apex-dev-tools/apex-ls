@@ -1,5 +1,9 @@
 package com.nawforce.runtime.sfparser_test
-import com.financialforce.oparser.StringUtils.{asConstructorSignatureString, asMethodSignatureString, asSignatureString}
+import com.financialforce.oparser.StringUtils.{
+  asConstructorSignatureString,
+  asMethodSignatureString,
+  asSignatureString
+}
 import com.financialforce.oparser._
 import com.nawforce.pkgforce.names.Names
 import com.nawforce.pkgforce.path.PathLike

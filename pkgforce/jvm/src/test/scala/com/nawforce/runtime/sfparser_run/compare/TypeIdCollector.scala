@@ -1,7 +1,11 @@
 package com.nawforce.runtime.sfparser_run.compare
 
 import com.financialforce.oparser.Id
-import com.nawforce.runtime.workspace.{ClassTypeDeclaration, IModuleTypeDeclaration, TypeDeclaration}
+import com.nawforce.runtime.workspace.{
+  ClassTypeDeclaration,
+  IModuleTypeDeclaration,
+  TypeDeclaration
+}
 
 import scala.collection.mutable.ArrayBuffer
 
