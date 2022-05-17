@@ -18,22 +18,20 @@ import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.memory.Cleanable
 import com.nawforce.pkgforce.path.PathLike
 
-import java.util.concurrent.locks.ReentrantLock
 import scala.collection.mutable
 
 case class RefreshRequest(pkg: OPM.PackageImpl, path: PathLike, highPriority: Boolean)
 
 class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
-  protected val lock         = new ReentrantLock(true)
   protected val refreshQueue = new mutable.Queue[RefreshRequest]()
   private var expired        = false
 
   def isDirty: Boolean = {
-    lock.synchronized { refreshQueue.nonEmpty }
+    org.refreshLock.synchronized { refreshQueue.nonEmpty }
   }
 
   def queue(request: RefreshRequest): Unit = {
-    lock.synchronized {
+    org.refreshLock.synchronized {
       if (request.highPriority && refreshQueue.isEmpty) {
         request.pkg.refreshBatched(Seq(request))
       } else {
@@ -44,7 +42,7 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
 
   def refreshAndFlush(): Boolean = {
     OrgInfo.current.withValue(org) {
-      lock.synchronized {
+      org.refreshLock.synchronized {
         val packages = org.packages
 
         val refreshed = packages
@@ -84,7 +82,7 @@ class CacheFlusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache])
   t.start()
 
   override def run(): Unit = {
-    def queueSize: Int = lock.synchronized { refreshQueue.size }
+    def queueSize: Int = org.refreshLock.synchronized { refreshQueue.size }
 
     while (true) {
       // Wait for non-zero queue to be stable

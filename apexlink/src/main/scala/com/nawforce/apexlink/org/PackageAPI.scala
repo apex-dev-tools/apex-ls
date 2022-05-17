@@ -46,7 +46,9 @@ trait PackageAPI extends Package {
   }
 
   override def isPackagePath(path: String): Boolean = {
-    isPackagePathInternal(Path(path))
+    org.refreshLock.synchronized {
+      isPackagePathInternal(Path(path))
+    }
   }
 
   def isPackagePathInternal(path: PathLike): Boolean = {
@@ -54,19 +56,23 @@ trait PackageAPI extends Package {
   }
 
   override def getTypeIdentifier(typeName: TypeName): TypeIdentifier = {
-    orderedModules.headOption
-      .flatMap(
-        module =>
-          TypeResolver(typeName, module) match {
-            case Right(td: TypeDeclaration) => Some(TypeIdentifier(this.namespace, td.typeName))
-            case _                          => None
-          }
-      )
-      .orNull
+    org.refreshLock.synchronized {
+      orderedModules.headOption
+        .flatMap(
+          module =>
+            TypeResolver(typeName, module) match {
+              case Right(td: TypeDeclaration) => Some(TypeIdentifier(this.namespace, td.typeName))
+              case _                          => None
+            }
+        )
+        .orNull
+    }
   }
 
   override def getTypeOfPath(path: String): TypeIdentifier = {
-    getTypeOfPathInternal(Path.safeApply(path)).map(_.asTypeIdentifier).orNull
+    org.refreshLock.synchronized {
+      getTypeOfPathInternal(Path.safeApply(path)).map(_.asTypeIdentifier).orNull
+    }
   }
 
   private[nawforce] def getTypeOfPathInternal(path: PathLike): Option[TypeId] = {
@@ -95,47 +101,53 @@ trait PackageAPI extends Package {
   }
 
   override def getPathsOfType(typeId: TypeIdentifier): Array[String] = {
-    if (typeId != null && typeId.namespace == namespace) {
-      orderedModules.view
-        .flatMap(module => {
-          module
-            .moduleType(typeId.typeName)
-            .map(td => td.paths.map(_.toString).toArray)
-            .orElse({
-              // Deal with page weirdness
-              if (typeId.typeName.outer.contains(TypeNames.Page)) {
-                module.pages.fields
-                  .find(_.name == typeId.typeName.name)
-                  .collect {
-                    case page: Page if page.location != null => Array(page.location.path.toString)
-                  }
-              } else {
-                None
-              }
-            })
-        })
-        .headOption
-        .getOrElse(Array())
-    } else {
-      Array()
+    org.refreshLock.synchronized {
+      if (typeId != null && typeId.namespace == namespace) {
+        orderedModules.view
+          .flatMap(module => {
+            module
+              .moduleType(typeId.typeName)
+              .map(td => td.paths.map(_.toString).toArray)
+              .orElse({
+                // Deal with page weirdness
+                if (typeId.typeName.outer.contains(TypeNames.Page)) {
+                  module.pages.fields
+                    .find(_.name == typeId.typeName.name)
+                    .collect {
+                      case page: Page if page.location != null => Array(page.location.path.toString)
+                    }
+                } else {
+                  None
+                }
+              })
+          })
+          .headOption
+          .getOrElse(Array())
+      } else {
+        Array()
+      }
     }
   }
 
   override def getSummaryOfType(typeId: TypeIdentifier): TypeSummary = {
-    if (typeId != null && typeId.namespace == namespace) {
-      orderedModules
-        .flatMap(_.types.get(typeId.typeName))
-        .filter(_.isInstanceOf[ApexDeclaration])
-        .map(_.asInstanceOf[ApexDeclaration].summary)
-        .headOption
-        .orNull
-    } else {
-      null
+    org.refreshLock.synchronized {
+      if (typeId != null && typeId.namespace == namespace) {
+        orderedModules
+          .flatMap(_.types.get(typeId.typeName))
+          .filter(_.isInstanceOf[ApexDeclaration])
+          .map(_.asInstanceOf[ApexDeclaration].summary)
+          .headOption
+          .orNull
+      } else {
+        null
+      }
     }
   }
 
   override def getSummaryOfTypeAsJSON(typeId: TypeIdentifier): String = {
-    Option(getSummaryOfType(typeId)).map(summary => write(summary)).orNull
+    org.refreshLock.synchronized {
+      Option(getSummaryOfType(typeId)).map(summary => write(summary)).orNull
+    }
   }
 
   override def getDependencies(
@@ -143,31 +155,33 @@ trait PackageAPI extends Package {
     outerInheritanceOnly: Boolean,
     apexOnly: Boolean
   ): Array[TypeIdentifier] = {
-    if (typeId != null && typeId.namespace == namespace) {
-      getDependentType(typeId.typeName)
-        .map(td => {
-          if (outerInheritanceOnly) {
-            td match {
-              case declaration: ApexClassDeclaration =>
-                declaration
-                  .dependencies()
-                  .flatMap({
-                    case dt: ApexClassDeclaration => Some(dt.outerTypeId.asTypeIdentifier)
-                    case _                        => None
-                  })
-                  .toArray
-              case _ => Array[TypeIdentifier]()
+    org.refreshLock.synchronized {
+      if (typeId != null && typeId.namespace == namespace) {
+        getDependentType(typeId.typeName)
+          .map(td => {
+            if (outerInheritanceOnly) {
+              td match {
+                case declaration: ApexClassDeclaration =>
+                  declaration
+                    .dependencies()
+                    .flatMap({
+                      case dt: ApexClassDeclaration => Some(dt.outerTypeId.asTypeIdentifier)
+                      case _                        => None
+                    })
+                    .toArray
+                case _ => Array[TypeIdentifier]()
+              }
+            } else {
+              val typeCache    = new TypeCache()
+              val dependencies = mutable.Set[TypeId]()
+              td.gatherDependencies(dependencies, apexOnly, outerTypesOnly = true, typeCache)
+              dependencies.map(_.asTypeIdentifier).toArray
             }
-          } else {
-            val typeCache    = new TypeCache()
-            val dependencies = mutable.Set[TypeId]()
-            td.gatherDependencies(dependencies, apexOnly, outerTypesOnly = true, typeCache)
-            dependencies.map(_.asTypeIdentifier).toArray
-          }
-        })
-        .orNull
-    } else {
-      null
+          })
+          .orNull
+      } else {
+        null
+      }
     }
   }
 
@@ -184,44 +198,50 @@ trait PackageAPI extends Package {
     typeId: TypeIdentifier,
     apexOnly: Boolean
   ): Array[TypeIdentifier] = {
-    if (typeId != null && typeId.namespace == namespace) {
-      getDependentType(typeId.typeName)
-        .map(
-          _.getTypeDependencyHolders.toSet
-            .filter(
-              id =>
-                !apexOnly || TypeResolver(id.typeName, orderedModules.head).toOption
-                  .exists(_.isInstanceOf[ApexDeclaration])
-            )
-            .map(_.asTypeIdentifier)
-            .toArray
-        )
-        .orNull
-    } else {
-      null
+    org.refreshLock.synchronized {
+      if (typeId != null && typeId.namespace == namespace) {
+        getDependentType(typeId.typeName)
+          .map(
+            _.getTypeDependencyHolders.toSet
+              .filter(
+                id =>
+                  !apexOnly || TypeResolver(id.typeName, orderedModules.head).toOption
+                    .exists(_.isInstanceOf[ApexDeclaration])
+              )
+              .map(_.asTypeIdentifier)
+              .toArray
+          )
+          .orNull
+      } else {
+        null
+      }
     }
   }
 
   override def hasDependency(typeId: TypeIdentifier, dependencyTypeId: TypeIdentifier): Boolean = {
-    if (typeId == null || typeId.namespace != namespace) return false
+    org.refreshLock.synchronized {
+      if (typeId == null || typeId.namespace != namespace) return false
 
-    getDependentType(typeId.typeName) match {
-      case Some(decl: ApexDeclaration) =>
-        val typeCache    = new TypeCache()
-        val dependencies = mutable.Set[TypeId]()
-        decl.gatherDependencies(dependencies, apexOnly = true, outerTypesOnly = false, typeCache)
-        dependencies.map(_.asTypeIdentifier).toArray.contains(dependencyTypeId)
-      case _ => false
+      getDependentType(typeId.typeName) match {
+        case Some(decl: ApexDeclaration) =>
+          val typeCache    = new TypeCache()
+          val dependencies = mutable.Set[TypeId]()
+          decl.gatherDependencies(dependencies, apexOnly = true, outerTypesOnly = false, typeCache)
+          dependencies.map(_.asTypeIdentifier).toArray.contains(dependencyTypeId)
+        case _ => false
+      }
     }
   }
 
   /** Get a array of type identifiers from this packages modules. */
   override def getTypeIdentifiers(apexOnly: Boolean): Array[TypeIdentifier] = {
-    modules
-      .foldLeft(Set[TypeIdentifier]())(
-        (acc, module) => acc ++ module.getMetadataDefinedTypeIdentifiers(apexOnly)
-      )
-      .toArray
+    org.refreshLock.synchronized {
+      modules
+        .foldLeft(Set[TypeIdentifier]())(
+          (acc, module) => acc ++ module.getMetadataDefinedTypeIdentifiers(apexOnly)
+        )
+        .toArray
+    }
   }
 
   /** Flush all types to the passed cache */
