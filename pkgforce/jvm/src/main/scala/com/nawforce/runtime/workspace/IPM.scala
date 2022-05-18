@@ -276,7 +276,6 @@ object IPM extends TriHierarchy {
       def resolveSignature(body: Signature): Unit = {
         body.typeRef = resolve(body.typeRef).getOrElse(body.typeRef)
 
-        // TODO: Remove debug
         if (body.typeRef.isInstanceOf[UnresolvedTypeRef]) {
           resolve(body.typeRef)
         }
