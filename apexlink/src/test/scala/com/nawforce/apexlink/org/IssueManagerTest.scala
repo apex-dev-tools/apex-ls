@@ -110,7 +110,7 @@ class IssueManagerTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("/Dummy.cls")
         path.write("public class Dummy")
-        org.unmanaged.refresh(path)
+        org.unmanaged.refresh(path, highPriority = false)
         org.flush()
 
         assert(org.issues.hasUpdatedIssues sameElements Array("/Dummy.cls"))

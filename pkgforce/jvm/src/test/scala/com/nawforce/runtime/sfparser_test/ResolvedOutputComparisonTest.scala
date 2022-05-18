@@ -246,7 +246,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
     rules.atLeastOne(first, second)
   }
   def compareTypeRef(first: Option[TypeRef], second: Option[TypeRef]): Boolean = {
-    rules.atLeastOne(first, second)
+    rules.atLeastOne(OptionalTypeRef(first), OptionalTypeRef(second))
   }
 
   def compareAnnotations(first: ArraySeq[Annotation], second: ArraySeq[Annotation]): Boolean = {
@@ -286,9 +286,12 @@ trait Rule[T] {
   }
 }
 
+// Wrapper to allow pattern matching despite erasure
+case class OptionalTypeRef(value: Option[TypeRef])
+
 class ModifierRule   extends Rule[Modifier]
 class AnnotationRule extends Rule[Annotation]
-class TypeRefRule    extends Rule[Option[TypeRef]]
+class TypeRefRule    extends Rule[OptionalTypeRef]
 
 case class RuleSets(
   modifierRuleSet: Array[ModifierRule],
@@ -302,10 +305,11 @@ case class RuleSets(
         annotationRuleSet.forall(_.evaluate(f, second.asInstanceOf[Annotation]))
       case f: Modifier => modifierRuleSet.forall(_.evaluate(f, second.asInstanceOf[Modifier]))
       case f: TypeRef =>
-        typeRefRuleSet.forall(_.evaluate(Some(f), Some(second.asInstanceOf[TypeRef])))
-      case f: Option[TypeRef] =>
-        typeRefRuleSet.forall(_.evaluate(f, second.asInstanceOf[Option[TypeRef]]))
-      case _ => first == second
+        typeRefRuleSet.forall(
+          _.evaluate(OptionalTypeRef(Some(f)), OptionalTypeRef(Some(second.asInstanceOf[TypeRef])))
+        )
+      case f: OptionalTypeRef =>
+        typeRefRuleSet.forall(_.evaluate(f, second.asInstanceOf[OptionalTypeRef]))
     }
   }
 
@@ -315,10 +319,11 @@ case class RuleSets(
         annotationRuleSet.exists(_.evaluate(f, second.asInstanceOf[Annotation]))
       case f: Modifier => modifierRuleSet.exists(_.evaluate(f, second.asInstanceOf[Modifier]))
       case f: TypeRef =>
-        typeRefRuleSet.exists(_.evaluate(Some(f), Some(second.asInstanceOf[TypeRef])))
-      case f: Option[TypeRef] =>
-        typeRefRuleSet.exists(_.evaluate(f, second.asInstanceOf[Option[TypeRef]]))
-      case _ => first == second
+        typeRefRuleSet.forall(
+          _.evaluate(OptionalTypeRef(Some(f)), OptionalTypeRef(Some(second.asInstanceOf[TypeRef])))
+        )
+      case f: OptionalTypeRef =>
+        typeRefRuleSet.exists(_.evaluate(f, second.asInstanceOf[OptionalTypeRef]))
     }
   }
 }
@@ -339,12 +344,13 @@ object RuleSets {
 }
 
 class TypeRefNamesAreEqual() extends TypeRefRule {
-  override def evaluate(first: Option[TypeRef], second: Option[TypeRef]): Boolean = {
-    first match {
+  override def evaluate(first: OptionalTypeRef, second: OptionalTypeRef): Boolean = {
+    first.value match {
       case Some(tr) =>
-        val check = second.nonEmpty && tr.getFullName.equalsIgnoreCase(processSecond(second.get))
+        val check =
+          second.value.nonEmpty && tr.getFullName.equalsIgnoreCase(processSecond(second.value.get))
         check
-      case None => second.isEmpty
+      case None => second.value.isEmpty
     }
   }
   def processSecond(second: TypeRef): String = {
@@ -374,10 +380,11 @@ class IgnoreSystemNamespace() extends TypeRefNamesAreEqualForPlatformTypes {
 }
 
 case class TypeRefOneIsVoidOtherIsNone() extends TypeRefRule {
-  override def evaluate(first: Option[TypeRef], second: Option[TypeRef]): Boolean = {
-    first match {
+  override def evaluate(first: OptionalTypeRef, second: OptionalTypeRef): Boolean = {
+    first.value match {
       case Some(tr) =>
-        if (tr.getFullName.equalsIgnoreCase(Names.Void.value)) second.isEmpty else first == second
+        if (tr.getFullName.equalsIgnoreCase(Names.Void.value)) second.value.isEmpty
+        else first == second
       case _ =>
         first == second
     }

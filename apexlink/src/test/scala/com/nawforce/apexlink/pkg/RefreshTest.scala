@@ -17,14 +17,18 @@ import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, Names}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.platform.Path
 import org.scalatest.funsuite.AnyFunSuite
 
 class RefreshTest extends AnyFunSuite with TestHelper {
 
-  private def refresh(pkg: OPM.PackageImpl, path: PathLike, source: String): Unit = {
+  private def refresh(
+    pkg: OPM.PackageImpl,
+    path: PathLike,
+    source: String,
+    highPriority: Boolean = false
+  ): Unit = {
     path.write(source)
-    pkg.refresh(path)
+    pkg.refresh(path, highPriority)
   }
 
   test("Valid refresh") {
@@ -109,7 +113,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         val org = createOrg(root)
         val pkg = org.unmanaged
         assert(
-          getMessages((root.join("pkg").join("Foo.cls")))
+          getMessages(root.join("pkg").join("Foo.cls"))
             == "Missing: line 1 at 28-29: No type declaration found for 'Bar.Inner'\n"
         )
 
@@ -737,4 +741,103 @@ class RefreshTest extends AnyFunSuite with TestHelper {
       }
     }
   }
+
+  test("Valid refresh (high priority)") {
+    withManualFlush {
+      FileSystemHelper.run(Map("pkg/Foo.cls" -> "public class Foo {}")) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        refresh(pkg, root.join("pkg/Foo.cls"), "public class Foo {}", highPriority = true)
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
+  test("Valid refresh (new high priority)") {
+    withManualFlush {
+      FileSystemHelper.run(Map()) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        refresh(pkg, root.join("pkg").join("Foo.cls"), "public class Foo {}", highPriority = true)
+        assert(org.issues.isEmpty)
+        assert(pkg.getTypeOfPathInternal(root.join("pkg").join("Foo.cls")) != null)
+      }
+    }
+  }
+
+  test("Valid refresh with changes (high priority)") {
+    withManualFlush {
+      FileSystemHelper.run(Map("pkg/Foo.cls" -> "public class Foo {}")) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        refresh(pkg, root.join("pkg/Foo.cls"), "public class Foo {Object a;}", highPriority = true)
+        assert(org.issues.isEmpty)
+        assert(unmanagedClass("Foo").exists(c => c.fields.exists(_.name.value == "a")));
+      }
+    }
+  }
+
+  test("Valid refresh with non-significant changes (high priority)") {
+    withManualFlush {
+      FileSystemHelper.run(Map("pkg/Foo.cls" -> "public class Foo {}")) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        refresh(
+          pkg,
+          root.join("pkg/Foo.cls"),
+          "public class Foo {/* A change */}",
+          highPriority = true
+        )
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
+  test("Refresh creates missing (high priority)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "pkg/Foo.cls" -> "public class Foo {Bar.Inner b;}",
+          "pkg/Bar.cls" -> "public class Bar {public class Inner {}}"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(org.issues.isEmpty)
+
+        refresh(pkg, root.join("pkg/Bar.cls"), "public class Bar {}", highPriority = true)
+        assert(
+          getMessages(root.join("pkg").join("Foo.cls"))
+            == "Missing: line 1 at 28-29: No type declaration found for 'Bar.Inner'\n"
+        )
+      }
+    }
+  }
+
+  test("Refresh resolves missing (high priority)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "pkg/Foo.cls" -> "public class Foo {Bar.Inner b;}",
+          "pkg/Bar.cls" -> "public class Bar {}"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(
+          getMessages(root.join("pkg").join("Foo.cls"))
+            == "Missing: line 1 at 28-29: No type declaration found for 'Bar.Inner'\n"
+        )
+
+        refresh(
+          pkg,
+          root.join("pkg/Bar.cls"),
+          "public class Bar {public class Inner {}}",
+          highPriority = true
+        )
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
 }
