@@ -261,7 +261,7 @@ object PlatformTypeDeclaration {
   private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
 
   //TODO: remove this once we get full validation for constructors
-  val constructorIgnoreTypes = Set(TypeNames.Interview)
+  val constructorIgnoreTypes = Set(TypeNames.Interview, TypeNames.List)
 
   /* Get a Path that leads to platform classes */
   lazy val platformPackagePath: java.nio.file.Path = {
