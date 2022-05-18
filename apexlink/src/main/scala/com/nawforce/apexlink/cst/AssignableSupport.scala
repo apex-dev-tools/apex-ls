@@ -73,6 +73,7 @@ object AssignableSupport {
          strictAssignable.contains(toType, fromType.typeName)
        else
          looseAssignable.contains(toType, fromType.typeName)) ||
+      isSObjectAssignable(toType, fromType.typeName, context) ||
       fromType.extendsOrImplements(toType)
     }
   }
