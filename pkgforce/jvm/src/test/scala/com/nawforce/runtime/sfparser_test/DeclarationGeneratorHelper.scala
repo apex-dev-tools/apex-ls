@@ -19,32 +19,25 @@ trait DeclarationGeneratorHelper {
     typeName: String,
     maybeArguments: Option[Array[UnresolvedTypeRef]]
   ): TypeNameSegment = {
-    val tp = new TypeNameSegment(toId(typeName))
-    maybeArguments match {
-      case Some(arguments) => tp.add(toTypeArguments(Some(arguments)))
-      case _               =>
-    }
-    tp
+    new TypeNameSegment(
+      toId(typeName),
+      maybeArguments
+        .map(arguments => toTypeArguments(Some(arguments)))
+        .getOrElse(TypeArguments.empty)
+    )
   }
 
   def toTypeArguments(maybeTypes: Option[Array[UnresolvedTypeRef]]): TypeArguments = {
-    val ta = new TypeArguments()
-    maybeTypes match {
-      case Some(types) => ta.typeList = Some(toTypeList(types))
-      case _           =>
-    }
-    ta
+    new TypeArguments(maybeTypes.map(types => toTypeList(types)).getOrElse(TypeList.empty))
   }
 
   def toTypeList(types: Array[UnresolvedTypeRef]): TypeList = {
-    val tl = new TypeList()
-    types.foreach(tl.add)
-    tl
+    TypeList(ArraySeq.unsafeWrapArray(types))
   }
 
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {
     val tr = new UnresolvedTypeRef()
-    typeNames.foreach(tr.add)
+    typeNames.foreach(tr.typeNameSegments.append)
     tr.arraySubscripts = totalSubscripts
     tr
   }
@@ -56,15 +49,15 @@ trait DeclarationGeneratorHelper {
     id: Option[Id] = None
   ): FormalParameter = {
     val fp = new FormalParameter()
-    modifiers.foreach(fp.add)
-    annotations.foreach(fp.add)
+    fp.setModifiers(ArraySeq.unsafeWrapArray(modifiers))
+    fp.setAnnotations(ArraySeq.unsafeWrapArray(annotations))
     fp.typeRef = typeRef
     fp.id = id
     fp
   }
 
   def toModifier(m: String): Modifier = {
-    Modifier(toIdToken(m))
+    Modifier(m)
   }
 
   def toIdToken(token: String): IdToken = {
@@ -86,9 +79,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toParameterList(fps: Array[FormalParameter]): FormalParameterList = {
-    val fpl = new FormalParameterList()
-    fps.foreach(fpl.add)
-    fpl
+    FormalParameterList(ArraySeq.unsafeWrapArray(fps))
   }
 
   def toConstructor(

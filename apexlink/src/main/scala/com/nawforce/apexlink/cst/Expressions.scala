@@ -78,9 +78,6 @@ sealed abstract class Expression extends CST {
   def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext
 
   def verify(context: BlockVerifyContext): ExprContext = {
-    if (context.thisType.typeName.name.value == "FeatureConsoleInfo")
-      println()
-
     val staticContext = if (context.isStatic) Some(true) else None
     verify(ExprContext(staticContext, context.thisType), new ExpressionVerifyContext(context))
   }
@@ -258,9 +255,6 @@ final case class DotExpressionWithMethod(
               .getOrElse(ExprContext.empty)
           }
         } else {
-          if (context.thisType.typeName.name.value == "FeatureConsoleInfo")
-            println()
-
           // When we can't find method we should still verify args for dependency side-effects
           target.map(target => target.arguments.map(_.verify(input, context)))
           ExprContext.empty
