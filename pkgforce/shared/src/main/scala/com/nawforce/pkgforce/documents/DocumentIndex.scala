@@ -59,17 +59,19 @@ final class DocumentIndex(
       collection.add(logger, document)
   }
 
-  /** Remove a document, does not error if the document is not in the index. */
-  def remove(document: MetadataDocument): Unit = {
+  /** Remove a document, does not error if the document is not in the index. Returns true if the document was removed. */
+  def remove(document: MetadataDocument): Boolean = {
     collection.remove(document)
   }
 
   /** Upsert a document. Document defining new or existing types return true, if the document would create a duplicate
     * type it is not added to the store and false is returned.
     */
-  def upsert(logger: IssueLogger, document: MetadataDocument): Unit = {
+  def upsert(logger: IssueLogger, document: MetadataDocument): Boolean = {
     if (isVisibleFile(document.path))
       collection.upsert(logger, document)
+    else
+      false
   }
 
   /** Check a file path would be included in index. */
@@ -235,18 +237,21 @@ private class DocumentStore(namespace: Option[Name]) {
     }
   }
 
-  /** Remove a document from the store. */
-  def remove(document: MetadataDocument): Unit = {
+  /** Remove a document from the store. Returns true if the document was in the store and removed. */
+  def remove(document: MetadataDocument): Boolean = {
+    val typeName = document.typeName(namespace).rawStringLower
     if (document.nature.partialType) {
       val docMap   = safePartialDocumentMap(document.nature)
-      val typeName = document.typeName(namespace).rawStringLower
-      if (docMap.contains(typeName))
+      val existing = docMap.get(typeName).exists(d => d.contains(document.path))
+      if (existing)
         docMap.put(typeName, docMap(typeName).filterNot(_ == document.path))
+      existing
     } else {
       val docMap   = safeFullDocumentMap(document.nature)
-      val typeName = document.typeName(namespace).rawStringLower
-      if (docMap.get(typeName).contains(document.path))
+      val existing = docMap.get(typeName).contains(document.path)
+      if (existing)
         docMap.remove(typeName)
+      existing
     }
   }
 
