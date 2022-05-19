@@ -9,7 +9,7 @@ import com.nawforce.pkgforce.api.ApexMethod;
 import com.nawforce.pkgforce.api.ApexMethodParameter;
 import com.nawforce.pkgforce.api.ApexType;
 import com.nawforce.pkgforce.api.ApexTypeId;
-import scala.collection.mutable.ArrayBuffer;
+import scala.collection.immutable.ArraySeq;
 
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +48,7 @@ public class ApexMethodAdapter implements ApexMethod {
 
     @Override
     public List<ApexMethodParameter> getParameters() {
-        ArrayBuffer<FormalParameter> parameters = md.formalParameterList().formalParameters();
+        ArraySeq<FormalParameter> parameters = md.formalParameterList().formalParameters();
         ApexMethodParameter[] result = new ApexMethodParameter[parameters.length()];
         for (int i = 0; i < parameters.length(); i++)
             result[i] = new ApexMethodParameterAdapter(parameters.apply(i));

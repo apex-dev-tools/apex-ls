@@ -224,11 +224,14 @@ class SubsetComparator(
     (false, ArraySeq(), ArraySeq())
   }
 
-  private def getTypeArgumentTypeRefs(typ: UnresolvedTypeRef): ArrayBuffer[TypeRef] = {
-    typ.typeNameSegments
-      .flatMap(_.typeArguments)
-      .flatMap(_.typeList)
-      .flatMap(_.typeRefs)
+  private def getTypeArgumentTypeRefs(typ: UnresolvedTypeRef): ArraySeq[TypeRef] = {
+    ArraySeq.unsafeWrapArray(
+      typ.typeNameSegments
+        .map(_.typeArguments)
+        .map(_.typeList)
+        .flatMap(_.typeRefs)
+        .toArray
+    )
   }
 
   private def compareTypeRef(first: Option[TypeRef], second: Option[TypeRef]): Boolean = {
@@ -341,10 +344,7 @@ class SubsetComparator(
     false
   }
 
-  private def areTypeRefsSubsets(
-    first: ArrayBuffer[TypeRef],
-    second: ArrayBuffer[TypeRef]
-  ): Boolean = {
+  private def areTypeRefsSubsets(first: ArraySeq[TypeRef], second: ArraySeq[TypeRef]): Boolean = {
     val isSubset = first.nonEmpty && first.size == second.size &&
       first.forall(f => second.exists(s => compareTypeRef(f, s)))
     isSubset

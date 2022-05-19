@@ -14,22 +14,22 @@ import com.nawforce.apexlink.cst.{
   CSTTypeArguments,
   CSTTypeName,
   CSTTypeReference,
-  TypeReference => CSTTypeReference
+  TypeReference => CSTTypeReferenceAlias
 }
 
 private[opcst] object TypeReference {
 
   def construct(tr: Option[OPTypeReference]): TypeName = {
-    CSTTypeReference.construct(Some(new OutlineParserTypeReference(tr)))
+    CSTTypeReferenceAlias.construct(Some(new OutlineParserTypeReference(tr)))
   }
 
   def construct(tr: OPTypeReference): TypeName = {
-    CSTTypeReference.construct(Some(new OutlineParserTypeReference(Some(tr))))
+    CSTTypeReferenceAlias.construct(Some(new OutlineParserTypeReference(Some(tr))))
   }
 
   private class OutlineParserTypeName(typeName: OPTypeName) extends CSTTypeName {
-    override def typeArguments(): Option[CSTTypeArguments] =
-      typeName.typeArguments.map(new OutlineParserTypeArgument(_))
+    override def typeArguments(): CSTTypeArguments =
+      new OutlineParserTypeArgument(typeName.typeArguments)
     override def isList: Boolean           = typeName.id.id.lowerCaseContents == "list"
     override def isSet: Boolean            = typeName.id.id.lowerCaseContents == "set"
     override def isMap: Boolean            = typeName.id.id.lowerCaseContents == "map"
@@ -59,7 +59,7 @@ private[opcst] object TypeReference {
   private class OutlineParserTypeArgument(typeArguments: OPTypeArguments) extends CSTTypeArguments {
     override def typeRefs(): ArraySeq[CSTTypeReference] =
       ArraySeq.from(
-        typeArguments.typeList.get.typeRefs.map(tr => new OutlineParserTypeReference(Some(tr)))
+        typeArguments.typeList.typeRefs.map(tr => new OutlineParserTypeReference(Some(tr)))
       )
   }
 }

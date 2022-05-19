@@ -4,7 +4,7 @@
 
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{ITypeDeclaration, TypeNameSegment, TypeRef, UnresolvedTypeRef}
+import com.financialforce.oparser.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -41,8 +41,9 @@ object TypeFinder {
     typeNames: ArrayBuffer[TypeNameSegment],
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
+
     //Pre resolve relative type arguments
-    typeNames.foreach(segment => {
+    val resolvedTypeNames = typeNames.map(segment => {
       val args = segment.getArguments
       val newArgs = args.flatMap {
         case unref: UnresolvedTypeRef =>
@@ -51,10 +52,12 @@ object TypeFinder {
       }
       if (args.nonEmpty && args.length == newArgs.length)
         segment.replaceArguments(newArgs)
+      else
+        segment
     })
 
     // If we have a ns, try it first before falling back to without for injected types that carry their own ns
-    val unresolved = UnresolvedTypeRef(typeNames)
+    val unresolved = UnresolvedTypeRef(resolvedTypeNames)
     from.module.namespace
       .flatMap(
         ns => baseModule.findExactTypeId(ns.value + "." + unresolved.getFullName, unresolved)
@@ -165,9 +168,4 @@ object TypeFinder {
   private def isCompound(typeNames: ArrayBuffer[TypeNameSegment]): Boolean = {
     typeNames.size > 1
   }
-
-  private def asFullName(typeNames: ArrayBuffer[TypeNameSegment]): String = {
-    typeNames.map(_.toString).mkString(".")
-  }
-
 }
