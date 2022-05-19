@@ -92,7 +92,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: void Foo.<constructor>(System.Integer)\n"
+      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: Foo.<constructor>(System.Integer)\n"
     )
   }
 
@@ -113,9 +113,8 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
         "Dummy.cls" -> "public class Dummy extends Foo{ public Dummy(String s){super('s');} }"
       )
     )
-    println(dummyIssues)
     assert(
-      dummyIssues == "Error: line 1 at 55-65: Constructor not defined: void Foo.<constructor>(System.String)\n"
+      dummyIssues == "Error: line 1 at 55-65: Constructor not defined: Foo.<constructor>(System.String)\n"
     )
   }
 
@@ -124,7 +123,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       Map("Dummy.cls" -> "public class Dummy { public Dummy(Integer i){this('s');} }")
     )
     assert(
-      dummyIssues == "Error: line 1 at 45-54: Constructor not defined: void Dummy.<constructor>(System.String)\n"
+      dummyIssues == "Error: line 1 at 45-54: Constructor not defined: Dummy.<constructor>(System.String)\n"
     )
   }
 
@@ -147,7 +146,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 36-43: Constructor is not visible: void Foo.<constructor>(System.String)\n"
+      dummyIssues == "Error: line 1 at 36-43: Constructor is not visible: Foo.<constructor>(System.String)\n"
     )
   }
 
@@ -200,7 +199,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 13-18: Constructor is not visible: void Foo.<constructor>()\n"
+      dummyIssues == "Error: line 1 at 13-18: Constructor is not visible: Foo.<constructor>()\n"
     )
   }
 
@@ -212,7 +211,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: void Foo.<constructor>(System.String)\n"
+      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: Foo.<constructor>(System.String)\n"
     )
   }
 
