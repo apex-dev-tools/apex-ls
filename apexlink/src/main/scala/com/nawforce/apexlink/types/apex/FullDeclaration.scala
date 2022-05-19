@@ -18,7 +18,6 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.finding.{RelativeTypeContext, TypeResolver}
-import com.nawforce.apexlink.memory.Monitor
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
@@ -389,7 +388,6 @@ object FullDeclaration {
           )
       )
 
-    cst.foreach(Monitor.push(_))
     cst.map(_.withContext(typeDecl))
   }
 }

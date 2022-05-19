@@ -51,8 +51,9 @@ class OrgQueue(path: String) { self =>
   def add(request: APIRequest): Unit =
     queue.add(request)
 
-  def refresh(path: String): Unit =
-    Option(org.getPackageForPath(path)).foreach(_.refresh(path))
+  def refresh(path: String, highPriority: Boolean): Unit = {
+    Option(org.getPackageForPath(path)).foreach(_.refresh(path, highPriority))
+  }
 }
 
 case class OpenRequest(promise: Promise[OpenResult]) extends APIRequest {
@@ -481,8 +482,8 @@ class OrgAPIImpl extends OrgAPI {
     IssuesForFiles(OrgQueue.instance(), paths, includeWarnings, maxErrorsPerFile)
   }
 
-  override def refresh(path: String): Future[Unit] = {
-    Future(OrgQueue.instance().refresh(path))
+  override def refresh(path: String, highPriority: Boolean): Future[Unit] = {
+    Future(OrgQueue.instance().refresh(path, highPriority))
   }
 
   override def typeIdentifiers(apexOnly: Boolean): Future[GetTypeIdentifiersResult] = {

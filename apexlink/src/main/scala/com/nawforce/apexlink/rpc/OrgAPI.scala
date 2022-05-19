@@ -195,7 +195,7 @@ trait OrgAPI {
   ): Future[IssuesResult]
 
   @api.JSONRPCMethod(name = "refresh")
-  def refresh(path: String): Future[Unit]
+  def refresh(path: String, highPriority: Boolean): Future[Unit]
 
   @api.JSONRPCMethod(name = "getTypeIdentifiers")
   def typeIdentifiers(apexOnly: Boolean): Future[GetTypeIdentifiersResult]

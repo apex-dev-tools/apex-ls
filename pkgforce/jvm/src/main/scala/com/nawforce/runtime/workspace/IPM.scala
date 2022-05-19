@@ -106,6 +106,12 @@ object IPM extends TriHierarchy {
 
     // Helper to save from dealing with Option in Java
     def namespaceAsString: String = namespace.map(_.value).getOrElse("")
+
+    /* Find first module in search order (may not be in this package) */
+    def firstModule: Option[Module] = {
+      orderedModules.headOption
+        .orElse(basePackages.headOption.flatMap(_.firstModule))
+    }
   }
 
   /* Module capabilities, not all of these will be supported by all module types, e.g. platform types don't have
@@ -118,7 +124,7 @@ object IPM extends TriHierarchy {
 
     /* Find next module in search order */
     def nextModule: Option[Module] = {
-      baseModules.headOption.orElse(basePackages.headOption.flatMap(_.orderedModules.headOption))
+      baseModules.headOption.orElse(basePackages.headOption.flatMap(_.firstModule))
     }
 
     /* Find a type declaration from a type name. The name format is not as flexible as found in Apex, you can not
@@ -132,7 +138,7 @@ object IPM extends TriHierarchy {
       UnresolvedTypeRef(name).toOption.flatMap(typeRef => {
         // Pre-resolve segment type arguments within the typeRef, this is required so that generic types
         // can be constructed without the need for a recursive call back to this module for type resolution.
-        typeRef.typeNameSegments.foreach(segment => {
+        val resolvedSegments = typeRef.typeNameSegments.map(segment => {
           val args = segment.getArguments
           val newArgs = args.flatMap {
             case unref: UnresolvedTypeRef =>
@@ -142,8 +148,10 @@ object IPM extends TriHierarchy {
           }
           if (args.nonEmpty && args.length == newArgs.length)
             segment.replaceArguments(newArgs)
+          else
+            segment
         })
-        findExactTypeId(name, typeRef)
+        findExactTypeId(name, UnresolvedTypeRef(resolvedSegments))
       })
     }
 
@@ -267,6 +275,10 @@ object IPM extends TriHierarchy {
 
       def resolveSignature(body: Signature): Unit = {
         body.typeRef = resolve(body.typeRef).getOrElse(body.typeRef)
+
+        if (body.typeRef.isInstanceOf[UnresolvedTypeRef]) {
+          resolve(body.typeRef)
+        }
       }
 
       def resolveMethods(methodDeclaration: MethodDeclaration): Unit = {
@@ -290,7 +302,7 @@ object IPM extends TriHierarchy {
         case None      => null
       })
       Option(decl.implementsTypeList).foreach(tl => {
-        tl.typeRefs.mapInPlace(tr => resolve(tr).getOrElse(tr))
+        decl.setImplements(TypeList(tl.typeRefs.map(tr => resolve(tr).getOrElse(tr))))
       })
       decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
       decl.properties.foreach(resolveSignature)
@@ -447,6 +459,7 @@ object IPM extends TriHierarchy {
       name: String,
       typeRef: UnresolvedTypeRef
     ): Option[IModuleTypeDeclaration] = {
+
       // Short-cut to next module if could not possibly match
       if (
         !defaultNamespace && !typeRef.typeNameSegments.head.id.id.lowerCaseContents
@@ -456,7 +469,7 @@ object IPM extends TriHierarchy {
 
       // Default namespace if needed and get declaration
       val defaultedNameAndRef = defaultName(name, typeRef)
-      val isGeneric           = typeRef.typeNameSegments.exists(_.typeArguments.nonEmpty)
+      val isGeneric           = typeRef.typeNameSegments.exists(_.typeArguments.typeList.typeRefs.nonEmpty)
       val result =
         if (!isGeneric) {
           types.getOrElseUpdate(

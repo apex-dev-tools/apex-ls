@@ -61,7 +61,7 @@ object RefreshStressTest {
           randoFile.write(c)
         })
 
-      org.packages.foreach(_.refresh(randoFile.toString))
+      org.packages.foreach(_.refresh(randoFile.toString, highPriority = false))
       org.flush()
 
       if (org.issues.issuesForFiles(null, includeWarnings = false, 0).length != baselineIssues) {
