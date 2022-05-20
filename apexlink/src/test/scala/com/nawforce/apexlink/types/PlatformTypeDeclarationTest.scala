@@ -193,7 +193,7 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     assert(td.get.outerTypeName.isEmpty)
     assert(td.get.nestedTypes.isEmpty)
 
-    val constructors = td.get.localConstructors.sortBy(_.toString)
+    val constructors = td.get.constructors.sortBy(_.toString)
     assert(constructors.length == 4)
     assert(
       constructors

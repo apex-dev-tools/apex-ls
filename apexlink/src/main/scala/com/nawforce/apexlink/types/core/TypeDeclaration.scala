@@ -395,10 +395,9 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
 
   val blocks: ArraySeq[BlockDeclaration]
   val fields: ArraySeq[FieldDeclaration]
-  val localConstructors: ArraySeq[ConstructorDeclaration]
 
   def methods: ArraySeq[MethodDeclaration]
-  def constructors: ArraySeq[ConstructorDeclaration] = localConstructors
+  def constructors: ArraySeq[ConstructorDeclaration]
 
   def isComplete: Boolean
   lazy val isExternallyVisible: Boolean =

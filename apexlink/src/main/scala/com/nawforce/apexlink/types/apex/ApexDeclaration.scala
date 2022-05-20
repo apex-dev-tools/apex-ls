@@ -41,10 +41,6 @@ trait ApexBlockLike extends BlockDeclaration with Locatable {
 /** Apex defined constructor core features, be they full or summary style */
 trait ApexConstructorLike extends ConstructorDeclaration with IdLocatable {
 
-  // Synthetic ctors are generated locally. For example default no args ctor when no ctors are provided.
-  // This is used for validation logic
-  def isSynthetic: Boolean = false
-
   def summary: ConstructorSummary = {
     ConstructorSummary(
       location.location,
@@ -145,6 +141,7 @@ trait ApexTriggerDeclaration extends ApexDeclaration {
 trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   val localFields: ArraySeq[ApexFieldLike]
   val localMethods: ArraySeq[ApexMethodLike]
+  val localConstructors: ArraySeq[ApexConstructorLike]
 
   override def nestedTypes: ArraySeq[ApexClassDeclaration]
 

@@ -399,8 +399,6 @@ final case class ApexConstructorDeclaration(
   override val nature: Nature               = CONSTRUCTOR_NATURE
   override val inTest: Boolean              = _inTest
 
-  override def isSynthetic: Boolean = block == EagerBlock.empty
-
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     parameters.foreach(_.verify(context))
 

@@ -65,7 +65,7 @@ class GenericPlatformTypeDeclaration(_typeName: TypeName, genericDecl: PlatformT
     getMethods.map(m => new GenericPlatformMethod(m, this))
   }
 
-  override lazy val localConstructors: ArraySeq[ConstructorDeclaration] = {
+  override lazy val constructors: ArraySeq[ConstructorDeclaration] = {
     getCtors.map(c => new GenericPlatformConstructor(c, this))
   }
 
