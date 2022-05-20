@@ -244,4 +244,14 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     )
     assert(dummyIssues.isEmpty)
   }
+
+  test("Unconstructable type") {
+    typeDeclarations(Map("Dummy.cls" -> "public class Dummy {Dummy(){new String();}}"))
+    assert(dummyIssues == "Error: line 1 at 38-40: Type cannot be constructed: System.String\n")
+  }
+
+  test("Interview type") {
+    typeDeclarations(Map("Dummy.cls" -> "public class Dummy {Dummy(){new Flow.Interview();}}"))
+    assert(dummyIssues == "Error: line 1 at 46-48: Cannot create type for: Flow.Interview\n")
+  }
 }

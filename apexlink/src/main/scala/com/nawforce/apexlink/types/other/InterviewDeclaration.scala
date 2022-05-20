@@ -21,6 +21,7 @@ import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.documents.{MetadataDocument, SourceInfo}
+import com.nawforce.pkgforce.modifiers.{Modifier, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.{PathLike, PathLocation, UnsafeLocatable}
 import com.nawforce.pkgforce.stream.{FlowEvent, PackageStream}
@@ -44,6 +45,8 @@ final case class Interview(module: OPM.Module, location: PathLocation, interview
     PlatformTypes.interviewType
   )
 
+  override val constructors: ArraySeq[InterviewConstructor] = Interview.constructors
+
   override def findMethod(
     name: Name,
     params: ArraySeq[TypeName],
@@ -54,7 +57,27 @@ final case class Interview(module: OPM.Module, location: PathLocation, interview
   }
 }
 
+final case class InterviewConstructor(
+  modifiers: ArraySeq[Modifier],
+  parameters: ArraySeq[ParameterDeclaration]
+) extends ConstructorDeclaration
+
+final case class InterviewParameter(name: Name, typeName: TypeName) extends ParameterDeclaration
+
 object Interview {
+  private def constructors: ArraySeq[InterviewConstructor] =
+    ArraySeq(
+      InterviewConstructor(
+        ArraySeq(PUBLIC_MODIFIER),
+        ArraySeq(
+          InterviewParameter(
+            Name("param"),
+            TypeNames.mapOf(TypeNames.String, TypeNames.InternalObject)
+          )
+        )
+      )
+    )
+
   def apply(module: OPM.Module, event: FlowEvent): Interview = {
     val location = event.sourceInfo.location
     val document = MetadataDocument(location.path)
@@ -91,6 +114,14 @@ final class InterviewDeclaration(
   ): Either[String, MethodDeclaration] = {
     PlatformTypes.interviewType.findMethod(name, params, staticContext, verifyContext)
   }
+
+  /** Flow.Interview is an abstract class so cannot create an instance of it.
+    * Only the subclasses can which is handled in Interview.
+    */
+  override def findConstructor(
+    params: ArraySeq[TypeName],
+    verifyContext: VerifyContext
+  ): Either[String, ConstructorDeclaration] = Left(s"Cannot create type for: $typeName")
 
   override def gatherDependencies(
     dependsOn: mutable.Set[TypeId],
