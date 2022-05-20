@@ -166,14 +166,10 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
   ): Unit = {
     val hasError = input match {
       case Some(td) =>
-        //TODO: remove this once we get full validation for constructors
-        if (PlatformTypeDeclaration.constructorIgnoreTypes.exists(td.superTypes().contains(_)))
-          None
-        else
-          td.findConstructor(arguments, context) match {
-            case Left(error) => Some(error)
-            case _           => None
-          }
+        td.findConstructor(arguments, context) match {
+          case Left(error) => Some(error)
+          case _           => None
+        }
       case _ => None
     }
     if (hasError.nonEmpty) {
