@@ -18,6 +18,7 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.finding.{MissingType, TypeError, TypeResolver}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.types.core.{
+  ConstructorDeclaration,
   FieldDeclaration,
   MethodDeclaration,
   ParameterDeclaration,
@@ -62,6 +63,17 @@ class GenericPlatformTypeDeclaration(_typeName: TypeName, genericDecl: PlatformT
 
   override lazy val methods: ArraySeq[MethodDeclaration] = {
     getMethods.map(m => new GenericPlatformMethod(m, this))
+  }
+
+  override lazy val localConstructors: ArraySeq[ConstructorDeclaration] = {
+    getCtors.map(c => new GenericPlatformConstructor(c, this))
+  }
+
+  override def getCtors: ArraySeq[PlatformConstructor] = {
+    ArraySeq
+      .unsafeWrapArray(cls.getDeclaredConstructors)
+      .filterNot(_.isSynthetic)
+      .map(c => new PlatformConstructor(c, this))
   }
 
   def replaceParams(typeName: TypeName): TypeName = {
@@ -114,6 +126,19 @@ class GenericPlatformMethod(
       .map(p => new GenericPlatformParameter(p, _typeDeclaration))
 
   override val hasBlock: Boolean = false
+}
+
+class GenericPlatformConstructor(
+  platformCtor: PlatformConstructor,
+  _typeDeclaration: GenericPlatformTypeDeclaration
+) extends ConstructorDeclaration {
+
+  override lazy val modifiers: ArraySeq[Modifier] = platformCtor.modifiers
+
+  override lazy val parameters: ArraySeq[ParameterDeclaration] =
+    platformCtor.parameters
+      .collect { case p: PlatformParameter => p }
+      .map(p => new GenericPlatformParameter(p, _typeDeclaration))
 }
 
 class GenericPlatformParameter(

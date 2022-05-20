@@ -159,4 +159,23 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     )
     assert(dummyIssues.isEmpty)
   }
+
+  test("Custom exceptions") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {public class TestException extends Exception {}}",
+        "Dummy.cls" -> "public class Dummy { Dummy(){ throw new Foo.TestException('Error'); }}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Generic platform type constructors") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" -> "public class Dummy { Dummy(){ new Set<String>(new List<String>()); new Map<String,String>();}}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
 }

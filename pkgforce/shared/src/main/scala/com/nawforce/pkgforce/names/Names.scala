@@ -137,4 +137,5 @@ object Names extends CleanableCache {
   lazy val ListName: Name                = cache("List")
   lazy val SetName: Name                 = cache("Set")
   lazy val MapName: Name                 = cache("Map")
+  lazy val Exception: Name               = cache("Exception")
 }

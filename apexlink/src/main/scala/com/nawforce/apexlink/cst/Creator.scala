@@ -166,17 +166,12 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     context: ExpressionVerifyContext
   ): Unit = {
     val hasError = input match {
-      case Some(at: ApexClassDeclaration) =>
-        //TODO: Remove Temp bypass for exception
-        if (
-          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("exception")
-        ) None
-        else
-          at.constructorMap.findConstructorByParams(arguments, context) match {
-            case Left(error) => Some(error)
-            case _           => None
-          }
-      case _ => None //TODO: handle other types?
+      case Some(td) =>
+        td.findConstructor(arguments, context) match {
+          case Left(error) => Some(error)
+          case _           => None
+        }
+      case _ => None
     }
     if (hasError.nonEmpty) {
       OrgInfo.logError(location, hasError.get)

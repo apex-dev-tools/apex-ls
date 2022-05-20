@@ -40,6 +40,11 @@ trait ApexBlockLike extends BlockDeclaration with Locatable {
 
 /** Apex defined constructor core features, be they full or summary style */
 trait ApexConstructorLike extends ConstructorDeclaration with IdLocatable {
+
+  // Synthetic ctors are generated locally. For example default no args ctor when no ctors are provided.
+  // This is used for validation logic
+  def isSynthetic: Boolean = false
+
   def summary: ConstructorSummary = {
     ConstructorSummary(
       location.location,
@@ -307,6 +312,12 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   ): Either[String, MethodDeclaration] = {
     methodMap.findMethod(name, params, staticContext, verifyContext)
   }
+
+  override def findConstructor(
+    params: ArraySeq[TypeName],
+    verifyContext: VerifyContext
+  ): Either[String, ConstructorDeclaration] =
+    constructorMap.findConstructorByParams(params, verifyContext)
 
   def bombScore(total: Int): (Int, Int, Double) = {
     val magicScale = 1.7306 // Places score 0-100

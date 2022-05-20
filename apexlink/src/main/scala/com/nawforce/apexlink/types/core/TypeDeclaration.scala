@@ -356,12 +356,19 @@ trait AbstractTypeDeclaration {
 
   def findNestedType(name: Name): Option[AbstractTypeDeclaration]
 
+  def findConstructor(
+    params: ArraySeq[TypeName],
+    verifyContext: VerifyContext
+  ): Either[String, ConstructorDeclaration]
+
 }
 
 trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
   def paths: ArraySeq[PathLike] // Metadata paths that contributed to this type
 
   def inTest: Boolean = false // Is type defined only for test code
+
+  def isCustomException: Boolean = false
 
   val moduleDeclaration: Option[
     OPM.Module
@@ -444,6 +451,16 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
 
   private lazy val methodMap: MethodMap =
     MethodMap(this, None, MethodMap.empty(), methods, ArraySeq())
+
+  private lazy val constructorMap: ConstructorMap =
+    ConstructorMap(this, None, constructors, ConstructorMap.empty)
+
+  override def findConstructor(
+    params: ArraySeq[TypeName],
+    verifyContext: VerifyContext
+  ): Either[String, ConstructorDeclaration] = {
+    constructorMap.findConstructorByParams(params, verifyContext)
+  }
 
   override def findMethod(
     name: Name,
