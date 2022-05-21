@@ -18,10 +18,14 @@ import com.nawforce.apexlink.cst.VerifyContext
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.apexlink.types.synthetic.{CustomMethodDeclaration, CustomParameterDeclaration}
+import com.nawforce.apexlink.types.synthetic.{
+  CustomField,
+  CustomMethodDeclaration,
+  CustomParameterDeclaration
+}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
@@ -69,7 +73,7 @@ object SObjectNature {
   }
 }
 
-trait SObjectLikeDeclaration extends DependentType
+trait SObjectLikeDeclaration extends DependentType with SObjectFieldFinder
 
 final case class SObjectDeclaration(
   sources: Array[SourceInfo],
@@ -82,7 +86,6 @@ final case class SObjectDeclaration(
   _isComplete: Boolean,
   isSynthetic: Boolean = false
 ) extends SObjectLikeDeclaration
-    with SObjectFieldFinder
     with SObjectMethods
     with UnsafeLocatable
     with DependencyHolder
@@ -118,19 +121,46 @@ final case class SObjectDeclaration(
     TypeResolver(superClass.get, this).toOption
 
   override def validate(): Unit = {
-    def updateDependencies(typeName: TypeName): Unit = {
-      TypeResolver(typeName, module) match {
-        case Right(d: Dependent) => addDependency(d)
-        case _                   => ()
-      }
-      typeName.params.foreach(updateDependencies)
-    }
+    validate(withRelationshipCollection = true)
+  }
 
-    // Crate dependencies on field types, can be ignored for Feed, Share & History synthetic SObjects
+  override def validate(withRelationshipCollection: Boolean): Unit = {
+    // Check field types, can be ignored for Feed, Share & History synthetic SObjects
     if (!isSynthetic) {
-      fields.map(_.typeName).toSet.foreach(updateDependencies)
+
+      // Check lookup like fields refer to valid SObjects
+      fields
+        .collect { case field: CustomField => field }
+        .filter(_.relationshipName.nonEmpty)
+        .foreach(field => {
+          TypeResolver(field.typeName, module).swap.toOption.map(_ => {
+            if (module.isGhostedType(field.typeName)) {
+              module.types.put(field.typeName, GhostSObjectDeclaration(module, field.typeName))
+            } else {
+              OrgInfo.logError(
+                field.location,
+                s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
+              )
+            }
+          })
+        })
+
+      // Update dependencies from field types
+      fields.map(_.typeName).toSet.filterNot(_ == typeName).foreach(updateDependencies)
+      propagateDependencies()
       propagateOuterDependencies(new TypeCache())
     }
+
+    if (withRelationshipCollection)
+      collectRelationshipFields()
+  }
+
+  private def updateDependencies(typeName: TypeName): Unit = {
+    TypeResolver(typeName, module) match {
+      case Right(d: Dependent) => addDependency(d)
+      case _                   => ()
+    }
+    typeName.params.foreach(updateDependencies)
   }
 
   def addDependency(dependent: Dependent): Unit = depends.add(dependent)
@@ -149,7 +179,7 @@ final case class SObjectDeclaration(
   override val fields: ArraySeq[FieldDeclaration] = baseFields
 
   override def findField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
-    findFieldSObject(name, staticContext)
+    findSObjectField(name, staticContext)
   }
 
   override val methods: ArraySeq[MethodDeclaration] = MethodDeclaration.emptyMethodDeclarations

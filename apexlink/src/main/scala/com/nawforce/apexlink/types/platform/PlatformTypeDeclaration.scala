@@ -20,7 +20,6 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
-import com.nawforce.apexlink.types.schema.SObjectFieldFinder
 import com.nawforce.apexlink.types.synthetic.{CustomMethodDeclaration, CustomParameterDeclaration}
 import com.nawforce.pkgforce.modifiers.{Modifier, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
@@ -36,8 +35,7 @@ import scala.jdk.CollectionConverters._
 
 /* Platform type declaration, a wrapper around a com.nawforce.platform Java classes */
 class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDeclaration])
-    extends TypeDeclaration
-    with SObjectFieldFinder {
+    extends TypeDeclaration {
 
   val cls: java.lang.Class[_] = native.asInstanceOf[java.lang.Class[_]]
 
@@ -131,11 +129,9 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   }
 
   override def findField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
-    if (isSObject) {
-      findFieldSObject(name, staticContext)
-    } else {
-      super.findField(name, staticContext)
-    }
+    // TODO: Don't think this can be true anymore
+    assert(!isSObject)
+    super.findField(name, staticContext)
   }
 
   override lazy val methods: ArraySeq[MethodDeclaration] = {
@@ -165,7 +161,7 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   }
 
   override def validate(): Unit = {
-    // Always valid because javac said so
+    // Not required
   }
 }
 

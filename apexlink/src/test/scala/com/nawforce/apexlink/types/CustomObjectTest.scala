@@ -16,7 +16,6 @@ package com.nawforce.apexlink.types
 
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.platform.Path
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.immutable.ArraySeq.ofRef
@@ -27,7 +26,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map("Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Silly"), None))))
     ) { root: PathLike =>
-      val org = createOrg(root)
+      createOrg(root)
       assert(
         getMessages(root.join("Foo__c.object")) ==
           "Error: line 10: Unrecognised type 'Silly' on custom field 'Bar__c'\n"
@@ -64,7 +63,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join(("Dummy.cls"))) ==
+        getMessages(root.join("Dummy.cls")) ==
           "Error: line 1 at 44-54: Expression list construction is only supported for Set or List types, not 'Schema.Foo__c'\n"
       )
       assert(
@@ -452,7 +451,10 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       val org = createOrg(root)
       assert(org.issues.isEmpty)
-      assert(packagedClass("pkg", "Dummy").get.blocks.head.dependencies().isEmpty)
+      assert(
+        packagedClass("pkg", "Dummy").get.blocks.head.dependencies().toSeq ==
+          Seq(packagedSObject("pkg", "Foo__c").get)
+      )
     }
   }
 

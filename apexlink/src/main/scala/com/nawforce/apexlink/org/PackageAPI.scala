@@ -358,7 +358,7 @@ trait PackageAPI extends Package {
       typeId =>
         typeId.module.moduleType(typeId.typeName) match {
           case Some(sobject: SObjectDeclaration) =>
-            // For SObjects, any file in module will trigger a refresh
+            // TODO: Over general, reload only needed when a base SObject is changed
             sobject.paths.find(typeId.module.isVisibleFile).map(path => refreshInternal(path))
             None
           case Some(summary: SummaryDeclaration) =>
