@@ -13,10 +13,11 @@
  */
 package com.nawforce.apexlink.types.schema
 
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.OPM
-import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.platform.PlatformField
 import com.nawforce.apexlink.types.synthetic.{CustomField, CustomFieldDeclaration}
 import com.nawforce.pkgforce.names._
@@ -38,11 +39,13 @@ trait SObjectFieldFinder {
 
   def validate(withRelationshipCollection: Boolean): Unit
 
-  def collectRelationshipFields(): Unit = {
+  def collectRelationshipFields(dependencyHolders: Set[TypeId]): Unit = {
     // Find SObject relationship fields that reference this one via dependency analysis
-    val incomingObjectAndField: Seq[(TypeDeclaration, CustomField)] = getDependencyHolders.toSeq
+    val incomingObjects = this +: dependencyHolders.toSeq
+      .flatMap(typeId => TypeResolver(typeId.typeName, typeId.module).toOption)
       .collect { case sobject: SObjectFieldFinder => sobject }
-      .flatMap(sobject => {
+    val incomingObjectAndField: Seq[(TypeDeclaration, CustomField)] =
+      incomingObjects.flatMap(sobject => {
         sobject.fields
           .collect { case field: CustomField => field }
           .filter(

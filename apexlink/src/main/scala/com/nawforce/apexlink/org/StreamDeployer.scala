@@ -28,7 +28,7 @@ import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryApex, TriggerDe
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.apexlink.types.schema.SObjectFieldFinder
+import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SObjectFieldFinder}
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
@@ -121,8 +121,8 @@ class StreamDeployer(
     // Run custom validation to setup dependencies and establish cross objects relationship fields from this
     sobjects.foreach(_.validate(withRelationshipCollection = false))
     types.values
-      .collect { case sobject: SObjectFieldFinder => sobject }
-      .foreach(_.collectRelationshipFields())
+      .collect { case sobject: SObjectDeclaration => sobject }
+      .foreach(sobject => sobject.collectRelationshipFields(sobject.getTypeDependencyHolders.toSet))
   }
 
   /** Consume Apex class events, this is a bit more involved as we try and load first via cache and then fallback
