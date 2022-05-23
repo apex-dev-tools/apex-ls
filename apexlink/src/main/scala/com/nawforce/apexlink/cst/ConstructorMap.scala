@@ -58,8 +58,8 @@ final case class ConstructorMap(
     def getCtorString = {
       typeName match {
         case Some(name) =>
-          s"void $name.<constructor>(${params.mkString(",")})"
-        case None => s"void <constructor>(${params.mkString(",")})"
+          s"$name.<constructor>(${params.mkString(",")})"
+        case None => s"<constructor>(${params.mkString(",")})"
       }
     }
     val potential =
