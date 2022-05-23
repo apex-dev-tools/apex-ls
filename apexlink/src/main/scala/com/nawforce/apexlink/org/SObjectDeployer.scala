@@ -202,14 +202,17 @@ class SObjectDeployer(module: OPM.Module) {
         Array(
           (
             objectName,
-            LocatableCustomFieldDeclaration(
-              field.sourceInfo.location,
-              defaultNamespace(field.name),
-              fieldType.typeName,
-              None
+            Array(
+              LocatableCustomFieldDeclaration(
+                field.sourceInfo.location,
+                defaultNamespace(field.name),
+                fieldType.typeName,
+                None
+              )
             )
           )
         )
+      case _ => Array()
     }
   }
 
