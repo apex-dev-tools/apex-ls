@@ -173,9 +173,6 @@ jobs:
     - name: Centralized-Salesforce-Dev-Framework
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose samples/Centralized-Salesforce-Dev-Framework/Centralized-Salesforce-Dev-Framework
 
-    - name: aws-sdk
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose samples/aws-sdk/aws-sdk
-
     - name: eventlogging
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose samples/eventlogging/eventlogging
 
@@ -487,9 +484,6 @@ jobs:
 
     - name: Centralized-Salesforce-Dev-Framework (Outline Parser)
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Centralized-Salesforce-Dev-Framework/Centralized-Salesforce-Dev-Framework
-
-    - name: aws-sdk (Outline Parser)
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/aws-sdk/aws-sdk
 
     - name: eventlogging (Outline Parser)
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/eventlogging/eventlogging
