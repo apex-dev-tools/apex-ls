@@ -63,7 +63,8 @@ abstract class FullDeclaration(
   override val inTest: Boolean = _inTest
 
   override val isCustomException: Boolean =
-    name.endsWith(Names.Exception) || superClass.contains(TypeNames.Exception)
+    name.endsWith(Names.Exception) || superClass.contains(TypeNames.Exception) ||
+      (superClassDeclaration.nonEmpty && superClassDeclaration.get.isCustomException)
 
   // Track if this has been flushed to cache yet
   private var flushedToCache = false
