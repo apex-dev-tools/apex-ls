@@ -473,6 +473,24 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.2.0</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>js/target</directory>
+            </fileset>
+            <fileset>
+              <directory>jvm/target</directory>
+            </fileset>
+            <fileset>
+              <directory>shared/target</directory>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 </project>
