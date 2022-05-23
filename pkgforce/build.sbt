@@ -10,22 +10,20 @@ ThisBuild / parallelExecution := false
 ThisBuild / organization := "com.github.nawforce"
 ThisBuild / organizationHomepage := Some(url("https://github.com/nawforce/pkgforce"))
 ThisBuild / scmInfo := Some(
-  ScmInfo(
-    url("https://github.com/nawforce/pkgforce"),
-    "git@github.com:nawforce/pkgforce.git"
-  )
+  ScmInfo(url("https://github.com/nawforce/pkgforce"), "git@github.com:nawforce/pkgforce.git")
 )
 ThisBuild / developers := List(
   Developer(
     id = "nawforce",
     name = "Kevin Jones",
     email = "nawforce@gmail.com",
-    url = url("https://github.com/nawforce"
-    )
+    url = url("https://github.com/nawforce")
   )
 )
 ThisBuild / description := "Salesforce Metadata Management Utility Library"
-ThisBuild / licenses := List("BSD-3-Clause" -> new URL("https://opensource.org/licenses/BSD-3-Clause"))
+ThisBuild / licenses := List(
+  "BSD-3-Clause" -> new URL("https://opensource.org/licenses/BSD-3-Clause")
+)
 ThisBuild / homepage := Some(url("https://github.com/nawforce/pkgforce"))
 ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")
 ThisBuild / publishTo := {
@@ -43,7 +41,7 @@ lazy val buildNPM = Def.task {
   (Compile / fastOptJS).value
   (Compile / fullOptJS).value
 
-  val jsDir = file("js")
+  val jsDir     = file("js")
   val targetDir = jsDir / "target" / "scala-2.13"
   val optSource = targetDir / "pkgforce-opt.js"
   val optTarget = jsDir / "npm" / "src" / "pkgforce.js"
@@ -54,7 +52,8 @@ lazy val buildNPM = Def.task {
   import scala.sys.process._
 
   val npmDir = jsDir / "npm"
-  val shell: Seq[String] = if (sys.props("os.name").contains("Windows")) Seq("cmd", "/c") else Seq("bash", "-c")
+  val shell: Seq[String] =
+    if (sys.props("os.name").contains("Windows")) Seq("cmd", "/c") else Seq("bash", "-c")
   Process(shell :+ "npm i --production", npmDir) !
 
   // Update NPM README.md
@@ -74,32 +73,30 @@ lazy val buildJVM = Def.task {
 
 lazy val build = taskKey[Unit]("Build artifacts")
 
-lazy val root = project.in(file(".")).
-  aggregate(pkgforce.js, pkgforce.jvm).
-  settings(
-    publish := {},
-    publishLocal := {},
-    publishM2 := {}
-  )
+lazy val root = project
+  .in(file("."))
+  .aggregate(pkgforce.js, pkgforce.jvm)
+  .settings(publish := {}, publishLocal := {}, publishM2 := {})
 
-lazy val pkgforce = crossProject(JSPlatform, JVMPlatform).in(file(".")).
-  settings(
+lazy val pkgforce = crossProject(JSPlatform, JVMPlatform)
+  .in(file("."))
+  .settings(
     scalacOptions += "-deprecation",
     libraryDependencies += "com.github.financialforcedev" %%% "ff-apex-outline-parser" % "1.0.0",
-    libraryDependencies += "com.lihaoyi" %%% "upickle" % "1.2.0",
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.0" % Test,
-  ).
-  jvmSettings(
+    libraryDependencies += "com.lihaoyi"                  %%% "upickle"                % "1.2.0",
+    libraryDependencies += "org.scalatest"                %%% "scalatest"              % "3.2.0" % Test
+  )
+  .jvmSettings(
     build := buildJVM.value,
-    libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
-    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.0.0",
-    libraryDependencies += "com.github.nawforce" % "apex-parser" % "2.13.0",
-    libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.8-1",
-    libraryDependencies += "com.github.nawforce" % "runforce" % "55.1.0",
-    libraryDependencies += "com.github.nawforce" % "uber-apex-jorje" % "1.0.0" % Test,
-    libraryDependencies += "com.google.jimfs" % "jimfs" % "1.1" % Test
-  ).
-  jsSettings(
+    libraryDependencies += "org.scala-lang.modules" %% "scala-xml"       % "1.3.0",
+    libraryDependencies += "org.scala-js"           %% "scalajs-stubs"   % "1.0.0",
+    libraryDependencies += "com.github.nawforce"     % "apex-parser"     % "2.13.0",
+    libraryDependencies += "org.antlr"               % "antlr4-runtime"  % "4.8-1",
+    libraryDependencies += "com.github.nawforce"     % "runforce"        % "55.2.0",
+    libraryDependencies += "com.github.nawforce"     % "uber-apex-jorje" % "1.0.0" % Test,
+    libraryDependencies += "com.google.jimfs"        % "jimfs"           % "1.1"   % Test
+  )
+  .jsSettings(
     build := buildNPM.value,
     libraryDependencies += "net.exoego" %%% "scala-js-nodejs-v14" % "0.12.0",
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }

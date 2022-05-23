@@ -396,6 +396,40 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Standard field reference describe") {
+    FileSystemHelper.run(
+      Map(
+        "Foo__c.object" -> customObject("Foo__c", new ofRef(Array(("Bar__c", Some("Text"), None)))),
+        "Dummy.cls"     -> "public class Dummy { {DescribeFieldResult a = Foo__c.Bar__c.getDescribe();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+      assert(
+        unmanagedClass("Dummy").get.blocks.head.dependencies().toSet == Set(
+          unmanagedSObject("Foo__c").get
+        )
+      )
+    }
+  }
+
+  test("Standard field reference describe via fields") {
+    FileSystemHelper.run(
+      Map(
+        "Foo__c.object" -> customObject("Foo__c", new ofRef(Array(("Bar__c", Some("Text"), None)))),
+        "Dummy.cls"     -> "public class Dummy { {DescribeFieldResult a = Foo__c.fields.Bar__c.getDescribe();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+      assert(
+        unmanagedClass("Dummy").get.blocks.head.dependencies().toSet == Set(
+          unmanagedSObject("Foo__c").get
+        )
+      )
+    }
+  }
+
   test("UserRecordAccess available") {
     FileSystemHelper.run(
       Map(
@@ -447,6 +481,28 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
           Seq(("Lookup__c", Some("Lookup"), Some("ghosted__Bar__c")))
         ),
         "pkg/Dummy.cls" -> "public class Dummy { {SObjectField a = ghosted__Bar__c.Lookup__r;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+      assert(packagedClass("pkg", "Dummy").get.blocks.head.dependencies().isEmpty)
+    }
+  }
+
+  test("Lookup describe (ghosted target)") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"namespace": "pkg",
+            |"packageDirectories": [{"path": "pkg"}],
+            |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
+            |}""".stripMargin,
+        "pkg/Foo__c.object" -> customObject(
+          "Foo",
+          Seq(("Lookup__c", Some("Lookup"), Some("ghosted__Bar__c")))
+        ),
+        "pkg/Dummy.cls" -> "public class Dummy { {DescribeFieldResult a = Foo__c.Lookup__c.getDescribe();} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)

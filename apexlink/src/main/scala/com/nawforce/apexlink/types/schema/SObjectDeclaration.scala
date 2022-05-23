@@ -109,8 +109,6 @@ final case class SObjectDeclaration(
 
   override def nestedTypes: ArraySeq[TypeDeclaration] = TypeDeclaration.emptyTypeDeclarations
 
-  override val localConstructors: ArraySeq[ConstructorDeclaration] =
-    ConstructorDeclaration.emptyConstructorDeclarations
   override val blocks: ArraySeq[BlockDeclaration] = BlockDeclaration.emptyBlockDeclarations
 
   override val superClass: Option[TypeName] = {
@@ -135,7 +133,9 @@ final case class SObjectDeclaration(
         .foreach(field => {
           TypeResolver(field.typeName, module).swap.toOption.map(_ => {
             if (module.isGhostedType(field.typeName)) {
-              module.types.put(field.typeName, GhostSObjectDeclaration(module, field.typeName))
+              val ghostedSObject = GhostSObjectDeclaration(module, field.typeName)
+              module.types.put(field.typeName, ghostedSObject)
+              module.schemaSObjectType.add(ghostedSObject.typeName.name, hasFieldSets = true)
             } else {
               OrgInfo.logError(
                 field.location,
@@ -152,7 +152,7 @@ final case class SObjectDeclaration(
     }
 
     if (withRelationshipCollection)
-      collectRelationshipFields()
+      collectRelationshipFields(getTypeDependencyHolders.toSet)
   }
 
   private def updateDependencies(typeName: TypeName): Unit = {
