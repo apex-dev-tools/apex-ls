@@ -268,11 +268,13 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
           "ext/Foo__c/fields/Baz__c.field-meta.xml" -> customField("Baz__c", "Text", None)
         )
       ) { root: PathLike =>
-        val org = createHappyOrg(root)
+        val org      = createHappyOrg(root)
+        val basePath = root.join("base").join("Foo__c")
+        basePath.createDirectory("fields")
         refresh(
           org.unmanaged,
-          root.join("base").join("Foo__c").join("Foo__c.object"),
-          customObject("Foo", Seq(("Bar__c", Some("Text"), None)))
+          root.join("base").join("Foo__c").join("fields").join("Bar__c.field-meta.xml"),
+          customField("Bar__c", "Text", None)
         )
         assert(org.flush())
         assert(org.issues.isEmpty)
@@ -323,7 +325,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
       ) { root: PathLike =>
         val org = createHappyOrg(root)
 
-        val basePath = root.join("base").join("Foo__c").join("Foo__c.object")
+        val basePath = root.join("base").join("Foo__c").join("Foo__c.object-meta.xml")
         basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
@@ -366,7 +368,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
 
         val startTypes = org.unmanaged.modules.head.types.size
-        val basePath   = root.join("Foo__c").join("Foo__c.object")
+        val basePath   = root.join("Foo__c").join("Foo__c.object-meta.xml")
         basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
@@ -395,7 +397,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            "/Foo__c.object: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__c'\n"
+            "/Foo__c.object: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'\n"
         )
       }
     }
@@ -414,14 +416,14 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
       ) { root: PathLike =>
         val org = createHappyOrg(root)
 
-        val basePath = root.join("Bar__c").join("Bar__c.object")
+        val basePath = root.join("Bar__c").join("Bar__c.object-meta.xml")
         basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
         assert(
           getMessages() ==
-            "/Foo__c/Foo__c.object-meta.xml: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__c'\n"
+            "/Foo__c/Foo__c.object-meta.xml: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'\n"
         )
       }
     }
@@ -588,7 +590,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
 
         val startTypes = org.unmanaged.modules.head.types.size
-        val basePath   = root.join("Foo__mdt").join("Foo__mdt.object")
+        val basePath   = root.join("Foo__mdt").join("Foo__mdt.object-meta.xml")
         basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
@@ -757,7 +759,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
 
         val startTypes = org.unmanaged.modules.head.types.size
-        val basePath   = root.join("Foo__e").join("Foo__e.object")
+        val basePath   = root.join("Foo__e").join("Foo__e.object-meta.xml")
         basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
@@ -926,7 +928,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
 
         val startTypes = org.unmanaged.modules.head.types.size
-        val basePath   = root.join("Foo__b").join("Foo__b.object")
+        val basePath   = root.join("Foo__b").join("Foo__b.object-meta.xml")
         basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())

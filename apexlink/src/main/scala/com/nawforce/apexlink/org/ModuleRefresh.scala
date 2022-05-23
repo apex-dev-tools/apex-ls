@@ -25,6 +25,7 @@ import com.nawforce.apexlink.types.other.{
   PageDeclaration
 }
 import com.nawforce.apexlink.types.platform.PlatformTypes
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
@@ -58,9 +59,15 @@ trait ModuleRefresh {
       val typeId    = TypeId(this, doc.typeName(namespace))
 
       // Update internal document tracking
-      index.upsert(pkg.org.issueManager, doc)
-      if (sourceOpt.isEmpty)
-        index.remove(doc)
+      if (sourceOpt.isEmpty) {
+        if (!index.remove(doc)) {
+          LoggerOps.debug(s"Refresh of deleted ${doc.path} was not in use, ignoring.")
+          return Seq()
+        }
+      } else if (!index.upsert(pkg.org.issueManager, doc)) {
+        LoggerOps.debug(s"Refresh of ${doc.path} would create duplicate type, ignoring.")
+        return Seq()
+      }
 
       // Clear errors as might fail to create type, SObjects are handled later due to multiple files
       pkg.org.issueManager.pop(doc.path)

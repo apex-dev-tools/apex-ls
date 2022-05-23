@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/jvm/src/test/scala" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/shared/src/main/scala" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shared/src/test/scala" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/js/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

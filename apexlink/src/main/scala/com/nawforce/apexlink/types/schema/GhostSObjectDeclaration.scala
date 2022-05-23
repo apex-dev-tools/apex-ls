@@ -28,7 +28,6 @@ import scala.collection.mutable
 final case class GhostSObjectDeclaration(module: OPM.Module, _typeName: TypeName)
     extends BasicTypeDeclaration(ArraySeq(), module, _typeName)
     with SObjectLikeDeclaration
-    with SObjectFieldFinder
     with SObjectMethods {
 
   override lazy val isComplete: Boolean = false
@@ -43,13 +42,17 @@ final case class GhostSObjectDeclaration(module: OPM.Module, _typeName: TypeName
     TypeResolver(superClass.get, this).toOption
   }
 
+  override def validate(withRelationshipCollection: Boolean): Unit = {
+    // Not required
+  }
+
   override def gatherDependencies(
     dependents: mutable.Set[TypeId],
     apexOnly: Boolean,
     outerTypesOnly: Boolean,
     typeCache: TypeCache
   ): Unit = {
-    // TODO: Should you be able to depend on a ghost?
+    // Not required
   }
 
   override val fields: ArraySeq[FieldDeclaration] = {
@@ -59,7 +62,7 @@ final case class GhostSObjectDeclaration(module: OPM.Module, _typeName: TypeName
   }
 
   override def findField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
-    findFieldSObject(name, staticContext)
+    findSObjectField(name, staticContext)
   }
 
   override def findMethod(

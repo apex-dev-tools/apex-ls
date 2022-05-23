@@ -13,13 +13,17 @@
  */
 package com.nawforce.apexlink.types.schema
 
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.OPM
-import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.platform.PlatformField
-import com.nawforce.apexlink.types.synthetic.CustomFieldDeclaration
+import com.nawforce.apexlink.types.synthetic.{CustomField, CustomFieldDeclaration}
 import com.nawforce.pkgforce.names._
+
+import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
 
 /* SObject field finding support. This is separated so it can be used by TypeDeclarations that can be used to
  * represent SObjects, the current cases being PlatformTypeDeclaration for standard objects and SObjectDeclarations
@@ -30,11 +34,58 @@ import com.nawforce.pkgforce.names._
 trait SObjectFieldFinder {
   this: TypeDeclaration =>
 
-  protected def findFieldSObject(
+  val fields: ArraySeq[FieldDeclaration]
+  private var relationshipFields: mutable.Map[Name, FieldDeclaration] = _
+
+  def validate(withRelationshipCollection: Boolean): Unit
+
+  def collectRelationshipFields(dependencyHolders: Set[TypeId]): Unit = {
+    // Find SObject relationship fields that reference this one via dependency analysis
+    val incomingObjects = this +: dependencyHolders.toSeq
+      .flatMap(typeId => TypeResolver(typeId.typeName, typeId.module).toOption)
+      .collect { case sobject: SObjectFieldFinder => sobject }
+    val incomingObjectAndField: Seq[(TypeDeclaration, CustomField)] =
+      incomingObjects.flatMap(sobject => {
+        sobject.fields
+          .collect { case field: CustomField => field }
+          .filter(
+            field =>
+              field.relationshipName.nonEmpty &&
+                field.typeName == typeName &&
+                field.name.value
+                  .endsWith("__r")
+          )
+          .map(field => (sobject.asInstanceOf[TypeDeclaration], field))
+      })
+
+    relationshipFields = mutable.Map[Name, FieldDeclaration]()
+    incomingObjectAndField.foreach(incoming => {
+      val relationshipName = Name(incoming._2.relationshipName.get + "__r")
+      val ns               = this.moduleDeclaration.flatMap(_.namespace)
+      val targetFieldName =
+        EncodedName(relationshipName).defaultNamespace(ns).fullName
+      relationshipFields.put(
+        targetFieldName,
+        CustomFieldDeclaration(targetFieldName, TypeNames.recordSetOf(incoming._1.typeName), None)
+      )
+    })
+  }
+
+  def findSObjectField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
+    findFieldSObject(name, staticContext, this.fieldsByName.toMap)
+      .orElse {
+        Option(relationshipFields).flatMap(
+          fields => findFieldSObject(name, staticContext, fields.toMap)
+        )
+      }
+  }
+
+  private def findFieldSObject(
     name: Name,
-    staticContext: Option[Boolean]
+    staticContext: Option[Boolean],
+    sObjectFields: Map[Name, FieldDeclaration]
   ): Option[FieldDeclaration] = {
-    val fieldOption = this.fieldsByName.get(name)
+    val fieldOption = sObjectFields.get(name)
 
     // Handle the synthetic static SObjectField or abort
     if (fieldOption.isEmpty) {
@@ -50,7 +101,7 @@ trait SObjectFieldFinder {
       } else if (staticContext.contains(true)) {
         // Create an SObjectField version of this field
         val shareTypeName = if (typeName.isShare) Some(typeName) else None
-        Some(getSObjectField(field, shareTypeName, moduleDeclaration))
+        Some(getSObjectField(field, shareTypeName, moduleDeclaration, sObjectFields))
       } else {
         None
       }
@@ -63,12 +114,14 @@ trait SObjectFieldFinder {
   private def getSObjectField(
     field: FieldDeclaration,
     shareTypeName: Option[TypeName],
-    module: Option[OPM.Module]
+    module: Option[OPM.Module],
+    sObjectFields: Map[Name, FieldDeclaration]
   ): FieldDeclaration = {
     field match {
       /* Relationship 'Id' fields can be used in place of the actual relationship field as must be typed as such */
       case field: PlatformField if isRelationshipField(field) =>
-        val relationshipField = findFieldSObject(Name(field.name.value.dropRight(2)), Some(true))
+        val relationshipField =
+          findFieldSObject(Name(field.name.value.dropRight(2)), Some(true), sObjectFields)
         relationshipField match {
           case Some(
                 CustomFieldDeclaration(
