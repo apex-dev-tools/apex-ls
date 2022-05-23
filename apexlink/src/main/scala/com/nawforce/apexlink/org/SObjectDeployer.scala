@@ -30,7 +30,7 @@ import com.nawforce.apexlink.types.synthetic.{
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
-import com.nawforce.pkgforce.path.{Location, PathLocation}
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.pkgforce.stream._
 
 import scala.collection.immutable.ArraySeq
@@ -57,7 +57,7 @@ class SObjectDeployer(module: OPM.Module) {
     ).iterator.buffered
 
     val createdSObjects = mutable.Map[TypeName, SObjectLikeDeclaration]()
-    val referenceFields = ArrayBuffer[(CustomFieldEvent, SObjectEvent, TypeName)]()
+    val referenceFields = ArrayBuffer[(CustomFieldEvent, TypeName)]()
 
     while (objectsEvents.hasNext) {
       val sObjectEvent = objectsEvents.next().asInstanceOf[SObjectEvent]
@@ -69,21 +69,24 @@ class SObjectDeployer(module: OPM.Module) {
       val fieldEvents         = bufferEvents[CustomFieldEvent](objectsEvents)
       val fieldSetEvents      = bufferEvents[FieldsetEvent](objectsEvents)
       val sharingReasonEvents = bufferEvents[SharingReasonEvent](objectsEvents)
-      val fields              = fieldEvents.flatMap(createCustomField)
       val fieldSets           = fieldSetEvents.map(_.name)
       val sharingReasons      = sharingReasonEvents.map(_.name)
-
-      // As there may be cyclic referencing between SObjects, we save these for later processing
-      referenceFields.addAll(fieldEvents.collect {
-        case e if SObjectDeployer.referenceFieldTypes.contains(e.rawType) =>
-          (e, sObjectEvent, typeName)
-      })
 
       val sources: Array[SourceInfo] =
         sObjectEvent.sourceInfo.toArray ++
           fieldEvents.map(_.sourceInfo) ++
           fieldSetEvents.map(_.sourceInfo) ++
           sharingReasonEvents.map(_.sourceInfo)
+
+      // As there may be cyclic referencing between SObjects, we save these for later processing
+      val (refs, nonRefs) = fieldEvents.partitionMap {
+        case e if SObjectDeployer.referenceFieldTypes.contains(e.rawType) =>
+          Left((e, typeName))
+        case f => Right(f)
+      }
+
+      referenceFields.addAll(refs)
+      val fields = nonRefs.flatMap(createCustomField)
 
       val sobjects =
         if (encodedName.ext.nonEmpty)
@@ -101,23 +104,16 @@ class SObjectDeployer(module: OPM.Module) {
       sobjects.foreach(sobject => createdSObjects.put(sobject.typeName, sobject))
     }
 
-    // Apply 'reverse' reference fields over the created SObjects
-    referenceFields.foreach(fieldObject => {
-      val referenceTo      = fieldObject._1.referenceTo.get._1
-      val relationshipName = Name(fieldObject._1.referenceTo.get._2.value + "__r")
-      val refTypeName      = schemaTypeNameOf(referenceTo)
-      val reverseFieldName =
-        EncodedName(relationshipName).defaultNamespace(module.namespace).fullName
+    referenceFields
+      .flatMap {
+        case (field, typeName) => createReferenceField(field, typeName, createdSObjects)
+      }
+      .groupMap(_._1)(_._2) // group fields by obj to recreate each obj only once
+      .foreach {
+        case (objName, fields) =>
+          addFieldsToSObject(objName, fields.toArray.flatten, createdSObjects)
+      }
 
-      addReferenceFieldToSObject(
-        createdSObjects,
-        refTypeName,
-        reverseFieldName,
-        fieldObject._1.name,
-        fieldObject._3,
-        fieldObject._1.sourceInfo.location
-      )
-    })
     createdSObjects.values.toArray
   }
 
@@ -128,27 +124,22 @@ class SObjectDeployer(module: OPM.Module) {
   }
 
   private def createCustomField(field: CustomFieldEvent): Array[FieldDeclaration] = {
-    val fieldType = SObjectDeployer.platformTypeOfFieldType(field).typeName
-    val name      = EncodedName(field.name).defaultNamespace(module.namespace).fullName
-    val location  = field.sourceInfo.location
-    val fieldDeclaration =
-      LocatableCustomFieldDeclaration(
-        location,
-        name,
-        fieldType,
-        field.referenceTo.map(to => schemaTypeNameOf(to._1))
-      )
+    val name         = defaultNamespace(field.name)
+    val location     = field.sourceInfo.location
+    val maybeRefType = field.referenceTo.map(to => schemaTypeNameOf(to._1))
+
+    val fieldType        = SObjectDeployer.platformTypeOfFieldType(field).typeName
+    val fieldDeclaration = LocatableCustomFieldDeclaration(location, name, fieldType, maybeRefType)
 
     // Create additional fields & lookup relationships for special fields types
     field.rawType.value match {
       case "Lookup" | "MasterDetail" | "MetadataRelationship" =>
-        val refTypeName = schemaTypeNameOf(field.referenceTo.get._1)
         Array(
           fieldDeclaration,
           LocatableCustomFieldDeclaration(
             location,
             name.replaceAll("__c$", "__r"),
-            refTypeName,
+            maybeRefType.get,
             None
           )
         )
@@ -172,69 +163,106 @@ class SObjectDeployer(module: OPM.Module) {
     }
   }
 
-  private def addReferenceFieldToSObject(
-    createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration],
-    targetTypeName: TypeName,
-    targetFieldName: Name,
-    originatingFieldName: Name,
-    originatingTypeName: TypeName,
-    location: PathLocation
-  ): Unit = {
+  private def createReferenceField(
+    field: CustomFieldEvent,
+    objectName: TypeName,
+    createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration]
+  ): Array[(TypeName, Array[FieldDeclaration])] = {
+    field.rawType.value match {
+      case "Lookup" | "MasterDetail" | "MetadataRelationship" =>
+        val refTypeName      = schemaTypeNameOf(field.referenceTo.get._1)
+        val relationshipName = Name(field.referenceTo.get._2.value + "__r")
 
-    val created = createdSObjects.get(targetTypeName)
-    if (module.isGhostedType(targetTypeName)) {
-      if (created.isEmpty)
-        createdSObjects.put(targetTypeName, GhostSObjectDeclaration(module, targetTypeName))
-      return
-    }
-
-    val td = created.orElse(TypeResolver(targetTypeName, module).toOption)
-    if ((td.isEmpty || !td.exists(_.isSObject)) && !module.isGhostedType(targetTypeName)) {
-      OrgInfo.logError(
-        location,
-        s"Lookup object $targetTypeName does not exist for field '$originatingFieldName'"
-      )
-    }
-
-    td.map(td => {
-      // IF the field exists we don't want to overwrite locally declared
-      val sobjectNature = td match {
-        case pt: PlatformTypeDeclaration if !pt.fields.exists(_.name == targetFieldName) =>
-          Some(PlatformObjectNature)
-        case so: SObjectDeclaration if !so.fields.exists(_.name == targetFieldName) =>
-          Some(so.sobjectNature)
-        case _ => None
-      }
-
-      sobjectNature.map(nature => {
-        createdSObjects.put(
-          td.typeName,
-          extendExistingSObject(
-            Some(td),
-            Array(),
-            td.typeName,
-            nature,
-            ArraySeq(
+        // forward + reverse ref fields
+        Array(
+          (objectName, createCustomField(field)),
+          (
+            refTypeName,
+            Array(
               CustomFieldDeclaration(
-                targetFieldName,
-                TypeNames.recordSetOf(originatingTypeName),
+                defaultNamespace(relationshipName),
+                TypeNames.recordSetOf(objectName),
                 None
               )
-            ),
-            ArraySeq(),
-            ArraySeq()
+            )
           )
         )
+      case "Summary" =>
+        val relatedFieldType = field.relatedField
+          .flatMap(to => createdSObjects.get(schemaTypeNameOf(to._1)))
+          .flatMap(_.findField(field.relatedField.get._2, Some(false)))
+          .map(_.typeName)
+
+        val fieldType = relatedFieldType match {
+          case Some(TypeNames.Date)     => PlatformTypes.dateType
+          case Some(TypeNames.Datetime) => PlatformTypes.datetimeType
+          case Some(_) | None           => SObjectDeployer.platformTypeOfFieldType(field)
+        }
+
+        Array(
+          (
+            objectName,
+            LocatableCustomFieldDeclaration(
+              field.sourceInfo.location,
+              defaultNamespace(field.name),
+              fieldType.typeName,
+              None
+            )
+          )
+        )
+    }
+  }
+
+  private def addFieldsToSObject(
+    objectName: TypeName,
+    fields: Array[FieldDeclaration],
+    createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration]
+  ): Unit = {
+    val created = createdSObjects.get(objectName)
+
+    if (module.isGhostedType(objectName)) {
+      if (created.isEmpty)
+        createdSObjects.put(objectName, GhostSObjectDeclaration(module, objectName))
+    } else {
+      val td = created.orElse(TypeResolver(objectName, module).toOption)
+      if (td.isEmpty || !td.exists(_.isSObject)) {
+        fields
+          .filter(_.safeLocation.isDefined)
+          .foreach(f => OrgInfo.logError(f.location, s"Object $objectName is not defined"))
+      }
+
+      td.foreach(td => {
+        // If the field exists we don't want to overwrite locally declared
+        val newFields = fields.filter(f => !td.fields.exists(_.name == f.name))
+        val sobjectNature = td match {
+          case _: PlatformTypeDeclaration =>
+            Some(PlatformObjectNature)
+          case so: SObjectDeclaration =>
+            Some(so.sobjectNature)
+          case _ => None
+        }
+
+        sobjectNature.foreach(nature => {
+          createdSObjects.put(
+            td.typeName,
+            extendExistingSObject(
+              Some(td),
+              Array(),
+              td.typeName,
+              nature,
+              ArraySeq.unsafeWrapArray(newFields),
+              ArraySeq(),
+              ArraySeq()
+            )
+          )
+        })
       })
-    })
+
+    }
   }
 
   private def schemaTypeNameOf(name: Name): TypeName = {
-    TypeName(
-      EncodedName(name).defaultNamespace(module.namespace).fullName,
-      Nil,
-      Some(TypeNames.Schema)
-    )
+    TypeName(defaultNamespace(name), Nil, Some(TypeNames.Schema))
   }
 
   private def createCustomObject(
@@ -625,6 +653,11 @@ class SObjectDeployer(module: OPM.Module) {
     // FUTURE: Duplicates are likely OK due to deploy handling, but we should warn?
     ArraySeq.unsafeWrapArray(fields.map(field => (field.name, field)).toMap.values.toArray)
   }
+
+  private def defaultNamespace(name: Name): Name = {
+    EncodedName(name).defaultNamespace(module.namespace).fullName
+  }
+
 }
 
 object SObjectDeployer {
@@ -800,7 +833,7 @@ object SObjectDeployer {
     )
 
   val referenceFieldTypes: Set[Name] =
-    Set(Name("Lookup"), Name("MasterDetail"), Name("MetadataRelationship"))
+    Set(Name("Lookup"), Name("MasterDetail"), Name("MetadataRelationship"), Name("Summary"))
 
   /** Convert a field type string to the platform type used for it in Apex. */
   def platformTypeOfFieldType(field: CustomFieldEvent): TypeDeclaration = {
