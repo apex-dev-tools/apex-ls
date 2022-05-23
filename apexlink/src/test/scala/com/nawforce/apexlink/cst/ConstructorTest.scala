@@ -253,4 +253,16 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     typeDeclarations(Map("Dummy.cls" -> "public class Dummy {Dummy(){new Flow.Interview();}}"))
     assert(dummyIssues == "Error: line 1 at 46-48: Cannot create type for: Flow.Interview\n")
   }
+
+  test("Ambiguous call") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {public Foo(String s){} public Foo(Integer i){} }",
+        "Dummy.cls" -> "public class Dummy {Dummy(){new Foo(null);}}"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 35-41: Ambiguous constructor call: Foo.<constructor>(null)\n"
+    )
+  }
 }
