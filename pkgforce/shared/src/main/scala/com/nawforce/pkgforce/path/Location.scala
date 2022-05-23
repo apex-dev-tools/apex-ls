@@ -71,7 +71,7 @@ trait UnsafeLocatable extends Locatable {
 
   def safeLocation: Option[PathLocation] = {
     val l = location
-    if (l.path != null)
+    if (l != null && l.path != null)
       Some(location)
     else
       None
@@ -118,4 +118,3 @@ trait IdLocatable extends Locatable {
   def idLocation: Location
   def idPathLocation: PathLocation = PathLocation(location.path, idLocation)
 }
-
