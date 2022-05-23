@@ -41,55 +41,71 @@ final case class ConstructorMap(
     if (matched.isEmpty)
       return Left(s"No constructor defined with ${params.length} arguments")
 
-    val assignable = matched.get.filter(c => {
-      val argZip = c.parameters.map(_.typeName).zip(params)
-      argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict = false, context))
-    })
-
-    findPotentialMatch(assignable, params, context)
+    findPotentialMatch(matched.get, params, context)
 
   }
 
   private def findPotentialMatch(
-    assignable: Array[ConstructorDeclaration],
+    matches: Array[ConstructorDeclaration],
     params: ArraySeq[TypeName],
     context: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
-    def getCtorString = {
+    def getCtorString: String = {
       typeName match {
         case Some(name) =>
           s"$name.<constructor>(${params.mkString(",")})"
         case None => s"<constructor>(${params.mkString(",")})"
       }
     }
-    val potential =
-      if (assignable.isEmpty)
-        None
-      else if (assignable.length == 1)
-        Some(assignable.head)
-      else
-        assignable.find(
-          ctor =>
-            assignable.forall(
-              c =>
-                c == ctor || ctor
-                  .hasMoreSpecificParams(c.parameters, params, context)
-                  .contains(true)
-            )
-        )
+
+    val potential = findMostSpecificMatch(strict = true, matches, params, context)
+      .orElse(findMostSpecificMatch(strict = false, matches, params, context))
 
     potential match {
-      case Some(ctor) =>
+      case Some(Right(ctor)) =>
         if (canAccessCtor(ctor, context)) {
           Right(ctor)
         } else {
           //Check the rest of assignable for accessible ctors, if not return the original error
-          findPotentialMatch(assignable.filterNot(_ == ctor), params, context) match {
+          findPotentialMatch(matches.filterNot(_ == ctor), params, context) match {
             case Right(ctor) => Right(ctor)
             case _           => Left(s"Constructor is not visible: $getCtorString")
           }
         }
-      case _ => Left(s"Constructor not defined: $getCtorString")
+      case Some(Left(error)) => Left(s"$error: $getCtorString")
+      case None              => Left(s"Constructor not defined: $getCtorString")
+    }
+  }
+
+  private def findMostSpecificMatch(
+    strict: Boolean,
+    matches: Array[ConstructorDeclaration],
+    params: ArraySeq[TypeName],
+    context: VerifyContext
+  ): Option[Either[String, ConstructorDeclaration]] = {
+    val assignable = matches.filter(c => {
+      val argZip = c.parameters.map(_.typeName).zip(params)
+      argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict, context))
+    })
+    if (assignable.isEmpty)
+      None
+    else if (assignable.length == 1)
+      Some(Right(assignable.head))
+    else {
+      Some(
+        assignable
+          .find(
+            ctor =>
+              assignable.forall(
+                c =>
+                  c == ctor || ctor
+                    .hasMoreSpecificParams(c.parameters, params, context)
+                    .contains(true)
+              )
+          )
+          .map(Right(_))
+          .getOrElse(Left("Ambiguous constructor call"))
+      )
     }
   }
 
