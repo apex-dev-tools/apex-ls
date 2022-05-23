@@ -104,7 +104,7 @@ class SObjectDeployer(module: OPM.Module) {
 
     derivedFields
       .groupMap(_._1) {
-        // group fields by obj to recreate each obj only once
+        // group fields by obj name to overwrite each obj only once
         case (objName, field) => createDerivedField(objName, field, createdSObjects)
       }
       .foreach(a => addFieldsToSObject(a._1, a._2.toArray, createdSObjects))
