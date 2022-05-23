@@ -15,13 +15,12 @@
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.diagnostics.IssueOps
-import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.XNames.NameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.org.SObjectDeployer.{feedFieldsFor, historyFieldsFor, shareFieldsFor}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
-import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
+import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.schema.{SObjectNature, _}
 import com.nawforce.apexlink.types.synthetic.{
   CustomFieldDeclaration,
@@ -34,7 +33,6 @@ import com.nawforce.pkgforce.path.Location
 import com.nawforce.pkgforce.stream._
 
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable.ArrayBuffer
 import scala.collection.{BufferedIterator, mutable}
 
 /** 'Deploy' a module from a stream of PackageEvents. Deploying here really means constructing a set of TypeDeclarations
@@ -57,7 +55,7 @@ class SObjectDeployer(module: OPM.Module) {
     ).iterator.buffered
 
     val createdSObjects = mutable.Map[TypeName, SObjectLikeDeclaration]()
-    val referenceFields = ArrayBuffer[(CustomFieldEvent, TypeName)]()
+    //val referenceFields = ArrayBuffer[(CustomFieldEvent, TypeName)]()
 
     while (objectsEvents.hasNext) {
       val sObjectEvent = objectsEvents.next().asInstanceOf[SObjectEvent]
@@ -104,15 +102,15 @@ class SObjectDeployer(module: OPM.Module) {
       sobjects.foreach(sobject => createdSObjects.put(sobject.typeName, sobject))
     }
 
-    referenceFields
-      .flatMap {
-        case (field, typeName) => createReferenceField(field, typeName, createdSObjects)
-      }
-      .groupMap(_._1)(_._2) // group fields by obj to recreate each obj only once
-      .foreach {
-        case (objName, fields) =>
-          addFieldsToSObject(objName, fields.toArray.flatten, createdSObjects)
-      }
+    // referenceFields
+    //   .flatMap {
+    //     case (field, typeName) => createReferenceField(field, typeName, createdSObjects)
+    //   }
+    //   .groupMap(_._1)(_._2) // group fields by obj to recreate each obj only once
+    //   .foreach {
+    //     case (objName, fields) =>
+    //       addFieldsToSObject(objName, fields.toArray.flatten, createdSObjects)
+    //   }
 
     createdSObjects.values.toArray
   }
@@ -140,7 +138,9 @@ class SObjectDeployer(module: OPM.Module) {
             location,
             name.replaceAll("__c$", "__r"),
             maybeRefType.get,
-            None
+            None,
+            asStatic = false,
+            Some(field.referenceTo.get._2.toString)
           )
         )
       case "Location" =>

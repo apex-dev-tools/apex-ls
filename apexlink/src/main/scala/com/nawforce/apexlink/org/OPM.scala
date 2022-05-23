@@ -36,15 +36,17 @@ import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, TEST_METHOD_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
-import com.nawforce.pkgforce.path.{PathLike, PathLocation}
+import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
 
+import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
 import java.util
+import java.util.concurrent.locks.ReentrantLock
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -62,6 +64,10 @@ object OPM extends TriHierarchy {
       extends TriOrg
       with Org
       with OrgTestClasses {
+    // Acquire lock for all operations that may be impacted by refresh
+    val refreshLock = new ReentrantLock(true)
+
+    // The workspace loaded into this Org
     val workspace: Workspace = initWorkspace.getOrElse(new Workspace(Seq()))
 
     /** Issues log for all packages in org. This is managed independently as errors may be raised against files
@@ -152,7 +158,9 @@ object OPM extends TriHierarchy {
     }
 
     /** Get all loaded packages. */
-    def getPackages(): Array[Package] = packages.toArray[Package]
+    def getPackages(): Array[Package] = {
+      packages.toArray[Package]
+    }
 
     /** Provide access to IssueManager for org */
     override def issues: IssuesManager = issueManager
@@ -174,36 +182,44 @@ object OPM extends TriHierarchy {
     }
 
     def getPackageForPath(path: String): Package = {
-      packages.find(_.isPackagePath(path)).orNull
+      refreshLock.synchronized {
+        packages.find(_.isPackagePath(path)).orNull
+      }
     }
 
     /** Get a array of type identifiers available across all packages. */
     def getTypeIdentifiers(apexOnly: Boolean): Array[TypeIdentifier] = {
-      OrgInfo.current.withValue(this) {
-        packages.foldLeft(Array[TypeIdentifier]())(
-          (acc, pkg) => acc ++ pkg.getTypeIdentifiers(apexOnly)
-        )
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          packages.foldLeft(Array[TypeIdentifier]())(
+            (acc, pkg) => acc ++ pkg.getTypeIdentifiers(apexOnly)
+          )
+        }
       }
     }
 
     /** Extract all dependencies */
     override def getDependencies: java.util.Map[String, Array[String]] = {
-      OrgInfo.current.withValue(this) {
-        val dependencies = new util.HashMap[String, Array[String]]()
-        packages
-          .filterNot(_.isGhosted)
-          .foreach(_.orderedModules.head.populateDependencies(dependencies))
-        dependencies
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          val dependencies = new util.HashMap[String, Array[String]]()
+          packages
+            .filterNot(_.isGhosted)
+            .foreach(_.orderedModules.head.populateDependencies(dependencies))
+          dependencies
+        }
       }
     }
 
     /** Find a location for an identifier */
     override def getIdentifierLocation(identifier: TypeIdentifier): PathLocation = {
-      OrgInfo.current.withValue(this) {
-        (findTypeIdentifier(identifier) match {
-          case Some(ad: ApexDeclaration) => Some(PathLocation(ad.location.path, ad.idLocation))
-          case _                         => None
-        }).orNull
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          (findTypeIdentifier(identifier) match {
+            case Some(ad: ApexDeclaration) => Some(PathLocation(ad.location.path, ad.idLocation))
+            case _                         => None
+          }).orNull
+        }
       }
     }
 
@@ -222,42 +238,44 @@ object OPM extends TriHierarchy {
       apexOnly: Boolean,
       ignoring: Array[TypeIdentifier]
     ): DependencyGraph = {
-      OrgInfo.current.withValue(this) {
-        val depWalker = new DownWalker(this, apexOnly)
-        val nodeData = depWalker
-          .walk(identifiers, depth, ignoring)
-          .map(n => {
-            DependencyNode(
-              n.id,
-              nodeFileSize(n.id),
-              n.nature,
-              n.transitiveCount,
-              n.isEntryPoint,
-              n.extending,
-              n.implementing,
-              n.using
-            )
-          })
-        val nodeIndex = nodeData.map(_.identifier).zipWithIndex.toMap
-
-        val linkData = new ArrayBuffer[DependencyLink]()
-        nodeData.foreach(n => {
-          val source = nodeIndex(n.identifier)
-
-          def safeLink(nature: String)(identifier: TypeIdentifier): Unit = {
-            nodeIndex
-              .get(identifier)
-              .foreach(
-                target => if (source != target) linkData += DependencyLink(source, target, nature)
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          val depWalker = new DownWalker(this, apexOnly)
+          val nodeData = depWalker
+            .walk(identifiers, depth, ignoring)
+            .map(n => {
+              DependencyNode(
+                n.id,
+                nodeFileSize(n.id),
+                n.nature,
+                n.transitiveCount,
+                n.isEntryPoint,
+                n.extending,
+                n.implementing,
+                n.using
               )
-          }
+            })
+          val nodeIndex = nodeData.map(_.identifier).zipWithIndex.toMap
 
-          n.extending.foreach(safeLink("extends"))
-          n.implementing.foreach(safeLink("implements"))
-          n.using.foreach(safeLink("uses"))
-        })
+          val linkData = new ArrayBuffer[DependencyLink]()
+          nodeData.foreach(n => {
+            val source = nodeIndex(n.identifier)
 
-        DependencyGraph(nodeData, linkData.toArray)
+            def safeLink(nature: String)(identifier: TypeIdentifier): Unit = {
+              nodeIndex
+                .get(identifier)
+                .foreach(
+                  target => if (source != target) linkData += DependencyLink(source, target, nature)
+                )
+            }
+
+            n.extending.foreach(safeLink("extends"))
+            n.implementing.foreach(safeLink("implements"))
+            n.using.foreach(safeLink("uses"))
+          })
+
+          DependencyGraph(nodeData, linkData.toArray)
+        }
       }
     }
 
@@ -277,11 +295,13 @@ object OPM extends TriHierarchy {
       if (path == null)
         return Array.empty
 
-      OrgInfo.current.withValue(this) {
-        packages
-          .find(_.isPackagePath(path))
-          .map(_.getDefinition(Path(path), line, offset, Option(content)))
-          .getOrElse(Array.empty)
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          packages
+            .find(_.isPackagePath(path))
+            .map(_.getDefinition(Path(path), line, offset, Option(content)))
+            .getOrElse(Array.empty)
+        }
       }
     }
 
@@ -291,7 +311,9 @@ object OPM extends TriHierarchy {
       offset: Int,
       content: String
     ): Array[CompletionItemLink] = {
-      getCompletionItemsInternal(Path(path), line, offset, content)
+      refreshLock.synchronized {
+        getCompletionItemsInternal(Path(path), line, offset, content)
+      }
     }
 
     def getCompletionItemsInternal(
@@ -312,20 +334,22 @@ object OPM extends TriHierarchy {
     }
 
     def getDependencyBombs(count: Int): Array[BombScore] = {
-      val maxBombs   = Math.max(0, count)
-      val allClasses = packages.flatMap(_.orderedModules.flatMap(_.nonTestClasses.toSeq))
-      val bombs      = mutable.PriorityQueue[BombScore]()(Ordering.by(1000 - _.score))
-      allClasses.foreach(cls => {
-        if (!cls.inTest) {
-          val score = cls.bombScore(allClasses.size)
-          if (score._3 > 0)
-            bombs.enqueue(BombScore(cls.typeId.asTypeIdentifier, score._2, score._1, score._3))
-          if (bombs.size > maxBombs) {
-            bombs.dequeue()
+      refreshLock.synchronized {
+        val maxBombs   = Math.max(0, count)
+        val allClasses = packages.flatMap(_.orderedModules.flatMap(_.nonTestClasses.toSeq))
+        val bombs      = mutable.PriorityQueue[BombScore]()(Ordering.by(1000 - _.score))
+        allClasses.foreach(cls => {
+          if (!cls.inTest) {
+            val score = cls.bombScore(allClasses.size)
+            if (score._3 > 0)
+              bombs.enqueue(BombScore(cls.typeId.asTypeIdentifier, score._2, score._1, score._3))
+            if (bombs.size > maxBombs) {
+              bombs.dequeue()
+            }
           }
-        }
-      })
-      bombs.dequeueAll.toArray.reverse
+        })
+        bombs.dequeueAll.toArray.reverse
+      }
     }
 
     def getDependencyCounts(
@@ -640,6 +664,18 @@ object OPM extends TriHierarchy {
             dependencies.put(td.typeName.toString, depends.map(_.typeName.toString).toArray)
         case _ => ()
       }
+    }
+
+    def log(issue: Issue): Unit = {
+      pkg.org.issueManager.log(issue)
+    }
+
+    def log(path: PathLike, message: String, ex: Throwable): Unit = {
+      val writer = new StringWriter
+      writer.append(message)
+      writer.append(": ")
+      ex.printStackTrace(new PrintWriter(writer))
+      log(Issue(path, ERROR_CATEGORY, Location.empty, writer.toString))
     }
 
     override def toString: String = {

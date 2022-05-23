@@ -400,12 +400,29 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
 final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression])
     extends MethodCall {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+    // Verify args so vars don't show as unused and map to typeNames
+    val args = arguments
+      .map(_.verify(input, context))
+      .map(arg => if (arg.isDefined) arg.typeName else TypeNames.Any)
 
-    // Verify args so vars don't show as unused
-    arguments.map(_.verify(input, context))
+    val ctorSearchContext = if (isSuper) context.superType else Some(context.thisType)
 
-    // TODO
-    ExprContext.empty
+    ctorSearchContext match {
+      case Some(at: ApexClassDeclaration) =>
+        //TODO: Remove Temp bypass for exception
+        if (
+          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("exception")
+        )
+          ExprContext.empty
+        else
+          at.constructorMap.findConstructorByParams(args, context) match {
+            case Left(error) =>
+              context.logError(location, error)
+              ExprContext.empty
+            case Right(ctor) => ExprContext(None, None, ctor)
+          }
+      case _ => ExprContext.empty
+    }
   }
 }
 

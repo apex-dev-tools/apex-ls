@@ -28,7 +28,7 @@ import com.nawforce.runtime.parsers.CodeParser
 import scala.collection.immutable.ArraySeq
 
 trait CSTTypeName {
-  def typeArguments(): Option[CSTTypeArguments]
+  def typeArguments(): CSTTypeArguments
   def isList: Boolean
   def isSet: Boolean
   def isMap: Boolean
@@ -40,20 +40,30 @@ trait CSTTypeReference {
   def typeNames(): ArraySeq[CSTTypeName]
 }
 
+object CSTTypeReference {
+  final val emptyArraySeq = ArraySeq[CSTTypeReference]()
+}
+
 trait CSTTypeArguments {
   def typeRefs(): ArraySeq[CSTTypeReference]
 }
 
 private[cst] object ANTLRCST {
-  private class ANTLRTypeArguments(typeArgumentsContext: TypeArgumentsContext)
+  private class ANTLRTypeArguments(typeArgumentsContext: Option[TypeArgumentsContext])
       extends CSTTypeArguments {
-    override def typeRefs(): ArraySeq[CSTTypeReference] =
-      CodeParser.toScala(typeArgumentsContext.typeList().typeRef()).map(new ANTLRTypeReference(_))
+    override def typeRefs(): ArraySeq[CSTTypeReference] = {
+      if (typeArgumentsContext.isEmpty)
+        CSTTypeReference.emptyArraySeq
+      else
+        CodeParser
+          .toScala(typeArgumentsContext.get.typeList().typeRef())
+          .map(new ANTLRTypeReference(_))
+    }
   }
 
   private class ANTLRTypeName(typeName: TypeNameContext) extends CSTTypeName {
-    override def typeArguments(): Option[CSTTypeArguments] =
-      CodeParser.toScala(typeName.typeArguments()).map(new ANTLRTypeArguments(_))
+    override def typeArguments(): CSTTypeArguments =
+      new ANTLRTypeArguments(CodeParser.toScala(typeName.typeArguments()))
     override def isList: Boolean           = CodeParser.toScala(typeName.LIST()).nonEmpty
     override def isSet: Boolean            = CodeParser.toScala(typeName.SET()).nonEmpty
     override def isMap: Boolean            = CodeParser.toScala(typeName.MAP()).nonEmpty
@@ -121,11 +131,11 @@ object TypeReference {
     }
   }
 
-  private def createTypeParams(typeArguments: Option[CSTTypeArguments]): Seq[TypeName] = {
-    typeArguments
-      .map(a => a.typeRefs())
-      .getOrElse(Seq())
-      .map(param => TypeReference.construct(Option(param)))
+  private def createTypeParams(typeArguments: CSTTypeArguments): Seq[TypeName] = {
+    if (typeArguments.typeRefs().isEmpty)
+      TypeName.emptySeq
+    else
+      typeArguments.typeRefs().map(param => TypeReference.construct(Option(param)))
   }
 }
 

@@ -29,7 +29,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
         val pkg  = org.unmanaged
 
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
 
         assert(pkg.getTypeOfPath(path.toString) == null)
@@ -49,7 +49,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("pkg/Bar.cls")
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
 
         assert(
@@ -69,7 +69,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
           val path = root.join("pkg/Foo.trigger")
           path.delete()
-          pkg.refresh(path)
+          pkg.refresh(path, highPriority = false)
           assert(org.flush())
 
           val fooTypeId = pkg.getTypeOfPath(root.join("pkg/Foo.trigger").toString)
@@ -93,7 +93,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("pkg/Bar.cls")
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
         assert(
           getMessages(root.join("pkg").join("Foo.trigger"))
@@ -124,7 +124,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("CustomLabels.labels")
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
 
         assert(pkg.orderedModules.head.labels.fields.isEmpty)
@@ -162,7 +162,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("CustomLabels.labels")
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
 
         val labels = pkg.orderedModules.head.labels
@@ -181,7 +181,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("Test.flow-meta.xml")
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
         assert(pkg.orderedModules.head.interviews.nestedTypes.isEmpty)
       }
@@ -198,7 +198,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
           val path = root.join("Test.flow-meta.xml")
           path.delete()
-          pkg.refresh(path)
+          pkg.refresh(path, highPriority = false)
           assert(org.flush())
           assert(
             pkg.orderedModules.head.interviews.nestedTypes.map(_.name).toSet == Set(Name("Test2"))
@@ -216,7 +216,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("TestPage.page")
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
         assert(pkg.orderedModules.head.pages.fields.isEmpty)
       }
@@ -233,7 +233,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
           val path = root.join("Test.page")
           path.delete()
-          pkg.refresh(path)
+          pkg.refresh(path, highPriority = false)
           assert(org.flush())
           assert(pkg.orderedModules.head.pages.fields.map(_.name).toSet == Set(Name("Test2")))
       }
@@ -249,7 +249,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("Test.component")
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
         assert(
           pkg.orderedModules.head.components.nestedTypes
@@ -271,7 +271,7 @@ class DeleteTest extends AnyFunSuite with TestHelper {
 
         val path = root.join("Test.component")
         path.delete()
-        pkg.refresh(path)
+        pkg.refresh(path, highPriority = false)
         assert(org.flush())
         assert(
           pkg.orderedModules.head.components.nestedTypes

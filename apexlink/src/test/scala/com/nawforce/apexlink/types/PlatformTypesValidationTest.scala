@@ -40,7 +40,7 @@ class PlatformTypesValidationTest extends AnyFunSuite {
   )
 
   test("Right number of types (should exclude inners)") {
-    assert(PlatformTypeDeclaration.classNames.size == 2084)
+    assert(PlatformTypeDeclaration.classNames.size == 2091)
   }
 
   test("SObject type is visible") {
@@ -155,7 +155,7 @@ class PlatformTypesValidationTest extends AnyFunSuite {
     }
 
     // Constructors (make sure we can decompose them via toString)
-    typeDeclaration.constructors.map(_.toString)
+    typeDeclaration.localConstructors.map(_.toString)
 
     // Methods (make sure we can decompose them via toString)
     typeDeclaration.methods.map(_.toString)

@@ -133,9 +133,107 @@ trait ParameterDeclaration {
   }
 }
 
-trait ConstructorDeclaration extends DependencyHolder {
-  val modifiers: ArraySeq[Modifier]
+trait Parameters {
   val parameters: ArraySeq[ParameterDeclaration]
+
+  /** Test if this params are compatible with those passed. Ideally this would just be a comparison of type names
+    * but there is a quirk in how platform generic interfaces are handled.
+    */
+  def hasCompatibleParameters(
+    params: ArraySeq[TypeName],
+    allowPlatformGenericEquivalence: Boolean
+  ): Boolean = {
+    if (parameters.length == params.length) {
+      parameters
+        .zip(params)
+        .forall(paramPair => {
+          paramPair._1.typeName == paramPair._2 ||
+            (allowPlatformGenericEquivalence &&
+              paramPair._1.typeName.params.nonEmpty && areSameGenericTypes(
+              paramPair._1.typeName,
+              paramPair._2
+            ))
+        })
+    } else {
+      false
+    }
+  }
+
+  /** Determine if this params is a more specific version of the passed params. For this to be true all the parameters
+    * of this parameters must be assignable to the corresponding parameter of the other method. However when dealing with
+    * RecordSets (SOQL results) we also prioritise degrees of specificness and use those to select as well.
+    */
+  def hasMoreSpecificParams(
+    otherParams: ArraySeq[ParameterDeclaration],
+    params: ArraySeq[TypeName],
+    context: VerifyContext
+  ): Option[Boolean] = {
+    if (parameters.length != otherParams.length || parameters.length != params.length)
+      return None
+
+    val zip = params.lazyZip(otherParams).lazyZip(parameters).toList
+    Some(zip.forall(tuple => {
+      if (tuple._1.isRecordSet) {
+        val sObjectType = tuple._1.params.head
+        val otherScore  = scoreRecordSetAssignability(tuple._2.typeName, sObjectType)
+        val thisScore   = scoreRecordSetAssignability(tuple._3.typeName, sObjectType)
+        thisScore.nonEmpty && (otherScore.isEmpty || thisScore.get < otherScore.get)
+      } else {
+        isAssignable(tuple._2.typeName, tuple._3.typeName, strict = false, context)
+      }
+    }))
+  }
+
+  /** Determine if parameter type names are considered the same. During method and constructor calls some platform generics are
+    * considered equivalent regardless of the type parameters used. Yeah, its a mess of a language.
+    */
+  protected def areSameGenericTypes(param: TypeName, other: TypeName): Boolean = {
+    param.equalsIgnoreParamTypes(other) &&
+    ( // Ignore generic type params on these
+      (param.outer.contains(TypeNames.System) && param.name == XNames.Iterable) ||
+      (param.outer.contains(TypeNames.System) && param.name == XNames.Iterator) ||
+      (param.outer.contains(TypeNames.Database) && param.name == Names.Batchable)
+    )
+  }
+
+  /** Create a score for toType reflecting it's priority (low is high) when matching against a RecordSet of
+    * sObjectType. The ordering here was empirically derived, having all of these available as possible
+    * matches does not create an ambiguity error, although the single record conversion may fail at runtime.
+    */
+  private def scoreRecordSetAssignability(toType: TypeName, sObjectType: TypeName): Option[Int] = {
+    if (toType == TypeNames.listOf(sObjectType))
+      Some(0)
+    else if (toType.isSObjectList)
+      Some(1)
+    else if (toType == sObjectType)
+      Some(2)
+    else if (toType == TypeNames.SObject)
+      Some(3)
+    else if (toType.isObjectList)
+      Some(4)
+    else if (toType == TypeNames.InternalObject)
+      Some(5)
+    else None
+  }
+}
+
+trait ConstructorDeclaration extends DependencyHolder with Parameters {
+  val modifiers: ArraySeq[Modifier]
+
+  //TODO: check is this is correct for ctors
+  def visibility: Modifier =
+    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
+  def isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
+
+  /** Test if the passed constructor has params compatible with this method. Ideally this would just be a comparison of
+    * type names but there is a quirk in how platform generic interfaces are handled.
+    */
+  def hasSameParameters(
+    other: ConstructorDeclaration,
+    allowPlatformGenericEquivalence: Boolean
+  ): Boolean = {
+    hasCompatibleParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
+  }
 
   override def toString: String =
     modifiers.map(_.toString).mkString(" ") + " constructor(" + parameters
@@ -147,11 +245,10 @@ object ConstructorDeclaration {
   val emptyConstructorDeclarations: ArraySeq[ConstructorDeclaration] = ArraySeq()
 }
 
-trait MethodDeclaration extends DependencyHolder with Dependent {
+trait MethodDeclaration extends DependencyHolder with Dependent with Parameters {
   val name: Name
   val modifiers: ArraySeq[Modifier]
   val typeName: TypeName
-  val parameters: ArraySeq[ParameterDeclaration]
 
   def hasBlock: Boolean
 
@@ -196,30 +293,7 @@ trait MethodDeclaration extends DependencyHolder with Dependent {
     other: MethodDeclaration,
     allowPlatformGenericEquivalence: Boolean
   ): Boolean = {
-    hasParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
-  }
-
-  /** Test if this method has params compatible with those passed. Ideally this would just be a comparison of type names
-    * but there is a quirk in how platform generic interfaces are handled.
-    */
-  def hasParameters(
-    params: ArraySeq[TypeName],
-    allowPlatformGenericEquivalence: Boolean
-  ): Boolean = {
-    if (parameters.length == params.length) {
-      parameters
-        .zip(params)
-        .forall(paramPair => {
-          paramPair._1.typeName == paramPair._2 ||
-            (allowPlatformGenericEquivalence &&
-              paramPair._1.typeName.params.nonEmpty && areSameGenericTypes(
-              paramPair._1.typeName,
-              paramPair._2
-            ))
-        })
-    } else {
-      false
-    }
+    hasCompatibleParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
   }
 
   /** Test if this method matches the provided params when fulfilling an interface method. This is more involved than
@@ -251,63 +325,6 @@ trait MethodDeclaration extends DependencyHolder with Dependent {
       false
     }
   }
-
-  /** Determine if parameter type names are considered the same. During method calls some platform generics are
-    * considered equivalent regardless of the type parameters used. Yeah, its a mess of a language.
-    */
-  private def areSameGenericTypes(param: TypeName, other: TypeName): Boolean = {
-    param.equalsIgnoreParamTypes(other) &&
-    ( // Ignore generic type params on these
-      (param.outer.contains(TypeNames.System) && param.name == XNames.Iterable) ||
-      (param.outer.contains(TypeNames.System) && param.name == XNames.Iterator) ||
-      (param.outer.contains(TypeNames.Database) && param.name == Names.Batchable)
-    )
-  }
-
-  /** Determine if this method is a more specific version of the passed method. For this to be true all the parameters
-    * of this method must be assignable to the corresponding parameter of the other method. However when dealing with
-    * RecordSets (SOQL results) we also prioritise degrees of specificness and use those to select as well.
-    */
-  def isMoreSpecific(
-    other: MethodDeclaration,
-    params: ArraySeq[TypeName],
-    context: VerifyContext
-  ): Option[Boolean] = {
-    if (parameters.length != other.parameters.length || parameters.length != params.length)
-      return None
-
-    val zip = params.lazyZip(other.parameters).lazyZip(parameters).toList
-    Some(zip.forall(tuple => {
-      if (tuple._1.isRecordSet) {
-        val sObjectType = tuple._1.params.head
-        val otherScore  = scoreRecordSetAssignability(tuple._2.typeName, sObjectType)
-        val thisScore   = scoreRecordSetAssignability(tuple._3.typeName, sObjectType)
-        thisScore.nonEmpty && (otherScore.isEmpty || thisScore.get < otherScore.get)
-      } else {
-        isAssignable(tuple._2.typeName, tuple._3.typeName, strict = false, context)
-      }
-    }))
-  }
-
-  /** Create a score for toType reflecting it's priority (low is high) when matching against a RecordSet of
-    * sObjectType. The ordering here was empirically derived, having all of these available as possible
-    * matches does not create an ambiguity error, although the single record conversion may fail at runtime.
-    */
-  private def scoreRecordSetAssignability(toType: TypeName, sObjectType: TypeName): Option[Int] = {
-    if (toType == TypeNames.listOf(sObjectType))
-      Some(0)
-    else if (toType.isSObjectList)
-      Some(1)
-    else if (toType == sObjectType)
-      Some(2)
-    else if (toType == TypeNames.SObject)
-      Some(3)
-    else if (toType.isObjectList)
-      Some(4)
-    else if (toType == TypeNames.InternalObject)
-      Some(5)
-    else None
-  }
 }
 
 object MethodDeclaration {
@@ -338,6 +355,7 @@ trait AbstractTypeDeclaration {
   ): Either[String, MethodDeclaration]
 
   def findNestedType(name: Name): Option[AbstractTypeDeclaration]
+
 }
 
 trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
@@ -370,9 +388,10 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
 
   val blocks: ArraySeq[BlockDeclaration]
   val fields: ArraySeq[FieldDeclaration]
-  val constructors: ArraySeq[ConstructorDeclaration]
+  val localConstructors: ArraySeq[ConstructorDeclaration]
 
   def methods: ArraySeq[MethodDeclaration]
+  def constructors: ArraySeq[ConstructorDeclaration] = localConstructors
 
   def isComplete: Boolean
   lazy val isExternallyVisible: Boolean =

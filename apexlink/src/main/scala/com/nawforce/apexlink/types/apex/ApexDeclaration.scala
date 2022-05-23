@@ -246,13 +246,21 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     _methodMap.get
   }
 
+  def constructorMap: ConstructorMap = {
+    if (_constructorMap.isEmpty) {
+      _constructorMap = Some(createConstructorMap)
+    }
+    _constructorMap.get
+  }
+
   protected def resetMethodMapIfInvalid(): Unit = {
     if (_methodMap.exists(_.deepHash != deepHash)) {
       _methodMap = None
     }
   }
 
-  private var _methodMap: Option[MethodMap] = None
+  private var _methodMap: Option[MethodMap]           = None
+  private var _constructorMap: Option[ConstructorMap] = None
 
   private def createMethodMap: MethodMap = {
     val errorLocation = Some(idPathLocation)
@@ -269,8 +277,26 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     methods
   }
 
+  private def createConstructorMap: ConstructorMap = {
+    val errorLocation = Some(idPathLocation)
+    val ctors = superClassDeclaration match {
+      case Some(at: ApexClassDeclaration) =>
+        ConstructorMap(this, errorLocation, localConstructors, at.constructorMap)
+      case Some(td: TypeDeclaration) =>
+        ConstructorMap(this, errorLocation, localConstructors, ConstructorMap(td))
+      case _ =>
+        ConstructorMap(this, errorLocation, localConstructors, ConstructorMap.empty)
+    }
+    ctors.errors.foreach(OrgInfo.log)
+    ctors
+  }
+
   override def methods: ArraySeq[MethodDeclaration] = {
     methodMap.allMethods
+  }
+
+  override def constructors: ArraySeq[ConstructorDeclaration] = {
+    constructorMap.allConstructors
   }
 
   override def findMethod(

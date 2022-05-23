@@ -57,11 +57,11 @@ object PartialStressTest {
           randoFile.write(contents.substring(0, trimLength))
 
           try {
-            org.packages.foreach(_.refresh(randoFile.toString))
+            org.packages.foreach(_.refresh(randoFile.toString, highPriority = false))
             org.flush()
           } finally {
             randoFile.write(contents)
-            org.packages.foreach(_.refresh(randoFile.toString))
+            org.packages.foreach(_.refresh(randoFile.toString, highPriority = false))
             org.flush()
           }
         })

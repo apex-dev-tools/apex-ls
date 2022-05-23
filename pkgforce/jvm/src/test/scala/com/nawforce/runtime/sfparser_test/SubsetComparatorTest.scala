@@ -1,17 +1,19 @@
-package com.nawforce.runtime.sfparser
+package com.nawforce.runtime.sfparser_test
 
 import com.financialforce.oparser._
-import com.nawforce.runtime.sfparser.compare.{SubsetComparator, TypeIdResolver}
+import com.nawforce.runtime.sfparser_run.compare.{SubsetComparator, TypeIdResolver}
 import com.nawforce.runtime.workspace.{ClassTypeDeclaration, IMutableModuleTypeDeclaration}
 import org.scalatest.funspec.AnyFunSpec
+
+import scala.collection.immutable.ArraySeq
 
 class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
   private def generateClassDeclaration(name: String): ClassTypeDeclaration = {
     val ctd = new ClassTypeDeclaration(null, "path/Dummy.ls", null)
     ctd.add(toId(name))
-    ctd.add(toAnnotation(Array("TestVisible"), None))
-    ctd.add(toModifier("private"))
+    ctd.setAnnotations(ArraySeq(toAnnotation(Array("TestVisible"), None)))
+    ctd.setModifiers(ArraySeq(toModifier("private")))
     ctd.add(toTypeRef(Map("Foo" -> None, "Bar" -> None)))
     ctd.add(toTypeList(Array(toTypeRef(Map("ExtendsType" -> None)))))
     ctd.add(
@@ -136,8 +138,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toAnnotation(Array("TestAnnotation"), Some("param")))
-      second.add(toAnnotation(Array("TestAnnotation"), Some("param")))
+      first.setAnnotations(ArraySeq(toAnnotation(Array("TestAnnotation"), Some("param"))))
+      second.setAnnotations(ArraySeq(toAnnotation(Array("TestAnnotation"), Some("param"))))
+
       //When
       val comparator = SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration])
       comparator.unresolvedSubsetOf(second)
@@ -150,8 +153,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toAnnotation(Array("TestAnnotation"), Some("param")))
-      second.add(toAnnotation(Array("diff"), Some("param")))
+      first.setAnnotations(ArraySeq(toAnnotation(Array("TestAnnotation"), Some("param"))))
+      second.setAnnotations(ArraySeq(toAnnotation(Array("diff"), Some("param"))))
       val comparator = SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration])
 
       //When //Then
@@ -166,8 +169,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toAnnotation(Array("TestAnnotation"), None))
-      second.add(toAnnotation(Array("QualifiedName", "TestAnnotation"), None))
+      first.setAnnotations(ArraySeq(toAnnotation(Array("TestAnnotation"), None)))
+      second.setAnnotations(ArraySeq(toAnnotation(Array("QualifiedName", "TestAnnotation"), None)))
+
       //When
       val comparator =
         SubsetComparator(
@@ -189,8 +193,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      Array("private", "with sharing").map(toModifier).foreach(first.add)
-      Array("private", "with sharing").map(toModifier).foreach(second.add)
+      first.setModifiers(ArraySeq("private", "with sharing").map(toModifier))
+      second.setModifiers(ArraySeq("private", "with sharing").map(toModifier))
+
       //When
       val comparator = SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration])
       comparator.unresolvedSubsetOf(second)
@@ -203,8 +208,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      Array("private", "with sharing").map(toModifier).foreach(first.add)
-      Array("private", "without sharing").map(toModifier).foreach(second.add)
+      first.setModifiers(ArraySeq("private", "with sharing").map(toModifier))
+      second.setModifiers(ArraySeq("private", "without sharing").map(toModifier))
+
       //When
       val comparator = SubsetComparator(first.asInstanceOf[IMutableModuleTypeDeclaration])
 

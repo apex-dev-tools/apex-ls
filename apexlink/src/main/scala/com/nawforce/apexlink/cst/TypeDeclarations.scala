@@ -86,19 +86,8 @@ final case class ClassDeclaration(
   private def verifyCommon(context: VerifyContext): Unit = {
     localIssues.foreach(context.log)
 
-    // This should likely be handled by method mapping, but constructors are not currently methods
-    constructors
-      .duplicates(_.parameters.map(_.typeName.toString()).mkString(","))
-      .foreach(duplicates => {
-        duplicates._2.map(dup => {
-          context.logError(
-            dup.idPathLocation,
-            s"Constructor is a duplicate of an earlier constructor at ${duplicates._1.idLocation.displayPosition}"
-          )
-        })
-      })
-
     // FUTURE: Eval method map for error handling side-effects
+    constructors
     methods
   }
 }

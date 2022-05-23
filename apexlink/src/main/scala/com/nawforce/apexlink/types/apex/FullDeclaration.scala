@@ -18,7 +18,6 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.finding.{RelativeTypeContext, TypeResolver}
-import com.nawforce.apexlink.memory.Monitor
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
@@ -89,7 +88,7 @@ abstract class FullDeclaration(
     }
   }
 
-  override lazy val constructors: ArraySeq[ApexConstructorDeclaration] = {
+  override lazy val localConstructors: ArraySeq[ApexConstructorDeclaration] = {
     bodyDeclarations.flatMap {
       case x: ApexConstructorDeclaration => Some(x)
       case _                             => None
@@ -291,7 +290,7 @@ abstract class FullDeclaration(
       interfaces,
       blocks.map(_.summary),
       localFields.map(_.summary).sortBy(_.name),
-      constructors.map(_.summary).sortBy(_.parameters.length),
+      localConstructors.map(_.summary).sortBy(_.parameters.length),
       localMethods.map(_.summary).sortBy(_.name),
       nestedTypes.map(_.summary).sortBy(_.name),
       dependencySummary()
@@ -326,7 +325,7 @@ object FullDeclaration {
         CompilationUnit.construct(parser, module, doc.name, result.value).map(_.typeDeclaration)
       } catch {
         case ex: Throwable =>
-          LoggerOps.info(s"CST construction failed for ${doc.path}", ex)
+          module.log(doc.path, "CST construction failed", ex)
           None
       }
     } else {
@@ -385,7 +384,6 @@ object FullDeclaration {
           )
       )
 
-    cst.foreach(Monitor.push(_))
     cst.map(_.withContext(typeDecl))
   }
 }

@@ -28,6 +28,7 @@ import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryApex, TriggerDe
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypes
+import com.nawforce.apexlink.types.schema.SObjectFieldFinder
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
@@ -109,13 +110,19 @@ class StreamDeployer(
   }
 
   private def consumeSObjects(events: BufferedIterator[PackageEvent]): Unit = {
+    // Create and register SObjects
     val deployer = new SObjectDeployer(module)
     val sobjects = deployer.createSObjects(events)
     sobjects.foreach(sobject => {
       types.put(sobject.typeName, sobject)
       module.schemaSObjectType.add(sobject.typeName.name, hasFieldSets = true)
     })
-    sobjects.foreach(_.validate())
+
+    // Run custom validation to setup dependencies and establish cross objects relationship fields from this
+    sobjects.foreach(_.validate(withRelationshipCollection = false))
+    types.values
+      .collect { case sobject: SObjectFieldFinder => sobject }
+      .foreach(_.collectRelationshipFields())
   }
 
   /** Consume Apex class events, this is a bit more involved as we try and load first via cache and then fallback
@@ -147,7 +154,7 @@ class StreamDeployer(
   /** Parse a collection of Apex classes, insert them and validate them. */
   private def parseAndValidateClasses(docs: ArraySeq[ClassDocument]): Unit = {
     LoggerOps.debugTime(s"Parsed ${docs.length} classes", docs.nonEmpty) {
-      val classTypes = docs
+      val decls = docs
         .flatMap(
           doc =>
             doc.path.readSourceData() match {
@@ -165,7 +172,14 @@ class StreamDeployer(
         )
 
       // Validate the classes, this must be last due to mutual dependence
-      classTypes.foreach(_.validate())
+      decls.foreach { decl =>
+        try {
+          decl.validate()
+        } catch {
+          case ex: Throwable =>
+            module.log(decl.paths.head, "Validation failed", ex)
+        }
+      }
     }
   }
 

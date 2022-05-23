@@ -18,6 +18,8 @@ import com.nawforce.apexlink.cst.AssignableSupport.couldBeEqual
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.OrgInfo
+import com.nawforce.apexlink.types.apex.ApexClassDeclaration
+import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.names._
 import com.nawforce.runtime.parsers.CodeParser
@@ -150,9 +152,34 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
       creating.typeDeclaration.validateFieldConstructorArguments(input, arguments, context)
       creating
     } else {
-      // FUTURE: Is constructor available
-      arguments.foreach(_.verify(input, context))
+      val args = arguments
+        .map(_.verify(input, context))
+        .map(arg => if (arg.isDefined) arg.typeName else TypeNames.Any)
+      validateConstructor(creating.declaration, args, context)
       creating
+    }
+  }
+
+  def validateConstructor(
+    input: Option[TypeDeclaration],
+    arguments: ArraySeq[TypeName],
+    context: ExpressionVerifyContext
+  ): Unit = {
+    val hasError = input match {
+      case Some(at: ApexClassDeclaration) =>
+        //TODO: Remove Temp bypass for exception
+        if (
+          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("exception")
+        ) None
+        else
+          at.constructorMap.findConstructorByParams(arguments, context) match {
+            case Left(error) => Some(error)
+            case _           => None
+          }
+      case _ => None //TODO: handle other types?
+    }
+    if (hasError.nonEmpty) {
+      OrgInfo.logError(location, hasError.get)
     }
   }
 
