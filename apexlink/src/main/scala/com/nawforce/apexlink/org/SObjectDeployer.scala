@@ -257,7 +257,6 @@ class SObjectDeployer(module: OPM.Module) {
           )
         })
       })
-
     }
   }
 
