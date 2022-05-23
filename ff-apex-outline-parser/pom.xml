@@ -61,6 +61,16 @@
               <goal>run</goal>
             </goals>
             <configuration>
+              <args>build</args>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install-outline-parser</id>
+            <phase>install</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
               <args>parserJS/publishLocal parserJVM/publishM2</args>
             </configuration>
           </execution>
