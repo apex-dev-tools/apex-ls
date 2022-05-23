@@ -179,7 +179,8 @@ class SObjectDeployer(module: OPM.Module) {
           (
             refTypeName,
             Array(
-              CustomFieldDeclaration(
+              LocatableCustomFieldDeclaration(
+                field.sourceInfo.location,
                 defaultNamespace(relationshipName),
                 TypeNames.recordSetOf(objectName),
                 None
@@ -190,7 +191,7 @@ class SObjectDeployer(module: OPM.Module) {
       case "Summary" =>
         val relatedFieldType = field.relatedField
           .flatMap(to => createdSObjects.get(schemaTypeNameOf(to._1)))
-          .flatMap(_.findField(field.relatedField.get._2, Some(false)))
+          .flatMap(_.findField(defaultNamespace(field.relatedField.get._2), Some(false)))
           .map(_.typeName)
 
         val fieldType = relatedFieldType match {

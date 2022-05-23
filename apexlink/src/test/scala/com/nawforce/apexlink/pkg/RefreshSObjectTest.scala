@@ -395,7 +395,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            "/Foo__c.object: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__c'\n"
+            "/Foo__c.object: Error: line 10: Object Schema.Bar__c is not defined\n"
         )
       }
     }
@@ -421,7 +421,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            "/Foo__c/Foo__c.object-meta.xml: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__c'\n"
+            "/Foo__c/Foo__c.object-meta.xml: Error: line 10: Object Schema.Bar__c is not defined\n"
         )
       }
     }
