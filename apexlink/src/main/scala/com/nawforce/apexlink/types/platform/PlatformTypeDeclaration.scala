@@ -86,11 +86,8 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   override lazy val modifiers: ArraySeq[Modifier] =
     PlatformModifiers.typeModifiers(cls.getModifiers, nature)
 
-  override lazy val localConstructors: ArraySeq[PlatformConstructor] = {
-    ArraySeq
-      .unsafeWrapArray(cls.getConstructors)
-      .filterNot(_.isSynthetic)
-      .map(c => new PlatformConstructor(c, this))
+  override lazy val constructors: ArraySeq[ConstructorDeclaration] = {
+    getCtors
   }
 
   override lazy val nestedTypes: ArraySeq[TypeDeclaration] = {
@@ -158,6 +155,13 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
       case _ =>
         ArraySeq.unsafeWrapArray(localMethods.map(m => new PlatformMethod(m, this)))
     }
+  }
+
+  protected def getCtors: ArraySeq[PlatformConstructor] = {
+    ArraySeq
+      .unsafeWrapArray(cls.getConstructors)
+      .filterNot(_.isSynthetic)
+      .map(c => new PlatformConstructor(c, this))
   }
 
   override def validate(): Unit = {
@@ -251,6 +255,9 @@ object PlatformTypeDeclaration {
 
   /* Cache of loaded platform declarations */
   private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
+
+  //TODO: remove this once we get full validation for constructors
+  val constructorIgnoreTypes = Set(TypeNames.Interview, TypeNames.List)
 
   /* Get a Path that leads to platform classes */
   lazy val platformPackagePath: java.nio.file.Path = {

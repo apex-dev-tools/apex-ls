@@ -18,8 +18,8 @@ import com.nawforce.apexlink.cst.AssignableSupport.couldBeEqual
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.OrgInfo
-import com.nawforce.apexlink.types.apex.ApexClassDeclaration
 import com.nawforce.apexlink.types.core.TypeDeclaration
+import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.names._
 import com.nawforce.runtime.parsers.CodeParser
@@ -152,10 +152,9 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
       creating.typeDeclaration.validateFieldConstructorArguments(input, arguments, context)
       creating
     } else {
-      val args = arguments
-        .map(_.verify(input, context))
-        .map(arg => if (arg.isDefined) arg.typeName else TypeNames.Any)
-      validateConstructor(creating.declaration, args, context)
+      val args = arguments.map(_.verify(input, context))
+      if (args.forall(_.isDefined))
+        validateConstructor(creating.declaration, args.map(arg => arg.typeName), context)
       creating
     }
   }
@@ -166,17 +165,16 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     context: ExpressionVerifyContext
   ): Unit = {
     val hasError = input match {
-      case Some(at: ApexClassDeclaration) =>
-        //TODO: Remove Temp bypass for exception
-        if (
-          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("exception")
-        ) None
+      case Some(td) =>
+        //TODO: remove this once we get full validation for constructors
+        if (PlatformTypeDeclaration.constructorIgnoreTypes.exists(td.superTypes().contains(_)))
+          None
         else
-          at.constructorMap.findConstructorByParams(arguments, context) match {
+          td.findConstructor(arguments, context) match {
             case Left(error) => Some(error)
             case _           => None
           }
-      case _ => None //TODO: handle other types?
+      case _ => None
     }
     if (hasError.nonEmpty) {
       OrgInfo.logError(location, hasError.get)

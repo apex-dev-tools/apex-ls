@@ -401,28 +401,25 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
     extends MethodCall {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     // Verify args so vars don't show as unused and map to typeNames
-    val args = arguments
-      .map(_.verify(input, context))
-      .map(arg => if (arg.isDefined) arg.typeName else TypeNames.Any)
+    val args = arguments.map(_.verify(input, context))
+    if (args.forall(_.isDefined)) {
+      val ctorSearchContext = if (isSuper) context.superType else Some(context.thisType)
 
-    val ctorSearchContext = if (isSuper) context.superType else Some(context.thisType)
-
-    ctorSearchContext match {
-      case Some(at: ApexClassDeclaration) =>
-        //TODO: Remove Temp bypass for exception
-        if (
-          at.superClass.nonEmpty && at.superClass.get.name.value.toLowerCase.endsWith("exception")
-        )
-          ExprContext.empty
-        else
-          at.constructorMap.findConstructorByParams(args, context) match {
-            case Left(error) =>
-              context.logError(location, error)
-              ExprContext.empty
-            case Right(ctor) => ExprContext(None, None, ctor)
-          }
-      case _ => ExprContext.empty
-    }
+      ctorSearchContext match {
+        case Some(td) =>
+          //TODO: remove this once we get full validation for constructors
+          if (PlatformTypeDeclaration.constructorIgnoreTypes.exists(td.superTypes().contains(_)))
+            ExprContext.empty
+          else
+            td.findConstructor(args.map(arg => arg.typeName), context) match {
+              case Left(error) =>
+                context.logError(location, error)
+                ExprContext.empty
+              case Right(ctor) => ExprContext(None, None, ctor)
+            }
+        case _ => ExprContext.empty
+      }
+    } else ExprContext.empty
   }
 }
 

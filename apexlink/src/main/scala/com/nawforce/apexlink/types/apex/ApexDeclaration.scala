@@ -40,6 +40,7 @@ trait ApexBlockLike extends BlockDeclaration with Locatable {
 
 /** Apex defined constructor core features, be they full or summary style */
 trait ApexConstructorLike extends ConstructorDeclaration with IdLocatable {
+
   def summary: ConstructorSummary = {
     ConstructorSummary(
       location.location,
@@ -140,6 +141,7 @@ trait ApexTriggerDeclaration extends ApexDeclaration {
 trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   val localFields: ArraySeq[ApexFieldLike]
   val localMethods: ArraySeq[ApexMethodLike]
+  val localConstructors: ArraySeq[ApexConstructorLike]
 
   override def nestedTypes: ArraySeq[ApexClassDeclaration]
 
@@ -307,6 +309,12 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   ): Either[String, MethodDeclaration] = {
     methodMap.findMethod(name, params, staticContext, verifyContext)
   }
+
+  override def findConstructor(
+    params: ArraySeq[TypeName],
+    verifyContext: VerifyContext
+  ): Either[String, ConstructorDeclaration] =
+    constructorMap.findConstructorByParams(params, verifyContext)
 
   def bombScore(total: Int): (Int, Int, Double) = {
     val magicScale = 1.7306 // Places score 0-100

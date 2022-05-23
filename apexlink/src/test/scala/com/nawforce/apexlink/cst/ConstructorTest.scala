@@ -92,7 +92,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: private constructor(System.Integer i)\n"
+      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: Foo.<constructor>(System.Integer)\n"
     )
   }
 
@@ -114,7 +114,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 55-65: Constructor not defined: void Foo.<constructor>(System.String)\n"
+      dummyIssues == "Error: line 1 at 55-65: Constructor not defined: Foo.<constructor>(System.String)\n"
     )
   }
 
@@ -123,7 +123,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       Map("Dummy.cls" -> "public class Dummy { public Dummy(Integer i){this('s');} }")
     )
     assert(
-      dummyIssues == "Error: line 1 at 45-54: Constructor not defined: void Dummy.<constructor>(System.String)\n"
+      dummyIssues == "Error: line 1 at 45-54: Constructor not defined: Dummy.<constructor>(System.String)\n"
     )
   }
 
@@ -146,7 +146,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 36-43: Constructor is not visible: private constructor(System.String s)\n"
+      dummyIssues == "Error: line 1 at 36-43: Constructor is not visible: Foo.<constructor>(System.String)\n"
     )
   }
 
@@ -155,6 +155,90 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       Map(
         "Foo.cls"   -> "public class Foo {public Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
         "Dummy.cls" -> "public class Dummy { Dummy(){new Foo('abc'); }}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Custom exceptions") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo {public class TestException extends Exception {}}",
+        "Dummy.cls" -> "public class Dummy { Dummy(){ throw new Foo.TestException('Error'); }}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Generic platform type constructors") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" -> "public class Dummy { Dummy(){ new Set<String>(new List<String>()); new Map<String,String>();}}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("No default super constructor") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "virtual public class Foo {public Foo(String arg) {}}",
+        "Dummy.cls" -> "public class Dummy extends Foo {}"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 13-18: No default constructor available in super type: Foo\n"
+    )
+  }
+
+  test("Private default super constructor") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "virtual public class Foo { private Foo() {} public Foo(String arg) {}}",
+        "Dummy.cls" -> "public class Dummy extends Foo {}"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 13-18: Constructor is not visible: Foo.<constructor>()\n"
+    )
+  }
+
+  test("Protected constructor call") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo { protected Foo(String s) {}}",
+        "Dummy.cls" -> "public class Dummy { public Dummy(String s){new Foo(s);} }"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: Foo.<constructor>(System.String)\n"
+    )
+  }
+
+  test("Protected super constructor call") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "virtual public class Foo { protected Foo(String s) {}}",
+        "Dummy.cls" -> "public class Dummy extends Foo { public Dummy(String s){super(s);} }"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Protected constructor call from inner") {
+    typeDeclarations(
+      Map(
+        "Foo.cls" -> "public class Foo { protected Foo(String s) {} class Bar{ public Bar(){ new Foo('s'); }}}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Private TestVisible default super constructor") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "@isTest virtual public class Foo { @TestVisible private Foo() {} public Foo(String arg) {}}",
+        "Dummy.cls" -> "@isTest public class Dummy extends Foo {}"
       )
     )
     assert(dummyIssues.isEmpty)
