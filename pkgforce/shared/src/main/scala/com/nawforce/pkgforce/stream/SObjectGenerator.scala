@@ -16,7 +16,7 @@ package com.nawforce.pkgforce.stream
 
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
-import com.nawforce.pkgforce.names.Name
+import com.nawforce.pkgforce.names.{DotName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.pkgforce.xml.{XMLDocumentLike, XMLElementLike, XMLException, XMLFactory}
 import com.nawforce.runtime.xml.XMLDocument
@@ -50,7 +50,8 @@ final case class CustomFieldEvent(
   sourceInfo: SourceInfo,
   name: Name,
   rawType: Name,
-  referenceTo: Option[(Name, Name)]
+  referenceTo: Option[(Name, Name)],
+  relatedField: Option[(Name, Name)]
 )                                                                       extends PackageEvent
 final case class FieldsetEvent(sourceInfo: SourceInfo, name: Name)      extends PackageEvent
 final case class SharingReasonEvent(sourceInfo: SourceInfo, name: Name) extends PackageEvent
@@ -75,7 +76,7 @@ object SObjectGenerator {
       found = false
       eventsByName.foreach(kv => {
         val depends = kv._2
-          .collect { case CustomFieldEvent(_, _, _, Some((referenceTo, _))) => referenceTo }
+          .collect { case CustomFieldEvent(_, _, _, Some((referenceTo, _)), _) => referenceTo }
           .filter(eventsByName.contains)
         if (depends.forall(d => emitted.contains(d))) {
           eventsByName.remove(kv._1)
@@ -278,7 +279,17 @@ object SObjectGenerator {
         case _ => None
       }
 
-      Iterator(CustomFieldEvent(sourceInfo, name, Name(rawType), target))
+      // Child relationship field references
+      val related = rawType match {
+        case "Summary" =>
+          elem
+            .getOptionalSingleChildAsString("summarizedField")
+            .map(fieldStr => DotName(fieldStr.trim))
+            .map(field => (field.firstName, field.lastName))
+        case _ => None
+      }
+
+      Iterator(CustomFieldEvent(sourceInfo, name, Name(rawType), target, related))
     }
   }
 
