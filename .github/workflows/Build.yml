@@ -28,8 +28,7 @@ jobs:
     - name: runforce-checkout
       uses: actions/checkout@v2
       with:
-        repository: bmathewffdc/runforce
-        ref: 'platform-ctors'
+        repository: nawforce/runforce
         path: './runforce'
 
     - name: runforce-compile
