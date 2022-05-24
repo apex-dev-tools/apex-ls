@@ -105,7 +105,10 @@ class SObjectDeployer(module: OPM.Module) {
     derivedFields
       .groupMap(_._1) {
         // group fields by obj name to overwrite each obj only once
-        case (objName, field) => createDerivedField(objName, field, createdSObjects)
+        case (objName, field) =>
+          val relField =
+            field.relatedField.flatMap(findRelatedField(_, createdSObjects, derivedFields))
+          createDerivedField(objName, field, relField)
       }
       .foreach(a => addFieldsToSObject(a._1, a._2.toArray, createdSObjects))
 
@@ -163,15 +166,12 @@ class SObjectDeployer(module: OPM.Module) {
   private def createDerivedField(
     objectName: TypeName,
     field: CustomFieldEvent,
-    createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration]
+    relatedField: Option[FieldDeclaration]
   ): FieldDeclaration = {
-    val location = field.sourceInfo.location
-    val relatedFieldType = field.relatedField
-      .flatMap(to => createdSObjects.get(schemaTypeNameOf(to._1)))
-      .flatMap(_.findField(defaultNamespace(field.relatedField.get._2), Some(false)))
-      .map(_.typeName)
+    val location         = field.sourceInfo.location
+    val relatedFieldType = relatedField.map(_.typeName)
 
-    if (relatedFieldType.isEmpty && field.relatedField.nonEmpty) {
+    if (relatedField.isEmpty && field.relatedField.nonEmpty) {
       val (relObj, relField) = field.relatedField.get
       OrgInfo.logError(
         location,
@@ -185,6 +185,28 @@ class SObjectDeployer(module: OPM.Module) {
       relatedFieldType.getOrElse(SObjectDeployer.platformTypeOfFieldType(field).typeName),
       None
     )
+  }
+
+  private def findRelatedField(
+    field: (Name, Name),
+    createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration],
+    derivedFields: ArrayBuffer[(TypeName, CustomFieldEvent)]
+  ): Option[FieldDeclaration] = {
+    val objName = schemaTypeNameOf(field._1)
+    val relObj  = createdSObjects.get(objName)
+
+    relObj
+      .flatMap(_.findField(defaultNamespace(field._2), Some(false)))
+      .orElse(
+        // rare case of chained related fields
+        derivedFields
+          .find {
+            case (obj, f) => obj == objName && f.name == field._2
+          }
+          .flatMap(
+            rf => rf._2.relatedField.flatMap(findRelatedField(_, createdSObjects, derivedFields))
+          )
+      )
   }
 
   private def addFieldsToSObject(
