@@ -106,12 +106,6 @@ object IPM extends TriHierarchy {
 
     // Helper to save from dealing with Option in Java
     def namespaceAsString: String = namespace.map(_.value).getOrElse("")
-
-    /* Find first module in search order (may not be in this package) */
-    def firstModule: Option[Module] = {
-      orderedModules.headOption
-        .orElse(basePackages.headOption.flatMap(_.firstModule))
-    }
   }
 
   /* Module capabilities, not all of these will be supported by all module types, e.g. platform types don't have
@@ -121,11 +115,6 @@ object IPM extends TriHierarchy {
 
     // Helper to save from dealing with Option in Java
     def namespaceAsString: String = pkg.namespaceAsString
-
-    /* Find next module in search order */
-    def nextModule: Option[Module] = {
-      baseModules.headOption.orElse(basePackages.headOption.flatMap(_.firstModule))
-    }
 
     /* Find a type declaration from a type name. The name format is not as flexible as found in Apex, you can not
      * use whitespace or array subscripts. In general namespaces should be used although System and Schema references
