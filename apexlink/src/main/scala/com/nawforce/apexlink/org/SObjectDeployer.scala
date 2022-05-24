@@ -371,7 +371,7 @@ class SObjectDeployer(module: OPM.Module) {
   /** Create an SObject by extending a base SObject with new fields, fieldSets and sharing reasons. If you don't pass
     * a base object than this will extend System.SObject.
     */
-  private def extendExistingSObject(
+  def extendExistingSObject(
     base: Option[TypeDeclaration],
     sources: Array[SourceInfo],
     typeName: TypeName,
