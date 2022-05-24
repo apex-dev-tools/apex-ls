@@ -155,7 +155,8 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
       val args = arguments.map(_.verify(input, context))
       if (args.forall(_.isDefined))
         validateConstructor(creating.declaration, args.map(arg => arg.typeName), context)
-      creating
+      else
+        creating
     }
   }
 
@@ -163,17 +164,16 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     input: Option[TypeDeclaration],
     arguments: ArraySeq[TypeName],
     context: ExpressionVerifyContext
-  ): Unit = {
-    val hasError = input match {
+  ): ExprContext = {
+    input match {
       case Some(td) =>
         td.findConstructor(arguments, context) match {
-          case Left(error) => Some(error)
-          case _           => None
+          case Left(error) =>
+            OrgInfo.logError(location, error)
+            ExprContext.empty
+          case Right(ctor) => ExprContext(None, input, ctor)
         }
-      case _ => None
-    }
-    if (hasError.nonEmpty) {
-      OrgInfo.logError(location, hasError.get)
+      case _ => ExprContext.empty
     }
   }
 
