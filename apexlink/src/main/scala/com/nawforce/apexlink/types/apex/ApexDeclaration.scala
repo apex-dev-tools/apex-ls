@@ -38,8 +38,15 @@ trait ApexBlockLike extends BlockDeclaration with Locatable {
   def summary: BlockSummary = BlockSummary(location.location, isStatic, dependencySummary())
 }
 
+/** Unifying trait for ApexConstructorLike and CustomConstructorDeclaration. Both need to appear to be visible from a
+  * a type but have little in common beyond allowing for creation of a summary.
+  */
+trait ApexVisibleConstructorLike extends ConstructorDeclaration {
+  def summary: ConstructorSummary
+}
+
 /** Apex defined constructor core features, be they full or summary style */
-trait ApexConstructorLike extends ConstructorDeclaration with IdLocatable {
+trait ApexConstructorLike extends ApexVisibleConstructorLike with IdLocatable {
 
   def summary: ConstructorSummary = {
     ConstructorSummary(

@@ -4,20 +4,16 @@
 
 package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
-import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.types.apex.{
-  ApexClassDeclaration,
-  ApexConstructorLike,
-  ApexDeclaration,
-  FullDeclaration
-}
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike, ApexDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.synthetic.{CustomConstructorDeclaration, CustomParameterDeclaration}
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
-import com.nawforce.pkgforce.path.PathLocation
+import com.nawforce.pkgforce.parsers.CLASS_NATURE
+import com.nawforce.pkgforce.path.{Location, PathLocation}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -160,7 +156,7 @@ object ConstructorMap {
 
   def apply(
     td: TypeDeclaration,
-    location: Option[PathLocation],
+    errorLocation: Option[PathLocation],
     ctors: ArraySeq[ConstructorDeclaration],
     superClassMap: ConstructorMap
   ): ConstructorMap = {
@@ -181,7 +177,7 @@ object ConstructorMap {
       workingMap.put(key, ctor :: ctorsWithSameParamLength)
     })
 
-    applySyntheticsCtors(td, workingMap, superClassMap, errors)
+    applySyntheticsCtors(errorLocation, td, workingMap, superClassMap, errors)
 
     td match {
       case td: ApexClassDeclaration =>
@@ -208,12 +204,13 @@ object ConstructorMap {
   }
 
   private def applySyntheticsCtors(
+    errorLocation: Option[PathLocation],
     td: TypeDeclaration,
     workingMap: WorkingMap,
     superClassMap: ConstructorMap,
     errors: mutable.Buffer[Issue]
   ): Unit = {
-    if (td.isCustomException) applyCustomExceptionsCtors(td, workingMap)
+    if (td.isCustomException) applyCustomExceptionsCtors(errorLocation, td, workingMap)
     else applyDefaultCtor(td, workingMap, superClassMap, errors)
   }
 
@@ -247,24 +244,27 @@ object ConstructorMap {
     }
   }
 
-  private def applyCustomExceptionsCtors(td: TypeDeclaration, workingMap: WorkingMap): Unit = {
-    def toParam(id: String, typeCntxt: RelativeTypeContext, typeName: TypeName): FormalParameter = {
-      FormalParameter(publicModifierResult, RelativeTypeName(typeCntxt, typeName), Id(Name(id)))
+  private def applyCustomExceptionsCtors(
+    errorLocation: Option[PathLocation],
+    td: TypeDeclaration,
+    workingMap: WorkingMap
+  ): Unit = {
+    def toParam(id: String, typeName: TypeName): CustomParameterDeclaration = {
+      CustomParameterDeclaration(Name(id), typeName)
     }
-    val synthetics = td match {
-      case fd: FullDeclaration =>
+    val location = errorLocation.map(_.location).getOrElse(Location.empty)
+    val synthetics = td.nature match {
+      case CLASS_NATURE =>
         ArraySeq(
-          toCtor(fd),
-          toCtor(fd, ArraySeq(toParam("param1", fd.typeContext, TypeNames.String))),
-          toCtor(fd, ArraySeq(toParam("param1", fd.typeContext, TypeNames.Exception))),
-          toCtor(
-            fd,
-            ArraySeq(
-              toParam("param1", fd.typeContext, TypeNames.String),
-              toParam("param2", fd.typeContext, TypeNames.Exception)
-            )
+          CustomConstructorDeclaration(location, ArraySeq()),
+          CustomConstructorDeclaration(location, ArraySeq(toParam("param1", TypeNames.String))),
+          CustomConstructorDeclaration(location, ArraySeq(toParam("param1", TypeNames.Exception))),
+          CustomConstructorDeclaration(
+            location,
+            ArraySeq(toParam("param1", TypeNames.String), toParam("param2", TypeNames.Exception))
           )
         )
+
       case _ => ArraySeq.empty
     }
 

@@ -53,7 +53,11 @@ abstract class TriHierarchy {
     /** Is this a ghost package, aka it has no modules. */
     lazy val isGhosted: Boolean = modules.isEmpty
 
-    override def toString: String = s"Package(${namespace.map(_.toString).getOrElse("")})"
+    /* Find first module in search order (may not be in this package) */
+    def firstModule: Option[TModule] = {
+      orderedModules.headOption
+        .orElse(basePackages.headOption.flatMap(_.firstModule))
+    }
 
     /* Check if a type is ghosted in this package */
     def isGhostedType(typeName: TypeName): Boolean = {
@@ -74,6 +78,7 @@ abstract class TriHierarchy {
       }
     }
 
+    override def toString: String = s"Package(${namespace.map(_.toString).getOrElse("")})"
   }
 
   trait TriModule {
@@ -102,6 +107,11 @@ abstract class TriHierarchy {
       namespace
         .map(_ => dependents.toSet ++ dependents.flatMap(_.transitiveModules))
         .getOrElse(baseModules.toSet)
+    }
+
+    /* Find next module in search order */
+    def nextModule: Option[TModule] = {
+      baseModules.headOption.orElse(basePackages.headOption.flatMap(_.firstModule))
     }
 
     /* Check if a type name is ghosted in this module */

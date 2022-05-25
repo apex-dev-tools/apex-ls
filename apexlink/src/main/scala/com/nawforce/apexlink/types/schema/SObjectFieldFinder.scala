@@ -58,7 +58,15 @@ trait SObjectFieldFinder {
           .map(field => (sobject.asInstanceOf[TypeDeclaration], field))
       })
 
-    relationshipFields = mutable.Map[Name, FieldDeclaration]()
+    relationshipFields = this.moduleDeclaration
+      .flatMap(_.nextModule)
+      .flatMap(nextModule => {
+        TypeResolver(typeName, nextModule).toOption
+          .collect { case sobject: SObjectFieldFinder => sobject }
+          .flatMap(sobject => Option(sobject.relationshipFields))
+      })
+      .getOrElse(mutable.Map())
+
     incomingObjectAndField.foreach(incoming => {
       val relationshipName = Name(incoming._2.relationshipName.get + "__r")
       val ns               = this.moduleDeclaration.flatMap(_.namespace)

@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.types.synthetic
 
 import com.nawforce.apexlink.api._
-import com.nawforce.apexlink.types.apex.ApexVisibleMethodLike
+import com.nawforce.apexlink.types.apex.{ApexVisibleConstructorLike, ApexVisibleMethodLike}
 import com.nawforce.apexlink.types.core.ParameterDeclaration
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
@@ -60,6 +60,24 @@ object CustomMethodDeclaration {
 
   def getModifiers(isStatic: Boolean): ArraySeq[Modifier] = {
     if (isStatic) staticModifiers else standardModifiers
+  }
+}
+
+final case class CustomConstructorDeclaration(
+  nameLocation: Location,
+  parameters: ArraySeq[ParameterDeclaration]
+) extends ApexVisibleConstructorLike {
+
+  override val modifiers: ArraySeq[Modifier] = CustomMethodDeclaration.standardModifiers
+
+  def summary: ConstructorSummary = {
+    ConstructorSummary(
+      nameLocation,
+      nameLocation,
+      modifiers,
+      parameters.map(_.serialise),
+      dependencySummary()
+    )
   }
 }
 
