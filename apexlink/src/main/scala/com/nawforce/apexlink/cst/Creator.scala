@@ -171,7 +171,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
           case Left(error) =>
             OrgInfo.logError(location, error)
             ExprContext.empty
-          case Right(ctor) => ExprContext(None, input, ctor)
+          case Right(ctor) => ExprContext(Some(false), input, ctor)
         }
       case _ => ExprContext.empty
     }

@@ -19,7 +19,7 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
-import com.nawforce.apexlink.types.apex.ApexClassDeclaration
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.other.AnyDeclaration
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
@@ -411,7 +411,10 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
             case Left(error) =>
               context.logError(location, error)
               ExprContext.empty
-            case Right(ctor) => ExprContext(None, None, ctor)
+            case Right(ctor: ApexConstructorLike) =>
+              context.saveResult(this, ctor.location.location) {
+                ExprContext(Some(false), None, ctor)
+              }
           }
         case _ => ExprContext.empty
       }
