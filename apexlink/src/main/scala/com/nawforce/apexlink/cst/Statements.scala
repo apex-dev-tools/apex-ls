@@ -15,11 +15,15 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.cst.stmts.SwitchStatement
+import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
+import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import java.lang.ref.WeakReference
@@ -428,9 +432,30 @@ object CatchClause {
   }
 }
 
-final case class ReturnStatement(expression: Option[Expression]) extends Statement {
+final case class ReturnStatement(expression: Option[Expression]) extends CST with Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.foreach(_.verify(context))
+    assertReturnType(context, expression.map(_.verify(context)))
+      .foreach(
+        msg => context.log(Issue(this.location.path, ERROR_CATEGORY, this.location.location, msg))
+      )
+  }
+
+  private def assertReturnType(
+    context: BlockVerifyContext,
+    expr: Option[ExprContext]
+  ): Option[String] = {
+    val expectedType = context.returnType
+
+    if (expr.isEmpty && expectedType != TypeNames.Void)
+      Some(s"Missing return value of type '$expectedType'")
+    else {
+      expr.flatMap(e => {
+        if (e.isDefined && !isAssignable(expectedType, e.typeDeclaration, strict = false, context))
+          Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
+        else
+          None
+      })
+    }
   }
 }
 
@@ -440,7 +465,7 @@ object ReturnStatement {
       CodeParser
         .toScala(statement.expression())
         .map(e => Expression.construct(e))
-    )
+    ).withContext(statement)
   }
 }
 

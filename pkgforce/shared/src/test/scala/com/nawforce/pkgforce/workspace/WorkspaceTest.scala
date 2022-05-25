@@ -566,7 +566,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
       issuesAndWS.value.get.events.toList should matchPattern {
         case List(
               SObjectEvent(sourceInfo, path, false, None, None),
-              CustomFieldEvent(_, Name("Name__c"), Name("Text"), None)
+              CustomFieldEvent(_, Name("Name__c"), Name("Text"), None, None)
             ) if sourceInfo.get.location == location && path == reportingPath =>
       }
     }
@@ -644,7 +644,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
       issuesAndWS.value.get.events.toList should matchPattern {
         case List(
               SObjectEvent(sourceInfo, path, false, None, None),
-              CustomFieldEvent(sourceInfoField, Name("Name__c"), Name("Text"), None)
+              CustomFieldEvent(sourceInfoField, Name("Name__c"), Name("Text"), None, None)
             )
             if sourceInfo.get.location == objectLocation &&
               sourceInfoField.location == fieldLocation && path == objectPath =>
@@ -754,7 +754,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
                 _,
                 Name("Lookup__c"),
                 Name("MasterDetail"),
-                Some((Name("MyMaster"), Name("Master")))
+                Some((Name("MyMaster"), Name("Master"))),
+                None
               )
             )
             if sourceInfo1.get.location == masterLocation &&
@@ -800,8 +801,71 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
                 _,
                 Name("Lookup__c"),
                 Name("MasterDetail"),
-                Some((Name("MyMaster"), Name("Master")))
+                Some((Name("MyMaster"), Name("Master"))),
+                None
               )
+            )
+            if sourceInfo1.get.location == masterLocation &&
+              sourceInfo2.get.location == detailLocation &&
+              masterPath == masterReportingPath && detailPath == detailReportingPath =>
+      }
+    }
+  }
+
+  test("Master/Detail related field") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "pkg/MyMaster.object" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <fields>
+            |     <fullName>MyDetailSummary__c</fullName>
+            |     <type>Summary</type>
+            |     <summarizedField>MyDetail.Child__c</summarizedField>
+            |   </fields>
+            |</CustomObject>
+            |""".stripMargin,
+        "pkg/sub/MyDetail.object" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <fields>
+            |     <fullName>Lookup__c</fullName>
+            |     <type>MasterDetail</type>
+            |     <referenceTo>MyMaster</referenceTo>
+            |     <relationshipName>Master</relationshipName>
+            |   </fields>
+            |   <fields>
+            |     <fullName>Child__c</fullName>
+            |     <type>Number</type>
+            |   </fields>
+            |</CustomObject>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      val issuesAndWS = Workspace(root)
+      assert(issuesAndWS.issues.isEmpty)
+      assert(issuesAndWS.value.nonEmpty)
+      val masterReportingPath = root.join("pkg").join("MyMaster.object")
+      val masterLocation      = PathLocation(masterReportingPath, Location.all)
+      val detailReportingPath = root.join("pkg").join("sub").join("MyDetail.object")
+      val detailLocation      = PathLocation(detailReportingPath, Location.all)
+      issuesAndWS.value.get.events.toList should matchPattern {
+        case List(
+              SObjectEvent(sourceInfo1, masterPath, false, None, None),
+              CustomFieldEvent(
+                _,
+                Name("MyDetailSummary__c"),
+                Name("Summary"),
+                None,
+                Some((Name("MyDetail"), Name("Child__c")))
+              ),
+              SObjectEvent(sourceInfo2, detailPath, false, None, None),
+              CustomFieldEvent(
+                _,
+                Name("Lookup__c"),
+                Name("MasterDetail"),
+                Some((Name("MyMaster"), Name("Master"))),
+                None
+              ),
+              CustomFieldEvent(_, Name("Child__c"), Name("Number"), None, None)
             )
             if sourceInfo1.get.location == masterLocation &&
               sourceInfo2.get.location == detailLocation &&

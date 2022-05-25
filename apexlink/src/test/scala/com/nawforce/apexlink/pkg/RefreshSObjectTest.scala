@@ -429,6 +429,49 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Derived field refresh") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Bar__c/Bar__c.object-meta.xml" -> customObject(
+            "Bar",
+            Seq(("Date__c", Some("DateTime"), None))
+          ),
+          "Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq())
+        )
+      ) { root: PathLike =>
+        val org = createHappyOrg(root)
+
+        val fieldsDir = root.join("Foo__c").createDirectory("fields").toOption.get
+        val field = fieldsDir
+          .createFile(
+            "SummaryDate__c.field-meta.xml",
+            customField(
+              "SummaryDate__c",
+              "Summary",
+              None,
+              Some(s"<summarizedField>Bar__c.Date__c</summarizedField>")
+            )
+          )
+          .toOption
+          .get
+
+        org.unmanaged.refresh(field, highPriority = false)
+        assert(org.issues.isEmpty)
+
+        val related = root.join("Bar__c").join("fields").join("Date__c.field-meta.xml")
+        related.delete()
+        org.unmanaged.refresh(related, highPriority = false)
+
+        assert(org.flush())
+        assert(
+          getMessages() ==
+            "/Foo__c/fields/SummaryDate__c.field-meta.xml: Error: line 1: Related field 'Bar__c.Date__c' required by Schema.Foo__c is not defined\n"
+        )
+      }
+    }
+  }
+
   test("Custom metadata upsert") {
     withManualFlush {
       val customObjectMetadata = customObject("Foo", Seq())

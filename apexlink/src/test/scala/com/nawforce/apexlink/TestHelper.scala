@@ -242,7 +242,12 @@ trait TestHelper {
        |""".stripMargin
   }
 
-  def customField(name: String, fieldType: String, relationshipName: Option[String]): String = {
+  def customField(
+    name: String,
+    fieldType: String,
+    relationshipName: Option[String],
+    xml: Option[String] = None
+  ): String = {
     s"""<?xml version="1.0" encoding="UTF-8"?>
        |<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
        |    <fullName>$name</fullName>
@@ -252,6 +257,7 @@ trait TestHelper {
        |    ${if (relationshipName.nonEmpty)
       s"<relationshipName>${name.replaceAll("__c$", "")}</relationshipName>"
     else ""}
+       |    ${if (xml.nonEmpty) s"$xml"}
        |</CustomField>
        |""".stripMargin
   }
