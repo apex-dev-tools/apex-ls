@@ -18,7 +18,7 @@ import com.nawforce.apexlink.cst.VerifyContext
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.org.{OPM, OrgInfo, SObjectDeployer}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.synthetic.{
@@ -131,18 +131,36 @@ final case class SObjectDeclaration(
         .collect { case field: CustomField => field }
         .filter(_.relationshipName.nonEmpty)
         .foreach(field => {
-          TypeResolver(field.typeName, module).swap.toOption.map(_ => {
-            if (module.isGhostedType(field.typeName)) {
-              val ghostedSObject = GhostSObjectDeclaration(module, field.typeName)
-              module.types.put(field.typeName, ghostedSObject)
-              module.schemaSObjectType.add(ghostedSObject.typeName.name, hasFieldSets = true)
-            } else {
-              OrgInfo.logError(
-                field.location,
-                s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
+          TypeResolver(field.typeName, module) match {
+            case Right(td: SObjectDeclaration) if !td.moduleDeclaration.contains(module) =>
+              // Create a module specific version for related lists to live on
+              val deployer = new SObjectDeployer(module)
+              val replacement = deployer.extendExistingSObject(
+                Some(td),
+                Array(),
+                td.typeName,
+                td.sobjectNature,
+                ArraySeq(),
+                ArraySeq(),
+                ArraySeq()
               )
-            }
-          })
+              module.types.put(replacement.typeName, replacement)
+              module.schemaSObjectType.add(replacement.typeName.name, hasFieldSets = true)
+            case Left(_) =>
+              if (module.isGhostedType(field.typeName)) {
+                // Create ghost SObject for later validations
+                val ghostedSObject = GhostSObjectDeclaration(module, field.typeName)
+                module.types.put(field.typeName, ghostedSObject)
+                module.schemaSObjectType.add(ghostedSObject.typeName.name, hasFieldSets = true)
+              } else {
+                // This is what we don't want to see ;-)
+                OrgInfo.logError(
+                  field.location,
+                  s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
+                )
+              }
+            case _ => ()
+          }
         })
 
       // Update dependencies from field types

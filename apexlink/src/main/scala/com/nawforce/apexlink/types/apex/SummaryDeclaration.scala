@@ -17,6 +17,7 @@ package com.nawforce.apexlink.types.apex
 import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
+import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
@@ -348,6 +349,10 @@ class SummaryDeclaration(
 
   override val superClass: Option[TypeName]   = typeSummary.superClass
   override val interfaces: ArraySeq[TypeName] = typeSummary.interfaces
+  override lazy val isCustomException: Boolean =
+    name.endsWith(Names.Exception) || superClass.contains(TypeNames.Exception) ||
+      (superClassDeclaration.nonEmpty && superClassDeclaration.get.isCustomException)
+
   override val nestedTypes: ArraySeq[SummaryDeclaration] =
     typeSummary.nestedTypes.map(
       new SummaryDeclaration(path, module, Some(typeId.typeName.intern), _)
