@@ -268,6 +268,12 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     }
   }
 
+  protected def resetConstructorMapIfInvalid(): Unit = {
+    if (_constructorMap.exists(_.deepHash != deepHash)) {
+      _constructorMap = None
+    }
+  }
+
   private var _methodMap: Option[MethodMap]           = None
   private var _constructorMap: Option[ConstructorMap] = None
 
