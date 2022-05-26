@@ -388,9 +388,9 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
           .getDefinition(path, line = 1, offset = 54, None)
           .contains(
             LocationLink(
-              Location(1, 49, 1, 58),
+              Location(1, 53, 1, 56),
               root.join("Foo.cls").toString,
-              Location(1, 13, 1, 16),
+              Location(1, 0, 1, 19),
               Location(1, 13, 1, 16)
             )
           )
@@ -423,7 +423,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Constructor navigation") {
+  test("Synthetic constructor navigation") {
     FileSystemHelper.run(
       Map("Dummy.cls" -> "public class Dummy {{new Foo();}}", "Foo.cls" -> "public class Foo {}")
     ) { root: PathLike =>
@@ -433,10 +433,33 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
           .getDefinition(root.join("Dummy.cls"), line = 1, offset = 27, None)
           .contains(
             LocationLink(
-              Location(1, 21, 1, 30),
+              Location(1, 25, 1, 28),
               root.join("Foo.cls").toString,
-              Location(1, 13, 1, 16),
+              Location(1, 0, 1, 19),
               Location(1, 13, 1, 16)
+            )
+          )
+      )
+    }
+  }
+
+  test("Defined constructor navigation") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {{Foo f = new Foo(1);}}",
+        "Foo.cls"   -> "public class Foo { public Foo(Integer i){}}"
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Dummy.cls"), line = 1, offset = 35, None)
+          .contains(
+            LocationLink(
+              Location(1, 29, 1, 39),
+              root.join("Foo.cls").toString,
+              Location(1, 26, 1, 42),
+              Location(1, 26, 1, 29)
             )
           )
       )
@@ -460,6 +483,28 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
               root.join("Foo.cls").toString,
               Location(1, 34, 1, 49),
               Location(1, 34, 1, 37)
+            )
+          )
+      )
+    }
+  }
+
+  test("This constructor") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public Dummy(){this('s');} public Dummy(String s){} }"
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Dummy.cls"), line = 1, offset = 38, None)
+          .contains(
+            LocationLink(
+              Location(1, 36, 1, 45),
+              root.join("Dummy.cls").toString,
+              Location(1, 55, 1, 72),
+              Location(1, 55, 1, 60)
             )
           )
       )

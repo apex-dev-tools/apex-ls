@@ -19,14 +19,14 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
-import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
+import com.nawforce.apexlink.types.apex.ApexClassDeclaration
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.other.AnyDeclaration
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
-import com.nawforce.pkgforce.path.{Locatable, PathLocation}
+import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.immutable.ArraySeq
@@ -411,10 +411,11 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
             case Left(error) =>
               context.logError(location, error)
               ExprContext.empty
-            case Right(ctor: ApexConstructorLike) =>
+            case Right(ctor: IdLocatable) =>
               context.saveResult(this, ctor.location.location) {
                 ExprContext(Some(false), None, ctor)
               }
+            case Right(ctor) => ExprContext(Some(false), None, ctor)
           }
         case _ => ExprContext.empty
       }
