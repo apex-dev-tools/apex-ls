@@ -102,15 +102,7 @@ class SObjectDeployer(module: OPM.Module) {
       sobjects.foreach(sobject => createdSObjects.put(sobject.typeName, sobject))
     }
 
-    derivedFields
-      .groupMap(_._1) {
-        // group fields by obj name to overwrite each obj only once
-        case (objName, field) =>
-          val relField =
-            field.relatedField.flatMap(findRelatedField(_, createdSObjects, derivedFields))
-          createDerivedField(objName, field, relField)
-      }
-      .foreach(a => addFieldsToSObject(a._1, a._2.toArray, createdSObjects))
+    addDerivedFieldsToObjects(derivedFields, createdSObjects)
 
     createdSObjects.values.toArray
   }
@@ -163,15 +155,36 @@ class SObjectDeployer(module: OPM.Module) {
     }
   }
 
+  private def addDerivedFieldsToObjects(
+    fields: ArrayBuffer[(TypeName, CustomFieldEvent)],
+    createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration]
+  ): Unit = {
+    fields
+      .groupMap(_._1) {
+        // group fields by obj name to overwrite each obj only once
+        case (objName, field) =>
+          val ghosted = field.relatedField.exists(f => module.isGhostedFieldName(f._2))
+          val relField =
+            field.relatedField.flatMap {
+              case _ if ghosted => None
+              case f            => findRelatedField(f, createdSObjects, fields)
+            }
+
+          createDerivedField(objName, field, relField, ghosted)
+      }
+      .foreach(a => addFieldsToSObject(a._1, a._2.toArray, createdSObjects))
+  }
+
   private def createDerivedField(
     objectName: TypeName,
     field: CustomFieldEvent,
-    relatedField: Option[FieldDeclaration]
+    relatedField: Option[FieldDeclaration],
+    ghostRelated: Boolean
   ): FieldDeclaration = {
     val location         = field.sourceInfo.location
     val relatedFieldType = relatedField.map(_.typeName)
 
-    if (relatedField.isEmpty && field.relatedField.nonEmpty) {
+    if (relatedField.isEmpty && field.relatedField.nonEmpty && !ghostRelated) {
       val (relObj, relField) = field.relatedField.get
       OrgInfo.logError(
         location,
