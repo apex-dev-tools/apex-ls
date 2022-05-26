@@ -542,10 +542,11 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
 
   def implements(typeName: TypeName, ignoreGenerics: Boolean): Boolean = {
     val interfaces = interfaceDeclarations
-    interfaces.exists(_.typeName match {
-      case TypeName(typeName.name, _, typeName.outer) if ignoreGenerics => true
-      case tn                                                           => tn == typeName
-    }) ||
+    interfaces.exists(
+      in =>
+        (ignoreGenerics && in.typeName.equalsNamesOnly(typeName)) ||
+          in.typeName == typeName
+    ) ||
     interfaces.exists(_.implements(typeName, ignoreGenerics)) ||
     superClassDeclaration.exists(_.implements(typeName, ignoreGenerics))
   }

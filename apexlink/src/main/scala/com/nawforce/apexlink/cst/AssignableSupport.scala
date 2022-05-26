@@ -3,9 +3,53 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.types.core.TypeDeclaration
-import com.nawforce.pkgforce.names.TypeName
+import com.nawforce.pkgforce.names.{Names, TypeName}
 
 object AssignableSupport {
+
+  implicit class AssignableName(fromType: TypeName) {
+
+    def isAssignableTo(toType: TypeName, strict: Boolean, context: VerifyContext): Boolean =
+      isAssignable(toType, fromType, strict, context)
+
+  }
+
+  implicit class AssignableType(fromType: TypeDeclaration) {
+
+    def isAssignableTo(toType: TypeName, strict: Boolean, context: VerifyContext): Boolean =
+      isAssignable(toType, fromType, strict, context)
+
+    def couldBeEqualTo(toType: TypeDeclaration, context: VerifyContext): Boolean =
+      couldBeEqual(toType, fromType, context)
+
+  }
+
+  def couldBeEqual(
+    toType: TypeDeclaration,
+    fromType: TypeDeclaration,
+    context: VerifyContext
+  ): Boolean = {
+    isAssignable(toType.typeName, fromType, strict = false, context) ||
+    isAssignable(fromType.typeName, toType, strict = false, context)
+  }
+
+  def isAssignable(
+    toType: TypeName,
+    fromType: TypeName,
+    strict: Boolean,
+    context: VerifyContext
+  ): Boolean = {
+    context.getTypeFor(fromType, context.thisType) match {
+      case Left(_) =>
+        // Allow some ghosted assignments to support Lists
+        (toType == TypeNames.SObject && context.module.isGhostedType(fromType) && fromType.outer
+          .contains(TypeNames.Schema)) ||
+          (toType == TypeNames.InternalObject && context.module.isGhostedType(fromType))
+      case Right(fromDeclaration) =>
+        isAssignable(toType, fromDeclaration, strict, context)
+    }
+  }
+
   def isAssignable(
     toType: TypeName,
     fromType: TypeDeclaration,
@@ -29,34 +73,9 @@ object AssignableSupport {
          strictAssignable.contains(toType, fromType.typeName)
        else
          looseAssignable.contains(toType, fromType.typeName)) ||
+      isSObjectAssignable(toType, fromType.typeName, context) ||
       fromType.extendsOrImplements(toType)
     }
-  }
-
-  def isAssignable(
-    toType: TypeName,
-    fromType: TypeName,
-    strict: Boolean,
-    context: VerifyContext
-  ): Boolean = {
-    context.getTypeFor(fromType, context.thisType) match {
-      case Left(_) =>
-        // Allow some ghosted assignments to support Lists
-        (toType == TypeNames.SObject && context.module.isGhostedType(fromType) && fromType.outer
-          .contains(TypeNames.Schema)) ||
-          (toType == TypeNames.InternalObject && context.module.isGhostedType(fromType))
-      case Right(fromDeclaration) =>
-        isAssignable(toType, fromDeclaration, strict, context)
-    }
-  }
-
-  def couldBeEqual(
-    toType: TypeDeclaration,
-    fromType: TypeDeclaration,
-    context: VerifyContext
-  ): Boolean = {
-    isAssignable(toType.typeName, fromType, strict = false, context) ||
-    isAssignable(fromType.typeName, toType, strict = false, context)
   }
 
   private def isAssignableGeneric(
@@ -64,39 +83,77 @@ object AssignableSupport {
     fromType: TypeDeclaration,
     context: VerifyContext
   ): Boolean = {
-    if (toType == fromType.typeName) {
-      true
-    } else if (toType.params.size == fromType.typeName.params.size) {
-      isSObjectListAssignment(toType, fromType, context) || {
-        // Future: This is over general, not supported on Set & Map, doh
-        val sameParams = toType.withParams(fromType.typeName.params)
-        (fromType.typeName == sameParams || fromType.extendsOrImplements(sameParams)) &&
-        toType.params
-          .zip(fromType.typeName.params)
-          .map(p => isAssignable(p._1, p._2, strict = false, context))
-          .forall(b => b)
-      }
+    if (toType.params.size == fromType.typeName.params.size) {
+      isAssignableName(toType, fromType) && hasAssignableParams(toType, fromType.typeName, context)
     } else if (toType.params.isEmpty || fromType.typeName.params.isEmpty) {
-      fromType.extendsOrImplements(toType)
+      // e.g. Object a = List<A> | Iterable<A> a = new CustomIterator() | Iterable<A> a = QueryLocator
+      fromType.extendsOrImplements(toType) ||
+      isQueryLocatorAssignable(toType, fromType.typeName, context)
     } else {
       false
     }
   }
 
-  private def isSObjectListAssignment(
+  private def isAssignableName(toType: TypeName, fromType: TypeDeclaration): Boolean = {
+    val sameParams = matchGenericType(toType, fromType.typeName)
+    fromType.typeName == sameParams || fromType.extendsOrImplements(sameParams)
+  }
+
+  private def matchGenericType(toType: TypeName, fromType: TypeName): TypeName = {
+    val likeType = toType.withParams(fromType.params)
+    if (toType.isIterable && fromType.isList) {
+      // Workaround for Iterable i = List
+      likeType.withName(Names.List$)
+    } else {
+      likeType
+    }
+  }
+
+  private def hasAssignableParams(
     toType: TypeName,
-    fromType: TypeDeclaration,
+    fromType: TypeName,
+    context: VerifyContext
+  ): Boolean = {
+    val toParams   = toType.params
+    val fromParams = fromType.params
+
+    (fromType.name match {
+      case Names.List$ | Names.Set$ => isSObjectAssignable(toParams.head, fromParams.head, context)
+      case Names.Map$               => isSObjectAssignable(toParams(1), fromParams(1), context)
+      case _                        => false
+    }) ||
+    toParams
+      .zip(fromParams)
+      .map(p => isAssignable(p._1, p._2, strict = false, context))
+      .forall(b => b)
+  }
+
+  private def isSObjectAssignable(
+    toType: TypeName,
+    fromType: TypeName,
     context: VerifyContext
   ): Boolean = {
     if (
-      toType.isList && fromType.typeName.isList &&
-      fromType.typeName.params.head == TypeNames.SObject &&
-      toType.params.head != TypeNames.SObject
+      fromType == TypeNames.SObject &&
+      toType != TypeNames.SObject
     ) {
-      context.getTypeFor(toType.params.head, context.thisType) match {
+      context.getTypeFor(toType, context.thisType) match {
         case Left(_)              => false
         case Right(toDeclaration) => toDeclaration.isSObject
       }
+    } else {
+      // SObject s = SObject
+      fromType == TypeNames.SObject
+    }
+  }
+
+  private def isQueryLocatorAssignable(
+    toType: TypeName,
+    fromType: TypeName,
+    context: VerifyContext
+  ): Boolean = {
+    if (fromType == TypeNames.QueryLocator && toType.isIterable && toType.params.nonEmpty) {
+      isAssignable(toType.params.head, TypeNames.SObject, strict = false, context)
     } else {
       false
     }
@@ -138,4 +195,5 @@ object AssignableSupport {
       (TypeNames.String, TypeNames.IdType),
       (TypeNames.Datetime, TypeNames.Date)
     )
+
 }

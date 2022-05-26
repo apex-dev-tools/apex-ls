@@ -61,6 +61,16 @@
               <goal>run</goal>
             </goals>
             <configuration>
+              <args>build</args>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install-outline-parser</id>
+            <phase>install</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
               <args>parserJS/publishLocal parserJVM/publishM2</args>
             </configuration>
           </execution>
@@ -88,6 +98,24 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.2.0</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>js/target</directory>
+            </fileset>
+            <fileset>
+              <directory>jvm/target</directory>
+            </fileset>
+            <fileset>
+              <directory>shared/target</directory>
+            </fileset>
+          </filesets>
+        </configuration>
       </plugin>
 
     </plugins>
