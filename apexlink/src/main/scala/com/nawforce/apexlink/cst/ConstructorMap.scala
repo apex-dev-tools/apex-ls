@@ -144,8 +144,6 @@ final case class ConstructorMap(
 
 object ConstructorMap {
   private val emptyIssues: ArraySeq[Issue]           = ArraySeq.empty
-  private val emptyParams: ArraySeq[FormalParameter] = ArraySeq.empty
-  private val publicModifierResult                   = new ModifierResults(ArraySeq(PUBLIC_MODIFIER), emptyIssues)
 
   type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
 
