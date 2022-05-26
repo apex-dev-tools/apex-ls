@@ -19,11 +19,13 @@ import com.nawforce.runtime.platform.Path
 
 import java.util.regex.{Matcher, Pattern}
 import scala.collection.compat.immutable.ArraySeq
+import scala.collection.mutable
 
 class ForceIgnore(rootPath: PathLike, ignoreRules: Seq[IgnoreRule]) {
   private val rootPathPrefix = {
     val path = rootPath.toString
-    // Separator for end of path needs to be unix format because it is being compared to paths in the forceignore which will have unix separator.
+    // Separator for end of path needs to be unix format because it is being compared to paths in the forceignore
+    // file which will have unix separator.
     if (path.endsWith("/")) path else path + "/"
   }
   private val rootPathPrefixLength = rootPathPrefix.length
@@ -46,9 +48,15 @@ class ForceIgnore(rootPath: PathLike, ignoreRules: Seq[IgnoreRule]) {
     ignoreRules.foreach(rule => {
       if (directory || !rule.dirOnly) {
         if (include != rule.negation) {
-          rule.matcher.reset(relativePath)
-          if (rule.matcher.matches()) {
-            include = !include
+          try {
+            rule.matcher.reset(relativePath)
+            if (rule.matcher.matches()) {
+              include = !include
+            }
+          } catch {
+            case ex: Throwable =>
+              // Catch JVM bug exception and log, see https://github.com/financialforcedev/ff-apex-ls/issues/170
+              LoggerOps.info(s"force ignore regex '${rule.regex}' on path '$relativePath'", ex)
           }
         }
       }
@@ -79,7 +87,7 @@ case class IgnoreRule(dirOnly: Boolean, negation: Boolean, pattern: String) {
   // Convert a pattern to a regex
   // See https://github.com/snark/ignorance/blob/master/ignorance/utils.py for reference
   lazy val regex: String = {
-    val builder = new StringBuilder()
+    val builder = new mutable.StringBuilder()
     var i       = 0
     val n       = pattern.length
     while (i < n) {
