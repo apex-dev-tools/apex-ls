@@ -83,6 +83,9 @@ abstract class PathLike {
 
   // Last modified timestamp
   def lastModified(): Option[Long]
+
+  // Path string in OS dependent format
+  def toStringNative: String
 }
 
 object PathLike {
