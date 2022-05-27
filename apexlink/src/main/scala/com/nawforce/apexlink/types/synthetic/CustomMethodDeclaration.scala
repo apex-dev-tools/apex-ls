@@ -66,9 +66,10 @@ object CustomMethodDeclaration {
 final case class CustomConstructorDeclaration(
   pathNameLocation: Option[PathLocation],
   parameters: ArraySeq[ParameterDeclaration]
-) extends ApexVisibleConstructorLike with UnsafeLocatable {
-  val nameLocation: Location = pathNameLocation.map(_.location).getOrElse(Location.empty)
-  override val location: PathLocation = pathNameLocation.orNull
+) extends ApexVisibleConstructorLike
+    with UnsafeLocatable {
+  val nameLocation: Location                 = pathNameLocation.map(_.location).getOrElse(Location.empty)
+  override val location: PathLocation        = pathNameLocation.orNull
   override val modifiers: ArraySeq[Modifier] = CustomMethodDeclaration.standardModifiers
 
   def summary: ConstructorSummary = {

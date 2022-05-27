@@ -24,7 +24,7 @@ import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
-import com.nawforce.pkgforce.parsers.Nature
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, Nature}
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, Location, PathLocation}
 
 import scala.collection.immutable.ArraySeq
@@ -326,8 +326,13 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   override def findConstructor(
     params: ArraySeq[TypeName],
     verifyContext: VerifyContext
-  ): Either[String, ConstructorDeclaration] =
-    constructorMap.findConstructorByParams(params, verifyContext)
+  ): Either[String, ConstructorDeclaration] = {
+    nature match {
+      case CLASS_NATURE => constructorMap.findConstructorByParams(params, verifyContext)
+      case _            => Left(s"Type cannot be constructed: $typeName")
+    }
+
+  }
 
   def bombScore(total: Int): (Int, Int, Double) = {
     val magicScale = 1.7306 // Places score 0-100

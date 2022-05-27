@@ -42,7 +42,7 @@ final case class ConstructorMap(
   ): Either[String, ConstructorDeclaration] = {
     constructorsByParam.get(params.length) match {
       case Some(potential) => findPotentialMatch(potential, params, context)
-      case None => Left(s"No constructor defined with ${params.length} arguments")
+      case None            => Left(s"No constructor defined with ${params.length} arguments")
     }
   }
 
@@ -216,10 +216,10 @@ object ConstructorMap {
     workingMap: WorkingMap,
     superClassMap: ConstructorMap,
     errors: mutable.Buffer[Issue]
-  ) = {
+  ): Unit = {
     if (workingMap.keys.isEmpty) {
-      td match {
-        case ad: ApexDeclaration =>
+      (td, td.nature) match {
+        case (ad: ApexDeclaration, CLASS_NATURE) =>
           val ctor = CustomConstructorDeclaration(errorLocation, ArraySeq())
           if (superClassMap.td.isEmpty)
             workingMap.put(0, List(ctor))
@@ -254,8 +254,14 @@ object ConstructorMap {
       case CLASS_NATURE =>
         ArraySeq(
           CustomConstructorDeclaration(errorLocation, ArraySeq()),
-          CustomConstructorDeclaration(errorLocation, ArraySeq(toParam("param1", TypeNames.String))),
-          CustomConstructorDeclaration(errorLocation, ArraySeq(toParam("param1", TypeNames.Exception))),
+          CustomConstructorDeclaration(
+            errorLocation,
+            ArraySeq(toParam("param1", TypeNames.String))
+          ),
+          CustomConstructorDeclaration(
+            errorLocation,
+            ArraySeq(toParam("param1", TypeNames.Exception))
+          ),
           CustomConstructorDeclaration(
             errorLocation,
             ArraySeq(toParam("param1", TypeNames.String), toParam("param2", TypeNames.Exception))

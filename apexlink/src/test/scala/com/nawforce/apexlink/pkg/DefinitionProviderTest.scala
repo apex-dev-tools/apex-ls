@@ -388,9 +388,9 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
           .getDefinition(path, line = 1, offset = 54, None)
           .contains(
             LocationLink(
-              Location(1, 53, 1, 56),
+              Location(1, 49, 1, 58),
               root.join("Foo.cls").toString,
-              Location(1, 0, 1, 19),
+              Location(1, 13, 1, 16),
               Location(1, 13, 1, 16)
             )
           )
@@ -433,9 +433,9 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
           .getDefinition(root.join("Dummy.cls"), line = 1, offset = 27, None)
           .contains(
             LocationLink(
-              Location(1, 25, 1, 28),
+              Location(1, 21, 1, 30),
               root.join("Foo.cls").toString,
-              Location(1, 0, 1, 19),
+              Location(1, 13, 1, 16),
               Location(1, 13, 1, 16)
             )
           )
@@ -514,7 +514,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
   test("super call to inner class with synthetic ctor") {
     FileSystemHelper.run(
       Map(
-        "Foo.cls" -> "public class Foo extends Dummy.InnerClass {public Foo(){super();}}",
+        "Foo.cls"   -> "public class Foo extends Dummy.InnerClass {public Foo(){super();}}",
         "Dummy.cls" -> "public class Dummy { public virtual class InnerClass {}}"
       )
     ) { root: PathLike =>
