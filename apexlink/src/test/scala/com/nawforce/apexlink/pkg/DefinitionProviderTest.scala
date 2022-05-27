@@ -510,4 +510,27 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
       )
     }
   }
+
+  test("super call to inner class with synthetic ctor") {
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls" -> "public class Foo extends Dummy.InnerClass {public Foo(){super();}}",
+        "Dummy.cls" -> "public class Dummy { public virtual class InnerClass {}}"
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Foo.cls"), line = 1, offset = 58, None)
+          .contains(
+            LocationLink(
+              Location(1, 56, 1, 63),
+              root.join("Dummy.cls").toString,
+              Location(1, 42, 1, 52),
+              Location(1, 42, 1, 52)
+            )
+          )
+      )
+    }
+  }
 }

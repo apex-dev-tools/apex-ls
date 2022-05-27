@@ -40,14 +40,10 @@ final case class ConstructorMap(
     params: ArraySeq[TypeName],
     context: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
-    val matched = constructorsByParam
-      .get(params.length)
-
-    if (matched.isEmpty)
-      return Left(s"No constructor defined with ${params.length} arguments")
-
-    findPotentialMatch(matched.get, params, context)
-
+    constructorsByParam.get(params.length) match {
+      case Some(potential) => findPotentialMatch(potential, params, context)
+      case None => Left(s"No constructor defined with ${params.length} arguments")
+    }
   }
 
   private def findPotentialMatch(
@@ -143,8 +139,6 @@ final case class ConstructorMap(
 }
 
 object ConstructorMap {
-  private val emptyIssues: ArraySeq[Issue]           = ArraySeq.empty
-
   type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
 
   def apply(td: TypeDeclaration): ConstructorMap = {
@@ -224,10 +218,9 @@ object ConstructorMap {
     errors: mutable.Buffer[Issue]
   ) = {
     if (workingMap.keys.isEmpty) {
-      val location = errorLocation.map(_.location).getOrElse(Location.empty)
       td match {
         case ad: ApexDeclaration =>
-          val ctor = CustomConstructorDeclaration(location, ArraySeq())
+          val ctor = CustomConstructorDeclaration(errorLocation, ArraySeq())
           if (superClassMap.td.isEmpty)
             workingMap.put(0, List(ctor))
           else
@@ -257,15 +250,14 @@ object ConstructorMap {
     def toParam(id: String, typeName: TypeName): CustomParameterDeclaration = {
       CustomParameterDeclaration(Name(id), typeName)
     }
-    val location = errorLocation.map(_.location).getOrElse(Location.empty)
     val synthetics = td.nature match {
       case CLASS_NATURE =>
         ArraySeq(
-          CustomConstructorDeclaration(location, ArraySeq()),
-          CustomConstructorDeclaration(location, ArraySeq(toParam("param1", TypeNames.String))),
-          CustomConstructorDeclaration(location, ArraySeq(toParam("param1", TypeNames.Exception))),
+          CustomConstructorDeclaration(errorLocation, ArraySeq()),
+          CustomConstructorDeclaration(errorLocation, ArraySeq(toParam("param1", TypeNames.String))),
+          CustomConstructorDeclaration(errorLocation, ArraySeq(toParam("param1", TypeNames.Exception))),
           CustomConstructorDeclaration(
-            location,
+            errorLocation,
             ArraySeq(toParam("param1", TypeNames.String), toParam("param2", TypeNames.Exception))
           )
         )
