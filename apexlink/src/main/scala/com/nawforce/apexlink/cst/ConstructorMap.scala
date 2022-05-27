@@ -223,7 +223,7 @@ object ConstructorMap {
           val ctor = CustomConstructorDeclaration(errorLocation, ArraySeq())
           if (superClassMap.td.isEmpty)
             workingMap.put(0, List(ctor))
-          else
+          else if(superClassMap.td.get.nature == CLASS_NATURE)
             superClassMap
               .findConstructorByParams(
                 ArraySeq.empty,
