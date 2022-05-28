@@ -22,15 +22,12 @@ import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.Nature
 import com.nawforce.pkgforce.path.PathLocation
 
-import scala.collection.mutable
-
 /** Context to aid RelativeTypeName resolve via the originating ApexDeclaration. This needs freezing after
   * RelativeTypeNames are constructed due to the FullDeclaration not being constructed until after its constituent
   * parts, such as constructors and methods which use RelativeTypeName.
   */
 final class RelativeTypeContext {
   var contextTypeDeclaration: TypeDeclaration = _
-  private val typeCache                       = mutable.Map[TypeName, Option[TypeResponse]]()
 
   /** Freeze the RelativeTypeContext by providing access to the enclosing Apex class. */
   def freeze(typeDeclaration: TypeDeclaration): Unit = {
@@ -38,32 +35,23 @@ final class RelativeTypeContext {
     contextTypeDeclaration = typeDeclaration
   }
 
-  /** Reset internal caching, for use during re-validation. */
-  def reset(): Unit = {
-    typeCache.clear()
-  }
-
   /** Resolve the passed typeName relative to the context class, returns None for ghosted types. */
   def resolve(typeName: TypeName): Option[TypeResponse] = {
-    typeCache.getOrElseUpdate(
-      typeName, {
-        val response =
-          // Workaround a stupid platform bug where the wrong type is used sometimes...
-          if (typeName.outer.nonEmpty) {
-            TypeResolver(typeName, contextTypeDeclaration.moduleDeclaration.get) match {
-              case Right(td) => Right(td)
-              case Left(_)   => TypeResolver(typeName, contextTypeDeclaration)
-            }
-          } else {
-            TypeResolver(typeName, contextTypeDeclaration)
-          }
-
-        if (response.isLeft && contextTypeDeclaration.moduleDeclaration.get.isGhostedType(typeName))
-          None
-        else
-          Some(response)
+    val response =
+      // Workaround a stupid platform bug where the wrong type is used sometimes...
+      if (typeName.outer.nonEmpty) {
+        TypeResolver(typeName, contextTypeDeclaration.moduleDeclaration.get) match {
+          case Right(td) => Right(td)
+          case Left(_)   => TypeResolver(typeName, contextTypeDeclaration)
+        }
+      } else {
+        TypeResolver(typeName, contextTypeDeclaration)
       }
-    )
+
+    if (response.isLeft && contextTypeDeclaration.moduleDeclaration.get.isGhostedType(typeName))
+      None
+    else
+      Some(response)
   }
 }
 

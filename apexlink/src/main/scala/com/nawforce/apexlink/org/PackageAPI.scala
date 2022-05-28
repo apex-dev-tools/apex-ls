@@ -340,8 +340,9 @@ trait PackageAPI extends Package {
       })
 
     // Then batched invalidation
-    val handled     = requests.keySet
-    val withMissing = org.issues.getMissing.filterNot(handled.contains).flatMap(findTypeIdOfPath)
+    // FUTURE: We could remove the handled requests from the missing but don't know if a type was added
+    // since a missing was last validated, so for now we need to revalidate them all just in case.
+    val withMissing = org.issues.getMissing.flatMap(findTypeIdOfPath)
     reValidate(references.toSet ++ withMissing)
 
     // Close any open plugins
