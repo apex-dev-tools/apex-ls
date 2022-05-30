@@ -360,6 +360,8 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
             consumeCharacter(capture = false)
         case Tokens.SingleQuote =>
           consumeStringLiteral()
+        case Tokens.Newline | Tokens.CarriageReturn =>
+          consumeNewline()
         case Tokens.LBrace =>
           consumeCharacter(capture = false)
           indent += 1
