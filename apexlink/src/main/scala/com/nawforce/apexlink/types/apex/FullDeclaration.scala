@@ -131,9 +131,9 @@ abstract class FullDeclaration(
   }
 
   override def preReValidate(): Unit = {
-    // Method maps & relative type contexts may be invalidated by changes to super classes/interfaces
+    // Method maps, constructor maps & relative type contexts may be invalidated by changes to super classes/interfaces
     resetMethodMapIfInvalid()
-    typeContext.reset()
+    resetConstructorMapIfInvalid()
     nestedTypes.foreach(_.preReValidate())
   }
 

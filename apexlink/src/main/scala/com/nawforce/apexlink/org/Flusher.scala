@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.org
 
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.memory.Cleanable
 import com.nawforce.pkgforce.path.PathLike
@@ -49,10 +50,12 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
         // Process in chunks, new requests may be queued during processing
         while (refreshQueue.nonEmpty) {
           val toProcess = refreshQueue.dequeueAll(_ => true)
+          LoggerOps.debug(s"Batched refresh starting for ${toProcess.length} items")
           packages
             .foreach(pkg => {
               updated |= pkg.refreshBatched(toProcess.filter(_.pkg == pkg))
             })
+          LoggerOps.debug(s"Batched refresh completed")
         }
 
         // Flush to cache

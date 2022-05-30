@@ -22,13 +22,10 @@ import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 
 class ForceIgnore(rootPath: PathLike, ignoreRules: Seq[IgnoreRule]) {
-  private val rootPathPrefix = {
-    val path = rootPath.toString
-    // Separator for end of path needs to be unix format because it is being compared to paths in the forceignore
-    // file which will have unix separator.
-    if (path.endsWith("/")) path else path + "/"
+  private val rootPathNative = rootPath.toStringNative
+  private val rootPathLength = {
+    rootPathNative.length + (if (rootPathNative.endsWith(Path.separator)) 0 else 1)
   }
-  private val rootPathPrefixLength = rootPathPrefix.length
 
   def includeDirectory(path: PathLike): Boolean = {
     include(path, directory = true)
@@ -39,11 +36,10 @@ class ForceIgnore(rootPath: PathLike, ignoreRules: Seq[IgnoreRule]) {
   }
 
   private def include(path: PathLike, directory: Boolean): Boolean = {
-    val absPath = path.toString
-    if (!absPath.startsWith(rootPathPrefix))
+    if (!rootPath.isParentOf(path))
       return false
 
-    val relativePath = absPath.substring(rootPathPrefixLength)
+    val relativePath = path.toStringNative.substring(rootPathLength)
     var include      = true
     ignoreRules.foreach(rule => {
       if (directory || !rule.dirOnly) {
