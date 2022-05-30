@@ -167,6 +167,8 @@ final class Path(val native: java.nio.file.Path) extends PathLike {
       value
     }
   }
+
+  override def toStringNative: String = native.toString
 }
 
 object Path {

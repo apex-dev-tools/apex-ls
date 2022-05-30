@@ -188,6 +188,8 @@ final class Path private (path: String) extends PathLike {
       value
     }
   }
+
+  override lazy val toStringNative: String = io.scalajs.nodejs.path.Path.format(pathObject)
 }
 
 object Path {
