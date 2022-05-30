@@ -390,7 +390,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
             LocationLink(
               Location(1, 49, 1, 58),
               root.join("Foo.cls").toString,
-              Location(1, 0, 1, 19),
+              Location(1, 13, 1, 16),
               Location(1, 13, 1, 16)
             )
           )
@@ -420,6 +420,117 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
               )
             )
         )
+    }
+  }
+
+  test("Synthetic constructor navigation") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy {{new Foo();}}", "Foo.cls" -> "public class Foo {}")
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Dummy.cls"), line = 1, offset = 27, None)
+          .contains(
+            LocationLink(
+              Location(1, 21, 1, 30),
+              root.join("Foo.cls").toString,
+              Location(1, 13, 1, 16),
+              Location(1, 13, 1, 16)
+            )
+          )
+      )
+    }
+  }
+
+  test("Defined constructor navigation") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {{Foo f = new Foo(1);}}",
+        "Foo.cls"   -> "public class Foo { public Foo(Integer i){}}"
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Dummy.cls"), line = 1, offset = 35, None)
+          .contains(
+            LocationLink(
+              Location(1, 29, 1, 39),
+              root.join("Foo.cls").toString,
+              Location(1, 26, 1, 42),
+              Location(1, 26, 1, 29)
+            )
+          )
+      )
+    }
+  }
+
+  test("Super Constructor") {
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"   -> "virtual public class Foo { public Foo(String s){}}",
+        "Dummy.cls" -> "public class Dummy extends Foo { public Dummy(){super('s');} }"
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Dummy.cls"), line = 1, offset = 50, None)
+          .contains(
+            LocationLink(
+              Location(1, 48, 1, 58),
+              root.join("Foo.cls").toString,
+              Location(1, 34, 1, 49),
+              Location(1, 34, 1, 37)
+            )
+          )
+      )
+    }
+  }
+
+  test("This constructor") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public Dummy(){this('s');} public Dummy(String s){} }"
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Dummy.cls"), line = 1, offset = 38, None)
+          .contains(
+            LocationLink(
+              Location(1, 36, 1, 45),
+              root.join("Dummy.cls").toString,
+              Location(1, 55, 1, 72),
+              Location(1, 55, 1, 60)
+            )
+          )
+      )
+    }
+  }
+
+  test("super call to inner class with synthetic ctor") {
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"   -> "public class Foo extends Dummy.InnerClass {public Foo(){super();}}",
+        "Dummy.cls" -> "public class Dummy { public virtual class InnerClass {}}"
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Foo.cls"), line = 1, offset = 58, None)
+          .contains(
+            LocationLink(
+              Location(1, 56, 1, 63),
+              root.join("Dummy.cls").toString,
+              Location(1, 42, 1, 52),
+              Location(1, 42, 1, 52)
+            )
+          )
+      )
     }
   }
 }
