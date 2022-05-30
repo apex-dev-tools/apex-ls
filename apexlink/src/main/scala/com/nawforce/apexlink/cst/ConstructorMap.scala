@@ -6,11 +6,7 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike, ApexDeclaration}
-import com.nawforce.apexlink.types.core.{
-  ConstructorDeclaration,
-  ParameterDeclaration,
-  TypeDeclaration
-}
+import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.synthetic.{
   CustomConstructorDeclaration,
   CustomParameterDeclaration
@@ -32,6 +28,7 @@ final case class ConstructorMap(
   superConstructorsByParam: Option[ConstructorMap],
   errors: List[Issue]
 ) {
+  val deepHash: Int = td.map(_.deepHash).getOrElse(0)
 
   def allConstructors: ArraySeq[ConstructorDeclaration] = {
     val buffer = new mutable.ArrayBuffer[ConstructorDeclaration]()
@@ -43,14 +40,10 @@ final case class ConstructorMap(
     params: ArraySeq[TypeName],
     context: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
-    val matched = constructorsByParam
-      .get(params.length)
-
-    if (matched.isEmpty)
-      return Left(s"No constructor defined with ${params.length} arguments")
-
-    findPotentialMatch(matched.get, params, context)
-
+    constructorsByParam.get(params.length) match {
+      case Some(potential) => findPotentialMatch(potential, params, context)
+      case None            => Left(s"No constructor defined with ${params.length} arguments")
+    }
   }
 
   private def findPotentialMatch(
@@ -146,10 +139,6 @@ final case class ConstructorMap(
 }
 
 object ConstructorMap {
-  private val emptyIssues: ArraySeq[Issue]           = ArraySeq.empty
-  private val emptyParams: ArraySeq[FormalParameter] = ArraySeq.empty
-  private val publicModifierResult                   = new ModifierResults(ArraySeq(PUBLIC_MODIFIER), emptyIssues)
-
   type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
 
   def apply(td: TypeDeclaration): ConstructorMap = {
@@ -218,21 +207,23 @@ object ConstructorMap {
     errors: mutable.Buffer[Issue]
   ): Unit = {
     if (td.isCustomException) applyCustomExceptionsCtors(errorLocation, td, workingMap)
-    else applyDefaultCtor(td, workingMap, superClassMap, errors)
+    else applyDefaultCtor(errorLocation, td, workingMap, superClassMap, errors)
   }
 
   private def applyDefaultCtor(
+    errorLocation: Option[PathLocation],
     td: TypeDeclaration,
     workingMap: WorkingMap,
     superClassMap: ConstructorMap,
     errors: mutable.Buffer[Issue]
-  ) = {
+  ): Unit = {
     if (workingMap.keys.isEmpty) {
-      td match {
-        case ad: ApexDeclaration =>
+      (td, td.nature) match {
+        case (ad: ApexDeclaration, CLASS_NATURE) =>
+          val ctor = CustomConstructorDeclaration(errorLocation, ArraySeq())
           if (superClassMap.td.isEmpty)
-            workingMap.put(0, List(toCtor(td)))
-          else
+            workingMap.put(0, List(ctor))
+          else if(superClassMap.td.get.nature == CLASS_NATURE)
             superClassMap
               .findConstructorByParams(
                 ArraySeq.empty,
@@ -244,7 +235,7 @@ object ConstructorMap {
                   else
                     s"No default constructor available in super type: ${superClassMap.typeName.get}"
                 setClassError(td, errors, msg)
-              case _ => workingMap.put(0, List(toCtor(td)))
+              case _ => workingMap.put(0, List(ctor))
             }
         case _ =>
       }
@@ -259,15 +250,20 @@ object ConstructorMap {
     def toParam(id: String, typeName: TypeName): CustomParameterDeclaration = {
       CustomParameterDeclaration(Name(id), typeName)
     }
-    val location = errorLocation.map(_.location).getOrElse(Location.empty)
     val synthetics = td.nature match {
       case CLASS_NATURE =>
         ArraySeq(
-          CustomConstructorDeclaration(location, ArraySeq()),
-          CustomConstructorDeclaration(location, ArraySeq(toParam("param1", TypeNames.String))),
-          CustomConstructorDeclaration(location, ArraySeq(toParam("param1", TypeNames.Exception))),
+          CustomConstructorDeclaration(errorLocation, ArraySeq()),
           CustomConstructorDeclaration(
-            location,
+            errorLocation,
+            ArraySeq(toParam("param1", TypeNames.String))
+          ),
+          CustomConstructorDeclaration(
+            errorLocation,
+            ArraySeq(toParam("param1", TypeNames.Exception))
+          ),
+          CustomConstructorDeclaration(
+            errorLocation,
             ArraySeq(toParam("param1", TypeNames.String), toParam("param2", TypeNames.Exception))
           )
         )
@@ -324,20 +320,6 @@ object ConstructorMap {
         )
       case _ =>
     }
-  }
-
-  private def toCtor(
-    td: TypeDeclaration,
-    params: ArraySeq[FormalParameter] = emptyParams
-  ): ApexConstructorDeclaration = {
-    lazy val qNames = td.outerTypeName.map(x => List(x.name)).getOrElse(Nil) ++ List(td.name)
-    ApexConstructorDeclaration(
-      publicModifierResult,
-      QualifiedName(qNames),
-      params,
-      td.inTest,
-      EagerBlock.empty
-    )
   }
 
   private def toMap(workingMap: WorkingMap): Map[Int, Array[ConstructorDeclaration]] = {

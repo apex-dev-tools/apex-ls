@@ -19,7 +19,7 @@ import com.nawforce.apexlink.types.apex.{ApexVisibleConstructorLike, ApexVisible
 import com.nawforce.apexlink.types.core.ParameterDeclaration
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
-import com.nawforce.pkgforce.path.Location
+import com.nawforce.pkgforce.path.{Location, PathLocation, UnsafeLocatable}
 
 import scala.collection.immutable.ArraySeq
 
@@ -64,10 +64,12 @@ object CustomMethodDeclaration {
 }
 
 final case class CustomConstructorDeclaration(
-  nameLocation: Location,
+  pathNameLocation: Option[PathLocation],
   parameters: ArraySeq[ParameterDeclaration]
-) extends ApexVisibleConstructorLike {
-
+) extends ApexVisibleConstructorLike
+    with UnsafeLocatable {
+  val nameLocation: Location                 = pathNameLocation.map(_.location).getOrElse(Location.empty)
+  override val location: PathLocation        = pathNameLocation.orNull
   override val modifiers: ArraySeq[Modifier] = CustomMethodDeclaration.standardModifiers
 
   def summary: ConstructorSummary = {
