@@ -254,7 +254,7 @@ class ApexMethodDeclaration(
   override val name: Name                   = id.name
   override val outerTypeId: TypeId          = thisType.typeId
   override val hasBlock: Boolean            = block.nonEmpty
-  override lazy val typeName: TypeName      = returnTypeName.typeName
+  override def typeName: TypeName           = returnTypeName.typeName
   override val nature: Nature               = METHOD_NATURE
   override val children: ArraySeq[ApexNode] = ArraySeq.empty
   override lazy val signature: String       = super[ApexMethodLike].signature

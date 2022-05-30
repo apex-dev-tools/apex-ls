@@ -248,7 +248,7 @@ object ConstructorDeclaration {
 trait MethodDeclaration extends DependencyHolder with Dependent with Parameters {
   val name: Name
   val modifiers: ArraySeq[Modifier]
-  val typeName: TypeName
+  def typeName: TypeName
 
   def hasBlock: Boolean
 
