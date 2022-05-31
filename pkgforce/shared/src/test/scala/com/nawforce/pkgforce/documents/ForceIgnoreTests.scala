@@ -21,7 +21,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class ForceIgnoreTests extends AnyFunSuite {
 
   test("Empty ignore") {
-    FileSystemHelper.run(Map[String, String](".forceignore" -> "")) { root: PathLike =>
+    FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "")) { root: PathLike =>
       val ignore =
         ForceIgnore(root.join(".forceignore")).value.getOrElse(throw new NoSuchElementException())
       assert(ignore.includeDirectory(root.join("foo")))
@@ -30,7 +30,7 @@ class ForceIgnoreTests extends AnyFunSuite {
   }
 
   test("Simple ignore") {
-    FileSystemHelper.run(Map[String, String](".forceignore" -> "foo")) { root: PathLike =>
+    FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "foo")) { root: PathLike =>
       val ignore =
         ForceIgnore(root.join(".forceignore")).value.getOrElse(throw new NoSuchElementException())
       assert(!ignore.includeDirectory(root.join("foo")))
@@ -41,7 +41,7 @@ class ForceIgnoreTests extends AnyFunSuite {
   }
 
   test("Directory ignore") {
-    FileSystemHelper.run(Map[String, String](".forceignore" -> "foo/")) { root: PathLike =>
+    FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "foo/")) { root: PathLike =>
       val ignore =
         ForceIgnore(root.join(".forceignore")).value.getOrElse(throw new NoSuchElementException())
       assert(!ignore.includeDirectory(root.join("foo")))
@@ -52,7 +52,7 @@ class ForceIgnoreTests extends AnyFunSuite {
   }
 
   test("Simple negate") {
-    FileSystemHelper.run(Map[String, String](".forceignore" -> "f*\n!foo")) { root: PathLike =>
+    FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "f*\n!foo")) { root: PathLike =>
       val ignore =
         ForceIgnore(root.join(".forceignore")).value.getOrElse(throw new NoSuchElementException())
       assert(ignore.includeDirectory(root.join("foo")))
@@ -63,7 +63,7 @@ class ForceIgnoreTests extends AnyFunSuite {
   }
 
   test("Directory negate") {
-    FileSystemHelper.run(Map[String, String](".forceignore" -> "f*\n!foo/")) { root: PathLike =>
+    FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "f*\n!foo/")) { root: PathLike =>
       val ignore =
         ForceIgnore(root.join(".forceignore")).value.getOrElse(throw new NoSuchElementException())
       assert(ignore.includeDirectory(root.join("foo")))
