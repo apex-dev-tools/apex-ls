@@ -250,7 +250,12 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
   }
 
   test("Unconstructable type") {
-    typeDeclarations(Map("Foo.cls" -> "public enum Foo {TEST}", "Dummy.cls" -> "public class Dummy {{new Foo();} }"))
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public enum Foo {TEST}",
+        "Dummy.cls" -> "public class Dummy {{new Foo();} }"
+      )
+    )
     assert(dummyIssues == "Error: line 1 at 28-30: Type cannot be constructed: Foo\n")
   }
 
