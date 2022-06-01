@@ -173,6 +173,14 @@ trait CompletionProvider {
                   }
                 })
                 .getOrElse(emptyCompletions)
+            case ApexParser.RULE_creator =>
+              module
+                .map(m => m.matchTdsForModule(terminatedContent._3, offset))
+                .map(_.foldLeft(Array[CompletionItemLink]())((acc, td) => {
+                  val hasPrivateAccess = classDetails._2.exists(_.location == td.location)
+                  acc ++ getAllCreatorCompletionItems(td, hasPrivateAccess)
+                }))
+                .getOrElse(emptyCompletions)
           }
       )
       .flatten
@@ -315,6 +323,16 @@ trait CompletionProvider {
     else
       items
   }
+
+  private def getAllCreatorCompletionItems(
+    td: TypeDeclaration,
+    hasPrivateAccess: Boolean = false
+  ): Array[CompletionItemLink] = {
+    td.constructors
+      .filter(ctor => hasPrivateAccess || ctor.modifiers.contains(PUBLIC_MODIFIER) || (ctor.isTestVisible && td.inTest))
+      .map(ctor => CompletionItemLink(td.name, ctor))
+      .toArray
+  }
 }
 
 object CompletionProvider {
@@ -376,5 +394,5 @@ object CompletionProvider {
     ApexLexer.INSTANCEOF
   )
   final val preferredRules: Set[Integer] =
-    Set[Integer](ApexParser.RULE_typeRef, ApexParser.RULE_primary)
+    Set[Integer](ApexParser.RULE_typeRef, ApexParser.RULE_primary, ApexParser.RULE_creator)
 }

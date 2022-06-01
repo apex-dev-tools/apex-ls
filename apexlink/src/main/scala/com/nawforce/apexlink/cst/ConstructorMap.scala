@@ -16,7 +16,7 @@ import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.CLASS_NATURE
-import com.nawforce.pkgforce.path.{Location, PathLocation}
+import com.nawforce.pkgforce.path.PathLocation
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
