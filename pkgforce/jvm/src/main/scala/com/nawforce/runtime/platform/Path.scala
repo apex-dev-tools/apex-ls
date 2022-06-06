@@ -160,15 +160,8 @@ final class Path(val native: java.nio.file.Path) extends PathLike {
   override def hashCode(): Int = toString.hashCode
 
   override def toString: String = {
-    val value = native.toString
-    if (Path.separator == "\\") {
-      value.replace('\\', '/')
-    } else {
-      value
-    }
+    native.toString
   }
-
-  override def toStringNative: String = native.toString
 }
 
 object Path {

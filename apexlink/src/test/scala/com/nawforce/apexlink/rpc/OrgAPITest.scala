@@ -201,7 +201,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
         graph.nodeData sameElements Array(
           DependencyNode(
             TypeIdentifier(None, TypeName(Name("Hello"))),
-            85,
+            if (Environment.isWindows) 88 else 85,
             "class",
             1,
             isEntryPoint = false,
@@ -211,7 +211,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
           ),
           DependencyNode(
             TypeIdentifier(None, TypeName(Name("World"))),
-            71,
+            if (Environment.isWindows) 74 else 71,
             "class",
             0,
             isEntryPoint = false,
@@ -242,7 +242,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
         graph.nodeData sameElements Array(
           DependencyNode(
             TypeIdentifier(None, TypeName(Name("Hello"))),
-            85,
+            if (Environment.isWindows) 88 else 85,
             "class",
             0,
             isEntryPoint = false,
