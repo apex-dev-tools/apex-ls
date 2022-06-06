@@ -197,11 +197,26 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
+      val helloSize = syntheticDir
+        .join("mdapi-test")
+        .join("Hello.cls")
+        .readBytes()
+        .toOption
+        .map(_.length)
+        .getOrElse(0)
+      val worldSize = syntheticDir
+        .join("mdapi-test")
+        .join("World.cls")
+        .readBytes()
+        .toOption
+        .map(_.length)
+        .getOrElse(0)
+
       assert(
         graph.nodeData sameElements Array(
           DependencyNode(
             TypeIdentifier(None, TypeName(Name("Hello"))),
-            if (Environment.isWindows) 88 else 85,
+            helloSize,
             "class",
             1,
             isEntryPoint = false,
@@ -211,7 +226,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
           ),
           DependencyNode(
             TypeIdentifier(None, TypeName(Name("World"))),
-            if (Environment.isWindows) 74 else 71,
+            worldSize,
             "class",
             0,
             isEntryPoint = false,
@@ -238,11 +253,18 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
+      val helloSize = syntheticDir
+        .join("mdapi-test")
+        .join("Hello.cls")
+        .readBytes()
+        .toOption
+        .map(_.length)
+        .getOrElse(0)
       assert(
         graph.nodeData sameElements Array(
           DependencyNode(
             TypeIdentifier(None, TypeName(Name("Hello"))),
-            if (Environment.isWindows) 88 else 85,
+            helloSize,
             "class",
             0,
             isEntryPoint = false,
