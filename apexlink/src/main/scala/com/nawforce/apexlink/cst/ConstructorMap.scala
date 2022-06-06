@@ -64,7 +64,7 @@ final case class ConstructorMap(
 
     potential match {
       case Some(Right(ctor)) =>
-        if (canAccessCtor(ctor, context)) {
+        if (ConstructorMap.isCtorAccessible(ctor, context.thisType, context.superType)) {
           Right(ctor)
         } else {
           //Check the rest of assignable for accessible ctors, if not return the original error
@@ -110,21 +110,19 @@ final case class ConstructorMap(
     }
   }
 
-  private def areInSameApexFile(
-    ctor: ConstructorDeclaration,
-    calledFrom: TypeDeclaration
-  ): Boolean = {
-    (ctor, calledFrom) match {
-      case (acl: ApexConstructorLike, ad: ApexDeclaration) => ad.location.path == acl.location.path
-      case _                                               => false
-    }
-  }
+}
 
-  private def canAccessCtor(ctor: ConstructorDeclaration, context: VerifyContext): Boolean = {
-    lazy val isTestVisible           = ctor.isTestVisible && context.thisType.inTest
-    lazy val isAccessedInThisContext = areInSameApexFile(ctor, context.thisType)
-    lazy val isAccessedInSuperContext =
-      context.superType.nonEmpty && areInSameApexFile(ctor, context.superType.get)
+object ConstructorMap {
+  type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
+
+  def isCtorAccessible(
+    ctor: ConstructorDeclaration,
+    thisType: TypeDeclaration,
+    superType: Option[TypeDeclaration]
+  ): Boolean = {
+    lazy val isTestVisible            = ctor.isTestVisible && thisType.inTest
+    lazy val isAccessedInThisContext  = areInSameApexFile(ctor, thisType)
+    lazy val isAccessedInSuperContext = superType.nonEmpty && areInSameApexFile(ctor, superType.get)
 
     ctor.visibility match {
       case PUBLIC_MODIFIER => true
@@ -135,11 +133,6 @@ final case class ConstructorMap(
       case _                => false
     }
   }
-
-}
-
-object ConstructorMap {
-  type WorkingMap = mutable.HashMap[Int, List[ConstructorDeclaration]]
 
   def apply(td: TypeDeclaration): ConstructorMap = {
     val workingMap = new WorkingMap()
@@ -324,5 +317,15 @@ object ConstructorMap {
 
   private def toMap(workingMap: WorkingMap): Map[Int, Array[ConstructorDeclaration]] = {
     workingMap.map(kv => (kv._1, kv._2.toArray)).toMap
+  }
+
+  private def areInSameApexFile(
+    ctor: ConstructorDeclaration,
+    calledFrom: TypeDeclaration
+  ): Boolean = {
+    (ctor, calledFrom) match {
+      case (acl: ApexConstructorLike, ad: ApexDeclaration) => ad.location.path == acl.location.path
+      case _                                               => false
+    }
   }
 }

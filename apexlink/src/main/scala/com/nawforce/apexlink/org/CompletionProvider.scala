@@ -22,6 +22,7 @@ import com.nawforce.apexlink.org.CompletionProvider.{
 }
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.CompletionItemLink
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexparser.{ApexLexer, ApexParser}
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
@@ -176,10 +177,7 @@ trait CompletionProvider {
             case ApexParser.RULE_creator =>
               module
                 .map(m => m.matchTdsForModule(terminatedContent._3, offset))
-                .map(_.foldLeft(Array[CompletionItemLink]())((acc, td) => {
-                  val hasPrivateAccess = classDetails._2.exists(_.location == td.location)
-                  acc ++ getAllCreatorCompletionItems(td, hasPrivateAccess)
-                }))
+                .map(_.flatMap(td => getAllCreatorCompletionItems(td, classDetails._2)))
                 .getOrElse(emptyCompletions)
           }
       )
@@ -325,13 +323,17 @@ trait CompletionProvider {
   }
 
   private def getAllCreatorCompletionItems(
-    td: TypeDeclaration,
-    hasPrivateAccess: Boolean = false
+    itemsFor: ApexClassDeclaration,
+    callingFrom: Option[ApexFullDeclaration]
   ): Array[CompletionItemLink] = {
-    td.constructors
-      .filter(ctor => hasPrivateAccess || ctor.modifiers.contains(PUBLIC_MODIFIER) || (ctor.isTestVisible && td.inTest))
-      .map(ctor => CompletionItemLink(td.name, ctor))
-      .toArray
+    callingFrom.map(td => (td, td.superClassDeclaration)) match {
+      case Some((thisType, superType)) =>
+        itemsFor.constructors
+          .filter(ctor => ConstructorMap.isCtorAccessible(ctor, thisType, superType))
+          .map(ctor => CompletionItemLink(itemsFor.name, ctor))
+          .toArray
+      case None => emptyCompletions
+    }
   }
 }
 
