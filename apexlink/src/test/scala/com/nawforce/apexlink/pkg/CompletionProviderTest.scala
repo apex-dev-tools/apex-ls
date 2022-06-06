@@ -374,6 +374,74 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("protected super constructor completion") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "",
+        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){} protected Foo(Integer i){}}"
+      )
+    ) { root: PathLike =>
+      val org     = createOrg(root)
+      val testSrc = "class Dummy extends Foo { public Dummy(){sup"
+      assert(
+        org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+          .filter(_.label.contains("super"))
+          .map(_.label)
+          sameElements Array("super", "super()", "super(i)", "super(s)")
+      )
+    }
+  }
+
+  test("private super constructor completion") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "",
+        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){} private Foo(Integer i){}}"
+      )
+    ) { root: PathLike =>
+      val org     = createOrg(root)
+      val testSrc = "class Dummy extends Foo { public Dummy(){sup"
+      println(
+        org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+          .filter(_.label.contains("super"))
+          .map(_.label)
+          sameElements Array("super", "super()", "super(s)")
+      )
+    }
+  }
+
+  test("this constructor completion") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "")) { root: PathLike =>
+      val org = createOrg(root)
+      val testSrc =
+        "public class Dummy { public Dummy(String s){} private Dummy(Integer i){} protected Dummy(Boolean b){} public Dummy(){th"
+      assert(
+        org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+          .filter(_.label.contains("this"))
+          .map(_.label)
+          sameElements Array("this", "this()", "this(b)", "this(i)", "this(s)")
+      )
+    }
+  }
+
   test("Primary Completions (variable type)") {
     FileSystemHelper.run(Map("Dummy.cls" -> "")) { root: PathLike =>
       val org     = createOrg(root)
