@@ -336,7 +336,7 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
       // Path are checked during layer construction
       project.get.layers(logger)
 
-      val pathPrefix = if (Environment.isWindows) "C:\\" else "/"
+      val pathPrefix = root.toString
       assert(
         logger.issues == ArraySeq(
           Issue(
