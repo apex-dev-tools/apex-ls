@@ -329,6 +329,51 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("public constructor completion") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "",
+        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){} private Foo(Integer i){}}"
+      )
+    ) { root: PathLike =>
+      val org     = createOrg(root)
+      val testSrc = s"class Dummy {{new Fo"
+      assert(
+        org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+          .map(_.label) sameElements Array("Foo()", "Foo(s)")
+      )
+    }
+  }
+
+  test("private constructor completion") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "",
+        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){} @TestVisible private Foo(Integer i){}}"
+      )
+    ) { root: PathLike =>
+      val org     = createOrg(root)
+      val testSrc = "@isTest class Dummy {{new Fo"
+      assert(
+        org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+          .map(_.label)
+          .sorted sameElements Array("Foo()", "Foo(s)", "Foo(i)").sorted
+      )
+    }
+  }
+
   test("Primary Completions (variable type)") {
     FileSystemHelper.run(Map("Dummy.cls" -> "")) { root: PathLike =>
       val org     = createOrg(root)
