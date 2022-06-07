@@ -315,32 +315,33 @@ trait CompletionProvider {
         .filter(hasPrivateAccess || _.modifiers.contains(PUBLIC_MODIFIER))
         .flatMap(nested => CompletionItemLink(nested))
     }
+    if (isStatic.isEmpty) {
+      val superCtors = td.superClassDeclaration
+        .map(superClass => {
+          superClass.constructors
+            .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
+            .map(
+              ctor =>
+                (
+                  "super(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")",
+                  ctor.toString
+                )
+            )
+            .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
+            .toArray
+        })
+        .getOrElse(emptyCompletions)
 
-    val superCtors = td.superClassDeclaration
-      .map(superClass => {
-        superClass.constructors
-          .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
-          .map(
-            ctor =>
-              (
-                "super(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")",
-                ctor.toString
-              )
-          )
-          .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
-          .toArray
-      })
-      .getOrElse(emptyCompletions)
+      val thisCtors = td.constructors
+        .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
+        .map(
+          ctor =>
+            ("this(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")", ctor.toString)
+        )
+        .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
 
-    val thisCtors = td.constructors
-      .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
-      .map(
-        ctor =>
-          ("this(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")", ctor.toString)
-      )
-      .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
-
-    items = items ++ thisCtors ++ superCtors
+      items = items ++ thisCtors ++ superCtors
+    }
 
     if (filterBy.nonEmpty)
       items.filter(x => x.label.take(1).toLowerCase == filterBy.take(1).toLowerCase)
