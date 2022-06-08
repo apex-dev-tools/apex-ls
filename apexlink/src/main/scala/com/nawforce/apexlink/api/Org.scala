@@ -117,6 +117,16 @@ trait Org {
     */
   def getDefinition(path: String, line: Int, offset: Int, content: String): Array[LocationLink]
 
+  /**
+    * TODO
+    * @param path
+    * @param line
+    * @param offset
+    * @param content
+    * @return
+    */
+  def getImplementation(path: String, line: Int, offset: Int, content: String): Array[LocationLink]
+
   /** Get a array of completion suggestion given a source file contents and a position.
     *
     * This will attempt to provide a list of possible completion suggestions at the position of the provided source

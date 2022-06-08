@@ -305,6 +305,15 @@ object OPM extends TriHierarchy {
       }
     }
 
+    override def getImplementation(
+      path: String,
+      line: Int,
+      offset: Int,
+      content: String
+    ): Array[LocationLink] = {
+      Array.empty
+    }
+
     override def getCompletionItems(
       path: String,
       line: Int,
