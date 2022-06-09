@@ -13,10 +13,20 @@
  */
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.cst.{ApexMethodDeclaration, ClassDeclaration, InterfaceDeclaration}
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.LocationLink
-import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration, TriggerDeclaration}
+import com.nawforce.apexlink.types.apex.{
+  ApexFullDeclaration,
+  ApexMethodLike,
+  FullDeclaration,
+  TriggerDeclaration
+}
+import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
+import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
+import com.nawforce.pkgforce.parsers.CLASS_NATURE
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLike, UnsafeLocatable}
 
 trait DefinitionProvider {
@@ -57,6 +67,78 @@ trait DefinitionProvider {
           })
       })
       .toArray
+  }
+
+  def getImplementation(
+    path: PathLike,
+    line: Int,
+    offset: Int,
+    content: Option[String]
+  ): Array[LocationLink] = {
+    val sourceAndType = loadSourceAndType(path, content)
+    if (sourceAndType.isEmpty)
+      return Array.empty
+
+    val source   = sourceAndType.get._1
+    val sourceTD = sourceAndType.get._2
+    val searchTermAndLocation =
+      source.extractDotTermInclusive(() => new IdentifierLimiter, line, offset)
+
+    if (searchTermAndLocation.isEmpty)
+      return Array.empty
+
+    val searchContext = sourceTD match {
+      case AbstractClassesAndInterface(td) =>
+        td.bodyDeclarations
+          .find(_.location.location.contains(line, offset))
+          .orElse({
+            (sourceTD, sourceTD.location.location.contains(line, offset)) match {
+              case (fd: FullDeclaration, true) => Some(fd)
+              case _                           => None
+            }
+          })
+      case _ => None
+    }
+
+    val usedByTds = sourceTD.getTypeDependencyHolders.toIterable.flatMap(
+      id => TypeResolver(id.typeName, id.module).toOption
+    )
+
+    searchContext match {
+      case Some(method: ApexMethodDeclaration) =>
+        usedByTds
+          .flatMap(
+            _.methods
+              .collect { case m: ApexMethodLike => m }
+              .find(m => m.signature == method.signature)
+          )
+          .map(
+            m =>
+              LocationLink(
+                searchTermAndLocation.get._2,
+                m.location.path.toString,
+                m.location.location,
+                m.idLocation
+              )
+          )
+          .toArray
+      case Some(_: ClassDeclaration) =>
+        usedByTds
+          .collect { case fd: FullDeclaration => fd }
+          .filterNot(_.modifiers.contains(ABSTRACT_MODIFIER))
+          .filter(_.nature == CLASS_NATURE)
+          .map(
+            fd =>
+              LocationLink(
+                searchTermAndLocation.get._2,
+                fd.location.path.toString,
+                fd.location.location,
+                fd.idLocation
+              )
+          )
+          .toArray
+      case None => Array.empty
+    }
   }
 
   private def loadSourceAndType(
@@ -133,5 +215,16 @@ trait DefinitionProvider {
             None
         }
       })
+  }
+
+  private object AbstractClassesAndInterface {
+    def unapply(td: TypeDeclaration): Option[FullDeclaration] = {
+      td match {
+        case id: InterfaceDeclaration => Some(id)
+        case cd: ClassDeclaration =>
+          if (cd.modifiers.contains(ABSTRACT_MODIFIER)) Some(cd) else None
+        case _ => None
+      }
+    }
   }
 }

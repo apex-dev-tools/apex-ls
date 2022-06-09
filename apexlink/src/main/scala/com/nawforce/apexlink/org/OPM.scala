@@ -311,7 +311,14 @@ object OPM extends TriHierarchy {
       offset: Int,
       content: String
     ): Array[LocationLink] = {
-      Array.empty
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          packages
+            .find(_.isPackagePath(path))
+            .map(_.getImplementation(Path(path), line, offset, Option(content)))
+            .getOrElse(Array.empty)
+        }
+      }
     }
 
     override def getCompletionItems(
