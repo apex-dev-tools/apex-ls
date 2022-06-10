@@ -63,7 +63,9 @@ abstract class FullDeclaration(
   override val inTest: Boolean = _inTest
 
   override val isCustomException: Boolean =
-    name.endsWith(Names.Exception) || superClass.contains(TypeNames.Exception) ||
+    name.endsWith(Names.Exception) || superClassDeclaration
+      .map(_.typeName)
+      .contains(TypeNames.Exception) ||
       (superClassDeclaration.nonEmpty && superClassDeclaration.get.isCustomException)
 
   // Track if this has been flushed to cache yet
@@ -145,6 +147,26 @@ abstract class FullDeclaration(
         id.location,
         s"Type name '${id.name}' does not match file name '$pathBasename'"
       )
+    }
+
+    //check custom exception is named and extended correctly
+    val isNamedCorrectly = id.name.endsWith(Names.Exception)
+    val isExtendedCorrectly =
+      superClassDeclaration.map(_.typeName).contains(TypeNames.Exception) || superClassDeclaration
+        .exists(_.isCustomException)
+
+    (isCustomException, isNamedCorrectly, isExtendedCorrectly) match {
+      case (true, true, false) =>
+        context.logError(
+          id.location,
+          s"Exception class '${id.name}' must extend another Exception class"
+        )
+      case (true, false, true) =>
+        context.logError(
+          id.location,
+          s"Class '${id.name}' extending an Exception must have a name ending in Exception"
+        )
+      case _ =>
     }
 
     // Check super class is visible
