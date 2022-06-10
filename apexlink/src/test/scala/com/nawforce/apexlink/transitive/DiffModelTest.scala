@@ -66,10 +66,6 @@ object DiffModelTest {
         .map(_._2)
         .getOrElse(-1)
 
-      if (path.contains("ContractsServiceImpl")) {
-        println(manualTransitives.map(_.toString).mkString(", "))
-      }
-
       val result =
         if (
           manualTransitives.length != graphTransitiveCount || manualTransitives.length != countTransitives
