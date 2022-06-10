@@ -60,7 +60,6 @@
     <mapping directory="$PROJECT_DIR$/samples/apex-unified-logging/apex-unified-logging" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/samples/at4dx/at4dx" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/samples/automation-components/automation-components" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/samples/aws-sdk/aws-sdk" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/samples/box-salesforce-sdk/box-salesforce-sdk" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/samples/declarative-lookup-rollup-summaries/declarative-lookup-rollup-summaries" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/samples/df12-apex-enterprise-patterns/df12-apex-enterprise-patterns" vcs="Git" />

@@ -26,21 +26,7 @@ trait ModuleCompletions {
   this: OPM.Module =>
 
   def matchTypeName(content: String, offset: Int): Array[CompletionItemLink] = {
-    val prefix = content
-      .findLimit(new IdentifierLimiter, forward = false, offset - 1)
-      .map(start => content.substring(start, offset))
-
-    // If we lead with our namespace, throw it away
-    val searchTerm = prefix.map(prefix => {
-      if (
-        namespace.nonEmpty && prefix.toLowerCase
-          .startsWith(namespace.get.value.toLowerCase + ".")
-      ) {
-        prefix.substring(namespace.get.value.length + 1)
-      } else {
-        prefix
-      }
-    })
+    val searchTerm = getSearchTerm(content, offset)
 
     // Collect over the modules (aka same namespace)
     val accum = ArrayBuffer[CompletionItemLink]()
@@ -53,14 +39,40 @@ trait ModuleCompletions {
     module: OPM.Module,
     searchTerm: Option[String]
   ): Array[CompletionItemLink] = {
+    getTypesFromModule(module, searchTerm).flatMap(CompletionItemLink(_))
+  }
 
+  def matchTdsForModule(content: String, offset: Int): Array[ApexClassDeclaration] = {
+    val searchTerm = getSearchTerm(content, offset)
+    getTypesFromModule(this, searchTerm)
+  }
+
+  private def getSearchTerm(content: String, offset: Int): Option[String] = {
+    val prefix = content
+      .findLimit(new IdentifierLimiter, forward = false, offset - 1)
+      .map(start => content.substring(start, offset))
+    // If we lead with our namespace, throw it away
+    prefix.map(prefix => {
+      if (
+        namespace.nonEmpty && prefix.toLowerCase
+          .startsWith(namespace.get.value.toLowerCase + ".")
+      ) {
+        prefix.substring(namespace.get.value.length + 1)
+      } else {
+        prefix
+      }
+    })
+  }
+
+  private def getTypesFromModule(
+    module: OPM.Module,
+    searchTerm: Option[String]
+  ): Array[ApexClassDeclaration] = {
     searchTerm
       .map(searchTerm => {
-
         val parts = searchTerm.split('.')
         val partCount =
           parts.length + (if (searchTerm.length > 1 && searchTerm.endsWith(".")) 1 else 0)
-
         if (partCount == 1) {
           // Match on first character of only part against any class name
           module.types
@@ -69,7 +81,6 @@ trait ModuleCompletions {
                 parts.head.isEmpty || kv._1.name.value.take(1).equalsIgnoreCase(parts.head.take(1))
             )
             .collect { case (_, td: ApexClassDeclaration) => td }
-            .flatMap(td => CompletionItemLink(td))
             .toArray
         } else if (partCount == 2) {
           // Match on first character of inner type, if we can find the outer
@@ -85,18 +96,13 @@ trait ModuleCompletions {
               )
             })
             .getOrElse(ArraySeq.empty)
-            .flatMap(td => CompletionItemLink(td))
             .toArray
         } else {
-          Array[CompletionItemLink]()
+          Array[ApexClassDeclaration]()
         }
       })
       .getOrElse {
-        // Return all classes in module when no prefix
-        module.types
-          .collect { case (_, td: ApexClassDeclaration) => td }
-          .flatMap(td => CompletionItemLink(td))
-          .toArray
+        module.types.collect { case (_, td: ApexClassDeclaration) => td }.toArray
       }
   }
 }

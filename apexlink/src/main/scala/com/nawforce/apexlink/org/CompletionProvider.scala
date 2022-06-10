@@ -22,6 +22,7 @@ import com.nawforce.apexlink.org.CompletionProvider.{
 }
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.CompletionItemLink
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexparser.{ApexLexer, ApexParser}
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
@@ -173,6 +174,11 @@ trait CompletionProvider {
                   }
                 })
                 .getOrElse(emptyCompletions)
+            case ApexParser.RULE_creator =>
+              module
+                .map(m => m.matchTdsForModule(terminatedContent._3, offset))
+                .map(_.flatMap(td => getAllCreatorCompletionItems(td, classDetails._2)))
+                .getOrElse(emptyCompletions)
           }
       )
       .flatten
@@ -309,11 +315,52 @@ trait CompletionProvider {
         .filter(hasPrivateAccess || _.modifiers.contains(PUBLIC_MODIFIER))
         .flatMap(nested => CompletionItemLink(nested))
     }
+    if (isStatic.isEmpty) {
+      val superCtors = td.superClassDeclaration
+        .map(superClass => {
+          superClass.constructors
+            .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
+            .map(
+              ctor =>
+                (
+                  "super(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")",
+                  ctor.toString
+                )
+            )
+            .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
+            .toArray
+        })
+        .getOrElse(emptyCompletions)
+
+      val thisCtors = td.constructors
+        .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
+        .map(
+          ctor =>
+            ("this(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")", ctor.toString)
+        )
+        .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
+
+      items = items ++ thisCtors ++ superCtors
+    }
 
     if (filterBy.nonEmpty)
       items.filter(x => x.label.take(1).toLowerCase == filterBy.take(1).toLowerCase)
     else
       items
+  }
+
+  private def getAllCreatorCompletionItems(
+    itemsFor: ApexClassDeclaration,
+    callingFrom: Option[ApexFullDeclaration]
+  ): Array[CompletionItemLink] = {
+    callingFrom.map(td => (td, td.superClassDeclaration)) match {
+      case Some((thisType, superType)) =>
+        itemsFor.constructors
+          .filter(ctor => ConstructorMap.isCtorAccessible(ctor, thisType, superType))
+          .map(ctor => CompletionItemLink(itemsFor.name, ctor))
+          .toArray
+      case None => emptyCompletions
+    }
   }
 }
 
@@ -376,5 +423,5 @@ object CompletionProvider {
     ApexLexer.INSTANCEOF
   )
   final val preferredRules: Set[Integer] =
-    Set[Integer](ApexParser.RULE_typeRef, ApexParser.RULE_primary)
+    Set[Integer](ApexParser.RULE_typeRef, ApexParser.RULE_primary, ApexParser.RULE_creator)
 }

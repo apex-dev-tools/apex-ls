@@ -1,6 +1,12 @@
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.types.core.{FieldDeclaration, MethodDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{
+  ConstructorDeclaration,
+  FieldDeclaration,
+  MethodDeclaration,
+  TypeDeclaration
+}
+import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE}
 import com.nawforce.pkgforce.path.Location
 import io.github.shogowada.scala.jsonrpc.serializers.JSONRPCPickler.{macroRW, ReadWriter => RW}
@@ -31,6 +37,12 @@ object CompletionItemLink {
       "Method",
       method.toString
     )
+  }
+
+  def apply(typName: Name, ctor: ConstructorDeclaration): CompletionItemLink = {
+    val ctorString =
+      typName.toString + "(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")"
+    CompletionItemLink(ctorString, "Constructor", ctor.toString)
   }
 
 }

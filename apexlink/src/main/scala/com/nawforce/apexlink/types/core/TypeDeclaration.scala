@@ -220,7 +220,6 @@ trait Parameters {
 trait ConstructorDeclaration extends DependencyHolder with Parameters {
   val modifiers: ArraySeq[Modifier]
 
-  //TODO: check is this is correct for ctors
   def visibility: Modifier =
     modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
   def isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
