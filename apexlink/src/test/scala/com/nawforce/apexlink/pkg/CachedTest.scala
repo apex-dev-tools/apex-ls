@@ -13,7 +13,7 @@
  */
 package com.nawforce.apexlink.pkg
 
-import com.nawforce.apexlink.api.{IssueOptions, ServerOps}
+import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM
@@ -696,7 +696,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       )
     ) { root: PathLike =>
       val org1 = createOrg(root)
-      val pkg1 = org1.unmanaged
+      org1.unmanaged
       assert(org1.issues.isEmpty)
       org1.flush()
 
@@ -705,8 +705,6 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
 
       {
         assert(org2.issues.isEmpty)
-        val options = new IssueOptions()
-        options.includeZombies = true
         assert(getMessages(org2) == "")
       }
 
@@ -714,8 +712,6 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
 
       {
         assert(org2.issues.isEmpty)
-        val options = new IssueOptions()
-        options.includeZombies = true
         assert(getMessages(org2) == "")
       }
     }

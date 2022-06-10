@@ -162,23 +162,3 @@ object Org {
     }
   }
 }
-
-/** Options available when retrieving File specific issues. */
-class FileIssueOptions {
-
-  /** Include warning messages, these may be ignored when checking for correctness. */
-  var includeWarnings: Boolean = true
-
-  /** Include warnings for dead fields, properties & methods, these may be ignored when checking for correctness. */
-  var includeZombies: Boolean = false
-
-  /** Maximum errors to include for each file, errors are ordered so this is the first 'n' errors. */
-  val maxErrorsPerFile: Integer = 10
-}
-
-/** Options available when retrieving Org issues. */
-class IssueOptions extends FileIssueOptions {
-
-  /** Override output default text format for issues, only supported option is "json" */
-  var format: String = ""
-}

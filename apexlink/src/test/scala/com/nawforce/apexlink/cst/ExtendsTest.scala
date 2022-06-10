@@ -130,10 +130,14 @@ class ExtendsTest extends AnyFunSuite with TestHelper {
   }
 
   test("Exception class with no custom exception superclass") {
-    assert(typeDeclarations(Map(
-      "BaseException.cls" -> "public virtual class BaseException extends Exception {}",
-      "DummyException.cls" -> "public class DummyException extends BaseException {}"
-    )).nonEmpty)
+    assert(
+      typeDeclarations(
+        Map(
+          "BaseException.cls"  -> "public virtual class BaseException extends Exception {}",
+          "DummyException.cls" -> "public class DummyException extends BaseException {}"
+        )
+      ).nonEmpty
+    )
     assert(!hasIssues)
   }
 
