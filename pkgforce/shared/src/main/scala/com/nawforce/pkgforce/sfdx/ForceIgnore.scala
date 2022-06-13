@@ -22,7 +22,7 @@ import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 
 class ForceIgnore(rootPath: PathLike, ignoreRules: Seq[IgnoreRule]) {
-  private val rootPathNative = rootPath.toStringNative
+  private val rootPathNative = rootPath.toString
   private val rootPathLength = {
     rootPathNative.length + (if (rootPathNative.endsWith(Path.separator)) 0 else 1)
   }
@@ -39,7 +39,7 @@ class ForceIgnore(rootPath: PathLike, ignoreRules: Seq[IgnoreRule]) {
     if (!rootPath.isParentOf(path))
       return false
 
-    val relativePath = path.toStringNative.substring(rootPathLength)
+    val relativePath = path.toString.substring(rootPathLength)
     var include      = true
     ignoreRules.foreach(rule => {
       if (directory || !rule.dirOnly) {

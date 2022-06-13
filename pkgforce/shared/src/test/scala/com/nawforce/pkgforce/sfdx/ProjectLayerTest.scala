@@ -19,6 +19,7 @@ import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.pkgforce.workspace.{ModuleLayer, NamespaceLayer}
 import com.nawforce.runtime.FileSystemHelper
+import com.nawforce.runtime.platform.Path
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -542,7 +543,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       assert(project.get.metadataGlobs.size == 2)
       assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith("pkg/bar/"))
+      assert(project.get.metadataGlobs(1).startsWith(s"pkg${Path.separator}bar/"))
     }
   }
 
