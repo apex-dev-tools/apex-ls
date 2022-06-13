@@ -327,9 +327,10 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     params: ArraySeq[TypeName],
     verifyContext: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
-    nature match {
-      case CLASS_NATURE => constructorMap.findConstructorByParams(params, verifyContext)
-      case _            => Left(s"Type cannot be constructed: $typeName")
+    (nature, modifiers.contains(ABSTRACT_MODIFIER)) match {
+      case (CLASS_NATURE, false) => constructorMap.findConstructorByParams(params, verifyContext)
+      case (CLASS_NATURE, true)  => Left(s"Abstract classes cannot be constructed: $typeName")
+      case (_, _)                => Left(s"Type cannot be constructed: $typeName")
     }
 
   }

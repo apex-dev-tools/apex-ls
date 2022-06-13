@@ -249,7 +249,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues == "Error: line 1 at 38-40: Type cannot be constructed: System.String\n")
   }
 
-  test("Unconstructable type") {
+  test("Unconstructable enum type") {
     typeDeclarations(
       Map(
         "Foo.cls"   -> "public enum Foo {TEST}",
@@ -257,6 +257,26 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(dummyIssues == "Error: line 1 at 28-30: Type cannot be constructed: Foo\n")
+  }
+
+  test("Unconstructable interface type") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public interface Foo {}",
+        "Dummy.cls" -> "public class Dummy {{new Foo();} }"
+      )
+    )
+    assert(dummyIssues == "Error: line 1 at 28-30: Type cannot be constructed: Foo\n")
+  }
+
+  test("Unconstructable abstract class type") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public abstract class Foo {}",
+        "Dummy.cls" -> "public class Dummy {{new Foo();} }"
+      )
+    )
+    assert(dummyIssues == "Error: line 1 at 28-30: Abstract classes cannot be constructed: Foo\n")
   }
 
   test("Interview type") {

@@ -392,18 +392,3 @@ object FullDeclaration {
     cst.map(_.withContext(typeDecl))
   }
 }
-
-
-object ExtensibleClassesAndInterface {
-  def unapply(td: TypeDeclaration): Option[FullDeclaration] = {
-    td match {
-      case id: InterfaceDeclaration => Some(id)
-      case cd: ClassDeclaration =>
-        val modifiers = cd.modifiers.toSet
-        if (modifiers.intersect(Set(ABSTRACT_MODIFIER, VIRTUAL_MODIFIER)).nonEmpty)
-          Some(cd)
-        else None
-      case _ => None
-    }
-  }
-}
