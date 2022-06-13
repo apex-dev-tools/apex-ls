@@ -272,8 +272,8 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
   test("Unconstructable abstract class type") {
     typeDeclarations(
       Map(
-        "Foo.cls"   -> "public abstract class Foo {}",
-        "Dummy.cls" -> "public class Dummy {{new Foo();} }"
+        "Foo.cls"   -> "public abstract class Foo {public Foo(String s){} public Foo(){this('');}}",
+        "Dummy.cls" -> "public class Dummy {{new Foo();}}"
       )
     )
     assert(dummyIssues == "Error: line 1 at 28-30: Abstract classes cannot be constructed: Foo\n")

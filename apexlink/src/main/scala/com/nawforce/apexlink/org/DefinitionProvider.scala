@@ -98,8 +98,7 @@ trait DefinitionProvider {
         TypeResolver(id.typeName, id.module).toOption match {
           //if the used by declaration is extensible, find the other classes that use it and add it to the acc
           case Some(ExtensibleClassesAndInterface(clsOrInterface)) =>
-            val concreteImpls = getUsedBy(clsOrInterface)
-            if (concreteImpls.isEmpty) acc.append(clsOrInterface) else acc.appendAll(concreteImpls)
+            acc.appendAll(getUsedBy(clsOrInterface).append(clsOrInterface))
           case Some(value) => acc.append(value)
           case _           =>
         }
@@ -153,7 +152,6 @@ trait DefinitionProvider {
       case Some(_: FullDeclaration) =>
         usedByTds
           .collect { case fd: FullDeclaration => fd }
-          .filterNot(_.modifiers.contains(ABSTRACT_MODIFIER))
           .filter(_.nature == CLASS_NATURE)
           .map(
             fd =>
