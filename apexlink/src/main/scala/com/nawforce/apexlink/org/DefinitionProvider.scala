@@ -13,21 +13,18 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst.{ApexMethodDeclaration, ClassDeclaration, InterfaceDeclaration}
+import com.nawforce.apexlink.cst.ApexMethodDeclaration
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.LocationLink
-import com.nawforce.apexlink.types.apex.{
-  ApexFullDeclaration,
-  ApexMethodLike,
-  FullDeclaration,
-  TriggerDeclaration
-}
+import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, ApexMethodLike, ExtensibleClassesAndInterface, FullDeclaration, TriggerDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
 import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
 import com.nawforce.pkgforce.parsers.CLASS_NATURE
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLike, UnsafeLocatable}
+
+import scala.collection.mutable.ArrayBuffer
 
 trait DefinitionProvider {
   this: OPM.PackageImpl =>
@@ -36,14 +33,15 @@ trait DefinitionProvider {
     path: PathLike,
     line: Int,
     offset: Int,
-    content: Option[String]
+    content: Option[String],
+    withImplementation: Boolean = false
   ): Array[LocationLink] = {
     // Make sure we have access to source code and a type to resolve things against
     val sourceAndType = loadSourceAndType(path, content)
     if (sourceAndType.isEmpty)
       return Array.empty
 
-    locateFromValidation(sourceAndType.get._2, line, offset)
+    val definitions = locateFromValidation(sourceAndType.get._2, line, offset)
       .orElse({
 
         val source   = sourceAndType.get._1
@@ -67,6 +65,9 @@ trait DefinitionProvider {
           })
       })
       .toArray
+
+    if (withImplementation) definitions ++ getImplementation(line, offset, sourceAndType)
+    else definitions
   }
 
   def getImplementation(
@@ -79,30 +80,52 @@ trait DefinitionProvider {
     if (sourceAndType.isEmpty)
       return Array.empty
 
+    getImplementation(line, offset, sourceAndType)
+  }
+
+  private def getImplementation(
+    line: Int,
+    offset: Int,
+    sourceAndType: Option[(String, ApexFullDeclaration)]
+  ): Array[LocationLink] = {
+    def getUsedBy(td: ApexFullDeclaration): ArrayBuffer[TypeDeclaration] = {
+      td.getTypeDependencyHolders.toIterable.foldLeft(ArrayBuffer[TypeDeclaration]())((acc, id) => {
+        TypeResolver(id.typeName, id.module).toOption match {
+          //if the used by declaration is extensible, find the other classes that use it and add it to the acc
+          case Some(ExtensibleClassesAndInterface(clsOrInterface)) =>
+            val concreteImpls = getUsedBy(clsOrInterface)
+            if (concreteImpls.isEmpty) acc.append(clsOrInterface) else acc.appendAll(concreteImpls)
+          case Some(value) => acc.append(value)
+          case _           =>
+        }
+        acc
+      })
+    }
+
     val source   = sourceAndType.get._1
     val sourceTD = sourceAndType.get._2
-    val searchTermAndLocation =
-      source.extractDotTermInclusive(() => new IdentifierLimiter, line, offset)
 
-    if (searchTermAndLocation.isEmpty)
-      return Array.empty
+    val searchLocation =
+      source
+        .extractDotTermInclusive(() => new IdentifierLimiter, line, offset)
+        .orElse(return Array.empty)
+        .get
+        ._2
 
     val searchContext = sourceTD match {
-      case AbstractClassesAndInterface(td) =>
-        td.bodyDeclarations
-          .find(_.location.location.contains(line, offset))
-          .orElse({
-            (sourceTD, sourceTD.location.location.contains(line, offset)) match {
-              case (fd: FullDeclaration, true) => Some(fd)
-              case _                           => None
-            }
-          })
+      case ExtensibleClassesAndInterface(td) =>
+        val source = (sourceTD, sourceTD.location.location.contains(line, offset)) match {
+          case (fd: FullDeclaration, true) => Some(fd)
+          case _                           => None
+        }
+        source.orElse({
+          td.bodyDeclarations
+            .find(_.location.location.contains(line, offset))
+        })
       case _ => None
     }
 
-    val usedByTds = sourceTD.getTypeDependencyHolders.toIterable.flatMap(
-      id => TypeResolver(id.typeName, id.module).toOption
-    )
+    val usedByTds = getUsedBy(sourceTD)
 
     searchContext match {
       case Some(method: ApexMethodDeclaration) =>
@@ -115,14 +138,14 @@ trait DefinitionProvider {
           .map(
             m =>
               LocationLink(
-                searchTermAndLocation.get._2,
+                searchLocation,
                 m.location.path.toString,
                 m.location.location,
                 m.idLocation
               )
           )
           .toArray
-      case Some(_: ClassDeclaration) =>
+      case Some(_: FullDeclaration) =>
         usedByTds
           .collect { case fd: FullDeclaration => fd }
           .filterNot(_.modifiers.contains(ABSTRACT_MODIFIER))
@@ -130,14 +153,14 @@ trait DefinitionProvider {
           .map(
             fd =>
               LocationLink(
-                searchTermAndLocation.get._2,
+                searchLocation,
                 fd.location.path.toString,
                 fd.location.location,
                 fd.idLocation
               )
           )
           .toArray
-      case None => Array.empty
+      case _ => Array.empty
     }
   }
 
@@ -215,16 +238,5 @@ trait DefinitionProvider {
             None
         }
       })
-  }
-
-  private object AbstractClassesAndInterface {
-    def unapply(td: TypeDeclaration): Option[FullDeclaration] = {
-      td match {
-        case id: InterfaceDeclaration => Some(id)
-        case cd: ClassDeclaration =>
-          if (cd.modifiers.contains(ABSTRACT_MODIFIER)) Some(cd) else None
-        case _ => None
-      }
-    }
   }
 }
