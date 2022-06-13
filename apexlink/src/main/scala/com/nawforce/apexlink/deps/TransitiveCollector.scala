@@ -20,7 +20,7 @@ import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier}
 import scala.collection.mutable
 
 /** Transitive dependency helper */
-class TransitiveCollector(org: Org, apexOnly: Boolean) {
+class TransitiveCollector(org: Org, samePackage: Boolean, apexOnly: Boolean) {
   private val packagesByNamespace =
     org.getPackages().map(pkg => (Name(pkg.getNamespaces(false).head), pkg)).toMap
 
@@ -32,7 +32,8 @@ class TransitiveCollector(org: Org, apexOnly: Boolean) {
     id: TypeIdentifier,
     ignoring: Array[TypeIdentifier] = Array()
   ): Array[TypeIdentifier] = {
-    val pkg = packagesByNamespace.get(id.namespace.getOrElse(Names.Empty))
+    val pkgNamespace = id.namespace.getOrElse(Names.Empty)
+    val pkg          = packagesByNamespace.get(pkgNamespace)
 
     val depsSeen = mutable.Set[TypeIdentifier]()
     depsSeen.add(id)
@@ -48,8 +49,10 @@ class TransitiveCollector(org: Org, apexOnly: Boolean) {
         .getOrElse(Array[TypeIdentifier]())
         .filterNot(depsSeen.contains)
         .foreach(t => {
-          deps.append(t)
-          depsSeen.add(t)
+          if (!samePackage || t.namespace.getOrElse(Names.Empty) == pkgNamespace) {
+            deps.append(t)
+            depsSeen.add(t)
+          }
         })
       current += 1
     }

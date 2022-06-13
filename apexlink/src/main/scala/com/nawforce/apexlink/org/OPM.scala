@@ -377,7 +377,7 @@ object OPM extends TriHierarchy {
         transitiveDependencies.count(t => t != typeId)
       }
 
-      val collector = new TransitiveCollector(this, true)
+      val collector = new TransitiveCollector(this, true, true)
 
       paths
         .flatMap { path =>
