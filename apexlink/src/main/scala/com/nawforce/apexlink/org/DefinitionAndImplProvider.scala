@@ -17,8 +17,15 @@ import com.nawforce.apexlink.cst.{ApexMethodDeclaration, InterfaceDeclaration}
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.LocationLink
-import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexFullDeclaration, ApexMethodLike, FullDeclaration, SummaryDeclaration, TriggerDeclaration}
-import com.nawforce.apexlink.types.core.TypeDeclaration
+import com.nawforce.apexlink.types.apex.{
+  ApexClassDeclaration,
+  ApexDeclaration,
+  ApexFullDeclaration,
+  ApexMethodLike,
+  FullDeclaration,
+  TriggerDeclaration
+}
+import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration}
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
 import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, VIRTUAL_MODIFIER}
 import com.nawforce.pkgforce.parsers.CLASS_NATURE
@@ -93,7 +100,9 @@ trait DefinitionAndImplProvider {
         TypeResolver(id.typeName, id.module).toOption match {
           //if the used by declaration is extensible, find the other classes that use it and add it to the acc
           case Some(ExtensibleClassesAndInterface(clsOrInterface)) =>
-            acc.appendAll(getUsedBy(clsOrInterface).append(clsOrInterface))
+            acc.appendAll(
+              getUsedBy(clsOrInterface).appendAll(clsOrInterface.nestedTypes).append(clsOrInterface)
+            )
           case Some(value) => acc.append(value)
           case _           =>
         }
@@ -111,19 +120,24 @@ trait DefinitionAndImplProvider {
         .get
         ._2
 
-    val searchContext = sourceTD match {
-      case ExtensibleClassesAndInterface(td) =>
-        td.methods.collect{case m:ApexMethodLike => m}
-          .find(_.location.location.contains(line, offset))
-          .orElse({
-            (sourceTD, sourceTD.location.location.contains(line, offset)) match {
-              case (fd: FullDeclaration, true) => Some(fd)
-              case _                           => None
-            }
-          })
+    def getSearchContext(td: TypeDeclaration): Option[Dependent with IdLocatable] = {
+      td match {
+        case ExtensibleClassesAndInterface(td) =>
+          td.methods
+            .collect { case m: ApexMethodLike => m }
+            .find(_.location.location.contains(line, offset))
+            .orElse({
+              (td, td.location.location.contains(line, offset)) match {
+                case (ad: ApexDeclaration, true) => Some(ad)
+                case _                           => None
+              }
+            })
 
-      case _ => None
+        case _ =>
+          if (td.nestedTypes.isEmpty) None else td.nestedTypes.flatMap(getSearchContext).headOption
+      }
     }
+    val searchContext = getSearchContext(sourceTD)
 
     val usedByTds = getUsedBy(sourceTD)
 
@@ -144,11 +158,13 @@ trait DefinitionAndImplProvider {
                 m.idLocation
               )
           )
-          .distinct.toArray
-      case Some(_: FullDeclaration) =>
+          .distinct
+          .toArray
+      case Some(td: ApexDeclaration) =>
         usedByTds
-          .collect { case fd: FullDeclaration => fd }
+          .collect { case fd: ApexDeclaration => fd }
           .filter(_.nature == CLASS_NATURE)
+          .filter(_.superTypes().contains(td.typeName))
           .map(
             fd =>
               LocationLink(
@@ -158,7 +174,8 @@ trait DefinitionAndImplProvider {
                 fd.idLocation
               )
           )
-          .distinct.toArray
+          .distinct
+          .toArray
       case _ => Array.empty
     }
   }

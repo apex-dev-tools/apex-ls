@@ -578,4 +578,90 @@ class DefinitionAndImplProviderTest extends AnyFunSuite with TestHelper {
       )
     }
   }
+
+  test("Identifier Implementation with non super type dependents") {
+    val contentAndCursorPos =
+      withCursor(s"public interface F${CURSOR}oo { void goToMethod(); void concrete(); }")
+    val dummy    = "public abstract class Dummy implements Foo { public void concrete(){}}"
+    val dummyTwo = "public virtual class DummyTwo extends Dummy { public void goToMethod(){}}"
+    val bar      = "public class Bar { public Bar(){ DummyTwo t = new DummyTwo();}}"
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"      -> contentAndCursorPos._1,
+        "Dummy.cls"    -> dummy,
+        "DummyTwo.cls" -> dummyTwo,
+        "Bar.cls"      -> bar
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+          .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
+          Array(
+            LocationLinkString("Foo", "/DummyTwo.cls", dummyTwo, "DummyTwo"),
+            LocationLinkString("Foo", "/Dummy.cls", dummy, "Dummy")
+          )
+      )
+    }
+  }
+
+  test("Identifier Implementation with inner classes") {
+    val contentAndCursorPos =
+      withCursor(s"public interface F${CURSOR}oo { void goToMethod();}")
+    val dummy =
+      "public abstract class Dummy { class InnerClass implements Foo { public void goToMethod(){}}}"
+    FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1, "Dummy.cls" -> dummy)) {
+      root: PathLike =>
+        val org = createHappyOrg(root)
+        assert(
+          org.unmanaged
+            .getImplementation(
+              root.join("Foo.cls"),
+              line = 1,
+              offset = contentAndCursorPos._2,
+              None
+            )
+            .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
+            Array(
+              LocationLinkString(
+                "Foo",
+                "/Dummy.cls",
+                "class InnerClass implements Foo { public void goToMethod(){}}",
+                "InnerClass"
+              )
+            )
+        )
+    }
+  }
+
+  test("From Inner go to implements") {
+    val contentAndCursorPos =
+      withCursor(s"public class Foo { public interface B${CURSOR}ar{} }")
+    val dummy =
+      "public abstract class Dummy { class InnerClass implements Foo.Bar {}}"
+    FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1, "Dummy.cls" -> dummy)) {
+      root: PathLike =>
+        val org = createHappyOrg(root)
+        assert(
+          org.unmanaged
+            .getImplementation(
+              root.join("Foo.cls"),
+              line = 1,
+              offset = contentAndCursorPos._2,
+              None
+            )
+            .map(LocationLinkString(root, contentAndCursorPos._1, _))
+            sameElements
+              Array(
+                LocationLinkString(
+                  "Bar",
+                  "/Dummy.cls",
+                  "class InnerClass implements Foo.Bar {}",
+                  "InnerClass"
+                )
+              )
+        )
+    }
+  }
 }
