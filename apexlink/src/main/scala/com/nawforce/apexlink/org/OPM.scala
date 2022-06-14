@@ -299,7 +299,9 @@ object OPM extends TriHierarchy {
         OrgInfo.current.withValue(this) {
           packages
             .find(_.isPackagePath(path))
-            .map(_.getDefinition(Path(path), line, offset, Option(content)))
+            .map(
+              _.getDefinition(Path(path), line, offset, Option(content), withImplementation = true)
+            )
             .getOrElse(Array.empty)
         }
       }
@@ -442,7 +444,7 @@ object OPM extends TriHierarchy {
     logger: IssueLogger
   ) extends TriPackage
       with PackageAPI
-      with DefinitionProvider
+      with DefinitionAndImplProvider
       with CompletionProvider {
 
     val modules: ArraySeq[Module] =
