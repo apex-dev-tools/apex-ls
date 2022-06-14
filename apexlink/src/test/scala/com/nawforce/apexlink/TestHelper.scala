@@ -27,7 +27,7 @@ import com.nawforce.pkgforce.path.{Location, PathLike}
 trait TestHelper {
 
   private var defaultOrg: OPM.OrgImpl = _
-  private var root: PathLike          = _
+  protected var root: PathLike        = _
 
   def createOrg(path: PathLike): OPM.OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq())

@@ -1,25 +1,43 @@
 package com.nawforce.runtime
 
 import java.nio.file.Files
-
 import com.google.common.jimfs.{Configuration, Jimfs}
 import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.platform.{Environment, Path}
 
 object FileSystemHelper {
 
   // Abstract virtual filesystem for testing
   def run[T](files: Map[String, String], setupCache: Boolean = false)(verify: PathLike => T): T = {
-    val config = Configuration
-      .unix()
-      .toBuilder
-      .setWorkingDirectory("/")
-      .build()
+    val os = System.getProperty("os.name")
+    val config =
+      if (os.contains("Windows")) {
+        val b = Configuration.windows().toBuilder
+        b.setWorkingDirectory("C:\\")
+        b.build()
+      } else if (os.contains("OS X")) {
+        val b = Configuration.osX().toBuilder
+        b.setWorkingDirectory("/")
+        b.build()
+      } else {
+        val b = Configuration.unix().toBuilder
+        b.setWorkingDirectory("/")
+        b.build()
+      }
+
     val fs      = Jimfs.newFileSystem(config)
     val rootDir = fs.getRootDirectories.iterator().next()
     files.foreach(kv => {
-      val path = rootDir.resolve(kv._1)
+      // Allow UNIX style for test files on Windows
+      var newPath = kv._1
+      if (Environment.isWindows) {
+        newPath = newPath.split('/').mkString(Path.separator)
+        if (newPath.head.toString == Path.separator)
+          newPath = newPath.tail
+      }
+      val path = rootDir.resolve(newPath)
+
       Files.createDirectories(path.getParent)
       Files.write(path, kv._2.getBytes())
     })

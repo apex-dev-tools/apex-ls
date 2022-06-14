@@ -113,6 +113,34 @@ class ExtendsTest extends AnyFunSuite with TestHelper {
     assert(!hasIssues)
   }
 
+  test("Exception superclass with wrong name") {
+    assert(typeDeclarations(Map("Dummy.cls" -> "public class Dummy extends Exception {}")).nonEmpty)
+    assert(
+      dummyIssues == "Error: line 1 at 13-18: Class 'Dummy' extending an Exception must have a name ending in Exception\n"
+    )
+  }
+
+  test("Exception class with no Exception superclass") {
+    assert(typeDeclarations(Map("DummyException.cls" -> "public class DummyException{}")).nonEmpty)
+    assert(
+      getMessages(
+        root.join("DummyException.cls")
+      ) == "Error: line 1 at 13-27: Exception class 'DummyException' must extend another Exception class\n"
+    )
+  }
+
+  test("Exception class with no custom exception superclass") {
+    assert(
+      typeDeclarations(
+        Map(
+          "BaseException.cls"  -> "public virtual class BaseException extends Exception {}",
+          "DummyException.cls" -> "public class DummyException extends BaseException {}"
+        )
+      ).nonEmpty
+    )
+    assert(!hasIssues)
+  }
+
   test("Outer superclass") {
     assert(
       typeDeclarations(

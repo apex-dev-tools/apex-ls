@@ -420,7 +420,7 @@ class MDIndexFindTest extends AnyFunSuite {
 
         val fooFile = foo.getFile
         assert(fooFile != null)
-        assert(fooFile.getFilename == "/Foo.cls")
+        assert(fooFile.getFilename == root.join("Foo.cls").toString)
         assert(!fooFile.hasError)
         assert(fooFile.getTypes.size() == 2)
         assert(fooFile.getTypes.contains(foo))
@@ -428,7 +428,7 @@ class MDIndexFindTest extends AnyFunSuite {
 
         val barFile = bar.getFile
         assert(barFile != null)
-        assert(barFile.getFilename == "/Foo.cls")
+        assert(barFile.getFilename == root.join("Foo.cls").toString)
         assert(!barFile.hasError)
         assert(barFile.getTypes.size() == 2)
         assert(fooFile.getTypes.contains(foo))
@@ -460,7 +460,7 @@ class MDIndexFindTest extends AnyFunSuite {
 
       val fooFile = foo.getFile
       assert(fooFile != null)
-      assert(fooFile.getFilename == "/sources/Foo.cls")
+      assert(fooFile.getFilename == root.join("sources").join("Foo.cls").toString)
       assert(!fooFile.hasError)
       assert(fooFile.getTypes.size() == 2)
       assert(fooFile.getTypes.contains(foo))
@@ -468,7 +468,7 @@ class MDIndexFindTest extends AnyFunSuite {
 
       val barFile = bar.getFile
       assert(barFile != null)
-      assert(barFile.getFilename == "/sources/Foo.cls")
+      assert(barFile.getFilename == root.join("sources").join("Foo.cls").toString)
       assert(!barFile.hasError)
       assert(barFile.getTypes.size() == 2)
       assert(fooFile.getTypes.contains(foo))
@@ -500,7 +500,7 @@ class MDIndexFindTest extends AnyFunSuite {
 
       val fooFile = foo.getFile
       assert(fooFile != null)
-      assert(fooFile.getFilename == "/sources/Foo.cls")
+      assert(fooFile.getFilename == root.join("sources").join("Foo.cls").toString)
       assert(!fooFile.hasError)
       assert(fooFile.getTypes.size() == 2)
       assert(fooFile.getTypes.contains(foo))
@@ -508,7 +508,7 @@ class MDIndexFindTest extends AnyFunSuite {
 
       val barFile = bar.getFile
       assert(barFile != null)
-      assert(barFile.getFilename == "/sources/Foo.cls")
+      assert(barFile.getFilename == root.join("sources").join("Foo.cls").toString)
       assert(!barFile.hasError)
       assert(barFile.getTypes.size() == 2)
       assert(fooFile.getTypes.contains(foo))
