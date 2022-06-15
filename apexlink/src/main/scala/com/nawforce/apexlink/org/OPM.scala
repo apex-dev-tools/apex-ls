@@ -299,9 +299,7 @@ object OPM extends TriHierarchy {
         OrgInfo.current.withValue(this) {
           packages
             .find(_.isPackagePath(path))
-            .map(
-              _.getDefinition(Path(path), line, offset, Option(content), withImplementation = true)
-            )
+            .map(_.getDefinition(Path(path), line, offset, Option(content)))
             .getOrElse(Array.empty)
         }
       }

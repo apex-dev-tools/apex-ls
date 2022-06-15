@@ -40,15 +40,14 @@ trait DefinitionAndImplProvider {
     path: PathLike,
     line: Int,
     offset: Int,
-    content: Option[String],
-    withImplementation: Boolean = false
+    content: Option[String]
   ): Array[LocationLink] = {
     // Make sure we have access to source code and a type to resolve things against
     val sourceAndType = loadSourceAndType(path, content)
     if (sourceAndType.isEmpty)
       return Array.empty
 
-    val definitions = locateFromValidation(sourceAndType.get._2, line, offset)
+    locateFromValidation(sourceAndType.get._2, line, offset)
       .orElse({
 
         val source   = sourceAndType.get._1
@@ -72,9 +71,6 @@ trait DefinitionAndImplProvider {
           })
       })
       .toArray
-
-    if (withImplementation) definitions ++ getImplementation(line, offset, sourceAndType)
-    else definitions
   }
 
   def getImplementation(
