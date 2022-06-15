@@ -91,13 +91,13 @@ trait DefinitionAndImplProvider {
     offset: Int,
     sourceAndType: Option[(String, ApexFullDeclaration)]
   ): Array[LocationLink] = {
-    def getUsedBy(td: ApexDeclaration): ArrayBuffer[TypeDeclaration] = {
+    def getTransitiveDependents(td: ApexDeclaration): ArrayBuffer[TypeDeclaration] = {
       td.getTypeDependencyHolders.toIterable.foldLeft(ArrayBuffer[TypeDeclaration]())((acc, id) => {
         TypeResolver(id.typeName, id.module).toOption match {
           //if the used by declaration is extensible, find the other classes that use it and add it to the acc
           case Some(ExtensibleClassesAndInterface(clsOrInterface)) =>
             acc.appendAll(
-              getUsedBy(clsOrInterface).appendAll(clsOrInterface.nestedTypes).append(clsOrInterface)
+              getTransitiveDependents(clsOrInterface).appendAll(clsOrInterface.nestedTypes).append(clsOrInterface)
             )
           case Some(value) => acc.append(value)
           case _           =>
@@ -135,7 +135,7 @@ trait DefinitionAndImplProvider {
     }
     val searchContext = getSearchContext(sourceTD)
 
-    val usedByTds = getUsedBy(sourceTD)
+    val usedByTds = getTransitiveDependents(sourceTD)
 
     searchContext match {
       case Some(method: ApexMethodDeclaration) =>

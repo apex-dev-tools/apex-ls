@@ -117,13 +117,14 @@ trait Org {
     */
   def getDefinition(path: String, line: Int, offset: Int, content: String): Array[LocationLink]
 
-  /**
-    * TODO
-    * @param path
-    * @param line
-    * @param offset
-    * @param content
-    * @return
+  /** Locate the implementations of interfaces and abstract methods and classes given the position
+    *
+    * This will attempt to locate the concrete implementation of the type definition or method at the provided
+    * line & offset in the path. The returned location are calculated based on the direct dependents and
+    * transitive dependents to find a concrete class that either has a super type that includes the type or a
+    * method signature from the path. If no location is found an empty array is returned. If content is null,
+    * path will be used to load the source code. It is not necessary for the file being searched
+    * from to be free of errors, but errors may impact the ability to locate inner classes within that file.
     */
   def getImplementation(path: String, line: Int, offset: Int, content: String): Array[LocationLink]
 
