@@ -2,19 +2,16 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.runtime.sfparser_test
+package com.financialforce.oparser
 
 import com.financialforce.oparser._
-import com.nawforce.runtime.platform.Path
-import com.nawforce.runtime.sfparser_run.SFParser
-import com.nawforce.runtime.sfparser_run.compare.SubsetComparator
-import com.nawforce.runtime.workspace.ModuleClassFactory
+import com.financialforce.oparser.testutil._
 import org.scalatest.funsuite.AnyFunSuite
 
 class SFParserTest extends AnyFunSuite {
+  private val path = "Dummy.cls"
 
   test("Classes") {
-    val path = Path("Dummy.cls")
     val content =
       """
         | public abstract class Dummy extends Bar implements Baz, Boo{
@@ -58,8 +55,8 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(null, path.basename, content).parse._1.head
+    val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
+    val sfp        = SFParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -68,7 +65,6 @@ class SFParserTest extends AnyFunSuite {
   }
 
   test("class sharing") {
-    val path = Path("Dummy.cls")
     val content =
       """
         | public with sharing class Dummy extends Baz {
@@ -77,8 +73,8 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(null, path.basename, content).parse._1.head
+    val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
+    val sfp        = SFParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -86,7 +82,6 @@ class SFParserTest extends AnyFunSuite {
   }
 
   test("Interface") {
-    val path = Path("Dummy.cls")
     val content =
       """
         | public interface Dummy extends Baz {
@@ -96,8 +91,8 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(null, path.basename, content).parse._1.head
+    val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
+    val sfp        = SFParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -105,7 +100,6 @@ class SFParserTest extends AnyFunSuite {
   }
 
   test("Enums") {
-    val path = Path("Dummy.cls")
     val content =
       """
         | public enum Season {
@@ -116,8 +110,8 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(null, path.basename, content).parse._1.head
+    val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
+    val sfp        = SFParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -125,7 +119,6 @@ class SFParserTest extends AnyFunSuite {
   }
 
   test("Classes with multiple static initializers") {
-    val path = Path("Dummy.cls")
     val content =
       """
         | public class Dummy {
@@ -140,8 +133,8 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(null, path.basename, content).parse._1.head
+    val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
+    val sfp        = SFParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -149,7 +142,6 @@ class SFParserTest extends AnyFunSuite {
   }
 
   test("Classes with multiple instance initializers") {
-    val path = Path("Dummy.cls")
     val content =
       """
         | public class Dummy {
@@ -164,8 +156,8 @@ class SFParserTest extends AnyFunSuite {
         | }
         |""".stripMargin
 
-    val op         = OutlineParser.parse(path.basename, content, ModuleClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(null, path.basename, content).parse._1.head
+    val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
+    val sfp        = SFParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 

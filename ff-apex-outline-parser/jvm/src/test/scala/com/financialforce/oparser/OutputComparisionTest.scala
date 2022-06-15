@@ -2,12 +2,11 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.runtime.sfparser_test
+package com.financialforce.oparser
 
 import com.financialforce.oparser.OutlineParser
-import com.nawforce.runtime.sfparser_run.compare.{SubsetComparator, TypeIdCollector}
-import com.nawforce.runtime.sfparser_run.{SFParser, SymbolProvider}
-import com.nawforce.runtime.workspace.{ModuleClassFactory, TypeDeclaration}
+import com.financialforce.oparser.{SubsetComparator, TypeIdCollector}
+import com.financialforce.oparser.testutil.{SFParser, SymbolProvider}
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
@@ -43,7 +42,7 @@ object OutputComparisonTest {
       .toMap
 
     val sfParserOutput =
-      SFParser(null, sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
+      SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
 
     files
       .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
@@ -51,7 +50,7 @@ object OutputComparisonTest {
         compareUnresolvedOutputs(
           f,
           sfParserOutput,
-          TypeIdCollector.fromTypeDecls(sfParserOutput._1)
+          TypeIdCollector(sfParserOutput._1.toList)
         )
       })
 
@@ -72,7 +71,7 @@ object OutputComparisonTest {
 
   private def compareUnresolvedOutputs(
     path: Path,
-    sfOutput: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String]),
+    sfOutput: (ArrayBuffer[TestTypeDeclaration], ArrayBuffer[String]),
     sfTypeIdResolver: TypeIdCollector
   ): Unit = {
     val (success, reason, opOut) = getOutLineParserOutput(path)
@@ -85,7 +84,7 @@ object OutputComparisonTest {
       return
     }
     try {
-      val opResolver = TypeIdCollector.fromIModuleTypeDecls(List(opOut.get))
+      val opResolver = TypeIdCollector(List(opOut.get))
       val comparator = SubsetComparator(opOut.get, opResolver, sfTypeIdResolver)
       comparator.unresolvedSubsetOf(sfTd.get)
       val warnings = comparator.getWarnings
@@ -104,7 +103,7 @@ object OutputComparisonTest {
 
   private def findSfParserOutput(
     path: Path,
-    output: (ArrayBuffer[TypeDeclaration], ArrayBuffer[String])
+    output: (ArrayBuffer[TestTypeDeclaration], ArrayBuffer[String])
   ) = {
     output._1.find(_.paths.head == path.toString)
   }
@@ -130,7 +129,7 @@ object OutputComparisonTest {
 
   private def getOutLineParserOutput(path: Path) = {
     val contentsString = getUTF8ContentsFromPath(path)
-    val result         = OutlineParser.parse(path.toString, contentsString, ModuleClassFactory, ctx = null)
+    val result         = OutlineParser.parse(path.toString, contentsString, TestClassFactory, ctx = null)
     (result._1, result._2, result._3)
   }
 
