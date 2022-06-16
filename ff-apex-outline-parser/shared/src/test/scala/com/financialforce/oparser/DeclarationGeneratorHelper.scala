@@ -1,7 +1,10 @@
-package com.nawforce.runtime.sfparser_test
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
+
+package com.financialforce.oparser
 
 import com.financialforce.oparser._
-
 import scala.collection.immutable.ArraySeq
 
 trait DeclarationGeneratorHelper {

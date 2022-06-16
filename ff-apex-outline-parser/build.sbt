@@ -30,7 +30,8 @@ lazy val parser = crossProject(JVMPlatform, JSPlatform)
   )
   .jvmSettings(
     build := buildJVM.value,
-    assembly / mainClass := Some("com.financialforce.oparser.JVMParser")
+    assembly / mainClass := Some("com.financialforce.oparser.JVMParser"),
+    libraryDependencies += "com.github.nawforce" % "uber-apex-jorje" % "1.0.0" % Test
   )
   .jsSettings(
     build := buildJS.value,
