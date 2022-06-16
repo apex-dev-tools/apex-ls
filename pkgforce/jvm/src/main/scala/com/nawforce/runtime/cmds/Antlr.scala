@@ -207,11 +207,11 @@ object Antlr {
     ctd._id = toId(ctx.id())
 
     if (Option(ctx.typeRef()).isDefined) {
-      ctd.add(antlrTypeRef(ctx.typeRef()))
+      ctd.setExtends(antlrTypeRef(ctx.typeRef()))
     }
 
     if (Option(ctx.typeList()).isDefined) {
-      ctd.add(antlrTypeList(ctx.typeList()))
+      ctd.setImplements(antlrTypeList(ctx.typeList()))
     }
 
     ctx.classBody().classBodyDeclaration.forEach { c =>
@@ -237,7 +237,7 @@ object Antlr {
             val innerClassDeclaration = new ClassTypeDeclaration(null, "", ctd)
             innerClassDeclaration.setAnnotations(md.annotations)
             innerClassDeclaration.setModifiers(md.modifiers)
-            ctd._innerTypes.append(innerClassDeclaration)
+            ctd.appendInnerType(innerClassDeclaration)
             antlrClassTypeDeclaration(innerClassDeclaration, icd)
           })
 
@@ -245,7 +245,7 @@ object Antlr {
             val innerInterfaceDeclaration = new InterfaceTypeDeclaration(null, "", ctd)
             innerInterfaceDeclaration.setAnnotations(md.annotations)
             innerInterfaceDeclaration.setModifiers(md.modifiers)
-            ctd._innerTypes.append(innerInterfaceDeclaration)
+            ctd.appendInnerType(innerInterfaceDeclaration)
             antlrInterfaceTypeDeclaration(innerInterfaceDeclaration, iid)
           })
 
@@ -253,7 +253,7 @@ object Antlr {
             val innerEnumDeclaration = new EnumTypeDeclaration(null, "", ctd)
             innerEnumDeclaration.setAnnotations(md.annotations)
             innerEnumDeclaration.setModifiers(md.modifiers)
-            ctd._innerTypes.append(innerEnumDeclaration)
+            ctd.appendInnerType(innerEnumDeclaration)
             antlrEnumTypeDeclaration(innerEnumDeclaration, ied)
           })
 
@@ -263,7 +263,7 @@ object Antlr {
           Option(d.fieldDeclaration()).foreach(antlrFieldDeclaration(ctd, md, _))
         })
         Option(c.block()).foreach(_ => {
-          ctd.add(Initializer(Option(c.STATIC()).isDefined))
+          ctd.appendInitializer(Initializer(Option(c.STATIC()).isDefined))
         })
       }
     }
@@ -276,7 +276,7 @@ object Antlr {
     itd._id = toId(ctx.id())
 
     if (Option(ctx.typeList()).isDefined) {
-      itd.add(antlrTypeList(ctx.typeList()))
+      itd.setImplements(antlrTypeList(ctx.typeList()))
     }
 
     ctx
@@ -353,11 +353,11 @@ object Antlr {
         formalParameterList
       )
 
-    ctd._constructors.append(constructor)
+    ctd.appendConstructor(constructor)
   }
 
   def antlrMethodDeclaration(
-    res: MethodDeclarationAssignable,
+    res: TypeDeclaration,
     md: MemberDeclaration,
     ctx: ApexParser.MethodDeclarationContext
   ): Unit = {
@@ -396,11 +396,11 @@ object Antlr {
         formalParameterList
       )
 
-    res.add(method)
+    res.appendMethod(method)
   }
 
   def antlrMethodDeclaration(
-    res: MethodDeclarationAssignable,
+    res: TypeDeclaration,
     md: MemberDeclaration,
     ctx: ApexParser.InterfaceMethodDeclarationContext
   ): Unit = {
@@ -439,7 +439,7 @@ object Antlr {
         formalParameterList
       )
 
-    res.add(method)
+    res.appendMethod(method)
   }
 
   def antlrFormalParameter(ctx: ApexParser.FormalParameterContext): FormalParameter = {
@@ -483,7 +483,7 @@ object Antlr {
         id
       )
 
-    ctd._properties.append(property)
+    ctd.appendProperty(property)
   }
 
   def antlrFieldDeclaration(
@@ -503,7 +503,7 @@ object Antlr {
             md.typeRef.get,
             id
           )
-        ctd._fields.append(field)
+        ctd.appendField(field)
       }))
   }
 

@@ -13,12 +13,12 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
   private def generateClassDeclaration(name: String): TestClassTypeDeclaration = {
     val ctd = new TestClassTypeDeclaration("path/Dummy.ls", null)
-    ctd.add(toId(name))
+    ctd.setId(toId(name))
     ctd.setAnnotations(ArraySeq(toAnnotation(Array("TestVisible"), None)))
     ctd.setModifiers(ArraySeq(toModifier("private")))
-    ctd.add(toTypeRef(Map("Foo" -> None, "Bar" -> None)))
-    ctd.add(toTypeList(Array(toTypeRef(Map("ExtendsType" -> None)))))
-    ctd.add(
+    ctd.setExtends(toTypeRef(Map("Foo" -> None, "Bar" -> None)))
+    ctd.setImplements(toTypeList(Array(toTypeRef(Map("ExtendsType" -> None)))))
+    ctd.appendMethod(
       toMethodDeclaration(
         Array(toAnnotation(Array("Test"), None)),
         Array("public", "static").map(toModifier),
@@ -224,8 +224,10 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None)))))
-      second.add(
+      first.setImplements(
+        toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None))))
+      )
+      second.setImplements(
         toTypeList(
           Array(
             toTypeRef(Map("Foo" -> None)),
@@ -250,8 +252,10 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None)))))
-      second.add(
+      first.setImplements(
+        toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None))))
+      )
+      second.setImplements(
         toTypeList(
           Array(
             toTypeRef(Map("Foo" -> None)),
@@ -274,8 +278,10 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None)))))
-      second.add(
+      first.setImplements(
+        toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None))))
+      )
+      second.setImplements(
         toTypeList(
           Array(
             toTypeRef(Map("Foo" -> None)),
@@ -299,8 +305,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toTypeList(Array()))
-      second.add(toTypeList(Array(toTypeRef(Map("Foo" -> None)))))
+      first.setImplements(toTypeList(Array()))
+      second.setImplements(toTypeList(Array(toTypeRef(Map("Foo" -> None)))))
+
       //When
       val comparator =
         SubsetComparator(first)

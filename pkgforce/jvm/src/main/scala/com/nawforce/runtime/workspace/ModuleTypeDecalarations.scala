@@ -8,6 +8,7 @@ import com.nawforce.pkgforce.memory.IdentityEquality
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 trait IModuleTypeDeclaration extends ITypeDeclaration {
   val module: IPM.Module
@@ -41,21 +42,26 @@ sealed class TypeDeclaration(
   val nature: TypeNature,
   _enclosing: IMutableModuleTypeDeclaration
 ) extends IMutableModuleTypeDeclaration {
+
+  // TODO: These should be private
   var _location: Location = _
 
   var _id: IdToken                  = _
   var _extendsTypeRef: TypeRef      = _
   var _implementsTypeList: TypeList = _
 
-  var _modifiers: ArraySeq[Modifier]                  = Modifiers.emptyArraySeq
-  var _annotations: ArraySeq[Annotation]              = Annotations.emptyArraySeq
-  var _initializers: mutable.ArrayBuffer[Initializer] = mutable.ArrayBuffer()
+  var _modifiers: ArraySeq[Modifier]     = Modifiers.emptyArraySeq
+  var _annotations: ArraySeq[Annotation] = Annotations.emptyArraySeq
 
-  var _innerTypes: mutable.ArrayBuffer[TypeDeclaration]          = mutable.ArrayBuffer()
-  var _constructors: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer()
-  var _methods: mutable.ArrayBuffer[MethodDeclaration]           = mutable.ArrayBuffer()
-  var _properties: mutable.ArrayBuffer[PropertyDeclaration]      = mutable.ArrayBuffer()
-  var _fields: mutable.ArrayBuffer[FieldDeclaration]             = mutable.ArrayBuffer()
+  var _initializers: ArraySeq[Initializer]            = Initializer.emptyArraySeq
+  var _innerTypes: ArraySeq[TypeDeclaration]          = TypeDeclaration.emptyArraySeq
+  var _constructors: ArraySeq[ConstructorDeclaration] = ConstructorDeclaration.emptyArraySeq
+  var _methods: ArraySeq[MethodDeclaration]           = MethodDeclaration.emptyArraySeq
+  var _properties: ArraySeq[PropertyDeclaration]      = PropertyDeclaration.emptyArraySeq
+  var _fields: ArraySeq[FieldDeclaration]             = FieldDeclaration.emptyArraySeq
+
+  // This is used to stage declaration that need adding to above, see syncBodyDeclarations()
+  private var _bodyDecls: mutable.ArrayBuffer[MutableTypeAppendable] = mutable.ArrayBuffer()
 
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
@@ -80,52 +86,65 @@ sealed class TypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
+  override def setId(id: IdToken): Unit                                = _id = id
   override def setLocation(location: Location): Unit                   = _location = location
   override def setExtends(typeRef: TypeRef): Unit                      = _extendsTypeRef = typeRef
   override def setImplements(typeList: TypeList): Unit                 = _implementsTypeList = typeList
   override def setModifiers(modifiers: ArraySeq[Modifier]): Unit       = _modifiers = modifiers
   override def setAnnotations(annotations: ArraySeq[Annotation]): Unit = _annotations = annotations
 
-  override def appendInnerType(inner: IMutableTypeDeclaration): Unit = {
-    // This is rather messy, we need to accept IMutableTypeDeclaration for the caller(s) but only want to
-    // expose as TypeDeclaration, it should not fail at run time, and maybe is fixable via some generics magic
-    inner match { case td: TypeDeclaration => _innerTypes.append(td) }
-  }
-  override def appendConstructor(ctor: ConstructorDeclaration): Unit = _constructors.append(ctor)
-  override def appendProperty(prop: PropertyDeclaration): Unit       = _properties.append(prop)
-  override def appendField(field: FieldDeclaration): Unit            = _fields.append(field)
+  override def appendInitializer(init: Initializer): Unit            = _bodyDecls.append(init)
+  override def appendInnerType(inner: IMutableTypeDeclaration): Unit = _bodyDecls.append(inner)
+  override def appendConstructor(ctor: ConstructorDeclaration): Unit = _bodyDecls.append(ctor)
+  override def appendProperty(prop: PropertyDeclaration): Unit       = _bodyDecls.append(prop)
+  override def appendField(field: FieldDeclaration): Unit            = _bodyDecls.append(field)
+  override def appendMethod(method: MethodDeclaration): Unit         = _bodyDecls.append(method)
 
-  override def add(tl: TypeList): Unit          = _implementsTypeList = tl
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-  override def add(init: Initializer): Unit     = _initializers.append(init)
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-  override def add(id: IdToken): Unit           = _id = id
+  override def onComplete(): Unit = {
+    // On completion of the type we distribute out the collected _bodyDecls to the right collection. This gives
+    // us the ability to move away from ArrayBuffer's which waste memory to exactly sized ArraySeq's
+    val inners = new ArrayBuffer[TypeDeclaration]()
+    _bodyDecls
+      .groupBy(bd => bd.getClass)
+      .foreach(kv => {
+        kv._2.head match {
+          case _: Initializer =>
+            _initializers = ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[Initializer]).toArray)
+          case _: ConstructorDeclaration =>
+            _constructors =
+              ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[ConstructorDeclaration]).toArray)
+          case _: MethodDeclaration =>
+            _methods =
+              ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[MethodDeclaration]).toArray)
+          case _: PropertyDeclaration =>
+            _properties =
+              ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[PropertyDeclaration]).toArray)
+          case _: FieldDeclaration =>
+            _fields = ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[FieldDeclaration]).toArray)
+          case _ =>
+            // Group all inners together
+            inners.addAll(kv._2.map(_.asInstanceOf[TypeDeclaration]))
+        }
+      })
+
+    if (inners.nonEmpty)
+      _innerTypes = ArraySeq.unsafeWrapArray(inners.toArray)
+
+    // onComplete should only be called once, so this should be safe ;-)
+    _bodyDecls = null
+  }
 }
 
 object TypeDeclaration {
   final val emptyArrayBuffer = mutable.ArrayBuffer[TypeDeclaration]()
+  final val emptyArraySeq    = ArraySeq[TypeDeclaration]()
 }
 
 class ClassTypeDeclaration(
   _module: IPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
-) extends TypeDeclaration(_module, path, CLASS_NATURE, enclosing)
-    with IdAssignable
-    with TypeRefAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable
-    with InitializerAssignable {
-
-  override def add(id: IdToken): Unit = _id = id
-
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-
-  override def add(init: Initializer): Unit = _initializers.append(init)
+) extends TypeDeclaration(_module, path, CLASS_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
@@ -187,16 +206,7 @@ class InterfaceTypeDeclaration(
   _module: IPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
-) extends TypeDeclaration(_module, path, INTERFACE_NATURE, enclosing)
-    with IdAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable {
-
-  override def add(i: IdToken): Unit = _id = i
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
+) extends TypeDeclaration(_module, path, INTERFACE_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
@@ -217,10 +227,7 @@ class EnumTypeDeclaration(
   _module: IPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
-) extends TypeDeclaration(_module, path, ENUM_NATURE, enclosing)
-    with IdAssignable {
-
-  override def add(i: IdToken): Unit = _id = i
+) extends TypeDeclaration(_module, path, ENUM_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._

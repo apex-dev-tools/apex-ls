@@ -73,12 +73,14 @@ sealed class TestTypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
+  override def setId(id: IdToken): Unit                                = _id = id
   override def setLocation(location: Location): Unit                   = _location = location
   override def setExtends(typeRef: TypeRef): Unit                      = _extendsTypeRef = typeRef
   override def setImplements(typeList: TypeList): Unit                 = _implementsTypeList = typeList
   override def setModifiers(modifiers: ArraySeq[Modifier]): Unit       = _modifiers = modifiers
   override def setAnnotations(annotations: ArraySeq[Annotation]): Unit = _annotations = annotations
 
+  override def appendInitializer(init: Initializer): Unit = _initializers.append(init)
   override def appendInnerType(inner: IMutableTypeDeclaration): Unit = {
     // This is rather messy, we need to accept IMutableTypeDeclaration for the caller(s) but only want to
     // expose as TypeDeclaration, it should not fail at run time, and maybe is fixable via some generics magic
@@ -87,12 +89,9 @@ sealed class TestTypeDeclaration(
   override def appendConstructor(ctor: ConstructorDeclaration): Unit = _constructors.append(ctor)
   override def appendProperty(prop: PropertyDeclaration): Unit       = _properties.append(prop)
   override def appendField(field: FieldDeclaration): Unit            = _fields.append(field)
+  override def appendMethod(md: MethodDeclaration): Unit             = _methods.append(md)
 
-  override def add(tl: TypeList): Unit          = _implementsTypeList = tl
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-  override def add(init: Initializer): Unit     = _initializers.append(init)
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-  override def add(i: IdToken): Unit            = _id = id
+  override def onComplete(): Unit = { /* Not needed, appending is immediate. */ }
 }
 
 object TestTypeDeclaration {
@@ -100,22 +99,7 @@ object TestTypeDeclaration {
 }
 
 class TestClassTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclaration)
-    extends TestTypeDeclaration(path, CLASS_NATURE, enclosing)
-    with IdAssignable
-    with TypeRefAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable
-    with InitializerAssignable {
-
-  override def add(i: IdToken): Unit = _id = i
-
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-
-  override def add(init: Initializer): Unit = _initializers.append(init)
+    extends TestTypeDeclaration(path, CLASS_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
@@ -174,16 +158,7 @@ class TestClassTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarat
 }
 
 class TestInterfaceTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclaration)
-    extends TestTypeDeclaration(path, INTERFACE_NATURE, enclosing)
-    with IdAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable {
-
-  override def add(i: IdToken): Unit = _id = i
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
+    extends TestTypeDeclaration(path, INTERFACE_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
@@ -201,10 +176,7 @@ class TestInterfaceTypeDeclaration(path: String, enclosing: IMutableTestTypeDecl
 }
 
 class TestEnumTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclaration)
-    extends TestTypeDeclaration(path, ENUM_NATURE, enclosing)
-    with IdAssignable {
-
-  override def add(i: IdToken): Unit = _id = i
+    extends TestTypeDeclaration(path, ENUM_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._

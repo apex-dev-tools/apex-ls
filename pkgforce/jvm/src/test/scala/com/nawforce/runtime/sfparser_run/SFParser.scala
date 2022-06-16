@@ -163,7 +163,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
     val constants               = constructFieldDeclarations(typeInfo).map(_.id)
 
-    etd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    etd.setId(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     etd.setModifiers(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray))
     etd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
     constants.foreach(
@@ -179,7 +179,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     enclosing: IMutableModuleTypeDeclaration
   ): InterfaceTypeDeclaration = {
     val itd = getInterfaceTypeDeclaration(path, typeInfo, enclosing)
-    constructMethodDeclarationForInterface(members).foreach(itd.add)
+    constructMethodDeclarationForInterface(members).foreach(itd.appendMethod)
     itd
   }
 
@@ -191,7 +191,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val itd                     = new InterfaceTypeDeclaration(module, path, enclosing)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
-    itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    itd.setId(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     // We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
     itd.setModifiers(
       ArraySeq.unsafeWrapArray(
@@ -212,9 +212,9 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val ctd = getClassTypesDeclaration(path, typeInfo, enclosing)
     getInnerTypes(members)
       .flatMap(x => getTypeDeclaration(x, path, ctd))
-      .foreach(ctd._innerTypes.append)
-    getInitBlocks(members).foreach(ctd._initializers.append)
-    constructMethodDeclarationForClass(members).foreach(ctd.add)
+      .foreach(ctd.appendInnerType)
+    getInitBlocks(members).foreach(ctd.appendInitializer)
+    constructMethodDeclarationForClass(members).foreach(ctd.appendMethod)
     ctd
   }
 
@@ -230,12 +230,12 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val properties              = constructPropertyDeclaration(typeInfo)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
-    ctd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    constructors.foreach(ctd._constructors.append)
+    ctd.setId(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    constructors.foreach(ctd.appendConstructor)
     ctd.setModifiers(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray))
     ctd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
-    properties.foreach(ctd._properties.append)
-    fields.foreach(ctd._fields.append)
+    properties.foreach(ctd.appendProperty)
+    fields.foreach(ctd.appendField)
     ctd._extendsTypeRef = constructExtendsTypeRef(typeInfo).orNull
     ctd._implementsTypeList = constructInterfaceTypeList(typeInfo).orNull
     ctd

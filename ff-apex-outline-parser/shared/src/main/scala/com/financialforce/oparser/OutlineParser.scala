@@ -153,6 +153,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               classTypeDeclaration.setLocation(
                 Location.updateEnd(startLocation, line, lineOffset, byteOffset)
               )
+              classTypeDeclaration.onComplete()
               (false, Some(classTypeDeclaration))
             case _ =>
               tokens.append(t); (true, None)
@@ -277,6 +278,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       tokens.clear()
       consumeClassBody(innerClass)
       innerClass.setLocation(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+      innerClass.onComplete()
       ctd.appendInnerType(innerClass)
     } else if (token.matches(Tokens.InterfaceStr)) {
       val innerInterface = factory.create(ctx, INTERFACE_NATURE, ctd.paths.head, Some(ctd))
@@ -285,6 +287,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       tokens.clear()
       consumeInterfaceBody(innerInterface)
       innerInterface.setLocation(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+      innerInterface.onComplete()
       ctd.appendInnerType(innerInterface)
     } else if (token.matches(Tokens.EnumStr)) {
       val innerEnum = factory.create(ctx, ENUM_NATURE, ctd.paths.head, Some(ctd))
@@ -293,6 +296,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       tokens.clear()
       consumeEnumBody(innerEnum)
       innerEnum.setLocation(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+      innerEnum.onComplete()
       ctd.appendInnerType(innerEnum)
     }
   }
@@ -398,6 +402,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               interfaceTypeDeclaration.setLocation(
                 Location.updateEnd(startLocation, line, lineOffset, byteOffset)
               )
+              interfaceTypeDeclaration.onComplete()
               (false, Some(interfaceTypeDeclaration))
             case _ =>
               tokens.append(t); (true, None)
@@ -458,6 +463,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               enumTypeDeclaration.setLocation(
                 Location.updateEnd(startLocation, line, lineOffset, byteOffset)
               )
+              enumTypeDeclaration.onComplete()
               (false, Some(enumTypeDeclaration))
             case _ =>
               tokens.append(t); (true, None)

@@ -5,6 +5,7 @@ package com.financialforce.oparser
 
 import scala.collection.immutable.ArraySeq
 
+// All types conform to this trait, can be used as a resolved TypeRef
 trait ITypeDeclaration extends TypeRef {
   def paths: Array[String]
   def location: Location
@@ -44,24 +45,31 @@ trait ITypeDeclaration extends TypeRef {
   }
 }
 
-trait IMutableTypeDeclaration
-    extends ITypeDeclaration
-    with IdAssignable
-    with TypeRefAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable
-    with InitializerAssignable {
+// A mutable variant of ITypeDeclaration to support incremental construction
+trait IMutableTypeDeclaration extends ITypeDeclaration with MutableTypeAppendable {
 
+  // Specialise the type of inner types
+  override def innerTypes: ArraySeq[IMutableTypeDeclaration]
+
+  // Setters for standard attributes of the type
+  def setId(id: IdToken): Unit
   def setLocation(location: Location): Unit
   def setExtends(typeRef: TypeRef): Unit
   def setImplements(typeList: TypeList): Unit
   def setModifiers(modifiers: ArraySeq[Modifier]): Unit
   def setAnnotations(annotations: ArraySeq[Annotation]): Unit
 
-  def innerTypes: ArraySeq[IMutableTypeDeclaration]
+  // Appenders for incremental construction
+  def appendInitializer(init: Initializer): Unit
   def appendInnerType(inner: IMutableTypeDeclaration): Unit
-
   def appendConstructor(ctor: ConstructorDeclaration): Unit
+  def appendMethod(method: MethodDeclaration): Unit
   def appendProperty(prop: PropertyDeclaration): Unit
-  def appendField(prop: FieldDeclaration): Unit
+  def appendField(field: FieldDeclaration): Unit
+
+  // Called after construction is complete
+  def onComplete(): Unit
 }
+
+// Marker interface for appendable elements such as constructors and fields
+trait MutableTypeAppendable

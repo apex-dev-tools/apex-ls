@@ -64,14 +64,6 @@ trait TypeListAssignable {
   def add(tl: TypeList): Unit
 }
 
-trait MethodDeclarationAssignable {
-  def add(md: MethodDeclaration): Unit
-}
-
-trait InitializerAssignable {
-  def add(init: Initializer): Unit
-}
-
 trait PropertyBlockAssignable {
   def add(pb: PropertyBlock): Unit
 }
@@ -299,7 +291,8 @@ case class ConstructorDeclaration(
   modifiers: ArraySeq[Modifier],
   qName: QualifiedName,
   formalParameterList: FormalParameterList
-) extends BodyDeclaration {
+) extends BodyDeclaration
+    with MutableTypeAppendable {
 
   val id: IdToken = qName.qName(0)
 
@@ -322,6 +315,7 @@ case class ConstructorDeclaration(
 object ConstructorDeclaration {
   final val emptyArrayBuffer: mutable.ArrayBuffer[ConstructorDeclaration] =
     mutable.ArrayBuffer[ConstructorDeclaration]()
+  final val emptyArraySeq = ArraySeq[ConstructorDeclaration]()
 }
 
 case class MethodDeclaration(
@@ -330,7 +324,8 @@ case class MethodDeclaration(
   var typeRef: Option[TypeRef],
   id: IdToken,
   formalParameterList: FormalParameterList
-) extends BodyDeclaration {
+) extends BodyDeclaration
+    with MutableTypeAppendable {
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
@@ -357,6 +352,7 @@ case class MethodDeclaration(
 object MethodDeclaration {
   final val emptyArrayBuffer: mutable.ArrayBuffer[MethodDeclaration] =
     mutable.ArrayBuffer[MethodDeclaration]()
+  final val emptyArraySeq = ArraySeq[MethodDeclaration]()
 
   def apply(
     annotations: ArraySeq[Annotation],
@@ -386,7 +382,8 @@ class PropertyDeclaration(
   val id: IdToken
 ) extends BodyDeclaration
     with Signature
-    with PropertyBlockAssignable {
+    with PropertyBlockAssignable
+    with MutableTypeAppendable {
 
   val propertyBlocks: mutable.ArrayBuffer[PropertyBlock] = mutable.ArrayBuffer[PropertyBlock]()
 
@@ -409,6 +406,7 @@ class PropertyDeclaration(
 object PropertyDeclaration {
   final val emptyArrayBuffer: mutable.ArrayBuffer[PropertyDeclaration] =
     mutable.ArrayBuffer[PropertyDeclaration]()
+  final val emptyArraySeq = ArraySeq[PropertyDeclaration]()
 }
 
 case class FieldDeclaration(
@@ -417,7 +415,8 @@ case class FieldDeclaration(
   var typeRef: TypeRef,
   id: IdToken
 ) extends BodyDeclaration
-    with Signature {
+    with Signature
+    with MutableTypeAppendable {
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[FieldDeclaration]
@@ -436,13 +435,15 @@ case class FieldDeclaration(
 object FieldDeclaration {
   final val emptyArrayBuffer: mutable.ArrayBuffer[FieldDeclaration] =
     mutable.ArrayBuffer[FieldDeclaration]()
+  final val emptyArraySeq = ArraySeq[FieldDeclaration]()
 }
 
 object Initializer {
-  val id: IdToken = IdToken("initializer", Location.default)
+  final val id: IdToken   = IdToken("initializer", Location.default)
+  final val emptyArraySeq = ArraySeq[Initializer]()
 }
 
-case class Initializer(isStatic: Boolean) extends BodyDeclaration {
+case class Initializer(isStatic: Boolean) extends BodyDeclaration with MutableTypeAppendable {
   override val id: IdToken = Initializer.id
 }
 
@@ -456,19 +457,19 @@ object Parse {
     if (!tokens.matches(index, Tokens.ClassStr))
       throw new Exception(s"Missing '${Tokens.ClassStr}'")
     index += 1
-    index = parseId(index, tokens, ctd)
+    index = setId(index, tokens, ctd)
 
     index = tokens.findIndex(t => t.matches(Tokens.ExtendsStr))
     if (index != -1) {
       val (newIndex, typeRef) = parseTypeRef(index + 1, tokens)
       index = newIndex
-      ctd.add(typeRef)
+      ctd.setExtends(typeRef)
     }
 
     index = tokens.findIndex(t => t.matches(Tokens.ImplementsStr))
     if (index != -1) {
       val (newIndex, typeList) = parseTypeList(index + 1, tokens)
-      ctd.add(typeList)
+      ctd.setImplements(typeList)
     }
     ctd
   }
@@ -481,12 +482,13 @@ object Parse {
     if (!tokens.matches(index, Tokens.InterfaceStr))
       throw new Exception(s"Missing '${Tokens.InterfaceStr}'")
     index += 1
-    index = parseId(index, tokens, itd)
+    index = setId(index, tokens, itd)
 
     index = tokens.findIndex(t => t.matches(Tokens.ExtendsStr))
     if (index != -1) {
       val (newIndex, typeList) = parseTypeList(index + 1, tokens)
-      itd.add(typeList)
+      // On interfaces we set 'extends' to 'implements' for type consistency with classes
+      itd.setImplements(typeList)
     }
 
     itd
@@ -500,7 +502,7 @@ object Parse {
     if (!tokens.matches(index, Tokens.EnumStr))
       throw new Exception(s"Missing '${Tokens.EnumStr}'")
     index += 1
-    index = parseId(index, tokens, etd)
+    index = setId(index, tokens, etd)
 
     etd
   }
@@ -592,7 +594,7 @@ object Parse {
     isStatic: Boolean
   ): Option[Initializer] = {
     val initializer = Initializer(isStatic)
-    ctd.add(initializer)
+    ctd.appendInitializer(initializer)
     Some(initializer)
   }
 
@@ -622,7 +624,7 @@ object Parse {
     startIndex: Int,
     tokens: Tokens,
     md: MemberDeclaration,
-    res: MethodDeclarationAssignable
+    res: IMutableTypeDeclaration
   ): Option[MethodDeclaration] = {
 
     if (md.typeRef.isEmpty) {
@@ -642,7 +644,7 @@ object Parse {
         id,
         formalParameterList.get
       )
-    res.add(method)
+    res.appendMethod(method)
     Some(method)
   }
 
@@ -771,6 +773,17 @@ object Parse {
       startIndex
     } else if (tokens.get(startIndex).isInstanceOf[IdToken]) {
       res.add(tokenToId(tokens.get(startIndex)))
+      startIndex + 1
+    } else {
+      startIndex
+    }
+  }
+
+  private def setId[T <: IMutableTypeDeclaration](startIndex: Int, tokens: Tokens, res: T): Int = {
+    if (startIndex >= tokens.length) {
+      startIndex
+    } else if (tokens.get(startIndex).isInstanceOf[IdToken]) {
+      res.setId(tokenToId(tokens.get(startIndex)))
       startIndex + 1
     } else {
       startIndex
