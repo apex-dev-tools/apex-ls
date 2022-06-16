@@ -49,7 +49,7 @@ trait DeclarationGeneratorHelper {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: Option[TypeRef] = None,
-    id: Option[Id] = None
+    id: Option[IdToken] = None
   ): FormalParameter = {
     val fp = new FormalParameter()
     fp.setModifiers(ArraySeq.unsafeWrapArray(modifiers))
@@ -77,8 +77,8 @@ trait DeclarationGeneratorHelper {
     qName
   }
 
-  def toId(id: String): Id = {
-    Id(toIdToken(id))
+  def toId(id: String): IdToken = {
+    toIdToken(id)
   }
 
   def toParameterList(fps: Array[FormalParameter]): FormalParameterList = {
@@ -103,7 +103,7 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: Id,
+    id: IdToken,
     parameters: FormalParameterList
   ): MethodDeclaration = {
     MethodDeclaration(
@@ -119,7 +119,7 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: Id
+    id: IdToken
   ): PropertyDeclaration = {
     new PropertyDeclaration(
       ArraySeq.unsafeWrapArray(annotation),
@@ -133,7 +133,7 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: Id
+    id: IdToken
   ): FieldDeclaration = {
     FieldDeclaration(
       ArraySeq.unsafeWrapArray(annotation),

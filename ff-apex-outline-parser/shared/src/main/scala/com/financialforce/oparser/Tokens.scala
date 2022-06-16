@@ -97,7 +97,7 @@ sealed trait Token {
   }
 }
 
-class IdToken private (val contents: String, _location: Location) extends Token {
+class IdToken private (override val contents: String, _location: Location) extends Token {
   // These are inlined to save memory
   private val startLine: Int       = _location.startLine
   private val startLineOffset: Int = _location.startLineOffset
@@ -106,8 +106,17 @@ class IdToken private (val contents: String, _location: Location) extends Token 
   private val endLineOffset: Int   = _location.endLineOffset
   private val endByteOffset: Int   = _location.endByteOffset
 
-  def location: Location =
+  override def location: Location =
     Location(startLine, startLineOffset, startByteOffset, endLine, endLineOffset, endByteOffset)
+
+  override def toString: String = contents
+
+  override def equals(obj: Any): Boolean = {
+    val other = obj.asInstanceOf[IdToken]
+    lowerCaseContents.equals(other.lowerCaseContents)
+  }
+
+  override val hashCode: Int = lowerCaseContents.hashCode
 }
 
 object IdToken {

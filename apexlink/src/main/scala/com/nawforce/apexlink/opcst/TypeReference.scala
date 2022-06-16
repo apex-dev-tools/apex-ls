@@ -30,10 +30,10 @@ private[opcst] object TypeReference {
   private class OutlineParserTypeName(typeName: OPTypeName) extends CSTTypeName {
     override def typeArguments(): CSTTypeArguments =
       new OutlineParserTypeArgument(typeName.typeArguments)
-    override def isList: Boolean           = typeName.id.id.lowerCaseContents == "list"
-    override def isSet: Boolean            = typeName.id.id.lowerCaseContents == "set"
-    override def isMap: Boolean            = typeName.id.id.lowerCaseContents == "map"
-    override def getIdText: Option[String] = Option(typeName.id.id.contents)
+    override def isList: Boolean           = typeName.id.lowerCaseContents == "list"
+    override def isSet: Boolean            = typeName.id.lowerCaseContents == "set"
+    override def isMap: Boolean            = typeName.id.lowerCaseContents == "map"
+    override def getIdText: Option[String] = Option(typeName.id.contents)
   }
 
   private class OutlineParserTypeReference(typeReference: Option[OPTypeReference])

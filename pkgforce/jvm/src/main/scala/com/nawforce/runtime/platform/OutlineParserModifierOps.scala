@@ -2,7 +2,7 @@ package com.nawforce.runtime.platform
 
 import com.financialforce.oparser.{
   Annotation => OPAnnotation,
-  Id => OPId,
+  IdToken => OPId,
   Location => OPLocation,
   Modifier => OPModifier
 }
@@ -63,8 +63,8 @@ object OutlineParserModifierOps {
     outer: Boolean
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    FieldModifiers.fieldModifiers(logger, mods, outer, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    FieldModifiers.fieldModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
   def classModifiers(
@@ -76,8 +76,8 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.classModifiers(logger, mods, outer, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.classModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
   def interfaceModifiers(
@@ -89,8 +89,8 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.interfaceModifiers(logger, mods, outer, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.interfaceModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
   def enumModifiers(
@@ -102,8 +102,8 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.enumModifiers(logger, mods, outer, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.enumModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
   def constructorModifiers(
@@ -113,8 +113,8 @@ object OutlineParserModifierOps {
     src: ArraySeq[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.constructorModifiers(logger, mods, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.constructorModifiers(logger, mods, OPLogEntryContext(path, id.location))
   }
 
   def parameterModifiers(
@@ -125,8 +125,8 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, id.location))
   }
 
   def classMethodModifiers(
@@ -139,12 +139,12 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
+    val mods   = toModifiers(path, id.location, annotations, src)
 
     MethodModifiers.classMethodModifiers(
       logger,
       mods,
-      OPLogEntryContext(path, id.id.location),
+      OPLogEntryContext(path, id.location),
       ownerNature,
       isOuter
     )
@@ -157,11 +157,11 @@ object OutlineParserModifierOps {
     src: ArraySeq[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
+    val mods   = toModifiers(path, id.location, annotations, src)
     MethodModifiers.interfaceMethodModifiers(
       logger,
       mods,
-      OPLogEntryContext(path, id.id.location),
+      OPLogEntryContext(path, id.location),
       isOuter = false
     )
   }

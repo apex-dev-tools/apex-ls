@@ -413,8 +413,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     new Location(from.getLine, from.getColumn, 0, endLine, endLineOffset, 0)
   }
 
-  private def toId(name: String, loc: apex.jorje.data.Location): Id = {
-    Id(toIdToken(name, loc))
+  private def toId(name: String, loc: apex.jorje.data.Location): IdToken = {
+    toIdToken(name, loc)
   }
 
   private def toIdToken(name: String, loc: apex.jorje.data.Location): IdToken = {

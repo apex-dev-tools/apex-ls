@@ -43,7 +43,7 @@ sealed class TypeDeclaration(
 ) extends IMutableModuleTypeDeclaration {
   var _location: Location = _
 
-  var _id: Id                       = _
+  var _id: IdToken                  = _
   var _extendsTypeRef: TypeRef      = _
   var _implementsTypeList: TypeList = _
 
@@ -60,7 +60,7 @@ sealed class TypeDeclaration(
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
 
-  override def id: Id = _id
+  override def id: IdToken = _id
 
   override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeArguments.empty)
 
@@ -99,7 +99,7 @@ sealed class TypeDeclaration(
   override def add(md: MethodDeclaration): Unit = _methods.append(md)
   override def add(init: Initializer): Unit     = _initializers.append(init)
   override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-  override def add(i: Id): Unit                 = _id = id
+  override def add(id: IdToken): Unit           = _id = id
 }
 
 object TypeDeclaration {
@@ -117,7 +117,7 @@ class ClassTypeDeclaration(
     with MethodDeclarationAssignable
     with InitializerAssignable {
 
-  override def add(i: Id): Unit = _id = i
+  override def add(id: IdToken): Unit = _id = id
 
   override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
 
@@ -132,7 +132,7 @@ class ClassTypeDeclaration(
     val base =
       s"""Class:      $id
          |Path:       $path
-         |Location:   ${id.id.location}
+         |Location:   ${id.location}
          |Annotation: ${asString(_annotations)}
          |Modifiers:  ${asString(_modifiers)}
          |Extends:    ${_extendsTypeRef}
@@ -192,7 +192,7 @@ class InterfaceTypeDeclaration(
     with TypeListAssignable
     with MethodDeclarationAssignable {
 
-  override def add(i: Id): Unit = _id = i
+  override def add(i: IdToken): Unit = _id = i
 
   override def add(tl: TypeList): Unit = _implementsTypeList = tl
 
@@ -202,7 +202,7 @@ class InterfaceTypeDeclaration(
     import StringUtils._
     s"""Interface:  $id
        |Path:       $path
-       |Location:   ${id.id.location}
+       |Location:   ${id.location}
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
        |Implements: ${_implementsTypeList}
@@ -220,17 +220,17 @@ class EnumTypeDeclaration(
 ) extends TypeDeclaration(_module, path, ENUM_NATURE, enclosing)
     with IdAssignable {
 
-  override def add(i: Id): Unit = _id = i
+  override def add(i: IdToken): Unit = _id = i
 
   override def toString: String = {
     import StringUtils._
     s"""Enum:       $id
        |Path:       $path
-       |Location:   ${id.id.location}
+       |Location:   ${id.location}
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
        |Constants:
-       |${fields.map(f => s"${f.id.id.location} ${f.id.id.contents}").mkString("\n")}
+       |${fields.map(f => s"${f.id.location} ${f.id.contents}").mkString("\n")}
        |
        |""".stripMargin
   }

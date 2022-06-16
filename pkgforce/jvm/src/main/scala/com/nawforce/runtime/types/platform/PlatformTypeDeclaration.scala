@@ -72,7 +72,7 @@ class PlatformTypeDeclaration(
 
   override val location: Location = Location.default
 
-  override val id: Id = typeInfo.typeName.id
+  override val id: IdToken = typeInfo.typeName.id
 
   override val typeNameSegment: TypeNameSegment = typeInfo.typeName
 
@@ -192,8 +192,8 @@ class PlatformTypeDeclaration(
   ): ConstructorDeclaration = {
     val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
     val name      = new QualifiedName()
-    (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.id.contents))
-      .map(s => Id(IdToken(s, Location.default)))
+    (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.contents))
+      .map(s => IdToken(s, Location.default))
       .foreach(name.add)
     ConstructorDeclaration(
       ArraySeq.empty,
@@ -214,7 +214,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.methodModifiers(method.getModifiers, td.nature),
       rtType,
-      Id(IdToken(decodeName(method.getName), Location.default)),
+      IdToken(decodeName(method.getName), Location.default),
       toFormalParameterList(method.getParameters)
     )
   }
@@ -224,7 +224,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(field.getModifiers),
       getPlatformTypeDeclFromType(field.getGenericType).get,
-      Id(IdToken(decodeName(field.getName), Location.default))
+      IdToken(decodeName(field.getName), Location.default)
     )
   }
 
@@ -237,7 +237,7 @@ class PlatformTypeDeclaration(
   protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
     val p = new FormalParameter
     p.typeRef = getPlatformTypeDeclFromType(parameter.getParameterizedType)
-    p.add(Id(IdToken(parameter.getName, Location.default)))
+    p.add(IdToken(parameter.getName, Location.default))
     p
   }
 
@@ -501,7 +501,7 @@ object PlatformTypeDeclaration {
         TypeArguments(TypeList(params.get))
       else
         TypeArguments.empty
-    TypeNameSegment(Id(IdToken(name, Location.default)), typeArguments)
+    TypeNameSegment(IdToken(name, Location.default), typeArguments)
   }
 
   private val typeAliasMap: Map[TypeName, TypeName] = Map(

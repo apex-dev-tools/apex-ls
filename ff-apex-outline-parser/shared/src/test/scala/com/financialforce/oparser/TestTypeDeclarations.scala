@@ -35,7 +35,7 @@ sealed class TestTypeDeclaration(
 ) extends IMutableTestTypeDeclaration {
   var _location: Location = _
 
-  var _id: Id                       = _
+  var _id: IdToken                  = _
   var _extendsTypeRef: TypeRef      = _
   var _implementsTypeList: TypeList = _
 
@@ -52,7 +52,7 @@ sealed class TestTypeDeclaration(
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
 
-  override def id: Id = _id
+  override def id: IdToken = _id
 
   override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeArguments.empty)
 
@@ -92,7 +92,7 @@ sealed class TestTypeDeclaration(
   override def add(md: MethodDeclaration): Unit = _methods.append(md)
   override def add(init: Initializer): Unit     = _initializers.append(init)
   override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-  override def add(i: Id): Unit                 = _id = id
+  override def add(i: IdToken): Unit            = _id = id
 }
 
 object TestTypeDeclaration {
@@ -107,7 +107,7 @@ class TestClassTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarat
     with MethodDeclarationAssignable
     with InitializerAssignable {
 
-  override def add(i: Id): Unit = _id = i
+  override def add(i: IdToken): Unit = _id = i
 
   override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
 
@@ -122,7 +122,7 @@ class TestClassTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarat
     val base =
       s"""Class:      $id
          |Path:       $path
-         |Location:   ${id.id.location}
+         |Location:   ${id.location}
          |Annotation: ${asString(_annotations)}
          |Modifiers:  ${asString(_modifiers)}
          |Extends:    ${_extendsTypeRef}
@@ -179,7 +179,7 @@ class TestInterfaceTypeDeclaration(path: String, enclosing: IMutableTestTypeDecl
     with TypeListAssignable
     with MethodDeclarationAssignable {
 
-  override def add(i: Id): Unit = _id = i
+  override def add(i: IdToken): Unit = _id = i
 
   override def add(tl: TypeList): Unit = _implementsTypeList = tl
 
@@ -189,7 +189,7 @@ class TestInterfaceTypeDeclaration(path: String, enclosing: IMutableTestTypeDecl
     import StringUtils._
     s"""Interface:  $id
        |Path:       $path
-       |Location:   ${id.id.location}
+       |Location:   ${id.location}
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
        |Implements: ${_implementsTypeList}
@@ -204,17 +204,17 @@ class TestEnumTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarati
     extends TestTypeDeclaration(path, ENUM_NATURE, enclosing)
     with IdAssignable {
 
-  override def add(i: Id): Unit = _id = i
+  override def add(i: IdToken): Unit = _id = i
 
   override def toString: String = {
     import StringUtils._
     s"""Enum:       $id
        |Path:       $path
-       |Location:   ${id.id.location}
+       |Location:   ${id.location}
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
        |Constants:
-       |${fields.map(f => s"${f.id.id.location} ${f.id.id.contents}").mkString("\n")}
+       |${fields.map(f => s"${f.id.location} ${f.id.contents}").mkString("\n")}
        |
        |""".stripMargin
   }

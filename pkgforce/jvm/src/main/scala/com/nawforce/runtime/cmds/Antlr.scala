@@ -130,12 +130,12 @@ object Antlr {
     i.add(toId(ctx))
   }
 
-  def toId(ctx: ApexParser.IdContext): Id = {
-    Id(IdToken(ctx.children.asScala.mkString(" "), location(ctx)))
+  def toId(ctx: ApexParser.IdContext): IdToken = {
+    IdToken(ctx.children.asScala.mkString(" "), location(ctx))
   }
 
-  def toId(text: String): Id = {
-    Id(IdToken(text, Location.default))
+  def toId(text: String): IdToken = {
+    IdToken(text, Location.default)
   }
 
   def toModifier(ctx: ApexParser.ModifierContext): Modifier = {
@@ -172,14 +172,14 @@ object Antlr {
     val typeArguments =
       Option(ctx.typeArguments()).map(ta => antlrTypeArguments(ta)).getOrElse(TypeArguments.empty)
     val tnOpt = Option(ctx.LIST())
-      .map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default)), typeArguments))
+      .map(l => new TypeNameSegment(IdToken(l.toString, Location.default), typeArguments))
       .orElse(
         Option(ctx.SET())
-          .map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default)), typeArguments))
+          .map(l => new TypeNameSegment(IdToken(l.toString, Location.default), typeArguments))
       )
       .orElse(
         Option(ctx.MAP())
-          .map(l => new TypeNameSegment(Id(IdToken(l.toString, Location.default)), typeArguments))
+          .map(l => new TypeNameSegment(IdToken(l.toString, Location.default), typeArguments))
       )
       .orElse(Option(ctx.id()).map(l => new TypeNameSegment(toId(l), typeArguments)))
 

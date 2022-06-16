@@ -451,7 +451,7 @@ object IPM extends TriHierarchy {
 
       // Short-cut to next module if could not possibly match
       if (
-        !defaultNamespace && !typeRef.typeNameSegments.head.id.id.lowerCaseContents
+        !defaultNamespace && !typeRef.typeNameSegments.head.id.lowerCaseContents
           .equalsIgnoreCase(namespace.get.value)
       )
         return nextModule.flatMap(_.findExactTypeId(name, typeRef))
@@ -493,7 +493,7 @@ object IPM extends TriHierarchy {
       if (
         !defaultNamespace || isNameAmbiguous ||
         (typeRef.typeNameSegments.length > 1 &&
-        typeRef.typeNameSegments.head.id.id.lowerCaseContents.equalsIgnoreCase(namespace.get.value))
+        typeRef.typeNameSegments.head.id.lowerCaseContents.equalsIgnoreCase(namespace.get.value))
       ) {
         (name, typeRef)
       } else {

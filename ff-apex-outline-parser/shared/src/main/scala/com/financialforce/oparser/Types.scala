@@ -53,7 +53,7 @@ object StringUtils {
 }
 
 trait IdAssignable {
-  def add(i: Id): Unit
+  def add(i: IdToken): Unit
 }
 
 trait TypeRefAssignable {
@@ -78,7 +78,7 @@ trait PropertyBlockAssignable {
 
 trait Signature {
   var typeRef: TypeRef
-  val id: Id
+  val id: IdToken
   val annotations: ArraySeq[Annotation]
   val modifiers: ArraySeq[Modifier]
 }
@@ -123,27 +123,16 @@ object Modifiers {
   final val FINAL_MODIFIER: Modifier    = Modifier(Tokens.FinalStr)
 }
 
-case class Id(id: IdToken) {
-  override def toString: String = id.contents
-
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[Id]
-    id.lowerCaseContents.equals(other.id.lowerCaseContents)
-  }
-
-  override val hashCode: Int = id.lowerCaseContents.hashCode
-}
-
 class QualifiedName extends IdAssignable {
-  val qName: mutable.ArrayBuffer[Id] = mutable.ArrayBuffer[Id]()
+  val qName: mutable.ArrayBuffer[IdToken] = mutable.ArrayBuffer[IdToken]()
 
   def location: Location = {
-    val start = qName.head.id.location
-    val end   = qName.last.id.location
+    val start = qName.head.location
+    val end   = qName.last.location
     Location.from(start, end)
   }
 
-  override def add(i: Id): Unit = qName.append(i)
+  override def add(i: IdToken): Unit = qName.append(i)
 
   override def toString: String = {
     import StringUtils._
@@ -161,13 +150,13 @@ class FormalParameter extends TypeRefAssignable with IdAssignable {
   var annotations: ArraySeq[Annotation] = Annotations.emptyArraySeq
   var modifiers: ArraySeq[Modifier]     = Modifiers.emptyArraySeq
   var typeRef: Option[TypeRef]          = None
-  var id: Option[Id]                    = None
+  var id: Option[IdToken]               = None
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
   override def add(tr: UnresolvedTypeRef): Unit = typeRef = Some(tr)
 
-  override def add(i: Id): Unit = id = Some(i)
+  override def add(i: IdToken): Unit = id = Some(i)
 
   def setModifiers(modifiers: ArraySeq[Modifier]): Unit = this.modifiers = modifiers
 
@@ -215,7 +204,7 @@ class PropertyBlock {
 }
 
 sealed trait BodyDeclaration {
-  val id: Id
+  val id: IdToken
 
   // These are inlined to save memory, block location is optional
   private var startLine: Int       = _
@@ -312,7 +301,7 @@ case class ConstructorDeclaration(
   formalParameterList: FormalParameterList
 ) extends BodyDeclaration {
 
-  val id: Id = qName.qName(0)
+  val id: IdToken = qName.qName(0)
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
@@ -339,7 +328,7 @@ case class MethodDeclaration(
   annotations: ArraySeq[Annotation],
   modifiers: ArraySeq[Modifier],
   var typeRef: Option[TypeRef],
-  id: Id,
+  id: IdToken,
   formalParameterList: FormalParameterList
 ) extends BodyDeclaration {
 
@@ -361,7 +350,7 @@ case class MethodDeclaration(
       case Some(tr) => tr.getFullName
       case _        => ""
     }
-    s"${id.id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typRefString $id $formalParameterList"
+    s"${id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typRefString $id $formalParameterList"
   }
 }
 
@@ -373,7 +362,7 @@ object MethodDeclaration {
     annotations: ArraySeq[Annotation],
     modifiers: ArraySeq[Modifier],
     typeRef: Option[TypeRef],
-    id: Id,
+    id: IdToken,
     formalParameterList: FormalParameterList
   ): MethodDeclaration = {
     new MethodDeclaration(annotations, modifiers, typeRef, id, formalParameterList)
@@ -383,7 +372,7 @@ object MethodDeclaration {
     annotations: ArraySeq[Annotation],
     modifiers: ArraySeq[Modifier],
     typeRef: TypeRef,
-    id: Id,
+    id: IdToken,
     formalParameterList: FormalParameterList
   ): MethodDeclaration = {
     new MethodDeclaration(annotations, modifiers, Some(typeRef), id, formalParameterList)
@@ -394,7 +383,7 @@ class PropertyDeclaration(
   val annotations: ArraySeq[Annotation],
   val modifiers: ArraySeq[Modifier],
   var typeRef: TypeRef,
-  val id: Id
+  val id: IdToken
 ) extends BodyDeclaration
     with Signature
     with PropertyBlockAssignable {
@@ -411,7 +400,7 @@ class PropertyDeclaration(
 
   override def toString: String = {
     import StringUtils._
-    s"${id.id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typeRef $id"
+    s"${id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typeRef $id"
   }
 
   override def add(pb: PropertyBlock): Unit = propertyBlocks.append(pb)
@@ -426,7 +415,7 @@ case class FieldDeclaration(
   annotations: ArraySeq[Annotation],
   modifiers: ArraySeq[Modifier],
   var typeRef: TypeRef,
-  id: Id
+  id: IdToken
 ) extends BodyDeclaration
     with Signature {
 
@@ -440,7 +429,7 @@ case class FieldDeclaration(
 
   override def toString: String = {
     import StringUtils._
-    s"${id.id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typeRef $id"
+    s"${id.location} ${asAnnotationAndModifierString(annotations, modifiers)} $typeRef $id"
   }
 }
 
@@ -450,11 +439,11 @@ object FieldDeclaration {
 }
 
 object Initializer {
-  val id: Id = Id(IdToken("initializer", Location.default))
+  val id: IdToken = IdToken("initializer", Location.default)
 }
 
 case class Initializer(isStatic: Boolean) extends BodyDeclaration {
-  override val id: Id = Initializer.id
+  override val id: IdToken = Initializer.id
 }
 
 object Parse {
@@ -576,7 +565,7 @@ object Parse {
     addMethod(index, tokens, md, itd).toSeq
   }
 
-  def parseEnumMember(etd: IMutableTypeDeclaration, tokens: Tokens): Seq[Id] = {
+  def parseEnumMember(etd: IMutableTypeDeclaration, tokens: Tokens): Seq[IdToken] = {
     if (tokens.isEmpty) return Seq.empty
 
     val constant = tokenToId(tokens.head)
@@ -775,7 +764,7 @@ object Parse {
 
   private def tokenToModifier(token: Token): Modifier = Modifier(token.contents)
 
-  private def tokenToId(token: Token): Id = Id(IdToken(token.contents, token.location))
+  private def tokenToId(token: Token): IdToken = IdToken(token.contents, token.location)
 
   private def parseId(startIndex: Int, tokens: Tokens, res: IdAssignable): Int = {
     if (startIndex >= tokens.length) {

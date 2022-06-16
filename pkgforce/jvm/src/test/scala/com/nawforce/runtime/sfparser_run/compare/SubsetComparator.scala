@@ -338,7 +338,7 @@ class SubsetComparator(
           })
       }
       return allTypeNames
-        .map(_.id.id.lowerCaseContents)
+        .map(_.id.lowerCaseContents)
         .count(_.equalsIgnoreCase("list")) == fUnresolvedType.arraySubscripts
     }
     false

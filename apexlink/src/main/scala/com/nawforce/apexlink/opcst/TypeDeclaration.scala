@@ -5,7 +5,7 @@ import com.financialforce.oparser.{
   ConstructorDeclaration => OPConstructorDeclaration,
   FieldDeclaration => OPFieldDeclaration,
   FormalParameter => OPFormalParameter,
-  Id => OPId,
+  IdToken => OPId,
   Initializer => OPInitializer,
   Location => OPLocation,
   MethodDeclaration => OPMethodDeclaration,
@@ -71,13 +71,13 @@ private[opcst] object OutlineParserId {
   }
 
   def construct(src: OPId, path: PathLike): Id = {
-    val id = Id(Names(src.id.contents))
+    val id = Id(Names(src.contents))
     id.setLocation(
       path,
-      src.id.location.startLine,
-      src.id.location.startLineOffset - 1,
-      src.id.location.endLine,
-      src.id.location.endLineOffset
+      src.location.startLine,
+      src.location.startLineOffset - 1,
+      src.location.endLine,
+      src.location.endLineOffset
     )
     id
   }
@@ -199,7 +199,7 @@ private[opcst] object OutlineParserClassDeclaration {
 
     val modifierResults =
       classModifiers(path, ic.id, ic.annotations, ic.modifiers, outer = false)
-    val thisType = outerType.asInner(ic.id.id.contents)
+    val thisType = outerType.asInner(ic.id.contents)
     val rv = OutlineParserClassDeclaration.construct(
       path,
       ic,
@@ -222,7 +222,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     outerType: ThisType
   ): Option[InterfaceDeclaration] = {
 
-    val thisType = outerType.asInner(ii.id.id.contents)
+    val thisType = outerType.asInner(ii.id.contents)
     val modifierResults =
       interfaceModifiers(path, ii.id, ii.annotations, ii.modifiers, outer = false)
     val rv =
@@ -294,7 +294,7 @@ private[opcst] object OutlineParserEnumDeclaration {
   ): Option[EnumDeclaration] = {
     val modifierResults =
       enumModifiers(path, ie.id, ie.annotations, ie.modifiers, outer = false)
-    val thisType = outerType.asInner(ie.id.id.contents)
+    val thisType = outerType.asInner(ie.id.contents)
     val rv       = construct(ie, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
   }
@@ -353,7 +353,7 @@ private[opcst] object OutlineParserEnumDeclaration {
     val declaration = ApexFieldDeclaration(thisType, modifierResults, thisType.typeName, vd)
     stampLocation(
       declaration,
-      id.id.location.copy(startLineOffset = id.id.location.startLineOffset - 1),
+      id.location.copy(startLineOffset = id.location.startLineOffset - 1),
       source.path
     )
     Some(declaration)
@@ -373,10 +373,10 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val modifierResults =
       constructorModifiers(path, cd.id, cd.annotations, cd.modifiers)
-    val qualifiedName = QualifiedName(cd.qName.qName.map(id => Names(id.id.contents)).toIndexedSeq)
+    val qualifiedName = QualifiedName(cd.qName.qName.map(id => Names(id.contents)).toIndexedSeq)
     stampLocation(
       qualifiedName,
-      cd.id.id.location.copy(startLineOffset = cd.id.id.location.startLineOffset - 1),
+      cd.id.location.copy(startLineOffset = cd.id.location.startLineOffset - 1),
       source.path
     )
 
@@ -393,8 +393,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     val declaration =
       ApexConstructorDeclaration(modifierResults, qualifiedName, parameters, thisType.inTest, block)
     val location = OPLocation(
-      cd.id.id.location.startLine,
-      cd.id.id.location.startLineOffset - 1,
+      cd.id.location.startLine,
+      cd.id.location.startLineOffset - 1,
       0,
       cd.location.get.endLine,
       cd.location.get.endLineOffset - 1,
@@ -447,14 +447,12 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         .get
         .typeNameSegments(0)
         .id
-        .id
         .location
         .startLine,
       md.typeRef
         .asInstanceOf[Option[UnresolvedTypeRef]]
         .get
         .typeNameSegments(0)
-        .id
         .id
         .location
         .startLineOffset - 1,
@@ -501,14 +499,12 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         .get
         .typeNameSegments(0)
         .id
-        .id
         .location
         .startLine,
       md.typeRef
         .asInstanceOf[Option[UnresolvedTypeRef]]
         .get
         .typeNameSegments(0)
-        .id
         .id
         .location
         .startLineOffset - 1,
@@ -543,18 +539,17 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, fieldTypeName, vd)
     val location = OPLocation(
-      fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.id.location.startLine,
+      fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.location.startLine,
       fd.typeRef
         .asInstanceOf[UnresolvedTypeRef]
         .typeNameSegments(0)
         .id
-        .id
         .location
         .startLineOffset - 1,
       0,
-      if (fd.blockLocation.isDefined) fd.blockLocation.get.endLine else fd.id.id.location.endLine,
+      if (fd.blockLocation.isDefined) fd.blockLocation.get.endLine else fd.id.location.endLine,
       if (fd.blockLocation.isDefined) fd.blockLocation.get.endLineOffset
-      else fd.id.id.location.endLineOffset + 1,
+      else fd.id.location.endLineOffset + 1,
       0
     )
     stampLocation(declaration, location, source.path)
@@ -613,7 +608,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val declaration =
       VariableDeclarator(typeName, OutlineParserId.construct(fd.id, source.path), init)
-    stampLocation(declaration, extendLocation(fd.id.id.location, startLineOffset = -1), source.path)
+    stampLocation(declaration, extendLocation(fd.id.location, startLineOffset = -1), source.path)
     declaration
   }
 
@@ -687,11 +682,10 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       )
 
     val location = OPLocation(
-      pd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.id.location.startLine,
+      pd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.location.startLine,
       pd.typeRef
         .asInstanceOf[UnresolvedTypeRef]
         .typeNameSegments(0)
-        .id
         .id
         .location
         .startLineOffset - 1,

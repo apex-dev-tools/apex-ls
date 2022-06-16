@@ -9,7 +9,7 @@ trait ITypeDeclaration extends TypeRef {
   def paths: Array[String]
   def location: Location
 
-  def id: Id
+  def id: IdToken
 
   def typeNameSegment: TypeNameSegment
 
