@@ -87,8 +87,8 @@ object Tokens {
 }
 
 sealed trait Token {
-  val contents: String
-  val location: Location
+  def contents: String
+  def location: Location
 
   def lowerCaseContents: String = contents.toLowerCase
 
@@ -97,7 +97,18 @@ sealed trait Token {
   }
 }
 
-case class IdToken private (contents: String, location: Location) extends Token
+class IdToken private (val contents: String, _location: Location) extends Token {
+  // These are inlined to save memory
+  private val startLine: Int       = _location.startLine
+  private val startLineOffset: Int = _location.startLineOffset
+  private val startByteOffset: Int = _location.startByteOffset
+  private val endLine: Int         = _location.endLine
+  private val endLineOffset: Int   = _location.endLineOffset
+  private val endByteOffset: Int   = _location.endByteOffset
+
+  def location: Location =
+    Location(startLine, startLineOffset, startByteOffset, endLine, endLineOffset, endByteOffset)
+}
 
 object IdToken {
   private val stringCache = new InternCache[String]()

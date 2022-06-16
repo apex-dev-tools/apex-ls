@@ -38,5 +38,7 @@ object Indexer {
       .foreach(issue => println(issue.asString))
 
     println(s"Index loading took ${stop - start}ms")
+
+    Thread.sleep(30 * 1000)
   }
 }
