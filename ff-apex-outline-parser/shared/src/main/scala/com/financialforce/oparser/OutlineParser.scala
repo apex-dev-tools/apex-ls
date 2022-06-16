@@ -180,10 +180,9 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               if (!tokens.isEmpty) {
                 Parse.parseClassMember(classTypeDeclaration, tokens, t) match {
                   case (_, cms) =>
-                    if (cms.nonEmpty) {
-                      val location = Location.from(tokens.head.location, t.location)
-                      cms.foreach(m => m.location = Some(location))
-                    }
+                    cms.foreach(
+                      _.setLocation(tokens.head.location.startPosition, t.location.endPosition)
+                    )
                 }
               }
               tokens.clear()
@@ -210,29 +209,26 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
 
   private def consumeClassMember(classTypeDeclaration: TypeDecl, t: Token): Unit = {
     Parse.parseClassMember(classTypeDeclaration, tokens, t) match {
-      case (finished, cms) if finished =>
-        val startBlockLocation = Location(line, lineOffset, byteOffset, 0, 0, 0)
-        val startLocation = {
-          if (cms.nonEmpty)
-            Some(
-              Location
-                .fromStart(tokens(0).map(_.location).getOrElse(startBlockLocation))
-            )
-          else None
-        }
+      case (true, classMembers) if classMembers.nonEmpty =>
+        val startBlockPosition = Position(line, lineOffset, byteOffset)
+        val startPosition      = tokens(0).map(_.location.startPosition).getOrElse(startBlockPosition)
+
         tokens.clear()
-        if (cms.length == 1 && cms.head.isInstanceOf[PropertyDeclaration])
-          consumePropertyDeclaration(cms.head.asInstanceOf[PropertyDeclaration])
+        if (classMembers.length == 1 && classMembers.head.isInstanceOf[PropertyDeclaration])
+          consumePropertyDeclaration(classMembers.head.asInstanceOf[PropertyDeclaration])
         else
           consumeBlock()
-        if (cms.nonEmpty) {
-          val location =
-            Location.updateEnd(startLocation.get, line, lineOffset, byteOffset)
-          val blockLocation =
-            Location.updateEnd(startBlockLocation, line, lineOffset, byteOffset)
-          cms.foreach(m => m.location = Some(location))
-          cms.foreach(m => m.blockLocation = Some(blockLocation))
-        }
+        classMembers.foreach(
+          m =>
+            m.setLocations(
+              startPosition,
+              startBlockPosition,
+              Position(line, lineOffset, byteOffset)
+            )
+        )
+      case (true, _) =>
+        tokens.clear()
+        consumeBlock()
       case (finished, _) if !finished =>
         consumeBlock()
     }
@@ -424,12 +420,14 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
             case Tokens.LParenStr =>
               tokens.append(t); collectParenthesisFragment(); (true, None)
             case Tokens.SemicolonStr =>
-              val ims = Parse.parseInterfaceMember(interfaceTypeDeclaration, tokens)
-              if (ims.nonEmpty) {
-                val sl       = tokens.head.location
-                val location = Location.updateEnd(sl, line, lineOffset, byteOffset)
-                ims.foreach(im => im.location = Some(location))
-              }
+              Parse
+                .parseInterfaceMember(interfaceTypeDeclaration, tokens)
+                .foreach(
+                  _.setLocation(
+                    tokens.head.location.startPosition,
+                    Position(line, lineOffset, byteOffset)
+                  )
+                )
               tokens.clear()
               (true, None)
             case Tokens.RBraceStr =>

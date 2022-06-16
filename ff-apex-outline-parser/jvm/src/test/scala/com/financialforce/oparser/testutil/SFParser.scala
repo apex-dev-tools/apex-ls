@@ -30,7 +30,7 @@ import scala.language.postfixOps
 
 class SFParser(source: Map[String, String]) {
   private val typeDeclarations: ArrayBuffer[TestTypeDeclaration] = ArrayBuffer()
-  private val parseFailures: ArrayBuffer[String]             = ArrayBuffer()
+  private val parseFailures: ArrayBuffer[String]                 = ArrayBuffer()
 
   def parse: (ArrayBuffer[TestTypeDeclaration], ArrayBuffer[String]) = {
     parse()
@@ -125,7 +125,8 @@ class SFParser(source: Map[String, String]) {
   private def getInitBlocks(members: UserClassMembers) = {
     def toInitializer(x: AstNode, isStatic: Boolean) = {
       val init = Initializer(isStatic)
-      init.location = Some(toLoc(x.getLoc, 0, 0))
+      val loc  = toLoc(x.getLoc, 0, 0)
+      init.setLocation(loc.startPosition, loc.endPosition)
       init
     }
 

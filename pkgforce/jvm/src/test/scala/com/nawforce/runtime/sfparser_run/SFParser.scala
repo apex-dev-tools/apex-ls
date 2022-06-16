@@ -126,7 +126,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   private def getInitBlocks(members: UserClassMembers) = {
     def toInitializer(x: AstNode, isStatic: Boolean) = {
       val init = Initializer(isStatic)
-      init.location = Some(toLoc(x.getLoc, 0, 0))
+      val loc  = toLoc(x.getLoc, 0, 0)
+      init.setLocation(loc.startPosition, loc.endPosition)
       init
     }
 

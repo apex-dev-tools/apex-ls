@@ -216,8 +216,93 @@ class PropertyBlock {
 
 sealed trait BodyDeclaration {
   val id: Id
-  var location: Option[Location]
-  var blockLocation: Option[Location]
+
+  // These are inlined to save memory, block location is optional
+  private var startLine: Int       = _
+  private var startLineOffset: Int = _
+  private var startByteOffset: Int = _
+  private var endLine: Int         = _
+  private var endLineOffset: Int   = _
+  private var endByteOffset: Int   = _
+
+  private var startBlockLine: Int       = -1
+  private var startBlockLineOffset: Int = _
+  private var startBlockByteOffset: Int = _
+  private var endBlockLine: Int         = _
+  private var endBlockLineOffset: Int   = _
+  private var endBlockByteOffset: Int   = _
+
+  def location: Option[Location] = {
+    endByteOffset match {
+      case 0 => None
+      case _ =>
+        Some(
+          Location(
+            startLine,
+            startLineOffset,
+            startByteOffset,
+            endLine,
+            endLineOffset,
+            endByteOffset
+          )
+        )
+    }
+  }
+  def blockLocation: Option[Location] = {
+    startBlockLine match {
+      case -1 => None
+      case _ =>
+        Some(
+          Location(
+            startBlockLine,
+            startBlockLineOffset,
+            startBlockByteOffset,
+            endBlockLine,
+            endBlockLineOffset,
+            endBlockByteOffset
+          )
+        )
+    }
+  }
+
+  def setLocation(startPosition: Position, endPosition: Position): Unit = {
+    startLine = startPosition.line
+    startLineOffset = startPosition.lineOffset
+    startByteOffset = startPosition.byteOffset
+    endLine = endPosition.line
+    endLineOffset = endPosition.lineOffset
+    endByteOffset = endPosition.byteOffset
+  }
+
+  def setBlockLocation(startPosition: Position, endPosition: Position): Unit = {
+    startBlockLine = startPosition.line
+    startBlockLineOffset = startPosition.lineOffset
+    startBlockByteOffset = startPosition.byteOffset
+    endBlockLine = endPosition.line
+    endBlockLineOffset = endPosition.lineOffset
+    endBlockByteOffset = endPosition.byteOffset
+  }
+
+  /** Set both location && blockLocation, with same endpoint */
+  def setLocations(
+    startPosition: Position,
+    blockStartPosition: Position,
+    endPosition: Position
+  ): Unit = {
+    startLine = startPosition.line
+    startLineOffset = startPosition.lineOffset
+    startByteOffset = startPosition.byteOffset
+    endLine = endPosition.line
+    endLineOffset = endPosition.lineOffset
+    endByteOffset = endPosition.byteOffset
+
+    startBlockLine = blockStartPosition.line
+    startBlockLineOffset = blockStartPosition.lineOffset
+    startBlockByteOffset = blockStartPosition.byteOffset
+    endBlockLine = endPosition.line
+    endBlockLineOffset = endPosition.lineOffset
+    endBlockByteOffset = endPosition.byteOffset
+  }
 }
 
 case class ConstructorDeclaration(
@@ -227,9 +312,7 @@ case class ConstructorDeclaration(
   formalParameterList: FormalParameterList
 ) extends BodyDeclaration {
 
-  val id: Id                          = qName.qName(0)
-  var location: Option[Location]      = None
-  var blockLocation: Option[Location] = None
+  val id: Id = qName.qName(0)
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
@@ -259,9 +342,6 @@ case class MethodDeclaration(
   id: Id,
   formalParameterList: FormalParameterList
 ) extends BodyDeclaration {
-
-  var location: Option[Location]      = None
-  var blockLocation: Option[Location] = None
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
@@ -319,9 +399,6 @@ class PropertyDeclaration(
     with Signature
     with PropertyBlockAssignable {
 
-  var location: Option[Location]      = None
-  var blockLocation: Option[Location] = None
-
   val propertyBlocks: mutable.ArrayBuffer[PropertyBlock] = mutable.ArrayBuffer[PropertyBlock]()
 
   override def equals(obj: Any): Boolean = {
@@ -353,9 +430,6 @@ case class FieldDeclaration(
 ) extends BodyDeclaration
     with Signature {
 
-  var location: Option[Location]      = None
-  var blockLocation: Option[Location] = None
-
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[FieldDeclaration]
     other.annotations == annotations &&
@@ -380,9 +454,7 @@ object Initializer {
 }
 
 case class Initializer(isStatic: Boolean) extends BodyDeclaration {
-  override val id: Id                          = Initializer.id
-  override var location: Option[Location]      = None
-  override var blockLocation: Option[Location] = None
+  override val id: Id = Initializer.id
 }
 
 object Parse {
@@ -686,17 +758,17 @@ object Parse {
       endLocation = endLocationAndIndex._1
       index = endLocationAndIndex._2
 
-      if (startLocation.isDefined)
-        field.blockLocation = Some(
-          Location(
-            startLine = startLocation.get.startLine,
-            startLineOffset = startLocation.get.startLineOffset,
-            startByteOffset = startLocation.get.endByteOffset + 1,
-            endLine = endLocation.startLine,
-            endLineOffset = endLocation.startLineOffset,
-            endByteOffset = endLocation.startByteOffset
-          )
+      if (startLocation.isDefined) {
+        // WARNING: I don't think there is a code path where this is not overwritten
+        field.setBlockLocation(
+          Position(
+            startLocation.get.startLine,
+            startLocation.get.startLineOffset,
+            startLocation.get.endByteOffset + 1
+          ),
+          Position(endLocation.startLine, endLocation.startLineOffset, endLocation.startByteOffset)
         )
+      }
     }
     fields.toSeq
   }

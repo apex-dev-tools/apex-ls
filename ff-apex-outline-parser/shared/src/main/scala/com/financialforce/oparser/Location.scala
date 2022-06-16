@@ -3,6 +3,12 @@
  */
 package com.financialforce.oparser
 
+case class Position(line: Int, lineOffset: Int, byteOffset: Int) {
+  override def toString: String = {
+    s"[$line.$lineOffset;$byteOffset"
+  }
+}
+
 case class Location(
   startLine: Int,
   startLineOffset: Int,
@@ -11,6 +17,9 @@ case class Location(
   endLineOffset: Int,
   endByteOffset: Int
 ) {
+  def startPosition: Position = Position(startLine, startLineOffset, startByteOffset)
+  def endPosition: Position   = Position(endLine, endLineOffset, endByteOffset)
+
   override def toString: String = {
     s"[$startLine.$startLineOffset->$endLine.$endLineOffset;$startByteOffset->$endByteOffset]"
   }
