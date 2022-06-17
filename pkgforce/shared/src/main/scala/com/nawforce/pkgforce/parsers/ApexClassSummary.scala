@@ -172,6 +172,7 @@ object ApexNode {
       str
   }
 }
+case class ExtendsType(name: Name, location: Location)
 
 class ApexLightNode(
   val location: PathLocation,
@@ -192,21 +193,20 @@ class ApexLightNode(
     val isNamedCorrectly    = name.endsWith(Names.Exception)
     val isExtendedCorrectly = typeRef.exists(_.name.endsWith(Names.Exception))
 
-    val issues = (isNamedCorrectly, isExtendedCorrectly) match {
+    (isNamedCorrectly, isExtendedCorrectly) match {
       case (true, false) =>
-        lazy val issueLoc = typeRef.map(_.location).getOrElse(idLocation)
-        Some(
+        ArraySeq(
           new Issue(
             location.path,
             Diagnostic(
               ERROR_CATEGORY,
-              issueLoc,
+              typeRef.map(_.location).getOrElse(idLocation),
               s"Exception class '$name' must extend another Exception class"
             )
           )
         )
       case (false, true) =>
-        Some(
+        ArraySeq(
           new Issue(
             location.path,
             Diagnostic(
@@ -216,13 +216,10 @@ class ApexLightNode(
             )
           )
         )
-      case _ => None
+      case _ => ArraySeq.empty
     }
-    issues.toSeq
   }
 }
-
-case class ExtendsType(name: Name, location: Location)
 
 case class ApexFormalParameter(
   modifiers: ArraySeq[Modifier],
