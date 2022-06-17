@@ -13,6 +13,7 @@
  */
 package com.nawforce.runtime.parsers
 
+import com.nawforce.apexparser.ApexParser.TypeRefContext
 import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
 import com.nawforce.pkgforce.diagnostics.IssuesAnd
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
@@ -117,6 +118,11 @@ object CodeParser {
   // Helper for JS Portability
   def getText(node: TerminalNode): String = {
     node.text
+  }
+
+  // Helper for JS Portability
+  def getText(context: js.UndefOr[TypeRefContext]): String = {
+    context.toOption.map(getText).getOrElse("")
   }
 
   // Helper for JS Portability

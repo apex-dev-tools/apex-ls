@@ -42,6 +42,14 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
     val modifierContext = getModifierContext(parentContext(ctx))
     val classModifiers =
       ApexModifiers.classModifiers(parser, modifierContext.modifiers, isOuter, ctx.id())
+    val typeRef = CodeParser.toScala(ctx.typeRef())
+    val extendsType =
+      if (typeRef.isDefined)
+        Some(
+          ExtendsType(Name(CodeParser.getText(typeRef.get)), parser.getPathLocation(typeRef.get).location)
+        )
+      else
+        None
 
     typeWrap(classModifiers.methodOwnerNature) {
       ArraySeq(
@@ -50,6 +58,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
           CLASS_NATURE,
           Name(CodeParser.getText(ctx.id())),
           parser.getPathLocation(ctx.id()).location,
+          extendsType,
           visitChildren(ctx),
           classModifiers.modifiers,
           s"${classModifiers.modifiers.mkString(" ")} class ${CodeParser.getText(ctx.id())}",
@@ -71,6 +80,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
         TRIGGER_NATURE,
         Name(CodeParser.getText(ids.head)),
         parser.getPathLocation(ids.head).location,
+        None,
         visitChildren(ctx),
         ArraySeq(),
         s"trigger ${CodeParser.getText(ids.head)} on ${CodeParser.getText(ids.tail.head)}",
@@ -96,6 +106,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
           INTERFACE_NATURE,
           Name(CodeParser.getText(ctx.id())),
           parser.getPathLocation(ctx.id()).location,
+          None,
           visitChildren(ctx),
           modifiers.modifiers,
           s"${modifiers.modifiers.mkString(" ")} interface ${CodeParser.getText(ctx.id())}",
@@ -122,6 +133,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
           ENUM_NATURE,
           Name(CodeParser.getText(ctx.id())),
           parser.getPathLocation(ctx.id()).location,
+          None,
           visitChildren(ctx),
           modifiers.modifiers,
           s"${modifiers.modifiers.mkString(" ")} enum ${CodeParser.getText(ctx.id())}",
@@ -251,6 +263,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
           FIELD_NATURE,
           Name(CodeParser.getText(vd.id())),
           parser.getPathLocation(vd.id()).location,
+          None,
           ArraySeq(),
           modifiers.modifiers,
           s"${appendSpace(modifiers.modifiers.mkString(" "))}$fieldType ${CodeParser
@@ -266,6 +279,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
           FIELD_NATURE,
           Name(CodeParser.getText(vd.id())),
           parser.getPathLocation(vd.id()).location,
+          None,
           ArraySeq(),
           modifiers.modifiers,
           s"${appendSpace(modifiers.modifiers.mkString(" "))}$fieldType ${CodeParser
@@ -296,6 +310,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
         PROPERTY_NATURE,
         Name(CodeParser.getText(ctx.id())),
         parser.getPathLocation(ctx.id()).location,
+        None,
         ArraySeq(),
         modifiers.modifiers,
         s"${appendSpace(modifiers.modifiers.mkString(" "))}$fieldType ${CodeParser
@@ -320,6 +335,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
             ENUM_CONSTANT_NATURE,
             Name(CodeParser.getText(id)),
             parser.getPathLocation(id).location,
+            None,
             ArraySeq.empty,
             ArraySeq.empty,
             constantName,
