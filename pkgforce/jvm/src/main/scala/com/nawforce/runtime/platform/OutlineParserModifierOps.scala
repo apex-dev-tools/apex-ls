@@ -25,15 +25,12 @@ object OutlineParserModifierOps {
     val modifiers = {
       annotations.flatMap(
         opA =>
-          ModifierOps(
-            "@" + opA.qName.toString.replace(" ", "").toLowerCase,
-            opA.parameters.getOrElse("")
-          )
+          ModifierOps("@" + opA.name.replace(" ", "").toLowerCase, opA.parameters.getOrElse(""))
             .map(
               m =>
                 (
                   m,
-                  OPLogEntryContext(path, extendLocation(opA.qName.location, startLineOffset = -2)),
+                  OPLogEntryContext(path, extendLocation(location, startLineOffset = -2)),
                   "Annotation"
                 )
             )

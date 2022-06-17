@@ -62,7 +62,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toAnnotation(ids: Array[String], parameter: Option[String]): Annotation = {
-    Annotation(toQName(ids), parameter)
+    Annotation(toQName(ids).toString, parameter)
   }
 
   def toQName(ids: Array[String]): QualifiedName = {

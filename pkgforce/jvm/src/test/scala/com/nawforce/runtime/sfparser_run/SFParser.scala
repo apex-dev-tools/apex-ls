@@ -398,7 +398,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
 
   private def toAnnotation(from: apex.jorje.semantic.ast.modifier.Annotation): Annotation = {
     //TODO: add parameters
-    Annotation(toQName(from.getType.getApexName, from.getLoc), None)
+    Annotation(from.getType.getApexName, None)
   }
 
   private def toLoc(

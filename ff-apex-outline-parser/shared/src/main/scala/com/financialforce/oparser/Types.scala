@@ -87,9 +87,9 @@ class MemberDeclaration extends TypeRefAssignable {
   override def add(tr: UnresolvedTypeRef): Unit = typeRef = Some(tr)
 }
 
-case class Annotation(qName: QualifiedName, parameters: Option[String]) {
+case class Annotation(name: String, parameters: Option[String]) {
   override def toString: String = {
-    if (parameters.isDefined) s"@$qName(${parameters.get})" else s"@$qName"
+    if (parameters.isDefined) s"@$name(${parameters.get})" else s"@$name"
   }
 }
 
@@ -907,7 +907,7 @@ object Parse {
       Some(builder.toString())
     } else None
 
-    accum.append(Annotation(qName, parameters))
+    accum.append(Annotation(qName.toString, parameters))
 
     index
   }

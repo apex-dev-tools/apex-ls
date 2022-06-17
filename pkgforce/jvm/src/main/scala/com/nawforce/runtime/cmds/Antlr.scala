@@ -132,7 +132,7 @@ object Antlr {
       .map(_.getText)
       .orElse(Option(ctx.elementValuePairs()).map(_.getText))
       .orElse(if (ctx.getText.endsWith("()")) Some("") else None)
-    Annotation(qName, args)
+    Annotation(qName.toString, args)
   }
 
   def antlrTypeList(ctx: ApexParser.TypeListContext): TypeList = {
