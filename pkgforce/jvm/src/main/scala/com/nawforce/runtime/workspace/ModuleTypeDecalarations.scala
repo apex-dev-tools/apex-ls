@@ -43,22 +43,21 @@ sealed class TypeDeclaration(
   _enclosing: IMutableModuleTypeDeclaration
 ) extends IMutableModuleTypeDeclaration {
 
-  // TODO: These should be private
-  var _location: Location = _
+  private var _location: Location = _
 
-  var _id: IdToken                  = _
-  var _extendsTypeRef: TypeRef      = _
-  var _implementsTypeList: TypeList = _
+  private var _id: IdToken                  = _
+  private var _extendsTypeRef: TypeRef      = _
+  private var _implementsTypeList: TypeList = _
 
-  var _modifiers: ArraySeq[Modifier]     = Modifiers.emptyArraySeq
-  var _annotations: ArraySeq[Annotation] = Annotations.emptyArraySeq
+  private var _modifiers: ArraySeq[Modifier]     = Modifiers.emptyArraySeq
+  private var _annotations: ArraySeq[Annotation] = Annotations.emptyArraySeq
 
-  var _initializers: ArraySeq[Initializer]            = Initializer.emptyArraySeq
-  var _innerTypes: ArraySeq[TypeDeclaration]          = TypeDeclaration.emptyArraySeq
-  var _constructors: ArraySeq[ConstructorDeclaration] = ConstructorDeclaration.emptyArraySeq
-  var _methods: ArraySeq[MethodDeclaration]           = MethodDeclaration.emptyArraySeq
-  var _properties: ArraySeq[PropertyDeclaration]      = PropertyDeclaration.emptyArraySeq
-  var _fields: ArraySeq[FieldDeclaration]             = FieldDeclaration.emptyArraySeq
+  private var _initializers: ArraySeq[Initializer]            = Initializer.emptyArraySeq
+  private var _innerTypes: ArraySeq[TypeDeclaration]          = TypeDeclaration.emptyArraySeq
+  private var _constructors: ArraySeq[ConstructorDeclaration] = ConstructorDeclaration.emptyArraySeq
+  private var _methods: ArraySeq[MethodDeclaration]           = MethodDeclaration.emptyArraySeq
+  private var _properties: ArraySeq[PropertyDeclaration]      = PropertyDeclaration.emptyArraySeq
+  private var _fields: ArraySeq[FieldDeclaration]             = FieldDeclaration.emptyArraySeq
 
   // This is used to stage declaration that need adding to above, see syncBodyDeclarations()
   private var _bodyDecls: mutable.ArrayBuffer[MutableTypeAppendable] = mutable.ArrayBuffer()
@@ -152,42 +151,42 @@ class ClassTypeDeclaration(
       s"""Class:      $id
          |Path:       $path
          |Location:   ${id.location}
-         |Annotation: ${asString(_annotations)}
-         |Modifiers:  ${asString(_modifiers)}
-         |Extends:    ${_extendsTypeRef}
-         |Implements: ${_implementsTypeList}
+         |Annotation: ${asString(annotations)}
+         |Modifiers:  ${asString(modifiers)}
+         |Extends:    $extendsTypeRef
+         |Implements: $implementsTypeList
          |""".stripMargin
 
     val c =
-      if (_constructors.isEmpty) ""
+      if (constructors.isEmpty) ""
       else
         s"""
            |Constructors:
-           |${_constructors.mkString("\n")}
+           |${constructors.mkString("\n")}
            |""".stripMargin
 
     val m =
-      if (_methods.isEmpty) ""
+      if (methods.isEmpty) ""
       else
         s"""
            |Methods:
-           |${_methods.mkString("\n")}
+           |${methods.mkString("\n")}
            |""".stripMargin
 
     val p =
-      if (_properties.isEmpty) ""
+      if (properties.isEmpty) ""
       else
         s"""
            |Properties:
-           |${_properties.mkString("\n")}
+           |${properties.mkString("\n")}
            |""".stripMargin
 
     val f =
-      if (_fields.isEmpty) ""
+      if (fields.isEmpty) ""
       else
         s"""
            |Fields:
-           |${_fields.mkString("\n")}
+           |${fields.mkString("\n")}
            |""".stripMargin
 
     val i =
@@ -213,9 +212,9 @@ class InterfaceTypeDeclaration(
     s"""Interface:  $id
        |Path:       $path
        |Location:   ${id.location}
-       |Annotation: ${asString(_annotations)}
-       |Modifiers:  ${asString(_modifiers)}
-       |Implements: ${_implementsTypeList}
+       |Annotation: ${asString(annotations)}
+       |Modifiers:  ${asString(modifiers)}
+       |Implements: $implementsTypeList
        |Methods:
        |${methods.mkString("\n")}
        |
@@ -234,8 +233,8 @@ class EnumTypeDeclaration(
     s"""Enum:       $id
        |Path:       $path
        |Location:   ${id.location}
-       |Annotation: ${asString(_annotations)}
-       |Modifiers:  ${asString(_modifiers)}
+       |Annotation: ${asString(annotations)}
+       |Modifiers:  ${asString(modifiers)}
        |Constants:
        |${fields.map(f => s"${f.id.location} ${f.id.contents}").mkString("\n")}
        |
@@ -322,52 +321,46 @@ object Compare {
       })
     }
 
-    if (first._annotations != second._annotations) {
-      throw new Exception(s"Different annotation ${first._annotations} != ${second._annotations}")
+    if (first.annotations != second.annotations) {
+      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
     }
 
-    if (first._modifiers != second._modifiers) {
-      throw new Exception(s"Different modifiers ${first._modifiers} != ${second._modifiers}")
+    if (first.modifiers != second.modifiers) {
+      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
     }
 
     if (first.id != second.id) {
       throw new Exception(s"Different or empty class id ${first.id} != ${second.id}")
     }
 
-    if (first._extendsTypeRef != second._extendsTypeRef) {
+    if (first.extendsTypeRef != second.extendsTypeRef) {
+      throw new Exception(s"Different extends ${first.extendsTypeRef} != ${second.extendsTypeRef}")
+    }
+
+    if (first.implementsTypeList != second.implementsTypeList) {
       throw new Exception(
-        s"Different extends ${first._extendsTypeRef} != ${second._extendsTypeRef}"
+        s"Different implements ${first.implementsTypeList} != ${second.implementsTypeList}"
       )
     }
 
-    if (first._implementsTypeList != second._implementsTypeList) {
-      throw new Exception(
-        s"Different implements ${first._implementsTypeList} != ${second._implementsTypeList}"
-      )
+    if (first.initializers.length != second.initializers.length) {
+      throw new Exception(s"Different initializers ${first.initializers} != ${second.initializers}")
     }
 
-    if (first._initializers.length != second._initializers.length) {
-      throw new Exception(
-        s"Different initializers ${first._initializers} != ${second._initializers}"
-      )
+    if (first.constructors != second.constructors) {
+      throw new Exception(s"Different constructors ${first.constructors} != ${second.constructors}")
     }
 
-    if (first._constructors != second._constructors) {
-      throw new Exception(
-        s"Different constructors ${first._constructors} != ${second._constructors}"
-      )
+    if (first.methods != second.methods) {
+      throw new Exception(s"Different methods ${first.methods} != ${second.methods}")
     }
 
-    if (first._methods != second._methods) {
-      throw new Exception(s"Different methods ${first._methods} != ${second._methods}")
+    if (first.properties != second.properties) {
+      throw new Exception(s"Different properties ${first.properties} != ${second.properties}")
     }
 
-    if (first._properties != second._properties) {
-      throw new Exception(s"Different properties ${first._properties} != ${second._properties}")
-    }
-
-    if (first._fields != second._fields) {
-      throw new Exception(s"Different fields ${first._fields} != ${second._fields}")
+    if (first.fields != second.fields) {
+      throw new Exception(s"Different fields ${first.fields} != ${second.fields}")
     }
 
     compareInnerClasses(innerClassTypeDeclarations(first), innerClassTypeDeclarations(second))
@@ -403,9 +396,9 @@ object Compare {
       throw new Exception(s"Different or empty interface id ${first.id} != ${second.id}")
     }
 
-    if (first._implementsTypeList != second._implementsTypeList) {
+    if (first.implementsTypeList != second.implementsTypeList) {
       throw new Exception(
-        s"Different extends ${first._implementsTypeList} != ${second._implementsTypeList}"
+        s"Different extends ${first.implementsTypeList} != ${second.implementsTypeList}"
       )
     }
 

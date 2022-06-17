@@ -204,7 +204,7 @@ object Antlr {
     ctd: ClassTypeDeclaration,
     ctx: ApexParser.ClassDeclarationContext
   ): Unit = {
-    ctd._id = toId(ctx.id())
+    ctd.setId(toId(ctx.id()))
 
     if (Option(ctx.typeRef()).isDefined) {
       ctd.setExtends(antlrTypeRef(ctx.typeRef()))
@@ -273,7 +273,7 @@ object Antlr {
     itd: InterfaceTypeDeclaration,
     ctx: ApexParser.InterfaceDeclarationContext
   ): Unit = {
-    itd._id = toId(ctx.id())
+    itd.setId(toId(ctx.id()))
 
     if (Option(ctx.typeList()).isDefined) {
       itd.setImplements(antlrTypeList(ctx.typeList()))
@@ -308,7 +308,7 @@ object Antlr {
     etd: EnumTypeDeclaration,
     ctx: ApexParser.EnumDeclarationContext
   ): Unit = {
-    etd._id = toId(ctx.id())
+    etd.setId(toId(ctx.id()))
 
     ctx
       .enumConstants()

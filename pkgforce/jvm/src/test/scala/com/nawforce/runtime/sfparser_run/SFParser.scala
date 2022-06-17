@@ -199,7 +199,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
       )
     )
     itd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
-    itd._implementsTypeList = constructInterfaceTypeList(typeInfo).orNull
+    itd.setImplements(constructInterfaceTypeList(typeInfo).orNull)
     itd
   }
 
@@ -236,8 +236,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     ctd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
     properties.foreach(ctd.appendProperty)
     fields.foreach(ctd.appendField)
-    ctd._extendsTypeRef = constructExtendsTypeRef(typeInfo).orNull
-    ctd._implementsTypeList = constructInterfaceTypeList(typeInfo).orNull
+    ctd.setExtends(constructExtendsTypeRef(typeInfo).orNull)
+    ctd.setImplements(constructInterfaceTypeList(typeInfo).orNull)
     ctd
   }
 
