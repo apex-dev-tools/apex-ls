@@ -17,11 +17,10 @@ trait ITypeDeclaration extends TypeRef {
   def enclosing: Option[ITypeDeclaration]
   def extendsTypeRef: TypeRef
   def implementsTypeList: TypeList
+  def modifiers: Array[Modifier]
+  def annotations: Array[Annotation]
 
-  def modifiers: ArraySeq[Modifier]
-  def annotations: ArraySeq[Annotation]
   def initializers: ArraySeq[Initializer]
-
   def innerTypes: ArraySeq[ITypeDeclaration]
   def constructors: ArraySeq[ConstructorDeclaration]
   def methods: ArraySeq[MethodDeclaration]
@@ -56,10 +55,10 @@ trait IMutableTypeDeclaration extends ITypeDeclaration with MutableTypeAppendabl
   def setLocation(location: Location): Unit
   def setExtends(typeRef: TypeRef): Unit
   def setImplements(typeList: TypeList): Unit
-  def setModifiers(modifiers: ArraySeq[Modifier]): Unit
-  def setAnnotations(annotations: ArraySeq[Annotation]): Unit
+  def setModifiers(modifiers: Array[Modifier]): Unit
+  def setAnnotations(annotations: Array[Annotation]): Unit
 
-  // Appenders for incremental construction
+  // Appends for incremental construction
   def appendInitializer(init: Initializer): Unit
   def appendInnerType(inner: IMutableTypeDeclaration): Unit
   def appendConstructor(ctor: ConstructorDeclaration): Unit

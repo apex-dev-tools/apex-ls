@@ -92,10 +92,10 @@ class PlatformTypeDeclaration(
       null
   }
 
-  override lazy val modifiers: ArraySeq[Modifier] =
+  override lazy val modifiers: Array[Modifier] =
     PlatformModifiers.typeModifiers(cls.getModifiers, nature)
 
-  override lazy val annotations: ArraySeq[Annotation] = emptyAnnotations
+  override lazy val annotations: Array[Annotation] = emptyAnnotations
 
   override lazy val initializers: ArraySeq[Initializer] = emptyInitializers
 
@@ -191,16 +191,12 @@ class PlatformTypeDeclaration(
     td: PlatformTypeDeclaration
   ): ConstructorDeclaration = {
     val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
-    val name      = new QualifiedName()
-    (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.contents))
-      .map(s => IdToken(s, Location.default))
-      .foreach(name.add)
-    ConstructorDeclaration(
-      ArraySeq.empty,
-      modifiers,
-      name,
-      toFormalParameterList(ctor.getParameters)
+    val name = QualifiedName(
+      (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.contents))
+        .map(s => IdToken(s, Location.default))
     )
+
+    ConstructorDeclaration(Array.empty, modifiers, name, toFormalParameterList(ctor.getParameters))
   }
 
   protected def toMethodDeclaration(
@@ -312,7 +308,7 @@ object PlatformTypeDeclaration {
   final val emptyPaths: Array[String]                                = Array.empty
   final val emptyArgs: Array[String]                                 = Array.empty
   final val emptyTypeDeclarations: ArraySeq[PlatformTypeDeclaration] = ArraySeq.empty
-  final val emptyAnnotations: ArraySeq[Annotation]                   = ArraySeq.empty
+  final val emptyAnnotations: Array[Annotation]                      = Array.empty
   final val emptyInitializers: ArraySeq[Initializer]                 = ArraySeq.empty
   final val emptyProperties: ArraySeq[PropertyDeclaration]           = ArraySeq.empty
   final val priorityNamespaces: Seq[Name]                            = Seq(Names.System, Names.Schema, Names.Database)

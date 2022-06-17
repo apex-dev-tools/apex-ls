@@ -373,7 +373,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val modifierResults =
       constructorModifiers(path, cd.id, cd.annotations, cd.modifiers)
-    val qualifiedName = QualifiedName(cd.qName.qName.map(id => Names(id.contents)).toIndexedSeq)
+    val qualifiedName = QualifiedName(cd.qName.parts.map(id => Names(id.contents)).toIndexedSeq)
     stampLocation(
       qualifiedName,
       cd.id.location.copy(startLineOffset = cd.id.location.startLineOffset - 1),
@@ -527,15 +527,9 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults = fieldModifiers(
-      path,
-      fd.id,
-      ArraySeq.unsafeWrapArray(fd.annotations.toArray),
-      ArraySeq.unsafeWrapArray(fd.modifiers.toArray),
-      isOuter
-    )
-    val fieldTypeName = TypeReference.construct(fd.typeRef.asInstanceOf[UnresolvedTypeRef])
-    val vd            = constructVariableDeclarator(fd, source, fieldTypeName, isOuter)
+    val modifierResults = fieldModifiers(path, fd.id, fd.annotations, fd.modifiers, isOuter)
+    val fieldTypeName   = TypeReference.construct(fd.typeRef.asInstanceOf[UnresolvedTypeRef])
+    val vd              = constructVariableDeclarator(fd, source, fieldTypeName, isOuter)
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, fieldTypeName, vd)
     val location = OPLocation(
@@ -663,14 +657,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       }
     }
 
-    val modifierResults = fieldModifiers(
-      path,
-      pd.id,
-      ArraySeq.unsafeWrapArray(pd.annotations.toArray),
-      ArraySeq.unsafeWrapArray(pd.modifiers.toArray),
-      isOuter
-    )
-    val propertyBlocks = ArraySeq.from(pd.propertyBlocks.flatMap(parsePropertyBlock))
+    val modifierResults = fieldModifiers(path, pd.id, pd.annotations, pd.modifiers, isOuter)
+    val propertyBlocks  = ArraySeq.from(pd.propertyBlocks.flatMap(parsePropertyBlock))
 
     val declaration =
       ApexPropertyDeclaration(

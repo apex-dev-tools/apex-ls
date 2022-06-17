@@ -82,7 +82,7 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(td.get.extendsTypeRef.getFullName == "ConnectApi.FeedElement")
     assert(td.get.implementsTypeList == null)
     assert(td.get.nature == CLASS_NATURE)
-    assert(td.get.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
+    assert(td.get.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
     assert(td.get.enclosing.isEmpty)
     assert(td.get.innerTypes.isEmpty)
   }
@@ -141,7 +141,7 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(td.get.extendsTypeRef == null)
     assert(td.get.implementsTypeList == null)
     assert(td.get.nature == CLASS_NATURE)
-    assert(td.get.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
+    assert(td.get.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
     assert(td.get.enclosing.isEmpty)
     assert(td.get.innerTypes.isEmpty)
 
@@ -160,9 +160,9 @@ class PlatformTypeTest extends AnyFunSuite {
           "street"
         )
     )
-    assert(fields.filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) sameElements fields)
+    assert(fields.filter(_.modifiers sameElements Array(PUBLIC_MODIFIER)) == fields)
     assert(fields.map(_.typeRef.isInstanceOf[PlatformTypeDeclaration]).forall(b => b))
-    assert(fields.filter(_.typeRef.getFullName == "System.String") sameElements fields)
+    assert(fields.filter(_.typeRef.getFullName == "System.String") == fields)
   }
 
   test("Constructor access") {
@@ -176,7 +176,7 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(td.get.extendsTypeRef.getFullName == "System.Exception")
     assert(td.get.implementsTypeList == null)
     assert(td.get.nature == CLASS_NATURE)
-    assert(td.get.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
+    assert(td.get.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
     assert(td.get.enclosing.isEmpty)
     assert(td.get.innerTypes.isEmpty)
 
@@ -184,7 +184,7 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(constructors.length == 4)
     assert(
       constructors
-        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) sameElements constructors
+        .filter(_.modifiers sameElements Array(PUBLIC_MODIFIER)) == constructors
     )
     assert(asConstructorSignatureString(constructors.head) == "public System.DmlException()")
     assert(
@@ -214,7 +214,7 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(td.get.extendsTypeRef == null)
     assert(td.get.implementsTypeList == null)
     assert(td.get.nature == CLASS_NATURE)
-    assert(td.get.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
+    assert(td.get.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
     assert(td.get.enclosing.isEmpty)
     assert(td.get.innerTypes.isEmpty)
 
@@ -238,7 +238,7 @@ class PlatformTypeTest extends AnyFunSuite {
     )
     assert(
       methods
-        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) sameElements methods
+        .filter(_.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) == methods
     )
     assert(
       asMethodSignatureString(
@@ -265,7 +265,7 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(td.get.extendsTypeRef.getFullName == "System.Exception")
     assert(td.get.implementsTypeList == null)
     assert(td.get.nature == CLASS_NATURE)
-    assert(td.get.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
+    assert(td.get.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
     assert(td.get.enclosing.isEmpty)
     assert(td.get.innerTypes.isEmpty)
 
@@ -292,7 +292,7 @@ class PlatformTypeTest extends AnyFunSuite {
     )
     assert(
       methods
-        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) sameElements methods
+        .filter(_.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) == methods
     )
   }
 
@@ -315,7 +315,7 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(td.get.implementsTypeList.typeRefs.head.isInstanceOf[PlatformTypeDeclaration])
     assert(td.get.implementsTypeList.typeRefs.head.getFullName == "System.Iterable<System.String>")
     assert(td.get.nature == CLASS_NATURE)
-    assert(td.get.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
+    assert(td.get.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
     assert(td.get.enclosing.isEmpty)
     assert(td.get.innerTypes.isEmpty)
 

@@ -40,26 +40,22 @@ object Antlr {
       val ctd = new ClassTypeDeclaration(null, "", null)
 
       ctd.setAnnotations(
-        ArraySeq.unsafeWrapArray(
-          tree
-            .typeDeclaration()
-            .modifier()
-            .asScala
-            .filter(_.annotation() != null)
-            .map(m => antlrAnnotation(m.annotation()))
-            .toArray
-        )
+        tree
+          .typeDeclaration()
+          .modifier()
+          .asScala
+          .filter(_.annotation() != null)
+          .map(m => antlrAnnotation(m.annotation()))
+          .toArray
       )
       ctd.setModifiers(
-        ArraySeq.unsafeWrapArray(
-          tree
-            .typeDeclaration()
-            .modifier()
-            .asScala
-            .filter(_.annotation() == null)
-            .map(toModifier)
-            .toArray
-        )
+        tree
+          .typeDeclaration()
+          .modifier()
+          .asScala
+          .filter(_.annotation() == null)
+          .map(toModifier)
+          .toArray
       )
 
       antlrClassTypeDeclaration(ctd, tree.typeDeclaration().classDeclaration())
@@ -69,26 +65,22 @@ object Antlr {
       val itd = new InterfaceTypeDeclaration(null, "", null)
 
       itd.setAnnotations(
-        ArraySeq.unsafeWrapArray(
-          tree
-            .typeDeclaration()
-            .modifier()
-            .asScala
-            .filter(_.annotation() != null)
-            .map(m => antlrAnnotation(m.annotation()))
-            .toArray
-        )
+        tree
+          .typeDeclaration()
+          .modifier()
+          .asScala
+          .filter(_.annotation() != null)
+          .map(m => antlrAnnotation(m.annotation()))
+          .toArray
       )
       itd.setModifiers(
-        ArraySeq.unsafeWrapArray(
-          tree
-            .typeDeclaration()
-            .modifier()
-            .asScala
-            .filter(_.annotation() == null)
-            .map(toModifier)
-            .toArray
-        )
+        tree
+          .typeDeclaration()
+          .modifier()
+          .asScala
+          .filter(_.annotation() == null)
+          .map(toModifier)
+          .toArray
       )
 
       antlrInterfaceTypeDeclaration(itd, tree.typeDeclaration().interfaceDeclaration())
@@ -98,26 +90,22 @@ object Antlr {
       val etd = new EnumTypeDeclaration(null, "", null)
 
       etd.setAnnotations(
-        ArraySeq.unsafeWrapArray(
-          tree
-            .typeDeclaration()
-            .modifier()
-            .asScala
-            .filter(_.annotation() != null)
-            .map(m => antlrAnnotation(m.annotation()))
-            .toArray
-        )
+        tree
+          .typeDeclaration()
+          .modifier()
+          .asScala
+          .filter(_.annotation() != null)
+          .map(m => antlrAnnotation(m.annotation()))
+          .toArray
       )
       etd.setModifiers(
-        ArraySeq.unsafeWrapArray(
-          tree
-            .typeDeclaration()
-            .modifier()
-            .asScala
-            .filter(_.annotation() == null)
-            .map(toModifier)
-            .toArray
-        )
+        tree
+          .typeDeclaration()
+          .modifier()
+          .asScala
+          .filter(_.annotation() == null)
+          .map(toModifier)
+          .toArray
       )
 
       antlrEnumTypeDeclaration(etd, tree.typeDeclaration().enumDeclaration())
@@ -143,8 +131,7 @@ object Antlr {
   }
 
   def antlrAnnotation(ctx: ApexParser.AnnotationContext): Annotation = {
-    val qName = new QualifiedName
-    ctx.qualifiedName().id().asScala.foreach(id => antlrId(qName, id))
+    val qName = QualifiedName(ctx.qualifiedName().id().asScala.map(id => toId(id)).toArray)
     val args = Option(ctx.elementValue())
       .map(_.getText)
       .orElse(Option(ctx.elementValuePairs()).map(_.getText))
@@ -219,18 +206,14 @@ object Antlr {
         Option(c.memberDeclaration()).foreach(d => {
           val md = new MemberDeclaration
           md.setAnnotations(
-            ArraySeq.unsafeWrapArray(
-              c.modifier()
-                .asScala
-                .filter(_.annotation() != null)
-                .map(m => antlrAnnotation(m.annotation()))
-                .toArray
-            )
+            c.modifier()
+              .asScala
+              .filter(_.annotation() != null)
+              .map(m => antlrAnnotation(m.annotation()))
+              .toArray
           )
           md.setModifiers(
-            ArraySeq.unsafeWrapArray(
-              c.modifier().asScala.filter(_.annotation() == null).map(toModifier).toArray
-            )
+            c.modifier().asScala.filter(_.annotation() == null).map(toModifier).toArray
           )
 
           Option(d.classDeclaration()).foreach(icd => {
@@ -286,19 +269,15 @@ object Antlr {
       .foreach(mctx => {
         val md = new MemberDeclaration
         md.setAnnotations(
-          ArraySeq.unsafeWrapArray(
-            mctx
-              .modifier()
-              .asScala
-              .filter(_.annotation() != null)
-              .map(m => antlrAnnotation(m.annotation()))
-              .toArray
-          )
+          mctx
+            .modifier()
+            .asScala
+            .filter(_.annotation() != null)
+            .map(m => antlrAnnotation(m.annotation()))
+            .toArray
         )
         md.setModifiers(
-          ArraySeq.unsafeWrapArray(
-            mctx.modifier().asScala.filter(_.annotation() == null).map(toModifier).toArray
-          )
+          mctx.modifier().asScala.filter(_.annotation() == null).map(toModifier).toArray
         )
         antlrMethodDeclaration(itd, md, mctx)
       })
@@ -316,7 +295,7 @@ object Antlr {
       .asScala
       .foreach(ictx => {
         val id = toId(ictx)
-        etd.appendField(new FieldDeclaration(ArraySeq(), ArraySeq(Modifier("static")), etd, id))
+        etd.appendField(FieldDeclaration(Array(), Array(Modifier("static")), etd, id))
       })
   }
 
@@ -326,9 +305,7 @@ object Antlr {
     ctx: ApexParser.ConstructorDeclarationContext
   ): Unit = {
 
-    val qName = new QualifiedName
-    ctx.qualifiedName().id().asScala.map(toId).foreach(qName.add)
-
+    val qName = QualifiedName(ctx.qualifiedName().id().asScala.map(toId).toArray)
     val formalParameterList = new FormalParameterList(
       Option(ctx.formalParameters())
         .flatMap(fp => Option(fp.formalParameterList()))
@@ -346,12 +323,7 @@ object Antlr {
     )
 
     val constructor =
-      ConstructorDeclaration(
-        ArraySeq.unsafeWrapArray(md.annotations.toArray),
-        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
-        qName,
-        formalParameterList
-      )
+      ConstructorDeclaration(md.annotations, md.modifiers, qName, formalParameterList)
 
     ctd.appendConstructor(constructor)
   }
@@ -388,13 +360,7 @@ object Antlr {
     }
 
     val method =
-      MethodDeclaration(
-        ArraySeq.unsafeWrapArray(md.annotations.toArray),
-        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
-        md.typeRef.get,
-        id,
-        formalParameterList
-      )
+      MethodDeclaration(md.annotations, md.modifiers, md.typeRef, id, formalParameterList)
 
     res.appendMethod(method)
   }
@@ -431,13 +397,7 @@ object Antlr {
     }
 
     val method =
-      MethodDeclaration(
-        ArraySeq.unsafeWrapArray(md.annotations.toArray),
-        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
-        md.typeRef.get,
-        id,
-        formalParameterList
-      )
+      MethodDeclaration(md.annotations, md.modifiers, md.typeRef, id, formalParameterList)
 
     res.appendMethod(method)
   }
@@ -446,20 +406,14 @@ object Antlr {
     val fp = new FormalParameter
 
     fp.setAnnotations(
-      ArraySeq.unsafeWrapArray(
-        ctx
-          .modifier()
-          .asScala
-          .filter(_.annotation() != null)
-          .map(m => antlrAnnotation(m.annotation()))
-          .toArray
-      )
+      ctx
+        .modifier()
+        .asScala
+        .filter(_.annotation() != null)
+        .map(m => antlrAnnotation(m.annotation()))
+        .toArray
     )
-    fp.setModifiers(
-      ArraySeq.unsafeWrapArray(
-        ctx.modifier().asScala.filter(_.annotation() == null).map(toModifier).toArray
-      )
-    )
+    fp.setModifiers(ctx.modifier().asScala.filter(_.annotation() == null).map(toModifier).toArray)
 
     fp.add(antlrTypeRef(ctx.typeRef()))
     fp.add(toId(ctx.id()))
@@ -475,14 +429,7 @@ object Antlr {
     val id = toId(ctx.id())
     md.add(antlrTypeRef(ctx.typeRef()))
 
-    val property =
-      new PropertyDeclaration(
-        ArraySeq.unsafeWrapArray(md.annotations.toArray),
-        ArraySeq.unsafeWrapArray(md.modifiers.toArray),
-        md.typeRef.get,
-        id
-      )
-
+    val property = PropertyDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
     ctd.appendProperty(property)
   }
 
@@ -497,12 +444,7 @@ object Antlr {
       .foreach(_.variableDeclarator().asScala.foreach(v => {
         val id = toId(v.id())
         val field =
-          FieldDeclaration(
-            ArraySeq.unsafeWrapArray(md.annotations.toArray),
-            ArraySeq.unsafeWrapArray(md.modifiers.toArray),
-            md.typeRef.get,
-            id
-          )
+          FieldDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
         ctd.appendField(field)
       }))
   }

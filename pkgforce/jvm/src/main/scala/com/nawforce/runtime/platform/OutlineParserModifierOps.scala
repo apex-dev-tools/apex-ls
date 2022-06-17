@@ -18,8 +18,8 @@ object OutlineParserModifierOps {
   private def toModifiers(
     path: PathLike,
     location: OPLocation,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier]
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier]
   ): ArraySeq[(Modifier, LogEntryContext, String)] = {
 
     val modifiers = {
@@ -58,8 +58,8 @@ object OutlineParserModifierOps {
   def fieldModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     outer: Boolean
   ): ModifierResults = {
     val logger = new ModifierLogger()
@@ -70,8 +70,8 @@ object OutlineParserModifierOps {
   def classModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
@@ -83,8 +83,8 @@ object OutlineParserModifierOps {
   def interfaceModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
@@ -96,8 +96,8 @@ object OutlineParserModifierOps {
   def enumModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
@@ -109,8 +109,8 @@ object OutlineParserModifierOps {
   def constructorModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier]
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
     val mods   = toModifiers(path, id.location, annotations, src)
@@ -120,8 +120,8 @@ object OutlineParserModifierOps {
   def parameterModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier]
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier]
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
@@ -132,8 +132,8 @@ object OutlineParserModifierOps {
   def classMethodModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     ownerNature: MethodOwnerNature,
     isOuter: Boolean
   ): ModifierResults = {
@@ -153,8 +153,8 @@ object OutlineParserModifierOps {
   def interfaceMethodModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier]
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
     val mods   = toModifiers(path, id.location, annotations, src)

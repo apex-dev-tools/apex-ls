@@ -49,8 +49,8 @@ sealed class TypeDeclaration(
   private var _extendsTypeRef: TypeRef      = _
   private var _implementsTypeList: TypeList = _
 
-  private var _modifiers: ArraySeq[Modifier]     = Modifiers.emptyArraySeq
-  private var _annotations: ArraySeq[Annotation] = Annotations.emptyArraySeq
+  private var _modifiers: Array[Modifier]     = Modifiers.emptyArray
+  private var _annotations: Array[Annotation] = Annotations.emptyArray
 
   private var _initializers: ArraySeq[Initializer]            = Initializer.emptyArraySeq
   private var _innerTypes: ArraySeq[TypeDeclaration]          = TypeDeclaration.emptyArraySeq
@@ -73,8 +73,8 @@ sealed class TypeDeclaration(
   override def extendsTypeRef: TypeRef                          = _extendsTypeRef
   override def implementsTypeList: TypeList                     = _implementsTypeList
 
-  override def modifiers: ArraySeq[Modifier]       = _modifiers
-  override def annotations: ArraySeq[Annotation]   = _annotations
+  override def modifiers: Array[Modifier]          = _modifiers
+  override def annotations: Array[Annotation]      = _annotations
   override def initializers: ArraySeq[Initializer] = ArraySeq.unsafeWrapArray(_initializers.toArray)
 
   override def innerTypes: ArraySeq[TypeDeclaration] = ArraySeq.unsafeWrapArray(_innerTypes.toArray)
@@ -85,12 +85,14 @@ sealed class TypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
-  override def setId(id: IdToken): Unit                                = _id = id
-  override def setLocation(location: Location): Unit                   = _location = location
-  override def setExtends(typeRef: TypeRef): Unit                      = _extendsTypeRef = typeRef
-  override def setImplements(typeList: TypeList): Unit                 = _implementsTypeList = typeList
-  override def setModifiers(modifiers: ArraySeq[Modifier]): Unit       = _modifiers = modifiers
-  override def setAnnotations(annotations: ArraySeq[Annotation]): Unit = _annotations = annotations
+  override def setId(id: IdToken): Unit                = _id = id
+  override def setLocation(location: Location): Unit   = _location = location
+  override def setExtends(typeRef: TypeRef): Unit      = _extendsTypeRef = typeRef
+  override def setImplements(typeList: TypeList): Unit = _implementsTypeList = typeList
+  override def setModifiers(modifiers: Array[Modifier]): Unit =
+    _modifiers = Modifiers.intern(modifiers)
+  override def setAnnotations(annotations: Array[Annotation]): Unit =
+    _annotations = Annotations.intern(annotations)
 
   override def appendInitializer(init: Initializer): Unit            = _bodyDecls.append(init)
   override def appendInnerType(inner: IMutableTypeDeclaration): Unit = _bodyDecls.append(inner)
@@ -321,12 +323,14 @@ object Compare {
       })
     }
 
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
+    if (!(first.annotations sameElements second.annotations)) {
+      throw new Exception(s"Different annotation ${first.annotations
+        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
+    if (!(first.modifiers sameElements second.modifiers)) {
+      throw new Exception(s"Different modifiers ${first.modifiers
+        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {
@@ -384,12 +388,14 @@ object Compare {
     second: InterfaceTypeDeclaration
   ): Unit = {
 
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
+    if (!(first.annotations sameElements second.annotations)) {
+      throw new Exception(s"Different annotation ${first.annotations
+        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
+    if (!(first.modifiers sameElements second.modifiers)) {
+      throw new Exception(s"Different modifiers ${first.modifiers
+        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {
@@ -409,12 +415,14 @@ object Compare {
 
   def compareEnumTypeDeclarations(first: EnumTypeDeclaration, second: EnumTypeDeclaration): Unit = {
 
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
+    if (!(first.annotations sameElements second.annotations)) {
+      throw new Exception(s"Different annotation ${first.annotations
+        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
+    if (!(first.modifiers sameElements second.modifiers)) {
+      throw new Exception(s"Different modifiers ${first.modifiers
+        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {

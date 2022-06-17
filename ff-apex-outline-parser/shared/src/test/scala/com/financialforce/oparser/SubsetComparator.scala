@@ -4,8 +4,6 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.oparser._
-
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -386,7 +384,9 @@ class SubsetComparator(
     secondDiff.find(firstSig.id == _.id) match {
       case Some(secondSig) =>
         val typeRefIdCheck = compareTypeRef(firstSig.typeRef, secondSig.typeRef)
-        typeRefIdCheck && firstSig.annotations == secondSig.annotations && firstSig.modifiers == secondSig.modifiers
+        typeRefIdCheck &&
+        (firstSig.annotations sameElements secondSig.annotations) &&
+        (firstSig.modifiers sameElements secondSig.modifiers)
       case _ => false
     }
   }
@@ -406,7 +406,9 @@ class SubsetComparator(
       typeRefIdCheck && checkForParameterListAgainst(
         first.formalParameterList,
         secondMethod.formalParameterList
-      ) && first.annotations == secondMethod.annotations && first.modifiers == secondMethod.modifiers
+      ) &&
+      (first.annotations sameElements secondMethod.annotations) &&
+      (first.modifiers sameElements secondMethod.modifiers)
     })
   }
 
@@ -418,11 +420,11 @@ class SubsetComparator(
       return second.formalParameters.nonEmpty && first.formalParameters.zipWithIndex.forall(f => {
         val s = second.formalParameters(f._2)
         compareTypeRef(f._1.typeRef, s.typeRef) && !getDiffIfThereIsAny(
-          ArraySeq.unsafeWrapArray(f._1.annotations.toArray),
-          ArraySeq.unsafeWrapArray(s.annotations.toArray)
+          ArraySeq.unsafeWrapArray(f._1.annotations),
+          ArraySeq.unsafeWrapArray(s.annotations)
         )._1 && !getDiffIfThereIsAny(
-          ArraySeq.unsafeWrapArray(f._1.modifiers.toArray),
-          ArraySeq.unsafeWrapArray(s.modifiers.toArray)
+          ArraySeq.unsafeWrapArray(f._1.modifiers),
+          ArraySeq.unsafeWrapArray(s.modifiers)
         )._1 && s.id == f._1.id
       })
     }
@@ -471,6 +473,10 @@ class SubsetComparator(
     if (isDiff) {
       throw new Exception(s"$errorMsg: $firstDiff != $secondDiff")
     }
+  }
+
+  private def checkAndThrowIfDiff[T](errorMsg: String, first: Array[T], second: Array[T]): Unit = {
+    checkAndThrowIfDiff(errorMsg, ArraySeq.unsafeWrapArray(first), ArraySeq.unsafeWrapArray(second))
   }
 
 }

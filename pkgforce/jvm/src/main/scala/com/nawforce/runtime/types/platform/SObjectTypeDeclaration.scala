@@ -43,9 +43,9 @@ class SObjectTypeDeclaration(override val module: IPM.Module, md: MetadataDocume
 
   override def implementsTypeList: TypeList = null // TODO
 
-  override def modifiers: ArraySeq[Modifier] = ArraySeq.empty // TODO
+  override def modifiers: Array[Modifier] = Array.empty // TODO
 
-  override def annotations: ArraySeq[Annotation] = ArraySeq.empty // TODO
+  override def annotations: Array[Annotation] = Array.empty // TODO
 
   override def initializers: ArraySeq[Initializer] = ArraySeq.empty // TODO
 

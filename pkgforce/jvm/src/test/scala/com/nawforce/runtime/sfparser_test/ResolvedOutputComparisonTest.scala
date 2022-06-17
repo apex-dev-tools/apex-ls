@@ -249,22 +249,20 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
     rules.atLeastOne(OptionalTypeRef(first), OptionalTypeRef(second))
   }
 
-  def compareAnnotations(first: ArraySeq[Annotation], second: ArraySeq[Annotation]): Boolean = {
+  def compareAnnotations(first: Array[Annotation], second: Array[Annotation]): Boolean = {
     first.forall(f => second.exists(s => rules.forAll(f, s)))
   }
-  def compareModifiers(first: ArraySeq[Modifier], second: ArraySeq[Modifier]): Boolean = {
+  def compareModifiers(first: Array[Modifier], second: Array[Modifier]): Boolean = {
     first.forall(f => second.exists(s => rules.forAll(f, s)))
   }
   def compareParamList(first: FormalParameterList, second: FormalParameterList): Boolean = {
     val typeRefs =
       first.formalParameters.flatMap(_.typeRef) zip second.formalParameters.flatMap(_.typeRef)
 
-    val modifiers = first.formalParameters.map(
-      m => m.modifiers.to(ArraySeq)
-    ) zip second.formalParameters.map(m => m.modifiers.to(ArraySeq))
-    val annotations = first.formalParameters.map(
-      _.annotations.to(ArraySeq)
-    ) zip second.formalParameters.map(_.annotations.to(ArraySeq))
+    val modifiers =
+      first.formalParameters.map(m => m.modifiers) zip second.formalParameters.map(m => m.modifiers)
+    val annotations =
+      first.formalParameters.map(_.annotations) zip second.formalParameters.map(_.annotations)
     val ids = first.formalParameters.map(_.id) zip second.formalParameters.map(_.id)
 
     typeRefs.forall(tr => compareTypeRef(tr._1, tr._2)) && modifiers.forall(

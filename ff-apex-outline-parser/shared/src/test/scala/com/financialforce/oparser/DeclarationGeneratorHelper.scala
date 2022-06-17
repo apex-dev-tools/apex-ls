@@ -4,7 +4,6 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.oparser._
 import scala.collection.immutable.ArraySeq
 
 trait DeclarationGeneratorHelper {
@@ -52,8 +51,8 @@ trait DeclarationGeneratorHelper {
     id: Option[IdToken] = None
   ): FormalParameter = {
     val fp = new FormalParameter()
-    fp.setModifiers(ArraySeq.unsafeWrapArray(modifiers))
-    fp.setAnnotations(ArraySeq.unsafeWrapArray(annotations))
+    fp.setModifiers(modifiers)
+    fp.setAnnotations(annotations)
     fp.typeRef = typeRef
     fp.id = id
     fp
@@ -72,9 +71,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toQName(ids: Array[String]): QualifiedName = {
-    val qName = new QualifiedName()
-    ids.foreach(x => qName.add(toId(x)))
-    qName
+    QualifiedName(ids.map(x => toId(x)))
   }
 
   def toId(id: String): IdToken = {
@@ -91,12 +88,7 @@ trait DeclarationGeneratorHelper {
     names: Array[String],
     parameters: FormalParameterList
   ): ConstructorDeclaration = {
-    ConstructorDeclaration(
-      ArraySeq.unsafeWrapArray(annotation),
-      ArraySeq.unsafeWrapArray(modifiers),
-      toQName(names),
-      parameters
-    )
+    ConstructorDeclaration(annotation, modifiers, toQName(names), parameters)
   }
 
   def toMethodDeclaration(
@@ -106,13 +98,7 @@ trait DeclarationGeneratorHelper {
     id: IdToken,
     parameters: FormalParameterList
   ): MethodDeclaration = {
-    MethodDeclaration(
-      ArraySeq.unsafeWrapArray(annotation),
-      ArraySeq.unsafeWrapArray(modifiers),
-      typeRef,
-      id,
-      parameters
-    )
+    MethodDeclaration(annotation, modifiers, Some(typeRef), id, parameters)
   }
 
   def toPropertyDeclaration(
@@ -121,12 +107,7 @@ trait DeclarationGeneratorHelper {
     typeRef: UnresolvedTypeRef,
     id: IdToken
   ): PropertyDeclaration = {
-    new PropertyDeclaration(
-      ArraySeq.unsafeWrapArray(annotation),
-      ArraySeq.unsafeWrapArray(modifiers),
-      typeRef,
-      id
-    )
+    PropertyDeclaration(annotation, modifiers, typeRef, id)
   }
 
   def toFieldDeclaration(
@@ -135,11 +116,6 @@ trait DeclarationGeneratorHelper {
     typeRef: UnresolvedTypeRef,
     id: IdToken
   ): FieldDeclaration = {
-    FieldDeclaration(
-      ArraySeq.unsafeWrapArray(annotation),
-      ArraySeq.unsafeWrapArray(modifiers),
-      typeRef,
-      id
-    )
+    FieldDeclaration(annotation, modifiers, typeRef, id)
   }
 }
