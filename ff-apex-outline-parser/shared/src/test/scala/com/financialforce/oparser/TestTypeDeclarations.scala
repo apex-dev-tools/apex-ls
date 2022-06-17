@@ -35,19 +35,18 @@ sealed class TestTypeDeclaration(
 ) extends IMutableTestTypeDeclaration {
   var _location: Location = _
 
-  var _id: IdToken                  = _
-  var _extendsTypeRef: TypeRef      = _
-  var _implementsTypeList: TypeList = _
+  var _id: IdToken                    = _
+  var _extendsTypeRef: TypeRef        = _
+  var _implementsTypeList: TypeList   = _
+  var _modifiers: Array[Modifier]     = Modifiers.emptyArray
+  var _annotations: Array[Annotation] = Annotations.emptyArray
 
-  var _modifiers: Array[Modifier]                     = Modifiers.emptyArray
-  var _annotations: Array[Annotation]                 = Annotations.emptyArray
-  var _initializers: mutable.ArrayBuffer[Initializer] = mutable.ArrayBuffer()
-
-  var _innerTypes: mutable.ArrayBuffer[TestTypeDeclaration]      = mutable.ArrayBuffer()
-  var _constructors: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer()
-  var _methods: mutable.ArrayBuffer[MethodDeclaration]           = mutable.ArrayBuffer()
-  var _properties: mutable.ArrayBuffer[PropertyDeclaration]      = mutable.ArrayBuffer()
-  var _fields: mutable.ArrayBuffer[FieldDeclaration]             = mutable.ArrayBuffer()
+  val _initializers: mutable.ArrayBuffer[Initializer]            = mutable.ArrayBuffer()
+  val _innerTypes: mutable.ArrayBuffer[TestTypeDeclaration]      = mutable.ArrayBuffer()
+  val _constructors: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer()
+  val _methods: mutable.ArrayBuffer[MethodDeclaration]           = mutable.ArrayBuffer()
+  val _properties: mutable.ArrayBuffer[PropertyDeclaration]      = mutable.ArrayBuffer()
+  val _fields: mutable.ArrayBuffer[FieldDeclaration]             = mutable.ArrayBuffer()
 
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location

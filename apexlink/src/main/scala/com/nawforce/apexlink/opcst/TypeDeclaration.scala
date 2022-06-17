@@ -700,7 +700,7 @@ private[opcst] object OutlineParserFormalParameter {
   ): Option[FormalParameter] = {
 
     val fp = FormalParameter(
-      parameterModifiers(path, src.id.get, src.annotations, src.modifiers),
+      parameterModifiers(path, src.id, src.annotations, src.modifiers),
       RelativeTypeName(typeContext, TypeReference.construct(src.typeRef)),
       OutlineParserId.construct(src.id, source.path)
     )

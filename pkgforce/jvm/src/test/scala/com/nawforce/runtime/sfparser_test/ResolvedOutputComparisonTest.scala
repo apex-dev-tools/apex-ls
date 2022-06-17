@@ -257,7 +257,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
   }
   def compareParamList(first: FormalParameterList, second: FormalParameterList): Boolean = {
     val typeRefs =
-      first.formalParameters.flatMap(_.typeRef) zip second.formalParameters.flatMap(_.typeRef)
+      first.formalParameters.map(_.typeRef) zip second.formalParameters.map(_.typeRef)
 
     val modifiers =
       first.formalParameters.map(m => m.modifiers) zip second.formalParameters.map(m => m.modifiers)

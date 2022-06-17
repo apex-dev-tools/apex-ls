@@ -366,12 +366,12 @@ class SFParser(source: Map[String, String]) {
 
   private def toFormalParameter(p: Parameter): FormalParameter = {
     val aAndM = toModifiersAndAnnotations(p.getModifiers.getModifiers)
-    val fp    = new FormalParameter()
-    fp.add(toId(p.getName.getValue, p.getLoc))
-    toTypeRef(Some(p.getTypeRef)).foreach(fp.add)
-    fp.setModifiers(aAndM._1.toArray)
-    fp.setAnnotations(aAndM._2.toArray)
-    fp
+    FormalParameter(
+      aAndM._2.toArray,
+      aAndM._1.toArray,
+      toTypeRef(Some(p.getTypeRef)).get,
+      toId(p.getName.getValue, p.getLoc)
+    )
   }
 
   private def toModifiersAndAnnotations(

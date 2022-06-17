@@ -282,7 +282,7 @@ object IPM extends TriHierarchy {
 
       def resolveParameterList(fpl: FormalParameterList): Unit = {
         fpl.formalParameters.foreach(fp => {
-          fp.typeRef = fp.typeRef.flatMap(resolve).orElse(fp.typeRef)
+          fp.typeRef = resolve(fp.typeRef).getOrElse(fp.typeRef)
         })
       }
 

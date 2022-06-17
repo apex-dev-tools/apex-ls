@@ -4,10 +4,7 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.oparser._
 import org.scalatest.funspec.AnyFunSpec
-
-import scala.collection.immutable.ArraySeq
 
 class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
@@ -29,8 +26,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
             toParameter(
               Array[Annotation](),
               Array[Modifier](),
-              Some(toTypeRef(Map("String" -> None))),
-              Some(toId("s"))
+              toTypeRef(Map("String" -> None)),
+              toId("s")
             )
           )
         )
@@ -72,8 +69,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
           toParameter(
             Array[Annotation](),
             Array[Modifier](),
-            Some(toTypeRef(Map(paramType -> None))),
-            Some(toId(paramName))
+            toTypeRef(Map(paramType -> None)),
+            toId(paramName)
           )
         )
       )
@@ -458,7 +455,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       val second = generateEmptyClassDeclaration("Dummy")
       first._constructors.append(getBasicConstructor("TestVisible", "private", "Dummy", "Foo", "f"))
       val sCon = getBasicConstructor("TestVisible", "private", "Dummy", "Foo", "f")
-      sCon.formalParameterList.formalParameters.head.typeRef.get
+      sCon.formalParameterList.formalParameters.head.typeRef
         .asInstanceOf[UnresolvedTypeRef]
         .typeNameSegments
         .prepend(toTypeNames("ResolvedName", None))
@@ -494,7 +491,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       typeRef: TypeRef = toTypeRef(Map("String" -> None)),
       id: IdToken = toId("s")
     ): FormalParameterList = {
-      toParameterList(Array(toParameter(annotations, modifiers, Some(typeRef), Some(id))))
+      toParameterList(Array(toParameter(annotations, modifiers, typeRef, id)))
     }
 
     it("should be equal") {

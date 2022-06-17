@@ -231,10 +231,12 @@ class PlatformTypeDeclaration(
   }
 
   protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
-    val p = new FormalParameter
-    p.typeRef = getPlatformTypeDeclFromType(parameter.getParameterizedType)
-    p.add(IdToken(parameter.getName, Location.default))
-    p
+    FormalParameter(
+      Annotations.emptyArray,
+      Modifiers.emptyArray,
+      getPlatformTypeDeclFromType(parameter.getParameterizedType).get,
+      IdToken(parameter.getName, Location.default)
+    )
   }
 
   protected def decodeName(name: String): String = {

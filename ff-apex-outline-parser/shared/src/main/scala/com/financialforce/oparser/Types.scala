@@ -60,10 +60,6 @@ object StringUtils {
 
 }
 
-trait IdAssignable {
-  def add(i: IdToken): Unit
-}
-
 trait TypeRefAssignable {
   def add(tr: UnresolvedTypeRef): Unit
 }
@@ -139,31 +135,28 @@ case class QualifiedName(parts: Array[IdToken]) {
     Location.from(start, end)
   }
 
+  override def equals(obj: Any): Boolean = {
+    val other = obj.asInstanceOf[QualifiedName]
+    parts.sameElements(other.parts)
+  }
+
   override def toString: String = {
     parts.map(_.toString).mkString(".")
   }
 }
 
-class FormalParameter extends TypeRefAssignable with IdAssignable {
-
-  var annotations: Array[Annotation] = Annotations.emptyArray
-  var modifiers: Array[Modifier]     = Modifiers.emptyArray
-  var typeRef: Option[TypeRef]       = None
-  var id: Option[IdToken]            = None
-
+// TODO: Needs hashCode
+case class FormalParameter private (
+  annotations: Array[Annotation],
+  modifiers: Array[Modifier],
+  var typeRef: TypeRef,
+  id: IdToken
+) {
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
-
-  override def add(tr: UnresolvedTypeRef): Unit = typeRef = Some(tr)
-
-  override def add(i: IdToken): Unit = id = Some(i)
-
-  def setModifiers(modifiers: Array[Modifier]): Unit = this.modifiers = modifiers
-
-  def setAnnotations(annotations: Array[Annotation]): Unit = this.annotations = annotations
 
   override def toString: String = {
     import StringUtils._
-    s"${asAnnotationAndModifierString(annotations, modifiers)}${typeRef.get.getFullName} ${asString(id)}"
+    s"${asAnnotationAndModifierString(annotations, modifiers)}${typeRef.getFullName} $id"
   }
 
   override def equals(obj: Any): Boolean = {
@@ -171,11 +164,19 @@ class FormalParameter extends TypeRefAssignable with IdAssignable {
 
     (other.annotations sameElements annotations) &&
     (other.modifiers sameElements modifiers) &&
-    other.typeRef
-      .map(_.getFullName)
-      .getOrElse("")
-      .equalsIgnoreCase(typeRef.map(_.getFullName).getOrElse("")) &&
+    other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
     other.id == id
+  }
+}
+
+object FormalParameter {
+  def apply(
+    annotations: Array[Annotation],
+    modifiers: Array[Modifier],
+    typeRef: TypeRef,
+    id: IdToken
+  ): FormalParameter = {
+    new FormalParameter(Annotations.intern(annotations), Modifiers.intern(modifiers), typeRef, id)
   }
 }
 
@@ -792,12 +793,6 @@ object Parse {
     }
   }
 
-  private def parseId(startIndex: Int, tokens: Tokens, res: IdAssignable): Int = {
-    val (newIndex, id) = getId(startIndex, tokens)
-    id.foreach(res.add)
-    newIndex
-  }
-
   private def setId[T <: IMutableTypeDeclaration](startIndex: Int, tokens: Tokens, res: T): Int = {
     val (newIndex, id) = getId(startIndex, tokens)
     id.foreach(res.setId)
@@ -991,19 +986,21 @@ object Parse {
       indexAtStart != index && index < tokens.length && !tokens.get(index).matches(Tokens.RParenStr)
     ) {
       indexAtStart = index
-      val formalParameter                    = new FormalParameter
+
       val (newIndex, modifiers, annotations) = parseModifiersAndAnnotations(index, tokens)
       index = newIndex
-      formalParameter.setModifiers(modifiers)
-      formalParameter.setAnnotations(annotations)
       val (newIndex2, typeRef) = parseTypeRef(index, tokens)
       index = newIndex2
-      formalParameter.add(typeRef)
-      index = parseId(index, tokens, formalParameter)
+      val (newIndex3, id) = getId(index, tokens)
+      index = newIndex3
       if (tokens(index).exists(_.matches(Tokens.CommaStr))) index += 1
-      if (formalParameters == null)
-        formalParameters = mutable.ArrayBuffer()
-      formalParameters.append(formalParameter)
+
+      id.foreach(id => {
+        if (formalParameters == null)
+          formalParameters = mutable.ArrayBuffer()
+        val formalParameter = FormalParameter(annotations, modifiers, typeRef, id)
+        formalParameters.append(formalParameter)
+      })
     }
     if (tokens(index).exists(_.matches(Tokens.RParenStr))) index += 1
     (

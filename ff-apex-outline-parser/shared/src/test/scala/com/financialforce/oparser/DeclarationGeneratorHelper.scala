@@ -47,15 +47,10 @@ trait DeclarationGeneratorHelper {
   def toParameter(
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
-    typeRef: Option[TypeRef] = None,
-    id: Option[IdToken] = None
+    typeRef: TypeRef,
+    id: IdToken
   ): FormalParameter = {
-    val fp = new FormalParameter()
-    fp.setModifiers(modifiers)
-    fp.setAnnotations(annotations)
-    fp.typeRef = typeRef
-    fp.id = id
-    fp
+    FormalParameter(annotations, modifiers, typeRef, id)
   }
 
   def toModifier(m: String): Modifier = {

@@ -114,10 +114,6 @@ object Antlr {
     None
   }
 
-  def antlrId(i: IdAssignable, ctx: ApexParser.IdContext): Unit = {
-    i.add(toId(ctx))
-  }
-
   def toId(ctx: ApexParser.IdContext): IdToken = {
     IdToken(ctx.children.asScala.mkString(" "), location(ctx))
   }
@@ -403,21 +399,17 @@ object Antlr {
   }
 
   def antlrFormalParameter(ctx: ApexParser.FormalParameterContext): FormalParameter = {
-    val fp = new FormalParameter
-
-    fp.setAnnotations(
+    FormalParameter(
       ctx
         .modifier()
         .asScala
         .filter(_.annotation() != null)
         .map(m => antlrAnnotation(m.annotation()))
-        .toArray
+        .toArray,
+      ctx.modifier().asScala.filter(_.annotation() == null).map(toModifier).toArray,
+      antlrTypeRef(ctx.typeRef()),
+      toId(ctx.id())
     )
-    fp.setModifiers(ctx.modifier().asScala.filter(_.annotation() == null).map(toModifier).toArray)
-
-    fp.add(antlrTypeRef(ctx.typeRef()))
-    fp.add(toId(ctx.id()))
-    fp
   }
 
   def antlrPropertyDeclaration(
