@@ -15,6 +15,7 @@ import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 
 import java.io.ByteArrayInputStream
 import scala.collection.compat.immutable.ArraySeq
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 object Antlr {
@@ -151,7 +152,7 @@ object Antlr {
     new TypeArguments(antlrTypeList(ctx.typeList()))
   }
 
-  def antlrTypeName(typeRef: UnresolvedTypeRef, ctx: ApexParser.TypeNameContext): Unit = {
+  def antlrTypeName(ctx: ApexParser.TypeNameContext): TypeNameSegment = {
     val typeArguments =
       Option(ctx.typeArguments()).map(ta => antlrTypeArguments(ta)).getOrElse(TypeArguments.empty)
     val tnOpt = Option(ctx.LIST())
@@ -166,21 +167,24 @@ object Antlr {
       )
       .orElse(Option(ctx.id()).map(l => new TypeNameSegment(toId(l), typeArguments)))
 
-    if (tnOpt.isEmpty)
+    if (tnOpt.isEmpty) {
       throw new Exception("Missing type name")
-    val tn = tnOpt.get
-    typeRef.typeNameSegments.append(tn)
+    }
+    tnOpt.get
   }
 
   def antlrTypeRef(ctx: ApexParser.TypeRefContext): UnresolvedTypeRef = {
-    val typeRef = new UnresolvedTypeRef
-    typeRef.arraySubscripts = Option(ctx.arraySubscripts()).map(_.RBRACK().size()).getOrElse(0)
+    val segments = new mutable.ArrayBuffer[TypeNameSegment]()
     ctx
       .typeName()
       .forEach(tn => {
-        antlrTypeName(typeRef, tn)
+        segments.append(antlrTypeName(tn))
       })
-    typeRef
+
+    UnresolvedTypeRef(
+      segments.toArray,
+      Option(ctx.arraySubscripts()).map(_.RBRACK().size()).getOrElse(0)
+    )
   }
 
   def antlrClassTypeDeclaration(
@@ -351,8 +355,9 @@ object Antlr {
     if (Option(ctx.typeRef()).isDefined) {
       md.add(antlrTypeRef(ctx.typeRef()))
     } else {
-      md.typeRef = Some(new UnresolvedTypeRef)
-      md.typeRef.get.typeNameSegments.append(new TypeNameSegment(toId("void"), TypeArguments.empty))
+      md.typeRef = Some(
+        UnresolvedTypeRef(Array(new TypeNameSegment(toId("void"), TypeArguments.empty)), 0)
+      )
     }
 
     val method =
@@ -388,8 +393,9 @@ object Antlr {
     if (Option(ctx.typeRef()).isDefined) {
       md.add(antlrTypeRef(ctx.typeRef()))
     } else {
-      md.typeRef = Some(new UnresolvedTypeRef)
-      md.typeRef.get.typeNameSegments.append(new TypeNameSegment(toId("void"), TypeArguments.empty))
+      md.typeRef = Some(
+        new UnresolvedTypeRef(Array(new TypeNameSegment(toId("void"), TypeArguments.empty)), 0)
+      )
     }
 
     val method =

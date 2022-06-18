@@ -287,7 +287,7 @@ class PlatformTypeDeclaration(
         else
           segment
       })
-    UnresolvedTypeRef(segments)
+    UnresolvedTypeRef(segments, 0)
   }
 
   def getTypeName(cls: java.lang.Class[_]): TypeInfo = {

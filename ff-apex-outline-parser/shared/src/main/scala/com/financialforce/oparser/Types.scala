@@ -5,6 +5,7 @@ package com.financialforce.oparser
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object StringUtils {
 
@@ -630,7 +631,7 @@ object Parse {
   }
 
   private def toQualifiedName(tr: UnresolvedTypeRef): QualifiedName = {
-    QualifiedName(tr.typeNameSegments.map(_.id).toArray)
+    QualifiedName(tr.typeNameSegments.map(_.id))
   }
 
   private def addInitializer(
@@ -852,12 +853,12 @@ object Parse {
 
   private def parseTypeRef(startIndex: Int, tokens: Tokens): (Int, UnresolvedTypeRef) = {
 
-    val typeRef                  = new UnresolvedTypeRef
+    val segments                 = new ArrayBuffer[TypeNameSegment]()
     var (index, typeNameSegment) = parseTypeNameSegment(startIndex, tokens)
     if (typeNameSegment.isEmpty) {
       throw new Exception(s"Missing Identifier")
     }
-    typeRef.typeNameSegments.append(typeNameSegment.get)
+    segments.append(typeNameSegment.get)
 
     while (index < tokens.length && tokens.get(index).matches(Tokens.DotStr)) {
       val (newIndex, typeNameSegment) = parseTypeNameSegment(index + 1, tokens)
@@ -866,12 +867,11 @@ object Parse {
       if (typeNameSegment.isEmpty) {
         throw new Exception(s"Missing Identifier")
       }
-      typeRef.typeNameSegments.append(typeNameSegment.get)
+      segments.append(typeNameSegment.get)
     }
 
     val (newIndex, count) = parseArraySubscripts(index, tokens)
-    typeRef.arraySubscripts = count
-    (newIndex, typeRef)
+    (newIndex, UnresolvedTypeRef(segments.toArray, count))
   }
 
   private def parseArraySubscripts(startIndex: Int, tokens: Tokens): (Int, Int) = {

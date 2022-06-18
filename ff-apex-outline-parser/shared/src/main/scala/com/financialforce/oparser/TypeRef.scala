@@ -6,6 +6,7 @@ package com.financialforce.oparser
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.util.hashing.MurmurHash3
 
 trait TypeRef {
   def getFullName: String
@@ -18,14 +19,21 @@ object TypeRef {
   final val emptyArraySeq: ArraySeq[TypeRef] = ArraySeq()
 }
 
-// TODO: Make immutable
-final case class UnresolvedTypeRef(
-  typeNameSegments: mutable.ArrayBuffer[TypeNameSegment] = mutable.ArrayBuffer[TypeNameSegment](),
-  var arraySubscripts: Int = 0
-) extends TypeRef {
+final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arraySubscripts: Int)
+    extends TypeRef {
 
   override def getFullName: String = {
     toString
+  }
+
+  override def equals(obj: Any): Boolean = {
+    val other = obj.asInstanceOf[UnresolvedTypeRef]
+    typeNameSegments.sameElements(other.typeNameSegments) &&
+    arraySubscripts == other.arraySubscripts
+  }
+
+  override def hashCode(): Int = {
+    MurmurHash3.orderedHash(Seq(arraySubscripts, MurmurHash3.arrayHash(typeNameSegments)))
   }
 
   override def toString: String = {
@@ -35,12 +43,6 @@ final case class UnresolvedTypeRef(
 }
 
 object UnresolvedTypeRef {
-  def apply(typeNameSegments: Array[TypeNameSegment], arraySubscripts: Int): UnresolvedTypeRef = {
-    val typeRef = new UnresolvedTypeRef
-    typeNameSegments.foreach(typeRef.typeNameSegments.append)
-    typeRef.arraySubscripts = arraySubscripts
-    typeRef
-  }
 
   /* Convert a string into a UnresolvedTypeRef. Note: This is really only suitable for well formed type names because
    * it does not handle whitespace or array subscripts or even do much error handling. */
@@ -155,11 +157,10 @@ object TypeArguments {
 
   def apply(params: Array[String]): TypeArguments = {
     val typeArguments = ArraySeq.unsafeWrapArray(params.map(tp => {
-      val typeRef = new UnresolvedTypeRef()
-      typeRef.typeNameSegments.append(
-        new TypeNameSegment(LocatableId(tp, Location.default), TypeArguments.empty)
+      UnresolvedTypeRef(
+        Array(new TypeNameSegment(LocatableId(tp, Location.default), TypeArguments.empty)),
+        0
       )
-      typeRef
     }))
 
     TypeArguments(TypeList(typeArguments))

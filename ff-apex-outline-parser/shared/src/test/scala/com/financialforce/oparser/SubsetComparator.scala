@@ -227,7 +227,6 @@ class SubsetComparator(
         .map(_.typeArguments)
         .map(_.typeList)
         .flatMap(_.typeRefs)
-        .toArray
     )
   }
 
@@ -270,7 +269,7 @@ class SubsetComparator(
       sUnresolvedType.typeNameSegments.filterNot(s => sResolver.get.canBeResolved(s.id))
     //if fTypeNamesRemovedResolvedTypes and sTypeNamesRemovedResolvedTypes are empty then all the types could be resolved
     var checks =
-      fTypeNamesRemovedResolvedTypes == sTypeNamesRemovedResolvedTypes && fUnresolvedType.arraySubscripts == sUnresolvedType.arraySubscripts
+      (fTypeNamesRemovedResolvedTypes sameElements sTypeNamesRemovedResolvedTypes) && fUnresolvedType.arraySubscripts == sUnresolvedType.arraySubscripts
     if (sTypeNamesRemovedResolvedTypes.isEmpty && fTypeNamesRemovedResolvedTypes.nonEmpty) {
       // we have all resolved types in second
       checks = checkTypeArguments(
@@ -288,7 +287,8 @@ class SubsetComparator(
     }
     if (!checks) {
       if (
-        fUnresolvedType.typeNameSegments.map(_.id) == sUnresolvedType.typeNameSegments.map(_.id)
+        fUnresolvedType.typeNameSegments.map(_.id) sameElements sUnresolvedType.typeNameSegments
+          .map(_.id)
       ) {
         //Type arguments for type names must have failed
         checks = checkTypeArguments(fUnresolvedType, sUnresolvedType)

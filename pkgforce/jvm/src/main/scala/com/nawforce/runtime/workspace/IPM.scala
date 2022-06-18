@@ -140,7 +140,7 @@ object IPM extends TriHierarchy {
           else
             segment
         })
-        findExactTypeId(name, UnresolvedTypeRef(resolvedSegments))
+        findExactTypeId(name, UnresolvedTypeRef(resolvedSegments, 0))
       })
     }
 
@@ -477,9 +477,7 @@ object IPM extends TriHierarchy {
         }
 
       result.orElse {
-        // Continue search in next module, if namespace defaulted we have to remove it, yuk
-        if (defaultedNameAndRef._1 != name)
-          typeRef.typeNameSegments.remove(0)
+        // Continue search in next module
         nextModule.flatMap(_.findExactTypeId(name, typeRef))
       }
     }
@@ -497,8 +495,13 @@ object IPM extends TriHierarchy {
       ) {
         (name, typeRef)
       } else {
-        typeRef.typeNameSegments.insert(0, TypeNameSegment(namespace.get.value))
-        (namespace.get.value + "." + name, typeRef)
+        (
+          namespace.get.value + "." + name,
+          UnresolvedTypeRef(
+            TypeNameSegment(namespace.get.value) +: typeRef.typeNameSegments,
+            typeRef.arraySubscripts
+          )
+        )
       }
     }
 

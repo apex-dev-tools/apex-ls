@@ -6,8 +6,6 @@ package com.nawforce.runtime.workspace
 
 import com.financialforce.oparser.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 
-import scala.collection.mutable.ArrayBuffer
-
 object TypeFinder {
 
   /**
@@ -38,7 +36,7 @@ object TypeFinder {
 
   private def getType(
     baseModule: IPM.Module,
-    typeNames: ArrayBuffer[TypeNameSegment],
+    typeNames: Array[TypeNameSegment],
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
 
@@ -57,7 +55,7 @@ object TypeFinder {
     })
 
     // If we have a ns, try it first before falling back to without for injected types that carry their own ns
-    val unresolved = UnresolvedTypeRef(resolvedTypeNames)
+    val unresolved = UnresolvedTypeRef(resolvedTypeNames, 0)
     from.module.namespace
       .flatMap(
         ns => baseModule.findExactTypeId(ns.value + "." + unresolved.getFullName, unresolved)
@@ -66,9 +64,7 @@ object TypeFinder {
       .orElse(baseModule.findExactTypeId(unresolved.getFullName))
   }
 
-  private def findScalarType(
-    typeNames: ArrayBuffer[TypeNameSegment]
-  ): Option[IModuleTypeDeclaration] = {
+  private def findScalarType(typeNames: Array[TypeNameSegment]): Option[IModuleTypeDeclaration] = {
     //TODO: We should implement this to gain some perf improvement but not needed to function properly as we
     // will push the search down to System package through findExactTypeId anyway
     None
@@ -76,7 +72,7 @@ object TypeFinder {
 
   private def findLocalTypeFor(
     baseModule: IPM.Module,
-    typeNames: ArrayBuffer[TypeNameSegment],
+    typeNames: Array[TypeNameSegment],
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
     //Shortcut self reference
@@ -93,7 +89,7 @@ object TypeFinder {
   }
 
   private def getNestedType(
-    typeNames: ArrayBuffer[TypeNameSegment],
+    typeNames: Array[TypeNameSegment],
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
     if (isCompound(typeNames)) {
@@ -105,7 +101,7 @@ object TypeFinder {
 
   private def getFromOuterType(
     baseModule: IPM.Module,
-    typeNames: ArrayBuffer[TypeNameSegment],
+    typeNames: Array[TypeNameSegment],
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
     if (isCompound(typeNames) || from.enclosing.isEmpty) {
@@ -132,7 +128,7 @@ object TypeFinder {
 
   private def getFromSuperType(
     baseModule: IPM.Module,
-    typeNames: ArrayBuffer[TypeNameSegment],
+    typeNames: Array[TypeNameSegment],
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
     def isTypeFromInner(toCheck: IModuleTypeDeclaration, from: IModuleTypeDeclaration): Boolean = {
@@ -151,7 +147,7 @@ object TypeFinder {
         None
       case unresolvedTypeRef: UnresolvedTypeRef =>
         val superTypeTypeNames = unresolvedTypeRef.typeNameSegments
-        if (typeNames == superTypeTypeNames)
+        if (typeNames sameElements superTypeTypeNames)
           return None
 
         val superType = findLocalTypeFor(baseModule, superTypeTypeNames, from).orElse({
@@ -165,7 +161,7 @@ object TypeFinder {
     }
   }
 
-  private def isCompound(typeNames: ArrayBuffer[TypeNameSegment]): Boolean = {
-    typeNames.size > 1
+  private def isCompound(typeNames: Array[TypeNameSegment]): Boolean = {
+    typeNames.length > 1
   }
 }

@@ -60,19 +60,22 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
     paramType: String,
     paramName: String
   ): ConstructorDeclaration = {
+    getBasicConstructor(annotation, modifier, name, toTypeRef(Map(paramType -> None)), paramName)
+  }
+
+  private def getBasicConstructor(
+    annotation: String,
+    modifier: String,
+    name: String,
+    paramType: TypeRef,
+    paramName: String
+  ): ConstructorDeclaration = {
     toConstructor(
       Array(toAnnotation(Array(annotation), None)),
       Array(modifier).map(toModifier),
       Array(name),
       toParameterList(
-        Array(
-          toParameter(
-            Array[Annotation](),
-            Array[Modifier](),
-            toTypeRef(Map(paramType -> None)),
-            toId(paramName)
-          )
-        )
+        Array(toParameter(Array[Annotation](), Array[Modifier](), paramType, toId(paramName)))
       )
     )
   }
@@ -451,15 +454,15 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
     it("should not be subsets when it typeRef has resolved names") {
       //We expect constructors to be either equal or not and do not check for subsets
       //Given
-      val first  = generateEmptyClassDeclaration("Dummy")
-      val second = generateEmptyClassDeclaration("Dummy")
+      val first = generateEmptyClassDeclaration("Dummy")
       first._constructors.append(getBasicConstructor("TestVisible", "private", "Dummy", "Foo", "f"))
-      val sCon = getBasicConstructor("TestVisible", "private", "Dummy", "Foo", "f")
-      sCon.formalParameterList.formalParameters.head.typeRef
-        .asInstanceOf[UnresolvedTypeRef]
-        .typeNameSegments
-        .prepend(toTypeNames("ResolvedName", None))
-      second._constructors.append(sCon)
+
+      val second = generateEmptyClassDeclaration("Dummy")
+      val paramType =
+        UnresolvedTypeRef(Array(toTypeNames("ResolvedName", None), toTypeNames("Foo", None)), 0)
+      second._constructors.append(
+        getBasicConstructor("TestVisible", "private", "Dummy", paramType, "f")
+      )
 
       //When
       val comparator =

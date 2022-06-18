@@ -23,6 +23,7 @@ import com.financialforce.oparser._
 import org.apache.commons.lang3.reflect.FieldUtils
 
 import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
@@ -417,19 +418,20 @@ class SFParser(source: Map[String, String]) {
   }
 
   private def toTypeRef(from: TypeInfo): com.financialforce.oparser.UnresolvedTypeRef = {
-    val tr = new UnresolvedTypeRef
+
     //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
+    val segments = mutable.ArrayBuffer[TypeNameSegment]()
     from.getApexName
       .replaceAll("<.*>", "")
       .split("\\.")
       .foreach(
         n =>
-          tr.typeNameSegments.append(
+          segments.append(
             toTypeNameFromTypeInfo(from.getTypeArguments, n, from.getCodeUnitDetails.getLoc)
           )
       )
 
-    tr
+    UnresolvedTypeRef(segments.toArray, 0)
   }
 
   private def toTypeRef(
@@ -437,7 +439,8 @@ class SFParser(source: Map[String, String]) {
   ): Option[com.financialforce.oparser.UnresolvedTypeRef] = {
     from match {
       case Some(typ) =>
-        val res = new UnresolvedTypeRef()
+        val segments   = mutable.ArrayBuffer[TypeNameSegment]()
+        var subscripts = 0
         //Things to note here,
         // if its a return type that has '[]' then parser will resolve '[]' to a list
         // but if its a in a typeArgument then it will resolve as ArrayTypeRef
@@ -447,12 +450,11 @@ class SFParser(source: Map[String, String]) {
           // into deep nested typeRef with string type arguments
           typ.getNames.forEach(
             x =>
-              res.typeNameSegments
+              segments
                 .append(new TypeNameSegment(toId(x.getValue, x.getLoc), TypeArguments.empty))
           )
-          res.arraySubscripts = 0
           for (_ <- 0 to typ.toString.split("\\[").length - 2) {
-            res.arraySubscripts += 1
+            subscripts += 1
           }
         } else {
           //We add the type arguments to the last type and not for each name
@@ -466,7 +468,7 @@ class SFParser(source: Map[String, String]) {
           val last = typ.getNames.get(typ.getNames.size() - 1)
           typ.getNames.forEach(
             t =>
-              res.typeNameSegments.append(
+              segments.append(
                 if (t eq last)
                   new TypeNameSegment(toId(t.getValue, t.getLoc), typeArguments)
                 else
@@ -475,7 +477,7 @@ class SFParser(source: Map[String, String]) {
           )
         }
 
-        return Some(res)
+        return Some(UnresolvedTypeRef(segments.toArray, subscripts))
       case _ =>
     }
     None

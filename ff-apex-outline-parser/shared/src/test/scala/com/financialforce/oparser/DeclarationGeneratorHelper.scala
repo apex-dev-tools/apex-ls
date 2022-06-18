@@ -38,10 +38,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {
-    val tr = new UnresolvedTypeRef()
-    typeNames.foreach(tr.typeNameSegments.append)
-    tr.arraySubscripts = totalSubscripts
-    tr
+    UnresolvedTypeRef(typeNames, totalSubscripts)
   }
 
   def toParameter(
