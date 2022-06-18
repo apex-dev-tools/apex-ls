@@ -57,7 +57,7 @@ public class ApexMethodAdapter implements ApexMethod {
 
     @Override
     public ApexLocationAdapter getLocation() {
-        return new ApexLocationAdapter(md.location().get());
+        return new ApexLocationAdapter(md.bodyLocation().get());
     }
 
     @Override

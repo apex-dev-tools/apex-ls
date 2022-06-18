@@ -2,7 +2,7 @@ package com.nawforce.runtime.platform
 
 import com.financialforce.oparser.{
   Annotation => OPAnnotation,
-  IdToken => OPId,
+  LocatableId => OPId,
   Location => OPLocation,
   Modifier => OPModifier
 }
@@ -116,14 +116,14 @@ object OutlineParserModifierOps {
 
   def parameterModifiers(
     path: PathLike,
-    id: OPId,
+    idLocation: OPLocation,
     annotations: Array[OPAnnotation],
     src: Array[OPModifier]
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.location, annotations, src)
-    ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, id.location))
+    val mods   = toModifiers(path, idLocation, annotations, src)
+    ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, idLocation))
   }
 
   def classMethodModifiers(

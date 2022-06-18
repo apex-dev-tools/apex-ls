@@ -54,7 +54,7 @@ public class ApexConstructorAdapter implements ApexMethod {
 
     @Override
     public ApexLocationAdapter getLocation() {
-        return new ApexLocationAdapter(cd.location().get());
+        return new ApexLocationAdapter(cd.bodyLocation().get());
     }
 
     @Override

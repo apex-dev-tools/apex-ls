@@ -97,7 +97,15 @@ sealed trait Token {
   }
 }
 
-class IdToken private (override val contents: String, _location: Location) extends Token {
+trait Id {
+  def contents: String
+}
+
+trait IdWithLocation extends Id {
+  def location: Location
+}
+
+abstract class IdLocationHolder(_location: Location) extends IdWithLocation {
   // These are inlined to save memory
   private val startLine: Int       = _location.startLine
   private val startLineOffset: Int = _location.startLineOffset
@@ -108,22 +116,27 @@ class IdToken private (override val contents: String, _location: Location) exten
 
   override def location: Location =
     Location(startLine, startLineOffset, startByteOffset, endLine, endLineOffset, endByteOffset)
+}
+
+class LocatableId private (override val contents: String, _location: Location)
+    extends IdLocationHolder(_location)
+    with Token {
 
   override def toString: String = contents
 
   override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[IdToken]
+    val other = obj.asInstanceOf[LocatableId]
     lowerCaseContents.equals(other.lowerCaseContents)
   }
 
   override val hashCode: Int = lowerCaseContents.hashCode
 }
 
-object IdToken {
+object LocatableId {
   private val stringCache = new InternCache[String]()
 
-  def apply(contents: String, location: Location): IdToken = {
-    new IdToken(stringCache.intern(contents), location)
+  def apply(contents: String, location: Location): LocatableId = {
+    new LocatableId(stringCache.intern(contents), location)
   }
 }
 

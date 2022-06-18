@@ -5,7 +5,7 @@ import com.financialforce.oparser.{
   ConstructorDeclaration => OPConstructorDeclaration,
   FieldDeclaration => OPFieldDeclaration,
   FormalParameter => OPFormalParameter,
-  IdToken => OPId,
+  IdWithLocation => OPId,
   Initializer => OPInitializer,
   Location => OPLocation,
   MethodDeclaration => OPMethodDeclaration,
@@ -396,8 +396,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       cd.id.location.startLine,
       cd.id.location.startLineOffset - 1,
       0,
-      cd.location.get.endLine,
-      cd.location.get.endLineOffset - 1,
+      cd.bodyLocation.get.endLine,
+      cd.bodyLocation.get.endLineOffset - 1,
       0
     )
     stampLocation(declaration, location, source.path)
@@ -457,8 +457,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         .location
         .startLineOffset - 1,
       0,
-      md.location.get.endLine,
-      md.location.get.endLineOffset - 1,
+      md.bodyLocation.get.endLine,
+      md.bodyLocation.get.endLineOffset - 1,
       0
     )
 
@@ -509,8 +509,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         .location
         .startLineOffset - 1,
       0,
-      md.location.get.endLine,
-      md.location.get.endLineOffset - 1,
+      md.bodyLocation.get.endLine,
+      md.bodyLocation.get.endLineOffset - 1,
       0
     )
 
@@ -623,7 +623,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     )
     stampLocation(
       declaration,
-      i.location.get.copy(startLineOffset = i.location.get.startLineOffset - 1),
+      i.bodyLocation.get.copy(startLineOffset = i.bodyLocation.get.startLineOffset - 1),
       source.path
     )
     Some(declaration)
@@ -678,8 +678,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         .location
         .startLineOffset - 1,
       0,
-      pd.location.get.endLine,
-      pd.location.get.endLineOffset - 1,
+      pd.bodyLocation.get.endLine,
+      pd.bodyLocation.get.endLineOffset - 1,
       0
     )
 
@@ -700,9 +700,9 @@ private[opcst] object OutlineParserFormalParameter {
   ): Option[FormalParameter] = {
 
     val fp = FormalParameter(
-      parameterModifiers(path, src.id, src.annotations, src.modifiers),
+      parameterModifiers(path, src.location, src.annotations, src.modifiers),
       RelativeTypeName(typeContext, TypeReference.construct(src.typeRef)),
-      OutlineParserId.construct(src.id, source.path)
+      OutlineParserId.construct(src, source.path)
     )
     Some(fp)
   }

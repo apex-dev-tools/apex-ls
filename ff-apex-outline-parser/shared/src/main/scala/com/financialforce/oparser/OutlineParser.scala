@@ -118,7 +118,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
           throw new Exception("End of file")
         case Some(t: NonIdToken) =>
           tokens.append(t); (true, None)
-        case Some(t: IdToken) =>
+        case Some(t: LocatableId) =>
           t.lowerCaseContents match {
             case Tokens.ClassStr =>
               tokens.append(t); (false, consumeClassDeclaration())
@@ -139,7 +139,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       discardCommentsAndWhitespace = true,
       {
         case None => (false, None)
-        case Some(t: IdToken) =>
+        case Some(t: LocatableId) =>
           tokens.append(t); (true, None)
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
@@ -169,7 +169,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       {
         case None =>
           throw new Exception("End of file")
-        case Some(t: IdToken) =>
+        case Some(t: LocatableId) =>
           tokens.append(t); (true, None)
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
@@ -240,7 +240,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       discardCommentsAndWhitespace = true,
       {
         case None => (false, None)
-        case Some(t: IdToken) =>
+        case Some(t: LocatableId) =>
           tokens.append(t); (true, None)
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
@@ -308,7 +308,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       (token: Option[Token], nestedParenthesis: Int) => {
         token match {
           case None => (false, nestedParenthesis, None)
-          case Some(t: IdToken) =>
+          case Some(t: LocatableId) =>
             tokens.append(t); (true, nestedParenthesis, None)
           case Some(t: NonIdToken) =>
             t.lowerCaseContents match {
@@ -331,7 +331,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       (token: Option[Token], nestedSquareBrackets: Int) => {
         token match {
           case None => (false, nestedSquareBrackets, None)
-          case Some(t: IdToken) =>
+          case Some(t: LocatableId) =>
             tokens.append(t); (true, nestedSquareBrackets, None)
           case Some(t: NonIdToken) =>
             t.lowerCaseContents match {
@@ -388,7 +388,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       discardCommentsAndWhitespace = true,
       {
         case None => (false, None)
-        case Some(t: IdToken) =>
+        case Some(t: LocatableId) =>
           tokens.append(t); (true, None)
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
@@ -418,7 +418,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       {
         case None =>
           throw new Exception("End of file")
-        case Some(t: IdToken) =>
+        case Some(t: LocatableId) =>
           tokens.append(t); (true, None)
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
@@ -449,7 +449,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       discardCommentsAndWhitespace = true,
       {
         case None => (false, None)
-        case Some(t: IdToken) =>
+        case Some(t: LocatableId) =>
           tokens.append(t); (true, None)
         case Some(t: NonIdToken) =>
           t.lowerCaseContents match {
@@ -479,7 +479,7 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
       {
         case None =>
           throw new Exception("End of file")
-        case Some(t: IdToken) =>
+        case Some(t: LocatableId) =>
           tokens.append(t)
           Parse.parseEnumMember(enumTypeDeclaration, tokens)
           tokens.clear()
@@ -708,13 +708,13 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
     */
   private def consumeToken(): Option[Token] = {
 
-    def consumeIdToken(): IdToken = {
+    def consumeIdToken(): LocatableId = {
       buffer.clear()
       while (!atEnd() && Tokens.isIdChar(currentChar)) {
         consumeCharacter()
       }
       val b = buffer.captured()
-      IdToken(b._1, b._2)
+      LocatableId(b._1, b._2)
     }
 
     def consumeNonIdToken(): NonIdToken = {

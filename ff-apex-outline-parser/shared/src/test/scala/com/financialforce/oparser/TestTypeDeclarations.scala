@@ -35,7 +35,7 @@ sealed class TestTypeDeclaration(
 ) extends IMutableTestTypeDeclaration {
   var _location: Location = _
 
-  var _id: IdToken                    = _
+  var _id: LocatableId                = _
   var _extendsTypeRef: TypeRef        = _
   var _implementsTypeList: TypeList   = _
   var _modifiers: Array[Modifier]     = Modifiers.emptyArray
@@ -51,7 +51,7 @@ sealed class TestTypeDeclaration(
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
 
-  override def id: IdToken = _id
+  override def id: LocatableId = _id
 
   override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeArguments.empty)
 
@@ -72,7 +72,7 @@ sealed class TestTypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
-  override def setId(id: IdToken): Unit                             = _id = id
+  override def setId(id: LocatableId): Unit                         = _id = id
   override def setLocation(location: Location): Unit                = _location = location
   override def setExtends(typeRef: TypeRef): Unit                   = _extendsTypeRef = typeRef
   override def setImplements(typeList: TypeList): Unit              = _implementsTypeList = typeList

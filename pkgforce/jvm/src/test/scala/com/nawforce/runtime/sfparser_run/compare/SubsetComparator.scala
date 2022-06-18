@@ -428,7 +428,7 @@ class SubsetComparator(
         )._1 && !getDiffIfThereIsAny(
           ArraySeq.unsafeWrapArray(f._1.modifiers),
           ArraySeq.unsafeWrapArray(s.modifiers)
-        )._1 && s.id == f._1.id
+        )._1 && s.contents == f._1.contents
       })
     }
     second.formalParameters.isEmpty

@@ -85,9 +85,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
   private def getMockResolver(resolvedTypes: Array[String] = Array()): TypeIdResolver = {
     new TypeIdResolver() {
-      val ids: Array[IdToken] = resolvedTypes.map(toId)
+      val ids: Array[LocatableId] = resolvedTypes.map(toId)
 
-      override def canBeResolved(id: IdToken): Boolean = ids.contains(id)
+      override def canBeResolved(id: LocatableId): Boolean = ids.contains(id)
     }
   }
 
@@ -479,7 +479,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       annotations: Array[Annotation] = Array(toAnnotation(Array("Override"), None)),
       modifiers: Array[Modifier] = Array("public", "static").map(toModifier),
       typeRef: TypeRef = toTypeRef(Map("void" -> None)),
-      id: IdToken = toId("method"),
+      id: LocatableId = toId("method"),
       parameters: FormalParameterList = generateParameterList()
     ): MethodDeclaration = {
       toMethodDeclaration(annotations, modifiers, typeRef, id, parameters)
@@ -489,7 +489,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       annotations: Array[Annotation] = Array[Annotation](),
       modifiers: Array[Modifier] = Array[Modifier](),
       typeRef: TypeRef = toTypeRef(Map("String" -> None)),
-      id: IdToken = toId("s")
+      id: LocatableId = toId("s")
     ): FormalParameterList = {
       toParameterList(Array(toParameter(annotations, modifiers, typeRef, id)))
     }

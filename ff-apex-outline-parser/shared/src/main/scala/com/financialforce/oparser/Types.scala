@@ -70,7 +70,7 @@ trait PropertyBlockAssignable {
 
 trait Signature {
   var typeRef: TypeRef
-  val id: IdToken
+  val id: LocatableId
   val annotations: Array[Annotation]
   val modifiers: Array[Modifier]
 }
@@ -128,7 +128,7 @@ object Modifiers {
   }
 }
 
-case class QualifiedName(parts: Array[IdToken]) {
+case class QualifiedName(parts: Array[LocatableId]) {
   def location: Location = {
     val start = parts.head.location
     val end   = parts.last.location
@@ -146,17 +146,19 @@ case class QualifiedName(parts: Array[IdToken]) {
 }
 
 // TODO: Needs hashCode
-case class FormalParameter private (
-  annotations: Array[Annotation],
-  modifiers: Array[Modifier],
+class FormalParameter private (
+  val annotations: Array[Annotation],
+  val modifiers: Array[Modifier],
   var typeRef: TypeRef,
-  id: IdToken
-) {
+  val contents: String,
+  location: Location
+) extends IdLocationHolder(location) {
+
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
   override def toString: String = {
     import StringUtils._
-    s"${asAnnotationAndModifierString(annotations, modifiers)}${typeRef.getFullName} $id"
+    s"${asAnnotationAndModifierString(annotations, modifiers)}${typeRef.getFullName} $contents"
   }
 
   override def equals(obj: Any): Boolean = {
@@ -165,7 +167,7 @@ case class FormalParameter private (
     (other.annotations sameElements annotations) &&
     (other.modifiers sameElements modifiers) &&
     other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
-    other.id == id
+    other.contents == contents
   }
 }
 
@@ -174,9 +176,15 @@ object FormalParameter {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: IdToken
+    id: LocatableId
   ): FormalParameter = {
-    new FormalParameter(Annotations.intern(annotations), Modifiers.intern(modifiers), typeRef, id)
+    new FormalParameter(
+      Annotations.intern(annotations),
+      Modifiers.intern(modifiers),
+      typeRef,
+      id.contents,
+      id.location
+    )
   }
 }
 
@@ -201,7 +209,7 @@ class PropertyBlock {
 }
 
 sealed trait BodyDeclaration {
-  val id: IdToken
+  def id: LocatableId
 
   // These are inlined to save memory, block location is optional
   private var startLine: Int       = _
@@ -218,7 +226,7 @@ sealed trait BodyDeclaration {
   private var endBlockLineOffset: Int   = _
   private var endBlockByteOffset: Int   = _
 
-  def location: Option[Location] = {
+  def bodyLocation: Option[Location] = {
     endByteOffset match {
       case 0 => None
       case _ =>
@@ -300,7 +308,7 @@ case class ConstructorDeclaration private (
 ) extends BodyDeclaration
     with MutableTypeAppendable {
 
-  val id: IdToken = qName.parts(0)
+  val id: LocatableId = qName.parts(0)
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
@@ -337,14 +345,18 @@ object ConstructorDeclaration {
 }
 
 // TODO: Hashcode
-case class MethodDeclaration private (
-  annotations: Array[Annotation],
-  modifiers: Array[Modifier],
+class MethodDeclaration private (
+  val annotations: Array[Annotation],
+  val modifiers: Array[Modifier],
   var typeRef: Option[TypeRef],
-  id: IdToken,
-  formalParameterList: FormalParameterList
-) extends BodyDeclaration
+  val contents: String,
+  _location: Location,
+  val formalParameterList: FormalParameterList
+) extends IdLocationHolder(_location)
+    with BodyDeclaration
     with MutableTypeAppendable {
+
+  def id: LocatableId = LocatableId(contents, location)
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
@@ -375,14 +387,15 @@ object MethodDeclaration {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: Option[TypeRef],
-    id: IdToken,
+    id: LocatableId,
     formalParameterList: FormalParameterList
   ): MethodDeclaration = {
     new MethodDeclaration(
       Annotations.intern(annotations),
       Modifiers.intern(modifiers),
       typeRef,
-      id,
+      id.contents,
+      id.location,
       formalParameterList
     )
   }
@@ -393,7 +406,7 @@ class PropertyDeclaration private (
   val annotations: Array[Annotation],
   val modifiers: Array[Modifier],
   var typeRef: TypeRef,
-  val id: IdToken
+  val id: LocatableId
 ) extends BodyDeclaration
     with Signature
     with PropertyBlockAssignable
@@ -424,7 +437,7 @@ object PropertyDeclaration {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: IdToken
+    id: LocatableId
   ): PropertyDeclaration = {
     new PropertyDeclaration(
       Annotations.intern(annotations),
@@ -440,7 +453,7 @@ case class FieldDeclaration private (
   annotations: Array[Annotation],
   modifiers: Array[Modifier],
   var typeRef: TypeRef,
-  id: IdToken
+  id: LocatableId
 ) extends BodyDeclaration
     with Signature
     with MutableTypeAppendable {
@@ -466,19 +479,19 @@ object FieldDeclaration {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: IdToken
+    id: LocatableId
   ): FieldDeclaration = {
     new FieldDeclaration(Annotations.intern(annotations), Modifiers.intern(modifiers), typeRef, id)
   }
 }
 
 case class Initializer(isStatic: Boolean) extends BodyDeclaration with MutableTypeAppendable {
-  override val id: IdToken = Initializer.id
+  override val id: LocatableId = Initializer.id
 }
 
 object Initializer {
-  final val id: IdToken   = IdToken("initializer", Location.default)
-  final val emptyArraySeq = ArraySeq[Initializer]()
+  final val id: LocatableId = LocatableId("initializer", Location.default)
+  final val emptyArraySeq   = ArraySeq[Initializer]()
 }
 
 object Parse {
@@ -601,7 +614,7 @@ object Parse {
     addMethod(index, tokens, md, itd).toSeq
   }
 
-  def parseEnumMember(etd: IMutableTypeDeclaration, tokens: Tokens): Seq[IdToken] = {
+  def parseEnumMember(etd: IMutableTypeDeclaration, tokens: Tokens): Seq[LocatableId] = {
     if (tokens.isEmpty) return Seq.empty
 
     val constant = tokenToId(tokens.head)
@@ -780,12 +793,12 @@ object Parse {
 
   private def tokenToModifier(token: Token): Modifier = Modifier(token.contents)
 
-  private def tokenToId(token: Token): IdToken = IdToken(token.contents, token.location)
+  private def tokenToId(token: Token): LocatableId = LocatableId(token.contents, token.location)
 
-  private def getId(startIndex: Int, tokens: Tokens): (Int, Option[IdToken]) = {
+  private def getId(startIndex: Int, tokens: Tokens): (Int, Option[LocatableId]) = {
     if (startIndex >= tokens.length) {
       (startIndex, None)
-    } else if (tokens.get(startIndex).isInstanceOf[IdToken]) {
+    } else if (tokens.get(startIndex).isInstanceOf[LocatableId]) {
       val id = tokenToId(tokens.get(startIndex))
       (startIndex + 1, Some(id))
     } else {
@@ -804,7 +817,7 @@ object Parse {
     tokens: Tokens
   ): (Int, Option[TypeNameSegment]) = {
     tokens(startIndex) match {
-      case Some(token: IdToken) =>
+      case Some(token: LocatableId) =>
         val id                         = tokenToId(token)
         val (nextIndex, typeArguments) = parseTypeArguments(startIndex + 1, tokens)
         (nextIndex, Some(TypeNameSegment(id, typeArguments)))
@@ -881,7 +894,7 @@ object Parse {
   ): Int = {
     if (!tokens(startIndex).exists(_.matches(Tokens.AtSignStr))) return startIndex
 
-    val names         = new mutable.ArrayBuffer[IdToken]()
+    val names         = new mutable.ArrayBuffer[LocatableId]()
     var (index, name) = getId(startIndex + 1, tokens)
     name.foreach(names.append)
     while (index < tokens.length && tokens.get(index).matches(Tokens.DotStr)) {

@@ -72,7 +72,7 @@ class PlatformTypeDeclaration(
 
   override val location: Location = Location.default
 
-  override val id: IdToken = typeInfo.typeName.id
+  override val id: LocatableId = typeInfo.typeName.id
 
   override val typeNameSegment: TypeNameSegment = typeInfo.typeName
 
@@ -193,7 +193,7 @@ class PlatformTypeDeclaration(
     val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
     val name = QualifiedName(
       (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.contents))
-        .map(s => IdToken(s, Location.default))
+        .map(s => LocatableId(s, Location.default))
     )
 
     ConstructorDeclaration(Array.empty, modifiers, name, toFormalParameterList(ctor.getParameters))
@@ -210,7 +210,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.methodModifiers(method.getModifiers, td.nature),
       rtType,
-      IdToken(decodeName(method.getName), Location.default),
+      LocatableId(decodeName(method.getName), Location.default),
       toFormalParameterList(method.getParameters)
     )
   }
@@ -220,7 +220,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(field.getModifiers),
       getPlatformTypeDeclFromType(field.getGenericType).get,
-      IdToken(decodeName(field.getName), Location.default)
+      LocatableId(decodeName(field.getName), Location.default)
     )
   }
 
@@ -235,7 +235,7 @@ class PlatformTypeDeclaration(
       Annotations.emptyArray,
       Modifiers.emptyArray,
       getPlatformTypeDeclFromType(parameter.getParameterizedType).get,
-      IdToken(parameter.getName, Location.default)
+      LocatableId(parameter.getName, Location.default)
     )
   }
 
@@ -499,7 +499,7 @@ object PlatformTypeDeclaration {
         TypeArguments(TypeList(params.get))
       else
         TypeArguments.empty
-    TypeNameSegment(IdToken(name, Location.default), typeArguments)
+    TypeNameSegment(LocatableId(name, Location.default), typeArguments)
   }
 
   private val typeAliasMap: Map[TypeName, TypeName] = Map(

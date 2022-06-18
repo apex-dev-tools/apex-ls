@@ -48,7 +48,7 @@ trait DeclarationGeneratorHelper {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: IdToken
+    id: LocatableId
   ): FormalParameter = {
     FormalParameter(annotations, modifiers, typeRef, id)
   }
@@ -57,8 +57,8 @@ trait DeclarationGeneratorHelper {
     Modifier(m)
   }
 
-  def toIdToken(token: String): IdToken = {
-    IdToken(token, Location.default)
+  def toIdToken(token: String): LocatableId = {
+    LocatableId(token, Location.default)
   }
 
   def toAnnotation(ids: Array[String], parameter: Option[String]): Annotation = {
@@ -69,7 +69,7 @@ trait DeclarationGeneratorHelper {
     QualifiedName(ids.map(x => toId(x)))
   }
 
-  def toId(id: String): IdToken = {
+  def toId(id: String): LocatableId = {
     toIdToken(id)
   }
 
@@ -90,7 +90,7 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: IdToken,
+    id: LocatableId,
     parameters: FormalParameterList
   ): MethodDeclaration = {
     MethodDeclaration(annotation, modifiers, Some(typeRef), id, parameters)
@@ -100,7 +100,7 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: IdToken
+    id: LocatableId
   ): PropertyDeclaration = {
     PropertyDeclaration(annotation, modifiers, typeRef, id)
   }
@@ -109,7 +109,7 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: IdToken
+    id: LocatableId
   ): FieldDeclaration = {
     FieldDeclaration(annotation, modifiers, typeRef, id)
   }

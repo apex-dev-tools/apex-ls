@@ -104,7 +104,7 @@ object UnresolvedTypeRef {
   }
 }
 
-final case class TypeNameSegment(id: IdToken, typeArguments: TypeArguments) {
+final case class TypeNameSegment(id: LocatableId, typeArguments: TypeArguments) {
 
   def getArguments: ArraySeq[TypeRef] = {
     ArraySeq.unsafeWrapArray(typeArguments.typeList.typeRefs.toArray)
@@ -124,22 +124,22 @@ final case class TypeNameSegment(id: IdToken, typeArguments: TypeArguments) {
 
 object TypeNameSegment {
   def apply(name: String): TypeNameSegment = {
-    new TypeNameSegment(IdToken(name, Location.default), TypeArguments.empty)
+    new TypeNameSegment(LocatableId(name, Location.default), TypeArguments.empty)
   }
 
   def apply(name: String, typeArguments: TypeArguments): TypeNameSegment = {
-    new TypeNameSegment(IdToken(name, Location.default), typeArguments)
+    new TypeNameSegment(LocatableId(name, Location.default), typeArguments)
   }
 
   def apply(name: String, typeArguments: Array[UnresolvedTypeRef]): TypeNameSegment = {
     new TypeNameSegment(
-      IdToken(name, Location.default),
+      LocatableId(name, Location.default),
       TypeArguments(TypeList(ArraySeq.unsafeWrapArray(typeArguments)))
     )
   }
 
   def apply(name: String, params: Array[String]): TypeNameSegment = {
-    new TypeNameSegment(IdToken(name, Location.default), TypeArguments(params))
+    new TypeNameSegment(LocatableId(name, Location.default), TypeArguments(params))
   }
 }
 
@@ -157,7 +157,7 @@ object TypeArguments {
     val typeArguments = ArraySeq.unsafeWrapArray(params.map(tp => {
       val typeRef = new UnresolvedTypeRef()
       typeRef.typeNameSegments.append(
-        new TypeNameSegment(IdToken(tp, Location.default), TypeArguments.empty)
+        new TypeNameSegment(LocatableId(tp, Location.default), TypeArguments.empty)
       )
       typeRef
     }))

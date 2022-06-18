@@ -263,7 +263,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       first.formalParameters.map(m => m.modifiers) zip second.formalParameters.map(m => m.modifiers)
     val annotations =
       first.formalParameters.map(_.annotations) zip second.formalParameters.map(_.annotations)
-    val ids = first.formalParameters.map(_.id) zip second.formalParameters.map(_.id)
+    val ids = first.formalParameters.map(_.contents) zip second.formalParameters.map(_.contents)
 
     typeRefs.forall(tr => compareTypeRef(tr._1, tr._2)) && modifiers.forall(
       m => compareModifiers(m._1, m._2)

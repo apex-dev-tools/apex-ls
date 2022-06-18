@@ -8,7 +8,7 @@ import com.financialforce.oparser.{
   Annotation,
   ConstructorDeclaration,
   FieldDeclaration,
-  IdToken,
+  LocatableId,
   Initializer,
   Location,
   MethodDeclaration,
@@ -35,7 +35,7 @@ class SObjectTypeDeclaration(override val module: IPM.Module, md: MetadataDocume
 
   override val location: Location = Location.default
 
-  override def id: IdToken = typeInfo.typeName.id
+  override def id: LocatableId = typeInfo.typeName.id
 
   override def typeNameSegment: TypeNameSegment = typeInfo.typeName
 

@@ -10,7 +10,7 @@ trait ITypeDeclaration extends TypeRef {
   def paths: Array[String]
   def location: Location
 
-  def id: IdToken
+  def id: LocatableId
 
   def typeNameSegment: TypeNameSegment
 
@@ -51,7 +51,7 @@ trait IMutableTypeDeclaration extends ITypeDeclaration with MutableTypeAppendabl
   override def innerTypes: ArraySeq[IMutableTypeDeclaration]
 
   // Setters for standard attributes of the type
-  def setId(id: IdToken): Unit
+  def setId(id: LocatableId): Unit
   def setLocation(location: Location): Unit
   def setExtends(typeRef: TypeRef): Unit
   def setImplements(typeList: TypeList): Unit
