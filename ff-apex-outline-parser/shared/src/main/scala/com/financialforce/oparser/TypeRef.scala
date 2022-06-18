@@ -4,7 +4,6 @@
 package com.financialforce.oparser
 
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.hashing.MurmurHash3
 
@@ -17,6 +16,15 @@ trait TypeRef {
 
 object TypeRef {
   final val emptyArraySeq: ArraySeq[TypeRef] = ArraySeq()
+
+  def toTypeRefs(params: Array[String]): ArraySeq[TypeRef] = {
+    ArraySeq.unsafeWrapArray(params.map(tp => {
+      UnresolvedTypeRef(
+        Array(new TypeNameSegment(LocatableId(tp, Location.default), emptyArraySeq)),
+        0
+      )
+    }))
+  }
 }
 
 final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arraySubscripts: Int)
@@ -106,19 +114,15 @@ object UnresolvedTypeRef {
   }
 }
 
-final case class TypeNameSegment(id: LocatableId, typeArguments: TypeArguments) {
-
-  def getArguments: ArraySeq[TypeRef] = {
-    ArraySeq.unsafeWrapArray(typeArguments.typeList.typeRefs.toArray)
-  }
+final case class TypeNameSegment(id: LocatableId, typeArguments: ArraySeq[TypeRef]) {
 
   def replaceArguments(args: ArraySeq[TypeRef]): TypeNameSegment = {
-    TypeNameSegment(id, TypeArguments(TypeList(args)))
+    TypeNameSegment(id, args)
   }
 
   override def toString: String = {
-    if (typeArguments.typeList.typeRefs.nonEmpty)
-      s"$id<${getArguments.map(_.getFullName).mkString(",")}>"
+    if (typeArguments.nonEmpty)
+      s"$id<${typeArguments.map(_.getFullName).mkString(",")}>"
     else
       id.toString
   }
@@ -126,55 +130,21 @@ final case class TypeNameSegment(id: LocatableId, typeArguments: TypeArguments) 
 
 object TypeNameSegment {
   def apply(name: String): TypeNameSegment = {
-    new TypeNameSegment(LocatableId(name, Location.default), TypeArguments.empty)
+    new TypeNameSegment(LocatableId(name, Location.default), TypeRef.emptyArraySeq)
   }
 
-  def apply(name: String, typeArguments: TypeArguments): TypeNameSegment = {
+  def apply(name: String, typeArguments: ArraySeq[TypeRef]): TypeNameSegment = {
     new TypeNameSegment(LocatableId(name, Location.default), typeArguments)
   }
 
   def apply(name: String, typeArguments: Array[UnresolvedTypeRef]): TypeNameSegment = {
     new TypeNameSegment(
       LocatableId(name, Location.default),
-      TypeArguments(TypeList(ArraySeq.unsafeWrapArray(typeArguments)))
+      ArraySeq.unsafeWrapArray(typeArguments)
     )
   }
 
   def apply(name: String, params: Array[String]): TypeNameSegment = {
-    new TypeNameSegment(LocatableId(name, Location.default), TypeArguments(params))
+    new TypeNameSegment(LocatableId(name, Location.default), TypeRef.toTypeRefs(params))
   }
-}
-
-// TODO: Can this be removed
-final case class TypeArguments(var typeList: TypeList) {
-  override def toString: String = {
-    typeList.toString
-  }
-}
-
-object TypeArguments {
-  final val empty = TypeArguments(TypeList.empty)
-
-  def apply(params: Array[String]): TypeArguments = {
-    val typeArguments = ArraySeq.unsafeWrapArray(params.map(tp => {
-      UnresolvedTypeRef(
-        Array(new TypeNameSegment(LocatableId(tp, Location.default), TypeArguments.empty)),
-        0
-      )
-    }))
-
-    TypeArguments(TypeList(typeArguments))
-  }
-}
-
-final case class TypeList(typeRefs: ArraySeq[TypeRef]) {
-
-  override def toString: String = {
-    import StringUtils._
-    asString(typeRefs, ",")
-  }
-}
-
-object TypeList {
-  final val empty = TypeList(TypeRef.emptyArraySeq)
 }

@@ -89,7 +89,7 @@ public class ApexTypeAdapter implements ApexType {
         if (td.implementsTypeList() == null)
             return null;
 
-        ArraySeq<TypeRef> refs = td.implementsTypeList().typeRefs();
+        ArraySeq<TypeRef> refs = td.implementsTypeList();
         NameApexTypeId[] interfaces = new NameApexTypeId[refs.length()];
         int entry = 0;
         for (int i = 0; i < refs.length(); i++)

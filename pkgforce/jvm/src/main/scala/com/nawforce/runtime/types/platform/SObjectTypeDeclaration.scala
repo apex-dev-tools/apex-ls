@@ -14,7 +14,6 @@ import com.financialforce.oparser.{
   MethodDeclaration,
   Modifier,
   PropertyDeclaration,
-  TypeList,
   TypeNameSegment,
   TypeRef
 }
@@ -41,7 +40,7 @@ class SObjectTypeDeclaration(override val module: IPM.Module, md: MetadataDocume
 
   override def extendsTypeRef: TypeRef = null // TODO
 
-  override def implementsTypeList: TypeList = null // TODO
+  override def implementsTypeList: ArraySeq[TypeRef] = null // TODO
 
   override def modifiers: Array[Modifier] = Array.empty // TODO
 

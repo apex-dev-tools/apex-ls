@@ -120,8 +120,8 @@ class SubsetComparator(
     }
 
     if (first.implementsTypeList != second.implementsTypeList) {
-      val firstTypeRefs  = Option(first.implementsTypeList).map(_.typeRefs).get
-      val secondTypeRefs = Option(second.implementsTypeList).map(_.typeRefs).get
+      val firstTypeRefs  = Option(first.implementsTypeList).get
+      val secondTypeRefs = Option(second.implementsTypeList).get
       val isSubset       = areTypeRefsSubsets(firstTypeRefs, secondTypeRefs)
       if (!isSubset)
         throw new Exception(
@@ -224,9 +224,7 @@ class SubsetComparator(
   private def getTypeArgumentTypeRefs(typ: UnresolvedTypeRef): ArraySeq[TypeRef] = {
     ArraySeq.unsafeWrapArray(
       typ.typeNameSegments
-        .map(_.typeArguments)
-        .map(_.typeList)
-        .flatMap(_.typeRefs)
+        .flatMap(_.typeArguments)
     )
   }
 

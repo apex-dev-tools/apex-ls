@@ -240,11 +240,11 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     ctd
   }
 
-  private def constructInterfaceTypeList(typeInfo: TypeInfo): Option[TypeList] = {
+  private def constructInterfaceTypeList(typeInfo: TypeInfo): Option[ArraySeq[TypeRef]] = {
     val interfaceRef =
       typeInfo.getCodeUnitDetails.getInterfaceTypeRefs.asScala.map(x => toTypeRef(Some(x)))
-    val tl = new TypeList(ArraySeq.unsafeWrapArray(interfaceRef.flatten.toArray))
-    if (tl.typeRefs.nonEmpty) Some(tl) else None
+    val tl = ArraySeq.unsafeWrapArray(interfaceRef.flatten.toArray)
+    if (tl.nonEmpty) Some(tl) else None
   }
 
   private def constructExtendsTypeRef(typeInfo: TypeInfo): Option[UnresolvedTypeRef] = {
@@ -450,7 +450,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
           typ.getNames.forEach(
             x =>
               segments
-                .append(new TypeNameSegment(toId(x.getValue, x.getLoc), TypeArguments.empty))
+                .append(new TypeNameSegment(toId(x.getValue, x.getLoc), TypeRef.emptyArraySeq))
           )
           for (_ <- 0 to typ.toString.split("\\[").length - 2) {
             subscripts += 1
@@ -460,9 +460,9 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
           val typArguments = typ.getTypeArguments.asScala
           val typeArguments =
             if (typArguments.nonEmpty)
-              TypeArguments(toTypeList(typArguments.flatMap(x => toTypeRef(Some(x)))))
+              toTypeList(typArguments.flatMap(x => toTypeRef(Some(x))))
             else
-              TypeArguments.empty
+              TypeRef.emptyArraySeq
 
           val last = typ.getNames.get(typ.getNames.size() - 1)
           typ.getNames.forEach(
@@ -471,7 +471,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
                 if (t eq last)
                   new TypeNameSegment(toId(t.getValue, t.getLoc), typeArguments)
                 else
-                  new TypeNameSegment(toId(t.getValue, t.getLoc), TypeArguments.empty)
+                  new TypeNameSegment(toId(t.getValue, t.getLoc), TypeRef.emptyArraySeq)
               )
           )
         }
@@ -487,14 +487,11 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     name: String,
     location: apex.jorje.data.Location
   ): TypeNameSegment = {
-    new TypeNameSegment(
-      toId(name, location),
-      TypeArguments(toTypeList(typeArguments.asScala.map(toTypeRef)))
-    )
+    new TypeNameSegment(toId(name, location), toTypeList(typeArguments.asScala.map(toTypeRef)))
   }
 
-  private def toTypeList(typeRefs: Iterable[UnresolvedTypeRef]) = {
-    new TypeList(ArraySeq.unsafeWrapArray(typeRefs.toArray))
+  private def toTypeList(typeRefs: Iterable[UnresolvedTypeRef]): ArraySeq[TypeRef] = {
+    ArraySeq.unsafeWrapArray(typeRefs.toArray)
   }
 
   private class BlockStatementVisitor extends AstVisitor[AdditionalPassScope] {

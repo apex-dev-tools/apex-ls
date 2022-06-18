@@ -82,12 +82,12 @@ class PlatformTypeDeclaration(
       .flatMap(PlatformTypeDeclaration.get(module, _))
       .orNull
 
-  override lazy val implementsTypeList: TypeList = {
+  override lazy val implementsTypeList: ArraySeq[TypeRef] = {
     val interfaces = cls.getInterfaces
     if (interfaces.nonEmpty) {
       val trs = interfaces.flatMap(getPlatformTypeDeclFromType)
       assert(interfaces.length == trs.length)
-      TypeList(ArraySeq.unsafeWrapArray(trs))
+      ArraySeq.unsafeWrapArray(trs)
     } else
       null
   }
@@ -137,8 +137,8 @@ class PlatformTypeDeclaration(
   //This is so types like Internal.Object$ can be displayed as Object instead
   override def toString: String = {
     val args =
-      if (typeNameSegment.getArguments.nonEmpty)
-        typeNameSegment.getArguments
+      if (typeNameSegment.typeArguments.nonEmpty)
+        typeNameSegment.typeArguments
           .map(
             arg => if (arg.isInstanceOf[PlatformTypeDeclaration]) arg.toString else arg.getFullName
           )
@@ -275,7 +275,7 @@ class PlatformTypeDeclaration(
   private def preResolveArguments(un: UnresolvedTypeRef, module: IPM.Module): UnresolvedTypeRef = {
     val segments = un.typeNameSegments
       .map(segment => {
-        val args = segment.getArguments
+        val args = segment.typeArguments
         val newArgs = args.flatMap {
           case unref: UnresolvedTypeRef =>
             val newUnref = preResolveArguments(unref, module)
@@ -356,14 +356,14 @@ object PlatformTypeDeclaration {
 
     // Quick fail on wrong number of type variables
     val td            = tdOpt.get
-    val typeArguments = td.typeNameSegment.getArguments
+    val typeArguments = td.typeNameSegment.typeArguments
     if (typeArguments.length != aliasedTypeName.params.size)
       return None
 
     if (typeArguments.isEmpty) {
       Some(td)
     } else {
-      val resolvedArgs = typeRef.typeNameSegments.last.getArguments.collect {
+      val resolvedArgs = typeRef.typeNameSegments.last.typeArguments.collect {
         case td: IModuleTypeDeclaration => td
       }
       Some(GenericPlatformTypeDeclaration.get(td.module, resolvedArgs, td))
@@ -382,8 +382,8 @@ object PlatformTypeDeclaration {
 
   private def asTypeName(typeName: TypeNameSegment, outer: Option[TypeName]): Option[TypeName] = {
     val resolvedSegments =
-      typeName.getArguments.collect { case td: IModuleTypeDeclaration => td }.map(_.typeName)
-    if (resolvedSegments.length != typeName.getArguments.length) {
+      typeName.typeArguments.collect { case td: IModuleTypeDeclaration => td }.map(_.typeName)
+    if (resolvedSegments.length != typeName.typeArguments.length) {
       None
     } else {
       val resolvedTypeNames: Seq[TypeName] =
@@ -494,11 +494,7 @@ object PlatformTypeDeclaration {
     name: String,
     params: Option[ArraySeq[IModuleTypeDeclaration]]
   ): TypeNameSegment = {
-    val typeArguments =
-      if (params.nonEmpty)
-        TypeArguments(TypeList(params.get))
-      else
-        TypeArguments.empty
+    val typeArguments = params.getOrElse(TypeRef.emptyArraySeq)
     TypeNameSegment(LocatableId(name, Location.default), typeArguments)
   }
 

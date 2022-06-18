@@ -123,15 +123,14 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
         s"Diff Extends ${first.getFullName} != ${second.getFullName}"
       )
     }
-    def compareTypeList(first: TypeList, second: TypeList): (Boolean, String) = {
+    def compareTypeList(first: ArraySeq[TypeRef], second: ArraySeq[TypeRef]): (Boolean, String) = {
       throwIfOneIsNull(first, second)
       if (first == null && second == null)
         return (true, "")
       (
         first != null && second != null &&
-          first.typeRefs.forall(f => second.typeRefs.exists(s => compareTypeRef(f, s))),
-        s"Diff implementsTypeList ${first.typeRefs
-          .map(_.getFullName)} != ${second.typeRefs.map(_.getFullName)}"
+          first.forall(f => second.exists(s => compareTypeRef(f, s))),
+        s"Diff implementsTypeList ${first.map(_.getFullName)} != ${second.map(_.getFullName)}"
       )
     }
 
@@ -207,7 +206,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
     }
 
     compareAndThrow[TypeRef](compareExtends, firstDecl.extendsTypeRef, secondDecl.extendsTypeRef)
-    compareAndThrow[TypeList](
+    compareAndThrow[ArraySeq[TypeRef]](
       compareTypeList,
       firstDecl.implementsTypeList,
       secondDecl.implementsTypeList

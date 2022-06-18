@@ -826,17 +826,17 @@ object Parse {
     }
   }
 
-  private def parseTypeArguments(startIndex: Int, tokens: Tokens): (Int, TypeArguments) = {
-    if (startIndex >= tokens.length) return (startIndex, TypeArguments.empty)
+  private def parseTypeArguments(startIndex: Int, tokens: Tokens): (Int, ArraySeq[TypeRef]) = {
+    if (startIndex >= tokens.length) return (startIndex, TypeRef.emptyArraySeq)
     if (!tokens.get(startIndex).matches(Tokens.LessThanStr))
-      return (startIndex, TypeArguments.empty)
+      return (startIndex, TypeRef.emptyArraySeq)
 
     val (index, typeList) = parseTypeList(startIndex + 1, tokens)
     if (!tokens(index).exists(_.matches(Tokens.GreaterThanStr))) throw new Exception("Missing >")
-    (index + 1, TypeArguments(typeList))
+    (index + 1, typeList)
   }
 
-  private def parseTypeList(startIndex: Int, tokens: Tokens): (Int, TypeList) = {
+  private def parseTypeList(startIndex: Int, tokens: Tokens): (Int, ArraySeq[TypeRef]) = {
     val typeRefs         = mutable.ArrayBuffer[TypeRef]()
     var (index, typeRef) = parseTypeRef(startIndex, tokens)
     typeRefs.append(typeRef)
@@ -846,9 +846,9 @@ object Parse {
       typeRefs.append(typeRef)
     }
     if (typeRefs.nonEmpty)
-      (index, TypeList(ArraySeq.unsafeWrapArray(typeRefs.toArray)))
+      (index, ArraySeq.unsafeWrapArray(typeRefs.toArray))
     else
-      (index, TypeList.empty)
+      (index, TypeRef.emptyArraySeq)
   }
 
   private def parseTypeRef(startIndex: Int, tokens: Tokens): (Int, UnresolvedTypeRef) = {

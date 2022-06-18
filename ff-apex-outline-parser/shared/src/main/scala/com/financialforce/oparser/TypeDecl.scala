@@ -16,7 +16,7 @@ trait ITypeDeclaration extends TypeRef {
 
   def enclosing: Option[ITypeDeclaration]
   def extendsTypeRef: TypeRef
-  def implementsTypeList: TypeList
+  def implementsTypeList: ArraySeq[TypeRef]
   def modifiers: Array[Modifier]
   def annotations: Array[Annotation]
 
@@ -54,7 +54,7 @@ trait IMutableTypeDeclaration extends ITypeDeclaration with MutableTypeAppendabl
   def setId(id: LocatableId): Unit
   def setLocation(location: Location): Unit
   def setExtends(typeRef: TypeRef): Unit
-  def setImplements(typeList: TypeList): Unit
+  def setImplements(typeList: ArraySeq[TypeRef]): Unit
   def setModifiers(modifiers: Array[Modifier]): Unit
   def setAnnotations(annotations: Array[Annotation]): Unit
 

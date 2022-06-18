@@ -25,16 +25,16 @@ trait DeclarationGeneratorHelper {
       toId(typeName),
       maybeArguments
         .map(arguments => toTypeArguments(Some(arguments)))
-        .getOrElse(TypeArguments.empty)
+        .getOrElse(TypeRef.emptyArraySeq)
     )
   }
 
-  def toTypeArguments(maybeTypes: Option[Array[UnresolvedTypeRef]]): TypeArguments = {
-    new TypeArguments(maybeTypes.map(types => toTypeList(types)).getOrElse(TypeList.empty))
+  def toTypeArguments(maybeTypes: Option[Array[UnresolvedTypeRef]]): ArraySeq[TypeRef] = {
+    maybeTypes.map(types => toTypeList(types)).getOrElse(TypeRef.emptyArraySeq)
   }
 
-  def toTypeList(types: Array[UnresolvedTypeRef]): TypeList = {
-    TypeList(ArraySeq.unsafeWrapArray(types))
+  def toTypeList(types: Array[UnresolvedTypeRef]): ArraySeq[TypeRef] = {
+    ArraySeq.unsafeWrapArray(types)
   }
 
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {

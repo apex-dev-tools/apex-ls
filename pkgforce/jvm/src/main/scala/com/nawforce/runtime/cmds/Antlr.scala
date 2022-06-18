@@ -136,25 +136,23 @@ object Antlr {
     Annotation(qName.toString, args)
   }
 
-  def antlrTypeList(ctx: ApexParser.TypeListContext): TypeList = {
-    new TypeList(
-      ArraySeq.unsafeWrapArray(
-        ctx
-          .typeRef()
-          .asScala
-          .map(tr => antlrTypeRef(tr))
-          .toArray
-      )
+  def antlrTypeList(ctx: ApexParser.TypeListContext): ArraySeq[TypeRef] = {
+    ArraySeq.unsafeWrapArray(
+      ctx
+        .typeRef()
+        .asScala
+        .map(tr => antlrTypeRef(tr))
+        .toArray
     )
   }
 
-  def antlrTypeArguments(ctx: ApexParser.TypeArgumentsContext): TypeArguments = {
-    new TypeArguments(antlrTypeList(ctx.typeList()))
+  def antlrTypeArguments(ctx: ApexParser.TypeArgumentsContext): ArraySeq[TypeRef] = {
+    antlrTypeList(ctx.typeList())
   }
 
   def antlrTypeName(ctx: ApexParser.TypeNameContext): TypeNameSegment = {
     val typeArguments =
-      Option(ctx.typeArguments()).map(ta => antlrTypeArguments(ta)).getOrElse(TypeArguments.empty)
+      Option(ctx.typeArguments()).map(ta => antlrTypeArguments(ta)).getOrElse(TypeRef.emptyArraySeq)
     val tnOpt = Option(ctx.LIST())
       .map(l => new TypeNameSegment(LocatableId(l.toString, Location.default), typeArguments))
       .orElse(
@@ -356,7 +354,7 @@ object Antlr {
       md.add(antlrTypeRef(ctx.typeRef()))
     } else {
       md.typeRef = Some(
-        UnresolvedTypeRef(Array(new TypeNameSegment(toId("void"), TypeArguments.empty)), 0)
+        UnresolvedTypeRef(Array(new TypeNameSegment(toId("void"), TypeRef.emptyArraySeq)), 0)
       )
     }
 
@@ -394,7 +392,7 @@ object Antlr {
       md.add(antlrTypeRef(ctx.typeRef()))
     } else {
       md.typeRef = Some(
-        new UnresolvedTypeRef(Array(new TypeNameSegment(toId("void"), TypeArguments.empty)), 0)
+        new UnresolvedTypeRef(Array(new TypeNameSegment(toId("void"), TypeRef.emptyArraySeq)), 0)
       )
     }
 

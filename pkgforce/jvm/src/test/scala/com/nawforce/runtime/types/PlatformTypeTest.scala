@@ -23,9 +23,8 @@ import com.financialforce.oparser.{
   CLASS_NATURE,
   ENUM_NATURE,
   INTERFACE_NATURE,
-  TypeArguments,
-  TypeList,
   TypeNameSegment,
+  TypeRef,
   UnresolvedTypeRef
 }
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
@@ -303,7 +302,7 @@ class PlatformTypeTest extends AnyFunSuite {
     )
     assert(stringTD.nonEmpty)
 
-    val listTS  = TypeNameSegment("List", TypeArguments(TypeList(ArraySeq(stringTD.get))))
+    val listTS  = TypeNameSegment("List", ArraySeq(stringTD.get))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
     val td      = PlatformTypeDeclaration.get(null, typeRef)
 
@@ -311,9 +310,9 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(td.get.id.toString == "List")
     assert(td.get.getFullName == "System.List<System.String>")
     assert(td.get.extendsTypeRef == null)
-    assert(td.get.implementsTypeList.typeRefs.length == 1)
-    assert(td.get.implementsTypeList.typeRefs.head.isInstanceOf[PlatformTypeDeclaration])
-    assert(td.get.implementsTypeList.typeRefs.head.getFullName == "System.Iterable<System.String>")
+    assert(td.get.implementsTypeList.length == 1)
+    assert(td.get.implementsTypeList.head.isInstanceOf[PlatformTypeDeclaration])
+    assert(td.get.implementsTypeList.head.getFullName == "System.Iterable<System.String>")
     assert(td.get.nature == CLASS_NATURE)
     assert(td.get.modifiers sameElements Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER))
     assert(td.get.enclosing.isEmpty)
@@ -355,7 +354,7 @@ class PlatformTypeTest extends AnyFunSuite {
     )
     assert(stringTD.nonEmpty)
 
-    val integerTS = TypeNameSegment("Integer", TypeArguments(TypeList(ArraySeq(stringTD.get))))
+    val integerTS = TypeNameSegment("Integer", ArraySeq(stringTD.get))
     val typeRef   = UnresolvedTypeRef(Array(TypeNameSegment("System"), integerTS), 0)
     val tdOpt     = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
@@ -369,21 +368,21 @@ class PlatformTypeTest extends AnyFunSuite {
     assert(stringTD.nonEmpty)
 
     val listTS =
-      TypeNameSegment("List", TypeArguments(TypeList(ArraySeq(stringTD.get, stringTD.get))))
+      TypeNameSegment("List", ArraySeq(stringTD.get, stringTD.get))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
     val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
   }
 
   test("Generic class with too few type arguments") {
-    val listTS  = TypeNameSegment("List", TypeArguments(TypeList(ArraySeq())))
+    val listTS  = TypeNameSegment("List", ArraySeq())
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
     val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)
   }
 
   test("Generic class with unresolved type argument") {
-    val listTS  = TypeNameSegment("List", TypeArguments(Array("String")))
+    val listTS  = TypeNameSegment("List", TypeRef.toTypeRefs(Array("String")))
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("System"), listTS), 0)
     val tdOpt   = PlatformTypeDeclaration.get(null, typeRef)
     assert(tdOpt.isEmpty)

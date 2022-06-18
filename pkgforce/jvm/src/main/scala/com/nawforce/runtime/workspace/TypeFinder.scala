@@ -42,7 +42,7 @@ object TypeFinder {
 
     //Pre resolve relative type arguments
     val resolvedTypeNames = typeNames.map(segment => {
-      val args = segment.getArguments
+      val args = segment.typeArguments
       val newArgs = args.flatMap {
         case unref: UnresolvedTypeRef =>
           get(baseModule, unref, from)

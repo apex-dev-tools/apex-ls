@@ -35,11 +35,11 @@ sealed class TestTypeDeclaration(
 ) extends IMutableTestTypeDeclaration {
   var _location: Location = _
 
-  var _id: LocatableId                = _
-  var _extendsTypeRef: TypeRef        = _
-  var _implementsTypeList: TypeList   = _
-  var _modifiers: Array[Modifier]     = Modifiers.emptyArray
-  var _annotations: Array[Annotation] = Annotations.emptyArray
+  var _id: LocatableId                       = _
+  var _extendsTypeRef: TypeRef               = _
+  var _implementsTypeList: ArraySeq[TypeRef] = _
+  var _modifiers: Array[Modifier]            = Modifiers.emptyArray
+  var _annotations: Array[Annotation]        = Annotations.emptyArray
 
   val _initializers: mutable.ArrayBuffer[Initializer]            = mutable.ArrayBuffer()
   val _innerTypes: mutable.ArrayBuffer[TestTypeDeclaration]      = mutable.ArrayBuffer()
@@ -53,11 +53,11 @@ sealed class TestTypeDeclaration(
 
   override def id: LocatableId = _id
 
-  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeArguments.empty)
+  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeRef.emptyArraySeq)
 
   override def enclosing: Option[IMutableTestTypeDeclaration] = Option(_enclosing)
   override def extendsTypeRef: TypeRef                        = _extendsTypeRef
-  override def implementsTypeList: TypeList                   = _implementsTypeList
+  override def implementsTypeList: ArraySeq[TypeRef]          = _implementsTypeList
 
   override def modifiers: Array[Modifier]          = _modifiers
   override def annotations: Array[Annotation]      = _annotations
@@ -75,7 +75,7 @@ sealed class TestTypeDeclaration(
   override def setId(id: LocatableId): Unit                         = _id = id
   override def setLocation(location: Location): Unit                = _location = location
   override def setExtends(typeRef: TypeRef): Unit                   = _extendsTypeRef = typeRef
-  override def setImplements(typeList: TypeList): Unit              = _implementsTypeList = typeList
+  override def setImplements(typeList: ArraySeq[TypeRef]): Unit     = _implementsTypeList = typeList
   override def setModifiers(modifiers: Array[Modifier]): Unit       = _modifiers = modifiers
   override def setAnnotations(annotations: Array[Annotation]): Unit = _annotations = annotations
 

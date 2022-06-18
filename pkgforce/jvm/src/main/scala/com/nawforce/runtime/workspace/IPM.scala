@@ -128,7 +128,7 @@ object IPM extends TriHierarchy {
         // Pre-resolve segment type arguments within the typeRef, this is required so that generic types
         // can be constructed without the need for a recursive call back to this module for type resolution.
         val resolvedSegments = typeRef.typeNameSegments.map(segment => {
-          val args = segment.getArguments
+          val args = segment.typeArguments
           val newArgs = args.flatMap {
             case unref: UnresolvedTypeRef =>
               findExactTypeId(unref.toString, unref)
@@ -291,7 +291,7 @@ object IPM extends TriHierarchy {
         case None      => null
       })
       Option(decl.implementsTypeList).foreach(tl => {
-        decl.setImplements(TypeList(tl.typeRefs.map(tr => resolve(tr).getOrElse(tr))))
+        decl.setImplements(tl.map(tr => resolve(tr).getOrElse(tr)))
       })
       decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
       decl.properties.foreach(resolveSignature)
@@ -458,7 +458,7 @@ object IPM extends TriHierarchy {
 
       // Default namespace if needed and get declaration
       val defaultedNameAndRef = defaultName(name, typeRef)
-      val isGeneric           = typeRef.typeNameSegments.exists(_.typeArguments.typeList.typeRefs.nonEmpty)
+      val isGeneric           = typeRef.typeNameSegments.exists(_.typeArguments.nonEmpty)
       val result =
         if (!isGeneric) {
           types.getOrElseUpdate(
