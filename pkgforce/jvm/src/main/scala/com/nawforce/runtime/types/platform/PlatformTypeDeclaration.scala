@@ -192,7 +192,7 @@ class PlatformTypeDeclaration(
   ): ConstructorDeclaration = {
     val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
     val name = QualifiedName(
-      (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.contents))
+      (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.name))
         .map(s => LocatableId(s, Location.default))
     )
 

@@ -98,7 +98,7 @@ sealed trait Token {
 }
 
 trait Id {
-  def contents: String
+  def name: String
 }
 
 trait IdWithLocation extends Id {
@@ -118,11 +118,14 @@ abstract class IdLocationHolder(_location: Location) extends IdWithLocation {
     Location(startLine, startLineOffset, startByteOffset, endLine, endLineOffset, endByteOffset)
 }
 
-class LocatableId private (override val contents: String, _location: Location)
+/* An Id and its associated location, beware equality is defined only over the id. */
+class LocatableId private (override val name: String, _location: Location)
     extends IdLocationHolder(_location)
     with Token {
 
-  override def toString: String = contents
+  override def contents: String = name
+
+  override def toString: String = name
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[LocatableId]

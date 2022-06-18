@@ -6,6 +6,7 @@ package com.financialforce.oparser
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.util.hashing.MurmurHash3
 
 object StringUtils {
 
@@ -146,12 +147,11 @@ case class QualifiedName(parts: Array[LocatableId]) {
   }
 }
 
-// TODO: Needs hashCode
 class FormalParameter private (
   val annotations: Array[Annotation],
   val modifiers: Array[Modifier],
   var typeRef: TypeRef,
-  val contents: String,
+  val name: String,
   location: Location
 ) extends IdLocationHolder(location) {
 
@@ -159,7 +159,7 @@ class FormalParameter private (
 
   override def toString: String = {
     import StringUtils._
-    s"${asAnnotationAndModifierString(annotations, modifiers)}${typeRef.getFullName} $contents"
+    s"${asAnnotationAndModifierString(annotations, modifiers)}${typeRef.getFullName} $name"
   }
 
   override def equals(obj: Any): Boolean = {
@@ -168,7 +168,18 @@ class FormalParameter private (
     (other.annotations sameElements annotations) &&
     (other.modifiers sameElements modifiers) &&
     other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
-    other.contents == contents
+    other.name == name
+  }
+
+  override def hashCode(): Int = {
+    MurmurHash3.orderedHash(
+      Seq(
+        MurmurHash3.arrayHash(annotations),
+        MurmurHash3.arrayHash(modifiers),
+        typeRef.getFullName.toLowerCase,
+        name
+      )
+    )
   }
 }
 
@@ -183,7 +194,7 @@ object FormalParameter {
       Annotations.intern(annotations),
       Modifiers.intern(modifiers),
       typeRef,
-      id.contents,
+      id.name,
       id.location
     )
   }
@@ -193,11 +204,6 @@ final case class FormalParameterList(formalParameters: ArraySeq[FormalParameter]
   override def toString: String = {
     import StringUtils._
     asString(formalParameters, ", ")
-  }
-
-  override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[FormalParameterList]
-    other.formalParameters == formalParameters
   }
 }
 
@@ -300,7 +306,6 @@ sealed trait BodyDeclaration {
   }
 }
 
-// TODO: Hashcode
 case class ConstructorDeclaration private (
   annotations: Array[Annotation],
   modifiers: Array[Modifier],
@@ -319,6 +324,17 @@ case class ConstructorDeclaration private (
     (other.modifiers sameElements modifiers) &&
     other.qName == qName &&
     other.formalParameterList == formalParameterList
+  }
+
+  override def hashCode(): Int = {
+    MurmurHash3.orderedHash(
+      Seq(
+        MurmurHash3.arrayHash(annotations),
+        MurmurHash3.arrayHash(modifiers),
+        qName.hashCode(),
+        formalParameterList.hashCode()
+      )
+    )
   }
 
   override def toString: String = {
@@ -345,30 +361,43 @@ object ConstructorDeclaration {
   }
 }
 
-// TODO: Hashcode
 class MethodDeclaration private (
   val annotations: Array[Annotation],
   val modifiers: Array[Modifier],
   var typeRef: Option[TypeRef],
-  val contents: String,
+  val name: String,
   _location: Location,
   val formalParameterList: FormalParameterList
 ) extends IdLocationHolder(_location)
     with BodyDeclaration
     with MutableTypeAppendable {
 
-  def id: LocatableId = LocatableId(contents, location)
+  def id: LocatableId = LocatableId(name, location)
 
   def annotationsAndModifiers: String = (annotations ++ modifiers).mkString(" ")
 
   override def equals(obj: Any): Boolean = {
     val other = obj.asInstanceOf[MethodDeclaration]
     (other.annotations sameElements annotations) &&
-    (other.modifiers sameElements modifiers) &&
-    other.typeRef.nonEmpty && typeRef.nonEmpty &&
-    other.typeRef.get.getFullName.equalsIgnoreCase(typeRef.get.getFullName) &&
+    (other.modifiers sameElements modifiers) && (
+      (other.typeRef.isEmpty && typeRef.isEmpty) ||
+      (other.typeRef.nonEmpty && typeRef.nonEmpty &&
+      other.typeRef.get.getFullName.equalsIgnoreCase(typeRef.get.getFullName))
+    ) &&
     other.id == id &&
     other.formalParameterList == formalParameterList
+  }
+
+  override def hashCode(): Int = {
+    MurmurHash3.orderedHash(
+      Seq(
+        MurmurHash3.arrayHash(annotations),
+        MurmurHash3.arrayHash(modifiers),
+        typeRef.map(_.getFullName.toLowerCase().hashCode).getOrElse(0),
+        name,
+        formalParameterList.hashCode()
+      )
+    )
   }
 
   override def toString: String = {
@@ -395,14 +424,13 @@ object MethodDeclaration {
       Annotations.intern(annotations),
       Modifiers.intern(modifiers),
       typeRef,
-      id.contents,
+      id.name,
       id.location,
       formalParameterList
     )
   }
 }
 
-// TODO: Hashcode
 class PropertyDeclaration private (
   val annotations: Array[Annotation],
   val modifiers: Array[Modifier],
@@ -421,6 +449,17 @@ class PropertyDeclaration private (
     (other.modifiers sameElements modifiers) &&
     other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
     other.id == id
+  }
+
+  override def hashCode(): Int = {
+    MurmurHash3.orderedHash(
+      Seq(
+        MurmurHash3.arrayHash(annotations),
+        MurmurHash3.arrayHash(modifiers),
+        typeRef.getFullName.toLowerCase().hashCode,
+        id.hashCode
+      )
+    )
   }
 
   override def toString: String = {
@@ -449,7 +488,6 @@ object PropertyDeclaration {
   }
 }
 
-// TODO: Hashcode
 case class FieldDeclaration private (
   annotations: Array[Annotation],
   modifiers: Array[Modifier],
@@ -465,6 +503,17 @@ case class FieldDeclaration private (
     (other.modifiers sameElements modifiers) &&
     other.typeRef.getFullName.equalsIgnoreCase(typeRef.getFullName) &&
     other.id == id
+  }
+
+  override def hashCode(): Int = {
+    MurmurHash3.orderedHash(
+      Seq(
+        MurmurHash3.arrayHash(annotations),
+        MurmurHash3.arrayHash(modifiers),
+        typeRef.getFullName.toLowerCase().hashCode,
+        id.hashCode
+      )
+    )
   }
 
   override def toString: String = {

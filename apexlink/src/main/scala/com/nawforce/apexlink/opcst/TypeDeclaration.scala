@@ -71,7 +71,7 @@ private[opcst] object OutlineParserId {
   }
 
   def construct(src: OPId, path: PathLike): Id = {
-    val id = Id(Names(src.contents))
+    val id = Id(Names(src.name))
     id.setLocation(
       path,
       src.location.startLine,
@@ -199,7 +199,7 @@ private[opcst] object OutlineParserClassDeclaration {
 
     val modifierResults =
       classModifiers(path, ic.id, ic.annotations, ic.modifiers, outer = false)
-    val thisType = outerType.asInner(ic.id.contents)
+    val thisType = outerType.asInner(ic.id.name)
     val rv = OutlineParserClassDeclaration.construct(
       path,
       ic,
@@ -222,7 +222,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     outerType: ThisType
   ): Option[InterfaceDeclaration] = {
 
-    val thisType = outerType.asInner(ii.id.contents)
+    val thisType = outerType.asInner(ii.id.name)
     val modifierResults =
       interfaceModifiers(path, ii.id, ii.annotations, ii.modifiers, outer = false)
     val rv =
@@ -294,7 +294,7 @@ private[opcst] object OutlineParserEnumDeclaration {
   ): Option[EnumDeclaration] = {
     val modifierResults =
       enumModifiers(path, ie.id, ie.annotations, ie.modifiers, outer = false)
-    val thisType = outerType.asInner(ie.id.contents)
+    val thisType = outerType.asInner(ie.id.name)
     val rv       = construct(ie, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
   }
@@ -373,7 +373,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val modifierResults =
       constructorModifiers(path, cd.id, cd.annotations, cd.modifiers)
-    val qualifiedName = QualifiedName(cd.qName.parts.map(id => Names(id.contents)).toIndexedSeq)
+    val qualifiedName = QualifiedName(cd.qName.parts.map(id => Names(id.name)).toIndexedSeq)
     stampLocation(
       qualifiedName,
       cd.id.location.copy(startLineOffset = cd.id.location.startLineOffset - 1),

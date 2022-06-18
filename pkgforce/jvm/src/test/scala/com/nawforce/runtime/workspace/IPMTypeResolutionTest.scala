@@ -16,7 +16,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
     index.rootModule.get.findExactTypeId(typeId)
   }
   def getField(td: IModuleTypeDeclaration, name: String): FieldDeclaration = {
-    td.fields.filter(_.id.contents.equalsIgnoreCase(name)).head
+    td.fields.filter(_.id.name.equalsIgnoreCase(name)).head
   }
 
   test("Resolves nested type") {

@@ -238,7 +238,7 @@ class EnumTypeDeclaration(
        |Annotation: ${asString(annotations)}
        |Modifiers:  ${asString(modifiers)}
        |Constants:
-       |${fields.map(f => s"${f.id.location} ${f.id.contents}").mkString("\n")}
+       |${fields.map(f => s"${f.id.location} ${f.id.name}").mkString("\n")}
        |
        |""".stripMargin
   }

@@ -185,7 +185,7 @@ class TestEnumTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarati
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
        |Constants:
-       |${fields.map(f => s"${f.id.location} ${f.id.contents}").mkString("\n")}
+       |${fields.map(f => s"${f.id.location} ${f.id.name}").mkString("\n")}
        |
        |""".stripMargin
   }

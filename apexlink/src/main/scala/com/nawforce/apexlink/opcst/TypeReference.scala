@@ -31,7 +31,7 @@ private[opcst] object TypeReference {
     override def isList: Boolean           = typeName.id.lowerCaseContents == "list"
     override def isSet: Boolean            = typeName.id.lowerCaseContents == "set"
     override def isMap: Boolean            = typeName.id.lowerCaseContents == "map"
-    override def getIdText: Option[String] = Option(typeName.id.contents)
+    override def getIdText: Option[String] = Option(typeName.id.name)
   }
 
   private class OutlineParserTypeReference(typeReference: Option[OPTypeRef])
