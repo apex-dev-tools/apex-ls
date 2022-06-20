@@ -222,6 +222,14 @@ trait OrgAPI {
     content: Option[String]
   ): Future[Array[LocationLink]]
 
+  @api.JSONRPCMethod(name = "getImplementation")
+  def getImplementation(
+    path: String,
+    line: Int,
+    offset: Int,
+    content: Option[String]
+  ): Future[Array[LocationLink]]
+
   @api.JSONRPCMethod(name = "getDependencyBombs")
   def getDependencyBombs(count: Int): Future[Array[BombScore]]
 
