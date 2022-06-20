@@ -121,11 +121,6 @@ object CodeParser {
   }
 
   // Helper for JS Portability
-  def getText(context: js.UndefOr[TypeRefContext]): String = {
-    context.toOption.map(getText).getOrElse("")
-  }
-
-  // Helper for JS Portability
   def toScala[T: ClassTag](collection: js.Array[T]): ArraySeq[T] = {
     collection match {
       case _ if collection.isEmpty => CodeParser.emptyArraySeq

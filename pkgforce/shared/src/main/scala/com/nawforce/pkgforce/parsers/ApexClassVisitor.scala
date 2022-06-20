@@ -42,14 +42,12 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
     val modifierContext = getModifierContext(parentContext(ctx))
     val classModifiers =
       ApexModifiers.classModifiers(parser, modifierContext.modifiers, isOuter, ctx.id())
-    val typeRef = CodeParser.toScala(ctx.typeRef())
-    val extendsType =
-      if (typeRef.isDefined)
-        Some(
-          ExtendsType(Name(CodeParser.getText(typeRef.get)), parser.getPathLocation(typeRef.get).location)
-        )
-      else
-        None
+    val extendsType = CodeParser
+      .toScala(ctx.typeRef())
+      .map(
+        typeRef =>
+          ExtendsType(Name(CodeParser.getText(typeRef)), parser.getPathLocation(typeRef).location)
+      )
 
     typeWrap(classModifiers.methodOwnerNature) {
       ArraySeq(
