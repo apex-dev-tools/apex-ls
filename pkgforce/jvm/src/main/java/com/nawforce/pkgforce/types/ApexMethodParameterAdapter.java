@@ -16,7 +16,7 @@ public class ApexMethodParameterAdapter  implements ApexMethodParameter {
 
     @Override
     public String getName() {
-        return fp.id().get().toString();
+        return fp.name();
     }
 
     @Override

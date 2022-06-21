@@ -73,12 +73,14 @@ object Compare {
       })
     }
 
-    if (first._annotations != second._annotations) {
-      throw new Exception(s"Different annotation ${first._annotations} != ${second._annotations}")
+    if (!(first._annotations sameElements second._annotations)) {
+      throw new Exception(s"Different annotation ${first._annotations
+        .mkString("Array(", ", ", ")")} != ${second._annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first._modifiers != second._modifiers) {
-      throw new Exception(s"Different modifiers ${first._modifiers} != ${second._modifiers}")
+    if (!(first._modifiers sameElements second._modifiers)) {
+      throw new Exception(s"Different modifiers ${first._modifiers
+        .mkString("Array(", ", ", ")")} != ${second._modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {
@@ -142,12 +144,14 @@ object Compare {
     second: TestInterfaceTypeDeclaration
   ): Unit = {
 
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
+    if (!(first.annotations sameElements second.annotations)) {
+      throw new Exception(s"Different annotation ${first.annotations
+        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
+    if (!(first.modifiers sameElements second.modifiers)) {
+      throw new Exception(s"Different modifiers ${first.modifiers
+        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {
@@ -170,12 +174,14 @@ object Compare {
     second: TestEnumTypeDeclaration
   ): Unit = {
 
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
+    if (!(first.annotations sameElements second.annotations)) {
+      throw new Exception(s"Different annotation ${first.annotations
+        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
+    if (!(first.modifiers sameElements second.modifiers)) {
+      throw new Exception(s"Different modifiers ${first.modifiers
+        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {

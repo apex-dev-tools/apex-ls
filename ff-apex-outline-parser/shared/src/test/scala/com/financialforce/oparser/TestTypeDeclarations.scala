@@ -35,33 +35,32 @@ sealed class TestTypeDeclaration(
 ) extends IMutableTestTypeDeclaration {
   var _location: Location = _
 
-  var _id: Id                       = _
-  var _extendsTypeRef: TypeRef      = _
-  var _implementsTypeList: TypeList = _
+  var _id: LocatableId                       = _
+  var _extendsTypeRef: TypeRef               = _
+  var _implementsTypeList: ArraySeq[TypeRef] = _
+  var _modifiers: Array[Modifier]            = Modifiers.emptyArray
+  var _annotations: Array[Annotation]        = Annotations.emptyArray
 
-  var _modifiers: ArraySeq[Modifier]                  = Modifiers.emptyArraySeq
-  var _annotations: ArraySeq[Annotation]              = Annotations.emptyArraySeq
-  var _initializers: mutable.ArrayBuffer[Initializer] = mutable.ArrayBuffer()
-
-  var _innerTypes: mutable.ArrayBuffer[TestTypeDeclaration]      = mutable.ArrayBuffer()
-  var _constructors: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer()
-  var _methods: mutable.ArrayBuffer[MethodDeclaration]           = mutable.ArrayBuffer()
-  var _properties: mutable.ArrayBuffer[PropertyDeclaration]      = mutable.ArrayBuffer()
-  var _fields: mutable.ArrayBuffer[FieldDeclaration]             = mutable.ArrayBuffer()
+  val _initializers: mutable.ArrayBuffer[Initializer]            = mutable.ArrayBuffer()
+  val _innerTypes: mutable.ArrayBuffer[TestTypeDeclaration]      = mutable.ArrayBuffer()
+  val _constructors: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer()
+  val _methods: mutable.ArrayBuffer[MethodDeclaration]           = mutable.ArrayBuffer()
+  val _properties: mutable.ArrayBuffer[PropertyDeclaration]      = mutable.ArrayBuffer()
+  val _fields: mutable.ArrayBuffer[FieldDeclaration]             = mutable.ArrayBuffer()
 
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
 
-  override def id: Id = _id
+  override def id: LocatableId = _id
 
-  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeArguments.empty)
+  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeRef.emptyArraySeq)
 
   override def enclosing: Option[IMutableTestTypeDeclaration] = Option(_enclosing)
   override def extendsTypeRef: TypeRef                        = _extendsTypeRef
-  override def implementsTypeList: TypeList                   = _implementsTypeList
+  override def implementsTypeList: ArraySeq[TypeRef]          = _implementsTypeList
 
-  override def modifiers: ArraySeq[Modifier]       = _modifiers
-  override def annotations: ArraySeq[Annotation]   = _annotations
+  override def modifiers: Array[Modifier]          = _modifiers
+  override def annotations: Array[Annotation]      = _annotations
   override def initializers: ArraySeq[Initializer] = ArraySeq.unsafeWrapArray(_initializers.toArray)
 
   override def innerTypes: ArraySeq[TestTypeDeclaration] =
@@ -73,12 +72,14 @@ sealed class TestTypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
-  override def setLocation(location: Location): Unit                   = _location = location
-  override def setExtends(typeRef: TypeRef): Unit                      = _extendsTypeRef = typeRef
-  override def setImplements(typeList: TypeList): Unit                 = _implementsTypeList = typeList
-  override def setModifiers(modifiers: ArraySeq[Modifier]): Unit       = _modifiers = modifiers
-  override def setAnnotations(annotations: ArraySeq[Annotation]): Unit = _annotations = annotations
+  override def setId(id: LocatableId): Unit                         = _id = id
+  override def setLocation(location: Location): Unit                = _location = location
+  override def setExtends(typeRef: TypeRef): Unit                   = _extendsTypeRef = typeRef
+  override def setImplements(typeList: ArraySeq[TypeRef]): Unit     = _implementsTypeList = typeList
+  override def setModifiers(modifiers: Array[Modifier]): Unit       = _modifiers = modifiers
+  override def setAnnotations(annotations: Array[Annotation]): Unit = _annotations = annotations
 
+  override def appendInitializer(init: Initializer): Unit = _initializers.append(init)
   override def appendInnerType(inner: IMutableTypeDeclaration): Unit = {
     // This is rather messy, we need to accept IMutableTypeDeclaration for the caller(s) but only want to
     // expose as TypeDeclaration, it should not fail at run time, and maybe is fixable via some generics magic
@@ -87,12 +88,9 @@ sealed class TestTypeDeclaration(
   override def appendConstructor(ctor: ConstructorDeclaration): Unit = _constructors.append(ctor)
   override def appendProperty(prop: PropertyDeclaration): Unit       = _properties.append(prop)
   override def appendField(field: FieldDeclaration): Unit            = _fields.append(field)
+  override def appendMethod(md: MethodDeclaration): Unit             = _methods.append(md)
 
-  override def add(tl: TypeList): Unit          = _implementsTypeList = tl
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-  override def add(init: Initializer): Unit     = _initializers.append(init)
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-  override def add(i: Id): Unit                 = _id = id
+  override def onComplete(): Unit = { /* Not needed, appending is immediate. */ }
 }
 
 object TestTypeDeclaration {
@@ -100,29 +98,14 @@ object TestTypeDeclaration {
 }
 
 class TestClassTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclaration)
-    extends TestTypeDeclaration(path, CLASS_NATURE, enclosing)
-    with IdAssignable
-    with TypeRefAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable
-    with InitializerAssignable {
-
-  override def add(i: Id): Unit = _id = i
-
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-
-  override def add(init: Initializer): Unit = _initializers.append(init)
+    extends TestTypeDeclaration(path, CLASS_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
     val base =
       s"""Class:      $id
          |Path:       $path
-         |Location:   ${id.id.location}
+         |Location:   ${id.location}
          |Annotation: ${asString(_annotations)}
          |Modifiers:  ${asString(_modifiers)}
          |Extends:    ${_extendsTypeRef}
@@ -174,22 +157,13 @@ class TestClassTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarat
 }
 
 class TestInterfaceTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclaration)
-    extends TestTypeDeclaration(path, INTERFACE_NATURE, enclosing)
-    with IdAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable {
-
-  override def add(i: Id): Unit = _id = i
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
+    extends TestTypeDeclaration(path, INTERFACE_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
     s"""Interface:  $id
        |Path:       $path
-       |Location:   ${id.id.location}
+       |Location:   ${id.location}
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
        |Implements: ${_implementsTypeList}
@@ -201,20 +175,17 @@ class TestInterfaceTypeDeclaration(path: String, enclosing: IMutableTestTypeDecl
 }
 
 class TestEnumTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclaration)
-    extends TestTypeDeclaration(path, ENUM_NATURE, enclosing)
-    with IdAssignable {
-
-  override def add(i: Id): Unit = _id = i
+    extends TestTypeDeclaration(path, ENUM_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
     s"""Enum:       $id
        |Path:       $path
-       |Location:   ${id.id.location}
+       |Location:   ${id.location}
        |Annotation: ${asString(_annotations)}
        |Modifiers:  ${asString(_modifiers)}
        |Constants:
-       |${fields.map(f => s"${f.id.id.location} ${f.id.id.contents}").mkString("\n")}
+       |${fields.map(f => s"${f.id.location} ${f.id.name}").mkString("\n")}
        |
        |""".stripMargin
   }

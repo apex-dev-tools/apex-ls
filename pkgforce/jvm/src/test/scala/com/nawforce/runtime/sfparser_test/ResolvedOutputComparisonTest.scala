@@ -123,15 +123,14 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
         s"Diff Extends ${first.getFullName} != ${second.getFullName}"
       )
     }
-    def compareTypeList(first: TypeList, second: TypeList): (Boolean, String) = {
+    def compareTypeList(first: ArraySeq[TypeRef], second: ArraySeq[TypeRef]): (Boolean, String) = {
       throwIfOneIsNull(first, second)
       if (first == null && second == null)
         return (true, "")
       (
         first != null && second != null &&
-          first.typeRefs.forall(f => second.typeRefs.exists(s => compareTypeRef(f, s))),
-        s"Diff implementsTypeList ${first.typeRefs
-          .map(_.getFullName)} != ${second.typeRefs.map(_.getFullName)}"
+          first.forall(f => second.exists(s => compareTypeRef(f, s))),
+        s"Diff implementsTypeList ${first.map(_.getFullName)} != ${second.map(_.getFullName)}"
       )
     }
 
@@ -207,7 +206,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
     }
 
     compareAndThrow[TypeRef](compareExtends, firstDecl.extendsTypeRef, secondDecl.extendsTypeRef)
-    compareAndThrow[TypeList](
+    compareAndThrow[ArraySeq[TypeRef]](
       compareTypeList,
       firstDecl.implementsTypeList,
       secondDecl.implementsTypeList
@@ -249,23 +248,21 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
     rules.atLeastOne(OptionalTypeRef(first), OptionalTypeRef(second))
   }
 
-  def compareAnnotations(first: ArraySeq[Annotation], second: ArraySeq[Annotation]): Boolean = {
+  def compareAnnotations(first: Array[Annotation], second: Array[Annotation]): Boolean = {
     first.forall(f => second.exists(s => rules.forAll(f, s)))
   }
-  def compareModifiers(first: ArraySeq[Modifier], second: ArraySeq[Modifier]): Boolean = {
+  def compareModifiers(first: Array[Modifier], second: Array[Modifier]): Boolean = {
     first.forall(f => second.exists(s => rules.forAll(f, s)))
   }
   def compareParamList(first: FormalParameterList, second: FormalParameterList): Boolean = {
     val typeRefs =
-      first.formalParameters.flatMap(_.typeRef) zip second.formalParameters.flatMap(_.typeRef)
+      first.formalParameters.map(_.typeRef) zip second.formalParameters.map(_.typeRef)
 
-    val modifiers = first.formalParameters.map(
-      m => m.modifiers.to(ArraySeq)
-    ) zip second.formalParameters.map(m => m.modifiers.to(ArraySeq))
-    val annotations = first.formalParameters.map(
-      _.annotations.to(ArraySeq)
-    ) zip second.formalParameters.map(_.annotations.to(ArraySeq))
-    val ids = first.formalParameters.map(_.id) zip second.formalParameters.map(_.id)
+    val modifiers =
+      first.formalParameters.map(m => m.modifiers) zip second.formalParameters.map(m => m.modifiers)
+    val annotations =
+      first.formalParameters.map(_.annotations) zip second.formalParameters.map(_.annotations)
+    val ids = first.formalParameters.map(_.name) zip second.formalParameters.map(_.name)
 
     typeRefs.forall(tr => compareTypeRef(tr._1, tr._2)) && modifiers.forall(
       m => compareModifiers(m._1, m._2)

@@ -24,6 +24,7 @@ import com.nawforce.runtime.workspace._
 import org.apache.commons.lang3.reflect.FieldUtils
 
 import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
@@ -126,7 +127,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   private def getInitBlocks(members: UserClassMembers) = {
     def toInitializer(x: AstNode, isStatic: Boolean) = {
       val init = Initializer(isStatic)
-      init.location = Some(toLoc(x.getLoc, 0, 0))
+      val loc  = toLoc(x.getLoc, 0, 0)
+      init.setLocation(loc.startPosition, loc.endPosition)
       init
     }
 
@@ -162,11 +164,11 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
     val constants               = constructFieldDeclarations(typeInfo).map(_.id)
 
-    etd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    etd.setModifiers(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray))
-    etd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
+    etd.setId(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    etd.setModifiers(modifiersAndAnnotations._1.toArray)
+    etd.setAnnotations(modifiersAndAnnotations._2.toArray)
     constants.foreach(
-      id => etd.appendField(new FieldDeclaration(ArraySeq(), ArraySeq(Modifier("static")), etd, id))
+      id => etd.appendField(FieldDeclaration(Array(), Array(Modifier("static")), etd, id))
     )
     etd
   }
@@ -178,7 +180,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     enclosing: IMutableModuleTypeDeclaration
   ): InterfaceTypeDeclaration = {
     val itd = getInterfaceTypeDeclaration(path, typeInfo, enclosing)
-    constructMethodDeclarationForInterface(members).foreach(itd.add)
+    constructMethodDeclarationForInterface(members).foreach(itd.appendMethod)
     itd
   }
 
@@ -190,15 +192,13 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val itd                     = new InterfaceTypeDeclaration(module, path, enclosing)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
-    itd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    itd.setId(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     // We don't want to treat the interface keyword as a modifier for InterfaceTypeDeclaration
     itd.setModifiers(
-      ArraySeq.unsafeWrapArray(
-        modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).toArray
-      )
+      modifiersAndAnnotations._1.filterNot(_.text.equalsIgnoreCase("interface")).toArray
     )
-    itd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
-    itd._implementsTypeList = constructInterfaceTypeList(typeInfo).orNull
+    itd.setAnnotations(modifiersAndAnnotations._2.toArray)
+    itd.setImplements(constructInterfaceTypeList(typeInfo).orNull)
     itd
   }
 
@@ -211,9 +211,9 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val ctd = getClassTypesDeclaration(path, typeInfo, enclosing)
     getInnerTypes(members)
       .flatMap(x => getTypeDeclaration(x, path, ctd))
-      .foreach(ctd._innerTypes.append)
-    getInitBlocks(members).foreach(ctd._initializers.append)
-    constructMethodDeclarationForClass(members).foreach(ctd.add)
+      .foreach(ctd.appendInnerType)
+    getInitBlocks(members).foreach(ctd.appendInitializer)
+    constructMethodDeclarationForClass(members).foreach(ctd.appendMethod)
     ctd
   }
 
@@ -229,22 +229,22 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val properties              = constructPropertyDeclaration(typeInfo)
     val modifiersAndAnnotations = toModifiersAndAnnotations(typeInfo.getModifiers)
 
-    ctd.add(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
-    constructors.foreach(ctd._constructors.append)
-    ctd.setModifiers(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray))
-    ctd.setAnnotations(ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray))
-    properties.foreach(ctd._properties.append)
-    fields.foreach(ctd._fields.append)
-    ctd._extendsTypeRef = constructExtendsTypeRef(typeInfo).orNull
-    ctd._implementsTypeList = constructInterfaceTypeList(typeInfo).orNull
+    ctd.setId(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
+    constructors.foreach(ctd.appendConstructor)
+    ctd.setModifiers(modifiersAndAnnotations._1.toArray)
+    ctd.setAnnotations(modifiersAndAnnotations._2.toArray)
+    properties.foreach(ctd.appendProperty)
+    fields.foreach(ctd.appendField)
+    ctd.setExtends(constructExtendsTypeRef(typeInfo).orNull)
+    ctd.setImplements(constructInterfaceTypeList(typeInfo).orNull)
     ctd
   }
 
-  private def constructInterfaceTypeList(typeInfo: TypeInfo): Option[TypeList] = {
+  private def constructInterfaceTypeList(typeInfo: TypeInfo): Option[ArraySeq[TypeRef]] = {
     val interfaceRef =
       typeInfo.getCodeUnitDetails.getInterfaceTypeRefs.asScala.map(x => toTypeRef(Some(x)))
-    val tl = new TypeList(ArraySeq.unsafeWrapArray(interfaceRef.flatten.toArray))
-    if (tl.typeRefs.nonEmpty) Some(tl) else None
+    val tl = ArraySeq.unsafeWrapArray(interfaceRef.flatten.toArray)
+    if (tl.nonEmpty) Some(tl) else None
   }
 
   private def constructExtendsTypeRef(typeInfo: TypeInfo): Option[UnresolvedTypeRef] = {
@@ -311,9 +311,9 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
 
   private def toProperties(from: FieldInfo): PropertyDeclaration = {
     val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
-    new PropertyDeclaration(
-      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray),
-      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray),
+    PropertyDeclaration(
+      modifiersAndAnnotations._2.toArray,
+      modifiersAndAnnotations._1.toArray,
       toTypeRef(from.getType),
       toId(from.getName, from.getLoc)
     )
@@ -322,8 +322,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   private def toField(from: FieldInfo): FieldDeclaration = {
     val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     val fd = FieldDeclaration(
-      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray),
-      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray),
+      modifiersAndAnnotations._2.toArray,
+      modifiersAndAnnotations._1.toArray,
       toTypeRef(from.getType),
       toId(from.getName, from.getLoc)
     )
@@ -337,10 +337,10 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   ): MethodDeclaration = {
     val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     MethodDeclaration(
-      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray),
-      if (noModifiers) ArraySeq.empty
-      else ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray),
-      toTypeRef(from.getReturnType),
+      modifiersAndAnnotations._2.toArray,
+      if (noModifiers) Array.empty
+      else modifiersAndAnnotations._1.toArray,
+      Some(toTypeRef(from.getReturnType)),
       toId(from.getCanonicalName, from.getLoc),
       toFormalParameterList(from.getParameters)
     )
@@ -350,8 +350,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   private def toConstructorDeclaration(from: MethodInfo): ConstructorDeclaration = {
     val modifiersAndAnnotations = toModifiersAndAnnotations(from.getModifiers)
     ConstructorDeclaration(
-      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._2.toArray),
-      ArraySeq.unsafeWrapArray(modifiersAndAnnotations._1.toArray),
+      modifiersAndAnnotations._2.toArray,
+      modifiersAndAnnotations._1.toArray,
       toQName(from.getName, from.getLoc),
       toFormalParameterList(from.getParameters)
     )
@@ -359,9 +359,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   }
 
   private def toQName(name: String, loc: apex.jorje.data.Location): QualifiedName = {
-    val qName = new QualifiedName()
-    qName.add(toId(name, loc))
-    qName
+    QualifiedName(Array(toId(name, loc)))
   }
 
   private def toFormalParameterList(pl: java.util.List[Parameter]): FormalParameterList = {
@@ -370,12 +368,12 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
 
   private def toFormalParameter(p: Parameter): FormalParameter = {
     val aAndM = toModifiersAndAnnotations(p.getModifiers.getModifiers)
-    val fp    = new FormalParameter()
-    fp.add(toId(p.getName.getValue, p.getLoc))
-    toTypeRef(Some(p.getTypeRef)).foreach(fp.add)
-    fp.setModifiers(ArraySeq.unsafeWrapArray(aAndM._1.toArray))
-    fp.setAnnotations(ArraySeq.unsafeWrapArray(aAndM._2.toArray))
-    fp
+    FormalParameter(
+      aAndM._2.toArray,
+      aAndM._1.toArray,
+      toTypeRef(Some(p.getTypeRef)).get,
+      toId(p.getName.getValue, p.getLoc)
+    )
   }
 
   private def toModifiersAndAnnotations(
@@ -401,7 +399,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
 
   private def toAnnotation(from: apex.jorje.semantic.ast.modifier.Annotation): Annotation = {
     //TODO: add parameters
-    Annotation(toQName(from.getType.getApexName, from.getLoc), None)
+    Annotation(from.getType.getApexName, None)
   }
 
   private def toLoc(
@@ -412,28 +410,27 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     new Location(from.getLine, from.getColumn, 0, endLine, endLineOffset, 0)
   }
 
-  private def toId(name: String, loc: apex.jorje.data.Location): Id = {
-    Id(toIdToken(name, loc))
+  private def toId(name: String, loc: apex.jorje.data.Location): LocatableId = {
+    toIdToken(name, loc)
   }
 
-  private def toIdToken(name: String, loc: apex.jorje.data.Location): IdToken = {
-    IdToken(name, toLoc(loc, loc.getLine, loc.getColumn + name.length - 1))
+  private def toIdToken(name: String, loc: apex.jorje.data.Location): LocatableId = {
+    LocatableId(name, toLoc(loc, loc.getLine, loc.getColumn + name.length - 1))
   }
 
   private def toTypeRef(from: TypeInfo): com.financialforce.oparser.UnresolvedTypeRef = {
-    val tr = new UnresolvedTypeRef
     //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
+    val segments = new mutable.ArrayBuffer[TypeNameSegment]()
     from.getApexName
       .replaceAll("<.*>", "")
       .split("\\.")
       .foreach(
         n =>
-          tr.typeNameSegments.append(
+          segments.append(
             toTypeNameFromTypeInfo(from.getTypeArguments, n, from.getCodeUnitDetails.getLoc)
           )
       )
-
-    tr
+    UnresolvedTypeRef(segments.toArray, 0)
   }
 
   private def toTypeRef(
@@ -441,7 +438,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   ): Option[com.financialforce.oparser.UnresolvedTypeRef] = {
     from match {
       case Some(typ) =>
-        val res = new UnresolvedTypeRef()
+        val segments   = new mutable.ArrayBuffer[TypeNameSegment]()
+        var subscripts = 0
         //Things to note here,
         // if its a return type that has '[]' then parser will resolve '[]' to a list
         // but if its a in a typeArgument then it will resolve as ArrayTypeRef
@@ -451,35 +449,34 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
           // into deep nested typeRef with string type arguments
           typ.getNames.forEach(
             x =>
-              res.typeNameSegments
-                .append(new TypeNameSegment(toId(x.getValue, x.getLoc), TypeArguments.empty))
+              segments
+                .append(new TypeNameSegment(toId(x.getValue, x.getLoc), TypeRef.emptyArraySeq))
           )
-          res.arraySubscripts = 0
           for (_ <- 0 to typ.toString.split("\\[").length - 2) {
-            res.arraySubscripts += 1
+            subscripts += 1
           }
         } else {
           //We add the type arguments to the last type and not for each name
           val typArguments = typ.getTypeArguments.asScala
           val typeArguments =
             if (typArguments.nonEmpty)
-              TypeArguments(toTypeList(typArguments.flatMap(x => toTypeRef(Some(x)))))
+              toTypeList(typArguments.flatMap(x => toTypeRef(Some(x))))
             else
-              TypeArguments.empty
+              TypeRef.emptyArraySeq
 
           val last = typ.getNames.get(typ.getNames.size() - 1)
           typ.getNames.forEach(
             t =>
-              res.typeNameSegments.append(
+              segments.append(
                 if (t eq last)
                   new TypeNameSegment(toId(t.getValue, t.getLoc), typeArguments)
                 else
-                  new TypeNameSegment(toId(t.getValue, t.getLoc), TypeArguments.empty)
+                  new TypeNameSegment(toId(t.getValue, t.getLoc), TypeRef.emptyArraySeq)
               )
           )
         }
 
-        return Some(res)
+        return Some(UnresolvedTypeRef(segments.toArray, subscripts))
       case _ =>
     }
     None
@@ -490,14 +487,11 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     name: String,
     location: apex.jorje.data.Location
   ): TypeNameSegment = {
-    new TypeNameSegment(
-      toId(name, location),
-      TypeArguments(toTypeList(typeArguments.asScala.map(toTypeRef)))
-    )
+    new TypeNameSegment(toId(name, location), toTypeList(typeArguments.asScala.map(toTypeRef)))
   }
 
-  private def toTypeList(typeRefs: Iterable[UnresolvedTypeRef]) = {
-    new TypeList(ArraySeq.unsafeWrapArray(typeRefs.toArray))
+  private def toTypeList(typeRefs: Iterable[UnresolvedTypeRef]): ArraySeq[TypeRef] = {
+    ArraySeq.unsafeWrapArray(typeRefs.toArray)
   }
 
   private class BlockStatementVisitor extends AstVisitor[AdditionalPassScope] {

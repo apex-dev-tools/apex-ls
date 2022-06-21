@@ -8,6 +8,7 @@ import com.nawforce.pkgforce.memory.IdentityEquality
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 trait IModuleTypeDeclaration extends ITypeDeclaration {
   val module: IPM.Module
@@ -41,35 +42,39 @@ sealed class TypeDeclaration(
   val nature: TypeNature,
   _enclosing: IMutableModuleTypeDeclaration
 ) extends IMutableModuleTypeDeclaration {
-  var _location: Location = _
 
-  var _id: Id                       = _
-  var _extendsTypeRef: TypeRef      = _
-  var _implementsTypeList: TypeList = _
+  private var _location: Location = _
 
-  var _modifiers: ArraySeq[Modifier]                  = Modifiers.emptyArraySeq
-  var _annotations: ArraySeq[Annotation]              = Annotations.emptyArraySeq
-  var _initializers: mutable.ArrayBuffer[Initializer] = mutable.ArrayBuffer()
+  private var _id: LocatableId                       = _
+  private var _extendsTypeRef: TypeRef               = _
+  private var _implementsTypeList: ArraySeq[TypeRef] = _
 
-  var _innerTypes: mutable.ArrayBuffer[TypeDeclaration]          = mutable.ArrayBuffer()
-  var _constructors: mutable.ArrayBuffer[ConstructorDeclaration] = mutable.ArrayBuffer()
-  var _methods: mutable.ArrayBuffer[MethodDeclaration]           = mutable.ArrayBuffer()
-  var _properties: mutable.ArrayBuffer[PropertyDeclaration]      = mutable.ArrayBuffer()
-  var _fields: mutable.ArrayBuffer[FieldDeclaration]             = mutable.ArrayBuffer()
+  private var _modifiers: Array[Modifier]     = Modifiers.emptyArray
+  private var _annotations: Array[Annotation] = Annotations.emptyArray
+
+  private var _initializers: ArraySeq[Initializer]            = Initializer.emptyArraySeq
+  private var _innerTypes: ArraySeq[TypeDeclaration]          = TypeDeclaration.emptyArraySeq
+  private var _constructors: ArraySeq[ConstructorDeclaration] = ConstructorDeclaration.emptyArraySeq
+  private var _methods: ArraySeq[MethodDeclaration]           = MethodDeclaration.emptyArraySeq
+  private var _properties: ArraySeq[PropertyDeclaration]      = PropertyDeclaration.emptyArraySeq
+  private var _fields: ArraySeq[FieldDeclaration]             = FieldDeclaration.emptyArraySeq
+
+  // This is used to stage declaration that need adding to above, see syncBodyDeclarations()
+  private var _bodyDecls: mutable.ArrayBuffer[MutableTypeAppendable] = mutable.ArrayBuffer()
 
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
 
-  override def id: Id = _id
+  override def id: LocatableId = _id
 
-  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeArguments.empty)
+  override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeRef.emptyArraySeq)
 
   override def enclosing: Option[IMutableModuleTypeDeclaration] = Option(_enclosing)
   override def extendsTypeRef: TypeRef                          = _extendsTypeRef
-  override def implementsTypeList: TypeList                     = _implementsTypeList
+  override def implementsTypeList: ArraySeq[TypeRef]            = _implementsTypeList
 
-  override def modifiers: ArraySeq[Modifier]       = _modifiers
-  override def annotations: ArraySeq[Annotation]   = _annotations
+  override def modifiers: Array[Modifier]          = _modifiers
+  override def annotations: Array[Annotation]      = _annotations
   override def initializers: ArraySeq[Initializer] = ArraySeq.unsafeWrapArray(_initializers.toArray)
 
   override def innerTypes: ArraySeq[TypeDeclaration] = ArraySeq.unsafeWrapArray(_innerTypes.toArray)
@@ -80,95 +85,110 @@ sealed class TypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
-  override def setLocation(location: Location): Unit                   = _location = location
-  override def setExtends(typeRef: TypeRef): Unit                      = _extendsTypeRef = typeRef
-  override def setImplements(typeList: TypeList): Unit                 = _implementsTypeList = typeList
-  override def setModifiers(modifiers: ArraySeq[Modifier]): Unit       = _modifiers = modifiers
-  override def setAnnotations(annotations: ArraySeq[Annotation]): Unit = _annotations = annotations
+  override def setId(id: LocatableId): Unit                     = _id = id
+  override def setLocation(location: Location): Unit            = _location = location
+  override def setExtends(typeRef: TypeRef): Unit               = _extendsTypeRef = typeRef
+  override def setImplements(typeList: ArraySeq[TypeRef]): Unit = _implementsTypeList = typeList
+  override def setModifiers(modifiers: Array[Modifier]): Unit =
+    _modifiers = Modifiers.intern(modifiers)
+  override def setAnnotations(annotations: Array[Annotation]): Unit =
+    _annotations = Annotations.intern(annotations)
 
-  override def appendInnerType(inner: IMutableTypeDeclaration): Unit = {
-    // This is rather messy, we need to accept IMutableTypeDeclaration for the caller(s) but only want to
-    // expose as TypeDeclaration, it should not fail at run time, and maybe is fixable via some generics magic
-    inner match { case td: TypeDeclaration => _innerTypes.append(td) }
+  override def appendInitializer(init: Initializer): Unit            = _bodyDecls.append(init)
+  override def appendInnerType(inner: IMutableTypeDeclaration): Unit = _bodyDecls.append(inner)
+  override def appendConstructor(ctor: ConstructorDeclaration): Unit = _bodyDecls.append(ctor)
+  override def appendProperty(prop: PropertyDeclaration): Unit       = _bodyDecls.append(prop)
+  override def appendField(field: FieldDeclaration): Unit            = _bodyDecls.append(field)
+  override def appendMethod(method: MethodDeclaration): Unit         = _bodyDecls.append(method)
+
+  override def onComplete(): Unit = {
+    // On completion of the type we distribute out the collected _bodyDecls to the right collection. This gives
+    // us the ability to move away from ArrayBuffer's which waste memory to exactly sized ArraySeq's
+    val inners = new ArrayBuffer[TypeDeclaration]()
+    _bodyDecls
+      .groupBy(bd => bd.getClass)
+      .foreach(kv => {
+        kv._2.head match {
+          case _: Initializer =>
+            _initializers = ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[Initializer]).toArray)
+          case _: ConstructorDeclaration =>
+            _constructors =
+              ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[ConstructorDeclaration]).toArray)
+          case _: MethodDeclaration =>
+            _methods =
+              ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[MethodDeclaration]).toArray)
+          case _: PropertyDeclaration =>
+            _properties =
+              ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[PropertyDeclaration]).toArray)
+          case _: FieldDeclaration =>
+            _fields = ArraySeq.unsafeWrapArray(kv._2.map(_.asInstanceOf[FieldDeclaration]).toArray)
+          case _ =>
+            // Group all inners together
+            inners.addAll(kv._2.map(_.asInstanceOf[TypeDeclaration]))
+        }
+      })
+
+    if (inners.nonEmpty)
+      _innerTypes = ArraySeq.unsafeWrapArray(inners.toArray)
+
+    // onComplete should only be called once, so this should be safe ;-)
+    _bodyDecls = null
   }
-  override def appendConstructor(ctor: ConstructorDeclaration): Unit = _constructors.append(ctor)
-  override def appendProperty(prop: PropertyDeclaration): Unit       = _properties.append(prop)
-  override def appendField(field: FieldDeclaration): Unit            = _fields.append(field)
-
-  override def add(tl: TypeList): Unit          = _implementsTypeList = tl
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-  override def add(init: Initializer): Unit     = _initializers.append(init)
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-  override def add(i: Id): Unit                 = _id = id
 }
 
 object TypeDeclaration {
   final val emptyArrayBuffer = mutable.ArrayBuffer[TypeDeclaration]()
+  final val emptyArraySeq    = ArraySeq[TypeDeclaration]()
 }
 
 class ClassTypeDeclaration(
   _module: IPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
-) extends TypeDeclaration(_module, path, CLASS_NATURE, enclosing)
-    with IdAssignable
-    with TypeRefAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable
-    with InitializerAssignable {
-
-  override def add(i: Id): Unit = _id = i
-
-  override def add(tr: UnresolvedTypeRef): Unit = _extendsTypeRef = tr
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
-
-  override def add(init: Initializer): Unit = _initializers.append(init)
+) extends TypeDeclaration(_module, path, CLASS_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
     val base =
       s"""Class:      $id
          |Path:       $path
-         |Location:   ${id.id.location}
-         |Annotation: ${asString(_annotations)}
-         |Modifiers:  ${asString(_modifiers)}
-         |Extends:    ${_extendsTypeRef}
-         |Implements: ${_implementsTypeList}
+         |Location:   ${id.location}
+         |Annotation: ${asString(annotations)}
+         |Modifiers:  ${asString(modifiers)}
+         |Extends:    $extendsTypeRef
+         |Implements: $implementsTypeList
          |""".stripMargin
 
     val c =
-      if (_constructors.isEmpty) ""
+      if (constructors.isEmpty) ""
       else
         s"""
            |Constructors:
-           |${_constructors.mkString("\n")}
+           |${constructors.mkString("\n")}
            |""".stripMargin
 
     val m =
-      if (_methods.isEmpty) ""
+      if (methods.isEmpty) ""
       else
         s"""
            |Methods:
-           |${_methods.mkString("\n")}
+           |${methods.mkString("\n")}
            |""".stripMargin
 
     val p =
-      if (_properties.isEmpty) ""
+      if (properties.isEmpty) ""
       else
         s"""
            |Properties:
-           |${_properties.mkString("\n")}
+           |${properties.mkString("\n")}
            |""".stripMargin
 
     val f =
-      if (_fields.isEmpty) ""
+      if (fields.isEmpty) ""
       else
         s"""
            |Fields:
-           |${_fields.mkString("\n")}
+           |${fields.mkString("\n")}
            |""".stripMargin
 
     val i =
@@ -187,25 +207,16 @@ class InterfaceTypeDeclaration(
   _module: IPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
-) extends TypeDeclaration(_module, path, INTERFACE_NATURE, enclosing)
-    with IdAssignable
-    with TypeListAssignable
-    with MethodDeclarationAssignable {
-
-  override def add(i: Id): Unit = _id = i
-
-  override def add(tl: TypeList): Unit = _implementsTypeList = tl
-
-  override def add(md: MethodDeclaration): Unit = _methods.append(md)
+) extends TypeDeclaration(_module, path, INTERFACE_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
     s"""Interface:  $id
        |Path:       $path
-       |Location:   ${id.id.location}
-       |Annotation: ${asString(_annotations)}
-       |Modifiers:  ${asString(_modifiers)}
-       |Implements: ${_implementsTypeList}
+       |Location:   ${id.location}
+       |Annotation: ${asString(annotations)}
+       |Modifiers:  ${asString(modifiers)}
+       |Implements: $implementsTypeList
        |Methods:
        |${methods.mkString("\n")}
        |
@@ -217,20 +228,17 @@ class EnumTypeDeclaration(
   _module: IPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
-) extends TypeDeclaration(_module, path, ENUM_NATURE, enclosing)
-    with IdAssignable {
-
-  override def add(i: Id): Unit = _id = i
+) extends TypeDeclaration(_module, path, ENUM_NATURE, enclosing) {
 
   override def toString: String = {
     import StringUtils._
     s"""Enum:       $id
        |Path:       $path
-       |Location:   ${id.id.location}
-       |Annotation: ${asString(_annotations)}
-       |Modifiers:  ${asString(_modifiers)}
+       |Location:   ${id.location}
+       |Annotation: ${asString(annotations)}
+       |Modifiers:  ${asString(modifiers)}
        |Constants:
-       |${fields.map(f => s"${f.id.id.location} ${f.id.id.contents}").mkString("\n")}
+       |${fields.map(f => s"${f.id.location} ${f.id.name}").mkString("\n")}
        |
        |""".stripMargin
   }
@@ -315,52 +323,48 @@ object Compare {
       })
     }
 
-    if (first._annotations != second._annotations) {
-      throw new Exception(s"Different annotation ${first._annotations} != ${second._annotations}")
+    if (!(first.annotations sameElements second.annotations)) {
+      throw new Exception(s"Different annotation ${first.annotations
+        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first._modifiers != second._modifiers) {
-      throw new Exception(s"Different modifiers ${first._modifiers} != ${second._modifiers}")
+    if (!(first.modifiers sameElements second.modifiers)) {
+      throw new Exception(s"Different modifiers ${first.modifiers
+        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {
       throw new Exception(s"Different or empty class id ${first.id} != ${second.id}")
     }
 
-    if (first._extendsTypeRef != second._extendsTypeRef) {
+    if (first.extendsTypeRef != second.extendsTypeRef) {
+      throw new Exception(s"Different extends ${first.extendsTypeRef} != ${second.extendsTypeRef}")
+    }
+
+    if (first.implementsTypeList != second.implementsTypeList) {
       throw new Exception(
-        s"Different extends ${first._extendsTypeRef} != ${second._extendsTypeRef}"
+        s"Different implements ${first.implementsTypeList} != ${second.implementsTypeList}"
       )
     }
 
-    if (first._implementsTypeList != second._implementsTypeList) {
-      throw new Exception(
-        s"Different implements ${first._implementsTypeList} != ${second._implementsTypeList}"
-      )
+    if (first.initializers.length != second.initializers.length) {
+      throw new Exception(s"Different initializers ${first.initializers} != ${second.initializers}")
     }
 
-    if (first._initializers.length != second._initializers.length) {
-      throw new Exception(
-        s"Different initializers ${first._initializers} != ${second._initializers}"
-      )
+    if (first.constructors != second.constructors) {
+      throw new Exception(s"Different constructors ${first.constructors} != ${second.constructors}")
     }
 
-    if (first._constructors != second._constructors) {
-      throw new Exception(
-        s"Different constructors ${first._constructors} != ${second._constructors}"
-      )
+    if (first.methods != second.methods) {
+      throw new Exception(s"Different methods ${first.methods} != ${second.methods}")
     }
 
-    if (first._methods != second._methods) {
-      throw new Exception(s"Different methods ${first._methods} != ${second._methods}")
+    if (first.properties != second.properties) {
+      throw new Exception(s"Different properties ${first.properties} != ${second.properties}")
     }
 
-    if (first._properties != second._properties) {
-      throw new Exception(s"Different properties ${first._properties} != ${second._properties}")
-    }
-
-    if (first._fields != second._fields) {
-      throw new Exception(s"Different fields ${first._fields} != ${second._fields}")
+    if (first.fields != second.fields) {
+      throw new Exception(s"Different fields ${first.fields} != ${second.fields}")
     }
 
     compareInnerClasses(innerClassTypeDeclarations(first), innerClassTypeDeclarations(second))
@@ -384,21 +388,23 @@ object Compare {
     second: InterfaceTypeDeclaration
   ): Unit = {
 
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
+    if (!(first.annotations sameElements second.annotations)) {
+      throw new Exception(s"Different annotation ${first.annotations
+        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
+    if (!(first.modifiers sameElements second.modifiers)) {
+      throw new Exception(s"Different modifiers ${first.modifiers
+        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {
       throw new Exception(s"Different or empty interface id ${first.id} != ${second.id}")
     }
 
-    if (first._implementsTypeList != second._implementsTypeList) {
+    if (first.implementsTypeList != second.implementsTypeList) {
       throw new Exception(
-        s"Different extends ${first._implementsTypeList} != ${second._implementsTypeList}"
+        s"Different extends ${first.implementsTypeList} != ${second.implementsTypeList}"
       )
     }
 
@@ -409,12 +415,14 @@ object Compare {
 
   def compareEnumTypeDeclarations(first: EnumTypeDeclaration, second: EnumTypeDeclaration): Unit = {
 
-    if (first.annotations != second.annotations) {
-      throw new Exception(s"Different annotation ${first.annotations} != ${second.annotations}")
+    if (!(first.annotations sameElements second.annotations)) {
+      throw new Exception(s"Different annotation ${first.annotations
+        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
-    if (first.modifiers != second.modifiers) {
-      throw new Exception(s"Different modifiers ${first.modifiers} != ${second.modifiers}")
+    if (!(first.modifiers sameElements second.modifiers)) {
+      throw new Exception(s"Different modifiers ${first.modifiers
+        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {

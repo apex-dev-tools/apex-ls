@@ -51,7 +51,7 @@ class GenericPlatformTypeDeclaration(
 
   override val location: Location = Location.default
 
-  override val id: Id = typeInfo.typeName.id
+  override val id: LocatableId = typeInfo.typeName.id
 
   override val typeNameSegment: TypeNameSegment =
     createTypeName(genericDecl.id.toString, Some(typeArgs))

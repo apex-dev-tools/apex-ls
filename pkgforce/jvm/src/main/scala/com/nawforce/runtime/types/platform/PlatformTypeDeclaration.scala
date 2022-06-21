@@ -72,7 +72,7 @@ class PlatformTypeDeclaration(
 
   override val location: Location = Location.default
 
-  override val id: Id = typeInfo.typeName.id
+  override val id: LocatableId = typeInfo.typeName.id
 
   override val typeNameSegment: TypeNameSegment = typeInfo.typeName
 
@@ -82,20 +82,20 @@ class PlatformTypeDeclaration(
       .flatMap(PlatformTypeDeclaration.get(module, _))
       .orNull
 
-  override lazy val implementsTypeList: TypeList = {
+  override lazy val implementsTypeList: ArraySeq[TypeRef] = {
     val interfaces = cls.getInterfaces
     if (interfaces.nonEmpty) {
       val trs = interfaces.flatMap(getPlatformTypeDeclFromType)
       assert(interfaces.length == trs.length)
-      TypeList(ArraySeq.unsafeWrapArray(trs))
+      ArraySeq.unsafeWrapArray(trs)
     } else
       null
   }
 
-  override lazy val modifiers: ArraySeq[Modifier] =
+  override lazy val modifiers: Array[Modifier] =
     PlatformModifiers.typeModifiers(cls.getModifiers, nature)
 
-  override lazy val annotations: ArraySeq[Annotation] = emptyAnnotations
+  override lazy val annotations: Array[Annotation] = emptyAnnotations
 
   override lazy val initializers: ArraySeq[Initializer] = emptyInitializers
 
@@ -137,8 +137,8 @@ class PlatformTypeDeclaration(
   //This is so types like Internal.Object$ can be displayed as Object instead
   override def toString: String = {
     val args =
-      if (typeNameSegment.getArguments.nonEmpty)
-        typeNameSegment.getArguments
+      if (typeNameSegment.typeArguments.nonEmpty)
+        typeNameSegment.typeArguments
           .map(
             arg => if (arg.isInstanceOf[PlatformTypeDeclaration]) arg.toString else arg.getFullName
           )
@@ -191,16 +191,12 @@ class PlatformTypeDeclaration(
     td: PlatformTypeDeclaration
   ): ConstructorDeclaration = {
     val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
-    val name      = new QualifiedName()
-    (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.id.contents))
-      .map(s => Id(IdToken(s, Location.default)))
-      .foreach(name.add)
-    ConstructorDeclaration(
-      ArraySeq.empty,
-      modifiers,
-      name,
-      toFormalParameterList(ctor.getParameters)
+    val name = QualifiedName(
+      (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.name))
+        .map(s => LocatableId(s, Location.default))
     )
+
+    ConstructorDeclaration(Array.empty, modifiers, name, toFormalParameterList(ctor.getParameters))
   }
 
   protected def toMethodDeclaration(
@@ -214,7 +210,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.methodModifiers(method.getModifiers, td.nature),
       rtType,
-      Id(IdToken(decodeName(method.getName), Location.default)),
+      LocatableId(decodeName(method.getName), Location.default),
       toFormalParameterList(method.getParameters)
     )
   }
@@ -224,7 +220,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(field.getModifiers),
       getPlatformTypeDeclFromType(field.getGenericType).get,
-      Id(IdToken(decodeName(field.getName), Location.default))
+      LocatableId(decodeName(field.getName), Location.default)
     )
   }
 
@@ -235,10 +231,12 @@ class PlatformTypeDeclaration(
   }
 
   protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
-    val p = new FormalParameter
-    p.typeRef = getPlatformTypeDeclFromType(parameter.getParameterizedType)
-    p.add(Id(IdToken(parameter.getName, Location.default)))
-    p
+    FormalParameter(
+      Annotations.emptyArray,
+      Modifiers.emptyArray,
+      getPlatformTypeDeclFromType(parameter.getParameterizedType).get,
+      LocatableId(parameter.getName, Location.default)
+    )
   }
 
   protected def decodeName(name: String): String = {
@@ -277,7 +275,7 @@ class PlatformTypeDeclaration(
   private def preResolveArguments(un: UnresolvedTypeRef, module: IPM.Module): UnresolvedTypeRef = {
     val segments = un.typeNameSegments
       .map(segment => {
-        val args = segment.getArguments
+        val args = segment.typeArguments
         val newArgs = args.flatMap {
           case unref: UnresolvedTypeRef =>
             val newUnref = preResolveArguments(unref, module)
@@ -289,7 +287,7 @@ class PlatformTypeDeclaration(
         else
           segment
       })
-    UnresolvedTypeRef(segments)
+    UnresolvedTypeRef(segments, 0)
   }
 
   def getTypeName(cls: java.lang.Class[_]): TypeInfo = {
@@ -312,7 +310,7 @@ object PlatformTypeDeclaration {
   final val emptyPaths: Array[String]                                = Array.empty
   final val emptyArgs: Array[String]                                 = Array.empty
   final val emptyTypeDeclarations: ArraySeq[PlatformTypeDeclaration] = ArraySeq.empty
-  final val emptyAnnotations: ArraySeq[Annotation]                   = ArraySeq.empty
+  final val emptyAnnotations: Array[Annotation]                      = Array.empty
   final val emptyInitializers: ArraySeq[Initializer]                 = ArraySeq.empty
   final val emptyProperties: ArraySeq[PropertyDeclaration]           = ArraySeq.empty
   final val priorityNamespaces: Seq[Name]                            = Seq(Names.System, Names.Schema, Names.Database)
@@ -358,14 +356,14 @@ object PlatformTypeDeclaration {
 
     // Quick fail on wrong number of type variables
     val td            = tdOpt.get
-    val typeArguments = td.typeNameSegment.getArguments
+    val typeArguments = td.typeNameSegment.typeArguments
     if (typeArguments.length != aliasedTypeName.params.size)
       return None
 
     if (typeArguments.isEmpty) {
       Some(td)
     } else {
-      val resolvedArgs = typeRef.typeNameSegments.last.getArguments.collect {
+      val resolvedArgs = typeRef.typeNameSegments.last.typeArguments.collect {
         case td: IModuleTypeDeclaration => td
       }
       Some(GenericPlatformTypeDeclaration.get(td.module, resolvedArgs, td))
@@ -384,8 +382,8 @@ object PlatformTypeDeclaration {
 
   private def asTypeName(typeName: TypeNameSegment, outer: Option[TypeName]): Option[TypeName] = {
     val resolvedSegments =
-      typeName.getArguments.collect { case td: IModuleTypeDeclaration => td }.map(_.typeName)
-    if (resolvedSegments.length != typeName.getArguments.length) {
+      typeName.typeArguments.collect { case td: IModuleTypeDeclaration => td }.map(_.typeName)
+    if (resolvedSegments.length != typeName.typeArguments.length) {
       None
     } else {
       val resolvedTypeNames: Seq[TypeName] =
@@ -496,12 +494,8 @@ object PlatformTypeDeclaration {
     name: String,
     params: Option[ArraySeq[IModuleTypeDeclaration]]
   ): TypeNameSegment = {
-    val typeArguments =
-      if (params.nonEmpty)
-        TypeArguments(TypeList(params.get))
-      else
-        TypeArguments.empty
-    TypeNameSegment(Id(IdToken(name, Location.default)), typeArguments)
+    val typeArguments = params.getOrElse(TypeRef.emptyArraySeq)
+    TypeNameSegment(LocatableId(name, Location.default), typeArguments)
   }
 
   private val typeAliasMap: Map[TypeName, TypeName] = Map(

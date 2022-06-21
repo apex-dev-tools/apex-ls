@@ -128,7 +128,7 @@ object IPM extends TriHierarchy {
         // Pre-resolve segment type arguments within the typeRef, this is required so that generic types
         // can be constructed without the need for a recursive call back to this module for type resolution.
         val resolvedSegments = typeRef.typeNameSegments.map(segment => {
-          val args = segment.getArguments
+          val args = segment.typeArguments
           val newArgs = args.flatMap {
             case unref: UnresolvedTypeRef =>
               findExactTypeId(unref.toString, unref)
@@ -140,7 +140,7 @@ object IPM extends TriHierarchy {
           else
             segment
         })
-        findExactTypeId(name, UnresolvedTypeRef(resolvedSegments))
+        findExactTypeId(name, UnresolvedTypeRef(resolvedSegments, 0))
       })
     }
 
@@ -282,7 +282,7 @@ object IPM extends TriHierarchy {
 
       def resolveParameterList(fpl: FormalParameterList): Unit = {
         fpl.formalParameters.foreach(fp => {
-          fp.typeRef = fp.typeRef.flatMap(resolve).orElse(fp.typeRef)
+          fp.typeRef = resolve(fp.typeRef).getOrElse(fp.typeRef)
         })
       }
 
@@ -291,7 +291,7 @@ object IPM extends TriHierarchy {
         case None      => null
       })
       Option(decl.implementsTypeList).foreach(tl => {
-        decl.setImplements(TypeList(tl.typeRefs.map(tr => resolve(tr).getOrElse(tr))))
+        decl.setImplements(tl.map(tr => resolve(tr).getOrElse(tr)))
       })
       decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
       decl.properties.foreach(resolveSignature)
@@ -451,14 +451,14 @@ object IPM extends TriHierarchy {
 
       // Short-cut to next module if could not possibly match
       if (
-        !defaultNamespace && !typeRef.typeNameSegments.head.id.id.lowerCaseContents
+        !defaultNamespace && !typeRef.typeNameSegments.head.id.lowerCaseContents
           .equalsIgnoreCase(namespace.get.value)
       )
         return nextModule.flatMap(_.findExactTypeId(name, typeRef))
 
       // Default namespace if needed and get declaration
       val defaultedNameAndRef = defaultName(name, typeRef)
-      val isGeneric           = typeRef.typeNameSegments.exists(_.typeArguments.typeList.typeRefs.nonEmpty)
+      val isGeneric           = typeRef.typeNameSegments.exists(_.typeArguments.nonEmpty)
       val result =
         if (!isGeneric) {
           types.getOrElseUpdate(
@@ -477,9 +477,7 @@ object IPM extends TriHierarchy {
         }
 
       result.orElse {
-        // Continue search in next module, if namespace defaulted we have to remove it, yuk
-        if (defaultedNameAndRef._1 != name)
-          typeRef.typeNameSegments.remove(0)
+        // Continue search in next module
         nextModule.flatMap(_.findExactTypeId(name, typeRef))
       }
     }
@@ -493,12 +491,17 @@ object IPM extends TriHierarchy {
       if (
         !defaultNamespace || isNameAmbiguous ||
         (typeRef.typeNameSegments.length > 1 &&
-        typeRef.typeNameSegments.head.id.id.lowerCaseContents.equalsIgnoreCase(namespace.get.value))
+        typeRef.typeNameSegments.head.id.lowerCaseContents.equalsIgnoreCase(namespace.get.value))
       ) {
         (name, typeRef)
       } else {
-        typeRef.typeNameSegments.insert(0, TypeNameSegment(namespace.get.value))
-        (namespace.get.value + "." + name, typeRef)
+        (
+          namespace.get.value + "." + name,
+          UnresolvedTypeRef(
+            TypeNameSegment(namespace.get.value) +: typeRef.typeNameSegments,
+            typeRef.arraySubscripts
+          )
+        )
       }
     }
 

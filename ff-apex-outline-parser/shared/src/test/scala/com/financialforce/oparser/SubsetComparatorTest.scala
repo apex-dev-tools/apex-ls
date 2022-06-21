@@ -4,21 +4,18 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.oparser._
 import org.scalatest.funspec.AnyFunSpec
-
-import scala.collection.immutable.ArraySeq
 
 class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
   private def generateClassDeclaration(name: String): TestClassTypeDeclaration = {
     val ctd = new TestClassTypeDeclaration("path/Dummy.ls", null)
-    ctd.add(toId(name))
-    ctd.setAnnotations(ArraySeq(toAnnotation(Array("TestVisible"), None)))
-    ctd.setModifiers(ArraySeq(toModifier("private")))
-    ctd.add(toTypeRef(Map("Foo" -> None, "Bar" -> None)))
-    ctd.add(toTypeList(Array(toTypeRef(Map("ExtendsType" -> None)))))
-    ctd.add(
+    ctd.setId(toId(name))
+    ctd.setAnnotations(Array(toAnnotation(Array("TestVisible"), None)))
+    ctd.setModifiers(Array(toModifier("private")))
+    ctd.setExtends(toTypeRef(Map("Foo" -> None, "Bar" -> None)))
+    ctd.setImplements(toTypeList(Array(toTypeRef(Map("ExtendsType" -> None)))))
+    ctd.appendMethod(
       toMethodDeclaration(
         Array(toAnnotation(Array("Test"), None)),
         Array("public", "static").map(toModifier),
@@ -29,8 +26,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
             toParameter(
               Array[Annotation](),
               Array[Modifier](),
-              Some(toTypeRef(Map("String" -> None))),
-              Some(toId("s"))
+              toTypeRef(Map("String" -> None)),
+              toId("s")
             )
           )
         )
@@ -63,19 +60,22 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
     paramType: String,
     paramName: String
   ): ConstructorDeclaration = {
+    getBasicConstructor(annotation, modifier, name, toTypeRef(Map(paramType -> None)), paramName)
+  }
+
+  private def getBasicConstructor(
+    annotation: String,
+    modifier: String,
+    name: String,
+    paramType: TypeRef,
+    paramName: String
+  ): ConstructorDeclaration = {
     toConstructor(
       Array(toAnnotation(Array(annotation), None)),
       Array(modifier).map(toModifier),
       Array(name),
       toParameterList(
-        Array(
-          toParameter(
-            Array[Annotation](),
-            Array[Modifier](),
-            Some(toTypeRef(Map(paramType -> None))),
-            Some(toId(paramName))
-          )
-        )
+        Array(toParameter(Array[Annotation](), Array[Modifier](), paramType, toId(paramName)))
       )
     )
   }
@@ -88,9 +88,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
   private def getMockResolver(resolvedTypes: Array[String] = Array()): TypeIdResolver = {
     new TypeIdResolver() {
-      val ids: Array[Id] = resolvedTypes.map(toId)
+      val ids: Array[LocatableId] = resolvedTypes.map(toId)
 
-      override def canBeResolved(id: Id): Boolean = ids.contains(id)
+      override def canBeResolved(id: LocatableId): Boolean = ids.contains(id)
     }
   }
 
@@ -140,8 +140,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.setAnnotations(ArraySeq(toAnnotation(Array("TestAnnotation"), Some("param"))))
-      second.setAnnotations(ArraySeq(toAnnotation(Array("TestAnnotation"), Some("param"))))
+      first.setAnnotations(Array(toAnnotation(Array("TestAnnotation"), Some("param"))))
+      second.setAnnotations(Array(toAnnotation(Array("TestAnnotation"), Some("param"))))
 
       //When
       val comparator = SubsetComparator(first)
@@ -155,8 +155,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.setAnnotations(ArraySeq(toAnnotation(Array("TestAnnotation"), Some("param"))))
-      second.setAnnotations(ArraySeq(toAnnotation(Array("diff"), Some("param"))))
+      first.setAnnotations(Array(toAnnotation(Array("TestAnnotation"), Some("param"))))
+      second.setAnnotations(Array(toAnnotation(Array("diff"), Some("param"))))
       val comparator = SubsetComparator(first)
 
       //When //Then
@@ -171,8 +171,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.setAnnotations(ArraySeq(toAnnotation(Array("TestAnnotation"), None)))
-      second.setAnnotations(ArraySeq(toAnnotation(Array("QualifiedName", "TestAnnotation"), None)))
+      first.setAnnotations(Array(toAnnotation(Array("TestAnnotation"), None)))
+      second.setAnnotations(Array(toAnnotation(Array("QualifiedName", "TestAnnotation"), None)))
 
       //When
       val comparator =
@@ -191,8 +191,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.setModifiers(ArraySeq("private", "with sharing").map(toModifier))
-      second.setModifiers(ArraySeq("private", "with sharing").map(toModifier))
+      first.setModifiers(Array("private", "with sharing").map(toModifier))
+      second.setModifiers(Array("private", "with sharing").map(toModifier))
 
       //When
       val comparator = SubsetComparator(first)
@@ -206,8 +206,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.setModifiers(ArraySeq("private", "with sharing").map(toModifier))
-      second.setModifiers(ArraySeq("private", "without sharing").map(toModifier))
+      first.setModifiers(Array("private", "with sharing").map(toModifier))
+      second.setModifiers(Array("private", "without sharing").map(toModifier))
 
       //When
       val comparator = SubsetComparator(first)
@@ -224,8 +224,10 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None)))))
-      second.add(
+      first.setImplements(
+        toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None))))
+      )
+      second.setImplements(
         toTypeList(
           Array(
             toTypeRef(Map("Foo" -> None)),
@@ -250,8 +252,10 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None)))))
-      second.add(
+      first.setImplements(
+        toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None))))
+      )
+      second.setImplements(
         toTypeList(
           Array(
             toTypeRef(Map("Foo" -> None)),
@@ -274,8 +278,10 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None)))))
-      second.add(
+      first.setImplements(
+        toTypeList(Array(toTypeRef(Map("Foo" -> None)), toTypeRef(Map("Bar" -> None))))
+      )
+      second.setImplements(
         toTypeList(
           Array(
             toTypeRef(Map("Foo" -> None)),
@@ -299,8 +305,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       //Given
       val first  = generateEmptyClassDeclaration("Dummy")
       val second = generateEmptyClassDeclaration("Dummy")
-      first.add(toTypeList(Array()))
-      second.add(toTypeList(Array(toTypeRef(Map("Foo" -> None)))))
+      first.setImplements(toTypeList(Array()))
+      second.setImplements(toTypeList(Array(toTypeRef(Map("Foo" -> None)))))
+
       //When
       val comparator =
         SubsetComparator(first)
@@ -447,15 +454,15 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
     it("should not be subsets when it typeRef has resolved names") {
       //We expect constructors to be either equal or not and do not check for subsets
       //Given
-      val first  = generateEmptyClassDeclaration("Dummy")
-      val second = generateEmptyClassDeclaration("Dummy")
+      val first = generateEmptyClassDeclaration("Dummy")
       first._constructors.append(getBasicConstructor("TestVisible", "private", "Dummy", "Foo", "f"))
-      val sCon = getBasicConstructor("TestVisible", "private", "Dummy", "Foo", "f")
-      sCon.formalParameterList.formalParameters.head.typeRef.get
-        .asInstanceOf[UnresolvedTypeRef]
-        .typeNameSegments
-        .prepend(toTypeNames("ResolvedName", None))
-      second._constructors.append(sCon)
+
+      val second = generateEmptyClassDeclaration("Dummy")
+      val paramType =
+        UnresolvedTypeRef(Array(toTypeNames("ResolvedName", None), toTypeNames("Foo", None)), 0)
+      second._constructors.append(
+        getBasicConstructor("TestVisible", "private", "Dummy", paramType, "f")
+      )
 
       //When
       val comparator =
@@ -475,7 +482,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       annotations: Array[Annotation] = Array(toAnnotation(Array("Override"), None)),
       modifiers: Array[Modifier] = Array("public", "static").map(toModifier),
       typeRef: TypeRef = toTypeRef(Map("void" -> None)),
-      id: Id = toId("method"),
+      id: LocatableId = toId("method"),
       parameters: FormalParameterList = generateParameterList()
     ): MethodDeclaration = {
       toMethodDeclaration(annotations, modifiers, typeRef, id, parameters)
@@ -485,9 +492,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       annotations: Array[Annotation] = Array[Annotation](),
       modifiers: Array[Modifier] = Array[Modifier](),
       typeRef: TypeRef = toTypeRef(Map("String" -> None)),
-      id: Id = toId("s")
+      id: LocatableId = toId("s")
     ): FormalParameterList = {
-      toParameterList(Array(toParameter(annotations, modifiers, Some(typeRef), Some(id))))
+      toParameterList(Array(toParameter(annotations, modifiers, typeRef, id)))
     }
 
     it("should be equal") {

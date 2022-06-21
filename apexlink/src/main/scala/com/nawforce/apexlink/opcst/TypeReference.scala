@@ -2,10 +2,8 @@ package com.nawforce.apexlink.opcst
 
 import com.financialforce.oparser.{
   UnresolvedTypeRef,
-  TypeArguments => OPTypeArguments,
-  TypeList => OPTypeList,
   TypeNameSegment => OPTypeName,
-  TypeRef => OPTypeReference
+  TypeRef => OPTypeRef
 }
 import com.nawforce.pkgforce.names.TypeName
 
@@ -19,24 +17,24 @@ import com.nawforce.apexlink.cst.{
 
 private[opcst] object TypeReference {
 
-  def construct(tr: Option[OPTypeReference]): TypeName = {
+  def construct(tr: Option[OPTypeRef]): TypeName = {
     CSTTypeReferenceAlias.construct(Some(new OutlineParserTypeReference(tr)))
   }
 
-  def construct(tr: OPTypeReference): TypeName = {
+  def construct(tr: OPTypeRef): TypeName = {
     CSTTypeReferenceAlias.construct(Some(new OutlineParserTypeReference(Some(tr))))
   }
 
   private class OutlineParserTypeName(typeName: OPTypeName) extends CSTTypeName {
     override def typeArguments(): CSTTypeArguments =
       new OutlineParserTypeArgument(typeName.typeArguments)
-    override def isList: Boolean           = typeName.id.id.lowerCaseContents == "list"
-    override def isSet: Boolean            = typeName.id.id.lowerCaseContents == "set"
-    override def isMap: Boolean            = typeName.id.id.lowerCaseContents == "map"
-    override def getIdText: Option[String] = Option(typeName.id.id.contents)
+    override def isList: Boolean           = typeName.id.lowerCaseContents == "list"
+    override def isSet: Boolean            = typeName.id.lowerCaseContents == "set"
+    override def isMap: Boolean            = typeName.id.lowerCaseContents == "map"
+    override def getIdText: Option[String] = Option(typeName.id.name)
   }
 
-  private class OutlineParserTypeReference(typeReference: Option[OPTypeReference])
+  private class OutlineParserTypeReference(typeReference: Option[OPTypeRef])
       extends CSTTypeReference {
     override def arraySubscriptsCount(): Int = {
       //TODO: is this actually right behaviour?
@@ -56,17 +54,15 @@ private[opcst] object TypeReference {
     }
   }
 
-  private class OutlineParserTypeArgument(typeArguments: OPTypeArguments) extends CSTTypeArguments {
+  private class OutlineParserTypeArgument(typeArguments: ArraySeq[OPTypeRef])
+      extends CSTTypeArguments {
     override def typeRefs(): ArraySeq[CSTTypeReference] =
-      ArraySeq.from(
-        typeArguments.typeList.typeRefs.map(tr => new OutlineParserTypeReference(Some(tr)))
-      )
+      ArraySeq.from(typeArguments.map(tr => new OutlineParserTypeReference(Some(tr))))
   }
 }
 
 private[opcst] object TypeList {
-  def construct(typeList: OPTypeList): ArraySeq[TypeName] = {
-    val types = typeList.typeRefs
-    ArraySeq.from(types.map(t => TypeReference.construct(Some(t))))
+  def construct(typeList: ArraySeq[OPTypeRef]): ArraySeq[TypeName] = {
+    ArraySeq.from(typeList.map(t => TypeReference.construct(Some(t))))
   }
 }

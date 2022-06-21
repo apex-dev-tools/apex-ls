@@ -7,6 +7,7 @@ import com.financialforce.oparser.FieldDeclaration;
 import com.nawforce.pkgforce.api.ApexField;
 import com.nawforce.pkgforce.api.ApexType;
 import com.nawforce.pkgforce.api.ApexTypeId;
+import scala.collection.immutable.ArraySeq;
 
 public class ApexFieldAdapter implements ApexField {
     final private ApexTypeAdapter owner;
@@ -29,7 +30,7 @@ public class ApexFieldAdapter implements ApexField {
 
     @Override
     public String getModifiers() {
-        return fd.modifiers().mkString(" ");
+        return ArraySeq.unsafeWrapArray(fd.modifiers()).mkString(" ");
     }
 
     @Override

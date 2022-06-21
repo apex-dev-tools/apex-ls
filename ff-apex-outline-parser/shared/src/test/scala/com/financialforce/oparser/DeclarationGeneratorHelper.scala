@@ -4,7 +4,6 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.oparser._
 import scala.collection.immutable.ArraySeq
 
 trait DeclarationGeneratorHelper {
@@ -26,59 +25,49 @@ trait DeclarationGeneratorHelper {
       toId(typeName),
       maybeArguments
         .map(arguments => toTypeArguments(Some(arguments)))
-        .getOrElse(TypeArguments.empty)
+        .getOrElse(TypeRef.emptyArraySeq)
     )
   }
 
-  def toTypeArguments(maybeTypes: Option[Array[UnresolvedTypeRef]]): TypeArguments = {
-    new TypeArguments(maybeTypes.map(types => toTypeList(types)).getOrElse(TypeList.empty))
+  def toTypeArguments(maybeTypes: Option[Array[UnresolvedTypeRef]]): ArraySeq[TypeRef] = {
+    maybeTypes.map(types => toTypeList(types)).getOrElse(TypeRef.emptyArraySeq)
   }
 
-  def toTypeList(types: Array[UnresolvedTypeRef]): TypeList = {
-    TypeList(ArraySeq.unsafeWrapArray(types))
+  def toTypeList(types: Array[UnresolvedTypeRef]): ArraySeq[TypeRef] = {
+    ArraySeq.unsafeWrapArray(types)
   }
 
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {
-    val tr = new UnresolvedTypeRef()
-    typeNames.foreach(tr.typeNameSegments.append)
-    tr.arraySubscripts = totalSubscripts
-    tr
+    UnresolvedTypeRef(typeNames, totalSubscripts)
   }
 
   def toParameter(
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
-    typeRef: Option[TypeRef] = None,
-    id: Option[Id] = None
+    typeRef: TypeRef,
+    id: LocatableId
   ): FormalParameter = {
-    val fp = new FormalParameter()
-    fp.setModifiers(ArraySeq.unsafeWrapArray(modifiers))
-    fp.setAnnotations(ArraySeq.unsafeWrapArray(annotations))
-    fp.typeRef = typeRef
-    fp.id = id
-    fp
+    FormalParameter(annotations, modifiers, typeRef, id)
   }
 
   def toModifier(m: String): Modifier = {
     Modifier(m)
   }
 
-  def toIdToken(token: String): IdToken = {
-    IdToken(token, Location.default)
+  def toIdToken(token: String): LocatableId = {
+    LocatableId(token, Location.default)
   }
 
   def toAnnotation(ids: Array[String], parameter: Option[String]): Annotation = {
-    Annotation(toQName(ids), parameter)
+    Annotation(toQName(ids).toString, parameter)
   }
 
   def toQName(ids: Array[String]): QualifiedName = {
-    val qName = new QualifiedName()
-    ids.foreach(x => qName.add(toId(x)))
-    qName
+    QualifiedName(ids.map(x => toId(x)))
   }
 
-  def toId(id: String): Id = {
-    Id(toIdToken(id))
+  def toId(id: String): LocatableId = {
+    toIdToken(id)
   }
 
   def toParameterList(fps: Array[FormalParameter]): FormalParameterList = {
@@ -91,55 +80,34 @@ trait DeclarationGeneratorHelper {
     names: Array[String],
     parameters: FormalParameterList
   ): ConstructorDeclaration = {
-    ConstructorDeclaration(
-      ArraySeq.unsafeWrapArray(annotation),
-      ArraySeq.unsafeWrapArray(modifiers),
-      toQName(names),
-      parameters
-    )
+    ConstructorDeclaration(annotation, modifiers, toQName(names), parameters)
   }
 
   def toMethodDeclaration(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: Id,
+    id: LocatableId,
     parameters: FormalParameterList
   ): MethodDeclaration = {
-    MethodDeclaration(
-      ArraySeq.unsafeWrapArray(annotation),
-      ArraySeq.unsafeWrapArray(modifiers),
-      typeRef,
-      id,
-      parameters
-    )
+    MethodDeclaration(annotation, modifiers, Some(typeRef), id, parameters)
   }
 
   def toPropertyDeclaration(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: Id
+    id: LocatableId
   ): PropertyDeclaration = {
-    new PropertyDeclaration(
-      ArraySeq.unsafeWrapArray(annotation),
-      ArraySeq.unsafeWrapArray(modifiers),
-      typeRef,
-      id
-    )
+    PropertyDeclaration(annotation, modifiers, typeRef, id)
   }
 
   def toFieldDeclaration(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: Id
+    id: LocatableId
   ): FieldDeclaration = {
-    FieldDeclaration(
-      ArraySeq.unsafeWrapArray(annotation),
-      ArraySeq.unsafeWrapArray(modifiers),
-      typeRef,
-      id
-    )
+    FieldDeclaration(annotation, modifiers, typeRef, id)
   }
 }

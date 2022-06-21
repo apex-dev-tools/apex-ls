@@ -123,8 +123,8 @@ class SubsetComparator(
     }
 
     if (first.implementsTypeList != second.implementsTypeList) {
-      val firstTypeRefs  = Option(first.implementsTypeList).map(_.typeRefs).get
-      val secondTypeRefs = Option(second.implementsTypeList).map(_.typeRefs).get
+      val firstTypeRefs  = Option(first.implementsTypeList).get
+      val secondTypeRefs = Option(second.implementsTypeList).get
       val isSubset       = areTypeRefsSubsets(firstTypeRefs, secondTypeRefs)
       if (!isSubset)
         throw new Exception(
@@ -227,10 +227,7 @@ class SubsetComparator(
   private def getTypeArgumentTypeRefs(typ: UnresolvedTypeRef): ArraySeq[TypeRef] = {
     ArraySeq.unsafeWrapArray(
       typ.typeNameSegments
-        .map(_.typeArguments)
-        .map(_.typeList)
-        .flatMap(_.typeRefs)
-        .toArray
+        .flatMap(_.typeArguments)
     )
   }
 
@@ -273,7 +270,7 @@ class SubsetComparator(
       sUnresolvedType.typeNameSegments.filterNot(s => sResolver.get.canBeResolved(s.id))
     //if fTypeNamesRemovedResolvedTypes and sTypeNamesRemovedResolvedTypes are empty then all the types could be resolved
     var checks =
-      fTypeNamesRemovedResolvedTypes == sTypeNamesRemovedResolvedTypes && fUnresolvedType.arraySubscripts == sUnresolvedType.arraySubscripts
+      (fTypeNamesRemovedResolvedTypes sameElements sTypeNamesRemovedResolvedTypes) && fUnresolvedType.arraySubscripts == sUnresolvedType.arraySubscripts
     if (sTypeNamesRemovedResolvedTypes.isEmpty && fTypeNamesRemovedResolvedTypes.nonEmpty) {
       // we have all resolved types in second
       checks = checkTypeArguments(
@@ -291,7 +288,8 @@ class SubsetComparator(
     }
     if (!checks) {
       if (
-        fUnresolvedType.typeNameSegments.map(_.id) == sUnresolvedType.typeNameSegments.map(_.id)
+        fUnresolvedType.typeNameSegments.map(_.id) sameElements sUnresolvedType.typeNameSegments
+          .map(_.id)
       ) {
         //Type arguments for type names must have failed
         checks = checkTypeArguments(fUnresolvedType, sUnresolvedType)
@@ -338,7 +336,7 @@ class SubsetComparator(
           })
       }
       return allTypeNames
-        .map(_.id.id.lowerCaseContents)
+        .map(_.id.lowerCaseContents)
         .count(_.equalsIgnoreCase("list")) == fUnresolvedType.arraySubscripts
     }
     false
@@ -387,7 +385,9 @@ class SubsetComparator(
     secondDiff.find(firstSig.id == _.id) match {
       case Some(secondSig) =>
         val typeRefIdCheck = compareTypeRef(firstSig.typeRef, secondSig.typeRef)
-        typeRefIdCheck && firstSig.annotations == secondSig.annotations && firstSig.modifiers == secondSig.modifiers
+        typeRefIdCheck &&
+        (firstSig.annotations sameElements secondSig.annotations) &&
+        (firstSig.modifiers sameElements secondSig.modifiers)
       case _ => false
     }
   }
@@ -407,7 +407,9 @@ class SubsetComparator(
       typeRefIdCheck && checkForParameterListAgainst(
         first.formalParameterList,
         secondMethod.formalParameterList
-      ) && first.annotations == secondMethod.annotations && first.modifiers == secondMethod.modifiers
+      ) &&
+      (first.annotations sameElements secondMethod.annotations) &&
+      (first.modifiers sameElements secondMethod.modifiers)
     })
   }
 
@@ -419,12 +421,12 @@ class SubsetComparator(
       return second.formalParameters.nonEmpty && first.formalParameters.zipWithIndex.forall(f => {
         val s = second.formalParameters(f._2)
         compareTypeRef(f._1.typeRef, s.typeRef) && !getDiffIfThereIsAny(
-          ArraySeq.unsafeWrapArray(f._1.annotations.toArray),
-          ArraySeq.unsafeWrapArray(s.annotations.toArray)
+          ArraySeq.unsafeWrapArray(f._1.annotations),
+          ArraySeq.unsafeWrapArray(s.annotations)
         )._1 && !getDiffIfThereIsAny(
-          ArraySeq.unsafeWrapArray(f._1.modifiers.toArray),
-          ArraySeq.unsafeWrapArray(s.modifiers.toArray)
-        )._1 && s.id == f._1.id
+          ArraySeq.unsafeWrapArray(f._1.modifiers),
+          ArraySeq.unsafeWrapArray(s.modifiers)
+        )._1 && s.name == f._1.name
       })
     }
     second.formalParameters.isEmpty
@@ -472,6 +474,10 @@ class SubsetComparator(
     if (isDiff) {
       throw new Exception(s"$errorMsg: $firstDiff != $secondDiff")
     }
+  }
+
+  private def checkAndThrowIfDiff[T](errorMsg: String, first: Array[T], second: Array[T]): Unit = {
+    checkAndThrowIfDiff(errorMsg, ArraySeq.unsafeWrapArray(first), ArraySeq.unsafeWrapArray(second))
   }
 
 }

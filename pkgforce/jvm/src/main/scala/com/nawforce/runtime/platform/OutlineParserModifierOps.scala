@@ -2,7 +2,7 @@ package com.nawforce.runtime.platform
 
 import com.financialforce.oparser.{
   Annotation => OPAnnotation,
-  Id => OPId,
+  LocatableId => OPId,
   Location => OPLocation,
   Modifier => OPModifier
 }
@@ -18,22 +18,19 @@ object OutlineParserModifierOps {
   private def toModifiers(
     path: PathLike,
     location: OPLocation,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier]
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier]
   ): ArraySeq[(Modifier, LogEntryContext, String)] = {
 
     val modifiers = {
       annotations.flatMap(
         opA =>
-          ModifierOps(
-            "@" + opA.qName.toString.replace(" ", "").toLowerCase,
-            opA.parameters.getOrElse("")
-          )
+          ModifierOps("@" + opA.name.replace(" ", "").toLowerCase, opA.parameters.getOrElse(""))
             .map(
               m =>
                 (
                   m,
-                  OPLogEntryContext(path, extendLocation(opA.qName.location, startLineOffset = -2)),
+                  OPLogEntryContext(path, extendLocation(location, startLineOffset = -2)),
                   "Annotation"
                 )
             )
@@ -58,93 +55,93 @@ object OutlineParserModifierOps {
   def fieldModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     outer: Boolean
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    FieldModifiers.fieldModifiers(logger, mods, outer, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    FieldModifiers.fieldModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
   def classModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.classModifiers(logger, mods, outer, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.classModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
   def interfaceModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.interfaceModifiers(logger, mods, outer, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.interfaceModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
   def enumModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     outer: Boolean
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.enumModifiers(logger, mods, outer, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.enumModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
   def constructorModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier]
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.constructorModifiers(logger, mods, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, id.location, annotations, src)
+    ApexModifiers.constructorModifiers(logger, mods, OPLogEntryContext(path, id.location))
   }
 
   def parameterModifiers(
     path: PathLike,
-    id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier]
+    idLocation: OPLocation,
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier]
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
-    ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, id.id.location))
+    val mods   = toModifiers(path, idLocation, annotations, src)
+    ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, idLocation))
   }
 
   def classMethodModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier],
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier],
     ownerNature: MethodOwnerNature,
     isOuter: Boolean
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
+    val mods   = toModifiers(path, id.location, annotations, src)
 
     MethodModifiers.classMethodModifiers(
       logger,
       mods,
-      OPLogEntryContext(path, id.id.location),
+      OPLogEntryContext(path, id.location),
       ownerNature,
       isOuter
     )
@@ -153,15 +150,15 @@ object OutlineParserModifierOps {
   def interfaceMethodModifiers(
     path: PathLike,
     id: OPId,
-    annotations: ArraySeq[OPAnnotation],
-    src: ArraySeq[OPModifier]
+    annotations: Array[OPAnnotation],
+    src: Array[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.id.location, annotations, src)
+    val mods   = toModifiers(path, id.location, annotations, src)
     MethodModifiers.interfaceMethodModifiers(
       logger,
       mods,
-      OPLogEntryContext(path, id.id.location),
+      OPLogEntryContext(path, id.location),
       isOuter = false
     )
   }

@@ -87,8 +87,8 @@ object Tokens {
 }
 
 sealed trait Token {
-  val contents: String
-  val location: Location
+  def contents: String
+  def location: Location
 
   def lowerCaseContents: String = contents.toLowerCase
 
@@ -97,13 +97,49 @@ sealed trait Token {
   }
 }
 
-case class IdToken private (contents: String, location: Location) extends Token
+trait Id {
+  def name: String
+}
 
-object IdToken {
+trait IdWithLocation extends Id {
+  def location: Location
+}
+
+abstract class IdLocationHolder(_location: Location) extends IdWithLocation {
+  // These are inlined to save memory
+  private val startLine: Int       = _location.startLine
+  private val startLineOffset: Int = _location.startLineOffset
+  private val startByteOffset: Int = _location.startByteOffset
+  private val endLine: Int         = _location.endLine
+  private val endLineOffset: Int   = _location.endLineOffset
+  private val endByteOffset: Int   = _location.endByteOffset
+
+  override def location: Location =
+    Location(startLine, startLineOffset, startByteOffset, endLine, endLineOffset, endByteOffset)
+}
+
+/* An Id and its associated location, beware equality is defined only over the id. */
+class LocatableId private (override val name: String, _location: Location)
+    extends IdLocationHolder(_location)
+    with Token {
+
+  override def contents: String = name
+
+  override def toString: String = name
+
+  override def equals(obj: Any): Boolean = {
+    val other = obj.asInstanceOf[LocatableId]
+    lowerCaseContents.equals(other.lowerCaseContents)
+  }
+
+  override val hashCode: Int = lowerCaseContents.hashCode
+}
+
+object LocatableId {
   private val stringCache = new InternCache[String]()
 
-  def apply(contents: String, location: Location): IdToken = {
-    new IdToken(stringCache.intern(contents), location)
+  def apply(contents: String, location: Location): LocatableId = {
+    new LocatableId(stringCache.intern(contents), location)
   }
 }
 
@@ -128,6 +164,7 @@ final class Tokens {
       false
   }
 
+  //noinspection IndexBoundsCheck
   def apply(index: Int): Option[Token] = {
     // Avoid lift() here, it's expensive
     if (index >= tokens.length) None else Some(tokens(index))

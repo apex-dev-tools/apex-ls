@@ -8,14 +8,12 @@ import com.financialforce.oparser.{
   Annotation,
   ConstructorDeclaration,
   FieldDeclaration,
-  ITypeDeclaration,
-  Id,
+  LocatableId,
   Initializer,
   Location,
   MethodDeclaration,
   Modifier,
   PropertyDeclaration,
-  TypeList,
   TypeNameSegment,
   TypeRef
 }
@@ -36,17 +34,17 @@ class SObjectTypeDeclaration(override val module: IPM.Module, md: MetadataDocume
 
   override val location: Location = Location.default
 
-  override def id: Id = typeInfo.typeName.id
+  override def id: LocatableId = typeInfo.typeName.id
 
   override def typeNameSegment: TypeNameSegment = typeInfo.typeName
 
   override def extendsTypeRef: TypeRef = null // TODO
 
-  override def implementsTypeList: TypeList = null // TODO
+  override def implementsTypeList: ArraySeq[TypeRef] = null // TODO
 
-  override def modifiers: ArraySeq[Modifier] = ArraySeq.empty // TODO
+  override def modifiers: Array[Modifier] = Array.empty // TODO
 
-  override def annotations: ArraySeq[Annotation] = ArraySeq.empty // TODO
+  override def annotations: Array[Annotation] = Array.empty // TODO
 
   override def initializers: ArraySeq[Initializer] = ArraySeq.empty // TODO
 
