@@ -1,10 +1,10 @@
 package com.nawforce.runtime.sfparser_test
-import com.financialforce.oparser.StringUtils.{
+import com.financialforce.types.StringUtils.{
   asConstructorSignatureString,
   asMethodSignatureString,
   asSignatureString
 }
-import com.financialforce.oparser._
+import com.financialforce.types._
 import com.nawforce.pkgforce.names.Names
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -135,11 +135,11 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
     }
 
     def compareConstructors(
-      first: ArraySeq[ConstructorDeclaration],
-      second: ArraySeq[ConstructorDeclaration]
+      first: ArraySeq[IConstructorDeclaration],
+      second: ArraySeq[IConstructorDeclaration]
     ): (Boolean, String) = {
       val check = first.forall(f => {
-        val matches = second.find(s => s.qName == f.qName)
+        val matches = second.find(s => s.id == f.id)
         assert(matches.nonEmpty)
         matches.exists(
           s =>
@@ -155,8 +155,8 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
     }
 
     def compareFields(
-      first: ArraySeq[FieldDeclaration],
-      second: ArraySeq[FieldDeclaration]
+      first: ArraySeq[IFieldDeclaration],
+      second: ArraySeq[IFieldDeclaration]
     ): (Boolean, String) = {
       (
         first.forall(f => {
@@ -170,8 +170,8 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       )
     }
     def compareProperties(
-      first: ArraySeq[PropertyDeclaration],
-      second: ArraySeq[PropertyDeclaration]
+      first: ArraySeq[IPropertyDeclaration],
+      second: ArraySeq[IPropertyDeclaration]
     ): (Boolean, String) = {
       (
         first.forall(f => {
@@ -185,8 +185,8 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       )
     }
     def compareMethods(
-      first: ArraySeq[MethodDeclaration],
-      second: ArraySeq[MethodDeclaration]
+      first: ArraySeq[IMethodDeclaration],
+      second: ArraySeq[IMethodDeclaration]
     ): (Boolean, String) = {
       (
         first.forall(f => {
@@ -211,18 +211,18 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       firstDecl.implementsTypeList,
       secondDecl.implementsTypeList
     )
-    compareAndThrow[ArraySeq[ConstructorDeclaration]](
+    compareAndThrow[ArraySeq[IConstructorDeclaration]](
       compareConstructors,
       firstDecl.constructors,
       secondDecl.constructors
     )
-    compareAndThrow[ArraySeq[FieldDeclaration]](compareFields, firstDecl.fields, secondDecl.fields)
-    compareAndThrow[ArraySeq[PropertyDeclaration]](
+    compareAndThrow[ArraySeq[IFieldDeclaration]](compareFields, firstDecl.fields, secondDecl.fields)
+    compareAndThrow[ArraySeq[IPropertyDeclaration]](
       compareProperties,
       firstDecl.properties,
       secondDecl.properties
     )
-    compareAndThrow[ArraySeq[MethodDeclaration]](
+    compareAndThrow[ArraySeq[IMethodDeclaration]](
       compareMethods,
       firstDecl.methods,
       secondDecl.methods

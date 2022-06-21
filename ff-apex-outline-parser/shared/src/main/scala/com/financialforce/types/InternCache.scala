@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved.
  */
-package com.financialforce.oparser
+package com.financialforce.types
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable

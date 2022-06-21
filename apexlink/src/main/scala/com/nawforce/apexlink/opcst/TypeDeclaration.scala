@@ -1,16 +1,16 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser.{
+import com.financialforce.types.{
   UnresolvedTypeRef,
-  ConstructorDeclaration => OPConstructorDeclaration,
-  FieldDeclaration => OPFieldDeclaration,
-  FormalParameter => OPFormalParameter,
+  IConstructorDeclaration => OPConstructorDeclaration,
+  IFieldDeclaration => OPFieldDeclaration,
+  IFormalParameter => OPFormalParameter,
   IdWithLocation => OPId,
-  Initializer => OPInitializer,
+  IInitializer => OPInitializer,
   Location => OPLocation,
-  MethodDeclaration => OPMethodDeclaration,
+  IMethodDeclaration => OPMethodDeclaration,
   PropertyBlock => OPPropertyBlock,
-  PropertyDeclaration => OPPropertyDeclaration
+  IPropertyDeclaration => OPPropertyDeclaration
 }
 import com.nawforce.apexlink.cst.{
   ApexConstructorDeclaration,
@@ -97,7 +97,9 @@ private[opcst] object OutlineParserClassDeclaration {
 
     val id = OutlineParserId.construct(ctd.id, source.path)
     val extendType =
-      Option(ctd.extendsTypeRef).map(TypeReference.construct).getOrElse(TypeNames.InternalObject)
+      Option(ctd.extendsTypeRef)
+        .map(tr => TypeReference.construct(tr))
+        .getOrElse(TypeNames.InternalObject)
     val implementsType =
       Option(ctd.implementsTypeList).map(TypeList.construct).getOrElse(TypeNames.emptyTypeNames)
 
@@ -373,7 +375,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val modifierResults =
       constructorModifiers(path, cd.id, cd.annotations, cd.modifiers)
-    val qualifiedName = QualifiedName(cd.qName.parts.map(id => Names(id.name)).toIndexedSeq)
+    val qualifiedName = QualifiedName(cd.qname.parts.map(id => Names(id.name)).toIndexedSeq)
     stampLocation(
       qualifiedName,
       cd.id.location.copy(startLineOffset = cd.id.location.startLineOffset - 1),
@@ -642,7 +644,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     def parsePropertyBlock(pb: OPPropertyBlock): Option[PropertyBlock] = {
 
-      SourceOps.withSource(source, pb.blockLocation.get, 0, if (isOuter) Some(source) else None) {
+      SourceOps.withSource(source, pb.location, 0, if (isOuter) Some(source) else None) {
         propertyBlockSource =>
           val parser = new CodeParser(propertyBlockSource)
           val result = parser.parsePropertyBlock()

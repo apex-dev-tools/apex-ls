@@ -4,6 +4,8 @@
 
 package com.financialforce.oparser
 
+import com.financialforce.types._
+
 import scala.collection.immutable.ArraySeq
 
 trait DeclarationGeneratorHelper {
@@ -45,7 +47,7 @@ trait DeclarationGeneratorHelper {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: LocatableId
+    id: LocatableIdToken
   ): FormalParameter = {
     FormalParameter(annotations, modifiers, typeRef, id)
   }
@@ -54,8 +56,8 @@ trait DeclarationGeneratorHelper {
     Modifier(m)
   }
 
-  def toIdToken(token: String): LocatableId = {
-    LocatableId(token, Location.default)
+  def toIdToken(token: String): LocatableIdToken = {
+    LocatableIdToken(token, Location.default)
   }
 
   def toAnnotation(ids: Array[String], parameter: Option[String]): Annotation = {
@@ -66,7 +68,7 @@ trait DeclarationGeneratorHelper {
     QualifiedName(ids.map(x => toId(x)))
   }
 
-  def toId(id: String): LocatableId = {
+  def toId(id: String): LocatableIdToken = {
     toIdToken(id)
   }
 
@@ -87,7 +89,7 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: LocatableId,
+    id: LocatableIdToken,
     parameters: FormalParameterList
   ): MethodDeclaration = {
     MethodDeclaration(annotation, modifiers, Some(typeRef), id, parameters)
@@ -97,16 +99,16 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: LocatableId
+    id: LocatableIdToken
   ): PropertyDeclaration = {
-    PropertyDeclaration(annotation, modifiers, typeRef, id)
+    PropertyDeclaration(annotation, modifiers, typeRef, Array(), id)
   }
 
   def toFieldDeclaration(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: LocatableId
+    id: LocatableIdToken
   ): FieldDeclaration = {
     FieldDeclaration(annotation, modifiers, typeRef, id)
   }

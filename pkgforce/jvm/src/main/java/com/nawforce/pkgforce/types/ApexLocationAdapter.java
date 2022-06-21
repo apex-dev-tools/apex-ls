@@ -4,9 +4,9 @@
 package com.nawforce.pkgforce.types;
 
 public class ApexLocationAdapter {
-    final private com.financialforce.oparser.Location location;
+    final private com.financialforce.types.Location location;
 
-    public ApexLocationAdapter(com.financialforce.oparser.Location location) {
+    public ApexLocationAdapter(com.financialforce.types.Location location) {
         this.location = location;
     }
 

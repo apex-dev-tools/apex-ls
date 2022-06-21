@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser._
+import com.financialforce.types._
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex, SObjectNature}
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
@@ -270,7 +270,7 @@ object IPM extends TriHierarchy {
         }
       }
 
-      def resolveMethods(methodDeclaration: MethodDeclaration): Unit = {
+      def resolveMethods(methodDeclaration: IMethodDeclaration): Unit = {
         if (methodDeclaration.typeRef.nonEmpty) {
           val isVoid = methodDeclaration.typeRef.get.getFullName.equalsIgnoreCase(Names.Void.value)
           methodDeclaration.typeRef =
@@ -451,7 +451,7 @@ object IPM extends TriHierarchy {
 
       // Short-cut to next module if could not possibly match
       if (
-        !defaultNamespace && !typeRef.typeNameSegments.head.id.lowerCaseContents
+        !defaultNamespace && !typeRef.typeNameSegments.head.id.lowerCaseName
           .equalsIgnoreCase(namespace.get.value)
       )
         return nextModule.flatMap(_.findExactTypeId(name, typeRef))
@@ -491,7 +491,7 @@ object IPM extends TriHierarchy {
       if (
         !defaultNamespace || isNameAmbiguous ||
         (typeRef.typeNameSegments.length > 1 &&
-        typeRef.typeNameSegments.head.id.lowerCaseContents.equalsIgnoreCase(namespace.get.value))
+        typeRef.typeNameSegments.head.id.lowerCaseName.equalsIgnoreCase(namespace.get.value))
       ) {
         (name, typeRef)
       } else {

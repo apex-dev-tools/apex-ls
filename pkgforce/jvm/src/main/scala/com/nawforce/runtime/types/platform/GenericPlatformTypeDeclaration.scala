@@ -14,12 +14,11 @@
 
 package com.nawforce.runtime.types.platform
 
-import com.financialforce.oparser._
+import com.financialforce.types.{IdWithLocation, Location, TypeNameSegment}
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{createTypeName, emptyPaths}
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
-import java.lang.reflect.Method
 import scala.collection.immutable.ArraySeq
 
 /* Wrapper for the few generic types we support, this specialises the methods of the type so that
@@ -51,7 +50,7 @@ class GenericPlatformTypeDeclaration(
 
   override val location: Location = Location.default
 
-  override val id: LocatableId = typeInfo.typeName.id
+  override val id: IdWithLocation = typeInfo.typeName.id
 
   override val typeNameSegment: TypeNameSegment =
     createTypeName(genericDecl.id.toString, Some(typeArgs))

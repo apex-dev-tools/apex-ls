@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved.
  */
-package com.financialforce.oparser
+package com.financialforce.types
 
 case class Position(line: Int, lineOffset: Int, byteOffset: Int) {
   override def toString: String = {
@@ -27,6 +27,17 @@ case class Location(
 
 object Location {
   val default: Location = Location(0, 0, 0, 0, 0, 0)
+
+  def apply(start: Position, end: Position): Location = {
+    Location(
+      start.line,
+      start.lineOffset,
+      start.byteOffset,
+      end.line,
+      end.lineOffset,
+      end.byteOffset
+    )
+  }
 
   def fromStart(l: Location): Location = {
     Location(l.startLine, l.startLineOffset, l.startByteOffset, 0, 0, 0)

@@ -15,18 +15,10 @@
 package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
+import com.financialforce.types._
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
-import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
-  createTypeName,
-  emptyAnnotations,
-  emptyArgs,
-  emptyInitializers,
-  emptyPaths,
-  emptyProperties,
-  emptyTypeDeclarations,
-  platformPackage
-}
+import com.nawforce.runtime.types.platform.PlatformTypeDeclaration._
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
 import java.nio.file.{FileSystemNotFoundException, FileSystems, Files, Paths}
@@ -72,7 +64,7 @@ class PlatformTypeDeclaration(
 
   override val location: Location = Location.default
 
-  override val id: LocatableId = typeInfo.typeName.id
+  override val id: IdWithLocation = typeInfo.typeName.id
 
   override val typeNameSegment: TypeNameSegment = typeInfo.typeName
 
@@ -193,7 +185,7 @@ class PlatformTypeDeclaration(
     val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
     val name = QualifiedName(
       (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.name))
-        .map(s => LocatableId(s, Location.default))
+        .map(s => LocatableIdToken(s, Location.default))
     )
 
     ConstructorDeclaration(Array.empty, modifiers, name, toFormalParameterList(ctor.getParameters))
@@ -210,7 +202,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.methodModifiers(method.getModifiers, td.nature),
       rtType,
-      LocatableId(decodeName(method.getName), Location.default),
+      LocatableIdToken(decodeName(method.getName), Location.default),
       toFormalParameterList(method.getParameters)
     )
   }
@@ -220,7 +212,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(field.getModifiers),
       getPlatformTypeDeclFromType(field.getGenericType).get,
-      LocatableId(decodeName(field.getName), Location.default)
+      LocatableIdToken(decodeName(field.getName), Location.default)
     )
   }
 
@@ -232,10 +224,10 @@ class PlatformTypeDeclaration(
 
   protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
     FormalParameter(
-      Annotations.emptyArray,
-      Modifiers.emptyArray,
+      Annotation.emptyArray,
+      Modifier.emptyArray,
       getPlatformTypeDeclFromType(parameter.getParameterizedType).get,
-      LocatableId(parameter.getName, Location.default)
+      LocatableIdToken(parameter.getName, Location.default)
     )
   }
 
@@ -495,7 +487,7 @@ object PlatformTypeDeclaration {
     params: Option[ArraySeq[IModuleTypeDeclaration]]
   ): TypeNameSegment = {
     val typeArguments = params.getOrElse(TypeRef.emptyArraySeq)
-    TypeNameSegment(LocatableId(name, Location.default), typeArguments)
+    TypeNameSegment(LocatableIdToken(name, Location.default), typeArguments)
   }
 
   private val typeAliasMap: Map[TypeName, TypeName] = Map(

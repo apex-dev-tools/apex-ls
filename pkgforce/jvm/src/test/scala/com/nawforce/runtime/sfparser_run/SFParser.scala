@@ -20,6 +20,7 @@ import apex.jorje.semantic.symbol.member.Member
 import apex.jorje.semantic.symbol.member.method.MethodInfo
 import apex.jorje.semantic.symbol.member.variable.FieldInfo
 import com.financialforce.oparser._
+import com.financialforce.types._
 import com.nawforce.runtime.workspace._
 import org.apache.commons.lang3.reflect.FieldUtils
 
@@ -315,6 +316,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
       modifiersAndAnnotations._2.toArray,
       modifiersAndAnnotations._1.toArray,
       toTypeRef(from.getType),
+      Array(),
       toId(from.getName, from.getLoc)
     )
   }
@@ -402,23 +404,19 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     Annotation(from.getType.getApexName, None)
   }
 
-  private def toLoc(
-    from: apex.jorje.data.Location,
-    endLine: Int,
-    endLineOffset: Int
-  ): com.financialforce.oparser.Location = {
+  private def toLoc(from: apex.jorje.data.Location, endLine: Int, endLineOffset: Int): Location = {
     new Location(from.getLine, from.getColumn, 0, endLine, endLineOffset, 0)
   }
 
-  private def toId(name: String, loc: apex.jorje.data.Location): LocatableId = {
+  private def toId(name: String, loc: apex.jorje.data.Location): LocatableIdToken = {
     toIdToken(name, loc)
   }
 
-  private def toIdToken(name: String, loc: apex.jorje.data.Location): LocatableId = {
-    LocatableId(name, toLoc(loc, loc.getLine, loc.getColumn + name.length - 1))
+  private def toIdToken(name: String, loc: apex.jorje.data.Location): LocatableIdToken = {
+    LocatableIdToken(name, toLoc(loc, loc.getLine, loc.getColumn + name.length - 1))
   }
 
-  private def toTypeRef(from: TypeInfo): com.financialforce.oparser.UnresolvedTypeRef = {
+  private def toTypeRef(from: TypeInfo): UnresolvedTypeRef = {
     //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
     val segments = new mutable.ArrayBuffer[TypeNameSegment]()
     from.getApexName
@@ -433,9 +431,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     UnresolvedTypeRef(segments.toArray, 0)
   }
 
-  private def toTypeRef(
-    from: Option[apex.jorje.data.ast.TypeRef]
-  ): Option[com.financialforce.oparser.UnresolvedTypeRef] = {
+  private def toTypeRef(from: Option[apex.jorje.data.ast.TypeRef]): Option[UnresolvedTypeRef] = {
     from match {
       case Some(typ) =>
         val segments   = new mutable.ArrayBuffer[TypeNameSegment]()

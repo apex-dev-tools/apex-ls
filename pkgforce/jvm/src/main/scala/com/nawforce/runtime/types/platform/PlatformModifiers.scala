@@ -14,24 +14,18 @@
 
 package com.nawforce.runtime.types.platform
 
-import com.financialforce.oparser.Modifiers.{
-  ABSTRACT_MODIFIER,
-  FINAL_MODIFIER,
-  PUBLIC_MODIFIER,
-  STATIC_MODIFIER,
-  VIRTUAL_MODIFIER
-}
-import com.financialforce.oparser.{
-  CLASS_NATURE,
-  ENUM_NATURE,
-  INTERFACE_NATURE,
-  Modifier,
-  TypeNature
-}
+import com.financialforce.oparser.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, TypeNature}
+import com.financialforce.types.Modifier
 
 import java.lang.reflect.{Modifier => JavaModifier}
 
 object PlatformModifiers {
+  final val PUBLIC_MODIFIER: Modifier   = Modifier("public")
+  final val STATIC_MODIFIER: Modifier   = Modifier("static")
+  final val VIRTUAL_MODIFIER: Modifier  = Modifier("virtual")
+  final val ABSTRACT_MODIFIER: Modifier = Modifier("abstract")
+  final val FINAL_MODIFIER: Modifier    = Modifier("final")
+
   private val modPublic: Array[Modifier]        = Array(PUBLIC_MODIFIER)
   private val modPublicAbs: Array[Modifier]     = Array(PUBLIC_MODIFIER, ABSTRACT_MODIFIER)
   private val modPublicVirtual: Array[Modifier] = Array(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)

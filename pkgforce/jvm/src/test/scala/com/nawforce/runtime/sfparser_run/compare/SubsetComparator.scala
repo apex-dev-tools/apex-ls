@@ -5,6 +5,7 @@
 package com.nawforce.runtime.sfparser_run.compare
 
 import com.financialforce.oparser._
+import com.financialforce.types._
 import com.nawforce.runtime.workspace.{
   ClassTypeDeclaration,
   EnumTypeDeclaration,
@@ -336,7 +337,7 @@ class SubsetComparator(
           })
       }
       return allTypeNames
-        .map(_.id.lowerCaseContents)
+        .map(_.id.lowerCaseName)
         .count(_.equalsIgnoreCase("list")) == fUnresolvedType.arraySubscripts
     }
     false

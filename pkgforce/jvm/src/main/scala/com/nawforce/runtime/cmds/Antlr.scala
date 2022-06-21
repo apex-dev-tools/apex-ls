@@ -1,6 +1,7 @@
 package com.nawforce.runtime.cmds
 
 import com.financialforce.oparser._
+import com.financialforce.types._
 import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
@@ -115,12 +116,12 @@ object Antlr {
     None
   }
 
-  def toId(ctx: ApexParser.IdContext): LocatableId = {
-    LocatableId(ctx.children.asScala.mkString(" "), location(ctx))
+  def toId(ctx: ApexParser.IdContext): LocatableIdToken = {
+    LocatableIdToken(ctx.children.asScala.mkString(" "), location(ctx))
   }
 
-  def toId(text: String): LocatableId = {
-    LocatableId(text, Location.default)
+  def toId(text: String): LocatableIdToken = {
+    LocatableIdToken(text, Location.default)
   }
 
   def toModifier(ctx: ApexParser.ModifierContext): Modifier = {
@@ -154,14 +155,18 @@ object Antlr {
     val typeArguments =
       Option(ctx.typeArguments()).map(ta => antlrTypeArguments(ta)).getOrElse(TypeRef.emptyArraySeq)
     val tnOpt = Option(ctx.LIST())
-      .map(l => new TypeNameSegment(LocatableId(l.toString, Location.default), typeArguments))
+      .map(l => new TypeNameSegment(LocatableIdToken(l.toString, Location.default), typeArguments))
       .orElse(
         Option(ctx.SET())
-          .map(l => new TypeNameSegment(LocatableId(l.toString, Location.default), typeArguments))
+          .map(
+            l => new TypeNameSegment(LocatableIdToken(l.toString, Location.default), typeArguments)
+          )
       )
       .orElse(
         Option(ctx.MAP())
-          .map(l => new TypeNameSegment(LocatableId(l.toString, Location.default), typeArguments))
+          .map(
+            l => new TypeNameSegment(LocatableIdToken(l.toString, Location.default), typeArguments)
+          )
       )
       .orElse(Option(ctx.id()).map(l => new TypeNameSegment(toId(l), typeArguments)))
 
@@ -425,7 +430,7 @@ object Antlr {
     val id = toId(ctx.id())
     md.add(antlrTypeRef(ctx.typeRef()))
 
-    val property = PropertyDeclaration(md.annotations, md.modifiers, md.typeRef.get, id)
+    val property = PropertyDeclaration(md.annotations, md.modifiers, md.typeRef.get, Array(), id)
     ctd.appendProperty(property)
   }
 

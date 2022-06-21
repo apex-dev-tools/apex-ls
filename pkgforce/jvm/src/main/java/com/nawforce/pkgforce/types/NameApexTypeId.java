@@ -3,7 +3,7 @@
  */
 package com.nawforce.pkgforce.types;
 
-import com.financialforce.oparser.TypeRef;
+import com.financialforce.types.TypeRef;
 import com.nawforce.pkgforce.api.ApexTypeId;
 import com.nawforce.pkgforce.names.TypeName;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;

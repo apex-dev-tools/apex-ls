@@ -3,6 +3,8 @@
  */
 package com.financialforce.oparser
 
+import com.financialforce.types.{IdLocationHolder, InternCache, Location}
+
 import scala.collection.mutable
 
 object Tokens {
@@ -97,29 +99,8 @@ sealed trait Token {
   }
 }
 
-trait Id {
-  def name: String
-}
-
-trait IdWithLocation extends Id {
-  def location: Location
-}
-
-abstract class IdLocationHolder(_location: Location) extends IdWithLocation {
-  // These are inlined to save memory
-  private val startLine: Int       = _location.startLine
-  private val startLineOffset: Int = _location.startLineOffset
-  private val startByteOffset: Int = _location.startByteOffset
-  private val endLine: Int         = _location.endLine
-  private val endLineOffset: Int   = _location.endLineOffset
-  private val endByteOffset: Int   = _location.endByteOffset
-
-  override def location: Location =
-    Location(startLine, startLineOffset, startByteOffset, endLine, endLineOffset, endByteOffset)
-}
-
 /* An Id and its associated location, beware equality is defined only over the id. */
-class LocatableId private (override val name: String, _location: Location)
+class LocatableIdToken private (override val name: String, _location: Location)
     extends IdLocationHolder(_location)
     with Token {
 
@@ -128,18 +109,18 @@ class LocatableId private (override val name: String, _location: Location)
   override def toString: String = name
 
   override def equals(obj: Any): Boolean = {
-    val other = obj.asInstanceOf[LocatableId]
+    val other = obj.asInstanceOf[LocatableIdToken]
     lowerCaseContents.equals(other.lowerCaseContents)
   }
 
   override val hashCode: Int = lowerCaseContents.hashCode
 }
 
-object LocatableId {
+object LocatableIdToken {
   private val stringCache = new InternCache[String]()
 
-  def apply(contents: String, location: Location): LocatableId = {
-    new LocatableId(stringCache.intern(contents), location)
+  def apply(contents: String, location: Location): LocatableIdToken = {
+    new LocatableIdToken(stringCache.intern(contents), location)
   }
 }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved.
  */
-package com.financialforce.oparser
+package com.financialforce.types
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
@@ -20,11 +20,12 @@ object TypeRef {
   def toTypeRefs(params: Array[String]): ArraySeq[TypeRef] = {
     ArraySeq.unsafeWrapArray(params.map(tp => {
       UnresolvedTypeRef(
-        Array(new TypeNameSegment(LocatableId(tp, Location.default), emptyArraySeq)),
+        Array(new TypeNameSegment(new LocatableId(tp, Location.default), emptyArraySeq)),
         0
       )
     }))
   }
+
 }
 
 final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arraySubscripts: Int)
@@ -45,8 +46,7 @@ final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arr
   }
 
   override def toString: String = {
-    import StringUtils._
-    asString(typeNameSegments, ".") + ("[]" * arraySubscripts)
+    typeNameSegments.mkString(".") + ("[]" * arraySubscripts)
   }
 }
 
@@ -114,7 +114,7 @@ object UnresolvedTypeRef {
   }
 }
 
-final case class TypeNameSegment(id: LocatableId, typeArguments: ArraySeq[TypeRef]) {
+final case class TypeNameSegment(id: IdWithLocation, typeArguments: ArraySeq[TypeRef]) {
 
   def replaceArguments(args: ArraySeq[TypeRef]): TypeNameSegment = {
     TypeNameSegment(id, args)
@@ -130,21 +130,21 @@ final case class TypeNameSegment(id: LocatableId, typeArguments: ArraySeq[TypeRe
 
 object TypeNameSegment {
   def apply(name: String): TypeNameSegment = {
-    new TypeNameSegment(LocatableId(name, Location.default), TypeRef.emptyArraySeq)
+    new TypeNameSegment(new LocatableId(name, Location.default), TypeRef.emptyArraySeq)
   }
 
   def apply(name: String, typeArguments: ArraySeq[TypeRef]): TypeNameSegment = {
-    new TypeNameSegment(LocatableId(name, Location.default), typeArguments)
+    new TypeNameSegment(new LocatableId(name, Location.default), typeArguments)
   }
 
   def apply(name: String, typeArguments: Array[UnresolvedTypeRef]): TypeNameSegment = {
     new TypeNameSegment(
-      LocatableId(name, Location.default),
+      new LocatableId(name, Location.default),
       ArraySeq.unsafeWrapArray(typeArguments)
     )
   }
 
   def apply(name: String, params: Array[String]): TypeNameSegment = {
-    new TypeNameSegment(LocatableId(name, Location.default), TypeRef.toTypeRefs(params))
+    new TypeNameSegment(new LocatableId(name, Location.default), TypeRef.toTypeRefs(params))
   }
 }

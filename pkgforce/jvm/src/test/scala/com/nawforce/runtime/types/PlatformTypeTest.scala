@@ -14,25 +14,17 @@
 
 package com.nawforce.runtime.types
 
-import com.financialforce.oparser.Modifiers.{PUBLIC_MODIFIER, VIRTUAL_MODIFIER}
-import com.financialforce.oparser.StringUtils.{
-  asConstructorSignatureString,
-  asMethodSignatureString
-}
-import com.financialforce.oparser.{
-  CLASS_NATURE,
-  ENUM_NATURE,
-  INTERFACE_NATURE,
-  TypeNameSegment,
-  TypeRef,
-  UnresolvedTypeRef
-}
+import com.financialforce.oparser.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE}
+import com.financialforce.types.StringUtils.{asConstructorSignatureString, asMethodSignatureString}
+import com.financialforce.types.{Modifier, TypeNameSegment, TypeRef, UnresolvedTypeRef}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.immutable.ArraySeq
 
 class PlatformTypeTest extends AnyFunSuite {
+  private val PUBLIC_MODIFIER  = Modifier("public")
+  private val VIRTUAL_MODIFIER = Modifier("virtual")
 
   test("Bad class not found") {
     val typeRef = UnresolvedTypeRef(Array(TypeNameSegment("Foo")), 0)

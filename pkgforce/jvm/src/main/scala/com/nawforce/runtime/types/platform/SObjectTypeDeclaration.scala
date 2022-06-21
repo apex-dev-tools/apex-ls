@@ -4,19 +4,8 @@
 
 package com.nawforce.runtime.types.platform
 
-import com.financialforce.oparser.{
-  Annotation,
-  ConstructorDeclaration,
-  FieldDeclaration,
-  LocatableId,
-  Initializer,
-  Location,
-  MethodDeclaration,
-  Modifier,
-  PropertyDeclaration,
-  TypeNameSegment,
-  TypeRef
-}
+import com.financialforce.oparser._
+import com.financialforce.types._
 import com.nawforce.pkgforce.documents.MetadataDocument
 import com.nawforce.runtime.types.platform.SObjectTypeDeclaration.{emptyPaths, getTypeInfo}
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
@@ -34,7 +23,7 @@ class SObjectTypeDeclaration(override val module: IPM.Module, md: MetadataDocume
 
   override val location: Location = Location.default
 
-  override def id: LocatableId = typeInfo.typeName.id
+  override def id: IdWithLocation = typeInfo.typeName.id
 
   override def typeNameSegment: TypeNameSegment = typeInfo.typeName
 

@@ -1,8 +1,8 @@
 package com.nawforce.runtime.platform
 
-import com.financialforce.oparser.{
+import com.financialforce.types.{
   Annotation => OPAnnotation,
-  LocatableId => OPId,
+  IdWithLocation => OPId,
   Location => OPLocation,
   Modifier => OPModifier
 }

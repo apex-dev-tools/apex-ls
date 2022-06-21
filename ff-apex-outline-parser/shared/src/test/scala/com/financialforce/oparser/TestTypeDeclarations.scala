@@ -4,6 +4,9 @@
 
 package com.financialforce.oparser
 
+import com.financialforce.types.StringUtils.asString
+import com.financialforce.types._
+
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
@@ -35,11 +38,11 @@ sealed class TestTypeDeclaration(
 ) extends IMutableTestTypeDeclaration {
   var _location: Location = _
 
-  var _id: LocatableId                       = _
+  var _id: LocatableIdToken                  = _
   var _extendsTypeRef: TypeRef               = _
   var _implementsTypeList: ArraySeq[TypeRef] = _
-  var _modifiers: Array[Modifier]            = Modifiers.emptyArray
-  var _annotations: Array[Annotation]        = Annotations.emptyArray
+  var _modifiers: Array[Modifier]            = Modifier.emptyArray
+  var _annotations: Array[Annotation]        = Annotation.emptyArray
 
   val _initializers: mutable.ArrayBuffer[Initializer]            = mutable.ArrayBuffer()
   val _innerTypes: mutable.ArrayBuffer[TestTypeDeclaration]      = mutable.ArrayBuffer()
@@ -51,7 +54,7 @@ sealed class TestTypeDeclaration(
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
 
-  override def id: LocatableId = _id
+  override def id: LocatableIdToken = _id
 
   override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeRef.emptyArraySeq)
 
@@ -72,7 +75,7 @@ sealed class TestTypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
-  override def setId(id: LocatableId): Unit                         = _id = id
+  override def setId(id: LocatableIdToken): Unit                    = _id = id
   override def setLocation(location: Location): Unit                = _location = location
   override def setExtends(typeRef: TypeRef): Unit                   = _extendsTypeRef = typeRef
   override def setImplements(typeList: ArraySeq[TypeRef]): Unit     = _implementsTypeList = typeList
@@ -101,7 +104,6 @@ class TestClassTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarat
     extends TestTypeDeclaration(path, CLASS_NATURE, enclosing) {
 
   override def toString: String = {
-    import StringUtils._
     val base =
       s"""Class:      $id
          |Path:       $path
@@ -160,7 +162,6 @@ class TestInterfaceTypeDeclaration(path: String, enclosing: IMutableTestTypeDecl
     extends TestTypeDeclaration(path, INTERFACE_NATURE, enclosing) {
 
   override def toString: String = {
-    import StringUtils._
     s"""Interface:  $id
        |Path:       $path
        |Location:   ${id.location}
@@ -178,7 +179,6 @@ class TestEnumTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarati
     extends TestTypeDeclaration(path, ENUM_NATURE, enclosing) {
 
   override def toString: String = {
-    import StringUtils._
     s"""Enum:       $id
        |Path:       $path
        |Location:   ${id.location}

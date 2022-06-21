@@ -4,6 +4,8 @@
 
 package com.financialforce.oparser
 
+import com.financialforce.types._
+
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -333,7 +335,7 @@ class SubsetComparator(
           })
       }
       return allTypeNames
-        .map(_.id.lowerCaseContents)
+        .map(_.id.lowerCaseName)
         .count(_.equalsIgnoreCase("list")) == fUnresolvedType.arraySubscripts
     }
     false

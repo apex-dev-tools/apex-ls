@@ -4,7 +4,7 @@
 
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
+import com.financialforce.types.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 
 object TypeFinder {
 

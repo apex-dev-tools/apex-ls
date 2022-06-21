@@ -3,8 +3,8 @@
  */
 package com.nawforce.pkgforce.types;
 
-import com.financialforce.oparser.ConstructorDeclaration;
-import com.financialforce.oparser.FormalParameter;
+import com.financialforce.types.IConstructorDeclaration;
+import com.financialforce.types.IFormalParameter;
 import com.nawforce.pkgforce.api.ApexMethod;
 import com.nawforce.pkgforce.api.ApexMethodParameter;
 import com.nawforce.pkgforce.api.ApexType;
@@ -15,10 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ApexConstructorAdapter implements ApexMethod {
-    final private ConstructorDeclaration cd;
+    final private IConstructorDeclaration cd;
     final private ApexTypeAdapter definingType;
 
-    public ApexConstructorAdapter(ApexTypeAdapter definingType, ConstructorDeclaration cd) {
+    public ApexConstructorAdapter(ApexTypeAdapter definingType, IConstructorDeclaration cd) {
         this.definingType = definingType;
         this.cd = cd;
     }
@@ -45,7 +45,7 @@ public class ApexConstructorAdapter implements ApexMethod {
 
     @Override
     public List<ApexMethodParameter> getParameters() {
-        ArraySeq<FormalParameter> parameters = cd.formalParameterList().formalParameters();
+        ArraySeq<IFormalParameter> parameters = cd.formalParameterList().formalParameters();
         ApexMethodParameter[] result = new ApexMethodParameter[parameters.length()];
         for (int i = 0; i < parameters.length(); i++)
             result[i] = new ApexMethodParameterAdapter(parameters.apply(i));

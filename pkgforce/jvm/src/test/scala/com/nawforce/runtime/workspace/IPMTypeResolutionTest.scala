@@ -4,8 +4,8 @@
 
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.StringUtils.asMethodSignatureString
-import com.financialforce.oparser.{FieldDeclaration, UnresolvedTypeRef}
+import com.financialforce.types.StringUtils.asMethodSignatureString
+import com.financialforce.types.{IFieldDeclaration, UnresolvedTypeRef}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
@@ -15,7 +15,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
   def getType(typeId: String, index: IPM.Index): Option[IModuleTypeDeclaration] = {
     index.rootModule.get.findExactTypeId(typeId)
   }
-  def getField(td: IModuleTypeDeclaration, name: String): FieldDeclaration = {
+  def getField(td: IModuleTypeDeclaration, name: String): IFieldDeclaration = {
     td.fields.filter(_.id.name.equalsIgnoreCase(name)).head
   }
 
