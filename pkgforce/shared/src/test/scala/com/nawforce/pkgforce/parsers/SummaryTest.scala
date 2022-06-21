@@ -60,6 +60,24 @@ class SummaryTest extends AnyFunSuite {
     assert(root.description == "public")
   }
 
+  test("Class summary with extends on LightNode") {
+    val path   = Path("Dummy.cls")
+    val cp     = CodeParser(path, SourceData("public class Dummy extends Foo {}"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+    val root = ApexNode(cp, result.value).get.asInstanceOf[ApexLightNode]
+    assert(root.nature == CLASS_NATURE)
+    assert(root.location == PathLocation(path, Location(1, 0, 1, 33)))
+    assert(root.name == Name("Dummy"))
+    assert(root.idLocation == Location(1, 13, 1, 18))
+    assert(root.typeRef.contains(ExtendsType(Name("Foo"), Location(1, 27, 1, 30))))
+    assert(root.children.isEmpty)
+    assert(root.modifiers == ArraySeq(PUBLIC_MODIFIER))
+    assert(root.parseIssues.isEmpty)
+    assert(root.signature == "public class Dummy")
+    assert(root.description == "public")
+  }
+
   test("Interface summary") {
     val path   = Path("Dummy.cls")
     val cp     = CodeParser(path, SourceData("public interface Dummy {}"))
@@ -262,6 +280,21 @@ class SummaryTest extends AnyFunSuite {
     assert(inner.nature == CLASS_NATURE)
   }
 
+  test("Nested class summary with extends") {
+    val path = Path("Dummy.cls")
+    val cp =
+      CodeParser(path, SourceData("public class Dummy { private class Inner extends Bar { } }"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+    val root = ApexNode(cp, result.value).get
+    assert(root.nature == CLASS_NATURE)
+    assert(root.children.size == 1)
+
+    val inner = root.children.head.asInstanceOf[ApexLightNode]
+    assert(inner.nature == CLASS_NATURE)
+    assert(inner.typeRef.contains(ExtendsType(Name("Bar"), Location(1, 49, 1, 52))))
+  }
+
   test("Nested interface summary") {
     val path   = Path("Dummy.cls")
     val cp     = CodeParser(path, SourceData("public class Dummy { private interface Inner { } }"))
@@ -367,6 +400,73 @@ class SummaryTest extends AnyFunSuite {
     assert(
       issues.head.diagnostic.message == "Method is a duplicate of an earlier method at line 1 at 32-35"
     )
+  }
+
+  test("Extends Exception") {
+    val path   = Path("DummyException.cls")
+    val cp     = CodeParser(path, SourceData("public class DummyException extends FooException {}"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+    val root   = ApexNode(cp, result.value).get
+    val issues = root.collectIssues()
+
+    assert(issues.isEmpty)
+  }
+
+  test("Test") {
+    val path   = Path("Dummy.cls")
+    val cp     = CodeParser(path, SourceData("public class Dummy {}"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+    val root   = ApexNode(cp, result.value).get
+    val issues = root.collectIssues()
+
+    assert(issues.isEmpty)
+  }
+
+  test("Exception class with incorrect name") {
+    val path   = Path("Dummy.cls")
+    val cp     = CodeParser(path, SourceData("public class Dummy extends FooException {}"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+    val root   = ApexNode(cp, result.value).get
+    val issues = root.collectIssues()
+    assert(issues.nonEmpty)
+    val diag = issues.head.diagnostic
+
+    assert(
+      diag.message == "Class 'Dummy' extending an Exception must have a name ending in Exception"
+    )
+    assert(diag.location == Location(1, 13, 1, 18))
+  }
+
+  test("Exception class with incorrect extends") {
+    val path   = Path("DummyException.cls")
+    val cp     = CodeParser(path, SourceData("public class DummyException extends Foo {}"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+    val root   = ApexNode(cp, result.value).get
+    val issues = root.collectIssues()
+    assert(issues.nonEmpty)
+    val diag = issues.head.diagnostic
+
+    assert(diag.message == "Exception class 'DummyException' must extend another Exception class")
+    assert(diag.location == Location(1, 36, 1, 39))
+  }
+
+  test("Inner exception class with incorrect extends") {
+    val path = Path("Dummy.cls")
+    val cp =
+      CodeParser(path, SourceData("public class Dummy { public class FooException extends Bar {}}"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+    val root   = ApexNode(cp, result.value).get
+    val issues = root.collectIssues()
+    assert(issues.nonEmpty)
+    val diag = issues.head.diagnostic
+
+    assert(diag.message == "Exception class 'FooException' must extend another Exception class")
+    assert(diag.location == Location(1, 55, 1, 58))
   }
 
 }
