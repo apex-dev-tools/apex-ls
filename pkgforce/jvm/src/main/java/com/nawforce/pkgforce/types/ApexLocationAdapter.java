@@ -3,10 +3,12 @@
  */
 package com.nawforce.pkgforce.types;
 
-public class ApexLocationAdapter {
-    final private com.financialforce.types.Location location;
+import com.financialforce.types.base.Location;
 
-    public ApexLocationAdapter(com.financialforce.types.Location location) {
+public class ApexLocationAdapter {
+    final private Location location;
+
+    public ApexLocationAdapter(Location location) {
         this.location = location;
     }
 

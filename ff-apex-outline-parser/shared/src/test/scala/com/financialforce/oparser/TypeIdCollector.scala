@@ -4,7 +4,8 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.types.{ITypeDeclaration, IdWithLocation}
+import com.financialforce.types.ITypeDeclaration
+import com.financialforce.types.base.IdWithLocation
 
 import scala.collection.mutable.ArrayBuffer
 

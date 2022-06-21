@@ -5,6 +5,13 @@
 package com.financialforce.oparser
 
 import com.financialforce.types._
+import com.financialforce.types.base.{
+  Annotation,
+  IdWithLocation,
+  Modifier,
+  TypeRef,
+  UnresolvedTypeRef
+}
 import org.scalatest.funspec.AnyFunSpec
 
 class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {

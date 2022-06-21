@@ -14,7 +14,7 @@
 
 package com.nawforce.runtime.types.platform
 
-import com.financialforce.types.{IdWithLocation, Location, TypeNameSegment}
+import com.financialforce.types.base.{IdWithLocation, Location, TypeNameSegment}
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{createTypeName, emptyPaths}
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
@@ -43,7 +43,7 @@ class GenericPlatformTypeDeclaration(
 
   override protected def genericToType(name: String): String = {
     val decl = paramsMap.get(Name(name))
-    if (decl.nonEmpty) decl.get.getFullName else name
+    if (decl.nonEmpty) decl.get.fullName else name
   }
 
   override val paths: Array[String] = emptyPaths

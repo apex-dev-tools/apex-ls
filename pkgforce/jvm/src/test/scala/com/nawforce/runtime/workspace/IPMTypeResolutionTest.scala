@@ -4,8 +4,8 @@
 
 package com.nawforce.runtime.workspace
 
-import com.financialforce.types.StringUtils.asMethodSignatureString
-import com.financialforce.types.{IFieldDeclaration, UnresolvedTypeRef}
+import com.financialforce.types.IFieldDeclaration
+import com.financialforce.types.base.UnresolvedTypeRef
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration
@@ -26,7 +26,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val foo    = getType("Foo", index)
       val foobar = getType("Foo.FooBar", index)
       assert(foo.nonEmpty && foobar.nonEmpty)
-      assert(foo.get.fields.head.typeRef.getFullName == "Foo.FooBar")
+      assert(foo.get.fields.head.typeRef.fullName == "Foo.FooBar")
       assert(foo.get.fields.head.typeRef == foobar.get)
     }
   }
@@ -43,7 +43,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
 
       assert(dummy.nonEmpty && innerType.nonEmpty && peerType.nonEmpty)
       assert(innerType.get.fields.head.typeRef == peerType.get)
-      assert(innerType.get.fields.head.typeRef.getFullName == "Dummy.PeerType")
+      assert(innerType.get.fields.head.typeRef.fullName == "Dummy.PeerType")
     }
   }
 
@@ -61,7 +61,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       assert(dummy.nonEmpty && bazBar.nonEmpty)
       val dummyField = dummy.get.fields.head
 
-      assert(dummyField.typeRef.getFullName == "Baz.BazBar")
+      assert(dummyField.typeRef.fullName == "Baz.BazBar")
       assert(dummyField.typeRef == bazBar.get)
     }
   }
@@ -77,7 +77,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val foo   = getType("Dummy.Foo", index)
 
       val dummyExtends = dummy.get.extendsTypeRef
-      assert(dummyExtends.getFullName == "Dummy.Foo")
+      assert(dummyExtends.fullName == "Dummy.Foo")
       assert(dummyExtends == foo.get)
     }
   }
@@ -106,7 +106,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
 
       val dummyField = dummy.get.fields.head
       assert(
-        dummyField.typeRef.getFullName == "System.Map<System.String,System.List<System.List<System.String>>>"
+        dummyField.typeRef.toString == "System.Map<System.String,System.List<System.List<System.String>>>"
       )
     }
   }
@@ -121,7 +121,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val dummy = getType("Dummy", index)
 
       val dummyField = dummy.get.fields.head
-      assert(dummyField.typeRef.getFullName == "System.Map<System.String,System.List<Dummy.Bar>>")
+      assert(dummyField.typeRef.toString == "System.Map<System.String,System.List<Dummy.Bar>>")
     }
   }
 
@@ -134,8 +134,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
 
       val dummyMethod = dummy.get.methods.head
       assert(dummyMethod.typeRef.get.isInstanceOf[PlatformTypeDeclaration])
-      assert(dummyMethod.typeRef.get.getFullName == "Internal.Object$")
-      assert(dummyMethod.typeRef.get.toString == "Object")
+      assert(dummyMethod.typeRef.get.fullName == "Internal.Object$")
     }
   }
 
@@ -149,9 +148,8 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val dummyField = dummy.get.fields.head
       assert(dummyField.typeRef.isInstanceOf[PlatformTypeDeclaration])
       assert(
-        dummyField.typeRef.getFullName == "System.Map<System.List<Internal.Object$>,System.String>"
+        dummyField.typeRef.fullName == "System.Map<System.List<Internal.Object$>,System.String>"
       )
-      assert(dummyField.typeRef.toString == "System.Map<System.List<Object>,System.String>")
     }
   }
 
@@ -164,11 +162,11 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val index = new IPM.Index(root)
       val dummy = getType("Dummy", index).get
 
-      assert(getField(dummy, "b").typeRef.getFullName == "SObjects.BusinessHours")
-      assert(getField(dummy, "s").typeRef.getFullName == "SObjects.Site")
-      assert(getField(dummy, "l").typeRef.getFullName == "System.Location")
-      assert(getField(dummy, "a").typeRef.getFullName == "System.Approval")
-      assert(getField(dummy, "ad").typeRef.getFullName == "System.Address")
+      assert(getField(dummy, "b").typeRef.toString == "SObjects.BusinessHours")
+      assert(getField(dummy, "s").typeRef.toString == "SObjects.Site")
+      assert(getField(dummy, "l").typeRef.toString == "System.Location")
+      assert(getField(dummy, "a").typeRef.toString == "System.Approval")
+      assert(getField(dummy, "ad").typeRef.toString == "System.Address")
     }
   }
 
@@ -183,8 +181,8 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val dummy = getType("Dummy", index).get
 
       assert(getField(dummy, "l").typeRef.isInstanceOf[IModuleTypeDeclaration])
-      assert(getField(dummy, "sl").typeRef.getFullName == "System.Location")
-      assert(getField(dummy, "scl").typeRef.getFullName == "SObjects.Location")
+      assert(getField(dummy, "sl").typeRef.toString == "System.Location")
+      assert(getField(dummy, "scl").typeRef.toString == "SObjects.Location")
     }
   }
 
@@ -202,7 +200,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
         itField.typeRef
           .asInstanceOf[PlatformTypeDeclaration]
           .methods
-          .map(asMethodSignatureString)
+          .map(_.signature)
           .sorted
           .mkString("\n") == Seq(
           "public virtual System.Iterator<System.List<System.String>> iterator()"
@@ -232,7 +230,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
       val rtType = dummy.methods.head.typeRef
       assert(rtType.nonEmpty)
       assert(rtType.get.isInstanceOf[UnresolvedTypeRef])
-      assert(rtType.get.getFullName.equalsIgnoreCase("voids"))
+      assert(rtType.get.toString.equalsIgnoreCase("voids"))
     }
   }
 }

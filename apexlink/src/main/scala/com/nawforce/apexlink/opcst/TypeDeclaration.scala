@@ -1,15 +1,17 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.types.{
+import com.financialforce.types.base.{
   UnresolvedTypeRef,
+  IdWithLocation => OPId,
+  Location => OPLocation,
+  PropertyBlock => OPPropertyBlock
+}
+import com.financialforce.types.{
   IConstructorDeclaration => OPConstructorDeclaration,
   IFieldDeclaration => OPFieldDeclaration,
   IFormalParameter => OPFormalParameter,
-  IdWithLocation => OPId,
   IInitializer => OPInitializer,
-  Location => OPLocation,
   IMethodDeclaration => OPMethodDeclaration,
-  PropertyBlock => OPPropertyBlock,
   IPropertyDeclaration => OPPropertyDeclaration
 }
 import com.nawforce.apexlink.cst.{

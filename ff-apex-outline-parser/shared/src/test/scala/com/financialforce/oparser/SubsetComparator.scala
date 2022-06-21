@@ -5,6 +5,7 @@
 package com.financialforce.oparser
 
 import com.financialforce.types._
+import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -257,7 +258,7 @@ class SubsetComparator(
     }
 
     first match {
-      case td: ITestTypeDeclaration => return td.getFullName == second.getFullName
+      case td: ITestTypeDeclaration => return td.toString == second.toString
       case _                        =>
     }
 
@@ -311,7 +312,7 @@ class SubsetComparator(
   private def compareListAdnArraySubscriptIfAny(first: TypeRef, second: TypeRef): Boolean = {
     //Check if type is array subscript and the other has matching number of List type
     first match {
-      case td: ITestTypeDeclaration => return td.getFullName == second.getFullName
+      case td: ITestTypeDeclaration => return td.toString == second.toString
       case _                        =>
     }
     //TODO we need to compare typerefs again make sure the other are matching
@@ -347,7 +348,7 @@ class SubsetComparator(
     isSubset
   }
 
-  private def subsetCompare[T <: Signature](
+  private def subsetCompare[T <: IVariable](
     first: ArraySeq[T],
     second: ArraySeq[T]
   ): (Boolean, ArraySeq[T], ArraySeq[T]) = {
@@ -377,7 +378,7 @@ class SubsetComparator(
     (check, ArraySeq(), ArraySeq())
   }
 
-  private def findAndCheckTypeRefSubSet[T <: Signature](
+  private def findAndCheckTypeRefSubSet[T <: IVariable](
     firstSig: T,
     secondDiff: ArraySeq[T]
   ): Boolean = {
@@ -453,7 +454,7 @@ class SubsetComparator(
       )
   }
 
-  private def checkAndThrowIfDiffForSignatures[T <: Signature](
+  private def checkAndThrowIfDiffForSignatures[T <: IVariable](
     errorMsg: String,
     first: ArraySeq[T],
     second: ArraySeq[T]

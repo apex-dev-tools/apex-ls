@@ -1,14 +1,18 @@
 /*
  * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved.
  */
-package com.financialforce.types
+package com.financialforce.types.base
 
+/** Position in a source file, uses line/lineOffset & byteOffset to save recomputing later. */
 case class Position(line: Int, lineOffset: Int, byteOffset: Int) {
   override def toString: String = {
     s"[$line.$lineOffset;$byteOffset"
   }
 }
 
+/** Location of a range in a source file, logically a start and end position but unrolled to reduce object overhead.
+  * Note: We don't enforce constraints such as end>=start so consumers should take care, see also Location.default.
+  */
 case class Location(
   startLine: Int,
   startLineOffset: Int,
@@ -26,6 +30,7 @@ case class Location(
 }
 
 object Location {
+  /* A default location, maps to start of the file but has zero characters. */
   val default: Location = Location(0, 0, 0, 0, 0, 0)
 
   def apply(start: Position, end: Position): Location = {
@@ -39,11 +44,7 @@ object Location {
     )
   }
 
-  def fromStart(l: Location): Location = {
-    Location(l.startLine, l.startLineOffset, l.startByteOffset, 0, 0, 0)
-  }
-
-  def from(sl: Location, el: Location): Location = {
+  def span(sl: Location, el: Location): Location = {
     Location(
       sl.startLine,
       sl.startLineOffset,
@@ -52,13 +53,5 @@ object Location {
       el.endLineOffset,
       el.endByteOffset
     )
-  }
-
-  def updateEnd(src: Location, l: Location): Location = {
-    src.copy(endLine = l.endLine, endLineOffset = l.endLineOffset, endByteOffset = l.endByteOffset)
-  }
-
-  def updateEnd(src: Location, endLine: Int, endLineOffset: Int, endByteOffset: Int): Location = {
-    src.copy(endLine = endLine, endLineOffset = endLineOffset, endByteOffset = endByteOffset)
   }
 }

@@ -15,7 +15,7 @@
 package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, TypeNature}
-import com.financialforce.types.Modifier
+import com.financialforce.types.base.Modifier
 
 import java.lang.reflect.{Modifier => JavaModifier}
 

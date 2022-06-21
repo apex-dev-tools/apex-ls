@@ -3,7 +3,20 @@
  */
 package com.financialforce.oparser
 
-import com.financialforce.types._
+import com.financialforce.types.{base, _}
+import com.financialforce.types.base.{
+  Annotation,
+  IdLocationHolder,
+  IdWithLocation,
+  Location,
+  Modifier,
+  Position,
+  PropertyBlock,
+  QualifiedName,
+  TypeNameSegment,
+  TypeRef,
+  UnresolvedTypeRef
+}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -636,7 +649,7 @@ object Parse {
     }
 
     val (newIndex, count) = parseArraySubscripts(index, tokens)
-    (newIndex, UnresolvedTypeRef(segments.toArray, count))
+    (newIndex, base.UnresolvedTypeRef(segments.toArray, count))
   }
 
   private def parseArraySubscripts(startIndex: Int, tokens: Tokens): (Int, Int) = {

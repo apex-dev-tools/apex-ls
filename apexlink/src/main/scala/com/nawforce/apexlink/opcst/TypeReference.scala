@@ -1,6 +1,6 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.types.{
+import com.financialforce.types.base.{
   UnresolvedTypeRef,
   TypeNameSegment => OPTypeName,
   TypeRef => OPTypeRef

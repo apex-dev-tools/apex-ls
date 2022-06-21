@@ -1,6 +1,6 @@
 package com.nawforce.runtime.platform
 
-import com.financialforce.types.{
+import com.financialforce.types.base.{
   Annotation => OPAnnotation,
   IdWithLocation => OPId,
   Location => OPLocation,

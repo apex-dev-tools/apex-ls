@@ -3,7 +3,7 @@
  */
 package com.financialforce.oparser
 
-import com.financialforce.types.Location
+import com.financialforce.types.base.Location
 
 class Buffer(backing: String) {
 

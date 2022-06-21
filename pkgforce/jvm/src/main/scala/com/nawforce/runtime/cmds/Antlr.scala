@@ -1,7 +1,16 @@
 package com.nawforce.runtime.cmds
 
 import com.financialforce.oparser._
-import com.financialforce.types._
+import com.financialforce.types.{base, _}
+import com.financialforce.types.base.{
+  Annotation,
+  Location,
+  Modifier,
+  QualifiedName,
+  TypeNameSegment,
+  TypeRef,
+  UnresolvedTypeRef
+}
 import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
@@ -184,7 +193,7 @@ object Antlr {
         segments.append(antlrTypeName(tn))
       })
 
-    UnresolvedTypeRef(
+    base.UnresolvedTypeRef(
       segments.toArray,
       Option(ctx.arraySubscripts()).map(_.RBRACK().size()).getOrElse(0)
     )

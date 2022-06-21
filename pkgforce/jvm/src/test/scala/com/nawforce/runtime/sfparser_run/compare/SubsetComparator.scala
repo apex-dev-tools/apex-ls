@@ -6,6 +6,7 @@ package com.nawforce.runtime.sfparser_run.compare
 
 import com.financialforce.oparser._
 import com.financialforce.types._
+import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 import com.nawforce.runtime.workspace.{
   ClassTypeDeclaration,
   EnumTypeDeclaration,
@@ -259,7 +260,7 @@ class SubsetComparator(
     }
 
     first match {
-      case td: IModuleTypeDeclaration => return td.getFullName == second.getFullName
+      case td: IModuleTypeDeclaration => return td.toString == second.toString
       case _                          =>
     }
 
@@ -313,7 +314,7 @@ class SubsetComparator(
   private def compareListAdnArraySubscriptIfAny(first: TypeRef, second: TypeRef): Boolean = {
     //Check if type is array subscript and the other has matching number of List type
     first match {
-      case td: IModuleTypeDeclaration => return td.getFullName == second.getFullName
+      case td: IModuleTypeDeclaration => return td.toString == second.toString
       case _                          =>
     }
     //TODO we need to compare typerefs again make sure the other are matching
@@ -349,7 +350,7 @@ class SubsetComparator(
     isSubset
   }
 
-  private def subsetCompare[T <: Signature](
+  private def subsetCompare[T <: IVariable](
     first: ArraySeq[T],
     second: ArraySeq[T]
   ): (Boolean, ArraySeq[T], ArraySeq[T]) = {
@@ -379,7 +380,7 @@ class SubsetComparator(
     (check, ArraySeq(), ArraySeq())
   }
 
-  private def findAndCheckTypeRefSubSet[T <: Signature](
+  private def findAndCheckTypeRefSubSet[T <: IVariable](
     firstSig: T,
     secondDiff: ArraySeq[T]
   ): Boolean = {
@@ -455,7 +456,7 @@ class SubsetComparator(
       )
   }
 
-  private def checkAndThrowIfDiffForSignatures[T <: Signature](
+  private def checkAndThrowIfDiffForSignatures[T <: IVariable](
     errorMsg: String,
     first: ArraySeq[T],
     second: ArraySeq[T]

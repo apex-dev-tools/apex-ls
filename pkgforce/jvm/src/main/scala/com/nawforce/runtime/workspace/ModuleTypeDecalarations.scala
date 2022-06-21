@@ -4,8 +4,8 @@
 package com.nawforce.runtime.workspace
 
 import com.financialforce.oparser._
-import com.financialforce.types.StringUtils.asString
 import com.financialforce.types._
+import com.financialforce.types.base.{Annotation, Location, Modifier, TypeNameSegment, TypeRef}
 import com.nawforce.pkgforce.memory.IdentityEquality
 
 import scala.collection.immutable.ArraySeq
@@ -22,11 +22,15 @@ trait IModuleTypeDeclaration extends ITypeDeclaration {
   def namespaceAsString: String = module.namespaceAsString
 
   // Override to include namespace
-  override def getFullName: String = {
-    Option(module)
-      .flatMap(_.namespace)
-      .map(ns => s"$ns.${super.getFullName}")
-      .getOrElse(super.getFullName)
+  override def fullName: String = {
+    enclosing
+      .map(_ => super.fullName) // Enclosing will add namespace!
+      .getOrElse(
+        Option(module)
+          .flatMap(_.namespace)
+          .map(ns => s"$ns.${super.fullName}")
+          .getOrElse(super.fullName)
+      )
   }
 }
 
@@ -154,8 +158,8 @@ class ClassTypeDeclaration(
       s"""Class:      $id
          |Path:       $path
          |Location:   ${id.location}
-         |Annotation: ${asString(annotations)}
-         |Modifiers:  ${asString(modifiers)}
+         |Annotation: ${annotations.mkString(" ")}
+         |Modifiers:  ${modifiers.mkString(" ")}
          |Extends:    $extendsTypeRef
          |Implements: $implementsTypeList
          |""".stripMargin
@@ -214,8 +218,8 @@ class InterfaceTypeDeclaration(
     s"""Interface:  $id
        |Path:       $path
        |Location:   ${id.location}
-       |Annotation: ${asString(annotations)}
-       |Modifiers:  ${asString(modifiers)}
+       |Annotation: ${annotations.mkString(" ")}
+       |Modifiers:  ${modifiers.mkString(" ")}
        |Implements: $implementsTypeList
        |Methods:
        |${methods.mkString("\n")}
@@ -234,8 +238,8 @@ class EnumTypeDeclaration(
     s"""Enum:       $id
        |Path:       $path
        |Location:   ${id.location}
-       |Annotation: ${asString(annotations)}
-       |Modifiers:  ${asString(modifiers)}
+       |Annotation: ${annotations.mkString(" ")}
+       |Modifiers:  ${modifiers.mkString(" ")}
        |Constants:
        |${fields.map(f => s"${f.id.location} ${f.id.name}").mkString("\n")}
        |

@@ -3,7 +3,7 @@
  */
 package com.nawforce.pkgforce.types;
 
-import com.financialforce.types.TypeRef;
+import com.financialforce.types.base.TypeRef;
 import com.nawforce.pkgforce.api.ApexTypeId;
 import com.nawforce.pkgforce.names.TypeName;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
@@ -33,9 +33,9 @@ public class NameApexTypeId implements ApexTypeId {
             return null;
         if (typeRef instanceof IModuleTypeDeclaration) {
             IModuleTypeDeclaration td = (IModuleTypeDeclaration)typeRef;
-            return new NameApexTypeId(td.getFullName(), td.namespaceAsString(), true);
+            return new NameApexTypeId(td.fullName(), td.namespaceAsString(), true);
         } else {
-            return new NameApexTypeId(typeRef.getFullName(), "", false);
+            return new NameApexTypeId(typeRef.fullName(), "", false);
         }
     }
 

@@ -1,16 +1,20 @@
 /*
  * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved.
  */
-package com.financialforce.types
+package com.financialforce.types.base
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 import scala.util.hashing.MurmurHash3
 
+/** Reference holder to a type. Typically TypeRefs start as a UnresolvedTypeRef and are replaced by a ITypeDeclaration
+  * during a resolve phase. The fullName can be used to determine equivalence between these two types of TypeRef.
+  */
 trait TypeRef {
-  def getFullName: String
-  override def toString: String = {
-    getFullName
+  def fullName: String
+
+  def sameRef(other: TypeRef): Boolean = {
+    other.fullName.equalsIgnoreCase(fullName)
   }
 }
 
@@ -25,14 +29,16 @@ object TypeRef {
       )
     }))
   }
-
 }
 
+/** A reference to a type in raw form as it appears in source files. This just captures the segments in the TypeRef
+  * and any array subscripts. We expect a resolve process to use this information to locate an ITypeDeclaration.
+  */
 final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arraySubscripts: Int)
     extends TypeRef {
 
-  override def getFullName: String = {
-    toString
+  override def fullName: String = {
+    typeNameSegments.mkString(".") + ("[]" * arraySubscripts)
   }
 
   override def equals(obj: Any): Boolean = {
@@ -45,15 +51,15 @@ final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arr
     MurmurHash3.orderedHash(Seq(arraySubscripts, MurmurHash3.arrayHash(typeNameSegments)))
   }
 
-  override def toString: String = {
-    typeNameSegments.mkString(".") + ("[]" * arraySubscripts)
-  }
+  override def toString: String = fullName
 }
 
 object UnresolvedTypeRef {
 
-  /* Convert a string into a UnresolvedTypeRef. Note: This is really only suitable for well formed type names because
-   * it does not handle whitespace or array subscripts or even do much error handling. */
+  /** Convert a string into a UnresolvedTypeRef. Note: This is really only suitable for well formed type names because
+    * it does not handle whitespace or array subscripts or even do much error handling.
+    */
+  // TODO: Can we improve this?
   def apply(typeName: String): Either[String, UnresolvedTypeRef] = {
     val parts = safeSplit(typeName, '.')
 
@@ -81,7 +87,7 @@ object UnresolvedTypeRef {
     Right(apply(segments.collect { case Right(segment) => segment }.toArray, 0))
   }
 
-  /* Split a list of comma delimited type names */
+  /** Split a list of comma delimited type names */
   private def buildTypeNames(value: String): Either[String, Array[UnresolvedTypeRef]] = {
     val args =
       safeSplit(value, ',').foldLeft(ArrayBuffer[Either[String, UnresolvedTypeRef]]())(
@@ -114,6 +120,7 @@ object UnresolvedTypeRef {
   }
 }
 
+/** A single segment of a TypeRef, essentially and id with optional type arguments */
 final case class TypeNameSegment(id: IdWithLocation, typeArguments: ArraySeq[TypeRef]) {
 
   def replaceArguments(args: ArraySeq[TypeRef]): TypeNameSegment = {
@@ -122,7 +129,7 @@ final case class TypeNameSegment(id: IdWithLocation, typeArguments: ArraySeq[Typ
 
   override def toString: String = {
     if (typeArguments.nonEmpty)
-      s"$id<${typeArguments.map(_.getFullName).mkString(",")}>"
+      s"$id<${typeArguments.map(_.fullName).mkString(",")}>"
     else
       id.toString
   }

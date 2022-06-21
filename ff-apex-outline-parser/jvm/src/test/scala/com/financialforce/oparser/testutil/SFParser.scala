@@ -20,7 +20,16 @@ import apex.jorje.semantic.symbol.member.Member
 import apex.jorje.semantic.symbol.member.method.MethodInfo
 import apex.jorje.semantic.symbol.member.variable.FieldInfo
 import com.financialforce.oparser._
-import com.financialforce.types._
+import com.financialforce.types.{base, _}
+import com.financialforce.types.base.{
+  Annotation,
+  Location,
+  Modifier,
+  QualifiedName,
+  TypeNameSegment,
+  TypeRef,
+  UnresolvedTypeRef
+}
 import org.apache.commons.lang3.reflect.FieldUtils
 
 import scala.collection.immutable.ArraySeq
@@ -429,7 +438,7 @@ class SFParser(source: Map[String, String]) {
           )
       )
 
-    UnresolvedTypeRef(segments.toArray, 0)
+    base.UnresolvedTypeRef(segments.toArray, 0)
   }
 
   private def toTypeRef(from: Option[apex.jorje.data.ast.TypeRef]): Option[UnresolvedTypeRef] = {
@@ -473,7 +482,7 @@ class SFParser(source: Map[String, String]) {
           )
         }
 
-        return Some(UnresolvedTypeRef(segments.toArray, subscripts))
+        return Some(base.UnresolvedTypeRef(segments.toArray, subscripts))
       case _ =>
     }
     None

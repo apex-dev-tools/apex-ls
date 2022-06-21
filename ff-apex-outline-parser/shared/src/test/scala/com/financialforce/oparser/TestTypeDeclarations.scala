@@ -4,8 +4,8 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.types.StringUtils.asString
 import com.financialforce.types._
+import com.financialforce.types.base.{Annotation, Location, Modifier, TypeNameSegment, TypeRef}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -108,8 +108,8 @@ class TestClassTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarat
       s"""Class:      $id
          |Path:       $path
          |Location:   ${id.location}
-         |Annotation: ${asString(_annotations)}
-         |Modifiers:  ${asString(_modifiers)}
+         |Annotation: ${_annotations.mkString(" ")}
+         |Modifiers:  ${_modifiers.mkString(" ")}
          |Extends:    ${_extendsTypeRef}
          |Implements: ${_implementsTypeList}
          |""".stripMargin
@@ -165,8 +165,8 @@ class TestInterfaceTypeDeclaration(path: String, enclosing: IMutableTestTypeDecl
     s"""Interface:  $id
        |Path:       $path
        |Location:   ${id.location}
-       |Annotation: ${asString(_annotations)}
-       |Modifiers:  ${asString(_modifiers)}
+       |Annotation: ${_annotations.mkString(" ")}
+       |Modifiers:  ${_modifiers.mkString(" ")}
        |Implements: ${_implementsTypeList}
        |Methods:
        |${methods.mkString("\n")}
@@ -182,8 +182,8 @@ class TestEnumTypeDeclaration(path: String, enclosing: IMutableTestTypeDeclarati
     s"""Enum:       $id
        |Path:       $path
        |Location:   ${id.location}
-       |Annotation: ${asString(_annotations)}
-       |Modifiers:  ${asString(_modifiers)}
+       |Annotation: ${_annotations.mkString(" ")}
+       |Modifiers:  ${_modifiers.mkString(" ")}
        |Constants:
        |${fields.map(f => s"${f.id.location} ${f.id.name}").mkString("\n")}
        |

@@ -4,6 +4,7 @@
 package com.financialforce.oparser
 
 import com.financialforce.types._
+import com.financialforce.types.base.{Annotation, Location, Modifier, TypeRef}
 
 import scala.collection.immutable.ArraySeq
 

@@ -1,6 +1,6 @@
 package com.nawforce.runtime.sfparser_run.compare
 
-import com.financialforce.types.IdWithLocation
+import com.financialforce.types.base.IdWithLocation
 import com.nawforce.runtime.workspace.{
   ClassTypeDeclaration,
   IModuleTypeDeclaration,

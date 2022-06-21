@@ -4,6 +4,7 @@
 package com.nawforce.runtime.workspace
 
 import com.financialforce.types._
+import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex, SObjectNature}
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
@@ -262,7 +263,7 @@ object IPM extends TriHierarchy {
         TypeFinder.get(this, typeRef, decl)
       }
 
-      def resolveSignature(body: Signature): Unit = {
+      def resolveSignature(body: IVariable): Unit = {
         body.typeRef = resolve(body.typeRef).getOrElse(body.typeRef)
 
         if (body.typeRef.isInstanceOf[UnresolvedTypeRef]) {
@@ -272,7 +273,7 @@ object IPM extends TriHierarchy {
 
       def resolveMethods(methodDeclaration: IMethodDeclaration): Unit = {
         if (methodDeclaration.typeRef.nonEmpty) {
-          val isVoid = methodDeclaration.typeRef.get.getFullName.equalsIgnoreCase(Names.Void.value)
+          val isVoid = methodDeclaration.typeRef.get.fullName.equalsIgnoreCase(Names.Void.value)
           methodDeclaration.typeRef =
             if (isVoid) None
             else resolve(methodDeclaration.typeRef.get).orElse(methodDeclaration.typeRef)

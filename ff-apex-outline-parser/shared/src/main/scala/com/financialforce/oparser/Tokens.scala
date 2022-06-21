@@ -3,7 +3,7 @@
  */
 package com.financialforce.oparser
 
-import com.financialforce.types.{IdLocationHolder, InternCache, Location}
+import com.financialforce.types.base.{IdLocationHolder, Location}
 
 import scala.collection.mutable
 
@@ -117,10 +117,10 @@ class LocatableIdToken private (override val name: String, _location: Location)
 }
 
 object LocatableIdToken {
-  private val stringCache = new InternCache[String]()
+  private val stringCache = mutable.HashMap[String, String]()
 
   def apply(contents: String, location: Location): LocatableIdToken = {
-    new LocatableIdToken(stringCache.intern(contents), location)
+    new LocatableIdToken(stringCache.getOrElseUpdate(contents, contents), location)
   }
 }
 

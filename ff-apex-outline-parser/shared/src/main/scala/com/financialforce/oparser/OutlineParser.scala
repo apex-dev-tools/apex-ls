@@ -4,7 +4,7 @@
 package com.financialforce.oparser
 
 import com.financialforce.oparser.OutlineParser.singleCharacterTokens
-import com.financialforce.types.{Location, Position, PropertyBlock}
+import com.financialforce.types.base.{Location, Position, PropertyBlock}
 
 import scala.annotation.tailrec
 import scala.collection.{BitSet, mutable}
@@ -148,11 +148,11 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               val classTypeDeclaration = factory.create(ctx, CLASS_NATURE, path, None)
               Parse.parseClassType(classTypeDeclaration, tokens)
               typeDeclaration = Some(classTypeDeclaration)
-              val startLocation = Location.fromStart(tokens.head.location)
+              val startPosition = tokens.head.location.startPosition
               tokens.clear()
               consumeClassBody(classTypeDeclaration)
               classTypeDeclaration.setLocation(
-                Location.updateEnd(startLocation, line, lineOffset, byteOffset)
+                Location(startPosition, Position(line, lineOffset, byteOffset))
               )
               classTypeDeclaration.onComplete()
               (false, Some(classTypeDeclaration))
@@ -271,28 +271,28 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
     if (token.matches(Tokens.ClassStr)) {
       val innerClass = factory.create(ctx, CLASS_NATURE, ctd.paths.head, Some(ctd))
       Parse.parseClassType(innerClass, tokens)
-      val startLocation = Location.fromStart(token.location)
+      val startPosition = token.location.startPosition
       tokens.clear()
       consumeClassBody(innerClass)
-      innerClass.setLocation(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+      innerClass.setLocation(Location(startPosition, Position(line, lineOffset, byteOffset)))
       innerClass.onComplete()
       ctd.appendInnerType(innerClass)
     } else if (token.matches(Tokens.InterfaceStr)) {
       val innerInterface = factory.create(ctx, INTERFACE_NATURE, ctd.paths.head, Some(ctd))
       Parse.parseInterfaceType(innerInterface, tokens)
-      val startLocation = Location.fromStart(token.location)
+      val startPosition = token.location.startPosition
       tokens.clear()
       consumeInterfaceBody(innerInterface)
-      innerInterface.setLocation(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+      innerInterface.setLocation(Location(startPosition, Position(line, lineOffset, byteOffset)))
       innerInterface.onComplete()
       ctd.appendInnerType(innerInterface)
     } else if (token.matches(Tokens.EnumStr)) {
       val innerEnum = factory.create(ctx, ENUM_NATURE, ctd.paths.head, Some(ctd))
       Parse.parseEnumType(innerEnum, tokens)
-      val startLocation = Location.fromStart(token.location)
+      val startPosition = token.location.startPosition
       tokens.clear()
       consumeEnumBody(innerEnum)
-      innerEnum.setLocation(Location.updateEnd(startLocation, line, lineOffset, byteOffset))
+      innerEnum.setLocation(Location(startPosition, Position(line, lineOffset, byteOffset)))
       innerEnum.onComplete()
       ctd.appendInnerType(innerEnum)
     }
@@ -393,11 +393,11 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               val interfaceTypeDeclaration = factory.create(ctx, INTERFACE_NATURE, path, None)
               Parse.parseInterfaceType(interfaceTypeDeclaration, tokens)
               typeDeclaration = Some(interfaceTypeDeclaration)
-              val startLocation = Location.fromStart(tokens.head.location)
+              val startPosition = tokens.head.location.startPosition
               tokens.clear()
               consumeInterfaceBody(interfaceTypeDeclaration)
               interfaceTypeDeclaration.setLocation(
-                Location.updateEnd(startLocation, line, lineOffset, byteOffset)
+                Location(startPosition, Position(line, lineOffset, byteOffset))
               )
               interfaceTypeDeclaration.onComplete()
               (false, Some(interfaceTypeDeclaration))
@@ -454,11 +454,11 @@ final class OutlineParser[TypeDecl <: IMutableTypeDeclaration, Ctx](
               val enumTypeDeclaration = factory.create(ctx, ENUM_NATURE, path, None)
               Parse.parseEnumType(enumTypeDeclaration, tokens)
               typeDeclaration = Some(enumTypeDeclaration)
-              val startLocation = Location.fromStart(tokens.head.location)
+              val startPosition = tokens.head.location.startPosition
               tokens.clear()
               consumeEnumBody(enumTypeDeclaration)
               enumTypeDeclaration.setLocation(
-                Location.updateEnd(startLocation, line, lineOffset, byteOffset)
+                Location(startPosition, Position(line, lineOffset, byteOffset))
               )
               enumTypeDeclaration.onComplete()
               (false, Some(enumTypeDeclaration))

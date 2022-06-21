@@ -6,6 +6,14 @@ package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
 import com.financialforce.types._
+import com.financialforce.types.base.{
+  Annotation,
+  IdWithLocation,
+  Location,
+  Modifier,
+  TypeNameSegment,
+  TypeRef
+}
 import com.nawforce.pkgforce.documents.MetadataDocument
 import com.nawforce.runtime.types.platform.SObjectTypeDeclaration.{emptyPaths, getTypeInfo}
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}

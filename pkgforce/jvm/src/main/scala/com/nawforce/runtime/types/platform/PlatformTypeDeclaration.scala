@@ -16,6 +16,16 @@ package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
 import com.financialforce.types._
+import com.financialforce.types.base.{
+  Annotation,
+  IdWithLocation,
+  Location,
+  Modifier,
+  QualifiedName,
+  TypeNameSegment,
+  TypeRef,
+  UnresolvedTypeRef
+}
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
 import com.nawforce.runtime.types.platform.PlatformTypeDeclaration._
@@ -118,10 +128,10 @@ class PlatformTypeDeclaration(
 
   override lazy val fields: ArraySeq[FieldDeclaration] = getFields
 
-  override def getFullName: String = {
+  override def fullName: String = {
     val ns = if (typeInfo.namespace.nonEmpty) s"${typeInfo.namespace.get}." else ""
     if (enclosing.nonEmpty)
-      return s"$ns${enclosing.get.getFullName}.${typeInfo.typeName.toString}"
+      return s"$ns${enclosing.get.fullName}.${typeInfo.typeName.toString}"
     s"$ns${typeInfo.typeName.toString}"
   }
 
@@ -131,14 +141,12 @@ class PlatformTypeDeclaration(
     val args =
       if (typeNameSegment.typeArguments.nonEmpty)
         typeNameSegment.typeArguments
-          .map(
-            arg => if (arg.isInstanceOf[PlatformTypeDeclaration]) arg.toString else arg.getFullName
-          )
+          .map(arg => if (arg.isInstanceOf[PlatformTypeDeclaration]) arg.toString else arg.fullName)
           .mkString("<", ",", ">")
       else ""
     var rawNames =
       if (enclosing.nonEmpty)
-        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName)
+        Seq(typeInfo.typeName.id.toString, enclosing.get.fullName)
       else Seq(typeInfo.typeName.id.toString)
     if (typeInfo.namespace.nonEmpty) {
       rawNames = rawNames :+ typeInfo.namespace.get
@@ -333,7 +341,7 @@ object PlatformTypeDeclaration {
 
   def get(module: IPM.Module, typeRef: UnresolvedTypeRef): Option[PlatformTypeDeclaration] = {
     //Exit early for void
-    if (typeRef.getFullName.equalsIgnoreCase(Names.Void.value))
+    if (typeRef.fullName.equalsIgnoreCase(Names.Void.value))
       return None
 
     // Conversion will fail if typeRef has unresolved type arguments

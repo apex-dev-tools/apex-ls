@@ -4,7 +4,16 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.types._
+import com.financialforce.types.{base, _}
+import com.financialforce.types.base.{
+  Annotation,
+  Location,
+  Modifier,
+  QualifiedName,
+  TypeNameSegment,
+  TypeRef,
+  UnresolvedTypeRef
+}
 
 import scala.collection.immutable.ArraySeq
 
@@ -40,7 +49,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {
-    UnresolvedTypeRef(typeNames, totalSubscripts)
+    base.UnresolvedTypeRef(typeNames, totalSubscripts)
   }
 
   def toParameter(
