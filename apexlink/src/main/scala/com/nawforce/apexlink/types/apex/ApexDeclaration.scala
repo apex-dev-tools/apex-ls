@@ -152,6 +152,11 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
 
   override def nestedTypes: ArraySeq[ApexClassDeclaration]
 
+  override def isCustomException: Boolean =
+    name.endsWith(Names.Exception) || superClassDeclaration
+      .map(_.typeName)
+      .contains(TypeNames.Exception) || superClassDeclaration.exists(_.isCustomException)
+
   /** Override to resolve conflict, TypeDeclaration & DependencyHolder both default false */
   override val inTest: Boolean = false
 

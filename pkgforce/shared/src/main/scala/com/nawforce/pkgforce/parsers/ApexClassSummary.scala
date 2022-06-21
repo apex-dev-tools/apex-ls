@@ -17,7 +17,7 @@ import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{GLOBAL_MODIFIER, Modifier, WEBSERVICE_MODIFIER}
-import com.nawforce.pkgforce.names.Name
+import com.nawforce.pkgforce.names.{Name, Names}
 import com.nawforce.pkgforce.path.{IdLocatable, Location, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 
@@ -172,18 +172,54 @@ object ApexNode {
       str
   }
 }
+case class ExtendsType(name: Name, location: Location)
 
 class ApexLightNode(
   val location: PathLocation,
   val nature: Nature,
   val name: Name,
   val idLocation: Location,
+  val typeRef: Option[ExtendsType],
   val children: ArraySeq[ApexNode],
   val modifiers: ArraySeq[Modifier],
   override val signature: String,
   override val description: String,
   val parseIssues: ArraySeq[Issue]
-) extends ApexNode {}
+) extends ApexNode {
+
+  override def localIssues: Seq[Issue] = super.localIssues ++ checkCustomException()
+
+  private def checkCustomException(): Seq[Issue] = {
+    val isNamedCorrectly    = name.endsWith(Names.Exception)
+    val isExtendedCorrectly = typeRef.exists(_.name.endsWith(Names.Exception))
+
+    (isNamedCorrectly, isExtendedCorrectly) match {
+      case (true, false) =>
+        ArraySeq(
+          new Issue(
+            location.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              typeRef.map(_.location).getOrElse(idLocation),
+              s"Exception class '$name' must extend another Exception class"
+            )
+          )
+        )
+      case (false, true) =>
+        ArraySeq(
+          new Issue(
+            location.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              idLocation,
+              s"Class '$name' extending an Exception must have a name ending in Exception"
+            )
+          )
+        )
+      case _ => ArraySeq.empty
+    }
+  }
+}
 
 case class ApexFormalParameter(
   modifiers: ArraySeq[Modifier],
