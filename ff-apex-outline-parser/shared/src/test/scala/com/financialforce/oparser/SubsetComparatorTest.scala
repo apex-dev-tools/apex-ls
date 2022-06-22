@@ -4,7 +4,6 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.types._
 import com.financialforce.types.base.{
   Annotation,
   IdWithLocation,
@@ -486,7 +485,6 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
     }
   }
 
-  //TODO: run tests when we fix comparator
   describe("Methods") {
     def generateMethod(
       annotations: Array[Annotation] = Array(toAnnotation(Array("Override"), None)),

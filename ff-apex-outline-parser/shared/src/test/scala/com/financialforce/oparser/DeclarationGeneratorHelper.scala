@@ -4,7 +4,6 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.types.{base, _}
 import com.financialforce.types.base.{
   Annotation,
   Location,
@@ -49,7 +48,7 @@ trait DeclarationGeneratorHelper {
   }
 
   def toTypeRef(typeNames: Array[TypeNameSegment], totalSubscripts: Int): UnresolvedTypeRef = {
-    base.UnresolvedTypeRef(typeNames, totalSubscripts)
+    UnresolvedTypeRef(typeNames, totalSubscripts)
   }
 
   def toParameter(

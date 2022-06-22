@@ -1,17 +1,6 @@
-/*
- * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved.
- */
-package com.nawforce.runtime.cmds
+package com.financialforce.oparser
 
-import com.financialforce.oparser.OutlineParser
-import com.nawforce.pkgforce.path.PathFactory
-import com.nawforce.runtime.workspace.{
-  ClassTypeDeclaration,
-  Compare,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration,
-  ModuleClassFactory
-}
+import com.financialforce.oparser.testutil.Antlr
 
 import java.nio.file.{Files, Path, Paths}
 import java.util.concurrent.atomic.AtomicLong
@@ -116,7 +105,7 @@ object Parser {
 
     val all = Future
       .sequence(futures)
-      .andThen(f => {
+      .andThen(_ => {
         println(s"Number of files: ${futures.length}")
         println(s"Total Length: ${totalLength.longValue()} bytes")
         println(s"Read File Time: ${totalReadFileTime.longValue() / 1e3}s")
@@ -188,7 +177,7 @@ object Parser {
     val td = if (test || !onlyANTLR) {
       start = System.currentTimeMillis()
       val (success, reason, decl) =
-        OutlineParser.parse(path.toString, contentsString, ModuleClassFactory, null)
+        OutlineParser.parse(path.toString, contentsString, TestClassFactory, null)
       if (!success)
         println(s"outline-parser failed: $path ${reason.get}")
       addParseTime(System.currentTimeMillis() - start)
@@ -203,7 +192,7 @@ object Parser {
     val antlrType = if (test || onlyANTLR) {
       try {
         start = System.currentTimeMillis()
-        val decl = Antlr.parse(PathFactory(path.toString), contentsBytes)
+        val decl = Antlr.parse(path.toString, contentsBytes)
         addAntlrTime(System.currentTimeMillis() - start)
         decl
       } catch {
@@ -215,18 +204,21 @@ object Parser {
 
     if (test && td.nonEmpty && antlrType.nonEmpty) {
       td.get match {
-        case cls: ClassTypeDeclaration =>
+        case cls: TestClassTypeDeclaration =>
           Compare.compareClassTypeDeclarations(
             cls,
-            antlrType.get.asInstanceOf[ClassTypeDeclaration]
+            antlrType.get.asInstanceOf[TestClassTypeDeclaration]
           )
-        case int: InterfaceTypeDeclaration =>
+        case int: TestInterfaceTypeDeclaration =>
           Compare.compareInterfaceTypeDeclarations(
             int,
-            antlrType.get.asInstanceOf[InterfaceTypeDeclaration]
+            antlrType.get.asInstanceOf[TestInterfaceTypeDeclaration]
           )
-        case enm: EnumTypeDeclaration =>
-          Compare.compareEnumTypeDeclarations(enm, antlrType.get.asInstanceOf[EnumTypeDeclaration])
+        case enm: TestEnumTypeDeclaration =>
+          Compare.compareEnumTypeDeclarations(
+            enm,
+            antlrType.get.asInstanceOf[TestEnumTypeDeclaration]
+          )
         case _ =>
       }
     }

@@ -20,7 +20,6 @@ import apex.jorje.semantic.symbol.member.Member
 import apex.jorje.semantic.symbol.member.method.MethodInfo
 import apex.jorje.semantic.symbol.member.variable.FieldInfo
 import com.financialforce.oparser._
-import com.financialforce.types.{base, _}
 import com.financialforce.types.base.{
   Annotation,
   Location,
@@ -39,7 +38,7 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
 import scala.language.postfixOps
 
-class SFParser(source: Map[String, String]) {
+class JorjeParser(source: Map[String, String]) {
   private val typeDeclarations: ArrayBuffer[TestTypeDeclaration] = ArrayBuffer()
   private val parseFailures: ArrayBuffer[String]                 = ArrayBuffer()
 
@@ -438,7 +437,7 @@ class SFParser(source: Map[String, String]) {
           )
       )
 
-    base.UnresolvedTypeRef(segments.toArray, 0)
+    UnresolvedTypeRef(segments.toArray, 0)
   }
 
   private def toTypeRef(from: Option[apex.jorje.data.ast.TypeRef]): Option[UnresolvedTypeRef] = {
@@ -482,7 +481,7 @@ class SFParser(source: Map[String, String]) {
           )
         }
 
-        return Some(base.UnresolvedTypeRef(segments.toArray, subscripts))
+        return Some(UnresolvedTypeRef(segments.toArray, subscripts))
       case _ =>
     }
     None
@@ -525,18 +524,18 @@ class SFParser(source: Map[String, String]) {
 
 }
 
-object SFParser {
+object JorjeParser {
 
   import java.util.logging.LogManager
 
   // Stop Jorje logging a startup message
   LogManager.getLogManager.reset()
 
-  def apply(path: String, contents: String): SFParser = {
-    new SFParser(Map(path -> contents))
+  def apply(path: String, contents: String): JorjeParser = {
+    new JorjeParser(Map(path -> contents))
   }
 
-  def apply(sources: Map[String, String]): SFParser = {
-    new SFParser(sources)
+  def apply(sources: Map[String, String]): JorjeParser = {
+    new JorjeParser(sources)
   }
 }

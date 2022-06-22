@@ -4,7 +4,7 @@
 package com.financialforce.oparser
 
 import com.financialforce.types._
-import com.financialforce.types.base.{Annotation, Location, Modifier, TypeRef}
+import com.financialforce.types.base.{Annotation, IdWithLocation, Location, Modifier, TypeRef}
 
 import scala.collection.immutable.ArraySeq
 
@@ -15,7 +15,7 @@ trait IMutableTypeDeclaration extends ITypeDeclaration with MutableTypeAppendabl
   override def innerTypes: ArraySeq[IMutableTypeDeclaration]
 
   // Setters for standard attributes of the type
-  def setId(id: LocatableIdToken): Unit
+  def setId(id: IdWithLocation): Unit
   def setLocation(location: Location): Unit
   def setExtends(typeRef: TypeRef): Unit
   def setImplements(typeList: ArraySeq[TypeRef]): Unit

@@ -56,17 +56,25 @@ final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arr
 
 object UnresolvedTypeRef {
 
-  /** Convert a string into a UnresolvedTypeRef. Note: This is really only suitable for well formed type names because
-    * it does not handle whitespace or array subscripts or even do much error handling.
+  /** Convert a string into a UnresolvedTypeRef. Note: This is really only intended for internal use as the
+    * error handling is limited.
     */
-  // TODO: Can we improve this?
   def apply(typeName: String): Either[String, UnresolvedTypeRef] = {
-    val parts = safeSplit(typeName, '.')
 
+    // Strip trailing array subscripts
+    var remaining: String = typeName.trim.replaceAll("\\s", "")
+    var arraySubscripts   = 0
+    while (remaining.endsWith("[]")) {
+      arraySubscripts += 1
+      remaining = remaining.substring(0, remaining.length - 2)
+    }
+
+    val parts = safeSplit(remaining, '.')
     val segments: List[Either[String, TypeNameSegment]] = parts.map(part => {
+      // Handle segment type arguments
       if (part.contains('<')) {
         val argSplit = part.split("<", 2)
-        if (argSplit.length != 2 || argSplit(1).length < 2 || part.last != '>')
+        if (argSplit.length != 2 || argSplit(1).length < 2 || remaining.last != '>')
           Left(s"Unmatched '<' found in '$part'")
         else {
           buildTypeNames(argSplit(1).take(argSplit(1).length - 1)) match {
@@ -84,7 +92,7 @@ object UnresolvedTypeRef {
     val errors = segments.collect { case Left(error) => error }
     if (errors.nonEmpty)
       return Left(errors.head)
-    Right(apply(segments.collect { case Right(segment) => segment }.toArray, 0))
+    Right(apply(segments.collect { case Right(segment) => segment }.toArray, arraySubscripts))
   }
 
   /** Split a list of comma delimited type names */
@@ -103,7 +111,7 @@ object UnresolvedTypeRef {
       .getOrElse(Right(args.collect { case Right(tn) => tn }.toArray))
   }
 
-  /** Split a string at 'separator' but ignoring if within '<...>' blocks. */
+  /** Split a string at 'separator' but ignoring if within '&lt;...>' blocks. */
   private def safeSplit(value: String, separator: Char): List[String] = {
     var parts: List[String] = Nil
     var current             = new StringBuffer()

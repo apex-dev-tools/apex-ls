@@ -5,7 +5,14 @@
 package com.financialforce.oparser
 
 import com.financialforce.types._
-import com.financialforce.types.base.{Annotation, Location, Modifier, TypeNameSegment, TypeRef}
+import com.financialforce.types.base.{
+  Annotation,
+  IdWithLocation,
+  Location,
+  Modifier,
+  TypeNameSegment,
+  TypeRef
+}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -38,7 +45,7 @@ sealed class TestTypeDeclaration(
 ) extends IMutableTestTypeDeclaration {
   var _location: Location = _
 
-  var _id: LocatableIdToken                  = _
+  var _id: IdWithLocation                    = _
   var _extendsTypeRef: TypeRef               = _
   var _implementsTypeList: ArraySeq[TypeRef] = _
   var _modifiers: Array[Modifier]            = Modifier.emptyArray
@@ -54,7 +61,7 @@ sealed class TestTypeDeclaration(
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
 
-  override def id: LocatableIdToken = _id
+  override def id: IdWithLocation = _id
 
   override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeRef.emptyArraySeq)
 
@@ -75,7 +82,7 @@ sealed class TestTypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
-  override def setId(id: LocatableIdToken): Unit                    = _id = id
+  override def setId(id: IdWithLocation): Unit                      = _id = id
   override def setLocation(location: Location): Unit                = _location = location
   override def setExtends(typeRef: TypeRef): Unit                   = _extendsTypeRef = typeRef
   override def setImplements(typeList: ArraySeq[TypeRef]): Unit     = _implementsTypeList = typeList

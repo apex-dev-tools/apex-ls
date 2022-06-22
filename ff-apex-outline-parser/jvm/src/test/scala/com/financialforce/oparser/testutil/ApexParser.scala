@@ -1,36 +1,45 @@
-package com.nawforce.runtime.cmds
+package com.financialforce.oparser.testutil
 
 import com.financialforce.oparser._
-import com.financialforce.types.{base, _}
-import com.financialforce.types.base.{
-  Annotation,
-  Location,
-  Modifier,
-  QualifiedName,
-  TypeNameSegment,
-  TypeRef,
-  UnresolvedTypeRef
-}
+import com.financialforce.types.base._
+import com.financialforce.types.{ITypeDeclaration, base}
 import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
-import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
-import com.nawforce.runtime.parsers.CollectingErrorListener
-import com.nawforce.runtime.workspace.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration,
-  TypeDeclaration
-}
-import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
+import org.antlr.v4.runtime._
 
 import java.io.ByteArrayInputStream
-import scala.collection.compat.immutable.ArraySeq
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.CollectionHasAsScala
+
+case class Issue(path: String, line: Int, lineOffset: Int, msg: String)
+
+class CollectingErrorListener(path: String) extends BaseErrorListener {
+  var _issues: mutable.ArrayBuffer[Issue] = _
+
+  override def syntaxError(
+    recognizer: Recognizer[_, _],
+    offendingSymbol: Any,
+    line: Int,
+    charPositionInLine: Int,
+    msg: String,
+    e: RecognitionException
+  ): Unit = {
+    if (_issues == null)
+      _issues = new mutable.ArrayBuffer[Issue]()
+    _issues.addOne(Issue(path, line, charPositionInLine, msg))
+  }
+
+  def issues: ArraySeq[Issue] = {
+    if (_issues != null)
+      ArraySeq.unsafeWrapArray(_issues.toArray)
+    else
+      ArraySeq.empty
+  }
+}
 
 object Antlr {
 
-  def parse(path: PathLike, source: Array[Byte]): Option[TypeDeclaration] = {
+  def parse(path: String, source: Array[Byte]): Option[ITypeDeclaration] = {
     val cis: CaseInsensitiveInputStream = new CaseInsensitiveInputStream(
       CharStreams.fromStream(new ByteArrayInputStream(source, 0, source.length))
     )
@@ -48,7 +57,7 @@ object Antlr {
       throw new Exception(listener.issues.head.toString)
 
     if (Option(tree.typeDeclaration().classDeclaration()).isDefined) {
-      val ctd = new ClassTypeDeclaration(null, "", null)
+      val ctd = new TestClassTypeDeclaration(path, enclosing = null)
 
       ctd.setAnnotations(
         tree
@@ -73,7 +82,7 @@ object Antlr {
       return Some(ctd)
     }
     if (Option(tree.typeDeclaration().interfaceDeclaration()).isDefined) {
-      val itd = new InterfaceTypeDeclaration(null, "", null)
+      val itd = new TestInterfaceTypeDeclaration(path, enclosing = null)
 
       itd.setAnnotations(
         tree
@@ -98,7 +107,7 @@ object Antlr {
       return Some(itd)
     }
     if (Option(tree.typeDeclaration().enumDeclaration()).isDefined) {
-      val etd = new EnumTypeDeclaration(null, "", null)
+      val etd = new TestEnumTypeDeclaration(path, enclosing = null)
 
       etd.setAnnotations(
         tree
@@ -200,7 +209,7 @@ object Antlr {
   }
 
   def antlrClassTypeDeclaration(
-    ctd: ClassTypeDeclaration,
+    ctd: TestClassTypeDeclaration,
     ctx: ApexParser.ClassDeclarationContext
   ): Unit = {
     ctd.setId(toId(ctx.id()))
@@ -229,7 +238,7 @@ object Antlr {
           )
 
           Option(d.classDeclaration()).foreach(icd => {
-            val innerClassDeclaration = new ClassTypeDeclaration(null, "", ctd)
+            val innerClassDeclaration = new TestClassTypeDeclaration(ctd.path, ctd)
             innerClassDeclaration.setAnnotations(md.annotations)
             innerClassDeclaration.setModifiers(md.modifiers)
             ctd.appendInnerType(innerClassDeclaration)
@@ -237,7 +246,7 @@ object Antlr {
           })
 
           Option(d.interfaceDeclaration()).foreach(iid => {
-            val innerInterfaceDeclaration = new InterfaceTypeDeclaration(null, "", ctd)
+            val innerInterfaceDeclaration = new TestInterfaceTypeDeclaration(ctd.path, ctd)
             innerInterfaceDeclaration.setAnnotations(md.annotations)
             innerInterfaceDeclaration.setModifiers(md.modifiers)
             ctd.appendInnerType(innerInterfaceDeclaration)
@@ -245,7 +254,7 @@ object Antlr {
           })
 
           Option(d.enumDeclaration()).foreach(ied => {
-            val innerEnumDeclaration = new EnumTypeDeclaration(null, "", ctd)
+            val innerEnumDeclaration = new TestEnumTypeDeclaration(ctd.path, ctd)
             innerEnumDeclaration.setAnnotations(md.annotations)
             innerEnumDeclaration.setModifiers(md.modifiers)
             ctd.appendInnerType(innerEnumDeclaration)
@@ -265,7 +274,7 @@ object Antlr {
   }
 
   def antlrInterfaceTypeDeclaration(
-    itd: InterfaceTypeDeclaration,
+    itd: TestInterfaceTypeDeclaration,
     ctx: ApexParser.InterfaceDeclarationContext
   ): Unit = {
     itd.setId(toId(ctx.id()))
@@ -296,7 +305,7 @@ object Antlr {
   }
 
   def antlrEnumTypeDeclaration(
-    etd: EnumTypeDeclaration,
+    etd: TestEnumTypeDeclaration,
     ctx: ApexParser.EnumDeclarationContext
   ): Unit = {
     etd.setId(toId(ctx.id()))
@@ -312,7 +321,7 @@ object Antlr {
   }
 
   def antlrConstructorDeclaration(
-    ctd: ClassTypeDeclaration,
+    ctd: TestClassTypeDeclaration,
     md: MemberDeclaration,
     ctx: ApexParser.ConstructorDeclarationContext
   ): Unit = {
@@ -340,7 +349,7 @@ object Antlr {
   }
 
   def antlrMethodDeclaration(
-    res: TypeDeclaration,
+    res: TestTypeDeclaration,
     md: MemberDeclaration,
     ctx: ApexParser.MethodDeclarationContext
   ): Unit = {
@@ -377,7 +386,7 @@ object Antlr {
   }
 
   def antlrMethodDeclaration(
-    res: TypeDeclaration,
+    res: TestTypeDeclaration,
     md: MemberDeclaration,
     ctx: ApexParser.InterfaceMethodDeclarationContext
   ): Unit = {
@@ -428,7 +437,7 @@ object Antlr {
   }
 
   def antlrPropertyDeclaration(
-    ctd: ClassTypeDeclaration,
+    ctd: TestClassTypeDeclaration,
     md: MemberDeclaration,
     ctx: ApexParser.PropertyDeclarationContext
   ): Unit = {
@@ -441,7 +450,7 @@ object Antlr {
   }
 
   def antlrFieldDeclaration(
-    ctd: ClassTypeDeclaration,
+    ctd: TestClassTypeDeclaration,
     md: MemberDeclaration,
     ctx: ApexParser.FieldDeclarationContext
   ): Unit = {
