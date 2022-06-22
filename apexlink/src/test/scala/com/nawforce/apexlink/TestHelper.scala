@@ -13,14 +13,16 @@
  */
 package com.nawforce.apexlink
 
+import com.nawforce.apexlink.TestHelper.CURSOR
 import com.nawforce.apexlink.api.{Org, ServerOps, TypeSummary}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
+import com.nawforce.apexlink.rpc.LocationLink
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
-import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.path.{Location, PathLike}
 
 trait TestHelper {
 
@@ -276,5 +278,57 @@ trait TestHelper {
        |    <fullName>$name</fullName>
        |</SharingReason>
        |""".stripMargin
+  }
+
+  def withCursor(content: String): (String, Int) = {
+    (content.replace(CURSOR, ""), content.indexOf(CURSOR))
+  }
+}
+
+object TestHelper {
+  final val CURSOR = "$"
+}
+
+case class LocationLinkString(
+  origin: String,
+  targetPath: String,
+  target: String,
+  targetSelection: String
+)
+
+object LocationLinkString {
+
+  def apply(
+    root: PathLike,
+    source: String,
+    target: String,
+    loc: LocationLink
+  ): LocationLinkString = {
+    LocationLinkString(
+      locToString(source, loc.origin),
+      root.join(loc.targetPath).toString,
+      locToString(target, loc.target),
+      locToString(target, loc.targetSelection)
+    )
+  }
+
+  def apply(root: PathLike, source: String, loc: LocationLink): LocationLinkString = {
+    val target = root.join(loc.targetPath).readSourceData().map(_.asString).toOption.get
+    apply(root, source, target, loc)
+  }
+
+  def apply(root: PathLike, sourceClsName: PathLike, loc: LocationLink): LocationLinkString = {
+    val source = sourceClsName.readSourceData().map(_.asString).toOption.get
+    apply(root, source, loc)
+  }
+
+  private def locToString(source: String, loc: Location): String = {
+    val lines = source.linesWithSeparators.toArray
+    if (loc.startLine == loc.endLine) {
+      return lines(loc.startLine - 1).substring(loc.startCharOffset(), loc.endCharOffset())
+    }
+    lines(loc.startLine - 1).substring(loc.startPosition, lines(loc.startLine - 1).length) + lines(
+      loc.endLine - 1
+    ).substring(0, loc.endPosition)
   }
 }

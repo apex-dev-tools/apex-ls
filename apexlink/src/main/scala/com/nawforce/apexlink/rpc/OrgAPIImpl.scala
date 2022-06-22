@@ -299,6 +299,32 @@ object GetDefinition {
   }
 }
 
+case class GetImplementation(
+  promise: Promise[Array[LocationLink]],
+  path: String,
+  line: Int,
+  offset: Int,
+  content: Option[String]
+) extends APIRequest {
+  override def process(queue: OrgQueue): Unit = {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    promise.success(orgImpl.getImplementation(path, line, offset, content.orNull))
+  }
+}
+
+object GetImplementation {
+  def apply(
+    queue: OrgQueue,
+    path: String,
+    line: Int,
+    offset: Int,
+    content: Option[String]
+  ): Future[Array[LocationLink]] = {
+    val promise = Promise[Array[LocationLink]]()
+    queue.add(new GetImplementation(promise, path, line, offset, content))
+    promise.future
+  }
+}
 case class GetDependencyBombs(promise: Promise[Array[BombScore]], count: Int) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
@@ -520,6 +546,15 @@ class OrgAPIImpl extends OrgAPI {
     content: Option[String]
   ): Future[Array[LocationLink]] = {
     GetDefinition(OrgQueue.instance(), path, line, offset, content)
+  }
+
+  override def getImplementation(
+    path: String,
+    line: Int,
+    offset: Int,
+    content: Option[String]
+  ): Future[Array[LocationLink]] = {
+    GetImplementation(OrgQueue.instance(), path, line, offset, content)
   }
 
   override def getDependencyBombs(count: Int): Future[Array[BombScore]] = {

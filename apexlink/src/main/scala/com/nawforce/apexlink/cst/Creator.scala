@@ -21,6 +21,7 @@ import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexparser.ApexParser._
+import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
 import com.nawforce.pkgforce.names._
 import com.nawforce.runtime.parsers.CodeParser
 
@@ -167,6 +168,10 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
   ): ExprContext = {
     input match {
       case Some(td) =>
+        if (td.modifiers.contains(ABSTRACT_MODIFIER)) {
+          OrgInfo.logError(location, s"Abstract classes cannot be constructed: ${td.typeName}")
+          return ExprContext.empty
+        }
         td.findConstructor(arguments, context) match {
           case Left(error) =>
             OrgInfo.logError(location, error)

@@ -305,6 +305,22 @@ object OPM extends TriHierarchy {
       }
     }
 
+    override def getImplementation(
+      path: String,
+      line: Int,
+      offset: Int,
+      content: String
+    ): Array[LocationLink] = {
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          packages
+            .find(_.isPackagePath(path))
+            .map(_.getImplementation(Path(path), line, offset, Option(content)))
+            .getOrElse(Array.empty)
+        }
+      }
+    }
+
     override def getCompletionItems(
       path: String,
       line: Int,
@@ -426,7 +442,7 @@ object OPM extends TriHierarchy {
     logger: IssueLogger
   ) extends TriPackage
       with PackageAPI
-      with DefinitionProvider
+      with DefinitionAndImplProvider
       with CompletionProvider {
 
     val modules: ArraySeq[Module] =
