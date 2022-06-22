@@ -48,7 +48,7 @@ public class ApexMethodAdapter implements ApexMethod {
 
     @Override
     public List<ApexMethodParameter> getParameters() {
-        ArraySeq<IFormalParameter> parameters = md.formalParameterList().formalParameters();
+        ArraySeq<IFormalParameter> parameters = md.formalParameters();
         ApexMethodParameter[] result = new ApexMethodParameter[parameters.length()];
         for (int i = 0; i < parameters.length(); i++)
             result[i] = new ApexMethodParameterAdapter(parameters.apply(i));

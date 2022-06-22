@@ -3,6 +3,7 @@
  */
 package com.nawforce.runtime.workspace
 
+import com.financialforce.oparser.FormalParameter
 import com.financialforce.types._
 import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 import com.nawforce.pkgforce.diagnostics._
@@ -278,11 +279,11 @@ object IPM extends TriHierarchy {
             if (isVoid) None
             else resolve(methodDeclaration.typeRef.get).orElse(methodDeclaration.typeRef)
         }
-        resolveParameterList(methodDeclaration.formalParameterList)
+        resolveParameterList(methodDeclaration.formalParameters)
       }
 
-      def resolveParameterList(fpl: FormalParameterList): Unit = {
-        fpl.formalParameters.foreach(fp => {
+      def resolveParameterList(fpl: ArraySeq[IFormalParameter]): Unit = {
+        fpl.foreach(fp => {
           fp.typeRef = resolve(fp.typeRef).getOrElse(fp.typeRef)
         })
       }
@@ -294,7 +295,7 @@ object IPM extends TriHierarchy {
       Option(decl.implementsTypeList).foreach(tl => {
         decl.setImplements(tl.map(tr => resolve(tr).getOrElse(tr)))
       })
-      decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
+      decl.constructors.foreach(c => resolveParameterList(c.formalParameters))
       decl.properties.foreach(resolveSignature)
       decl.fields.foreach(resolveSignature)
       decl.methods.foreach(resolveMethods)

@@ -15,7 +15,6 @@
 package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
-import com.financialforce.types._
 import com.financialforce.types.base.{
   Annotation,
   IdWithLocation,
@@ -226,8 +225,8 @@ class PlatformTypeDeclaration(
 
   protected def toFormalParameterList(
     params: Array[java.lang.reflect.Parameter]
-  ): FormalParameterList = {
-    new FormalParameterList(ArraySeq.unsafeWrapArray(params.map(toFormalParameter)))
+  ): ArraySeq[FormalParameter] = {
+    ArraySeq.unsafeWrapArray(params.map(toFormalParameter))
   }
 
   protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {

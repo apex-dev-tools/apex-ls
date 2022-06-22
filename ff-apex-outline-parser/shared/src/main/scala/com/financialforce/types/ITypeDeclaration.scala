@@ -7,17 +7,6 @@ import com.financialforce.types.base._
 
 import scala.collection.immutable.ArraySeq
 
-// TODO: Can we remove this?
-final case class FormalParameterList(formalParameters: ArraySeq[IFormalParameter]) {
-  override def toString: String = {
-    formalParameters.mkString(", ")
-  }
-}
-
-object FormalParameterList {
-  final val empty = FormalParameterList(ArraySeq())
-}
-
 /** Class, enum, interface type declaration. May be used as a resolved TypeRef. Uses Identity equality. */
 trait ITypeDeclaration extends TypeRef with AnnotationsAndModifiers {
   def paths: Array[String]

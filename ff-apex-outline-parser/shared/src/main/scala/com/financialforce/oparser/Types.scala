@@ -48,6 +48,7 @@ class FormalParameter private (
     with IFormalParameter
 
 object FormalParameter {
+  val emptyArraySeq: ArraySeq[FormalParameter] = ArraySeq[FormalParameter]()
   def apply(
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
@@ -159,7 +160,7 @@ case class ConstructorDeclaration private (
   annotations: Array[Annotation],
   modifiers: Array[Modifier],
   qname: QualifiedName,
-  formalParameterList: FormalParameterList
+  formalParameters: ArraySeq[FormalParameter]
 ) extends BodyDeclaration
     with IConstructorDeclaration
     with MutableTypeAppendable {
@@ -173,7 +174,7 @@ object ConstructorDeclaration {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     qName: QualifiedName,
-    formalParameterList: FormalParameterList
+    formalParameterList: ArraySeq[FormalParameter]
   ): ConstructorDeclaration = {
     new ConstructorDeclaration(
       Annotation.intern(annotations),
@@ -189,7 +190,7 @@ class MethodDeclaration private (
   val modifiers: Array[Modifier],
   var typeRef: Option[TypeRef],
   val id: IdWithLocation,
-  val formalParameterList: FormalParameterList
+  val formalParameters: ArraySeq[FormalParameter]
 ) extends BodyDeclaration
     with IMethodDeclaration
     with MutableTypeAppendable
@@ -202,7 +203,7 @@ object MethodDeclaration {
     modifiers: Array[Modifier],
     typeRef: Option[TypeRef],
     id: LocatableIdToken,
-    formalParameterList: FormalParameterList
+    formalParameterList: ArraySeq[FormalParameter]
   ): MethodDeclaration = {
     new MethodDeclaration(
       Annotation.intern(annotations),
@@ -767,7 +768,7 @@ object Parse {
   private def parseFormalParameterList(
     startIndex: Int,
     tokens: Tokens
-  ): (Int, Option[FormalParameterList]) = {
+  ): (Int, Option[ArraySeq[FormalParameter]]) = {
     if (!tokens(startIndex).exists(_.matches(Tokens.LParenStr))) return (startIndex, None)
 
     var formalParameters: mutable.ArrayBuffer[FormalParameter] = null
@@ -797,8 +798,8 @@ object Parse {
     (
       index,
       Some(
-        if (formalParameters == null) FormalParameterList.empty
-        else new FormalParameterList(ArraySeq.unsafeWrapArray(formalParameters.toArray))
+        if (formalParameters == null) FormalParameter.emptyArraySeq
+        else ArraySeq.unsafeWrapArray(formalParameters.toArray)
       )
     )
   }

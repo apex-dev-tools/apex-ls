@@ -396,17 +396,17 @@ class SubsetComparator(
     first: MethodDeclaration,
     second: ArraySeq[MethodDeclaration]
   ) = {
-    val numberOfParams = first.formalParameterList.formalParameters.length
+    val numberOfParams = first.formalParameters.length
     val possibleMethods = second.filter(
       s =>
-        s.formalParameterList.formalParameters.length ==
+        s.formalParameters.length ==
           numberOfParams
     )
     possibleMethods.nonEmpty && possibleMethods.exists(secondMethod => {
       val typeRefIdCheck = compareTypeRef(first.typeRef, secondMethod.typeRef)
       typeRefIdCheck && checkForParameterListAgainst(
-        first.formalParameterList,
-        secondMethod.formalParameterList
+        first.formalParameters,
+        secondMethod.formalParameters
       ) &&
       (first.annotations sameElements secondMethod.annotations) &&
       (first.modifiers sameElements secondMethod.modifiers)
@@ -414,12 +414,12 @@ class SubsetComparator(
   }
 
   private def checkForParameterListAgainst(
-    first: FormalParameterList,
-    second: FormalParameterList
+    first: ArraySeq[FormalParameter],
+    second: ArraySeq[FormalParameter]
   ): Boolean = {
-    if (first.formalParameters.nonEmpty) {
-      return second.formalParameters.nonEmpty && first.formalParameters.zipWithIndex.forall(f => {
-        val s = second.formalParameters(f._2)
+    if (first.nonEmpty) {
+      return second.nonEmpty && first.zipWithIndex.forall(f => {
+        val s = second(f._2)
         compareTypeRef(f._1.typeRef, s.typeRef) && !getDiffIfThereIsAny(
           ArraySeq.unsafeWrapArray(f._1.annotations),
           ArraySeq.unsafeWrapArray(s.annotations)
@@ -429,7 +429,7 @@ class SubsetComparator(
         )._1 && s.name == f._1.name
       })
     }
-    second.formalParameters.isEmpty
+    second.isEmpty
   }
 
   private def checkAndThrowIfDiffForMethods(

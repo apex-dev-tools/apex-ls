@@ -384,7 +384,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       source.path
     )
 
-    val parameters = cd.formalParameterList.formalParameters
+    val parameters = cd.formalParameters
       .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
       .pipe(ArraySeq.from)
 
@@ -429,7 +429,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
             .construct(source, md.blockLocation.get, if (isOuter) Some(source) else None)
         )
 
-    val parameters = md.formalParameterList.formalParameters
+    val parameters = md.formalParameters
       .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
       .pipe(ArraySeq.from)
 
@@ -481,7 +481,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val modifierResults = interfaceMethodModifiers(path, md.id, md.annotations, md.modifiers)
 
-    val parameters = md.formalParameterList.formalParameters
+    val parameters = md.formalParameters
       .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
       .pipe(ArraySeq.from)
 

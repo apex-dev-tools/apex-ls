@@ -373,8 +373,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     QualifiedName(Array(toId(name, loc)))
   }
 
-  private def toFormalParameterList(pl: java.util.List[Parameter]): FormalParameterList = {
-    FormalParameterList(ArraySeq.unsafeWrapArray(pl.asScala.map(toFormalParameter).toArray))
+  private def toFormalParameterList(pl: java.util.List[Parameter]): ArraySeq[FormalParameter] = {
+    ArraySeq.unsafeWrapArray(pl.asScala.map(toFormalParameter).toArray)
   }
 
   private def toFormalParameter(p: Parameter): FormalParameter = {

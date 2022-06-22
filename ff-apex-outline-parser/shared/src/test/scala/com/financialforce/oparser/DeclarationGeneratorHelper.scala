@@ -81,15 +81,15 @@ trait DeclarationGeneratorHelper {
     toIdToken(id)
   }
 
-  def toParameterList(fps: Array[FormalParameter]): FormalParameterList = {
-    FormalParameterList(ArraySeq.unsafeWrapArray(fps))
+  def toParameterList(fps: Array[FormalParameter]): ArraySeq[FormalParameter] = {
+    ArraySeq.unsafeWrapArray(fps)
   }
 
   def toConstructor(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     names: Array[String],
-    parameters: FormalParameterList
+    parameters: ArraySeq[FormalParameter]
   ): ConstructorDeclaration = {
     ConstructorDeclaration(annotation, modifiers, toQName(names), parameters)
   }
@@ -99,7 +99,7 @@ trait DeclarationGeneratorHelper {
     modifiers: Array[Modifier],
     typeRef: TypeRef,
     id: LocatableIdToken,
-    parameters: FormalParameterList
+    parameters: ArraySeq[FormalParameter]
   ): MethodDeclaration = {
     MethodDeclaration(annotation, modifiers, Some(typeRef), id, parameters)
   }

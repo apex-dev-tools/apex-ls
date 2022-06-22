@@ -141,7 +141,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
           s =>
             compareAnnotations(f.annotations, s.annotations) &&
               compareModifiers(f.modifiers, s.modifiers) &&
-              compareParamList(f.formalParameterList, s.formalParameterList)
+              compareParamList(f.formalParameters, s.formalParameters)
         )
       })
       (
@@ -192,8 +192,8 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
               f.modifiers,
               s.modifiers
             ) && compareAnnotations(f.annotations, s.annotations) && compareParamList(
-              f.formalParameterList,
-              s.formalParameterList
+              f.formalParameters,
+              s.formalParameters
             )
           })
         }),
@@ -250,15 +250,18 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
   def compareModifiers(first: Array[Modifier], second: Array[Modifier]): Boolean = {
     first.forall(f => second.exists(s => rules.forAll(f, s)))
   }
-  def compareParamList(first: FormalParameterList, second: FormalParameterList): Boolean = {
+  def compareParamList(
+    first: ArraySeq[IFormalParameter],
+    second: ArraySeq[IFormalParameter]
+  ): Boolean = {
     val typeRefs =
-      first.formalParameters.map(_.typeRef) zip second.formalParameters.map(_.typeRef)
+      first.map(_.typeRef) zip second.map(_.typeRef)
 
     val modifiers =
-      first.formalParameters.map(m => m.modifiers) zip second.formalParameters.map(m => m.modifiers)
+      first.map(m => m.modifiers) zip second.map(m => m.modifiers)
     val annotations =
-      first.formalParameters.map(_.annotations) zip second.formalParameters.map(_.annotations)
-    val ids = first.formalParameters.map(_.name) zip second.formalParameters.map(_.name)
+      first.map(_.annotations) zip second.map(_.annotations)
+    val ids = first.map(_.name) zip second.map(_.name)
 
     typeRefs.forall(tr => compareTypeRef(tr._1, tr._2)) && modifiers.forall(
       m => compareModifiers(m._1, m._2)

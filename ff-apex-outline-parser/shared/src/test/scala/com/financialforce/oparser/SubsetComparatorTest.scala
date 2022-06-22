@@ -14,6 +14,8 @@ import com.financialforce.types.base.{
 }
 import org.scalatest.funspec.AnyFunSpec
 
+import scala.collection.immutable.ArraySeq
+
 class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
   private def generateClassDeclaration(name: String): TestClassTypeDeclaration = {
@@ -491,7 +493,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       modifiers: Array[Modifier] = Array("public", "static").map(toModifier),
       typeRef: TypeRef = toTypeRef(Map("void" -> None)),
       id: LocatableIdToken = toId("method"),
-      parameters: FormalParameterList = generateParameterList()
+      parameters: ArraySeq[FormalParameter] = generateParameterList()
     ): MethodDeclaration = {
       toMethodDeclaration(annotations, modifiers, typeRef, id, parameters)
     }
@@ -501,7 +503,7 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       modifiers: Array[Modifier] = Array[Modifier](),
       typeRef: TypeRef = toTypeRef(Map("String" -> None)),
       id: LocatableIdToken = toId("s")
-    ): FormalParameterList = {
+    ): ArraySeq[FormalParameter] = {
       toParameterList(Array(toParameter(annotations, modifiers, typeRef, id)))
     }
 

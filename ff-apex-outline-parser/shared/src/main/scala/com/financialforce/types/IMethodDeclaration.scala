@@ -5,12 +5,13 @@ package com.financialforce.types
 
 import com.financialforce.types.base._
 
+import scala.collection.immutable.ArraySeq
 import scala.util.hashing.MurmurHash3
 
 /** Class method, note custom equality does not include location information. */
 trait IMethodDeclaration extends IBodyDeclaration with AnnotationsAndModifiers {
   var typeRef: Option[TypeRef]
-  def formalParameterList: FormalParameterList
+  def formalParameters: ArraySeq[IFormalParameter]
   override def id: IdWithLocation
   override def bodyLocation: Option[Location]
   override def blockLocation: Option[Location]
@@ -19,7 +20,7 @@ trait IMethodDeclaration extends IBodyDeclaration with AnnotationsAndModifiers {
 
   def signature: String = {
     val typeName = typeRef.map(_.toString).getOrElse("void")
-    s"$annotationsAndModifiers $typeName $id($formalParameterList)".tidyWhitespace
+    s"$annotationsAndModifiers $typeName $id(${formalParameters.mkString(", ")})".tidyWhitespace
   }
 
   override def equals(obj: Any): Boolean = {
@@ -31,7 +32,7 @@ trait IMethodDeclaration extends IBodyDeclaration with AnnotationsAndModifiers {
       other.typeRef.get.sameRef(typeRef.get))
     ) &&
     other.id == id &&
-    other.formalParameterList == formalParameterList
+    other.formalParameters == formalParameters
   }
 
   override def hashCode(): Int = {
@@ -41,7 +42,7 @@ trait IMethodDeclaration extends IBodyDeclaration with AnnotationsAndModifiers {
         MurmurHash3.arrayHash(modifiers),
         typeRef.map(_.toString.toLowerCase().hashCode).getOrElse(0),
         id,
-        formalParameterList.hashCode()
+        formalParameters.hashCode()
       )
     )
   }

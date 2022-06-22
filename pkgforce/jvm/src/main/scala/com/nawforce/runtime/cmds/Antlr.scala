@@ -318,7 +318,7 @@ object Antlr {
   ): Unit = {
 
     val qName = QualifiedName(ctx.qualifiedName().id().asScala.map(toId).toArray)
-    val formalParameterList = new FormalParameterList(
+    val formalParameterList =
       Option(ctx.formalParameters())
         .flatMap(fp => Option(fp.formalParameterList()))
         .map(
@@ -331,8 +331,7 @@ object Antlr {
                 .toArray
             )
         )
-        .getOrElse(ArraySeq.empty)
-    )
+        .getOrElse(FormalParameter.emptyArraySeq)
 
     val constructor =
       ConstructorDeclaration(md.annotations, md.modifiers, qName, formalParameterList)
@@ -348,7 +347,7 @@ object Antlr {
 
     val id = toId(ctx.id())
 
-    val formalParameterList = new FormalParameterList(
+    val formalParameterList =
       Option(ctx.formalParameters())
         .flatMap(fp => Option(fp.formalParameterList()))
         .map(
@@ -361,8 +360,7 @@ object Antlr {
                 .toArray
             )
         )
-        .getOrElse(ArraySeq.empty)
-    )
+        .getOrElse(FormalParameter.emptyArraySeq)
 
     if (Option(ctx.typeRef()).isDefined) {
       md.add(antlrTypeRef(ctx.typeRef()))
@@ -386,7 +384,7 @@ object Antlr {
 
     val id = toId(ctx.id())
 
-    val formalParameterList = new FormalParameterList(
+    val formalParameterList =
       Option(ctx.formalParameters())
         .flatMap(fp => Option(fp.formalParameterList()))
         .map(
@@ -399,8 +397,7 @@ object Antlr {
                 .toArray
             )
         )
-        .getOrElse(ArraySeq.empty)
-    )
+        .getOrElse(FormalParameter.emptyArraySeq)
 
     if (Option(ctx.typeRef()).isDefined) {
       md.add(antlrTypeRef(ctx.typeRef()))
