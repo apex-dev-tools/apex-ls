@@ -44,7 +44,7 @@ jobs:
     - name: amoss 
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/amoss/amoss
 
-    - name: SimpleLightningComponents 
+    - name: SimpleLightningComponents
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SimpleLightningComponents/SimpleLightningComponents
 
     - name: FormulaShare-DX 
@@ -134,8 +134,8 @@ jobs:
     - name: einstein-ai 
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/einstein-ai/einstein-ai
 
-    - name: purealoe-lwc 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/purealoe-lwc
+    # - name: purealoe-lwc
+    # run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/purealoe-lwc
 
     - name: HyperBatch 
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/HyperBatch
