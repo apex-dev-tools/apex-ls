@@ -27,11 +27,12 @@ import scala.concurrent.Future
 
 class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
 
-  val syntheticDir: Path = {
-    if (Path("samples/synthetic").isDirectory)
-      Path("samples/synthetic")
+  val samplesDir: Path = {
+    val dir = Path("apexlink").join("samples")
+    if (dir.isDirectory)
+      dir
     else
-      Path("../samples/synthetic")
+      Path("samples")
   }
 
   override def beforeEach(): Unit = {
@@ -92,7 +93,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Add package MDAPI directory") {
-    val workspace = syntheticDir.join("mdapi-test")
+    val workspace = samplesDir.join("mdapi-test")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -106,7 +107,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   test("Add package sfdx directory (relative)") {
     val orgAPI = OrgAPI()
     for {
-      result <- orgAPI.open(syntheticDir.join("sfdx-test").toString())
+      result <- orgAPI.open(samplesDir.join("sfdx-test").toString())
       issues <- orgAPI.getIssues(includeWarnings = false, maxIssuesPerFile = 0)
     } yield {
       assert(result.error.isEmpty && result.namespaces.sameElements(Array("")))
@@ -115,7 +116,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Add package sfdx directory (absolute)") {
-    val workspace = syntheticDir.join("sfdx-test")
+    val workspace = samplesDir.join("sfdx-test")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -129,7 +130,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   test("Add package sfdx directory with ns (relative)") {
     val orgAPI = OrgAPI()
     for {
-      result <- orgAPI.open(syntheticDir.join("sfdx-ns-test").toString())
+      result <- orgAPI.open(samplesDir.join("sfdx-ns-test").toString())
       issues <- orgAPI.getIssues(includeWarnings = false, maxIssuesPerFile = 0)
     } yield {
       assert(result.error.isEmpty && result.namespaces.sameElements(Array("sfdx_test", "")))
@@ -138,7 +139,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Add package sfdx directory with ns (absolute)") {
-    val workspace = syntheticDir.join("sfdx-ns-test")
+    val workspace = samplesDir.join("sfdx-ns-test")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -150,7 +151,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Issues") {
-    val workspace = syntheticDir.join("sfdx-ns-test")
+    val workspace = samplesDir.join("sfdx-ns-test")
     val orgAPI    = OrgAPI()
 
     val pkg: Future[Assertion] = orgAPI.open(workspace.toString) map { result =>
@@ -167,7 +168,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Dependency Graph (zero depth)") {
-    val workspace = syntheticDir.join("mdapi-test")
+    val workspace = samplesDir.join("mdapi-test")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -185,7 +186,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Dependency Graph (some depth)") {
-    val workspace = syntheticDir.join("mdapi-test")
+    val workspace = samplesDir.join("mdapi-test")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -197,14 +198,14 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
-      val helloSize = syntheticDir
+      val helloSize = samplesDir
         .join("mdapi-test")
         .join("Hello.cls")
         .readBytes()
         .toOption
         .map(_.length)
         .getOrElse(0)
-      val worldSize = syntheticDir
+      val worldSize = samplesDir
         .join("mdapi-test")
         .join("World.cls")
         .readBytes()
@@ -241,7 +242,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Dependency Graph (some depth) with ignored identifiers") {
-    val workspace = syntheticDir.join("mdapi-test")
+    val workspace = samplesDir.join("mdapi-test")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -253,7 +254,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
-      val helloSize = syntheticDir
+      val helloSize = samplesDir
         .join("mdapi-test")
         .join("Hello.cls")
         .readBytes()
@@ -279,7 +280,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Dependency Graph (bad identifier))") {
-    val workspace = syntheticDir.join("mdapi-test")
+    val workspace = samplesDir.join("mdapi-test")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -297,7 +298,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Test Class Names (with test class)") {
-    val workspace = syntheticDir.join("test-classes")
+    val workspace = samplesDir.join("test-classes")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -315,7 +316,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Test Class Names (find test class)") {
-    val workspace = syntheticDir.join("test-classes")
+    val workspace = samplesDir.join("test-classes")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -332,7 +333,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Test Class Names (no test class)") {
-    val workspace = syntheticDir.join("test-classes")
+    val workspace = samplesDir.join("test-classes")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -349,7 +350,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Test Class Names (indirect to inner interface)") {
-    val workspace = syntheticDir.join("test-classes")
+    val workspace = samplesDir.join("test-classes")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -366,7 +367,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Test Class Names (indirect to interface)") {
-    val workspace = syntheticDir.join("test-classes")
+    val workspace = samplesDir.join("test-classes")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -383,7 +384,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Test Class Names (indirect to inner implementation)") {
-    val workspace = syntheticDir.join("test-classes")
+    val workspace = samplesDir.join("test-classes")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -400,7 +401,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Test Class Names (service)") {
-    val workspace = syntheticDir.join("test-classes")
+    val workspace = samplesDir.join("test-classes")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -417,7 +418,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get Test Class Names (with superclass)") {
-    val workspace = syntheticDir.join("test-classes")
+    val workspace = samplesDir.join("test-classes")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -434,7 +435,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get DependencyCounts") {
-    val workspace = syntheticDir.join("dependency-counts")
+    val workspace = samplesDir.join("dependency-counts")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
@@ -468,7 +469,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
   }
 
   test("Get DependencyCounts (exclude tests)") {
-    val workspace = syntheticDir.join("dependency-counts")
+    val workspace = samplesDir.join("dependency-counts")
     val orgAPI    = OrgAPI()
     for {
       result <- orgAPI.open(workspace.toString)
