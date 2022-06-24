@@ -1,10 +1,6 @@
 package com.nawforce.runtime.sfparser_test
-import com.financialforce.oparser.StringUtils.{
-  asConstructorSignatureString,
-  asMethodSignatureString,
-  asSignatureString
-}
-import com.financialforce.oparser._
+import com.financialforce.types._
+import com.financialforce.types.base.{Annotation, Modifier, TypeRef}
 import com.nawforce.pkgforce.names.Names
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -54,7 +50,7 @@ object ResolvedOutputComparisonTest {
       .foreach(f => {
         total += 1
         val sf = findSfParserOutput(f, sfParserOutput)
-        val op = index.rootModule.get.findExactTypeId(sf.get.getFullName)
+        val op = index.rootModule.get.findExactTypeId(sf.get.fullName)
         compareResolved(sf, op)
       })
     println(s"Number of errors $errors out of $total")
@@ -77,7 +73,7 @@ object ResolvedOutputComparisonTest {
     } catch {
       case ex: Throwable =>
         errors += 1
-        System.err.println(s"Failed output on ${fromSf.get.getFullName}. Reason: ${ex.getMessage}")
+        System.err.println(s"Failed output on ${fromSf.get.fullName}. Reason: ${ex.getMessage}")
     }
 
   }
@@ -120,7 +116,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
         return (true, "")
       (
         first != null && second != null && compareTypeRef(first, second),
-        s"Diff Extends ${first.getFullName} != ${second.getFullName}"
+        s"Diff Extends ${first.fullName} != ${second.fullName}"
       )
     }
     def compareTypeList(first: ArraySeq[TypeRef], second: ArraySeq[TypeRef]): (Boolean, String) = {
@@ -130,33 +126,33 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       (
         first != null && second != null &&
           first.forall(f => second.exists(s => compareTypeRef(f, s))),
-        s"Diff implementsTypeList ${first.map(_.getFullName)} != ${second.map(_.getFullName)}"
+        s"Diff implementsTypeList ${first.map(_.fullName)} != ${second.map(_.fullName)}"
       )
     }
 
     def compareConstructors(
-      first: ArraySeq[ConstructorDeclaration],
-      second: ArraySeq[ConstructorDeclaration]
+      first: ArraySeq[IConstructorDeclaration],
+      second: ArraySeq[IConstructorDeclaration]
     ): (Boolean, String) = {
       val check = first.forall(f => {
-        val matches = second.find(s => s.qName == f.qName)
+        val matches = second.find(s => s.id == f.id)
         assert(matches.nonEmpty)
         matches.exists(
           s =>
             compareAnnotations(f.annotations, s.annotations) &&
               compareModifiers(f.modifiers, s.modifiers) &&
-              compareParamList(f.formalParameterList, s.formalParameterList)
+              compareParamList(f.formalParameters, s.formalParameters)
         )
       })
       (
         check,
-        s"Diff constructors ${first.map(asConstructorSignatureString).mkString(";")} != ${second.map(asConstructorSignatureString).mkString(";")}"
+        s"Diff constructors ${first.map(_.signature).mkString(";")} != ${second.map(_.signature).mkString(";")}"
       )
     }
 
     def compareFields(
-      first: ArraySeq[FieldDeclaration],
-      second: ArraySeq[FieldDeclaration]
+      first: ArraySeq[IFieldDeclaration],
+      second: ArraySeq[IFieldDeclaration]
     ): (Boolean, String) = {
       (
         first.forall(f => {
@@ -166,12 +162,12 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
           compareModifiers(f.modifiers, s.get.modifiers) &&
           compareTypeRef(f.typeRef, s.get.typeRef)
         }),
-        s"Diff Fields ${first.map(asSignatureString).mkString(";")} != ${second.map(asSignatureString).mkString(";")}"
+        s"Diff Fields ${first.map(_.signature).mkString(";")} != ${second.map(_.signature).mkString(";")}"
       )
     }
     def compareProperties(
-      first: ArraySeq[PropertyDeclaration],
-      second: ArraySeq[PropertyDeclaration]
+      first: ArraySeq[IPropertyDeclaration],
+      second: ArraySeq[IPropertyDeclaration]
     ): (Boolean, String) = {
       (
         first.forall(f => {
@@ -181,12 +177,12 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
           compareModifiers(f.modifiers, s.get.modifiers) &&
           compareTypeRef(f.typeRef, s.get.typeRef)
         }),
-        s"Diff Properties ${first.map(asSignatureString).mkString(";")} != ${second.map(asSignatureString).mkString(";")}"
+        s"Diff Properties ${first.map(_.signature).mkString(";")} != ${second.map(_.signature).mkString(";")}"
       )
     }
     def compareMethods(
-      first: ArraySeq[MethodDeclaration],
-      second: ArraySeq[MethodDeclaration]
+      first: ArraySeq[IMethodDeclaration],
+      second: ArraySeq[IMethodDeclaration]
     ): (Boolean, String) = {
       (
         first.forall(f => {
@@ -196,12 +192,12 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
               f.modifiers,
               s.modifiers
             ) && compareAnnotations(f.annotations, s.annotations) && compareParamList(
-              f.formalParameterList,
-              s.formalParameterList
+              f.formalParameters,
+              s.formalParameters
             )
           })
         }),
-        s"Diff Methods ${first.map(asMethodSignatureString).mkString(";")} != ${second.map(asMethodSignatureString).mkString(";")}"
+        s"Diff Methods ${first.map(_.signature).mkString(";")} != ${second.map(_.signature).mkString(";")}"
       )
     }
 
@@ -211,18 +207,18 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       firstDecl.implementsTypeList,
       secondDecl.implementsTypeList
     )
-    compareAndThrow[ArraySeq[ConstructorDeclaration]](
+    compareAndThrow[ArraySeq[IConstructorDeclaration]](
       compareConstructors,
       firstDecl.constructors,
       secondDecl.constructors
     )
-    compareAndThrow[ArraySeq[FieldDeclaration]](compareFields, firstDecl.fields, secondDecl.fields)
-    compareAndThrow[ArraySeq[PropertyDeclaration]](
+    compareAndThrow[ArraySeq[IFieldDeclaration]](compareFields, firstDecl.fields, secondDecl.fields)
+    compareAndThrow[ArraySeq[IPropertyDeclaration]](
       compareProperties,
       firstDecl.properties,
       secondDecl.properties
     )
-    compareAndThrow[ArraySeq[MethodDeclaration]](
+    compareAndThrow[ArraySeq[IMethodDeclaration]](
       compareMethods,
       firstDecl.methods,
       secondDecl.methods
@@ -235,7 +231,7 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       throw new Exception(s"One Object is null while the other is not. '$first != $second'")
   }
 
-  def compareSignature[T <: Signature](first: T, second: T): Boolean = {
+  def compareSignature[T <: IVariable](first: T, second: T): Boolean = {
     compareTypeRef(first.typeRef, second.typeRef) &&
     compareModifiers(first.modifiers, second.modifiers) &&
     compareAnnotations(first.annotations, second.annotations) &&
@@ -254,15 +250,18 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
   def compareModifiers(first: Array[Modifier], second: Array[Modifier]): Boolean = {
     first.forall(f => second.exists(s => rules.forAll(f, s)))
   }
-  def compareParamList(first: FormalParameterList, second: FormalParameterList): Boolean = {
+  def compareParamList(
+    first: ArraySeq[IFormalParameter],
+    second: ArraySeq[IFormalParameter]
+  ): Boolean = {
     val typeRefs =
-      first.formalParameters.map(_.typeRef) zip second.formalParameters.map(_.typeRef)
+      first.map(_.typeRef) zip second.map(_.typeRef)
 
     val modifiers =
-      first.formalParameters.map(m => m.modifiers) zip second.formalParameters.map(m => m.modifiers)
+      first.map(m => m.modifiers) zip second.map(m => m.modifiers)
     val annotations =
-      first.formalParameters.map(_.annotations) zip second.formalParameters.map(_.annotations)
-    val ids = first.formalParameters.map(_.name) zip second.formalParameters.map(_.name)
+      first.map(_.annotations) zip second.map(_.annotations)
+    val ids = first.map(_.name) zip second.map(_.name)
 
     typeRefs.forall(tr => compareTypeRef(tr._1, tr._2)) && modifiers.forall(
       m => compareModifiers(m._1, m._2)
@@ -345,23 +344,23 @@ class TypeRefNamesAreEqual() extends TypeRefRule {
     first.value match {
       case Some(tr) =>
         val check =
-          second.value.nonEmpty && tr.getFullName.equalsIgnoreCase(processSecond(second.value.get))
+          second.value.nonEmpty && tr.fullName.equalsIgnoreCase(processSecond(second.value.get))
         check
       case None => second.value.isEmpty
     }
   }
   def processSecond(second: TypeRef): String = {
-    second.getFullName
+    second.fullName
   }
 
 }
 
 class TypeRefNamesAreEqualForPlatformTypes() extends TypeRefNamesAreEqual {
-  //We have to use toString for platform as getFullName will give the internal name
+  //We have to use toString for platform as fullName will give the internal name
   override def processSecond(second: TypeRef): String = {
     second match {
       case decl: PlatformTypeDeclaration => decl.toString
-      case _                             => second.getFullName
+      case _                             => second.fullName
     }
   }
 }
@@ -380,7 +379,7 @@ case class TypeRefOneIsVoidOtherIsNone() extends TypeRefRule {
   override def evaluate(first: OptionalTypeRef, second: OptionalTypeRef): Boolean = {
     first.value match {
       case Some(tr) =>
-        if (tr.getFullName.equalsIgnoreCase(Names.Void.value)) second.value.isEmpty
+        if (tr.fullName.equalsIgnoreCase(Names.Void.value)) second.value.isEmpty
         else first == second
       case _ =>
         first == second

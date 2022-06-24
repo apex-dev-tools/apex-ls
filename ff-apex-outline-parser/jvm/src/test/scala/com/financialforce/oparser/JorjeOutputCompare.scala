@@ -4,14 +4,12 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.oparser.OutlineParser
-import com.financialforce.oparser.{SubsetComparator, TypeIdCollector}
-import com.financialforce.oparser.testutil.{SFParser, SymbolProvider}
+import com.financialforce.oparser.testutil.{JorjeParser, SymbolProvider}
 
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
 
-object OutputComparisonTest {
+object JorjeOutputCompare {
   var exactlyEqual = 0
   var withWarnings = 0
   var errors       = 0
@@ -41,17 +39,13 @@ object OutputComparisonTest {
       })
       .toMap
 
-    val sfParserOutput =
-      SFParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
+    val jorjeParserOutput =
+      JorjeParser(sources).parseClassWithSymbolProvider(SymbolProvider(dbpath))
 
     files
-      .filterNot(x => sfParserOutput._2.contains(x.toAbsolutePath.toString))
+      .filterNot(x => jorjeParserOutput._2.contains(x.toAbsolutePath.toString))
       .foreach(f => {
-        compareUnresolvedOutputs(
-          f,
-          sfParserOutput,
-          TypeIdCollector(sfParserOutput._1.toList)
-        )
+        compareUnresolvedOutputs(f, jorjeParserOutput, TypeIdCollector(jorjeParserOutput._1.toList))
       })
 
     def toPercentage(result: Int) = {
@@ -71,11 +65,11 @@ object OutputComparisonTest {
 
   private def compareUnresolvedOutputs(
     path: Path,
-    sfOutput: (ArrayBuffer[TestTypeDeclaration], ArrayBuffer[String]),
-    sfTypeIdResolver: TypeIdCollector
+    jorjeOutput: (ArrayBuffer[TestTypeDeclaration], ArrayBuffer[String]),
+    jorjeTypeIdResolver: TypeIdCollector
   ): Unit = {
     val (success, reason, opOut) = getOutLineParserOutput(path)
-    val sfTd                     = findSfParserOutput(path, sfOutput)
+    val jorjeTd                  = findJorjeParserOutput(path, jorjeOutput)
 
     total += 1
     if (!success) {
@@ -85,8 +79,8 @@ object OutputComparisonTest {
     }
     try {
       val opResolver = TypeIdCollector(List(opOut.get))
-      val comparator = SubsetComparator(opOut.get, opResolver, sfTypeIdResolver)
-      comparator.unresolvedSubsetOf(sfTd.get)
+      val comparator = SubsetComparator(opOut.get, opResolver, jorjeTypeIdResolver)
+      comparator.unresolvedSubsetOf(jorjeTd.get)
       val warnings = comparator.getWarnings
       if (warnings.nonEmpty) {
         withWarnings += 1
@@ -101,7 +95,7 @@ object OutputComparisonTest {
     }
   }
 
-  private def findSfParserOutput(
+  private def findJorjeParserOutput(
     path: Path,
     output: (ArrayBuffer[TestTypeDeclaration], ArrayBuffer[String])
   ) = {

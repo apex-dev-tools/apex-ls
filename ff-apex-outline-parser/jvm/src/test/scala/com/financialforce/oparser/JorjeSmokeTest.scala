@@ -4,11 +4,10 @@
 
 package com.financialforce.oparser
 
-import com.financialforce.oparser._
 import com.financialforce.oparser.testutil._
 import org.scalatest.funsuite.AnyFunSuite
 
-class SFParserTest extends AnyFunSuite {
+class JorjeSmokeTest extends AnyFunSuite {
   private val path = "Dummy.cls"
 
   test("Classes") {
@@ -56,7 +55,7 @@ class SFParserTest extends AnyFunSuite {
         |""".stripMargin
 
     val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(path, content).parse._1.head
+    val sfp        = JorjeParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -74,7 +73,7 @@ class SFParserTest extends AnyFunSuite {
         |""".stripMargin
 
     val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(path, content).parse._1.head
+    val sfp        = JorjeParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -92,7 +91,7 @@ class SFParserTest extends AnyFunSuite {
         |""".stripMargin
 
     val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(path, content).parse._1.head
+    val sfp        = JorjeParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -111,7 +110,7 @@ class SFParserTest extends AnyFunSuite {
         |""".stripMargin
 
     val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(path, content).parse._1.head
+    val sfp        = JorjeParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -134,7 +133,7 @@ class SFParserTest extends AnyFunSuite {
         |""".stripMargin
 
     val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(path, content).parse._1.head
+    val sfp        = JorjeParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 
@@ -157,7 +156,7 @@ class SFParserTest extends AnyFunSuite {
         |""".stripMargin
 
     val op         = OutlineParser.parse(path, content, TestClassFactory, ctx = null)._3.get
-    val sfp        = SFParser(path, content).parse._1.head
+    val sfp        = JorjeParser(path, content).parse._1.head
     val comparator = SubsetComparator(op)
     comparator.unresolvedSubsetOf(sfp)
 

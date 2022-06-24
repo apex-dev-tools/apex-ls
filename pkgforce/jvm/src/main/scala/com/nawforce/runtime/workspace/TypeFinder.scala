@@ -4,7 +4,7 @@
 
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
+import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 
 object TypeFinder {
 
@@ -57,11 +57,9 @@ object TypeFinder {
     // If we have a ns, try it first before falling back to without for injected types that carry their own ns
     val unresolved = UnresolvedTypeRef(resolvedTypeNames, 0)
     from.module.namespace
-      .flatMap(
-        ns => baseModule.findExactTypeId(ns.value + "." + unresolved.getFullName, unresolved)
-      )
-      .orElse(baseModule.findExactTypeId(unresolved.getFullName, unresolved))
-      .orElse(baseModule.findExactTypeId(unresolved.getFullName))
+      .flatMap(ns => baseModule.findExactTypeId(ns.value + "." + unresolved.fullName, unresolved))
+      .orElse(baseModule.findExactTypeId(unresolved.fullName, unresolved))
+      .orElse(baseModule.findExactTypeId(unresolved.fullName))
   }
 
   private def findScalarType(typeNames: Array[TypeNameSegment]): Option[IModuleTypeDeclaration] = {

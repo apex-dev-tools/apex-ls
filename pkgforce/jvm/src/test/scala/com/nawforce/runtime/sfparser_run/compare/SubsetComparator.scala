@@ -5,6 +5,8 @@
 package com.nawforce.runtime.sfparser_run.compare
 
 import com.financialforce.oparser._
+import com.financialforce.types._
+import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 import com.nawforce.runtime.workspace.{
   ClassTypeDeclaration,
   EnumTypeDeclaration,
@@ -258,7 +260,7 @@ class SubsetComparator(
     }
 
     first match {
-      case td: IModuleTypeDeclaration => return td.getFullName == second.getFullName
+      case td: IModuleTypeDeclaration => return td.toString == second.toString
       case _                          =>
     }
 
@@ -312,7 +314,7 @@ class SubsetComparator(
   private def compareListAdnArraySubscriptIfAny(first: TypeRef, second: TypeRef): Boolean = {
     //Check if type is array subscript and the other has matching number of List type
     first match {
-      case td: IModuleTypeDeclaration => return td.getFullName == second.getFullName
+      case td: IModuleTypeDeclaration => return td.toString == second.toString
       case _                          =>
     }
     //TODO we need to compare typerefs again make sure the other are matching
@@ -336,7 +338,7 @@ class SubsetComparator(
           })
       }
       return allTypeNames
-        .map(_.id.lowerCaseContents)
+        .map(_.id.lowerCaseName)
         .count(_.equalsIgnoreCase("list")) == fUnresolvedType.arraySubscripts
     }
     false
@@ -348,7 +350,7 @@ class SubsetComparator(
     isSubset
   }
 
-  private def subsetCompare[T <: Signature](
+  private def subsetCompare[T <: IVariable](
     first: ArraySeq[T],
     second: ArraySeq[T]
   ): (Boolean, ArraySeq[T], ArraySeq[T]) = {
@@ -378,7 +380,7 @@ class SubsetComparator(
     (check, ArraySeq(), ArraySeq())
   }
 
-  private def findAndCheckTypeRefSubSet[T <: Signature](
+  private def findAndCheckTypeRefSubSet[T <: IVariable](
     firstSig: T,
     secondDiff: ArraySeq[T]
   ): Boolean = {
@@ -396,17 +398,17 @@ class SubsetComparator(
     first: MethodDeclaration,
     second: ArraySeq[MethodDeclaration]
   ) = {
-    val numberOfParams = first.formalParameterList.formalParameters.length
+    val numberOfParams = first.formalParameters.length
     val possibleMethods = second.filter(
       s =>
-        s.formalParameterList.formalParameters.length ==
+        s.formalParameters.length ==
           numberOfParams
     )
     possibleMethods.nonEmpty && possibleMethods.exists(secondMethod => {
       val typeRefIdCheck = compareTypeRef(first.typeRef, secondMethod.typeRef)
       typeRefIdCheck && checkForParameterListAgainst(
-        first.formalParameterList,
-        secondMethod.formalParameterList
+        first.formalParameters,
+        secondMethod.formalParameters
       ) &&
       (first.annotations sameElements secondMethod.annotations) &&
       (first.modifiers sameElements secondMethod.modifiers)
@@ -414,12 +416,12 @@ class SubsetComparator(
   }
 
   private def checkForParameterListAgainst(
-    first: FormalParameterList,
-    second: FormalParameterList
+    first: ArraySeq[FormalParameter],
+    second: ArraySeq[FormalParameter]
   ): Boolean = {
-    if (first.formalParameters.nonEmpty) {
-      return second.formalParameters.nonEmpty && first.formalParameters.zipWithIndex.forall(f => {
-        val s = second.formalParameters(f._2)
+    if (first.nonEmpty) {
+      return second.nonEmpty && first.zipWithIndex.forall(f => {
+        val s = second(f._2)
         compareTypeRef(f._1.typeRef, s.typeRef) && !getDiffIfThereIsAny(
           ArraySeq.unsafeWrapArray(f._1.annotations),
           ArraySeq.unsafeWrapArray(s.annotations)
@@ -429,7 +431,7 @@ class SubsetComparator(
         )._1 && s.name == f._1.name
       })
     }
-    second.formalParameters.isEmpty
+    second.isEmpty
   }
 
   private def checkAndThrowIfDiffForMethods(
@@ -454,7 +456,7 @@ class SubsetComparator(
       )
   }
 
-  private def checkAndThrowIfDiffForSignatures[T <: Signature](
+  private def checkAndThrowIfDiffForSignatures[T <: IVariable](
     errorMsg: String,
     first: ArraySeq[T],
     second: ArraySeq[T]

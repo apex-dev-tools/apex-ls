@@ -20,6 +20,15 @@ import apex.jorje.semantic.symbol.member.Member
 import apex.jorje.semantic.symbol.member.method.MethodInfo
 import apex.jorje.semantic.symbol.member.variable.FieldInfo
 import com.financialforce.oparser._
+import com.financialforce.types.base.{
+  Annotation,
+  Location,
+  Modifier,
+  QualifiedName,
+  TypeNameSegment,
+  TypeRef,
+  UnresolvedTypeRef
+}
 import org.apache.commons.lang3.reflect.FieldUtils
 
 import scala.collection.immutable.ArraySeq
@@ -29,7 +38,7 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.jdk.OptionConverters.RichOptional
 import scala.language.postfixOps
 
-class SFParser(source: Map[String, String]) {
+class JorjeParser(source: Map[String, String]) {
   private val typeDeclarations: ArrayBuffer[TestTypeDeclaration] = ArrayBuffer()
   private val parseFailures: ArrayBuffer[String]                 = ArrayBuffer()
 
@@ -314,6 +323,7 @@ class SFParser(source: Map[String, String]) {
       modifiersAndAnnotations._2.toArray,
       modifiersAndAnnotations._1.toArray,
       toTypeRef(from.getType),
+      Array(),
       toId(from.getName, from.getLoc)
     )
   }
@@ -361,8 +371,8 @@ class SFParser(source: Map[String, String]) {
     QualifiedName(Array(toId(name, loc)))
   }
 
-  private def toFormalParameterList(pl: java.util.List[Parameter]): FormalParameterList = {
-    FormalParameterList(ArraySeq.unsafeWrapArray(pl.asScala.map(toFormalParameter).toArray))
+  private def toFormalParameterList(pl: java.util.List[Parameter]): ArraySeq[FormalParameter] = {
+    ArraySeq.unsafeWrapArray(pl.asScala.map(toFormalParameter).toArray)
   }
 
   private def toFormalParameter(p: Parameter): FormalParameter = {
@@ -401,23 +411,19 @@ class SFParser(source: Map[String, String]) {
     Annotation(from.getType.getApexName, None)
   }
 
-  private def toLoc(
-    from: apex.jorje.data.Location,
-    endLine: Int,
-    endLineOffset: Int
-  ): com.financialforce.oparser.Location = {
+  private def toLoc(from: apex.jorje.data.Location, endLine: Int, endLineOffset: Int): Location = {
     new Location(from.getLine, from.getColumn, 0, endLine, endLineOffset, 0)
   }
 
-  private def toId(name: String, loc: apex.jorje.data.Location): LocatableId = {
+  private def toId(name: String, loc: apex.jorje.data.Location): LocatableIdToken = {
     toIdToken(name, loc)
   }
 
-  private def toIdToken(name: String, loc: apex.jorje.data.Location): LocatableId = {
-    LocatableId(name, toLoc(loc, loc.getLine, loc.getColumn + name.length - 1))
+  private def toIdToken(name: String, loc: apex.jorje.data.Location): LocatableIdToken = {
+    LocatableIdToken(name, toLoc(loc, loc.getLine, loc.getColumn + name.length - 1))
   }
 
-  private def toTypeRef(from: TypeInfo): com.financialforce.oparser.UnresolvedTypeRef = {
+  private def toTypeRef(from: TypeInfo): UnresolvedTypeRef = {
 
     //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
     val segments = mutable.ArrayBuffer[TypeNameSegment]()
@@ -434,9 +440,7 @@ class SFParser(source: Map[String, String]) {
     UnresolvedTypeRef(segments.toArray, 0)
   }
 
-  private def toTypeRef(
-    from: Option[apex.jorje.data.ast.TypeRef]
-  ): Option[com.financialforce.oparser.UnresolvedTypeRef] = {
+  private def toTypeRef(from: Option[apex.jorje.data.ast.TypeRef]): Option[UnresolvedTypeRef] = {
     from match {
       case Some(typ) =>
         val segments   = mutable.ArrayBuffer[TypeNameSegment]()
@@ -520,18 +524,18 @@ class SFParser(source: Map[String, String]) {
 
 }
 
-object SFParser {
+object JorjeParser {
 
   import java.util.logging.LogManager
 
   // Stop Jorje logging a startup message
   LogManager.getLogManager.reset()
 
-  def apply(path: String, contents: String): SFParser = {
-    new SFParser(Map(path -> contents))
+  def apply(path: String, contents: String): JorjeParser = {
+    new JorjeParser(Map(path -> contents))
   }
 
-  def apply(sources: Map[String, String]): SFParser = {
-    new SFParser(sources)
+  def apply(sources: Map[String, String]): JorjeParser = {
+    new JorjeParser(sources)
   }
 }

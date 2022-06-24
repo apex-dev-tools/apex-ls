@@ -3,14 +3,14 @@
  */
 package com.nawforce.pkgforce.types;
 
-import com.financialforce.oparser.FormalParameter;
+import com.financialforce.types.IFormalParameter;
 import com.nawforce.pkgforce.api.ApexMethodParameter;
 import com.nawforce.pkgforce.api.ApexTypeId;
 
 public class ApexMethodParameterAdapter  implements ApexMethodParameter {
-    final private FormalParameter fp;
+    final private IFormalParameter fp;
 
-    public ApexMethodParameterAdapter(FormalParameter fp) {
+    public ApexMethodParameterAdapter(IFormalParameter fp) {
         this.fp = fp;
     }
 

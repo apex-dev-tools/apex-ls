@@ -4,6 +4,15 @@
 package com.nawforce.runtime.workspace
 
 import com.financialforce.oparser._
+import com.financialforce.types._
+import com.financialforce.types.base.{
+  Annotation,
+  IdWithLocation,
+  Location,
+  Modifier,
+  TypeNameSegment,
+  TypeRef
+}
 import com.nawforce.pkgforce.memory.IdentityEquality
 
 import scala.collection.immutable.ArraySeq
@@ -20,11 +29,15 @@ trait IModuleTypeDeclaration extends ITypeDeclaration {
   def namespaceAsString: String = module.namespaceAsString
 
   // Override to include namespace
-  override def getFullName: String = {
-    Option(module)
-      .flatMap(_.namespace)
-      .map(ns => s"$ns.${super.getFullName}")
-      .getOrElse(super.getFullName)
+  override def fullName: String = {
+    enclosing
+      .map(_ => super.fullName) // Enclosing will add namespace!
+      .getOrElse(
+        Option(module)
+          .flatMap(_.namespace)
+          .map(ns => s"$ns.${super.fullName}")
+          .getOrElse(super.fullName)
+      )
   }
 }
 
@@ -45,12 +58,12 @@ sealed class TypeDeclaration(
 
   private var _location: Location = _
 
-  private var _id: LocatableId                       = _
+  private var _id: IdWithLocation                    = _
   private var _extendsTypeRef: TypeRef               = _
   private var _implementsTypeList: ArraySeq[TypeRef] = _
 
-  private var _modifiers: Array[Modifier]     = Modifiers.emptyArray
-  private var _annotations: Array[Annotation] = Annotations.emptyArray
+  private var _modifiers: Array[Modifier]     = Modifier.emptyArray
+  private var _annotations: Array[Annotation] = Annotation.emptyArray
 
   private var _initializers: ArraySeq[Initializer]            = Initializer.emptyArraySeq
   private var _innerTypes: ArraySeq[TypeDeclaration]          = TypeDeclaration.emptyArraySeq
@@ -65,7 +78,7 @@ sealed class TypeDeclaration(
   override def paths: Array[String] = Array(path)
   override def location: Location   = _location
 
-  override def id: LocatableId = _id
+  override def id: IdWithLocation = _id
 
   override def typeNameSegment: TypeNameSegment = new TypeNameSegment(id, TypeRef.emptyArraySeq)
 
@@ -73,11 +86,11 @@ sealed class TypeDeclaration(
   override def extendsTypeRef: TypeRef                          = _extendsTypeRef
   override def implementsTypeList: ArraySeq[TypeRef]            = _implementsTypeList
 
-  override def modifiers: Array[Modifier]          = _modifiers
-  override def annotations: Array[Annotation]      = _annotations
-  override def initializers: ArraySeq[Initializer] = ArraySeq.unsafeWrapArray(_initializers.toArray)
+  override def modifiers: Array[Modifier]     = _modifiers
+  override def annotations: Array[Annotation] = _annotations
 
   override def innerTypes: ArraySeq[TypeDeclaration] = ArraySeq.unsafeWrapArray(_innerTypes.toArray)
+  override def initializers: ArraySeq[Initializer]   = ArraySeq.unsafeWrapArray(_initializers.toArray)
   override def constructors: ArraySeq[ConstructorDeclaration] =
     ArraySeq.unsafeWrapArray(_constructors.toArray)
   override def methods: ArraySeq[MethodDeclaration] = ArraySeq.unsafeWrapArray(_methods.toArray)
@@ -85,14 +98,14 @@ sealed class TypeDeclaration(
     ArraySeq.unsafeWrapArray(_properties.toArray)
   override def fields: ArraySeq[FieldDeclaration] = ArraySeq.unsafeWrapArray(_fields.toArray)
 
-  override def setId(id: LocatableId): Unit                     = _id = id
+  override def setId(id: IdWithLocation): Unit                  = _id = id
   override def setLocation(location: Location): Unit            = _location = location
   override def setExtends(typeRef: TypeRef): Unit               = _extendsTypeRef = typeRef
   override def setImplements(typeList: ArraySeq[TypeRef]): Unit = _implementsTypeList = typeList
   override def setModifiers(modifiers: Array[Modifier]): Unit =
-    _modifiers = Modifiers.intern(modifiers)
+    _modifiers = Modifier.intern(modifiers)
   override def setAnnotations(annotations: Array[Annotation]): Unit =
-    _annotations = Annotations.intern(annotations)
+    _annotations = Annotation.intern(annotations)
 
   override def appendInitializer(init: Initializer): Unit            = _bodyDecls.append(init)
   override def appendInnerType(inner: IMutableTypeDeclaration): Unit = _bodyDecls.append(inner)
@@ -148,13 +161,12 @@ class ClassTypeDeclaration(
 ) extends TypeDeclaration(_module, path, CLASS_NATURE, enclosing) {
 
   override def toString: String = {
-    import StringUtils._
     val base =
       s"""Class:      $id
          |Path:       $path
          |Location:   ${id.location}
-         |Annotation: ${asString(annotations)}
-         |Modifiers:  ${asString(modifiers)}
+         |Annotation: ${annotations.mkString(" ")}
+         |Modifiers:  ${modifiers.mkString(" ")}
          |Extends:    $extendsTypeRef
          |Implements: $implementsTypeList
          |""".stripMargin
@@ -210,12 +222,11 @@ class InterfaceTypeDeclaration(
 ) extends TypeDeclaration(_module, path, INTERFACE_NATURE, enclosing) {
 
   override def toString: String = {
-    import StringUtils._
     s"""Interface:  $id
        |Path:       $path
        |Location:   ${id.location}
-       |Annotation: ${asString(annotations)}
-       |Modifiers:  ${asString(modifiers)}
+       |Annotation: ${annotations.mkString(" ")}
+       |Modifiers:  ${modifiers.mkString(" ")}
        |Implements: $implementsTypeList
        |Methods:
        |${methods.mkString("\n")}
@@ -231,12 +242,11 @@ class EnumTypeDeclaration(
 ) extends TypeDeclaration(_module, path, ENUM_NATURE, enclosing) {
 
   override def toString: String = {
-    import StringUtils._
     s"""Enum:       $id
        |Path:       $path
        |Location:   ${id.location}
-       |Annotation: ${asString(annotations)}
-       |Modifiers:  ${asString(modifiers)}
+       |Annotation: ${annotations.mkString(" ")}
+       |Modifiers:  ${modifiers.mkString(" ")}
        |Constants:
        |${fields.map(f => s"${f.id.location} ${f.id.name}").mkString("\n")}
        |

@@ -1,16 +1,20 @@
 /*
  * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved.
  */
-package com.financialforce.oparser
+package com.financialforce.types.base
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 import scala.util.hashing.MurmurHash3
 
+/** Reference holder to a type. Typically TypeRefs start as a UnresolvedTypeRef and are replaced by a ITypeDeclaration
+  * during a resolve phase. The fullName can be used to determine equivalence between these two types of TypeRef.
+  */
 trait TypeRef {
-  def getFullName: String
-  override def toString: String = {
-    getFullName
+  def fullName: String
+
+  def sameRef(other: TypeRef): Boolean = {
+    other.fullName.equalsIgnoreCase(fullName)
   }
 }
 
@@ -20,18 +24,21 @@ object TypeRef {
   def toTypeRefs(params: Array[String]): ArraySeq[TypeRef] = {
     ArraySeq.unsafeWrapArray(params.map(tp => {
       UnresolvedTypeRef(
-        Array(new TypeNameSegment(LocatableId(tp, Location.default), emptyArraySeq)),
+        Array(new TypeNameSegment(new LocatableId(tp, Location.default), emptyArraySeq)),
         0
       )
     }))
   }
 }
 
+/** A reference to a type in raw form as it appears in source files. This just captures the segments in the TypeRef
+  * and any array subscripts. We expect a resolve process to use this information to locate an ITypeDeclaration.
+  */
 final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arraySubscripts: Int)
     extends TypeRef {
 
-  override def getFullName: String = {
-    toString
+  override def fullName: String = {
+    typeNameSegments.mkString(".") + ("[]" * arraySubscripts)
   }
 
   override def equals(obj: Any): Boolean = {
@@ -44,23 +51,30 @@ final case class UnresolvedTypeRef(typeNameSegments: Array[TypeNameSegment], arr
     MurmurHash3.orderedHash(Seq(arraySubscripts, MurmurHash3.arrayHash(typeNameSegments)))
   }
 
-  override def toString: String = {
-    import StringUtils._
-    asString(typeNameSegments, ".") + ("[]" * arraySubscripts)
-  }
+  override def toString: String = fullName
 }
 
 object UnresolvedTypeRef {
 
-  /* Convert a string into a UnresolvedTypeRef. Note: This is really only suitable for well formed type names because
-   * it does not handle whitespace or array subscripts or even do much error handling. */
+  /** Convert a string into a UnresolvedTypeRef. Note: This is really only intended for internal use as the
+    * error handling is limited.
+    */
   def apply(typeName: String): Either[String, UnresolvedTypeRef] = {
-    val parts = safeSplit(typeName, '.')
 
+    // Strip trailing array subscripts
+    var remaining: String = typeName.trim.replaceAll("\\s", "")
+    var arraySubscripts   = 0
+    while (remaining.endsWith("[]")) {
+      arraySubscripts += 1
+      remaining = remaining.substring(0, remaining.length - 2)
+    }
+
+    val parts = safeSplit(remaining, '.')
     val segments: List[Either[String, TypeNameSegment]] = parts.map(part => {
+      // Handle segment type arguments
       if (part.contains('<')) {
         val argSplit = part.split("<", 2)
-        if (argSplit.length != 2 || argSplit(1).length < 2 || part.last != '>')
+        if (argSplit.length != 2 || argSplit(1).length < 2 || remaining.last != '>')
           Left(s"Unmatched '<' found in '$part'")
         else {
           buildTypeNames(argSplit(1).take(argSplit(1).length - 1)) match {
@@ -78,10 +92,10 @@ object UnresolvedTypeRef {
     val errors = segments.collect { case Left(error) => error }
     if (errors.nonEmpty)
       return Left(errors.head)
-    Right(apply(segments.collect { case Right(segment) => segment }.toArray, 0))
+    Right(apply(segments.collect { case Right(segment) => segment }.toArray, arraySubscripts))
   }
 
-  /* Split a list of comma delimited type names */
+  /** Split a list of comma delimited type names */
   private def buildTypeNames(value: String): Either[String, Array[UnresolvedTypeRef]] = {
     val args =
       safeSplit(value, ',').foldLeft(ArrayBuffer[Either[String, UnresolvedTypeRef]]())(
@@ -97,7 +111,7 @@ object UnresolvedTypeRef {
       .getOrElse(Right(args.collect { case Right(tn) => tn }.toArray))
   }
 
-  /** Split a string at 'separator' but ignoring if within '<...>' blocks. */
+  /** Split a string at 'separator' but ignoring if within '&lt;...>' blocks. */
   private def safeSplit(value: String, separator: Char): List[String] = {
     var parts: List[String] = Nil
     var current             = new StringBuffer()
@@ -114,7 +128,8 @@ object UnresolvedTypeRef {
   }
 }
 
-final case class TypeNameSegment(id: LocatableId, typeArguments: ArraySeq[TypeRef]) {
+/** A single segment of a TypeRef, essentially and id with optional type arguments */
+final case class TypeNameSegment(id: IdWithLocation, typeArguments: ArraySeq[TypeRef]) {
 
   def replaceArguments(args: ArraySeq[TypeRef]): TypeNameSegment = {
     TypeNameSegment(id, args)
@@ -122,7 +137,7 @@ final case class TypeNameSegment(id: LocatableId, typeArguments: ArraySeq[TypeRe
 
   override def toString: String = {
     if (typeArguments.nonEmpty)
-      s"$id<${typeArguments.map(_.getFullName).mkString(",")}>"
+      s"$id<${typeArguments.map(_.fullName).mkString(",")}>"
     else
       id.toString
   }
@@ -130,21 +145,21 @@ final case class TypeNameSegment(id: LocatableId, typeArguments: ArraySeq[TypeRe
 
 object TypeNameSegment {
   def apply(name: String): TypeNameSegment = {
-    new TypeNameSegment(LocatableId(name, Location.default), TypeRef.emptyArraySeq)
+    new TypeNameSegment(new LocatableId(name, Location.default), TypeRef.emptyArraySeq)
   }
 
   def apply(name: String, typeArguments: ArraySeq[TypeRef]): TypeNameSegment = {
-    new TypeNameSegment(LocatableId(name, Location.default), typeArguments)
+    new TypeNameSegment(new LocatableId(name, Location.default), typeArguments)
   }
 
   def apply(name: String, typeArguments: Array[UnresolvedTypeRef]): TypeNameSegment = {
     new TypeNameSegment(
-      LocatableId(name, Location.default),
+      new LocatableId(name, Location.default),
       ArraySeq.unsafeWrapArray(typeArguments)
     )
   }
 
   def apply(name: String, params: Array[String]): TypeNameSegment = {
-    new TypeNameSegment(LocatableId(name, Location.default), TypeRef.toTypeRefs(params))
+    new TypeNameSegment(new LocatableId(name, Location.default), TypeRef.toTypeRefs(params))
   }
 }

@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.platform
 
-import com.financialforce.oparser.{Location => OPLocation}
+import com.financialforce.types.base.{Location => OPLocation}
 import com.nawforce.pkgforce.path.{Location, PathLike, Positionable}
 
 /** Utility methods to manipulate and map from Outline Parser Location to pkgforce Location */
