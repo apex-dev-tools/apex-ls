@@ -97,7 +97,9 @@ trait DefinitionAndImplProvider {
           //if the used by declaration is extensible, find the other classes that use it and add it to the acc
           case Some(ExtensibleClassesAndInterface(clsOrInterface)) =>
             acc.appendAll(
-              getTransitiveDependents(clsOrInterface).appendAll(clsOrInterface.nestedTypes).append(clsOrInterface)
+              getTransitiveDependents(clsOrInterface)
+                .appendAll(clsOrInterface.nestedTypes)
+                .append(clsOrInterface)
             )
           case Some(value) => acc.append(value)
           case _           =>

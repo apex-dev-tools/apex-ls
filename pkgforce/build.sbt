@@ -88,13 +88,13 @@ lazy val pkgforce = crossProject(JSPlatform, JVMPlatform)
   )
   .jvmSettings(
     build := buildJVM.value,
-    libraryDependencies += "org.scala-lang.modules" %% "scala-xml"       % "1.3.0",
-    libraryDependencies += "org.scala-js"           %% "scalajs-stubs"   % "1.0.0",
-    libraryDependencies += "com.github.nawforce"     % "apex-parser"     % "2.13.0",
-    libraryDependencies += "org.antlr"               % "antlr4-runtime"  % "4.8-1",
-    libraryDependencies += "com.github.nawforce"     % "runforce"        % "55.4.0",
-    libraryDependencies += "com.github.nawforce"     % "uber-apex-jorje" % "1.0.0" % Test,
-    libraryDependencies += "com.google.jimfs"        % "jimfs"           % "1.1"   % Test
+    libraryDependencies += "org.scala-lang.modules"  %% "scala-xml"       % "1.3.0",
+    libraryDependencies += "org.scala-js"            %% "scalajs-stubs"   % "1.0.0",
+    libraryDependencies += "io.github.apex-dev-tools" % "apex-parser"     % "3.0.0",
+    libraryDependencies += "org.antlr"                % "antlr4-runtime"  % "4.8-1",
+    libraryDependencies += "com.github.nawforce"      % "runforce"        % "55.4.0",
+    libraryDependencies += "com.github.nawforce"      % "uber-apex-jorje" % "1.0.0" % Test,
+    libraryDependencies += "com.google.jimfs"         % "jimfs"           % "1.1"   % Test
   )
   .jsSettings(
     build := buildNPM.value,

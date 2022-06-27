@@ -14,8 +14,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="scala-sdk-2.13.3" level="application" />
+    <orderEntry type="library" name="Maven: io.github.apex-dev-tools:apex-types_2.13:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.13.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest_2.13:3.2.2" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.scala-lang:scala-library:2.13.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-core_2.13:3.2.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-compatible:3.2.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalactic:scalactic_2.13:3.2.2" level="project" />

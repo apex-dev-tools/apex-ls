@@ -32,13 +32,8 @@ object UTF8Decode {
     var remaining = charCount
     var at        = offset
     while (remaining > 0) {
-      val charLength = sequenceLength(buffer(at))
-      if (charLength == 1) {
-        remaining -= 1
-      } else {
-        remaining -= new String(buffer, at, charLength, StandardCharsets.UTF_8).length
-      }
-      at += charLength
+      at += sequenceLength(buffer(at))
+      remaining -= 1
     }
     at
   }

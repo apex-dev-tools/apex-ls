@@ -21,7 +21,10 @@ lazy val parser = crossProject(JVMPlatform, JSPlatform)
   .in(file("."))
   .settings(
     name := "ff-apex-outline-parser",
-    libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.2.9" % "test"),
+    libraryDependencies ++= Seq(
+      "io.github.apex-dev-tools" %%% "apex-types" % "1.0.0",
+      "org.scalatest" %%% "scalatest" % "3.2.9" % "test"
+    ),
     scalacOptions += "-deprecation",
     publishM2 / checksums := Nil
   )
