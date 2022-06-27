@@ -236,6 +236,7 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
 
       whenControls.foreach(_.verify(context))
     }
+    verifyControlPath(context)
   }
 
   private def checkMatchableTo(typeName: TypeName): Seq[String] = {
@@ -284,6 +285,6 @@ object SwitchStatement {
         .toScala(switchStatement.whenControl())
         .map(wc => WhenControl.construct(parser, wc).withContext(wc))
         .toList
-    )
+    ).withContext(switchStatement)
   }
 }

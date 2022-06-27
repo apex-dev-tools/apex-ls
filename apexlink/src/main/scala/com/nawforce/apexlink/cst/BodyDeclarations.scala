@@ -283,6 +283,7 @@ class ApexMethodDeclaration(
     block.foreach(block => {
       block.verify(blockContext)
     })
+    blockContext.logControlFlowIssues()
 
     setDepends(context.dependencies)
     context.propagateDependencies()
