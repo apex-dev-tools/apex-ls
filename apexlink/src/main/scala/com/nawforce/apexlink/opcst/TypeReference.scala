@@ -1,19 +1,19 @@
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser.{
+import com.financialforce.types.base.{
   UnresolvedTypeRef,
   TypeNameSegment => OPTypeName,
   TypeRef => OPTypeRef
 }
-import com.nawforce.pkgforce.names.TypeName
-
-import scala.collection.immutable.ArraySeq
 import com.nawforce.apexlink.cst.{
   CSTTypeArguments,
   CSTTypeName,
   CSTTypeReference,
   TypeReference => CSTTypeReferenceAlias
 }
+import com.nawforce.pkgforce.names.TypeName
+
+import scala.collection.immutable.ArraySeq
 
 private[opcst] object TypeReference {
 
@@ -28,9 +28,9 @@ private[opcst] object TypeReference {
   private class OutlineParserTypeName(typeName: OPTypeName) extends CSTTypeName {
     override def typeArguments(): CSTTypeArguments =
       new OutlineParserTypeArgument(typeName.typeArguments)
-    override def isList: Boolean           = typeName.id.lowerCaseContents == "list"
-    override def isSet: Boolean            = typeName.id.lowerCaseContents == "set"
-    override def isMap: Boolean            = typeName.id.lowerCaseContents == "map"
+    override def isList: Boolean           = typeName.id.lowerCaseName == "list"
+    override def isSet: Boolean            = typeName.id.lowerCaseName == "set"
+    override def isMap: Boolean            = typeName.id.lowerCaseName == "map"
     override def getIdText: Option[String] = Option(typeName.id.name)
   }
 

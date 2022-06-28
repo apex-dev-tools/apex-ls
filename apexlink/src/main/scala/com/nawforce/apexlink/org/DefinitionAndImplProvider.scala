@@ -24,6 +24,8 @@ import com.nawforce.apexlink.types.apex.{
   ApexMethodLike
 }
 import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{Dependent, DependentType, TypeDeclaration}
+import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
 import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, VIRTUAL_MODIFIER}
 import com.nawforce.pkgforce.parsers.CLASS_NATURE
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLike, UnsafeLocatable}
@@ -40,7 +42,7 @@ trait DefinitionAndImplProvider extends SourceOps {
     content: Option[String]
   ): Array[LocationLink] = {
     // Make sure we have access to source code and a type to resolve things against
-    val sourceAndType = loadSourceAndType(path, content)
+    val sourceAndType = loadFullSourceAndType(path, content)
     if (sourceAndType.isEmpty)
       return Array.empty
 
@@ -76,7 +78,13 @@ trait DefinitionAndImplProvider extends SourceOps {
     offset: Int,
     content: Option[String]
   ): Array[LocationLink] = {
-    val sourceAndType = loadSourceAndType(path, content)
+    val sourceAndType = loadSource(path, content).flatMap(source => {
+      loadTypeFromModule(path) match {
+        case Some(dt: DependentType) => Some((source, dt))
+        case _                       => loadRawType(path, source)
+      }
+    })
+
     if (sourceAndType.isEmpty)
       return Array.empty
 
@@ -86,9 +94,9 @@ trait DefinitionAndImplProvider extends SourceOps {
   private def getImplementation(
     line: Int,
     offset: Int,
-    sourceAndType: Option[(String, ApexFullDeclaration)]
+    sourceAndType: Option[(String, DependentType)]
   ): Array[LocationLink] = {
-    def getTransitiveDependents(td: ApexDeclaration): ArrayBuffer[TypeDeclaration] = {
+    def getTransitiveDependents(td: DependentType): ArrayBuffer[TypeDeclaration] = {
       td.getTypeDependencyHolders.toIterable.foldLeft(ArrayBuffer[TypeDeclaration]())((acc, id) => {
         TypeResolver(id.typeName, id.module).toOption match {
           //if the used by declaration is extensible, find the other classes that use it and add it to the acc
@@ -173,7 +181,53 @@ trait DefinitionAndImplProvider extends SourceOps {
           .toArray
       case _ => Array.empty
     }
+  }
 
+  private def loadFullSourceAndType(
+    path: PathLike,
+    content: Option[String]
+  ): Option[(String, ApexFullDeclaration)] = {
+    // We need source code no matter what
+    val sourceOpt = loadSource(path, content)
+
+    // If we don't have new source we can assume the loaded type is current, but it could be a summary
+    if (content.isEmpty) {
+      loadTypeFromModule(path) match {
+        case Some(fd: FullDeclaration)     => return Some((sourceOpt.get, fd))
+        case Some(atd: TriggerDeclaration) => return Some((sourceOpt.get, atd))
+        case _                             =>
+      }
+    }
+    // No option but to load it as content is being provided
+    loadRawType(path, sourceOpt.get)
+  }
+
+  private def loadSource(path: PathLike, content: Option[String]): Option[String] = {
+    val sourceOpt = content.orElse(path.read().toOption)
+    if (sourceOpt.isEmpty)
+      return None
+    sourceOpt
+  }
+
+  private def loadRawType(path: PathLike, source: String): Option[(String, ApexFullDeclaration)] = {
+    if (path.basename.toLowerCase.endsWith(".trigger")) {
+      loadTrigger(path, source)._2.map(td => (source, td))
+    } else {
+      loadClass(path, source)._2.map(td => (source, td))
+    }
+  }
+
+  private def loadTypeFromModule(path: PathLike): Option[TypeDeclaration] = {
+    MetadataDocument(path).collect({
+      case doc: ApexTriggerDocument =>
+        orderedModules.view
+          .flatMap(_.moduleType(doc.typeName(namespace)))
+          .headOption
+      case doc: ApexClassDocument =>
+        orderedModules.view
+          .flatMap(_.moduleType(doc.typeName(namespace)))
+          .headOption
+    }).flatten
   }
 
   private def getFromValidation(

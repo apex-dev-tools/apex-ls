@@ -3,7 +3,7 @@
  */
 package com.nawforce.pkgforce.types;
 
-import com.financialforce.oparser.PropertyDeclaration;
+import com.financialforce.types.IPropertyDeclaration;
 import com.nawforce.pkgforce.api.ApexField;
 import com.nawforce.pkgforce.api.ApexType;
 import com.nawforce.pkgforce.api.ApexTypeId;
@@ -11,9 +11,9 @@ import scala.collection.immutable.ArraySeq;
 
 public class ApexPropertyAdapter implements ApexField {
     final private ApexTypeAdapter owner;
-    final private PropertyDeclaration pd;
+    final private IPropertyDeclaration pd;
 
-    public ApexPropertyAdapter(ApexTypeAdapter owner, PropertyDeclaration pd) {
+    public ApexPropertyAdapter(ApexTypeAdapter owner, IPropertyDeclaration pd) {
         this.owner = owner;
         this.pd = pd;
     }

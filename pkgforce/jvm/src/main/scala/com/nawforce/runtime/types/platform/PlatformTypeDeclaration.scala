@@ -15,18 +15,19 @@
 package com.nawforce.runtime.types.platform
 
 import com.financialforce.oparser._
+import com.financialforce.types.base.{
+  Annotation,
+  IdWithLocation,
+  Location,
+  Modifier,
+  QualifiedName,
+  TypeNameSegment,
+  TypeRef,
+  UnresolvedTypeRef
+}
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
-import com.nawforce.runtime.types.platform.PlatformTypeDeclaration.{
-  createTypeName,
-  emptyAnnotations,
-  emptyArgs,
-  emptyInitializers,
-  emptyPaths,
-  emptyProperties,
-  emptyTypeDeclarations,
-  platformPackage
-}
+import com.nawforce.runtime.types.platform.PlatformTypeDeclaration._
 import com.nawforce.runtime.workspace.{IModuleTypeDeclaration, IPM}
 
 import java.nio.file.{FileSystemNotFoundException, FileSystems, Files, Paths}
@@ -72,7 +73,7 @@ class PlatformTypeDeclaration(
 
   override val location: Location = Location.default
 
-  override val id: LocatableId = typeInfo.typeName.id
+  override val id: IdWithLocation = typeInfo.typeName.id
 
   override val typeNameSegment: TypeNameSegment = typeInfo.typeName
 
@@ -126,10 +127,10 @@ class PlatformTypeDeclaration(
 
   override lazy val fields: ArraySeq[FieldDeclaration] = getFields
 
-  override def getFullName: String = {
+  override def fullName: String = {
     val ns = if (typeInfo.namespace.nonEmpty) s"${typeInfo.namespace.get}." else ""
     if (enclosing.nonEmpty)
-      return s"$ns${enclosing.get.getFullName}.${typeInfo.typeName.toString}"
+      return s"$ns${enclosing.get.fullName}.${typeInfo.typeName.toString}"
     s"$ns${typeInfo.typeName.toString}"
   }
 
@@ -139,14 +140,12 @@ class PlatformTypeDeclaration(
     val args =
       if (typeNameSegment.typeArguments.nonEmpty)
         typeNameSegment.typeArguments
-          .map(
-            arg => if (arg.isInstanceOf[PlatformTypeDeclaration]) arg.toString else arg.getFullName
-          )
+          .map(arg => if (arg.isInstanceOf[PlatformTypeDeclaration]) arg.toString else arg.fullName)
           .mkString("<", ",", ">")
       else ""
     var rawNames =
       if (enclosing.nonEmpty)
-        Seq(typeInfo.typeName.id.toString, enclosing.get.getFullName)
+        Seq(typeInfo.typeName.id.toString, enclosing.get.fullName)
       else Seq(typeInfo.typeName.id.toString)
     if (typeInfo.namespace.nonEmpty) {
       rawNames = rawNames :+ typeInfo.namespace.get
@@ -193,7 +192,7 @@ class PlatformTypeDeclaration(
     val modifiers = PlatformModifiers.ctorModifiers(ctor.getModifiers)
     val name = QualifiedName(
       (Array(td.typeInfo.namespace).flatten ++ Array(td.typeInfo.typeName.id.name))
-        .map(s => LocatableId(s, Location.default))
+        .map(s => LocatableIdToken(s, Location.default))
     )
 
     ConstructorDeclaration(Array.empty, modifiers, name, toFormalParameterList(ctor.getParameters))
@@ -210,7 +209,7 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.methodModifiers(method.getModifiers, td.nature),
       rtType,
-      LocatableId(decodeName(method.getName), Location.default),
+      LocatableIdToken(decodeName(method.getName), Location.default),
       toFormalParameterList(method.getParameters)
     )
   }
@@ -220,22 +219,22 @@ class PlatformTypeDeclaration(
       emptyAnnotations,
       PlatformModifiers.fieldOrMethodModifiers(field.getModifiers),
       getPlatformTypeDeclFromType(field.getGenericType).get,
-      LocatableId(decodeName(field.getName), Location.default)
+      LocatableIdToken(decodeName(field.getName), Location.default)
     )
   }
 
   protected def toFormalParameterList(
     params: Array[java.lang.reflect.Parameter]
-  ): FormalParameterList = {
-    new FormalParameterList(ArraySeq.unsafeWrapArray(params.map(toFormalParameter)))
+  ): ArraySeq[FormalParameter] = {
+    ArraySeq.unsafeWrapArray(params.map(toFormalParameter))
   }
 
   protected def toFormalParameter(parameter: java.lang.reflect.Parameter): FormalParameter = {
     FormalParameter(
-      Annotations.emptyArray,
-      Modifiers.emptyArray,
+      Annotation.emptyArray,
+      Modifier.emptyArray,
       getPlatformTypeDeclFromType(parameter.getParameterizedType).get,
-      LocatableId(parameter.getName, Location.default)
+      LocatableIdToken(parameter.getName, Location.default)
     )
   }
 
@@ -341,7 +340,7 @@ object PlatformTypeDeclaration {
 
   def get(module: IPM.Module, typeRef: UnresolvedTypeRef): Option[PlatformTypeDeclaration] = {
     //Exit early for void
-    if (typeRef.getFullName.equalsIgnoreCase(Names.Void.value))
+    if (typeRef.fullName.equalsIgnoreCase(Names.Void.value))
       return None
 
     // Conversion will fail if typeRef has unresolved type arguments
@@ -495,7 +494,7 @@ object PlatformTypeDeclaration {
     params: Option[ArraySeq[IModuleTypeDeclaration]]
   ): TypeNameSegment = {
     val typeArguments = params.getOrElse(TypeRef.emptyArraySeq)
-    TypeNameSegment(LocatableId(name, Location.default), typeArguments)
+    TypeNameSegment(LocatableIdToken(name, Location.default), typeArguments)
   }
 
   private val typeAliasMap: Map[TypeName, TypeName] = Map(

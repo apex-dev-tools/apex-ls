@@ -3,6 +3,8 @@
  */
 package com.financialforce.oparser
 
+import com.financialforce.types.base.Location
+
 class Buffer(backing: String) {
 
   private var startLine       = 0

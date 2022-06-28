@@ -3,7 +3,9 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser._
+import com.financialforce.oparser.FormalParameter
+import com.financialforce.types._
+import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex, SObjectNature}
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
@@ -262,7 +264,7 @@ object IPM extends TriHierarchy {
         TypeFinder.get(this, typeRef, decl)
       }
 
-      def resolveSignature(body: Signature): Unit = {
+      def resolveSignature(body: IVariable): Unit = {
         body.typeRef = resolve(body.typeRef).getOrElse(body.typeRef)
 
         if (body.typeRef.isInstanceOf[UnresolvedTypeRef]) {
@@ -270,18 +272,18 @@ object IPM extends TriHierarchy {
         }
       }
 
-      def resolveMethods(methodDeclaration: MethodDeclaration): Unit = {
+      def resolveMethods(methodDeclaration: IMethodDeclaration): Unit = {
         if (methodDeclaration.typeRef.nonEmpty) {
-          val isVoid = methodDeclaration.typeRef.get.getFullName.equalsIgnoreCase(Names.Void.value)
+          val isVoid = methodDeclaration.typeRef.get.fullName.equalsIgnoreCase(Names.Void.value)
           methodDeclaration.typeRef =
             if (isVoid) None
             else resolve(methodDeclaration.typeRef.get).orElse(methodDeclaration.typeRef)
         }
-        resolveParameterList(methodDeclaration.formalParameterList)
+        resolveParameterList(methodDeclaration.formalParameters)
       }
 
-      def resolveParameterList(fpl: FormalParameterList): Unit = {
-        fpl.formalParameters.foreach(fp => {
+      def resolveParameterList(fpl: ArraySeq[IFormalParameter]): Unit = {
+        fpl.foreach(fp => {
           fp.typeRef = resolve(fp.typeRef).getOrElse(fp.typeRef)
         })
       }
@@ -293,7 +295,7 @@ object IPM extends TriHierarchy {
       Option(decl.implementsTypeList).foreach(tl => {
         decl.setImplements(tl.map(tr => resolve(tr).getOrElse(tr)))
       })
-      decl.constructors.foreach(c => resolveParameterList(c.formalParameterList))
+      decl.constructors.foreach(c => resolveParameterList(c.formalParameters))
       decl.properties.foreach(resolveSignature)
       decl.fields.foreach(resolveSignature)
       decl.methods.foreach(resolveMethods)
@@ -451,7 +453,7 @@ object IPM extends TriHierarchy {
 
       // Short-cut to next module if could not possibly match
       if (
-        !defaultNamespace && !typeRef.typeNameSegments.head.id.lowerCaseContents
+        !defaultNamespace && !typeRef.typeNameSegments.head.id.lowerCaseName
           .equalsIgnoreCase(namespace.get.value)
       )
         return nextModule.flatMap(_.findExactTypeId(name, typeRef))
@@ -491,7 +493,7 @@ object IPM extends TriHierarchy {
       if (
         !defaultNamespace || isNameAmbiguous ||
         (typeRef.typeNameSegments.length > 1 &&
-        typeRef.typeNameSegments.head.id.lowerCaseContents.equalsIgnoreCase(namespace.get.value))
+        typeRef.typeNameSegments.head.id.lowerCaseName.equalsIgnoreCase(namespace.get.value))
       ) {
         (name, typeRef)
       } else {

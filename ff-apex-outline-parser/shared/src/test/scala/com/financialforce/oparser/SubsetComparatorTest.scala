@@ -4,7 +4,16 @@
 
 package com.financialforce.oparser
 
+import com.financialforce.types.base.{
+  Annotation,
+  IdWithLocation,
+  Modifier,
+  TypeRef,
+  UnresolvedTypeRef
+}
 import org.scalatest.funspec.AnyFunSpec
+
+import scala.collection.immutable.ArraySeq
 
 class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
@@ -88,9 +97,9 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
 
   private def getMockResolver(resolvedTypes: Array[String] = Array()): TypeIdResolver = {
     new TypeIdResolver() {
-      val ids: Array[LocatableId] = resolvedTypes.map(toId)
+      val ids: Array[IdWithLocation] = resolvedTypes.map(toId)
 
-      override def canBeResolved(id: LocatableId): Boolean = ids.contains(id)
+      override def canBeResolved(id: IdWithLocation): Boolean = ids.contains(id)
     }
   }
 
@@ -476,14 +485,13 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
     }
   }
 
-  //TODO: run tests when we fix comparator
   describe("Methods") {
     def generateMethod(
       annotations: Array[Annotation] = Array(toAnnotation(Array("Override"), None)),
       modifiers: Array[Modifier] = Array("public", "static").map(toModifier),
       typeRef: TypeRef = toTypeRef(Map("void" -> None)),
-      id: LocatableId = toId("method"),
-      parameters: FormalParameterList = generateParameterList()
+      id: LocatableIdToken = toId("method"),
+      parameters: ArraySeq[FormalParameter] = generateParameterList()
     ): MethodDeclaration = {
       toMethodDeclaration(annotations, modifiers, typeRef, id, parameters)
     }
@@ -492,8 +500,8 @@ class SubsetComparatorTest extends AnyFunSpec with DeclarationGeneratorHelper {
       annotations: Array[Annotation] = Array[Annotation](),
       modifiers: Array[Modifier] = Array[Modifier](),
       typeRef: TypeRef = toTypeRef(Map("String" -> None)),
-      id: LocatableId = toId("s")
-    ): FormalParameterList = {
+      id: LocatableIdToken = toId("s")
+    ): ArraySeq[FormalParameter] = {
       toParameterList(Array(toParameter(annotations, modifiers, typeRef, id)))
     }
 

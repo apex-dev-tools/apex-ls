@@ -21,23 +21,21 @@ lazy val parser = crossProject(JVMPlatform, JSPlatform)
   .in(file("."))
   .settings(
     name := "ff-apex-outline-parser",
-    libraryDependencies ++= Seq(
-      "org.scalatest"     %%% "scalatest"   % "3.2.9" % "test",
-      "com.github.nawforce" % "apex-parser" % "2.13.0" //% "test"
-    ),
+    libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.2.9" % "test"),
     scalacOptions += "-deprecation",
     publishM2 / checksums := Nil
   )
   .jvmSettings(
     build := buildJVM.value,
-    assembly / mainClass := Some("com.financialforce.oparser.JVMParser"),
-    libraryDependencies += "com.github.nawforce" % "uber-apex-jorje" % "1.0.0" % Test
+    libraryDependencies ++= Seq(
+      "com.github.nawforce"      % "uber-apex-jorje" % "1.0.0" % Test,
+      "io.github.apex-dev-tools" % "apex-parser"     % "3.0.0" % Test
+    )
   )
   .jsSettings(
     build := buildJS.value,
     libraryDependencies ++= Seq("net.exoego" %%% "scala-js-nodejs-v14" % "0.12.0"),
     scalaJSUseMainModuleInitializer := false,
-    /* Compile / mainClass := Some("com.financialforce.oparser.JSParser"), */
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.CommonJSModule)
     }

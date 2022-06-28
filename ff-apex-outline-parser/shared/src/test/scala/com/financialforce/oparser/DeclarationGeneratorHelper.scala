@@ -4,6 +4,16 @@
 
 package com.financialforce.oparser
 
+import com.financialforce.types.base.{
+  Annotation,
+  Location,
+  Modifier,
+  QualifiedName,
+  TypeNameSegment,
+  TypeRef,
+  UnresolvedTypeRef
+}
+
 import scala.collection.immutable.ArraySeq
 
 trait DeclarationGeneratorHelper {
@@ -45,7 +55,7 @@ trait DeclarationGeneratorHelper {
     annotations: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: LocatableId
+    id: LocatableIdToken
   ): FormalParameter = {
     FormalParameter(annotations, modifiers, typeRef, id)
   }
@@ -54,8 +64,8 @@ trait DeclarationGeneratorHelper {
     Modifier(m)
   }
 
-  def toIdToken(token: String): LocatableId = {
-    LocatableId(token, Location.default)
+  def toIdToken(token: String): LocatableIdToken = {
+    LocatableIdToken(token, Location.default)
   }
 
   def toAnnotation(ids: Array[String], parameter: Option[String]): Annotation = {
@@ -66,19 +76,19 @@ trait DeclarationGeneratorHelper {
     QualifiedName(ids.map(x => toId(x)))
   }
 
-  def toId(id: String): LocatableId = {
+  def toId(id: String): LocatableIdToken = {
     toIdToken(id)
   }
 
-  def toParameterList(fps: Array[FormalParameter]): FormalParameterList = {
-    FormalParameterList(ArraySeq.unsafeWrapArray(fps))
+  def toParameterList(fps: Array[FormalParameter]): ArraySeq[FormalParameter] = {
+    ArraySeq.unsafeWrapArray(fps)
   }
 
   def toConstructor(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     names: Array[String],
-    parameters: FormalParameterList
+    parameters: ArraySeq[FormalParameter]
   ): ConstructorDeclaration = {
     ConstructorDeclaration(annotation, modifiers, toQName(names), parameters)
   }
@@ -87,8 +97,8 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: TypeRef,
-    id: LocatableId,
-    parameters: FormalParameterList
+    id: LocatableIdToken,
+    parameters: ArraySeq[FormalParameter]
   ): MethodDeclaration = {
     MethodDeclaration(annotation, modifiers, Some(typeRef), id, parameters)
   }
@@ -97,16 +107,16 @@ trait DeclarationGeneratorHelper {
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: LocatableId
+    id: LocatableIdToken
   ): PropertyDeclaration = {
-    PropertyDeclaration(annotation, modifiers, typeRef, id)
+    PropertyDeclaration(annotation, modifiers, typeRef, Array(), id)
   }
 
   def toFieldDeclaration(
     annotation: Array[Annotation],
     modifiers: Array[Modifier],
     typeRef: UnresolvedTypeRef,
-    id: LocatableId
+    id: LocatableIdToken
   ): FieldDeclaration = {
     FieldDeclaration(annotation, modifiers, typeRef, id)
   }

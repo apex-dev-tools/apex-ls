@@ -13,7 +13,7 @@
     <bytecodeTargetLevel>
       <module name="apexlink" target="1.8" />
       <module name="apexlink-parent" target="1.5" />
-      <module name="ff-apex-outline-parser" target="1.5" />
+      <module name="ff-apex-outline-parser" target="1.7" />
       <module name="pkgforce_2.13" target="1.8" />
     </bytecodeTargetLevel>
   </component>

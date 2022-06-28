@@ -1,6 +1,6 @@
 package com.nawforce.runtime.sfparser_run.compare
 
-import com.financialforce.oparser.LocatableId
+import com.financialforce.types.base.IdWithLocation
 import com.nawforce.runtime.workspace.{
   ClassTypeDeclaration,
   IModuleTypeDeclaration,
@@ -10,23 +10,23 @@ import com.nawforce.runtime.workspace.{
 import scala.collection.mutable.ArrayBuffer
 
 trait TypeIdResolver {
-  def canBeResolved(id: LocatableId): Boolean
+  def canBeResolved(id: IdWithLocation): Boolean
 }
 
-class TypeIdCollector(allIds: ArrayBuffer[LocatableId]) extends TypeIdResolver {
-  def canBeResolved(id: LocatableId): Boolean = {
+class TypeIdCollector(allIds: ArrayBuffer[IdWithLocation]) extends TypeIdResolver {
+  def canBeResolved(id: IdWithLocation): Boolean = {
     allIds.contains(id)
   }
 }
 
 object TypeIdCollector {
   def fromIModuleTypeDecls(tds: List[IModuleTypeDeclaration]): TypeIdCollector = {
-    val allIds: ArrayBuffer[LocatableId] = ArrayBuffer()
+    val allIds: ArrayBuffer[IdWithLocation] = ArrayBuffer()
     tds.foreach(td => appendToIds(td, allIds))
     new TypeIdCollector(allIds)
   }
 
-  private def appendToIds(td: IModuleTypeDeclaration, acc: ArrayBuffer[LocatableId]): Unit = {
+  private def appendToIds(td: IModuleTypeDeclaration, acc: ArrayBuffer[IdWithLocation]): Unit = {
     acc.append(td.id)
     td match {
       case cls: ClassTypeDeclaration =>
@@ -36,7 +36,7 @@ object TypeIdCollector {
   }
 
   def fromTypeDecls(tds: ArrayBuffer[TypeDeclaration]): TypeIdCollector = {
-    val allIds: ArrayBuffer[LocatableId] = ArrayBuffer()
+    val allIds: ArrayBuffer[IdWithLocation] = ArrayBuffer()
     tds.foreach(td => appendToIds(td, allIds))
     new TypeIdCollector(allIds)
   }

@@ -3,8 +3,8 @@
  */
 package com.nawforce.pkgforce.types;
 
-import com.financialforce.oparser.FormalParameter;
-import com.financialforce.oparser.MethodDeclaration;
+import com.financialforce.types.IFormalParameter;
+import com.financialforce.types.IMethodDeclaration;
 import com.nawforce.pkgforce.api.ApexMethod;
 import com.nawforce.pkgforce.api.ApexMethodParameter;
 import com.nawforce.pkgforce.api.ApexType;
@@ -17,10 +17,10 @@ import java.util.List;
 public class ApexMethodAdapter implements ApexMethod {
     final private static NameApexTypeId VOID_APEX_TYPE_ID = new NameApexTypeId("void", "", false);
 
-    final private MethodDeclaration md;
+    final private IMethodDeclaration md;
     final private ApexTypeAdapter definingType;
 
-    public ApexMethodAdapter(ApexTypeAdapter definingType, MethodDeclaration md) {
+    public ApexMethodAdapter(ApexTypeAdapter definingType, IMethodDeclaration md) {
         this.definingType = definingType;
         this.md = md;
     }
@@ -48,7 +48,7 @@ public class ApexMethodAdapter implements ApexMethod {
 
     @Override
     public List<ApexMethodParameter> getParameters() {
-        ArraySeq<FormalParameter> parameters = md.formalParameterList().formalParameters();
+        ArraySeq<IFormalParameter> parameters = md.formalParameters();
         ApexMethodParameter[] result = new ApexMethodParameter[parameters.length()];
         for (int i = 0; i < parameters.length(); i++)
             result[i] = new ApexMethodParameterAdapter(parameters.apply(i));
