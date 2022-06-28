@@ -130,6 +130,7 @@ abstract class FullDeclaration(
     // Method maps, constructor maps & relative type contexts may be invalidated by changes to super classes/interfaces
     resetMethodMapIfInvalid()
     resetConstructorMapIfInvalid()
+    typeContext.reset()
     nestedTypes.foreach(_.preReValidate())
   }
 

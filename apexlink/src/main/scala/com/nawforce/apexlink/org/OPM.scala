@@ -27,7 +27,7 @@ import com.nawforce.apexlink.types.apex.{
   ApexFullDeclaration,
   TriggerDeclaration
 }
-import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
+import com.nawforce.apexlink.types.core.{DependentType, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType}
@@ -641,7 +641,7 @@ object OPM extends TriHierarchy {
         types.put(typeName, td)
 
         // Labels must also be updated against just 'Label' to simulate the defaulting of the System namespace, this is
-        // a design flaw but I am living it for now, if this is skipped Label would resolve against an empty platform
+        // a design flaw but I am leaving it for now, if this is skipped Label would resolve against an empty platform
         // type.
         typeName match {
           case TypeNames.Label => types.put(TypeName(labels.name), labels)
@@ -649,7 +649,7 @@ object OPM extends TriHierarchy {
         }
 
       } else {
-        types.remove(typeName)
+        types.remove(typeName).foreach(_.dead = true)
       }
     }
 
@@ -665,7 +665,7 @@ object OPM extends TriHierarchy {
     }
 
     def removeMetadata(typeName: TypeName): Unit = {
-      types.remove(typeName)
+      types.remove(typeName).foreach(_.dead = true)
     }
 
     // Add dependencies for Apex types to a map
