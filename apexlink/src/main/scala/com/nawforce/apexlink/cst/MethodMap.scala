@@ -358,7 +358,7 @@ object MethodMap {
   ): Unit = {
     td match {
       // Only check Apex defined non-abstract classes
-      case td: ApexClassDeclaration if !td.isAbstract =>
+      case td: ApexClassDeclaration if td.nature == CLASS_NATURE && !td.isAbstract =>
         workingMap.values.flatten
           .collect { case m: ApexMethodDeclaration => m }
           .filterNot(m => m.hasBlock || m.outerTypeId == td.typeId)
