@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.types.core
 
+import com.financialforce.oparser.Location
 import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.cst._
@@ -22,7 +23,8 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
-import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.org.{OPM, OrgInfo, Referencable}
+import com.nawforce.apexlink.rpc.SimpleLocation
 import com.nawforce.apexlink.types.other.Component
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.synthetic.{
@@ -33,7 +35,7 @@ import com.nawforce.apexlink.types.synthetic.{
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.Nature
-import com.nawforce.pkgforce.path.{PathLike, UnsafeLocatable}
+import com.nawforce.pkgforce.path.{IdLocatable, PathLike, UnsafeLocatable}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -244,7 +246,7 @@ object ConstructorDeclaration {
   val emptyConstructorDeclarations: ArraySeq[ConstructorDeclaration] = ArraySeq()
 }
 
-trait MethodDeclaration extends DependencyHolder with Dependent with Parameters {
+trait MethodDeclaration extends DependencyHolder with Dependent with Parameters with Referencable {
   val name: Name
   val modifiers: ArraySeq[Modifier]
   def typeName: TypeName

@@ -15,7 +15,13 @@
 package com.nawforce.apexlink.api
 
 import com.nawforce.apexlink.org.OPM
-import com.nawforce.apexlink.rpc.{BombScore, CompletionItemLink, DependencyGraph, LocationLink}
+import com.nawforce.apexlink.rpc.{
+  BombScore,
+  CompletionItemLink,
+  DependencyGraph,
+  LocationLink,
+  SimpleLocation
+}
 import com.nawforce.pkgforce.api.IssuesCollection
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -127,6 +133,9 @@ trait Org {
     * from to be free of errors, but errors may impact the ability to locate inner classes within that file.
     */
   def getImplementation(path: String, line: Int, offset: Int, content: String): Array[LocationLink]
+
+  //TODO
+  def getReferences(path: String, line: Int, offset: Int, content: String): Array[SimpleLocation]
 
   /** Get a array of completion suggestion given a source file contents and a position.
     *

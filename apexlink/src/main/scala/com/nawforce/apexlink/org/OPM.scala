@@ -321,6 +321,25 @@ object OPM extends TriHierarchy {
       }
     }
 
+    override def getReferences(
+      path: String,
+      line: Int,
+      offset: Int,
+      content: String
+    ): Array[SimpleLocation] = {
+      if (path == null)
+        return Array.empty
+
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          packages
+            .find(_.isPackagePath(path))
+            .map(_.getReferences(Path(path), line, offset, Option(content)))
+            .getOrElse(Array.empty)
+        }
+      }
+    }
+
     override def getCompletionItems(
       path: String,
       line: Int,
@@ -443,7 +462,8 @@ object OPM extends TriHierarchy {
   ) extends TriPackage
       with PackageAPI
       with DefinitionAndImplProvider
-      with CompletionProvider {
+      with CompletionProvider
+      with ReferenceProvider {
 
     val modules: ArraySeq[Module] =
       layers
