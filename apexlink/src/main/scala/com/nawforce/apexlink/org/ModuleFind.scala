@@ -17,7 +17,6 @@ package com.nawforce.apexlink.org
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.modifiers.GLOBAL_MODIFIER
 import com.nawforce.pkgforce.names.{EncodedName, TypeName}
@@ -78,18 +77,7 @@ trait ModuleFind {
     }
 
     // Try base modules & packages of this module
-    baseModules.view
-      .flatMap(_.findPackageType(typeName, from))
-      .headOption
-      .orElse(
-        basePackages.view
-          .flatMap(
-            pkg =>
-              pkg.orderedModules.lastOption
-                .flatMap(_.findPackageType(typeName, from, inPackage = false))
-          )
-          .headOption
-      )
+    nextModule.flatMap(next => next.findPackageType(typeName, from, next.pkg == pkg))
   }
 
   /** Find a type just in this module. */
