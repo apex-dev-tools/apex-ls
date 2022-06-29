@@ -211,8 +211,7 @@ object WhenControl {
 final case class SwitchStatement(expression: Expression, whenControls: List[WhenControl])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    val switchContext = new InnerBlockVerifyContext(context).withBranchingControl()
-    val result        = expression.verify(context)
+    val result = expression.verify(context)
     if (result.isDefined) {
       val values = result.typeName match {
         case TypeNames.Integer | TypeNames.Long | TypeNames.String =>
@@ -234,18 +233,19 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
       duplicates.headOption.foreach(
         dup => OrgInfo.logError(expression.location, s"Duplicate when case for $dup")
       )
-
-      whenControls.foreach(_.verify(switchContext))
-      verifyControlPath(
-        switchContext,
-        BranchControlPattern(
-          None,
-          Option
-            .when(whenControls.isEmpty) { Array(x = true) }
-            .getOrElse(whenControls.map(_ => true).toArray)
-        )
-      )
     }
+
+    val switchContext = new InnerBlockVerifyContext(context).withBranchingControl()
+    whenControls.foreach(_.verify(switchContext))
+    verifyControlPath(
+      switchContext,
+      BranchControlPattern(
+        None,
+        Option
+          .when(whenControls.isEmpty) { Array(x = true) }
+          .getOrElse(whenControls.map(_ => true).toArray)
+      )
+    )
   }
 
   private def checkMatchableTo(typeName: TypeName): Seq[String] = {
