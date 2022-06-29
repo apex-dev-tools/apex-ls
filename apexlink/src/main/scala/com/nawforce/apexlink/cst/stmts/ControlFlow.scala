@@ -7,7 +7,6 @@ package com.nawforce.apexlink.cst.stmts
 import com.nawforce.apexlink.cst.{BlockVerifyContext, CST, OuterBlockVerifyContext}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
-import com.nawforce.pkgforce.path.PathLocation
 
 import scala.collection.mutable
 
@@ -31,11 +30,11 @@ trait ControlFlowContext {
   }
 
   def getControlRoot(): ControlFlowContext = root
-  def setControlRoot(context: BlockVerifyContext with ControlFlowContext): Unit = {
+  def setControlRoot(context: BlockVerifyContext with ControlFlowContext): BlockVerifyContext = {
     root = context
+    this
   }
 
-  //TODO find alternative
   def hasBranchingControl(): Boolean = root.branching
   def withBranchingControl(): BlockVerifyContext = {
     root.branching = true

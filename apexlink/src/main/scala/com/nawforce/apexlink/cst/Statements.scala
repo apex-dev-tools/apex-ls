@@ -380,9 +380,9 @@ final case class TryStatement(block: Block, catches: Seq[CatchClause], finallyBl
     catches.foreach(_.verify(tryContext))
     finallyBlock.foreach(_.verify(tryContext))
 
-    //val p = Array(true, catches.map(_ => false): _*, finallyBlock.map(_ => false).getOrElse(): _*)
-    val a = mutable.ArrayBuffer(true)
-    a.addAll(catches.map(_ => false))
+    val a = mutable
+      .ArrayBuffer(true)
+      .addAll(catches.map(_ => true))
     finallyBlock.foreach(_ => a.addOne(false))
     verifyControlPath(tryContext, BranchControlPattern(None, a.toArray))
   }
