@@ -137,8 +137,11 @@ object BlockControlPattern {
 }
 
 // if/else, try/catch
-class BranchControlPattern(expr: Option[ExprContext], requiredBranches: Array[Boolean])
-    extends BlockControlPattern {
+class BranchControlPattern(
+  expr: Option[ExprContext],
+  requiredBranches: Array[Boolean],
+  exclusive: Boolean
+) extends BlockControlPattern {
   override protected def collectFailedPaths(
     context: BlockVerifyContext,
     paths: Array[ControlPath]
@@ -156,9 +159,7 @@ class BranchControlPattern(expr: Option[ExprContext], requiredBranches: Array[Bo
     }
   }
 
-  override protected def willEnterBlock(context: BlockVerifyContext): Boolean = {
-    !requiredBranches.contains(false)
-  }
+  override protected def willEnterBlock(context: BlockVerifyContext): Boolean = exclusive
 
   override protected def willBlockReturn(
     paths: Array[ControlPath],
@@ -171,6 +172,9 @@ class BranchControlPattern(expr: Option[ExprContext], requiredBranches: Array[Bo
 
 object BranchControlPattern {
   def apply(expr: Option[ExprContext], requiredBranches: Array[Boolean]): BranchControlPattern = {
-    new BranchControlPattern(expr, requiredBranches)
+    new BranchControlPattern(expr, requiredBranches, false)
+  }
+  def apply(expr: Option[ExprContext], requiredBranches: Int): BranchControlPattern = {
+    new BranchControlPattern(expr, Array.fill(requiredBranches)(true), true)
   }
 }

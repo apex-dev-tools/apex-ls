@@ -166,7 +166,7 @@ final case class IfStatement(expression: Expression, statements: Seq[Statement])
         context.typePlugin.onBlockValidated(stmt.asInstanceOf[Block], context.isStatic, stmtContext)
     })
 
-    verifyControlPath(stmtRootContext, BranchControlPattern(Some(expr), Array(true, true)))
+    verifyControlPath(stmtRootContext, BranchControlPattern(Some(expr), 2))
   }
 }
 
