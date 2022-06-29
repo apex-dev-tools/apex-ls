@@ -24,8 +24,7 @@ import com.nawforce.apexlink.types.apex.{
   ApexMethodLike
 }
 import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration}
-import com.nawforce.apexlink.types.core.{Dependent, DependentType, TypeDeclaration}
-import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
+import com.nawforce.apexlink.types.core.DependentType
 import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, VIRTUAL_MODIFIER}
 import com.nawforce.pkgforce.parsers.CLASS_NATURE
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLike, UnsafeLocatable}
@@ -112,17 +111,6 @@ trait DefinitionAndImplProvider extends SourceOps {
         acc
       })
     }
-
-    val source   = sourceAndType.get._1
-    val sourceTD = sourceAndType.get._2
-
-    val searchLocation =
-      source
-        .extractDotTermInclusive(() => new IdentifierLimiter, line, offset)
-        .orElse(return Array.empty)
-        .get
-        ._2
-
     def getSearchContext(td: TypeDeclaration): Option[Dependent with IdLocatable] = {
       td match {
         case ExtensibleClassesAndInterface(td) =>
@@ -140,6 +128,17 @@ trait DefinitionAndImplProvider extends SourceOps {
           if (td.nestedTypes.isEmpty) None else td.nestedTypes.flatMap(getSearchContext).headOption
       }
     }
+
+    val source   = sourceAndType.get._1
+    val sourceTD = sourceAndType.get._2
+
+    val searchLocation =
+      source
+        .extractDotTermInclusive(() => new IdentifierLimiter, line, offset)
+        .orElse(return Array.empty)
+        .get
+        ._2
+
     val searchContext = getSearchContext(sourceTD)
 
     val usedByTds = getTransitiveDependents(sourceTD)
@@ -181,53 +180,6 @@ trait DefinitionAndImplProvider extends SourceOps {
           .toArray
       case _ => Array.empty
     }
-  }
-
-  private def loadFullSourceAndType(
-    path: PathLike,
-    content: Option[String]
-  ): Option[(String, ApexFullDeclaration)] = {
-    // We need source code no matter what
-    val sourceOpt = loadSource(path, content)
-
-    // If we don't have new source we can assume the loaded type is current, but it could be a summary
-    if (content.isEmpty) {
-      loadTypeFromModule(path) match {
-        case Some(fd: FullDeclaration)     => return Some((sourceOpt.get, fd))
-        case Some(atd: TriggerDeclaration) => return Some((sourceOpt.get, atd))
-        case _                             =>
-      }
-    }
-    // No option but to load it as content is being provided
-    loadRawType(path, sourceOpt.get)
-  }
-
-  private def loadSource(path: PathLike, content: Option[String]): Option[String] = {
-    val sourceOpt = content.orElse(path.read().toOption)
-    if (sourceOpt.isEmpty)
-      return None
-    sourceOpt
-  }
-
-  private def loadRawType(path: PathLike, source: String): Option[(String, ApexFullDeclaration)] = {
-    if (path.basename.toLowerCase.endsWith(".trigger")) {
-      loadTrigger(path, source)._2.map(td => (source, td))
-    } else {
-      loadClass(path, source)._2.map(td => (source, td))
-    }
-  }
-
-  private def loadTypeFromModule(path: PathLike): Option[TypeDeclaration] = {
-    MetadataDocument(path).collect({
-      case doc: ApexTriggerDocument =>
-        orderedModules.view
-          .flatMap(_.moduleType(doc.typeName(namespace)))
-          .headOption
-      case doc: ApexClassDocument =>
-        orderedModules.view
-          .flatMap(_.moduleType(doc.typeName(namespace)))
-          .headOption
-    }).flatten
   }
 
   private def getFromValidation(

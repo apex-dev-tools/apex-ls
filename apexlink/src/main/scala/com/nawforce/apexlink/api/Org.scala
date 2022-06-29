@@ -20,7 +20,7 @@ import com.nawforce.apexlink.rpc.{
   CompletionItemLink,
   DependencyGraph,
   LocationLink,
-  SimpleLocation
+  TargetLocation
 }
 import com.nawforce.pkgforce.api.IssuesCollection
 import com.nawforce.pkgforce.diagnostics.LoggerOps
@@ -135,7 +135,7 @@ trait Org {
   def getImplementation(path: String, line: Int, offset: Int, content: String): Array[LocationLink]
 
   //TODO
-  def getReferences(path: String, line: Int, offset: Int, content: String): Array[SimpleLocation]
+  def getReferences(path: String, line: Int, offset: Int, content: String): Array[TargetLocation]
 
   /** Get a array of completion suggestion given a source file contents and a position.
     *

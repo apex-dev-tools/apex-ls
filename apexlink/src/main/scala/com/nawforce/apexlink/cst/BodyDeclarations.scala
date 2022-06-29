@@ -17,6 +17,7 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.org.Referencable
 import com.nawforce.apexlink.types.apex.{
   ApexBlockLike,
   ApexConstructorLike,
@@ -247,7 +248,8 @@ class ApexMethodDeclaration(
   override val parameters: ArraySeq[FormalParameter],
   val block: Option[Block]
 ) extends ClassBodyDeclaration(_modifiers)
-    with ApexMethodLike {
+    with ApexMethodLike
+    with Referencable {
 
   override def idLocation: Location = id.location.location
 

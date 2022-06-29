@@ -326,7 +326,7 @@ object OPM extends TriHierarchy {
       line: Int,
       offset: Int,
       content: String
-    ): Array[SimpleLocation] = {
+    ): Array[TargetLocation] = {
       if (path == null)
         return Array.empty
 
