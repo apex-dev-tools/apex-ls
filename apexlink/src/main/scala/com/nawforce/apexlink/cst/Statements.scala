@@ -159,8 +159,7 @@ final case class IfStatement(expression: Expression, statements: Seq[Statement])
     statements.foreach(stmt => {
       val isBlock = stmt.isInstanceOf[Block]
       if (isBlock) {
-        stmtContext = new InnerBlockVerifyContext(stmtContext)
-        stmtContext.setControlRoot(stmtRootContext)
+        stmtContext = new InnerBlockVerifyContext(stmtContext).setControlRoot(stmtRootContext)
       }
       stmt.verify(stmtContext)
       if (isBlock)
@@ -188,8 +187,7 @@ final case class ForStatement(control: Option[ForControl], statement: Option[Sta
       val forContext = new InnerBlockVerifyContext(context)
       control.verify(forContext)
 
-      val loopContext = new InnerBlockVerifyContext(forContext)
-      loopContext.setControlRoot(forContext)
+      val loopContext = new InnerBlockVerifyContext(forContext).setControlRoot(forContext)
       control.addVars(loopContext)
       statement.foreach(_.verify(loopContext))
       verifyControlPath(forContext, BlockControlPattern())
