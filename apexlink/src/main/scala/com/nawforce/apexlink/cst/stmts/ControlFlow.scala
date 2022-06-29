@@ -62,15 +62,19 @@ trait OuterControlFlowContext {
         case method: BlockPath if !method.returns && returnType != TypeNames.Void =>
           method
       }
-      .map {
-        case outer if outer.failedPaths.isEmpty => Array[ControlPath](outer)
-        case inner                              => inner.failedPaths
+      .foreach {
+        case outer if outer.failedPaths.isEmpty =>
+          logPathIssue(outer, Some(s"Method does not return a value"))
+        case inner => inner.failedPaths.foreach(logPathIssue(_))
       }
-      .foreach(_.flatMap(_.location).foreach(logPathIssue))
   }
 
-  private def logPathIssue(pl: PathLocation): Unit = {
-    log(Issue(pl.path, ERROR_CATEGORY, pl.location, s"Code path does not return a value"))
+  private def logPathIssue(path: ControlPath, msg: Option[String] = None): Unit = {
+    val message = msg.getOrElse(path match {
+      case _: UnknownPath => s"Expected return statement"
+      case _              => s"Code path does not return a value"
+    })
+    path.location.foreach(pl => log(Issue(pl.path, ERROR_CATEGORY, pl.location, message)))
   }
 }
 
