@@ -18,7 +18,7 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{DotName, Name, TypeName}
-import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, TRIGGER_NATURE}
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE}
 import org.scalatest.funsuite.AnyFunSuite
 
 class PlatformTypesValidationTest extends AnyFunSuite {
@@ -40,7 +40,7 @@ class PlatformTypesValidationTest extends AnyFunSuite {
   )
 
   test("Right number of types (should exclude inners)") {
-    assert(PlatformTypeDeclaration.classNames.size == 2091)
+    assert(PlatformTypeDeclaration.classNames.size == 2112)
   }
 
   test("SObject type is visible") {

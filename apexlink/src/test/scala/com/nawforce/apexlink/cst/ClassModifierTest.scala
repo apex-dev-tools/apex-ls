@@ -243,7 +243,7 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {void func();}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 25-29: Method must have an implementations or be marked abstract\n"
+        "Error: line 1 at 25-29: Method must have an implementation or be marked abstract\n"
     )
   }
 

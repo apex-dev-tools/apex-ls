@@ -324,7 +324,10 @@ object MethodMap {
       checkInterfaces(td, location, td.isAbstract, workingMap, interfaces, errors)
     }
 
-    // Only Apex class types are replaceable and hence have deep hashes
+    // Validate all required methods are implemented
+    checkCompleteness(td, location, errors, workingMap)
+
+    // Finally, construct the actual MethodMap
     val testVisiblePrivateSet =
       if (testVisiblePrivate.isEmpty) emptyMethodDeclarationsSet else testVisiblePrivate.toSet
     td match {
@@ -344,6 +347,34 @@ object MethodMap {
           testVisiblePrivateSet,
           errors.toList
         )
+    }
+  }
+
+  private def checkCompleteness(
+    td: TypeDeclaration,
+    location: Option[PathLocation],
+    errors: mutable.Buffer[Issue],
+    workingMap: WorkingMap
+  ): Unit = {
+    td match {
+      // Only check Apex defined non-abstract classes
+      case td: ApexClassDeclaration if td.nature == CLASS_NATURE && !td.isAbstract =>
+        workingMap.values.flatten
+          .collect { case m: ApexMethodDeclaration => m }
+          .filterNot(m => m.hasBlock || m.outerTypeId == td.typeId)
+          .foreach(method => {
+            errors.append(
+              new Issue(
+                location.get.path,
+                Diagnostic(
+                  ERROR_CATEGORY,
+                  location.get.location,
+                  s"Non-abstract class must implement method '${method.signature}' from type '${method.outerTypeId}'"
+                )
+              )
+            )
+          })
+      case _ => ()
     }
   }
 

@@ -185,4 +185,16 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
       "Error: line 1 at 78-82: Method 'fuNc' is a duplicate of an existing method\n"
     )
   }
+
+  test("Extending abstract requires interface methods") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void m1(); void m2(); }",
+        "AFoo.cls"  -> "public abstract class AFoo implements Foo { public void m1(){} }",
+        "Dummy.cls" -> "public class Dummy extends AFoo {  }"
+      ),
+      "Error: line 1 at 13-18: Non-abstract class must implement method 'void m2()' from type 'Foo'\n"
+    )
+  }
+
 }
