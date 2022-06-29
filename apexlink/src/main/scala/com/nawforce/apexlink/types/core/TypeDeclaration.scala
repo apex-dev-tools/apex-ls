@@ -379,6 +379,9 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
   val nature: Nature
   val modifiers: ArraySeq[Modifier]
 
+  /** Dead flag, set when discarded from module, useful to aid type cache eviction */
+  var dead: Boolean = false
+
   lazy val namespace: Option[Name] = {
     val outermostType = outerTypeName.getOrElse(typeName).outer
     if (outermostType.forall(_.outer.isEmpty)) outermostType.map(_.name)

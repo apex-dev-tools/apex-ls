@@ -117,7 +117,8 @@ trait ModuleRefresh {
       case _: SObjectFieldDocument | _: SObjectFieldSetDocument | _: SObjectSharingReasonDocument =>
         val sObjectDir = doc.path.parent.parent
         removeSObjectTypes(sObjectDir.basename)
-      case _ => types.remove(doc.typeName(namespace))
+      case _ =>
+        types.remove(doc.typeName(namespace)).foreach(_.dead = true)
     }
   }
 
@@ -132,7 +133,7 @@ trait ModuleRefresh {
         typeName.withNameReplace("__c$", "__History")
       )
       objectNames.foreach(typeName => schemaSObjectType.remove(typeName.name))
-      objectNames.foreach(types.remove)
+      objectNames.foreach(typeName => types.remove(typeName).foreach(_.dead = true))
     }
   }
 

@@ -271,7 +271,7 @@ class ApexMethodDeclaration(
       if (isAbstract && block.nonEmpty)
         context.logError(id.location, "Abstract methods can not have an implementation")
       else if (!isAbstract && block.isEmpty)
-        context.logError(id.location, "Method must have an implementations or be marked abstract")
+        context.logError(id.location, "Method must have an implementation or be marked abstract")
       else if (isAbstract && isVirtual)
         context.logError(id.location, "Abstract methods do not need virtual keyword")
     }
