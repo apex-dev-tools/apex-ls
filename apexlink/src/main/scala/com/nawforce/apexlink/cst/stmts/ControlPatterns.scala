@@ -28,7 +28,8 @@ sealed case class BlockPath(
   returns: Boolean,
   unreachable: Boolean,
   location: Option[PathLocation],
-  failedPaths: Array[ControlPath]
+  failedPaths: Array[ControlPath],
+  enters: Boolean
 ) extends ControlPath
 
 sealed trait ControlPattern {
@@ -36,11 +37,14 @@ sealed trait ControlPattern {
   def addControlPath(context: BlockVerifyContext, cst: CST): ControlPath
 
   protected def nextPathUnreachable(context: BlockVerifyContext): Boolean = {
-    val paths = context.getPaths
+    val paths   = context.getPaths
+    val nonVoid = context.returnType != TypeNames.Void
     !context.hasBranchingControl() && (paths.lastOption.exists(_.unreachable) || paths.exists {
+      // some block returns depend on entry to the block
+      // we cannot be certain in all cases
       case s: StatementPath => s.returns || s.exitsBlock
-      //TODO if block with branching that returns
-      case _ => false // limitation: block returns depend on entry to the block
+      case b: BlockPath     => nonVoid && b.enters && b.returns
+      case _                => false // unknown stmts/blocks
     })
   }
 
@@ -74,51 +78,56 @@ class BlockControlPattern extends ControlPattern {
     val blockUnreachable = parent.exists(p => nextPathUnreachable(p))
 
     val path = if (paths.length == 0 || blockUnreachable) {
-      BlockPath(returns = false, blockUnreachable, cst.safeLocation, Array())
+      BlockPath(returns = false, blockUnreachable, cst.safeLocation, Array(), enters = false)
     } else {
       val failedPaths = Option
         .unless(context.returnType == TypeNames.Void) { collectFailedPaths(context, paths) }
         .getOrElse(Array())
 
-      BlockPath(blockReturns(paths, failedPaths), blockUnreachable, cst.safeLocation, failedPaths)
+      BlockPath(
+        willBlockReturn(paths, failedPaths),
+        blockUnreachable,
+        cst.safeLocation,
+        failedPaths,
+        willEnterBlock(context)
+      )
     }
 
     parent.foreach(_.addPath(path))
     path
   }
 
-  def collectFailedPaths(
+  protected def collectFailedPaths(
     context: BlockVerifyContext,
     paths: Array[ControlPath]
   ): Array[ControlPath] = {
-    if (context.returnType == TypeNames.Void) {
-      Array()
+    val path = paths
+      .filterNot(_.unreachable)
+      .last
+
+    if (path.returns) {
+      // block is valid
+      Array[ControlPath]()
     } else {
-      val path = paths
-        .filterNot(_.unreachable)
-        .last
-
-      if (path.returns) {
-        // block is valid
-        Array[ControlPath]()
-      } else {
-        // failed inner paths take precedence
-        path match {
-          case BlockPath(_, _, _, failed) if failed.length > 0 => failed
-          case _                                               => Array(path)
-        }
-        //TODO
-        // change failedPaths to location + errorType
-        // if statement "Expected return"
-        // if block with failed paths "Path does not return"
-        // if block without failed paths "Missing path with return" or something
-
-      }
+      handlePathFailure(path)
     }
   }
 
-  def blockReturns(paths: Array[ControlPath], failedPaths: Array[ControlPath]): Boolean =
+  protected def willEnterBlock(context: BlockVerifyContext): Boolean = false
+
+  protected def willBlockReturn(
+    paths: Array[ControlPath],
+    failedPaths: Array[ControlPath]
+  ): Boolean =
     failedPaths.isEmpty
+
+  protected def handlePathFailure(path: ControlPath): Array[ControlPath] = {
+    // failed inner paths take precedence
+    path match {
+      case BlockPath(_, _, _, failed, _) if failed.length > 0 => failed
+      case _                                                  => Array(path)
+    }
+  }
 }
 
 object BlockControlPattern {
@@ -130,7 +139,7 @@ object BlockControlPattern {
 // if/else, try/catch
 class BranchControlPattern(expr: Option[ExprContext], requiredBranches: Array[Boolean])
     extends BlockControlPattern {
-  override def collectFailedPaths(
+  override protected def collectFailedPaths(
     context: BlockVerifyContext,
     paths: Array[ControlPath]
   ): Array[ControlPath] = {
@@ -140,41 +149,28 @@ class BranchControlPattern(expr: Option[ExprContext], requiredBranches: Array[Bo
     } else {
       paths
         .zip(requiredBranches)
-        .filter {
-          case (path, required) => required && !path.returns
+        .collect {
+          case (path, required) if required && !path.returns => path
         }
-        .flatMap {
-          case (BlockPath(_, _, _, failed), _) if failed.length > 0 => failed
-          case (p, _)                                               => Array(p)
-        }
+        .flatMap(handlePathFailure)
     }
   }
 
-  override def blockReturns(paths: Array[ControlPath], failedPaths: Array[ControlPath]): Boolean = {
-    // make sure empty failed paths is genuine
-    super.blockReturns(paths, failedPaths) && paths.length == requiredBranches.length
+  override protected def willEnterBlock(context: BlockVerifyContext): Boolean = {
+    !requiredBranches.contains(false)
+  }
 
-    //TODO check edge case
-    // if expression always true
-    // doesn't matter if other paths are missing / don't return
+  override protected def willBlockReturn(
+    paths: Array[ControlPath],
+    failedPaths: Array[ControlPath]
+  ): Boolean = {
+    // make sure empty failed paths is genuine
+    super.willBlockReturn(paths, failedPaths) && paths.length == requiredBranches.length
   }
 }
 
 object BranchControlPattern {
   def apply(expr: Option[ExprContext], requiredBranches: Array[Boolean]): BranchControlPattern = {
     new BranchControlPattern(expr, requiredBranches)
-  }
-}
-
-class LoopControlPattern(expr: Option[ExprContext]) extends BlockControlPattern {
-  //TODO test expression
-  // may not enter loop
-  // therefore must assume returns = false
-  // if always enters loop - returns can't be false
-}
-
-object LoopControlPattern {
-  def apply(expr: Option[ExprContext]): LoopControlPattern = {
-    new LoopControlPattern(expr)
   }
 }

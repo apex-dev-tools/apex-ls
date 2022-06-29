@@ -89,8 +89,8 @@ trait ControlFlow {
 
     path match {
       // if this block itself is unreachable, issue logging is deferred to parent block
-      case BlockPath(_, unreachable, _, _) if !unreachable => context.logUnreachableIssues()
-      case _                                               =>
+      case BlockPath(_, unreachable, _, _, _) if !unreachable => context.logUnreachableIssues()
+      case _                                                  =>
     }
   }
 
