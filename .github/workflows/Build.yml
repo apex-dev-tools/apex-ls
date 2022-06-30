@@ -83,8 +83,9 @@ jobs:
     - name: grid 
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/grid/grid
 
-    - name: soql-secure 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/soql-secure/soql-secure
+    # Unreachable statement, useless "return null"
+    #- name: soql-secure 
+    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/soql-secure/soql-secure
 
     - name: box-salesforce-sdk 
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/box-salesforce-sdk/box-salesforce-sdk
