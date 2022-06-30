@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.cst.ClassBodyDeclaration

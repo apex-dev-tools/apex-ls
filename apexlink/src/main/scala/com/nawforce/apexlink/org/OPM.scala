@@ -461,8 +461,9 @@ object OPM extends TriHierarchy {
     logger: IssueLogger
   ) extends TriPackage
       with PackageAPI
-      with DefinitionAndImplProvider
+      with DefinitionProvider
       with CompletionProvider
+      with ImplementationProvider
       with ReferenceProvider {
 
     val modules: ArraySeq[Module] =
