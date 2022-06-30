@@ -128,22 +128,14 @@ object PageDeclaration {
   }
 
   private def collectBasePages(module: OPM.Module): ArraySeq[Page] = {
-    ArraySeq.unsafeWrapArray(
-      module.basePackages
-        .flatMap(basePkg => {
-          val nsPrefix = basePkg.namespace.get.toString() + "__"
-          basePkg.orderedModules.headOption.map(m => {
-            // We only carry forward the pre-namespaced version of the pages
-            m.pages.pages.flatMap(page => {
-              if (page.name.value.startsWith(nsPrefix))
-                Some(page)
-              else
-                None
-            })
-          })
-        })
-        .flatten
-        .toArray
-    )
+    module.nextModule
+      .map(next => {
+        if (next.namespace != module.namespace) {
+          next.pages.pages.filter(page => page.name.value.contains("__"))
+        } else {
+          next.pages.pages
+        }
+      })
+      .getOrElse(ArraySeq())
   }
 }
