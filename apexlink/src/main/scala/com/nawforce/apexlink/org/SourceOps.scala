@@ -29,28 +29,22 @@ trait SourceOps {
   }
 
   def loadSource(path: PathLike, content: Option[String]): Option[String] = {
-    val sourceOpt = content.orElse(path.read().toOption)
-    if (sourceOpt.isEmpty)
-      return None
-    sourceOpt
+    content.orElse(path.read().toOption)
   }
 
   def loadRawType(path: PathLike, source: String): Option[(String, ApexFullDeclaration)] = {
-    if (path.basename.toLowerCase.endsWith(".trigger")) {
-      loadTrigger(path, source)._2.map(td => (source, td))
-    } else {
-      loadClass(path, source)._2.map(td => (source, td))
+    MetadataDocument(path) match {
+      case Some(_: ApexTriggerDocument) => loadTrigger(path, source)._2.map(td => (source, td))
+      case Some(_: ApexClassDocument)   => loadClass(path, source)._2.map(td => (source, td))
+      case _                            => None
     }
+
   }
 
   def loadTypeFromModule(path: PathLike): Option[TypeDeclaration] = {
     MetadataDocument(path)
       .collect({
-        case doc: ApexTriggerDocument =>
-          orderedModules.view
-            .flatMap(_.moduleType(doc.typeName(namespace)))
-            .headOption
-        case doc: ApexClassDocument =>
+        case doc @ (_: ApexTriggerDocument | _: ApexClassDocument) =>
           orderedModules.view
             .flatMap(_.moduleType(doc.typeName(namespace)))
             .headOption
