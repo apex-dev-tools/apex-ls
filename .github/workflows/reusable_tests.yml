@@ -70,8 +70,8 @@ jobs:
     - name: SimpleLightningComponents 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SimpleLightningComponents/SimpleLightningComponents
 
-    - name: FormulaShare-DX 
-      run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/FormulaShare-DX/FormulaShare-DX
+    #- name: FormulaShare-DX 
+    #  run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/FormulaShare-DX/FormulaShare-DX
 
     - name: Apex-for-Xero 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Apex-for-Xero/Apex-for-Xero
