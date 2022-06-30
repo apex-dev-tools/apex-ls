@@ -61,6 +61,7 @@ trait ImplementationProvider extends SourceOps {
     def getSearchContext(td: TypeDeclaration): Option[Dependent with IdLocatable] = {
       td match {
         case ExtensibleClassesAndInterface(td) =>
+          //Only find method or class declaration to search implementations for
           td.methods
             .collect { case m: ApexMethodLike => m }
             .find(_.location.location.contains(line, offset))

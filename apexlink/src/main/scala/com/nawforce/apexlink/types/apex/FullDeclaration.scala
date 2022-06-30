@@ -284,7 +284,7 @@ abstract class FullDeclaration(
     }
   }
 
-  private def getBodyDeclarationFromLocation(
+  def getBodyDeclarationFromLocation(
     line: Int,
     offset: Int
   ): Option[(FullDeclaration, ClassBodyDeclaration)] = {

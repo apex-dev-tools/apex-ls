@@ -5,7 +5,6 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.cst.ClassBodyDeclaration
 import com.nawforce.apexlink.org.ReferenceProvider.emptyTargetLocations
-import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.TargetLocation
 import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration, SummaryDeclaration}
 import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration}
@@ -38,22 +37,10 @@ trait ReferenceProvider extends SourceOps {
 
     getFromValidation(sourceTD, line, offset)
       .getOrElse({
-        val source = loadSource(path, content).getOrElse(return emptyTargetLocations)
-        val searchTermAndLocation = source
-          .extractDotTermInclusive(() => new IdentifierLimiter, line, offset)
-          .orElse(return emptyTargetLocations)
-          .get
-
-        val sourceLocation = searchTermAndLocation._2
         sourceTD match {
           case fd: FullDeclaration =>
-            fd.bodyDeclarations
-              .find(_.location.location.contains(sourceLocation))
-              .orElse({
-                fd.nestedTypes
-                  .flatMap(_.bodyDeclarations)
-                  .find(_.location.location.contains(sourceLocation))
-              })
+            fd.getBodyDeclarationFromLocation(line, offset)
+              .map(_._2)
               .collect({ case ref: Referencable => ref })
               .map(_.findReferences())
               .getOrElse(emptyTargetLocations)
