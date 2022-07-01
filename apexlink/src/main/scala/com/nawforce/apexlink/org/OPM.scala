@@ -321,12 +321,7 @@ object OPM extends TriHierarchy {
       }
     }
 
-    override def getReferences(
-      path: String,
-      line: Int,
-      offset: Int,
-      content: String
-    ): Array[TargetLocation] = {
+    override def getReferences(path: String, line: Int, offset: Int): Array[TargetLocation] = {
       if (path == null)
         return Array.empty
 
@@ -334,7 +329,7 @@ object OPM extends TriHierarchy {
         OrgInfo.current.withValue(this) {
           packages
             .find(_.isPackagePath(path))
-            .map(_.getReferences(Path(path), line, offset, Option(content)))
+            .map(_.getReferences(Path(path), line, offset))
             .getOrElse(Array.empty)
         }
       }

@@ -407,7 +407,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       val org     = createOrg(root)
       val testSrc = "class Dummy extends Foo { public Dummy(){sup"
-      println(
+      assert(
         org
           .getCompletionItemsInternal(
             root.join("Dummy.cls"),

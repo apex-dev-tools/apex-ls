@@ -134,8 +134,14 @@ trait Org {
     */
   def getImplementation(path: String, line: Int, offset: Int, content: String): Array[LocationLink]
 
-  //TODO
-  def getReferences(path: String, line: Int, offset: Int, content: String): Array[TargetLocation]
+  /**
+    * Locate the references given the location and offset.
+    *
+    * This will attempt to find a body declaration (methods, fields or classes) at the given line & offset
+    * to find any blocks of code that is uses the found body declaration. This will return an array of locations
+    * at the point where the code is being used. If no references are found an empty array will be returned.
+    */
+  def getReferences(path: String, line: Int, offset: Int): Array[TargetLocation]
 
   /** Get a array of completion suggestion given a source file contents and a position.
     *

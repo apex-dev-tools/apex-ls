@@ -451,7 +451,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)
-      println(
+      assert(
         org.unmanaged
           .getDefinition(root.join("Dummy.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _))
@@ -468,7 +468,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
       )
     FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org = createHappyOrg(root)
-      println(
+      assert(
         org.unmanaged
           .getDefinition(root.join("Dummy.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _))
