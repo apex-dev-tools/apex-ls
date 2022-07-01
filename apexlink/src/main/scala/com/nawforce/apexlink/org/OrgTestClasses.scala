@@ -22,6 +22,10 @@ import scala.collection.immutable.ArraySeq
 trait OrgTestClasses {
   self: OPM.OrgImpl =>
 
+  def getTestClassNames(paths: Array[String]): Array[String] = {
+    getTestClassNames(paths, findTests = true)
+  }
+
   def getTestClassNames(paths: Array[String], findTests: Boolean): Array[String] = {
     def findPackageIdentifierAndSummary(
       path: String
@@ -45,7 +49,6 @@ trait OrgTestClasses {
       filterTypeId: TypeIdentifier
     ): Array[String] = {
       if (summary.modifiers.contains(ISTEST_ANNOTATION)) return Array(summary.name)
-      if (!findTests) return Array.empty
 
       Option(pkg.getDependencyHolders(typeId, apexOnly = true)).getOrElse(Array.empty).flatMap {
         dependentTypeId =>
