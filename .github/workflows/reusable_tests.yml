@@ -70,7 +70,7 @@ jobs:
     - name: SimpleLightningComponents 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SimpleLightningComponents/SimpleLightningComponents
 
-    #- name: FormulaShare-DX 
+    #- name: FormulaShare-DX
     #  run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/FormulaShare-DX/FormulaShare-DX
 
     - name: Apex-for-Xero 
@@ -103,7 +103,7 @@ jobs:
     - name: grid 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/grid/grid
 
-    #- name: soql-secure 
+    #- name: soql-secure
     #  run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/soql-secure/soql-secure
 
     - name: box-salesforce-sdk 
@@ -181,8 +181,8 @@ jobs:
     - name: salesforce-limit-monitor 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/salesforce-limit-monitor/salesforce-limit-monitor
 
-    - name: Centralized-Salesforce-Dev-Framework 
-      run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Centralized-Salesforce-Dev-Framework/Centralized-Salesforce-Dev-Framework
+    #- name: Centralized-Salesforce-Dev-Framework
+    #  run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Centralized-Salesforce-Dev-Framework/Centralized-Salesforce-Dev-Framework
 
     - name: eventlogging 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/eventlogging/eventlogging
@@ -295,8 +295,8 @@ jobs:
     - name: Automated-Testing-for-Force 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Automated-Testing-for-Force/Automated-Testing-for-Force
 
-    - name: CustomMetadataLoader 
-      run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/CustomMetadataLoader/CustomMetadataLoader
+    #- name: CustomMetadataLoader
+    #  run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/CustomMetadataLoader/CustomMetadataLoader
 
     - name: declarative-lookup-rollup-summaries 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/declarative-lookup-rollup-summaries/declarative-lookup-rollup-summaries
@@ -334,8 +334,8 @@ jobs:
     - name: HEDAP 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/HEDAP/HEDAP
 
-    - name: Milestones-PM 
-      run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Milestones-PM/Milestones-PM
+    #- name: Milestones-PM
+    #  run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Milestones-PM/Milestones-PM
 
     - name: Salesforce-Lookup-Rollup-Summaries 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Salesforce-Lookup-Rollup-Summaries/Salesforce-Lookup-Rollup-Summaries
@@ -349,8 +349,8 @@ jobs:
     - name: SmartFactory-for-Force.com 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SmartFactory-for-Force/SmartFactory-for-Force
 
-    - name: twilio-salesforce 
-      run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/twilio-salesforce/twilio-salesforce
+    #- name: twilio-salesforce
+    #  run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/twilio-salesforce/twilio-salesforce
 
     - name: Visualforce-Multiselect-Picklist 
       run: java -cp "./artifacts/dependencies/*:./artifacts/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Visualforce-Multiselect-Picklist/Visualforce-Multiselect-Picklist
