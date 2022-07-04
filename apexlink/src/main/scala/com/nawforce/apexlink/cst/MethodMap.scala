@@ -362,6 +362,9 @@ object MethodMap {
         workingMap.values.flatten
           .collect { case m: ApexMethodDeclaration => m }
           .filterNot(m => m.hasBlock || m.outerTypeId == td.typeId)
+          // We exclude gulped here because it's often missing method declarations, direct use of a gulp interface
+          // will be checked, this just leaves a hole when coming via abstract classes
+          .filterNot(m => m.outerTypeId.module.isGulped)
           .foreach(method => {
             errors.append(
               new Issue(
