@@ -87,16 +87,3 @@ trait DefinitionProvider extends SourceOps {
   }
 }
 
-private object ExtensibleClassesAndInterface {
-  def unapply(td: TypeDeclaration): Option[ApexDeclaration] = {
-    td match {
-      case id: InterfaceDeclaration => Some(id)
-      case cd: ApexClassDeclaration =>
-        val modifiers = cd.modifiers.toSet
-        if (modifiers.intersect(Set(ABSTRACT_MODIFIER, VIRTUAL_MODIFIER)).nonEmpty)
-          Some(cd)
-        else None
-      case _ => None
-    }
-  }
-}

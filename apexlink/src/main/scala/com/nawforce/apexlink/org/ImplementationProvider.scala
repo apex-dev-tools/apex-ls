@@ -4,12 +4,13 @@
 
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst.ApexMethodDeclaration
+import com.nawforce.apexlink.cst.{ApexMethodDeclaration, InterfaceDeclaration}
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.LocationLink
-import com.nawforce.apexlink.types.apex.{ApexDeclaration, ApexMethodLike}
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.{Dependent, DependentType, TypeDeclaration}
+import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, VIRTUAL_MODIFIER}
 import com.nawforce.pkgforce.parsers.CLASS_NATURE
 import com.nawforce.pkgforce.path.{IdLocatable, PathLike}
 
@@ -130,4 +131,18 @@ trait ImplementationProvider extends SourceOps {
     }
   }
 
+}
+
+private object ExtensibleClassesAndInterface {
+  def unapply(td: TypeDeclaration): Option[ApexDeclaration] = {
+    td match {
+      case id: InterfaceDeclaration => Some(id)
+      case cd: ApexClassDeclaration =>
+        val modifiers = cd.modifiers.toSet
+        if (modifiers.intersect(Set(ABSTRACT_MODIFIER, VIRTUAL_MODIFIER)).nonEmpty)
+          Some(cd)
+        else None
+      case _ => None
+    }
+  }
 }
