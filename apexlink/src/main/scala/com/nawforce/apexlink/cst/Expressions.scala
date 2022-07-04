@@ -18,7 +18,7 @@ import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.{OPM, OrgInfo, Referencable}
+import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.other.AnyDeclaration
@@ -357,7 +357,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
       case Right(method) =>
         context.addDependency(method)
         method match {
-          case ref: Referencable => ref.addLocation(location)
+          case ref: Referenceable => ref.addLocation(location)
           case _                 =>
         }
         if (method.typeName != TypeNames.Void) {

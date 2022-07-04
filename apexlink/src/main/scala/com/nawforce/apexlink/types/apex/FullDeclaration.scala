@@ -131,7 +131,7 @@ abstract class FullDeclaration(
     resetMethodMapIfInvalid()
     resetConstructorMapIfInvalid()
     typeContext.reset()
-    bodyDeclarations.collect({ case pre: PreReValidatable => pre }).foreach(_.preReValidate())
+    bodyDeclarations.collect({ case p: PreReValidatable => p.preReValidate() })
     nestedTypes.foreach(_.preReValidate())
   }
 

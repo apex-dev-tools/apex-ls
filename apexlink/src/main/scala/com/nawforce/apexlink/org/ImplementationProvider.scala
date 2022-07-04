@@ -97,8 +97,7 @@ trait ImplementationProvider extends SourceOps {
         usedByTds
           .flatMap(
             _.methods
-              .collect { case m: ApexMethodLike => m }
-              .find(m => m.signature == method.signature)
+              .collect { case m: ApexMethodLike if m.signature == method.signature => m }
           )
           .map(
             m =>

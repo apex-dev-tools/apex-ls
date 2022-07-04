@@ -10,7 +10,7 @@ import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration, S
 import com.nawforce.apexlink.types.core.{Dependent, PreReValidatable, TypeDeclaration}
 import com.nawforce.pkgforce.path.{IdLocatable, PathLike, PathLocation}
 
-trait Referencable extends PreReValidatable {
+trait Referenceable extends PreReValidatable {
   this: Dependent =>
   private var referenceLocations: SkinnySet[PathLocation] = new SkinnySet()
 
@@ -43,24 +43,24 @@ trait ReferenceProvider extends SourceOps {
     }
 
     getFromValidation(sourceTD, line, offset)
-      .getOrElse({
+      .orElse({
         sourceTD match {
           case fd: FullDeclaration =>
             fd.getBodyDeclarationFromLocation(line, offset)
               .map(_._2)
-              .collect({ case ref: Referencable => ref })
-              .map(_.findReferences())
-              .getOrElse(emptyTargetLocations)
-          case _ => emptyTargetLocations
+              .collect({ case ref: Referenceable => ref })
+          case _ => None
         }
       })
+      .map(_.findReferences())
+      .getOrElse(emptyTargetLocations)
   }
 
   private def getFromValidation(
     td: TypeDeclaration,
     line: Int,
     offset: Int
-  ): Option[Array[TargetLocation]] = {
+  ): Option[Referenceable] = {
     td match {
       case td: ApexFullDeclaration =>
         val result = locateFromValidation(td, line, offset)
@@ -69,8 +69,7 @@ trait ReferenceProvider extends SourceOps {
             ._1(_)
             .result
             .locatable
-            .collect({ case ref: Referencable => ref })
-            .map(_.findReferences())
+            .collect({ case ref: Referenceable => ref })
         )
       case _ => None
     }

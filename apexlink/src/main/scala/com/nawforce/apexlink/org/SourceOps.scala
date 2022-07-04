@@ -16,19 +16,17 @@ trait SourceOps {
     path: PathLike,
     content: Option[String]
   ): Option[(String, ApexFullDeclaration)] = {
-    // We need source code no matter what
-    val sourceOpt = loadSource(path, content).orElse(return None)
-
-    // If we don't have new source we can assume the loaded type is current, but it could be a summary
-    if (content.isEmpty) {
-      loadTypeFromModule(path) match {
-        case Some(fd: FullDeclaration)     => return Some((sourceOpt.get, fd))
-        case Some(atd: TriggerDeclaration) => return Some((sourceOpt.get, atd))
-        case _                             =>
+    loadSource(path, content).flatMap(source => {
+      if (content.isEmpty) {
+        loadTypeFromModule(path) match {
+          case Some(fd: FullDeclaration)     => Some((source, fd))
+          case Some(atd: TriggerDeclaration) => Some((source, atd))
+          case _                             => None
+        }
+      } else {
+        loadRawType(path, source)
       }
-    }
-    // No option but to load it as content is being provided
-    loadRawType(path, sourceOpt.get)
+    })
   }
 
   def loadSource(path: PathLike, content: Option[String]): Option[String] = {
@@ -46,13 +44,13 @@ trait SourceOps {
 
   def loadTypeFromModule(path: PathLike): Option[TypeDeclaration] = {
     MetadataDocument(path)
-      .collect({
+      .flatMap({
         case doc @ (_: ApexTriggerDocument | _: ApexClassDocument) =>
           orderedModules.view
             .flatMap(_.moduleType(doc.typeName(namespace)))
             .headOption
+        case _ => None
       })
-      .flatten
   }
 
   /** Extract a location link from an expression at the passed location */
