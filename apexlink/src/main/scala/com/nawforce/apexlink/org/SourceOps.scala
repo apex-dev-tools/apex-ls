@@ -17,15 +17,17 @@ trait SourceOps {
     content: Option[String]
   ): Option[(String, ApexFullDeclaration)] = {
     loadSource(path, content).flatMap(source => {
+      // If we don't have new source we can assume the loaded type is current, but it could be a summary
       if (content.isEmpty) {
         loadTypeFromModule(path) match {
           case Some(fd: FullDeclaration)     => Some((source, fd))
           case Some(atd: TriggerDeclaration) => Some((source, atd))
           case _                             => None
         }
+        // No option but to load it as content is being provided
       } else {
-        loadRawType(path, source)
-      }
+        None
+      }.orElse(loadRawType(path, source))
     })
   }
 
