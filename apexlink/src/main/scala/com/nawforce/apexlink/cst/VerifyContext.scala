@@ -378,8 +378,6 @@ final class OuterBlockVerifyContext(
 final class InnerBlockVerifyContext(parentContext: BlockVerifyContext)
     extends BlockVerifyContext(parentContext) {
 
-  def parentBlock: BlockVerifyContext = parentContext
-
   override def isStatic: Boolean = parentContext.isStatic
 
   override def returnType: TypeName = parentContext.returnType
