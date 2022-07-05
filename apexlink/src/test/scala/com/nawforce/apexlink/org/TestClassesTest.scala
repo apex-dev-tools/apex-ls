@@ -1,0 +1,313 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
+package com.nawforce.apexlink.org
+
+import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
+import com.nawforce.pkgforce.path.PathLike
+import org.scalatest.funsuite.AnyFunSuite
+
+class TestClassesTest extends AnyFunSuite with TestHelper {
+
+  def getTestClassNames(root: PathLike, paths: Array[String]): Set[String] = {
+    withOrg(org => {
+      org.getTestClassNamesInternal(paths.map(p => root.join(p)))
+    })
+  }
+
+  test("Empty request") {
+    withManualFlush {
+      FileSystemHelper.run(Map()) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array()).isEmpty)
+      }
+    }
+  }
+
+  test("No tests") {
+    withManualFlush {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")).isEmpty)
+      }
+    }
+  }
+
+  test("Single test class") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"     -> "public class Dummy {}",
+          "DummyTest.cls" -> "@isTest public class DummyTest { {Dummy a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("DummyTest"))
+        assert(getTestClassNames(root, Array("DummyTest.cls")) == Set("DummyTest"))
+      }
+    }
+  }
+
+  test("Single test class (inner)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"     -> "public class Dummy { public class DummyInner {} }",
+          "DummyTest.cls" -> "@isTest public class DummyTest { {Dummy.DummyInner a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("DummyTest"))
+      }
+    }
+  }
+
+  test("Multiple test classes") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"      -> "public class Dummy {}",
+          "DummyTest.cls"  -> "@isTest public class DummyTest { {Dummy a;}}",
+          "DummyTest2.cls" -> "@isTest public class DummyTest2 { {Dummy a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("DummyTest", "DummyTest2"))
+        assert(getTestClassNames(root, Array("DummyTest.cls")) == Set("DummyTest"))
+        assert(getTestClassNames(root, Array("DummyTest2.cls")) == Set("DummyTest2"))
+      }
+    }
+  }
+
+  test("Multiple test classes (inner)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"      -> "public class Dummy { public class DummyInner {} }",
+          "DummyTest.cls"  -> "@isTest public class DummyTest { {Dummy.DummyInner a;}}",
+          "DummyTest2.cls" -> "@isTest public class DummyTest2 { {Dummy.DummyInner a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("DummyTest", "DummyTest2"))
+      }
+    }
+  }
+
+  test("Indirect test class") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy {}",
+          "Foo.cls"     -> "public class Foo { {Dummy a;}}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect test class (inner)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy { public class DummyInner {} }",
+          "Foo.cls"     -> "public class Foo { {Dummy.DummyInner a;}}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect test class (indirect inner)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy { }",
+          "Foo.cls"     -> "public class Foo { public class FooInner { {Dummy a;} }}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo.FooInner a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect via super class to test class") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy extends Foo {}",
+          "Foo.cls"     -> "public virtual class Foo {}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect via super class to test class (super class inner)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy extends Foo.FooInner {}",
+          "Foo.cls"     -> "public class Foo {public virtual class FooInner { }}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect via super class to test class (indirect class inner)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy extends Foo {}",
+          "Foo.cls"     -> "public virtual class Foo {public class FooExtra {}}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo.FooExtra a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect via super super class to test class") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy extends Bar {}",
+          "Bar.cls"     -> "public virtual class Bar extends Foo {}",
+          "Foo.cls"     -> "public virtual class Foo {}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect via interface to test class") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy implements Foo {}",
+          "Foo.cls"     -> "public interface Foo {}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect via interface to test class (inner interface)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy implements Foo.FooInner {}",
+          "Foo.cls"     -> "public class Foo {public interface FooInner {}}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect via interface interface class to test class") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy implements Bar {}",
+          "Bar.cls"     -> "public interface Bar extends Foo {}",
+          "Foo.cls"     -> "public interface Foo {}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Indirect via super class & interface to test class") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls"   -> "public class Dummy extends Bar {}",
+          "Bar.cls"     -> "public virtual class Bar implements Foo {}",
+          "Foo.cls"     -> "public interface Foo {}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("FooTest"))
+      }
+    }
+  }
+
+  test("Shared interface does not spider") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Bar.cls"     -> "public interface Bar {}",
+          "BarTest.cls" -> "@isTest public class BarTest {{Bar a;}}",
+          "Dummy.cls"   -> "public class Dummy implements Bar {}",
+          "Foo.cls"     -> "public class Foo implements Bar {}",
+          "FooTest.cls" -> "@isTest public class FooTest {{Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        // FooTest can be skipped as unrelated to impl of Bar
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("BarTest"))
+
+        // Any significant change to Bar would require Dummy & Foo to change so this is safe
+        assert(getTestClassNames(root, Array("Bar.cls")) == Set("BarTest"))
+
+        // If we did change the interface & impl
+        assert(getTestClassNames(root, Array("Bar.cls", "Foo.cls")) == Set("BarTest", "FooTest"))
+      }
+    }
+  }
+
+  test("Shared inner interface does not spider") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Bar.cls"     -> "public class Bar { public interface BarInner {}}",
+          "BarTest.cls" -> "@isTest public class BarTest {{Bar.BarInner a;}}",
+          "Dummy.cls"   -> "public class Dummy implements Bar.BarInner {}",
+          "Foo.cls"     -> "public class Foo implements Bar.BarInner {}",
+          "FooTest.cls" -> "@isTest public class FooTest { {Foo a;}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+        // FooTest should ideally not be included here in these, as Foo only depends on an interface
+        // See ReferencingCollector.testReferences() for an explanation of why this happens
+        assert(getTestClassNames(root, Array("Dummy.cls")) == Set("BarTest", "FooTest"))
+        assert(getTestClassNames(root, Array("Bar.cls")) == Set("BarTest", "FooTest"))
+
+        // If we did change the interface & impl
+        assert(getTestClassNames(root, Array("Bar.cls", "Foo.cls")) == Set("BarTest", "FooTest"))
+
+      }
+    }
+  }
+
+}
