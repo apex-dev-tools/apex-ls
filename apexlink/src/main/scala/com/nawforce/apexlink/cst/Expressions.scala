@@ -18,7 +18,7 @@ import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.other.AnyDeclaration
@@ -349,7 +349,6 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     input: ExprContext,
     context: ExpressionVerifyContext
   ): ExprContext = {
-
     val args = arguments.map(_.verify(input, context))
 
     // If we failed to get argument type (maybe due to ghosting), use null as assignable to anything
@@ -357,6 +356,10 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     callee.findMethod(target.name, argTypes, staticContext, context) match {
       case Right(method) =>
         context.addDependency(method)
+        method match {
+          case ref: Referenceable => ref.addLocation(location)
+          case _                 =>
+        }
         if (method.typeName != TypeNames.Void) {
           val td = context.getTypeAndAddDependency(method.typeName, context.thisType)
           td match {

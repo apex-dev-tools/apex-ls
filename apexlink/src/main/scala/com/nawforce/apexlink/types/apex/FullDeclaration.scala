@@ -131,6 +131,7 @@ abstract class FullDeclaration(
     resetMethodMapIfInvalid()
     resetConstructorMapIfInvalid()
     typeContext.reset()
+    bodyDeclarations.collect({ case p: PreReValidatable => p.preReValidate() })
     nestedTypes.foreach(_.preReValidate())
   }
 
@@ -284,7 +285,7 @@ abstract class FullDeclaration(
     }
   }
 
-  private def getBodyDeclarationFromLocation(
+  def getBodyDeclarationFromLocation(
     line: Int,
     offset: Int
   ): Option[(FullDeclaration, ClassBodyDeclaration)] = {

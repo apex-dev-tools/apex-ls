@@ -192,7 +192,7 @@ object WhenValue {
 
 final case class WhenControl(whenValue: WhenValue, block: Block) extends CST {
   def verify(context: BlockVerifyContext): Unit = {
-    val blockContext = new InnerBlockVerifyContext(context)
+    val blockContext = new InnerBlockVerifyContext(context).setControlRoot(context)
     whenValue.verify(blockContext)
     block.verify(blockContext)
     context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
@@ -204,7 +204,7 @@ object WhenControl {
     WhenControl(
       CodeParser.toScala(whenControl.whenValue()).map(v => WhenValue.construct(v)).get,
       Block.construct(parser, whenControl.block(), isTrigger = false)
-    )
+    ).withContext(whenControl)
   }
 }
 
@@ -233,9 +233,19 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
       duplicates.headOption.foreach(
         dup => OrgInfo.logError(expression.location, s"Duplicate when case for $dup")
       )
-
-      whenControls.foreach(_.verify(context))
     }
+
+    val switchContext = new InnerBlockVerifyContext(context).withBranchingControl()
+    whenControls.foreach(_.verify(switchContext))
+    verifyControlPath(
+      switchContext,
+      BranchControlPattern(
+        None,
+        Option
+          .when(whenControls.isEmpty) { Array(x = true) }
+          .getOrElse(whenControls.map(_ => true).toArray)
+      )
+    )
   }
 
   private def checkMatchableTo(typeName: TypeName): Seq[String] = {
@@ -284,6 +294,6 @@ object SwitchStatement {
         .toScala(switchStatement.whenControl())
         .map(wc => WhenControl.construct(parser, wc).withContext(wc))
         .toList
-    )
+    ).withContext(switchStatement)
   }
 }

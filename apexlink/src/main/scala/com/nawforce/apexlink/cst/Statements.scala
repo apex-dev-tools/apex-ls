@@ -16,31 +16,32 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
-import com.nawforce.apexlink.cst.stmts.SwitchStatement
+import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, TypeName}
-import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import java.lang.ref.WeakReference
 import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
 
-trait Statement {
+abstract class Statement extends CST with ControlFlow {
   def verify(context: BlockVerifyContext): Unit
 }
 
 // Treat Block as Statement for blocks in blocks
-trait Block extends Statement
+abstract class Block extends Statement
 
 // Standard eager block
 final case class EagerBlock(statements: Seq[Statement]) extends Block {
   override def verify(context: BlockVerifyContext): Unit = {
     val blockContext = new InnerBlockVerifyContext(context)
-    statements.foreach(s => s.verify(blockContext))
+    statements.foreach(_.verify(blockContext))
+    verifyControlPath(blockContext, BlockControlPattern())
   }
 }
 
@@ -59,7 +60,8 @@ final case class LazyBlock(
 
   override def verify(context: BlockVerifyContext): Unit = {
     val blockContext = new InnerBlockVerifyContext(context)
-    statements().foreach(s => s.verify(blockContext))
+    statements().foreach(_.verify(blockContext))
+    verifyControlPath(blockContext, BlockControlPattern())
     context.typePlugin.onBlockValidated(this, context.isStatic, blockContext)
   }
 
@@ -82,6 +84,7 @@ final case class LazyBlock(
       // Now rebuild, making sure we put correct source in scope for CST to use
       val parsedSource = if (reParsed) source else source.outer.get
       CST.sourceContext.withValue(Some(parsedSource)) {
+        withContext(statementContext)
         val parser = new CodeParser(parsedSource)
         statementsRef = createStatements(statementContext, parser, isTrigger)
         statements = statementsRef.get
@@ -117,6 +120,7 @@ object Block {
 
   def construct(parser: CodeParser, blockContext: BlockContext, isTrigger: Boolean): Block = {
     EagerBlock(Statement.construct(parser, CodeParser.toScala(blockContext.statement()), isTrigger))
+      .withContext(blockContext)
   }
 
   def constructOption(parser: CodeParser, blockContext: Option[BlockContext]): Option[Block] = {
@@ -129,6 +133,7 @@ final case class LocalVariableDeclarationStatement(
 ) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     localVariableDeclaration.verify(context)
+    verifyControlPath(context)
   }
 }
 
@@ -140,25 +145,28 @@ object LocalVariableDeclarationStatement {
   ): LocalVariableDeclarationStatement = {
     LocalVariableDeclarationStatement(
       LocalVariableDeclaration.construct(parser, from.localVariableDeclaration(), isTrigger)
-    )
+    ).withContext(from)
   }
 }
 
 final case class IfStatement(expression: Expression, statements: Seq[Statement]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    val expr = expression.verify(context)
 
     // This is replicating a feature where non-block statements can pass declarations forward
-    var stmtContext = new InnerBlockVerifyContext(context)
+    val stmtRootContext = new InnerBlockVerifyContext(context).withBranchingControl()
+    var stmtContext     = stmtRootContext
     statements.foreach(stmt => {
       val isBlock = stmt.isInstanceOf[Block]
       if (isBlock) {
-        stmtContext = new InnerBlockVerifyContext(stmtContext)
+        stmtContext = new InnerBlockVerifyContext(stmtContext).setControlRoot(stmtRootContext)
       }
       stmt.verify(stmtContext)
       if (isBlock)
         context.typePlugin.onBlockValidated(stmt.asInstanceOf[Block], context.isStatic, stmtContext)
     })
+
+    verifyControlPath(stmtRootContext, BranchControlPattern(Some(expr), 2))
   }
 }
 
@@ -168,7 +176,7 @@ object IfStatement {
     IfStatement(
       Expression.construct(ifStatement.parExpression().expression()),
       Statement.construct(parser, statements.toList, isTrigger = false)
-    )
+    ).withContext(ifStatement)
   }
 }
 
@@ -179,9 +187,10 @@ final case class ForStatement(control: Option[ForControl], statement: Option[Sta
       val forContext = new InnerBlockVerifyContext(context)
       control.verify(forContext)
 
-      val loopContext = new InnerBlockVerifyContext(forContext)
+      val loopContext = new InnerBlockVerifyContext(forContext).setControlRoot(forContext)
       control.addVars(loopContext)
       statement.foreach(_.verify(loopContext))
+      verifyControlPath(forContext, BlockControlPattern())
     })
   }
 }
@@ -193,7 +202,7 @@ object ForStatement {
       CodeParser
         .toScala(statement.statement())
         .flatMap(stmt => Statement.construct(parser, stmt, isTrigger = false))
-    )
+    ).withContext(statement)
   }
 }
 
@@ -234,7 +243,7 @@ object EnhancedForControl {
       TypeReference.construct(from.typeRef()),
       Id.construct(from.id()),
       Expression.construct(from.expression()).withContext(from)
-    )
+    ).withContext(from)
   }
 }
 
@@ -338,7 +347,7 @@ object WhileStatement {
     WhileStatement(
       Expression.construct(statement.parExpression().expression()),
       Statement.construct(parser, statement.statement(), isTrigger = false)
-    )
+    ).withContext(statement)
   }
 }
 
@@ -356,16 +365,24 @@ object DoWhileStatement {
       Statement.construct(parser, statement.statement(), isTrigger = false),
       Option(statement.parExpression())
         .map(parExpression => Expression.construct(parExpression.expression()))
-    )
+    ).withContext(statement)
   }
 }
 
 final case class TryStatement(block: Block, catches: Seq[CatchClause], finallyBlock: Option[Block])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    block.verify(context)
-    catches.foreach(_.verify(context))
-    finallyBlock.foreach(_.verify(context))
+    val tryContext = new InnerBlockVerifyContext(context).withBranchingControl()
+
+    block.verify(tryContext)
+    catches.foreach(_.verify(tryContext))
+    finallyBlock.foreach(_.verify(tryContext))
+
+    val a = mutable
+      .ArrayBuffer(true)
+      .addAll(catches.map(_ => true))
+    finallyBlock.foreach(_ => a.addOne(false))
+    verifyControlPath(tryContext, BranchControlPattern(None, a.toArray))
   }
 }
 
@@ -380,7 +397,7 @@ object TryStatement {
       Block.construct(parser, from.block(), isTrigger = false),
       CatchClause.construct(parser, catches),
       finallyBlock
-    )
+    ).withContext(from)
   }
 }
 
@@ -394,15 +411,15 @@ final case class CatchClause(
     modifiers.issues.foreach(context.log)
 
     block.foreach(block => {
-      val blockContext      = new InnerBlockVerifyContext(context)
+      val blockContext      = new InnerBlockVerifyContext(context).setControlRoot(context)
       val exceptionTypeName = qname.asTypeName()
       blockContext.getTypeAndAddDependency(exceptionTypeName, context.thisType) match {
         case Left(_) =>
           context.missingType(qname.location, exceptionTypeName)
         case Right(exceptionType) =>
           blockContext.addVar(Name(id), None, exceptionType)
-          block.verify(blockContext)
       }
+      block.verify(blockContext)
       context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
     })
   }
@@ -432,12 +449,13 @@ object CatchClause {
   }
 }
 
-final case class ReturnStatement(expression: Option[Expression]) extends CST with Statement {
+final case class ReturnStatement(expression: Option[Expression]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     assertReturnType(context, expression.map(_.verify(context)))
       .foreach(
         msg => context.log(Issue(this.location.path, ERROR_CATEGORY, this.location.location, msg))
       )
+    verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }
 
   private def assertReturnType(
@@ -472,80 +490,89 @@ object ReturnStatement {
 final case class ThrowStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verify(context)
+    verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }
 }
 
 object ThrowStatement {
   def construct(statement: ThrowStatementContext): ThrowStatement = {
-    ThrowStatement(Expression.construct(statement.expression()))
+    ThrowStatement(Expression.construct(statement.expression())).withContext(statement)
   }
 }
 
 final case class BreakStatement() extends Statement {
-  override def verify(context: BlockVerifyContext): Unit = {}
+  override def verify(context: BlockVerifyContext): Unit = {
+    verifyControlPath(context, ExitControlPattern(exitsMethod = false, exitsBlock = true))
+  }
 }
 
 object BreakStatement {
   def construct(statement: BreakStatementContext): BreakStatement = {
-    BreakStatement()
+    BreakStatement().withContext(statement)
   }
 }
 
 final case class ContinueStatement() extends Statement {
-  override def verify(context: BlockVerifyContext): Unit = {}
+  override def verify(context: BlockVerifyContext): Unit = {
+    verifyControlPath(context, ExitControlPattern(exitsMethod = false, exitsBlock = true))
+  }
 }
 
 object ContinueStatement {
   def construct(statement: ContinueStatementContext): ContinueStatement = {
-    ContinueStatement()
+    ContinueStatement().withContext(statement)
   }
 }
 
 final case class InsertStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verify(context)
+    verifyControlPath(context)
   }
 }
 
 object InsertStatement {
   def construct(statement: InsertStatementContext): InsertStatement = {
-    InsertStatement(Expression.construct(statement.expression()))
+    InsertStatement(Expression.construct(statement.expression())).withContext(statement)
   }
 }
 
 final case class UpdateStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verify(context)
+    verifyControlPath(context)
   }
 }
 
 object UpdateStatement {
   def construct(statement: UpdateStatementContext): UpdateStatement = {
-    UpdateStatement(Expression.construct(statement.expression()))
+    UpdateStatement(Expression.construct(statement.expression())).withContext(statement)
   }
 }
 
 final case class DeleteStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verify(context)
+    verifyControlPath(context)
   }
 }
 
 object DeleteStatement {
   def construct(statement: DeleteStatementContext): DeleteStatement = {
-    DeleteStatement(Expression.construct(statement.expression()))
+    DeleteStatement(Expression.construct(statement.expression())).withContext(statement)
   }
 }
 
 final case class UndeleteStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verify(context)
+    verifyControlPath(context)
   }
 }
 
 object UndeleteStatement {
   def construct(statement: UndeleteStatementContext): UndeleteStatement = {
-    UndeleteStatement(Expression.construct(statement.expression()))
+    UndeleteStatement(Expression.construct(statement.expression())).withContext(statement)
   }
 }
 
@@ -554,6 +581,7 @@ final case class UpsertStatement(expression: Expression, field: Option[Qualified
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verify(context)
     // Future: Verify Field
+    verifyControlPath(context)
   }
 }
 
@@ -563,7 +591,7 @@ object UpsertStatement {
     val qualifiedName = CodeParser
       .toScala(statement.qualifiedName())
       .flatMap(qualifiedName => QualifiedName.construct(qualifiedName))
-    Some(UpsertStatement(expression, qualifiedName))
+    Some(UpsertStatement(expression, qualifiedName).withContext(statement))
   }
 }
 
@@ -572,6 +600,7 @@ final case class MergeStatement(expression1: Expression, expression2: Expression
   override def verify(context: BlockVerifyContext): Unit = {
     expression1.verify(context)
     expression2.verify(context)
+    verifyControlPath(context)
   }
 }
 
@@ -579,6 +608,7 @@ object MergeStatement {
   def construct(statement: MergeStatementContext): MergeStatement = {
     val expressions = CodeParser.toScala(statement.expression())
     MergeStatement(Expression.construct(expressions.head), Expression.construct(expressions(1)))
+      .withContext(statement)
   }
 }
 
@@ -587,6 +617,7 @@ final case class RunAsStatement(expressions: ArraySeq[Expression], block: Option
   override def verify(context: BlockVerifyContext): Unit = {
     expressions.foreach(_.verify(context))
     block.foreach(_.verify(context))
+    verifyControlPath(context)
   }
 }
 
@@ -601,7 +632,7 @@ object RunAsStatement {
       CodeParser
         .toScala(statement.block())
         .map(b => Block.construct(parser, b, isTrigger = false))
-    RunAsStatement(expressions, block)
+    RunAsStatement(expressions, block).withContext(statement)
   }
 }
 
@@ -609,12 +640,13 @@ final case class ExpressionStatement(var expression: Expression) extends Stateme
   override def verify(context: BlockVerifyContext): Unit = {
     // Future: What causes 'expression can not be a statement' error
     expression.verify(context)
+    verifyControlPath(context)
   }
 }
 
 object ExpressionStatement {
   def construct(statement: ExpressionStatementContext): ExpressionStatement = {
-    ExpressionStatement(Expression.construct(statement.expression()))
+    ExpressionStatement(Expression.construct(statement.expression())).withContext(statement)
   }
 }
 

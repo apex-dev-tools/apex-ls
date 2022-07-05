@@ -86,7 +86,7 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
         "Dummy.cls" ->
           """
           | global class Dummy implements Database.Batchable<sObject> {
-          |   Iterable<sObject> start(Database.BatchableContext param1) {}
+          |   Iterable<sObject> start(Database.BatchableContext param1) { return new List<SObject>(); }
           |   void execute(Database.BatchableContext param1, List<SObject> param2) {}
           |   void finish(Database.BatchableContext param1) {}
           | }

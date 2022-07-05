@@ -13,11 +13,11 @@
  */
 package com.nawforce.apexlink
 
-import com.nawforce.apexlink.TestHelper.CURSOR
+import com.nawforce.apexlink.TestHelper.{CURSOR, locToString}
 import com.nawforce.apexlink.api.{Org, ServerOps, TypeSummary}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
-import com.nawforce.apexlink.rpc.LocationLink
+import com.nawforce.apexlink.rpc.{LocationLink, TargetLocation}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
@@ -53,6 +53,7 @@ trait TestHelper {
 
   def createHappyOrg(path: PathLike): OPM.OrgImpl = {
     createOrg(path)
+    println(getMessages())
     assert(!hasIssues)
     defaultOrg
   }
@@ -287,6 +288,23 @@ trait TestHelper {
 
 object TestHelper {
   final val CURSOR = "$"
+  def locToString(source: String, loc: Location): String = {
+    val lines = source.linesWithSeparators.toArray
+    if (loc.startLine == loc.endLine) {
+      return lines(loc.startLine - 1).substring(loc.startCharOffset(), loc.endCharOffset())
+    }
+    lines(loc.startLine - 1).substring(loc.startPosition, lines(loc.startLine - 1).length) + lines(
+      loc.endLine - 1
+    ).substring(0, loc.endPosition)
+  }
+}
+
+case class TargetLocationString(targetPath: String, target: String)
+object TargetLocationString {
+  def apply(root: PathLike, loc: TargetLocation): TargetLocationString = {
+    val source = root.join(loc.targetPath).readSourceData().map(_.asString).toOption.get
+    TargetLocationString(loc.targetPath, locToString(source, loc.range))
+  }
 }
 
 case class LocationLinkString(
@@ -320,15 +338,5 @@ object LocationLinkString {
   def apply(root: PathLike, sourceClsName: PathLike, loc: LocationLink): LocationLinkString = {
     val source = sourceClsName.readSourceData().map(_.asString).toOption.get
     apply(root, source, loc)
-  }
-
-  private def locToString(source: String, loc: Location): String = {
-    val lines = source.linesWithSeparators.toArray
-    if (loc.startLine == loc.endLine) {
-      return lines(loc.startLine - 1).substring(loc.startCharOffset(), loc.endCharOffset())
-    }
-    lines(loc.startLine - 1).substring(loc.startPosition, lines(loc.startLine - 1).length) + lines(
-      loc.endLine - 1
-    ).substring(0, loc.endPosition)
   }
 }

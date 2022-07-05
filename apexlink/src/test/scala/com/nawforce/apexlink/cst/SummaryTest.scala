@@ -426,10 +426,12 @@ class SummaryTest extends AnyFunSuite with TestHelper {
 
   test("Class with methods") {
     assert(
-      classSummary("public class Dummy {public String foo(String a) {} void bar() {} }") ==
+      classSummary(
+        "public class Dummy {public String foo(String a) { return 's'; } void bar() {} }"
+      ) ==
         TypeSummary(
-          -140800034,
-          Location(1, 0, 1, 66),
+          -699503704,
+          Location(1, 0, 1, 79),
           Location(1, 13, 1, 18),
           "Dummy",
           dummyTypeName,
@@ -443,8 +445,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
           ArraySeq(),
           ArraySeq(
             MethodSummary(
-              Location(1, 51, 1, 64),
-              Location(1, 56, 1, 59),
+              Location(1, 64, 1, 77),
+              Location(1, 69, 1, 72),
               "bar",
               ArraySeq(),
               TypeNames.Void,
@@ -453,7 +455,7 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               Array()
             ),
             MethodSummary(
-              Location(1, 27, 1, 50),
+              Location(1, 27, 1, 63),
               Location(1, 34, 1, 37),
               "foo",
               ArraySeq(PUBLIC_MODIFIER),

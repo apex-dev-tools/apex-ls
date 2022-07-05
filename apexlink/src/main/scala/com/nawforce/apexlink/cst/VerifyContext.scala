@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
+import com.nawforce.apexlink.cst.stmts.{ControlFlowContext, OuterControlFlowContext}
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
@@ -276,7 +277,9 @@ final class BodyDeclarationVerifyContext(
 
 case class VarTypeAndDefinition(declaration: TypeDeclaration, definition: Option[CST])
 
-abstract class BlockVerifyContext(parentContext: VerifyContext) extends VerifyContext {
+abstract class BlockVerifyContext(parentContext: VerifyContext)
+    extends VerifyContext
+    with ControlFlowContext {
 
   private val vars     = mutable.Map[Name, VarTypeAndDefinition]()
   private val usedVars = mutable.Set[Name]()
@@ -362,7 +365,8 @@ final class OuterBlockVerifyContext(
   parentContext: VerifyContext,
   isStaticContext: Boolean,
   returnTypeName: TypeName = TypeNames.Void
-) extends BlockVerifyContext(parentContext) {
+) extends BlockVerifyContext(parentContext)
+    with OuterControlFlowContext {
 
   assert(!parentContext.isInstanceOf[BlockVerifyContext])
 
