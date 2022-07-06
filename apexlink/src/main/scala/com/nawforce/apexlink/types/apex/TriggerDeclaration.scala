@@ -70,7 +70,7 @@ final case class TriggerDeclaration(
 
   override val superClass: Option[TypeName]           = None
   override val interfaces: ArraySeq[TypeName]         = ArraySeq()
-  override val nestedTypes: ArraySeq[TypeDeclaration] = TypeDeclaration.emptyTypeDeclarations
+  override val nestedTypes: ArraySeq[ApexDeclaration] = ArraySeq()
 
   override val blocks: ArraySeq[BlockDeclaration] = BlockDeclaration.emptyBlockDeclarations
   override val fields: ArraySeq[FieldDeclaration] = FieldDeclaration.emptyFieldDeclarations

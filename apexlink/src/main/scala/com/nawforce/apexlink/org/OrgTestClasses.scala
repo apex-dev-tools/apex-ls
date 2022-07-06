@@ -15,9 +15,11 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.api.TypeSummary
 import com.nawforce.apexlink.deps.ReferencingCollector
+import com.nawforce.apexlink.deps.ReferencingCollector.TypeIdOps
 import com.nawforce.apexlink.org.OPM.Module
-import com.nawforce.apexlink.types.apex.ApexClassDeclaration
+import com.nawforce.apexlink.types.apex.ApexDeclaration
 import com.nawforce.apexlink.types.core.TypeId
+import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.Path
 
@@ -33,90 +35,64 @@ trait OrgTestClasses {
 
   def getTestClassNamesInternal(paths: Array[PathLike]): Set[String] = {
     // Locate starting typeIds for the passed paths, this includes super classes & interfaces
-    val sourceIds = paths
-      .flatMap { path =>
-        findPackageIdentifierAndSummary(path).toArray.flatMap {
-          case (typeId, summary) =>
-            findSources(typeId, summary)
-        }
-      }
+    val startingIds = paths.flatMap { path => findPackageIdentifier(path) }
+
+    // Convert to source set by searching for related types
+    val accum = mutable.Set[ApexDeclaration]()
+    startingIds.foreach(typeId => {
+      typeId.toApexDeclaration.foreach(
+        td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, accum))
+      )
+    })
 
     // Locate tests for the sourceIds
     ReferencingCollector
-      .testReferences(sourceIds.toSet)
+      .testReferences(accum.toSet)
       .filter(_.outerTypeName.isEmpty) // Safety check, we only want outer types here
       .map(_.typeName.toString)
   }
 
-  /** Given a summary type find related targets of interest. Related in this case means finding interfaces and
-    * superclasses which may have tests targeting them.
-    */
-  private def findSources(typeId: TypeId, summary: TypeSummary): Array[TypeId] = {
-    val accum = mutable.Set[TypeId]()
-    accum.addOne(typeId)
-    sourcesForSummary(typeId.module, summary, accum)
-    accum.toArray
-  }
-
   /** Retrieve type info from a path */
-  private def findPackageIdentifierAndSummary(path: PathLike): Option[(TypeId, TypeSummary)] = {
+  private def findPackageIdentifier(path: PathLike): Option[TypeId] = {
     packages.view
-      .flatMap(pkg => {
-        pkg
-          .getTypeOfPathInternal(path)
-          .flatMap(
-            typeId =>
-              Option(pkg.getSummaryOfType(typeId.asTypeIdentifier))
-                .map(summary => (typeId, summary))
-          )
-      })
+      .flatMap(pkg => pkg.getTypeOfPathInternal(path))
       .headOption
   }
 
-  /** Collect source information from a summary, examines super classes, interfaces and nested classes */
-  private def sourcesForSummary(
-    module: Module,
-    summary: TypeSummary,
-    accum: mutable.Set[TypeId]
-  ): Unit = {
-    sourcesForSuperclass(module, summary, accum)
-    sourcesForInterfaces(module, summary, accum)
-    summary.nestedTypes.foreach { nested => sourcesForSummary(module, nested, accum) }
+  /** Collect source information from a summary, examines super classes & interfaces */
+  private def sourcesForType(td: ApexDeclaration, accum: mutable.Set[ApexDeclaration]): Unit = {
+    accum.add(td)
+    sourcesForSuperclass(td, accum)
+    sourcesForInterfaces(td, accum)
   }
 
   /** Collect source information on interfaces, recursive over super classes & includes interfaces. */
   private def sourcesForSuperclass(
-    module: Module,
-    summary: TypeSummary,
-    accum: mutable.Set[TypeId]
+    td: ApexDeclaration,
+    accum: mutable.Set[ApexDeclaration]
   ): Unit = {
-    summary.superClass.foreach { superclass =>
-      module.findPackageType(superclass, None) match {
-        case Some(td: ApexClassDeclaration) if !accum.contains(td.typeId) =>
-          val summary = td.summary
-          accum.addOne(td.typeId)
-          sourcesForSummary(td.module, summary, accum)
-        case _ => ()
-      }
+    td.superClass.foreach { superclass =>
+      toApexDeclaration(td.module, superclass).foreach(
+        superClassTd => sourcesForType(superClassTd, accum)
+      )
     }
   }
 
   /** Collect source information on interfaces, recursive over interface extends. */
   private def sourcesForInterfaces(
-    module: Module,
-    summary: TypeSummary,
-    accum: mutable.Set[TypeId]
+    td: ApexDeclaration,
+    accum: mutable.Set[ApexDeclaration]
   ): Unit = {
-    summary.interfaces.foreach { interface =>
-      module.findPackageType(interface, None) match {
-        case Some(td: ApexClassDeclaration) if !accum.contains(td.typeId) =>
-          // If we find, log & recurse on it
-          val summary = td.summary
-          accum.addOne(td.typeId)
-          sourcesForInterfaces(td.module, summary, accum)
-        case _ => ()
-      }
+    td.interfaces.foreach { interface =>
+      toApexDeclaration(td.module, interface).foreach(interfaceTd => {
+        accum.addOne(interfaceTd)
+        sourcesForInterfaces(interfaceTd, accum)
+      })
     }
+  }
+
+  private def toApexDeclaration(module: Module, typeName: TypeName): Option[ApexDeclaration] = {
+    TypeId(module, typeName).toApexDeclaration
   }
 
   /** Information held on sources */

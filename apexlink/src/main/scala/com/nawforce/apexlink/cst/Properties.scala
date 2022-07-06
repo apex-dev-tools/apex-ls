@@ -37,7 +37,7 @@ final case class ApexPropertyDeclaration(
   override val name: Name                   = id.name
   override val children: ArraySeq[ApexNode] = ArraySeq.empty
   override val nature: Nature               = PROPERTY_NATURE
-  override val outerTypeId: TypeId          = thisType.typeId
+  override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
 
   override def idLocation: Location = id.location.location

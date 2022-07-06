@@ -135,25 +135,19 @@ private[opcst] object OutlineParserClassDeclaration {
     val fields = ctd.fields.flatMap(
       f =>
         OutlineParserClassBodyDeclaration
-          .constructFieldDeclaration(path, f, source, typeContext, outerTypeName.isEmpty, thisType)
+          .constructFieldDeclaration(path, f, source, outerTypeName.isEmpty, thisType)
     )
 
     val initializers = ctd.initializers.flatMap(
       i =>
         OutlineParserClassBodyDeclaration
-          .constructInitializerBlock(i, source, typeContext, outerTypeName.isEmpty, thisType)
+          .constructInitializerBlock(i, source, outerTypeName.isEmpty, thisType)
     )
 
     val properties = ctd.properties.flatMap(
       p =>
-        OutlineParserClassBodyDeclaration.constructPropertyDeclaration(
-          path,
-          p,
-          source,
-          typeContext,
-          outerTypeName.isEmpty,
-          thisType
-        )
+        OutlineParserClassBodyDeclaration
+          .constructPropertyDeclaration(path, p, source, outerTypeName.isEmpty, thisType)
     )
 
     val innerTypes = ctd.innerTypes.flatMap {
@@ -253,14 +247,8 @@ private[opcst] object OutlineParserInterfaceDeclaration {
 
     val methods = itd.methods.flatMap(
       m =>
-        OutlineParserClassBodyDeclaration.constructInterfaceMethodDeclaration(
-          path,
-          m,
-          source,
-          typeContext,
-          outerTypeName.isEmpty,
-          thisType
-        )
+        OutlineParserClassBodyDeclaration
+          .constructInterfaceMethodDeclaration(path, m, source, typeContext, thisType)
     )
 
     val declaration = InterfaceDeclaration(
@@ -316,9 +304,7 @@ private[opcst] object OutlineParserEnumDeclaration {
 
     val typeContext = new RelativeTypeContext
 
-    val fields = etd.fields.flatMap(
-      f => constructEnumConstant(f.id, source, thisType, outerTypeName.isDefined)
-    )
+    val fields = etd.fields.flatMap(f => constructEnumConstant(f.id, source, thisType))
 
     val declaration = EnumDeclaration(
       source,
@@ -346,8 +332,7 @@ private[opcst] object OutlineParserEnumDeclaration {
   private def constructEnumConstant(
     id: OPId,
     source: Source,
-    thisType: ThisType,
-    isOuter: Boolean
+    thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
     val modifierResults = enumConstantModifiers()
@@ -395,7 +380,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     )
 
     val declaration =
-      ApexConstructorDeclaration(modifierResults, qualifiedName, parameters, thisType.inTest, block)
+      ApexConstructorDeclaration(modifierResults, qualifiedName, parameters, thisType, block)
     val location = OPLocation(
       cd.id.location.startLine,
       cd.id.location.startLineOffset - 1,
@@ -475,7 +460,6 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     md: OPMethodDeclaration,
     source: Source,
     typeContext: RelativeTypeContext,
-    isOuter: Boolean,
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
@@ -526,7 +510,6 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     path: PathLike,
     fd: OPFieldDeclaration,
     source: Source,
-    typeContext: RelativeTypeContext,
     isOuter: Boolean,
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
@@ -613,7 +596,6 @@ private[opcst] object OutlineParserClassBodyDeclaration {
   def constructInitializerBlock(
     i: OPInitializer,
     source: Source,
-    typeContext: RelativeTypeContext,
     isOuter: Boolean,
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
@@ -623,7 +605,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       modifierResults,
       OutlineParserBlock
         .construct(source, i.blockLocation.get, if (isOuter) Some(source) else None),
-      thisType.inTest
+      thisType
     )
     stampLocation(
       declaration,
@@ -637,7 +619,6 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     path: PathLike,
     pd: OPPropertyDeclaration,
     source: Source,
-    typeContext: RelativeTypeContext,
     isOuter: Boolean,
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {

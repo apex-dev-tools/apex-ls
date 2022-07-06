@@ -341,7 +341,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.toSet == Set("ServiceAPITest", "ServiceTest"))
+      assert(classes.testClassNames.toSet == Set("ServiceAPITest"))
     }
   }
 
@@ -373,7 +373,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.toSet == Set("ServiceAPITest", "ServiceTest"))
+      assert(classes.testClassNames.toSet == Set("ServiceAPITest"))
     }
   }
 

@@ -361,10 +361,10 @@ object MethodMap {
       case td: ApexClassDeclaration if td.nature == CLASS_NATURE && !td.isAbstract =>
         workingMap.values.flatten
           .collect { case m: ApexMethodDeclaration => m }
-          .filterNot(m => m.hasBlock || m.outerTypeId == td.typeId)
+          .filterNot(m => m.hasBlock || m.thisTypeId == td.typeId)
           // We exclude gulped here because it's often missing method declarations, direct use of a gulp interface
           // will be checked, this just leaves a hole when coming via abstract classes
-          .filterNot(m => m.outerTypeId.module.isGulped)
+          .filterNot(m => m.thisTypeId.module.isGulped)
           .foreach(method => {
             errors.append(
               new Issue(
@@ -372,7 +372,7 @@ object MethodMap {
                 Diagnostic(
                   ERROR_CATEGORY,
                   location.get.location,
-                  s"Non-abstract class must implement method '${method.signature}' from type '${method.outerTypeId}'"
+                  s"Non-abstract class must implement method '${method.signature}' from type '${method.thisTypeId}'"
                 )
               )
             )
@@ -384,7 +384,7 @@ object MethodMap {
   private def isApexLocalMethod(td: TypeDeclaration, method: MethodDeclaration): Boolean = {
     (td, method) match {
       case (td: ApexClassDeclaration, method: ApexMethodLike) =>
-        td.typeId == method.outerTypeId
+        td.typeId == method.thisTypeId
       case _ =>
         false
     }
@@ -684,7 +684,7 @@ object MethodMap {
     */
   private def areInSameApexClass(m1: MethodDeclaration, m2: MethodDeclaration): Boolean = {
     (m1, m2) match {
-      case (am1: ApexMethodLike, am2: ApexMethodLike) => am1.outerTypeId == am2.outerTypeId
+      case (am1: ApexMethodLike, am2: ApexMethodLike) => am1.thisTypeId == am2.thisTypeId
       case (pm1: PlatformMethod, pm2: PlatformMethod) => pm1.typeDeclaration eq pm2.typeDeclaration
       case _                                          => false
     }
