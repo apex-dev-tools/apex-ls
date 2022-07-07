@@ -362,7 +362,13 @@ trait AbstractTypeDeclaration {
 
 }
 
-trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
+trait PreReValidatable {
+
+  /** Called before validate() when a type is about to be re-validated to allow for cached state cleaning. */
+  def preReValidate(): Unit = {}
+}
+
+trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReValidatable {
   def paths: ArraySeq[PathLike] // Metadata paths that contributed to this type
 
   def inTest: Boolean = false // Is type defined only for test code
@@ -416,9 +422,6 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent {
     outerTypeName
       .flatMap(typeName => TypeResolver(typeName, this).toOption)
       .getOrElse(this)
-
-  /** Called before validate() when a type is about to be re-validated to allow for cached state cleaning. */
-  def preReValidate(): Unit = {}
 
   def validate(): Unit
 

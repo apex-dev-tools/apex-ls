@@ -24,7 +24,9 @@ class SafeNavigationTest extends AnyFunSuite with TestHelper {
   }
 
   test("Method Reference") {
-    typeDeclaration("public class Dummy {String func(){} { String b = this?.func(); }}")
+    typeDeclaration(
+      "public class Dummy {String func(){ return 's'; } { String b = this?.func(); }}"
+    )
     assert(!hasIssues)
   }
 
@@ -34,7 +36,9 @@ class SafeNavigationTest extends AnyFunSuite with TestHelper {
   }
 
   test("Method nexted reference") {
-    typeDeclaration("public class Dummy {Dummy func(){} { Dummy b = this?.func()?.func(); }}")
+    typeDeclaration(
+      "public class Dummy {Dummy func(){ return new Dummy(); } { Dummy b = this?.func()?.func(); }}"
+    )
     assert(!hasIssues)
   }
 
@@ -46,9 +50,11 @@ class SafeNavigationTest extends AnyFunSuite with TestHelper {
   }
 
   test("Static method reference") {
-    typeDeclaration("public class Dummy {static String func(){} { String b = Dummy?.func(); }}")
+    typeDeclaration(
+      "public class Dummy {static String func(){ return 's'; } { String b = Dummy?.func(); }}"
+    )
     assert(
-      dummyIssues == "Error: line 1 at 56-69: Safe navigation operator (?.) can not be used on static references\n"
+      dummyIssues == "Error: line 1 at 69-82: Safe navigation operator (?.) can not be used on static references\n"
     )
   }
 }
