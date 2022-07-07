@@ -27,7 +27,7 @@ import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
-import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLocation}
+import com.nawforce.pkgforce.path.{Locatable, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.immutable.ArraySeq
@@ -358,7 +358,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
         context.addDependency(method)
         method match {
           case ref: Referenceable => ref.addLocation(location)
-          case _                 =>
+          case _                  =>
         }
         if (method.typeName != TypeNames.Void) {
           val td = context.getTypeAndAddDependency(method.typeName, context.thisType)

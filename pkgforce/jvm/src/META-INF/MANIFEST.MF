@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Class-Path: 
-  apex_types_2.13-1.0.0.jar
+  apex-types_2.13-1.0.0.jar
   antlr4-runtime-4.8-1.jar
   apex-parser-3.0.0.jar
   commons-lang3-3.0.jar
