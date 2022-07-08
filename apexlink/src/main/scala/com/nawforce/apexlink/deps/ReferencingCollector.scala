@@ -12,34 +12,39 @@ import scala.collection.mutable
 
 object ReferencingCollector {
 
-  /** Given some Types, find all referencing Apex tests. For classes we include references of references when
-    * looking for test classes, but for interfaces only tests directly referencing the interface are returned to
-    * avoid the scope expanding into unrelated implementors of those interfaces. This works in practice because
-    * any significant change to an interface would require changes to all implementors for the code to be deployable,
-    * so tests for those implementation classes will be found independently. Tests included in the input will be
-    * contained in the results.
+  case class NodeInfo(td: ApexDeclaration, primary: Boolean)
+
+  /** Given some Types, find all referencing Apex tests. To find all relevant tests the input should include related
+    *  types such as superclasses, interfaces and nexted types with the primary flag set to false. Test classes included
+    *  in the input will be contained in the results.
     */
-  def testReferences(sourceTds: Set[ApexDeclaration]): Set[ApexDeclaration] = {
+  def testReferences(sourceTds: Set[NodeInfo]): Set[ApexDeclaration] = {
     val results = mutable.Set[ApexDeclaration]()
-    visitApexReferences(sourceTds, path => testClassVisit(results, path))
+    visitApexReferences(sourceTds, (primary, path) => testClassVisit(results, primary, path))
     results.toSet
   }
 
   /** Visitor for locating @isTest classes */
   private def testClassVisit(
     accum: mutable.Set[ApexDeclaration],
+    primary: Boolean,
     path: List[ApexDeclaration]
   ): Boolean = {
     // Terminate search if we already have this test class
     if (accum.contains(path.head))
       return false
 
-    // Always save test classes, we don't bail out as we want to capture test->test dependencies
+    // Always save test classes, we don't bail out here as we want to capture test->test dependencies
     if (path.head.modifiers.contains(ISTEST_ANNOTATION))
       accum.add(path.head)
 
-    // Don't spider beyond one level past an interface
-    !path.tail.headOption.exists(_.nature == INTERFACE_NATURE)
+    if (!primary) {
+      // For non-primary searches we don't want to spider from interfaces beyond the first layer as we can end up
+      // in code unrelated to the primary changes. We are just looking for tests of the interface.
+      !path.tail.exists(_.nature == INTERFACE_NATURE)
+    } else {
+      true
+    }
   }
 
   /** Visit references to the passed type declarations. The visit function is called on all unique declarations
@@ -48,20 +53,20 @@ object ReferencingCollector {
     * further, but it may be revisited on other unexplored branches.
     */
   def visitApexReferences(
-    sourceTds: Set[ApexDeclaration],
-    visitPath: List[ApexDeclaration] => Boolean
+    sourceTds: Set[NodeInfo],
+    visitPath: (Boolean, List[ApexDeclaration]) => Boolean
   ): Unit = {
     val visited     = mutable.Set[ApexDeclaration]()
-    val searchQueue = mutable.Queue[List[ApexDeclaration]]()
-    searchQueue.enqueueAll(sourceTds.map(id => List(id)))
+    val searchQueue = mutable.Queue[(Boolean, List[ApexDeclaration])]()
+    searchQueue.enqueueAll(sourceTds.map(id => (id.primary, List(id.td))))
 
     while (searchQueue.nonEmpty) {
       val path = searchQueue.dequeue()
-      if (visitPath(path)) {
-        visited.add(path.head)
-        getDependencyHolders(path.head)
+      if (visitPath(path._1, path._2)) {
+        visited.add(path._2.head)
+        getDependencyHolders(path._2.head)
           .diff(visited)
-          .foreach(holder => searchQueue.enqueue(holder :: path))
+          .foreach(holder => searchQueue.enqueue((path._1, holder :: path._2)))
       }
     }
   }

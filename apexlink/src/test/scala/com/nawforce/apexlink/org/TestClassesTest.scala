@@ -273,8 +273,8 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
       // FooTest can be skipped as unrelated to impl of Bar
       assert(getTestClassNames(root, Array("Dummy.cls")) == Set("BarTest"))
 
-      // Any significant change to Bar would require Dummy & Foo to change so this is safe
-      assert(getTestClassNames(root, Array("Bar.cls")) == Set("BarTest"))
+      // Changing interface could impact Foo although it would likely need fixing for deploy
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set("BarTest", "FooTest"))
 
       // If we did change the interface & impl
       assert(getTestClassNames(root, Array("Bar.cls", "Foo.cls")) == Set("BarTest", "FooTest"))
@@ -295,11 +295,27 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
       // FooTest can be skipped as unrelated to impl of Bar
       assert(getTestClassNames(root, Array("Dummy.cls")) == Set("BarTest"))
 
-      // Any significant change to Bar would require Dummy & Foo to change so this is safe
-      assert(getTestClassNames(root, Array("Bar.cls")) == Set("BarTest"))
+      // Changing interface could impact Foo although it would likely need fixing for deploy
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set("BarTest", "FooTest"))
 
       // If we did change the interface & impl
       assert(getTestClassNames(root, Array("Bar.cls", "Foo.cls")) == Set("BarTest", "FooTest"))
+    }
+  }
+
+  test("Shared interface spiders over abstract class") {
+    FileSystemHelper.run(
+      Map(
+        "Bar.cls"     -> "public interface Bar {}",
+        "BarTest.cls" -> "@isTest public class BarTest {{Bar a;}}",
+        "Dummy.cls"   -> "public class Dummy implements Bar {}",
+        "Foo.cls"     -> "public abstract class Foo implements Bar {}",
+        "FooTest.cls" -> "@isTest public class FooTest {{Foo a;}}"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+      // Using abstract is not special here, just verifying an old problem does not return
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set("BarTest", "FooTest"))
     }
   }
 

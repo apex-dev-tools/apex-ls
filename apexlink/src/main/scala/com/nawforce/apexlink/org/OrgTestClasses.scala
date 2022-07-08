@@ -15,7 +15,7 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.api.TypeSummary
 import com.nawforce.apexlink.deps.ReferencingCollector
-import com.nawforce.apexlink.deps.ReferencingCollector.TypeIdOps
+import com.nawforce.apexlink.deps.ReferencingCollector.{NodeInfo, TypeIdOps}
 import com.nawforce.apexlink.org.OPM.Module
 import com.nawforce.apexlink.types.apex.ApexDeclaration
 import com.nawforce.apexlink.types.core.TypeId
@@ -38,10 +38,10 @@ trait OrgTestClasses {
     val startingIds = paths.flatMap { path => findPackageIdentifier(path) }
 
     // Convert to source set by searching for related types
-    val accum = mutable.Set[ApexDeclaration]()
+    val accum = mutable.Set[NodeInfo]()
     startingIds.foreach(typeId => {
       typeId.toApexDeclaration.foreach(
-        td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, accum))
+        td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
       )
     })
 
@@ -60,32 +60,30 @@ trait OrgTestClasses {
   }
 
   /** Collect source information from a summary, examines super classes & interfaces */
-  private def sourcesForType(td: ApexDeclaration, accum: mutable.Set[ApexDeclaration]): Unit = {
-    accum.add(td)
+  private def sourcesForType(
+    td: ApexDeclaration,
+    primary: Boolean,
+    accum: mutable.Set[NodeInfo]
+  ): Unit = {
+    accum.add(NodeInfo(td, primary))
     sourcesForSuperclass(td, accum)
     sourcesForInterfaces(td, accum)
   }
 
   /** Collect source information on interfaces, recursive over super classes & includes interfaces. */
-  private def sourcesForSuperclass(
-    td: ApexDeclaration,
-    accum: mutable.Set[ApexDeclaration]
-  ): Unit = {
+  private def sourcesForSuperclass(td: ApexDeclaration, accum: mutable.Set[NodeInfo]): Unit = {
     td.superClass.foreach { superclass =>
       toApexDeclaration(td.module, superclass).foreach(
-        superClassTd => sourcesForType(superClassTd, accum)
+        superClassTd => sourcesForType(superClassTd, primary = false, accum)
       )
     }
   }
 
   /** Collect source information on interfaces, recursive over interface extends. */
-  private def sourcesForInterfaces(
-    td: ApexDeclaration,
-    accum: mutable.Set[ApexDeclaration]
-  ): Unit = {
+  private def sourcesForInterfaces(td: ApexDeclaration, accum: mutable.Set[NodeInfo]): Unit = {
     td.interfaces.foreach { interface =>
       toApexDeclaration(td.module, interface).foreach(interfaceTd => {
-        accum.addOne(interfaceTd)
+        accum.addOne(NodeInfo(interfaceTd, primary = false))
         sourcesForInterfaces(interfaceTd, accum)
       })
     }

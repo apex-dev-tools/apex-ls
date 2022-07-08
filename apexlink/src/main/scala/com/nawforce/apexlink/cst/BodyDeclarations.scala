@@ -65,6 +65,7 @@ abstract class ClassBodyDeclaration(modifierResults: ModifierResults)
       depends = None
     else
       depends = Some(dependencies)
+    propagateDependencies()
   }
 
   def collectDependencies(dependsOn: mutable.Set[Dependent]): Unit = {
@@ -225,7 +226,6 @@ final case class ApexInitializerBlock(_modifiers: ModifierResults, block: Block,
     context.typePlugin.onBlockValidated(block, isStatic, blockContext)
 
     setDepends(context.dependencies)
-    context.propagateDependencies()
   }
 }
 
@@ -289,7 +289,6 @@ class ApexMethodDeclaration(
     blockContext.logControlFlowIssues()
 
     setDepends(context.dependencies)
-    context.propagateDependencies()
   }
 }
 
@@ -367,8 +366,6 @@ final case class ApexFieldDeclaration(
       new OuterBlockVerifyContext(context, modifiers.contains(STATIC_MODIFIER))
     )
     setDepends(context.dependencies)
-
-    context.propagateDependencies()
   }
 }
 
@@ -414,7 +411,6 @@ final case class ApexConstructorDeclaration(
     context.typePlugin.onBlockValidated(block, isStatic = false, blockContext)
 
     setDepends(context.dependencies)
-    context.propagateDependencies()
   }
 }
 

@@ -91,7 +91,6 @@ final case class ApexPropertyDeclaration(
     }
 
     setDepends(context.dependencies)
-    context.propagateDependencies()
   }
 }
 
