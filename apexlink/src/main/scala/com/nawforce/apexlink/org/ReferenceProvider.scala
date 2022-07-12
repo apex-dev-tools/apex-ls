@@ -7,8 +7,8 @@ import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.org.ReferenceProvider.emptyTargetLocations
 import com.nawforce.apexlink.rpc.TargetLocation
 import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration, SummaryDeclaration}
-import com.nawforce.apexlink.types.core.{Dependent, PreReValidatable, TypeDeclaration}
-import com.nawforce.pkgforce.path.{IdLocatable, PathLike, PathLocation}
+import com.nawforce.apexlink.types.core.{Dependent, PreReValidatable, TypeDeclaration, TypeId}
+import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 
 trait Referenceable extends PreReValidatable {
   this: Dependent =>
@@ -19,32 +19,44 @@ trait Referenceable extends PreReValidatable {
     referenceLocations = new SkinnySet()
   }
 
-  def addLocation(pathLocation: PathLocation): Unit = {
-    referenceLocations.add(pathLocation)
-  }
-  //Find all the holders and find the locations of the usage inside the block
-  def findReferences(): Array[TargetLocation] = {
-    getDependencyHolders
-      .collect({ case idLocatable: IdLocatable => idLocatable })
-      .flatMap(ref => referenceLocations.toSet.filter(_.path == ref.location.path))
+  def getTargetLocations: Array[TargetLocation] = {
+    referenceLocations.toSet
       .map(ref => TargetLocation(ref.path.toString, ref.location))
       .toArray
   }
+
+  def addLocation(pathLocation: PathLocation): Unit = {
+    referenceLocations.add(pathLocation)
+  }
+
+  /**
+    * Returns the detailed reference locations
+    */
+  def findReferences(): Set[TargetLocation]
+
+  /**
+    * Returns the types that needs to be revalidated to build up reference locations.
+    * This represents a high level view of all the types that hold a references.
+    */
+  def getTypeIdsForReValidation: Set[TypeId]
 }
 
 trait ReferenceProvider extends SourceOps {
   this: OPM.PackageImpl =>
 
   def getReferences(path: PathLike, line: Int, offset: Int): Array[TargetLocation] = {
-    val sourceTD = loadTypeFromModule(path).getOrElse(return emptyTargetLocations)
-    sourceTD match {
-      case sm: SummaryDeclaration => reValidate(Set(sm.typeId) ++ sm.getTypeDependencyHolders.toSet)
-      case _                      =>
+    val sourceTd = loadTypeFromModule(path) match {
+      case Some(sm: SummaryDeclaration) =>
+        reValidate(Set(sm.typeId) ++ sm.getTypeDependencyHolders.toSet)
+        //Reload the source after summary type has been validated so we can get the full type
+        loadTypeFromModule(path).getOrElse(return emptyTargetLocations)
+      case Some(td) => td
+      case None     => return emptyTargetLocations
     }
 
-    getFromValidation(sourceTD, line, offset)
+    getReferenceableFromValidation(sourceTd, line, offset)
       .orElse({
-        sourceTD match {
+        sourceTd match {
           case fd: FullDeclaration =>
             fd.getBodyDeclarationFromLocation(line, offset)
               .map(_._2)
@@ -52,11 +64,15 @@ trait ReferenceProvider extends SourceOps {
           case _ => None
         }
       })
-      .map(_.findReferences())
+      .map(ref => {
+        //ReValidate any references so that ReferenceLocations can be built up
+        reValidate(ref.getTypeIdsForReValidation)
+        ref.findReferences().toArray
+      })
       .getOrElse(emptyTargetLocations)
   }
 
-  private def getFromValidation(
+  private def getReferenceableFromValidation(
     td: TypeDeclaration,
     line: Int,
     offset: Int

@@ -18,6 +18,7 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
+import com.nawforce.apexlink.memory.SkinnyWeakSet
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
@@ -65,6 +66,7 @@ trait ApexConstructorLike extends ApexVisibleConstructorLike with IdLocatable {
 trait ApexVisibleMethodLike extends MethodDeclaration {
   def summary: MethodSummary
 }
+final case class Shadow(shadowedMethod: MethodDeclaration, shadowedBy: MethodDeclaration)
 
 /** Apex defined method core features, be they full or summary style */
 trait ApexMethodLike extends ApexVisibleMethodLike with IdLocatable {
@@ -74,15 +76,24 @@ trait ApexMethodLike extends ApexVisibleMethodLike with IdLocatable {
   def isSynthetic: Boolean = false
 
   // Populated by type MethodMap construction
-  var shadows: List[MethodDeclaration] = Nil
+  var _shadows: SkinnyWeakSet[MethodDeclaration]    = new SkinnyWeakSet()
+  var _shadowedBy: SkinnyWeakSet[MethodDeclaration] = new SkinnyWeakSet()
+
+  def shadows: Set[MethodDeclaration]    = _shadows.toSet
+  def shadowedBy: Set[MethodDeclaration] = _shadowedBy.toSet
 
   def resetShadows(): Unit = {
-    shadows = Nil
+    _shadows = new SkinnyWeakSet()
+    _shadowedBy = new SkinnyWeakSet()
   }
 
   def addShadow(method: MethodDeclaration): Unit = {
     if (method ne this) {
-      shadows = method :: shadows
+      _shadows.add(method)
+    }
+    method match {
+      case am: ApexMethodLike => am._shadowedBy.add(this)
+      case _                  =>
     }
   }
 
