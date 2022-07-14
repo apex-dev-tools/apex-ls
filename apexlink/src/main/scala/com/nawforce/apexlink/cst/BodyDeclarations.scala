@@ -65,6 +65,7 @@ abstract class ClassBodyDeclaration(modifierResults: ModifierResults)
       depends = None
     else
       depends = Some(dependencies)
+    propagateDependencies()
   }
 
   def collectDependencies(dependsOn: mutable.Set[Dependent]): Unit = {
@@ -206,7 +207,7 @@ object ClassBodyDeclaration {
   }
 }
 
-final case class ApexInitializerBlock(_modifiers: ModifierResults, block: Block, _inTest: Boolean)
+final case class ApexInitializerBlock(_modifiers: ModifierResults, block: Block, thisType: ThisType)
     extends ClassBodyDeclaration(_modifiers)
     with ApexBlockLike {
 
@@ -216,7 +217,8 @@ final case class ApexInitializerBlock(_modifiers: ModifierResults, block: Block,
   override val nature: Nature               = INIT_NATURE
   override val children: ArraySeq[ApexNode] = ArraySeq.empty
   override val name: Name                   = Name.empty
-  override val inTest: Boolean              = _inTest
+  override val thisTypeId: TypeId           = thisType.typeId
+  override val inTest: Boolean              = thisType.inTest
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     val blockContext = new OuterBlockVerifyContext(context, isStatic)
@@ -224,7 +226,6 @@ final case class ApexInitializerBlock(_modifiers: ModifierResults, block: Block,
     context.typePlugin.onBlockValidated(block, isStatic, blockContext)
 
     setDepends(context.dependencies)
-    context.propagateDependencies()
   }
 }
 
@@ -235,7 +236,7 @@ object ApexInitializerBlock {
     modifiers: ModifierResults,
     block: BlockContext
   ): ApexInitializerBlock = {
-    ApexInitializerBlock(modifiers, Block.constructLazy(parser, block), thisType.inTest)
+    ApexInitializerBlock(modifiers, Block.constructLazy(parser, block), thisType)
       .withContext(block)
   }
 }
@@ -254,7 +255,7 @@ class ApexMethodDeclaration(
   override def idLocation: Location = id.location.location
 
   override val name: Name                   = id.name
-  override val outerTypeId: TypeId          = thisType.typeId
+  override val thisTypeId: TypeId           = thisType.typeId
   override val hasBlock: Boolean            = block.nonEmpty
   override def typeName: TypeName           = returnTypeName.typeName
   override val nature: Nature               = METHOD_NATURE
@@ -288,7 +289,6 @@ class ApexMethodDeclaration(
     blockContext.logControlFlowIssues()
 
     setDepends(context.dependencies)
-    context.propagateDependencies()
   }
 }
 
@@ -355,7 +355,7 @@ final case class ApexFieldDeclaration(
   override val writeAccess: Modifier        = readAccess
   override val children: ArraySeq[ApexNode] = ArraySeq.empty
   override val nature: Nature               = FIELD_NATURE
-  override val outerTypeId: TypeId          = thisType.typeId
+  override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
@@ -366,8 +366,6 @@ final case class ApexFieldDeclaration(
       new OuterBlockVerifyContext(context, modifiers.contains(STATIC_MODIFIER))
     )
     setDepends(context.dependencies)
-
-    context.propagateDependencies()
   }
 }
 
@@ -391,7 +389,7 @@ final case class ApexConstructorDeclaration(
   _modifiers: ModifierResults,
   qualifiedName: QualifiedName,
   parameters: ArraySeq[FormalParameter],
-  _inTest: Boolean,
+  thisType: ThisType,
   block: Block
 ) extends ClassBodyDeclaration(_modifiers)
     with ApexConstructorLike {
@@ -401,7 +399,8 @@ final case class ApexConstructorDeclaration(
   override val name: Name                   = Name(qualifiedName.names.mkString("."))
   override val children: ArraySeq[ApexNode] = ArraySeq.empty
   override val nature: Nature               = CONSTRUCTOR_NATURE
-  override val inTest: Boolean              = _inTest
+  override val thisTypeId: TypeId           = thisType.typeId
+  override val inTest: Boolean              = thisType.inTest
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     parameters.foreach(_.verify(context))
@@ -412,7 +411,6 @@ final case class ApexConstructorDeclaration(
     context.typePlugin.onBlockValidated(block, isStatic = false, blockContext)
 
     setDepends(context.dependencies)
-    context.propagateDependencies()
   }
 }
 
@@ -432,7 +430,7 @@ object ApexConstructorDeclaration {
           modifiers,
           qname,
           FormalParameters.construct(parser, typeContext, from.formalParameters()),
-          thisType.inTest,
+          thisType,
           Block.constructLazy(parser, from.block())
         ).withContext(from)
       })

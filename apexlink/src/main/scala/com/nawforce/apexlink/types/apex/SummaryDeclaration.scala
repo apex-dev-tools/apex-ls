@@ -17,7 +17,6 @@ package com.nawforce.apexlink.types.apex
 import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
-import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
@@ -250,7 +249,7 @@ class SummaryParameter(parameterSummary: ParameterSummary) extends ParameterDecl
 class SummaryMethod(
   val module: OPM.Module,
   path: PathLike,
-  val outerTypeId: TypeId,
+  val thisTypeId: TypeId,
   override val inTest: Boolean,
   methodSummary: MethodSummary
 ) extends ApexMethodLike
@@ -273,6 +272,7 @@ class SummaryMethod(
 class SummaryBlock(
   val module: OPM.Module,
   path: PathLike,
+  override val thisTypeId: TypeId,
   override val inTest: Boolean,
   blockSummary: BlockSummary
 ) extends ApexBlockLike
@@ -288,7 +288,7 @@ class SummaryBlock(
 class SummaryField(
   val module: OPM.Module,
   path: PathLike,
-  val outerTypeId: TypeId,
+  val thisTypeId: TypeId,
   override val inTest: Boolean,
   fieldSummary: FieldSummary
 ) extends ApexFieldLike
@@ -309,6 +309,7 @@ class SummaryField(
 class SummaryConstructor(
   val module: OPM.Module,
   path: PathLike,
+  override val thisTypeId: TypeId,
   override val inTest: Boolean,
   constructorSummary: ConstructorSummary
 ) extends ApexConstructorLike
@@ -355,11 +356,11 @@ class SummaryDeclaration(
       new SummaryDeclaration(path, module, Some(typeId.typeName.intern), _)
     )
   override val blocks: ArraySeq[SummaryBlock] =
-    typeSummary.blocks.map(new SummaryBlock(module, path, inTest, _))
+    typeSummary.blocks.map(new SummaryBlock(module, path, typeId, inTest, _))
   override val localFields: ArraySeq[SummaryField] =
     typeSummary.fields.map(new SummaryField(module, path, typeId, inTest, _))
   override val localConstructors: ArraySeq[SummaryConstructor] =
-    typeSummary.constructors.map(new SummaryConstructor(module, path, inTest, _))
+    typeSummary.constructors.map(new SummaryConstructor(module, path, typeId, inTest, _))
   override val localMethods: ArraySeq[SummaryMethod] =
     typeSummary.methods.map(new SummaryMethod(module, path, typeId, inTest, _))
 

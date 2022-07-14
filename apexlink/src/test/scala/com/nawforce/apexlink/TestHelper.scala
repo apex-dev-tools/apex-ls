@@ -53,7 +53,9 @@ trait TestHelper {
 
   def createHappyOrg(path: PathLike): OPM.OrgImpl = {
     createOrg(path)
-    println(getMessages())
+    val messages = getMessages()
+    if (messages.nonEmpty)
+      println(getMessages())
     assert(!hasIssues)
     defaultOrg
   }

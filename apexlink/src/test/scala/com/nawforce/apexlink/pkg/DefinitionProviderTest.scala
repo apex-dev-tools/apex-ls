@@ -14,14 +14,14 @@
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
-import com.nawforce.apexlink.rpc.LocationLink
 import com.nawforce.apexlink.{FileSystemHelper, LocationLinkString, TestHelper}
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.PathLike
 import org.scalatest.funsuite.AnyFunSuite
 
 class DefinitionProviderTest extends AnyFunSuite with TestHelper {
 
   test("Outer class match") {
+
     val contentAndCursorPos = withCursor(s"public class D${CURSOR}ummy {}")
     FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createHappyOrg(root)

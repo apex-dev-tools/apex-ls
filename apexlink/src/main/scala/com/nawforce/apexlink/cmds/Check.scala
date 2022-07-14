@@ -20,12 +20,12 @@ import com.nawforce.apexlink.api.{
   OutlineParserSingleThreaded,
   ServerOps
 }
-import com.nawforce.apexlink.api.{Org, ServerOps}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.pkgforce.api.IssueLocation
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
-import com.nawforce.runtime.platform.Environment
+import com.nawforce.runtime.platform.{Environment, Path}
 
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 /** Basic command line for exercising the project analysis */
@@ -124,7 +124,7 @@ object Check {
   }
 
   private def writeDependenciesAsJSON(org: Org): Unit = {
-    val buffer = new StringBuilder()
+    val buffer = new mutable.StringBuilder()
     var first  = true
     buffer ++= s"""{ "dependencies": [\n"""
     org.getDependencies.asScala.foreach(kv => {
@@ -190,7 +190,7 @@ object Check {
   }
 
   private class TextMessageWriter(showPath: Boolean = true) extends MessageWriter {
-    private val buffer = new StringBuilder()
+    private val buffer = new mutable.StringBuilder()
 
     override def startOutput(): Unit = buffer.clear()
 
@@ -205,7 +205,7 @@ object Check {
   }
 
   private class JSONMessageWriter extends MessageWriter {
-    private val buffer                 = new StringBuilder()
+    private val buffer                 = new mutable.StringBuilder()
     private var firstDocument: Boolean = _
     private var firstMessage: Boolean  = _
 
@@ -244,7 +244,7 @@ object Check {
 
   object JSON {
     def encode(value: String): String = {
-      val buf = new StringBuilder()
+      val buf = new mutable.StringBuilder()
       value.foreach {
         case '"'                 => buf.append("\\\"")
         case '\\'                => buf.append("\\\\")
