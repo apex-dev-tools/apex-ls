@@ -6,13 +6,26 @@ package com.nawforce.apexlink.org
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.org.ReferenceProvider.emptyTargetLocations
 import com.nawforce.apexlink.rpc.TargetLocation
-import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration, SummaryDeclaration}
+import com.nawforce.apexlink.types.apex.{
+  ApexClassDeclaration,
+  ApexFullDeclaration,
+  FullDeclaration,
+  SummaryDeclaration
+}
 import com.nawforce.apexlink.types.core.{Dependent, PreReValidatable, TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
+
+import scala.util.hashing.MurmurHash3
+
+private final case class ReferenceableCache(
+  typesAndDeepHash: Array[(TypeId, Int)],
+  locations: Set[TargetLocation]
+)
 
 trait Referenceable extends PreReValidatable {
   this: Dependent =>
   private var referenceLocations: SkinnySet[PathLocation] = new SkinnySet()
+  private var cache: (Int, Set[TargetLocation])           = (0, Set.empty)
 
   override def preReValidate(): Unit = {
     super.preReValidate()
@@ -29,16 +42,39 @@ trait Referenceable extends PreReValidatable {
     referenceLocations.add(pathLocation)
   }
 
+  def findReferences(): Set[TargetLocation] = {
+    val hashCode = hash()
+    if (hashCode != cache._1)
+      cache = (hashCode, collectReferences())
+    cache._2
+  }
+
+  def doesNeedReValidation(): Boolean = {
+    hash() != cache._1
+  }
+
+  /**
+    * This represents a high level view of all the types that hold a reference to this object.
+    * Returns the types that needs can be revalidated to build up  the more specific reference locations.
+    */
+  def getReferenceHolderTypeIds: Set[TypeId]
+
   /**
     * Returns the detailed reference locations
     */
-  def findReferences(): Set[TargetLocation]
+  protected def collectReferences(): Set[TargetLocation]
 
-  /**
-    * Returns the types that needs to be revalidated to build up reference locations.
-    * This represents a high level view of all the types that hold a references.
-    */
-  def getTypeIdsForReValidation: Set[TypeId]
+  private def hash(): Int = {
+    //TODO: use typeId Ops instead of toApexDeclaration from the other PR
+    def toApexDeclaration(typeId: TypeId): Option[ApexClassDeclaration] = {
+      typeId.module
+        .findPackageType(typeId.typeName, None)
+        .collect { case td: ApexClassDeclaration => td }
+    }
+    MurmurHash3.arrayHash(
+      getReferenceHolderTypeIds.toArray.flatMap(toApexDeclaration).map(_.deepHash)
+    )
+  }
 }
 
 trait ReferenceProvider extends SourceOps {
@@ -66,7 +102,8 @@ trait ReferenceProvider extends SourceOps {
       })
       .map(ref => {
         //ReValidate any references so that ReferenceLocations can be built up
-        reValidate(ref.getTypeIdsForReValidation)
+        if (ref.doesNeedReValidation())
+          reValidate(ref.getReferenceHolderTypeIds)
         ref.findReferences().toArray
       })
       .getOrElse(emptyTargetLocations)

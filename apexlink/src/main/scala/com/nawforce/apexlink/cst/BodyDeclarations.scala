@@ -18,7 +18,6 @@ import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.Referenceable
-import com.nawforce.apexlink.rpc.TargetLocation
 import com.nawforce.apexlink.types.apex.{
   ApexBlockLike,
   ApexConstructorLike,
@@ -262,46 +261,6 @@ class ApexMethodDeclaration(
   override val children: ArraySeq[ApexNode] = ArraySeq.empty
   override lazy val signature: String       = super[ApexMethodLike].signature
   override val inTest: Boolean              = thisType.inTest
-
-  override def getTypeIdsForReValidation: Set[TypeId] = {
-    //TODO: use typeId Ops instead of toApexDeclaration from the other PR
-    def toApexDeclaration(typeId: TypeId): Option[DependentType] = {
-      typeId.module
-        .findPackageType(typeId.typeName, None)
-        .collect { case td: DependentType => td }
-    }
-    collectMethods()
-      .map(_.outerTypeId)
-      .flatMap(toApexDeclaration)
-      .flatMap(td => {
-        (td.outermostTypeDeclaration match {
-          case d: DependentType => d.getTypeDependencyHolders.toSet
-          case _                => Set.empty[TypeId]
-        }) ++ Set(td.typeId)
-      })
-  }
-
-  override def findReferences(): Set[TargetLocation] = {
-    collectMethods().flatMap(_.getTargetLocations)
-  }
-
-  private def collectMethods(): Set[ApexMethodDeclaration] = {
-    def getApexMethod(methods: Set[MethodDeclaration]): Set[ApexMethodDeclaration] = {
-      methods.collect({ case am: ApexMethodDeclaration => am })
-    }
-
-    val q                        = mutable.Queue[ApexMethodDeclaration]()
-    val parentAndChildrenMethods = mutable.Queue[ApexMethodDeclaration]()
-    q.enqueueAll(getApexMethod(shadows) ++ getApexMethod(shadowedBy))
-    while (q.nonEmpty) {
-      val item = q.dequeue()
-      if (!parentAndChildrenMethods.contains(item)) {
-        parentAndChildrenMethods.append(item)
-        q.enqueueAll(getApexMethod(item.shadows) ++ getApexMethod(item.shadowedBy))
-      }
-    }
-    (parentAndChildrenMethods :+ this).toSet
-  }
 
   // If using a fake block then consider synthetic, we need to use a block to avoid confusion with abstract
   override def isSynthetic: Boolean = block.contains(EagerBlock.empty)

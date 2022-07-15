@@ -215,6 +215,8 @@ abstract class FullDeclaration(
 
     // Log dependencies logged against this context
     setDepends(context.dependencies)
+    //Call to create the methodMap so iwe can force to build up shadows, used by unused and get references
+    methodMap
   }
 
   override def gatherDependencies(

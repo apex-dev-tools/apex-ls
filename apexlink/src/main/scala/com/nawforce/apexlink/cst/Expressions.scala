@@ -358,7 +358,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
         context.addDependency(method)
         method match {
           case ref: Referenceable => ref.addLocation(location)
-          case _                 =>
+          case _                  =>
         }
         if (method.typeName != TypeNames.Void) {
           val td = context.getTypeAndAddDependency(method.typeName, context.thisType)

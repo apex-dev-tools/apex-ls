@@ -20,7 +20,8 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.memory.SkinnyWeakSet
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
+import com.nawforce.apexlink.rpc.TargetLocation
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
@@ -66,10 +67,9 @@ trait ApexConstructorLike extends ApexVisibleConstructorLike with IdLocatable {
 trait ApexVisibleMethodLike extends MethodDeclaration {
   def summary: MethodSummary
 }
-final case class Shadow(shadowedMethod: MethodDeclaration, shadowedBy: MethodDeclaration)
 
 /** Apex defined method core features, be they full or summary style */
-trait ApexMethodLike extends ApexVisibleMethodLike with IdLocatable {
+trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLocatable {
   val outerTypeId: TypeId
 
   // Synthetic methods are generated locally & so can be excluded from issue reporting
@@ -90,11 +90,52 @@ trait ApexMethodLike extends ApexVisibleMethodLike with IdLocatable {
   def addShadow(method: MethodDeclaration): Unit = {
     if (method ne this) {
       _shadows.add(method)
+
+      method match {
+        case am: ApexMethodLike => am._shadowedBy.add(this)
+        case _                  =>
+      }
     }
-    method match {
-      case am: ApexMethodLike => am._shadowedBy.add(this)
-      case _                  =>
+  }
+
+  override def getReferenceHolderTypeIds: Set[TypeId] = {
+    //TODO: use typeId Ops instead of toApexDeclaration from the other PR
+    def toApexDeclaration(typeId: TypeId): Option[DependentType] = {
+      typeId.module
+        .findPackageType(typeId.typeName, None)
+        .collect { case td: DependentType => td }
     }
+    collectMethods()
+      .map(_.outerTypeId)
+      .flatMap(toApexDeclaration)
+      .flatMap(td => {
+        (td.outermostTypeDeclaration match {
+          case d: DependentType => d.getTypeDependencyHolders.toSet
+          case _                => Set.empty[TypeId]
+        }) ++ Set(td.typeId)
+      })
+  }
+
+  override def collectReferences(): Set[TargetLocation] = {
+    collectMethods().flatMap(_.getTargetLocations)
+  }
+
+  private def collectMethods(): Set[ApexMethodLike] = {
+    def getApexMethod(methods: Set[MethodDeclaration]): Set[ApexMethodLike] = {
+      methods.collect({ case am: ApexMethodLike => am })
+    }
+
+    val q                        = mutable.Queue[ApexMethodLike]()
+    val parentAndChildrenMethods = mutable.Queue[ApexMethodLike]()
+    q.enqueueAll(getApexMethod(shadows) ++ getApexMethod(shadowedBy))
+    while (q.nonEmpty) {
+      val item = q.dequeue()
+      if (!parentAndChildrenMethods.contains(item)) {
+        parentAndChildrenMethods.append(item)
+        q.enqueueAll(getApexMethod(item.shadows) ++ getApexMethod(item.shadowedBy))
+      }
+    }
+    (parentAndChildrenMethods :+ this).toSet
   }
 
   def summary: MethodSummary = {
