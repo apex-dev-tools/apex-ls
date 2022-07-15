@@ -12,7 +12,6 @@
     <name>apexlink parent</name>
 
     <modules>
-        <module>ff-apex-outline-parser</module>
         <module>pkgforce</module>
         <module>apexlink</module>
     </modules>

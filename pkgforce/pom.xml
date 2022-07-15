@@ -59,8 +59,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.github.financialforcedev</groupId>
-      <artifactId>ff-apex-outline-parser_2.13</artifactId>
+      <groupId>io.github.apex-dev-tools</groupId>
+      <artifactId>outline-parser_2.13</artifactId>
       <version>1.0.0</version>
     </dependency>
 
