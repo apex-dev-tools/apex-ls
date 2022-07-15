@@ -16,6 +16,7 @@ package com.nawforce.apexlink.types.apex
 
 import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.cst._
+import com.nawforce.apexlink.deps.ReferencingCollector.TypeIdOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.memory.SkinnyWeakSet
@@ -103,15 +104,9 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
   }
 
   override def getReferenceHolderTypeIds: Set[TypeId] = {
-    //TODO: use typeId Ops instead of toApexDeclaration from the other PR
-    def toApexDeclaration(typeId: TypeId): Option[DependentType] = {
-      typeId.module
-        .findPackageType(typeId.typeName, None)
-        .collect { case td: DependentType => td }
-    }
     collectMethods()
       .map(_.thisTypeId)
-      .flatMap(toApexDeclaration)
+      .flatMap(id => id.toTypeDeclaration[DependentType])
       .flatMap(td => {
         (td.outermostTypeDeclaration match {
           case d: DependentType => d.getTypeDependencyHolders.toSet

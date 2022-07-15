@@ -40,9 +40,11 @@ trait OrgTestClasses {
     // Convert to source set by searching for related types
     val accum = mutable.Set[NodeInfo]()
     startingIds.foreach(typeId => {
-      typeId.toApexDeclaration.foreach(
-        td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
-      )
+      typeId
+        .toTypeDeclaration[ApexDeclaration]
+        .foreach(
+          td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
+        )
     })
 
     // Locate tests for the sourceIds
@@ -90,7 +92,7 @@ trait OrgTestClasses {
   }
 
   private def toApexDeclaration(module: Module, typeName: TypeName): Option[ApexDeclaration] = {
-    TypeId(module, typeName).toApexDeclaration
+    TypeId(module, typeName).toTypeDeclaration[ApexDeclaration]
   }
 
   /** Information held on sources */

@@ -4,11 +4,12 @@
 package com.nawforce.apexlink.deps
 
 import com.nawforce.apexlink.types.apex.ApexDeclaration
-import com.nawforce.apexlink.types.core.TypeId
+import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.parsers.INTERFACE_NATURE
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
 object ReferencingCollector {
 
@@ -83,15 +84,15 @@ object ReferencingCollector {
 
   /** Convert TypeIds to ApexDeclarations, ignoring any which can't be found. */
   private def toApexDeclarations(typeIds: Set[TypeId]): Set[ApexDeclaration] = {
-    typeIds.flatMap(_.toApexDeclaration)
+    typeIds.flatMap(_.toTypeDeclaration[ApexDeclaration])
   }
 
   /** Helper to lookup a TypeId */
   implicit class TypeIdOps(typeId: TypeId) {
-    def toApexDeclaration: Option[ApexDeclaration] = {
+    def toTypeDeclaration[T <: TypeDeclaration: ClassTag]: Option[T] = {
       typeId.module
         .findPackageType(typeId.typeName, None)
-        .collect { case td: ApexDeclaration => td }
+        .collect { case td: T => td }
     }
   }
 }

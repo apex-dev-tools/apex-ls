@@ -14,7 +14,7 @@ import com.nawforce.apexlink.types.apex.{
 }
 import com.nawforce.apexlink.types.core.{Dependent, PreReValidatable, TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
-
+import com.nawforce.apexlink.deps.ReferencingCollector.TypeIdOps
 import scala.util.hashing.MurmurHash3
 
 private final case class ReferenceableCache(
@@ -65,14 +65,10 @@ trait Referenceable extends PreReValidatable {
   protected def collectReferences(): Set[TargetLocation]
 
   private def hash(): Int = {
-    //TODO: use typeId Ops instead of toApexDeclaration from the other PR
-    def toApexDeclaration(typeId: TypeId): Option[ApexClassDeclaration] = {
-      typeId.module
-        .findPackageType(typeId.typeName, None)
-        .collect { case td: ApexClassDeclaration => td }
-    }
     MurmurHash3.arrayHash(
-      getReferenceHolderTypeIds.toArray.flatMap(toApexDeclaration).map(_.deepHash)
+      getReferenceHolderTypeIds.toArray
+        .flatMap(id => id.toTypeDeclaration[ApexClassDeclaration])
+        .map(_.deepHash)
     )
   }
 }
