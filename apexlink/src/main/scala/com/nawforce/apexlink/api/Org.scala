@@ -165,6 +165,14 @@ trait Org {
     * scale 0-100 and ranked highest->lowest. The first 'count' os these are returned for your ridicule.
     */
   def getDependencyBombs(count: Int): Array[BombScore]
+
+  /** Find test class names that can be used to test the passed set of files.
+    *
+    * This calculates a set of tests that should be run when the passed files have been changed. The input files must
+    * be Apex classes for this to find results. The results include all tests that directly reference one of the
+    * input classes and tests that reference any supertype or interface of an input class.
+    */
+  def getTestClassNames(paths: Array[String]): Array[String]
 }
 
 object Org {

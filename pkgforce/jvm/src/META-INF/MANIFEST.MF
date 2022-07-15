@@ -1,9 +1,10 @@
 Manifest-Version: 1.0
 Class-Path: 
+  apex-types_2.13-1.0.0.jar
   antlr4-runtime-4.8-1.jar
   apex-parser-3.0.0.jar
   commons-lang3-3.0.jar
-  ff-apex-outline-parser_2.13-1.0.0-SNAPSHOT.jar
+  ff-apex-outline-parser_2.13-1.0.0.jar
   geny_2.13-0.6.2.jar
   runforce-55.5.0.jar
   scala-collection-compat_2.13-2.1.4.jar

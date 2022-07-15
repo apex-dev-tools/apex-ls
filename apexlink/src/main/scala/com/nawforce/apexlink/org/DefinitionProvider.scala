@@ -13,12 +13,9 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst.InterfaceDeclaration
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.LocationLink
-import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexFullDeclaration}
-import com.nawforce.apexlink.types.core.TypeDeclaration
-import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, VIRTUAL_MODIFIER}
+import com.nawforce.apexlink.types.apex.ApexFullDeclaration
 import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLike, UnsafeLocatable}
 
 trait DefinitionProvider extends SourceOps {

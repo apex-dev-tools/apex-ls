@@ -35,8 +35,9 @@ import scala.util.hashing.MurmurHash3
 
 /** Apex block core features, be they full or summary style */
 trait ApexBlockLike extends BlockDeclaration with Locatable {
+  val thisTypeId: TypeId
+  override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
   def location: PathLocation
-
   def summary: BlockSummary = BlockSummary(location.location, isStatic, dependencySummary())
 }
 
@@ -49,6 +50,8 @@ trait ApexVisibleConstructorLike extends ConstructorDeclaration {
 
 /** Apex defined constructor core features, be they full or summary style */
 trait ApexConstructorLike extends ApexVisibleConstructorLike with IdLocatable {
+  val thisTypeId: TypeId
+  override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
   def summary: ConstructorSummary = {
     ConstructorSummary(
@@ -70,7 +73,8 @@ trait ApexVisibleMethodLike extends MethodDeclaration {
 
 /** Apex defined method core features, be they full or summary style */
 trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLocatable {
-  val outerTypeId: TypeId
+  val thisTypeId: TypeId
+  override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
   // Synthetic methods are generated locally & so can be excluded from issue reporting
   def isSynthetic: Boolean = false
@@ -106,7 +110,7 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
         .collect { case td: DependentType => td }
     }
     collectMethods()
-      .map(_.outerTypeId)
+      .map(_.thisTypeId)
       .flatMap(toApexDeclaration)
       .flatMap(td => {
         (td.outermostTypeDeclaration match {
@@ -154,7 +158,8 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
 
 /** Apex defined fields core features, be they full or summary style */
 trait ApexFieldLike extends FieldDeclaration with IdLocatable {
-  val outerTypeId: TypeId
+  val thisTypeId: TypeId
+  override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
   val nature: Nature
   val idTarget: Option[TypeName] = None
 
@@ -180,6 +185,8 @@ trait ApexDeclaration extends DependentType with IdLocatable {
   val isEntryPoint: Boolean
 
   def summary: TypeSummary
+
+  override def nestedTypes: ArraySeq[ApexDeclaration]
 }
 
 /** Apex defined type for parsed (aka Full) classes, interfaces, enums & triggers */
@@ -201,6 +208,8 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   val localFields: ArraySeq[ApexFieldLike]
   val localMethods: ArraySeq[ApexMethodLike]
   val localConstructors: ArraySeq[ApexConstructorLike]
+
+  override def thisTypeIdOpt: Option[TypeId] = Some(typeId)
 
   override def nestedTypes: ArraySeq[ApexClassDeclaration]
 

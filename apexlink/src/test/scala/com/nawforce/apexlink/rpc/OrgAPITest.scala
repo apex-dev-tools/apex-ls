@@ -304,8 +304,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       result <- orgAPI.open(workspace.toString)
       classes <- orgAPI.getTestClassNames(
         new GetTestClassNamesRequest(
-          Array(workspace.toString + "/force-app/main/default/classes/HelloTest.cls"),
-          false
+          Array(workspace.toString + "/force-app/main/default/classes/HelloTest.cls")
         )
       )
     } yield {
@@ -322,8 +321,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       result <- orgAPI.open(workspace.toString)
       classes <- orgAPI.getTestClassNames(
         new GetTestClassNamesRequest(
-          Array(workspace.toString + "/force-app/main/default/classes/Hello.cls"),
-          true
+          Array(workspace.toString + "/force-app/main/default/classes/Hello.cls")
         )
       )
     } yield {
@@ -339,8 +337,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       result <- orgAPI.open(workspace.toString)
       classes <- orgAPI.getTestClassNames(
         new GetTestClassNamesRequest(
-          Array(workspace.toString + "/force-app/main/default/classes/NoTest.cls"),
-          true
+          Array(workspace.toString + "/force-app/main/default/classes/NoTest.cls")
         )
       )
     } yield {
@@ -356,8 +353,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       result <- orgAPI.open(workspace.toString)
       classes <- orgAPI.getTestClassNames(
         new GetTestClassNamesRequest(
-          Array(workspace.toString + "/force-app/main/default/classes/ServiceImpl.cls"),
-          true
+          Array(workspace.toString + "/force-app/main/default/classes/ServiceImpl.cls")
         )
       )
     } yield {
@@ -373,8 +369,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       result <- orgAPI.open(workspace.toString)
       classes <- orgAPI.getTestClassNames(
         new GetTestClassNamesRequest(
-          Array(workspace.toString + "/force-app/main/default/classes/APIImpl.cls"),
-          true
+          Array(workspace.toString + "/force-app/main/default/classes/APIImpl.cls")
         )
       )
     } yield {
@@ -390,8 +385,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       result <- orgAPI.open(workspace.toString)
       classes <- orgAPI.getTestClassNames(
         new GetTestClassNamesRequest(
-          Array(workspace.toString + "/force-app/main/default/classes/InnerServiceImpl.cls"),
-          true
+          Array(workspace.toString + "/force-app/main/default/classes/InnerServiceImpl.cls")
         )
       )
     } yield {
@@ -407,8 +401,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       result <- orgAPI.open(workspace.toString)
       classes <- orgAPI.getTestClassNames(
         new GetTestClassNamesRequest(
-          Array(workspace.toString + "/force-app/main/default/classes/Service.cls"),
-          true
+          Array(workspace.toString + "/force-app/main/default/classes/Service.cls")
         )
       )
     } yield {
@@ -424,8 +417,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       result <- orgAPI.open(workspace.toString)
       classes <- orgAPI.getTestClassNames(
         new GetTestClassNamesRequest(
-          Array(workspace.toString + "/force-app/main/default/classes/Derived.cls"),
-          true
+          Array(workspace.toString + "/force-app/main/default/classes/Derived.cls")
         )
       )
     } yield {

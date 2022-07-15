@@ -13,106 +13,86 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.api.{Package, TypeSummary}
-import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
-import com.nawforce.pkgforce.names.TypeIdentifier
+import com.nawforce.apexlink.api.TypeSummary
+import com.nawforce.apexlink.deps.ReferencingCollector
+import com.nawforce.apexlink.deps.ReferencingCollector.{NodeInfo, TypeIdOps}
+import com.nawforce.apexlink.org.OPM.Module
+import com.nawforce.apexlink.types.apex.ApexDeclaration
+import com.nawforce.apexlink.types.core.TypeId
+import com.nawforce.pkgforce.names.TypeName
+import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.platform.Path
 
-import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
 
+/** Test class discovery helper */
 trait OrgTestClasses {
   self: OPM.OrgImpl =>
 
-  def getTestClassNames(paths: Array[String], findTests: Boolean): Array[String] = {
-    def findPackageIdentifierAndSummary(
-      path: String
-    ): Option[(Package, TypeIdentifier, TypeSummary)] = {
-      packages.view
-        .flatMap(pkg => {
-          Option(pkg.getTypeOfPath(path))
-            .flatMap(
-              typeId =>
-                Option(pkg.getSummaryOfType(typeId))
-                  .map(summary => (pkg, typeId, summary))
-            )
-        })
-        .headOption
-    }
-
-    def findReferencedTestPaths(
-      pkg: Package,
-      typeId: TypeIdentifier,
-      summary: TypeSummary,
-      filterTypeId: TypeIdentifier
-    ): Array[String] = {
-      if (summary.modifiers.contains(ISTEST_ANNOTATION)) return Array(summary.name)
-      if (!findTests) return Array.empty
-
-      Option(pkg.getDependencyHolders(typeId, apexOnly = true)).getOrElse(Array.empty).flatMap {
-        dependentTypeId =>
-          Option(pkg.getSummaryOfType(dependentTypeId)).toArray
-            .filter { dependentSummary =>
-              dependentSummary.modifiers.contains(ISTEST_ANNOTATION)
-            }
-            .filter { _ =>
-              pkg.hasDependency(dependentTypeId, filterTypeId)
-            }
-            .map { dependentSummary =>
-              dependentSummary.name
-            }
-      }
-    }
-
-    def targetsForInterfaces(
-      pkg: Package,
-      summary: TypeSummary
-    ): ArraySeq[(TypeIdentifier, TypeIdentifier, TypeSummary)] = {
-      summary.interfaces.flatMap { interface =>
-        Option(pkg.getTypeIdentifier(interface))
-          .flatMap { interfaceTypeId =>
-            val outerTypeId =
-              interfaceTypeId.typeName.outer.map(pkg.getTypeIdentifier).getOrElse(interfaceTypeId)
-            Option(pkg.getSummaryOfType(outerTypeId))
-              .map((interfaceTypeId, outerTypeId, _))
-          }
-      }
-    }
-
-    def targetsForSuperclass(
-      pkg: Package,
-      summary: TypeSummary
-    ): Array[(TypeIdentifier, TypeIdentifier, TypeSummary)] = {
-      summary.superClass
-        .flatMap { tn =>
-          Option(pkg.getTypeIdentifier(tn))
-            .flatMap { tid =>
-              Option(pkg.getSummaryOfType(tid))
-                .flatMap { summary =>
-                  val otid = tid.typeName.outer.map(pkg.getTypeIdentifier).getOrElse(tid)
-                  Some(Array((tid, otid, summary)) ++ targetsForInterfaces(pkg, summary))
-                }
-            }
-        }
-        .getOrElse(Array.empty)
-    }
-
-    paths.flatMap { path =>
-      findPackageIdentifierAndSummary(path).toArray.flatMap {
-        case (pkg, typeId, summary) =>
-          val interfaces = targetsForInterfaces(pkg, summary)
-          val nestedInterfaces = summary.nestedTypes.flatMap { nestedSummary =>
-            targetsForInterfaces(pkg, nestedSummary)
-          }
-          val superClassTargets = targetsForSuperclass(pkg, summary)
-
-          val targets =
-            Seq((typeId, typeId, summary)) ++ interfaces ++ nestedInterfaces ++ superClassTargets
-
-          targets.flatMap {
-            case (actualTypeId, outerTypeId, outerSummary) =>
-              findReferencedTestPaths(pkg, outerTypeId, outerSummary, actualTypeId)
-          }
-      }
-    }.distinct
+  def getTestClassNames(paths: Array[String]): Array[String] = {
+    getTestClassNamesInternal(paths.map(p => Path(p))).toArray
   }
 
+  def getTestClassNamesInternal(paths: Array[PathLike]): Set[String] = {
+    // Locate starting typeIds for the passed paths, this includes super classes & interfaces
+    val startingIds = paths.flatMap { path => findPackageIdentifier(path) }
+
+    // Convert to source set by searching for related types
+    val accum = mutable.Set[NodeInfo]()
+    startingIds.foreach(typeId => {
+      typeId.toApexDeclaration.foreach(
+        td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
+      )
+    })
+
+    // Locate tests for the sourceIds
+    ReferencingCollector
+      .testReferences(accum.toSet)
+      .filter(_.outerTypeName.isEmpty) // Safety check, we only want outer types here
+      .map(_.typeName.toString)
+  }
+
+  /** Retrieve type info from a path */
+  private def findPackageIdentifier(path: PathLike): Option[TypeId] = {
+    packages.view
+      .flatMap(pkg => pkg.getTypeOfPathInternal(path))
+      .headOption
+  }
+
+  /** Collect source information from a summary, examines super classes & interfaces */
+  private def sourcesForType(
+    td: ApexDeclaration,
+    primary: Boolean,
+    accum: mutable.Set[NodeInfo]
+  ): Unit = {
+    accum.add(NodeInfo(td, primary))
+    sourcesForSuperclass(td, accum)
+    sourcesForInterfaces(td, accum)
+  }
+
+  /** Collect source information on interfaces, recursive over super classes & includes interfaces. */
+  private def sourcesForSuperclass(td: ApexDeclaration, accum: mutable.Set[NodeInfo]): Unit = {
+    td.superClass.foreach { superclass =>
+      toApexDeclaration(td.module, superclass).foreach(
+        superClassTd => sourcesForType(superClassTd, primary = false, accum)
+      )
+    }
+  }
+
+  /** Collect source information on interfaces, recursive over interface extends. */
+  private def sourcesForInterfaces(td: ApexDeclaration, accum: mutable.Set[NodeInfo]): Unit = {
+    td.interfaces.foreach { interface =>
+      toApexDeclaration(td.module, interface).foreach(interfaceTd => {
+        accum.addOne(NodeInfo(interfaceTd, primary = false))
+        sourcesForInterfaces(interfaceTd, accum)
+      })
+    }
+  }
+
+  private def toApexDeclaration(module: Module, typeName: TypeName): Option[ApexDeclaration] = {
+    TypeId(module, typeName).toApexDeclaration
+  }
+
+  /** Information held on sources */
+  private case class SourceInfo(typeId: TypeId, summary: TypeSummary)
 }

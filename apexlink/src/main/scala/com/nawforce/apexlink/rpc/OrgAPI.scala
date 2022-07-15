@@ -123,7 +123,7 @@ object BombScore {
   implicit val rwName: RW[Name]                     = macroRW
 }
 
-case class GetTestClassNamesRequest(paths: Array[String], findTests: Boolean)
+case class GetTestClassNamesRequest(paths: Array[String])
 
 object GetTestClassNamesRequest {
   implicit val rw: RW[GetTestClassNamesRequest] = macroRW

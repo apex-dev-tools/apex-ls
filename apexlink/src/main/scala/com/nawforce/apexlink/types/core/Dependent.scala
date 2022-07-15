@@ -29,7 +29,8 @@ import com.nawforce.pkgforce.memory.IdentityEquality
 /* Dependents are referencable elements in code such as types, fields, constructors, methods & labels.
  *
  * A dependent has a set of 'holders' of the dependent for reverse lookup although the set may may contain references
- * to dead holders that have yet to be GC'd. They use identity equality to help with collections performance.
+ * to dead holders that have yet to be garbage collected. They use identity equality to help with collections
+ * performance.
  */
 trait Dependent extends IdentityEquality {
   // The set of holders of this dependent
@@ -62,29 +63,32 @@ trait Dependent extends IdentityEquality {
 /** Holder of a dependencies, */
 trait DependencyHolder {
 
+  /** The TypeId for the containing type of the holder, optional as requires a module. */
+  def thisTypeIdOpt: Option[TypeId] = None
+
+  /** Is the holder within test code */
   def inTest: Boolean = false
 
-  // Get Dependents being held, default to empty for holders who do not use this, override as needed
-  // TODO: Narrow where we introduce this so default not needed
+  /** Get Dependents being held, default to empty for holders who do not use this, override as needed */
   def dependencies(): Iterable[Dependent] = Iterable.empty
 
-  // Inform each dependent this is holding a dependency to them
+  /** Inform each dependent this is holding a dependency to them */
   def propagateDependencies(): Unit = {
     dependencies().foreach(_.addDependencyHolder(this))
   }
 
-  // Convert dependencies into a summary format
+  /** Convert dependencies into a summary format */
   def dependencySummary(): Array[DependentSummary] = {
     dependencies()
       .flatMap {
         case td: ApexClassDeclaration =>
           Some(TypeDependentSummary(td.typeId.asTypeIdentifier, td.sourceHash))
         case fd: ApexFieldLike =>
-          Some(FieldDependentSummary(fd.outerTypeId.asTypeIdentifier, fd.name.value))
+          Some(FieldDependentSummary(fd.thisTypeId.asTypeIdentifier, fd.name.value))
         case md: ApexMethodLike =>
           Some(
             MethodDependentSummary(
-              md.outerTypeId.asTypeIdentifier,
+              md.thisTypeId.asTypeIdentifier,
               md.name.value,
               md.parameters.map(_.typeName)
             )
