@@ -4,7 +4,6 @@
 package com.nawforce.apexlink.deps
 
 import com.nawforce.apexlink.types.apex.ApexDeclaration
-import com.nawforce.apexlink.types.core.TypeId
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.parsers.INTERFACE_NATURE
 
@@ -75,23 +74,13 @@ object ReferencingCollector {
     * on inner classes.
     */
   private def getDependencyHolders(td: ApexDeclaration): Set[ApexDeclaration] = {
-    toApexDeclarations(
-      td.getDependencyHolders
-        .flatMap(_.thisTypeIdOpt)
-    )
-  }
-
-  /** Convert TypeIds to ApexDeclarations, ignoring any which can't be found. */
-  private def toApexDeclarations(typeIds: Set[TypeId]): Set[ApexDeclaration] = {
-    typeIds.flatMap(_.toApexDeclaration)
-  }
-
-  /** Helper to lookup a TypeId */
-  implicit class TypeIdOps(typeId: TypeId) {
-    def toApexDeclaration: Option[ApexDeclaration] = {
-      typeId.module
-        .findPackageType(typeId.typeName, None)
-        .collect { case td: ApexDeclaration => td }
-    }
+    td.getDependencyHolders
+      .flatMap(_.thisTypeIdOpt)
+      .flatMap(
+        typeId =>
+          typeId.module
+            .findPackageType(typeId.typeName, None)
+            .collect { case td: ApexDeclaration => td }
+      )
   }
 }

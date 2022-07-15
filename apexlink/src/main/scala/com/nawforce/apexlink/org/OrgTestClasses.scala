@@ -15,10 +15,10 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.api.TypeSummary
 import com.nawforce.apexlink.deps.ReferencingCollector
-import com.nawforce.apexlink.deps.ReferencingCollector.{NodeInfo, TypeIdOps}
-import com.nawforce.apexlink.org.OPM.Module
+import com.nawforce.apexlink.deps.ReferencingCollector.NodeInfo
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.types.apex.ApexDeclaration
-import com.nawforce.apexlink.types.core.TypeId
+import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.Path
@@ -40,9 +40,12 @@ trait OrgTestClasses {
     // Convert to source set by searching for related types
     val accum = mutable.Set[NodeInfo]()
     startingIds.foreach(typeId => {
-      typeId.toApexDeclaration.foreach(
-        td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
-      )
+      typeId.module
+        .findPackageType(typeId.typeName, None)
+        .collect { case td: ApexDeclaration => td }
+        .foreach(
+          td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
+        )
     })
 
     // Locate tests for the sourceIds
@@ -73,7 +76,7 @@ trait OrgTestClasses {
   /** Collect source information on interfaces, recursive over super classes & includes interfaces. */
   private def sourcesForSuperclass(td: ApexDeclaration, accum: mutable.Set[NodeInfo]): Unit = {
     td.superClass.foreach { superclass =>
-      toApexDeclaration(td.module, superclass).foreach(
+      toApexDeclaration(superclass, td).foreach(
         superClassTd => sourcesForType(superClassTd, primary = false, accum)
       )
     }
@@ -82,15 +85,18 @@ trait OrgTestClasses {
   /** Collect source information on interfaces, recursive over interface extends. */
   private def sourcesForInterfaces(td: ApexDeclaration, accum: mutable.Set[NodeInfo]): Unit = {
     td.interfaces.foreach { interface =>
-      toApexDeclaration(td.module, interface).foreach(interfaceTd => {
+      toApexDeclaration(interface, td).foreach(interfaceTd => {
         accum.addOne(NodeInfo(interfaceTd, primary = false))
         sourcesForInterfaces(interfaceTd, accum)
       })
     }
   }
 
-  private def toApexDeclaration(module: Module, typeName: TypeName): Option[ApexDeclaration] = {
-    TypeId(module, typeName).toApexDeclaration
+  private def toApexDeclaration(
+    typeName: TypeName,
+    from: TypeDeclaration
+  ): Option[ApexDeclaration] = {
+    TypeResolver(typeName, from).toOption.collect { case td: ApexDeclaration => td }
   }
 
   /** Information held on sources */
