@@ -190,11 +190,12 @@ class ApexLightNode(
   override def localIssues: Seq[Issue] = super.localIssues ++ checkCustomException()
 
   private def checkCustomException(): Seq[Issue] = {
+    val isClass             = nature == CLASS_NATURE
     val isNamedCorrectly    = name.endsWith(Names.Exception)
     val isExtendedCorrectly = typeRef.exists(_.name.endsWith(Names.Exception))
 
-    (isNamedCorrectly, isExtendedCorrectly) match {
-      case (true, false) =>
+    (isClass, isNamedCorrectly, isExtendedCorrectly) match {
+      case (true, true, false) =>
         ArraySeq(
           new Issue(
             location.path,
@@ -205,7 +206,7 @@ class ApexLightNode(
             )
           )
         )
-      case (false, true) =>
+      case (true, false, true) =>
         ArraySeq(
           new Issue(
             location.path,

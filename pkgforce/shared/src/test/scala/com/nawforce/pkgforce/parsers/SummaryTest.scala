@@ -469,4 +469,15 @@ class SummaryTest extends AnyFunSuite {
     assert(diag.location == Location(1, 55, 1, 58))
   }
 
+  test("Field ending with exception") {
+    val path = Path("Dummy.cls")
+    val cp =
+      CodeParser(path, SourceData("public class Dummy { public String fieldException = 's'; }"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+    val root   = ApexNode(cp, result.value).get
+    val issues = root.collectIssues()
+    assert(issues.isEmpty)
+  }
+
 }
