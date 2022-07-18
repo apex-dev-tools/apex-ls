@@ -4,12 +4,10 @@
 package com.nawforce.apexlink.deps
 
 import com.nawforce.apexlink.types.apex.ApexDeclaration
-import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.parsers.INTERFACE_NATURE
 
 import scala.collection.mutable
-import scala.reflect.ClassTag
 
 object ReferencingCollector {
 
@@ -76,23 +74,13 @@ object ReferencingCollector {
     * on inner classes.
     */
   private def getDependencyHolders(td: ApexDeclaration): Set[ApexDeclaration] = {
-    toApexDeclarations(
-      td.getDependencyHolders
-        .flatMap(_.thisTypeIdOpt)
-    )
-  }
-
-  /** Convert TypeIds to ApexDeclarations, ignoring any which can't be found. */
-  private def toApexDeclarations(typeIds: Set[TypeId]): Set[ApexDeclaration] = {
-    typeIds.flatMap(_.toTypeDeclaration[ApexDeclaration])
-  }
-
-  /** Helper to lookup a TypeId */
-  implicit class TypeIdOps(typeId: TypeId) {
-    def toTypeDeclaration[T <: TypeDeclaration: ClassTag]: Option[T] = {
-      typeId.module
-        .findPackageType(typeId.typeName, None)
-        .collect { case td: T => td }
-    }
+    td.getDependencyHolders
+      .flatMap(_.thisTypeIdOpt)
+      .flatMap(
+        typeId =>
+          typeId.module
+            .findPackageType(typeId.typeName, None)
+            .collect { case td: ApexDeclaration => td }
+      )
   }
 }

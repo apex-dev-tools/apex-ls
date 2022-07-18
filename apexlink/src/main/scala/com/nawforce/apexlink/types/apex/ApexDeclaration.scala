@@ -16,11 +16,11 @@ package com.nawforce.apexlink.types.apex
 
 import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.cst._
-import com.nawforce.apexlink.deps.ReferencingCollector.TypeIdOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.memory.SkinnyWeakSet
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.org.ReferenceProvider.TypeIdOps
 import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.rpc.TargetLocation
 import com.nawforce.apexlink.types.core._
