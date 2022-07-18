@@ -104,16 +104,6 @@ object Check {
         org.flush()
       }
 
-      println(
-        org
-          .getTestClassNames(
-            Array(
-              "/Users/kjones/ff/prds/cpq/force-app/main/core/classes/rates/RateCardServiceImpl.cls"
-            )
-          )
-          .mkString("Array(", ", ", ")")
-      )
-
       // Output issues
       if (depends) {
         if (json) {
