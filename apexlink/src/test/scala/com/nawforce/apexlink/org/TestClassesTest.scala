@@ -3,7 +3,10 @@
  */
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
+import com.nawforce.apexlink.types.apex.SummaryDeclaration
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
+import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -15,18 +18,64 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
     })
   }
 
+  private def assertIsSummaryDeclaration(
+    pkg: OPM.PackageImpl,
+    name: String,
+    namespace: Option[Name] = None
+  ): Unit = {
+    assert(
+      pkg.orderedModules.head
+        .findModuleType(TypeName(Name(name)).withNamespace(namespace))
+        .head
+        .isInstanceOf[SummaryDeclaration]
+    )
+  }
+
   private def run(files: Map[String, String])(verify: (PathLike, Option[String]) => ()): Unit = {
+
+    // Uncached, no namespace
     FileSystemHelper.run(files) { root: PathLike =>
       createHappyOrg(root)
       verify(root, None)
     }
 
+    // Cached, no namespace
+    withManualFlush {
+      FileSystemHelper.run(files) { root: PathLike =>
+        val org = createHappyOrg(root)
+        org.flush()
+
+        val org2 = createHappyOrg(root)
+        val pkg2 = org2.unmanaged
+        files.foreach(file => assertIsSummaryDeclaration(pkg2, file._1.replace(".cls", "")))
+
+        verify(root, None)
+      }
+    }
+
+    // Uncached, with namespace
     val withProject = Map(
       "sfdx-project.json" -> """{"namespace": "pkg", "packageDirectories": [{"path": "pkg"}]}"""
     ) ++ files.map(kv => ("pkg/" + kv._1, kv._2))
     FileSystemHelper.run(withProject) { root: PathLike =>
       createHappyOrg(root)
       verify(root.join("pkg"), Some("pkg"))
+    }
+
+    // Cached, with namespace
+    withManualFlush {
+      FileSystemHelper.run(withProject) { root: PathLike =>
+        val org = createHappyOrg(root)
+        org.flush()
+
+        val org2 = createHappyOrg(root)
+        val pkg2 = org2.packagesByNamespace(Some(Name("pkg")))
+        files.foreach(
+          file => assertIsSummaryDeclaration(pkg2, file._1.replace(".cls", ""), Some(Name("pkg")))
+        )
+
+        verify(root.join("pkg"), Some("pkg"))
+      }
     }
   }
 
