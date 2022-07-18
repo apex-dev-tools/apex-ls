@@ -3,6 +3,7 @@
  */
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.cst.ExprContext
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.org.ReferenceProvider.emptyTargetLocations
 import com.nawforce.apexlink.rpc.TargetLocation
@@ -15,12 +16,8 @@ import com.nawforce.apexlink.types.apex.{
 import com.nawforce.apexlink.types.core.{Dependent, PreReValidatable, TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.apexlink.deps.ReferencingCollector.TypeIdOps
-import scala.util.hashing.MurmurHash3
 
-private final case class ReferenceableCache(
-  typesAndDeepHash: Array[(TypeId, Int)],
-  locations: Set[TargetLocation]
-)
+import scala.util.hashing.MurmurHash3
 
 trait Referenceable extends PreReValidatable {
   this: Dependent =>
@@ -86,40 +83,40 @@ trait ReferenceProvider extends SourceOps {
       case None     => return emptyTargetLocations
     }
 
-    getReferenceableFromValidation(sourceTd, line, offset)
+    val expr = getExpressionFromValidation(sourceTd, line, offset)
+
+    if (expr.nonEmpty && expr.get.locatable.isEmpty)
+      return emptyTargetLocations
+
+    expr
+      .flatMap(_.locatable)
       .orElse({
         sourceTd match {
           case fd: FullDeclaration =>
             fd.getBodyDeclarationFromLocation(line, offset)
               .map(_._2)
-              .collect({ case ref: Referenceable => ref })
-          case _ => None
         }
       })
-      .map(ref => {
-        //ReValidate any references so that ReferenceLocations can be built up
-        if (ref.doesNeedReValidation())
-          reValidate(ref.getReferenceHolderTypeIds)
-        ref.findReferences().toArray
+      .flatMap({
+        case ref: Referenceable =>
+          //ReValidate any references so that ReferenceLocations can be built up
+          if (ref.doesNeedReValidation())
+            reValidate(ref.getReferenceHolderTypeIds)
+          Some(ref.findReferences().toArray)
+        case _ => None
       })
       .getOrElse(emptyTargetLocations)
   }
 
-  private def getReferenceableFromValidation(
+  private def getExpressionFromValidation(
     td: TypeDeclaration,
     line: Int,
     offset: Int
-  ): Option[Referenceable] = {
+  ): Option[ExprContext] = {
     td match {
       case td: ApexFullDeclaration =>
         val result = locateFromValidation(td, line, offset)
-        result._2.flatMap(
-          result
-            ._1(_)
-            .result
-            .locatable
-            .collect({ case ref: Referenceable => ref })
-        )
+        result._2.map(loc => result._1(loc).result)
       case _ => None
     }
 

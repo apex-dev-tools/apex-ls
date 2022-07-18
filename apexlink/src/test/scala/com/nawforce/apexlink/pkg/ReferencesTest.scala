@@ -7,6 +7,22 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class ReferencesTest extends AnyFunSuite with TestHelper {
 
+  test("Returns empty on non referencable methods") {
+    val a =
+      withCursor(s"public class A { void fun(){ String s = 'small'.cap${CURSOR}italize();}}")
+    FileSystemHelper.run(
+      Map("A.cls" -> a._1, "UsedA.cls" -> "public class UsedA {public void fn(){new A().fun();}}")
+    ) { root: PathLike =>
+      val path = root.join("A.cls")
+      val org  = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getReferences(path, line = 1, offset = a._2)
+          .isEmpty
+      )
+    }
+  }
+
   test("Find all references from method signature") {
     val dummy = withCursor(
       s"public class Dummy implements IInterface{ public void f${CURSOR}unc(){} public void callFuncMethod(){func();}}"
