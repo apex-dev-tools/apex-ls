@@ -18,7 +18,8 @@ import com.nawforce.pkgforce.diagnostics.{CatchingLogger, IssueLogger}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{LocationAnd, PathLocation}
-import com.nawforce.runtime.parsers.{PageParser, VFParser}
+import com.nawforce.runtime.parsers.PageParser
+import com.nawforce.vfparser.VFParser
 
 import scala.collection.compat.immutable.ArraySeq
 

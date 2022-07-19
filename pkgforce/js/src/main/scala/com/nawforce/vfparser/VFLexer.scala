@@ -11,15 +11,16 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.runtime.parsers
+package com.nawforce.vfparser
 
 import com.nawforce.runtime.parsers.antlr.CharStream
+import com.nawforce.runtime.parsers.CollectingErrorListener
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("vf-parser", "VFLexer")
+@JSImport("@apexdevtools/vf-parser", "VFLexer")
 class VFLexer(stream: CharStream) extends js.Object {
   def removeErrorListeners(): Unit                              = js.native
   def addErrorListener(listener: CollectingErrorListener): Unit = js.native

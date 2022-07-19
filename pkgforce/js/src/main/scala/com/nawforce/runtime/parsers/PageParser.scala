@@ -17,6 +17,7 @@ import com.nawforce.pkgforce.diagnostics.IssuesAnd
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.runtime.parsers.PageParser.ParserRuleContext
 import com.nawforce.runtime.parsers.antlr.{CharStreams, CommonTokenStream, ParseTree}
+import com.nawforce.vfparser.{VFParser, VFLexer}
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.reflect.ClassTag

@@ -16,8 +16,9 @@ package com.nawforce.pkgforce.parsers
 
 import com.nawforce.pkgforce.parsers.VFParserTest.ParserIssue
 import com.nawforce.runtime.SourceBlob
-import com.nawforce.runtime.parsers.{PageParser, Source, VFParser}
+import com.nawforce.runtime.parsers.{PageParser, Source}
 import com.nawforce.runtime.platform.Path
+import com.nawforce.vfparser.VFParser
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

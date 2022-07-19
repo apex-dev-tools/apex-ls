@@ -15,7 +15,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="ff-apex-outline-parser" />
     <orderEntry type="library" name="Maven: io.github.apex-dev-tools:outline-parser_2.13:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: io.github.apex-dev-tools:apex-types_2.13:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.13.3" level="project" />
@@ -23,6 +22,7 @@
     <orderEntry type="library" name="Maven: com.github.nawforce:runforce:55.5.0" level="project" />
     <orderEntry type="library" name="Maven: io.github.apex-dev-tools:apex-parser:3.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.antlr:antlr4-runtime:4.8-1" level="project" />
+    <orderEntry type="library" name="Maven: io.github.apex-dev-tools:vf-parser:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: com.github.nawforce:scala-json-rpc_2.13:1.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-reflect:2.13.3" level="project" />
     <orderEntry type="library" name="Maven: com.github.nawforce:scala-json-rpc-upickle-json-serializer_2.13:1.0.1" level="project" />
