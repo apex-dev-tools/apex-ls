@@ -119,7 +119,7 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
     collectMethods().flatMap(_.getTargetLocations)
   }
 
-  private def collectMethods(): Set[ApexMethodLike] = {
+  def collectMethods(): Set[ApexMethodLike] = {
     def getApexMethod(methods: Set[MethodDeclaration]): Set[ApexMethodLike] = {
       methods.collect({ case am: ApexMethodLike => am })
     }
