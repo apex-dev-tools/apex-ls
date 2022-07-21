@@ -11,17 +11,18 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.runtime.parsers
+package com.nawforce.vfparser
 
 import com.nawforce.runtime.parsers.PageParser.TerminalNode
-import com.nawforce.runtime.parsers.VFParser.VfUnitContext
+import com.nawforce.vfparser.VFParser.VfUnitContext
 import com.nawforce.runtime.parsers.antlr.{CommonTokenStream, ParserRuleContext}
+import com.nawforce.runtime.parsers.CollectingErrorListener
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("vf-parser", "VFParser")
+@JSImport("@apexdevtools/vf-parser", "VFParser")
 class VFParser(tokens: CommonTokenStream) extends js.Object {
 
   def removeErrorListeners(): Unit                              = js.native
@@ -33,7 +34,7 @@ class VFParser(tokens: CommonTokenStream) extends js.Object {
 object VFParser {
 
   @js.native
-  @JSImport("vf-parser", "VfUnitContext")
+  @JSImport("@apexdevtools/vf-parser", "VfUnitContext")
   class VfUnitContext extends ParserRuleContext {
     def element(): ElementContext = js.native
 
@@ -45,7 +46,7 @@ object VFParser {
   }
 
   @js.native
-  @JSImport("vf-parser", "ElementContext")
+  @JSImport("@apexdevtools/vf-parser", "ElementContext")
   class ElementContext extends ParserRuleContext {
     def Name(): js.Array[TerminalNode]          = js.native
     def Name(i: Int): TerminalNode              = js.native
@@ -56,7 +57,7 @@ object VFParser {
   }
 
   @js.native
-  @JSImport("vf-parser", "AttributeContext")
+  @JSImport("@apexdevtools/vf-parser", "AttributeContext")
   class AttributeContext extends ParserRuleContext {
     def attributeName(): AttributeNameContext               = js.native
     def attributeValues(): js.Array[AttributeValuesContext] = js.native
@@ -64,15 +65,15 @@ object VFParser {
   }
 
   @js.native
-  @JSImport("vf-parser", "AttributeNameContext")
+  @JSImport("@apexdevtools/vf-parser", "AttributeNameContext")
   class AttributeNameContext extends ParserRuleContext {}
 
   @js.native
-  @JSImport("vf-parser", "AttributeValuesContext")
+  @JSImport("@apexdevtools/vf-parser", "AttributeValuesContext")
   class AttributeValuesContext extends ParserRuleContext {}
 
   @js.native
-  @JSImport("vf-parser", "AttributeValuesContext")
+  @JSImport("@apexdevtools/vf-parser", "AttributeValuesContext")
   class ContentContext extends ParserRuleContext {
 
     def element(): js.Array[ElementContext] = js.native
@@ -89,7 +90,7 @@ object VFParser {
   }
 
   @js.native
-  @JSImport("vf-parser", "ChardataContext")
+  @JSImport("@apexdevtools/vf-parser", "ChardataContext")
   class ChardataContext extends ParserRuleContext {
     def CDATA_TEXT(): js.Array[TerminalNode] = js.native
     def CDATA_TEXT(i: Int): TerminalNode     = js.native
@@ -106,6 +107,6 @@ object VFParser {
   }
 
   @js.native
-  @JSImport("vf-parser", "ProcessingInstructionContext")
+  @JSImport("@apexdevtools/vf-parser", "ProcessingInstructionContext")
   class ProcessingInstructionContext extends ParserRuleContext {}
 }

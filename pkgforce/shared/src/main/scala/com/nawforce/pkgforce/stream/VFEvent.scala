@@ -16,8 +16,9 @@ package com.nawforce.pkgforce.stream
 import com.nawforce.pkgforce.documents.SourceInfo
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.LocationAnd
-import com.nawforce.runtime.parsers.VFParser.AttributeContext
-import com.nawforce.runtime.parsers.{PageParser, Source, VFParser}
+import com.nawforce.runtime.parsers.{PageParser, Source}
+import com.nawforce.vfparser.VFParser
+import com.nawforce.vfparser.VFParser.AttributeContext
 
 import java.util.regex.{Matcher, Pattern}
 import scala.collection.compat.immutable.ArraySeq
