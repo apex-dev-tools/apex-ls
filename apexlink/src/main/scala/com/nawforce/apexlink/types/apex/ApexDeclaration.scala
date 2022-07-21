@@ -111,7 +111,7 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
         (td.outermostTypeDeclaration match {
           case d: DependentType => d.getTypeDependencyHolders.toSet
           case _                => Set.empty[TypeId]
-        }) ++ Set(td.typeId)
+        }) ++ Set(td.outerTypeId)
       })
   }
 
