@@ -82,7 +82,7 @@ lazy val pkgforce = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
   .settings(
     scalacOptions += "-deprecation",
-    libraryDependencies += "com.github.financialforcedev" %%% "ff-apex-outline-parser" % "1.0.0",
+    libraryDependencies += "io.github.apex-dev-tools"     %%% "outline-parser"         % "1.0.0",
     libraryDependencies += "com.lihaoyi"                  %%% "upickle"                % "1.2.0",
     libraryDependencies += "org.scalatest"                %%% "scalatest"              % "3.2.0" % Test
   )
