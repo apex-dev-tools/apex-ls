@@ -27,7 +27,7 @@ import scala.reflect.ClassTag
 
 /** Apex class parser helper */
 class CodeParser(val source: Source) {
-  private val cis = source.asInsensitiveStream
+  private[nawforce] val cis = source.asInsensitiveStream
 
   var lastTokenStream: Option[CommonTokenStream] = None
 

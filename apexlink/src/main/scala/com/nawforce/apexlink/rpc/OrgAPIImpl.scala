@@ -371,7 +371,6 @@ case class GetDependencyCounts(
         GetDependencyCountsResult(
           orgImpl
             .getDependencyCounts(request.paths, request.excludeTestClasses)
-            .map(c => DependencyCount(c._1, c._2))
         )
       )
     }

@@ -141,7 +141,11 @@ object GetDependencyCountsRequest {
   implicit val rw: RW[GetDependencyCountsRequest] = macroRW
 }
 
-case class DependencyCount(path: String, count: Int)
+case class DependencyCount(
+  path: String,
+  count: Int,
+  maxDependencyCount: Either[Option[String], Int]
+)
 
 object DependencyCount {
   implicit val rw: RW[DependencyCount] = macroRW

@@ -15,7 +15,7 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.api.{AvailableParser, BuildInfo, Org, Package, ServerOps, TypeSummary}
 import com.nawforce.apexlink.cst.CompilationUnit
-import com.nawforce.apexlink.deps.{DownWalker, TransitiveCollector}
+import com.nawforce.apexlink.deps.{DownWalker, MaxDependencyCountParser, TransitiveCollector}
 import com.nawforce.apexlink.finding.TypeFinder
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
@@ -31,7 +31,7 @@ import com.nawforce.apexlink.types.core.{DependentType, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType}
-import com.nawforce.apexparser.ApexParser
+import com.nawforce.apexparser.{ApexLexer, ApexParser}
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, TEST_METHOD_MODIFIER}
@@ -42,6 +42,7 @@ import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
+import org.antlr.v4.runtime.{CommonTokenStream, Token}
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
@@ -385,7 +386,7 @@ object OPM extends TriHierarchy {
     def getDependencyCounts(
       paths: Array[String],
       excludeTestClasses: Boolean
-    ): Array[(String, Int)] = {
+    ): Array[DependencyCount] = {
 
       def getTypeAndSummaryOfPath(path: String): Option[(TypeIdentifier, TypeSummary)] =
         packages.view
@@ -421,7 +422,14 @@ object OPM extends TriHierarchy {
             }
             .map {
               case (typeId, transitiveDependencies) =>
-                (path, countTransitiveDependencies(typeId, transitiveDependencies))
+                DependencyCount(
+                  path,
+                  countTransitiveDependencies(typeId, transitiveDependencies),
+                  MaxDependencyCountParser.parseMaxDependencyCount(
+                    path,
+                    workspace.projectConfig.flatMap(_.maxDependencyCount)
+                  )
+                )
             }
         }
     }
