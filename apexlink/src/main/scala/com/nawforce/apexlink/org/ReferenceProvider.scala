@@ -12,9 +12,10 @@ import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
   ApexFullDeclaration,
   FullDeclaration,
+  PreReValidatable,
   SummaryDeclaration
 }
-import com.nawforce.apexlink.types.core.{Dependent, PreReValidatable, TypeDeclaration, TypeId}
+import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 
 import scala.reflect.ClassTag

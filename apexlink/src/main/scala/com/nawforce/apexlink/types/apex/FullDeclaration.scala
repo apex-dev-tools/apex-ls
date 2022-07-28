@@ -215,7 +215,9 @@ abstract class FullDeclaration(
 
     // Log dependencies logged against this context
     setDepends(context.dependencies)
-    //Call to create the methodMap so iwe can force to build up shadows, used by unused and get references
+
+    //Forcing creating of method map in case it is not already done. Depending on the order of validation the methodMap
+    // may have been created already, this is just making sure it is so that we can rely on the side-effects
     methodMap
   }
 
