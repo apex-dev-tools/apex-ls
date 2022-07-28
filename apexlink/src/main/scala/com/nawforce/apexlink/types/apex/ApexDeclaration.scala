@@ -34,6 +34,12 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.util.hashing.MurmurHash3
 
+trait PreReValidatable {
+
+  /** Called before validate() when a type is about to be re-validated to allow for cached state cleaning. */
+  def preReValidate(): Unit = {}
+}
+
 /** Apex block core features, be they full or summary style */
 trait ApexBlockLike extends BlockDeclaration with Locatable {
   val thisTypeId: TypeId

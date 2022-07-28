@@ -23,13 +23,10 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.types.apex.PreReValidatable
 import com.nawforce.apexlink.types.other.Component
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.apexlink.types.synthetic.{
-  CustomField,
-  CustomFieldDeclaration,
-  LocatableCustomFieldDeclaration
-}
+import com.nawforce.apexlink.types.synthetic.{CustomField, CustomFieldDeclaration, LocatableCustomFieldDeclaration}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.Nature
@@ -360,12 +357,6 @@ trait AbstractTypeDeclaration {
     verifyContext: VerifyContext
   ): Either[String, ConstructorDeclaration]
 
-}
-
-trait PreReValidatable {
-
-  /** Called before validate() when a type is about to be re-validated to allow for cached state cleaning. */
-  def preReValidate(): Unit = {}
 }
 
 trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReValidatable {
