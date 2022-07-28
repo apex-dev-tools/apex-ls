@@ -190,34 +190,37 @@ class ApexLightNode(
   override def localIssues: Seq[Issue] = super.localIssues ++ checkCustomException()
 
   private def checkCustomException(): Seq[Issue] = {
-    val isNamedCorrectly    = name.endsWith(Names.Exception)
-    val isExtendedCorrectly = typeRef.exists(_.name.endsWith(Names.Exception))
-
-    (isNamedCorrectly, isExtendedCorrectly) match {
-      case (true, false) =>
-        ArraySeq(
-          new Issue(
-            location.path,
-            Diagnostic(
-              ERROR_CATEGORY,
-              typeRef.map(_.location).getOrElse(idLocation),
-              s"Exception class '$name' must extend another Exception class"
+    val isClass                  = nature == CLASS_NATURE || nature == INTERFACE_NATURE
+    lazy val isNamedCorrectly    = name.endsWith(Names.Exception)
+    lazy val isExtendedCorrectly = typeRef.exists(_.name.endsWith(Names.Exception))
+    if (isClass) {
+      (isNamedCorrectly, isExtendedCorrectly) match {
+        case (true, false) =>
+          ArraySeq(
+            new Issue(
+              location.path,
+              Diagnostic(
+                ERROR_CATEGORY,
+                typeRef.map(_.location).getOrElse(idLocation),
+                s"Exception class '$name' must extend another Exception class"
+              )
             )
           )
-        )
-      case (false, true) =>
-        ArraySeq(
-          new Issue(
-            location.path,
-            Diagnostic(
-              ERROR_CATEGORY,
-              idLocation,
-              s"Class '$name' extending an Exception must have a name ending in Exception"
+        case (false, true) =>
+          ArraySeq(
+            new Issue(
+              location.path,
+              Diagnostic(
+                ERROR_CATEGORY,
+                idLocation,
+                s"Class '$name' extending an Exception must have a name ending in Exception"
+              )
             )
           )
-        )
-      case _ => ArraySeq.empty
-    }
+        case _ => ArraySeq.empty
+      }
+    } else
+      ArraySeq.empty
   }
 }
 
