@@ -26,10 +26,14 @@ import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.apex.PreReValidatable
 import com.nawforce.apexlink.types.other.Component
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.apexlink.types.synthetic.{CustomField, CustomFieldDeclaration, LocatableCustomFieldDeclaration}
+import com.nawforce.apexlink.types.synthetic.{
+  CustomField,
+  CustomFieldDeclaration,
+  LocatableCustomFieldDeclaration
+}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
-import com.nawforce.pkgforce.parsers.Nature
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE, Nature}
 import com.nawforce.pkgforce.path.{PathLike, UnsafeLocatable}
 
 import scala.collection.immutable.ArraySeq
@@ -401,7 +405,10 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
   def isComplete: Boolean
   lazy val isExternallyVisible: Boolean =
     modifiers.exists(TypeDeclaration.externalTypeModifiers.contains)
-  lazy val isAbstract: Boolean           = modifiers.contains(ABSTRACT_MODIFIER)
+  lazy val isAbstract: Boolean = modifiers.contains(ABSTRACT_MODIFIER)
+  lazy val isVirtual: Boolean  = modifiers.contains(VIRTUAL_MODIFIER)
+  lazy val isExtensible: Boolean =
+    nature == INTERFACE_NATURE || (nature == CLASS_NATURE && (isAbstract || isVirtual))
   lazy val isFieldConstructed: Boolean   = isSObject || isApexPagesComponent
   lazy val isSObject: Boolean            = superClass.contains(TypeNames.SObject)
   lazy val isApexPagesComponent: Boolean = superClass.contains(TypeNames.ApexPagesComponent)

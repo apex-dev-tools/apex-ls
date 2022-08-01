@@ -57,8 +57,8 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
           .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _))
           sameElements Array(
-            LocationLinkString("concrete", "/Bar.cls", "void concrete(){}", "concrete"),
-            LocationLinkString("concrete", "/Dummy.cls", "void concrete(){}", "concrete")
+            LocationLinkString("concrete", "/Dummy.cls", "void concrete(){}", "concrete"),
+            LocationLinkString("concrete", "/Bar.cls", "void concrete(){}", "concrete")
           )
       )
     }
