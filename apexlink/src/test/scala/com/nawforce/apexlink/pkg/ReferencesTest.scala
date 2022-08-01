@@ -198,8 +198,9 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
       assert(
         org2.unmanaged
           .getReferences(path, line = 1, offset = usedB._2)
-          .map(TargetLocationString(root, _)) sameElements
-          Array(
+          .map(TargetLocationString(root, _))
+          .toSet ==
+          Set(
             TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
             TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()"),
             TargetLocationString(root.join("UsedC.cls").toString, "new B().fn()")
