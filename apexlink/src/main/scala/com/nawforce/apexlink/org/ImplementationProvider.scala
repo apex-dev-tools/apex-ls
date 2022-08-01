@@ -130,15 +130,6 @@ trait ImplementationProvider extends SourceOps {
 }
 
 private object ExtensibleClassesAndInterface {
-  def unapply(td: TypeDeclaration): Option[DependentType with Locatable] = {
-    (td, td.nature) match {
-      case (d: DependentType with Locatable, INTERFACE_NATURE) => Some(d)
-      case (d: DependentType with Locatable, CLASS_NATURE) =>
-        val modifiers = d.modifiers.toSet
-        if (modifiers.intersect(Set(ABSTRACT_MODIFIER, VIRTUAL_MODIFIER)).nonEmpty)
-          Some(d)
-        else None
-      case _ => None
-    }
-  }
+  def unapply(td: TypeDeclaration): Option[DependentType with Locatable] =
+    Option.when(td.isExtensible) { td } collect { case td: DependentType with Locatable => td }
 }
