@@ -4,7 +4,6 @@
 
 package com.nawforce.apexlink.deps
 
-import com.nawforce.apexlink.org.ReferenceProvider.TypeIdOps
 import com.nawforce.apexlink.types.apex.ApexDeclaration
 import com.nawforce.apexlink.types.core.TypeId
 import com.nawforce.apexparser.ApexLexer

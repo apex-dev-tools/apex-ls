@@ -4,9 +4,8 @@
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.cst.ExprContext
-import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.memory.SkinnySet
-import com.nawforce.apexlink.org.ReferenceProvider.{TypeIdOps, emptyTargetLocations}
+import com.nawforce.apexlink.org.ReferenceProvider.emptyTargetLocations
 import com.nawforce.apexlink.rpc.TargetLocation
 import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
@@ -128,10 +127,4 @@ trait ReferenceProvider extends SourceOps {
 
 object ReferenceProvider {
   private val emptyTargetLocations: Array[TargetLocation] = Array.empty
-
-  implicit class TypeIdOps(typeId: TypeId) {
-    def toTypeDeclaration[T <: TypeDeclaration: ClassTag]: Option[T] = {
-      TypeResolver(typeId.typeName, typeId.module).toOption.collect { case td: T => td }
-    }
-  }
 }
