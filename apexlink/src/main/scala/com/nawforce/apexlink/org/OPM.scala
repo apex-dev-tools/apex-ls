@@ -408,13 +408,19 @@ object OPM extends TriHierarchy {
         transitiveDependencies.count(t => t != typeId)
       }
 
+      def getTypeIdOfPath(path: String): Option[TypeId] =
+        packages.view
+          .flatMap(pkg => pkg.getTypeOfPathInternal(Path.safeApply(path)))
+          .headOption
+
       val collector = new TransitiveCollector(this, true, true)
 
       paths
         .flatMap { path =>
           getTypeAndSummaryOfPath(path)
             .filter {
-              case (_, summary) =>
+              case (typeId, summary) =>
+                typeId.toString
                 !excludeTestClasses || !summary.modifiers.contains(ISTEST_ANNOTATION)
             }
             .map {
@@ -425,10 +431,15 @@ object OPM extends TriHierarchy {
                 DependencyCount(
                   path,
                   countTransitiveDependencies(typeId, transitiveDependencies),
-                  MaxDependencyCountParser.parseMaxDependencyCount(
-                    path,
-                    workspace.projectConfig.flatMap(_.maxDependencyCount)
-                  )
+                  getTypeIdOfPath(path)
+                    .map(
+                      id =>
+                        MaxDependencyCountParser.parseMaxDependencyCount(
+                          id,
+                          workspace.projectConfig.flatMap(_.maxDependencyCount)
+                        )
+                    )
+                    .getOrElse(Left(Some(s"Could not find type for path $path")))
                 )
             }
         }

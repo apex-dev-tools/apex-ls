@@ -14,18 +14,18 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.ParserHelper
+import com.nawforce.apexlink.{FileSystemHelper, ParserHelper, TestHelper}
 import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
-import com.nawforce.pkgforce.path.Location
+import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.platform.{Environment, Path}
 import org.scalatest.funsuite.AsyncFunSuite
 import org.scalatest.{Assertion, BeforeAndAfterEach}
 
 import scala.concurrent.Future
 
-class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
+class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
   val samplesDir: Path = {
     val dir = Path("apexlink").join("samples")
@@ -478,6 +478,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
       )
     } yield {
       assert(result.error.isEmpty)
+      assert(dependencyCounts.counts.forall(_.maxDependencyCount.isLeft))
+      assert(dependencyCounts.counts.flatMap(_.maxDependencyCount.swap.toOption).flatten.isEmpty)
       assert(dependencyCounts.counts.length == 3)
       assert(
         dependencyCounts.counts.filter(c => c.path.contains("TransDep")).map(_.count).apply(0) == 2
@@ -491,4 +493,115 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach {
     }
   }
 
+  test("Get DependencyCounts with maxDependencyCount info from SFDX project") {
+    FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
+      root.createFile("sfdx-project.json", """
+          |{
+          |  "packageDirectories": [
+          |    {
+          |      "path": "force-app",
+          |      "default": true
+          |    }
+          |  ],
+          |  "namespace": "",
+          |  "sfdcLoginUrl": "https://login.salesforce.com",
+          |  "sourceApiVersion": "48.0",
+          |  "plugins" : {
+          |     "maxDependencyCount" : 12
+          |  }
+          |}
+          |""".stripMargin)
+
+      val orgAPI = createOrg(root)
+      assert(
+        orgAPI
+          .getDependencyCounts(
+            Array(
+              root.toString + "force-app/main/default/classes/NoDeps.cls",
+              root.toString + "force-app/main/default/classes/SingleDep.cls",
+              root.toString + "force-app/main/default/classes/TransDep.cls",
+              root.toString + "force-app/main/default/classes/TestDep.cls"
+            ),
+            excludeTestClasses = true
+          )
+          .map(_.maxDependencyCount)
+          .forall(d => d.isRight && d.toOption.get == 12)
+      )
+    }
+  }
+
+  test("Get DependencyCounts with MaxDependencyCount comment") {
+    FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
+      root.createFile("sfdx-project.json", """
+                                                  |{
+                                                  |  "packageDirectories": [
+                                                  |    {
+                                                  |      "path": "force-app",
+                                                  |      "default": true
+                                                  |    }
+                                                  |  ],
+                                                  |  "namespace": "",
+                                                  |  "sfdcLoginUrl": "https://login.salesforce.com",
+                                                  |  "sourceApiVersion": "48.0",
+                                                  |  "plugins" : {
+                                                  |     "maxDependencyCount" : 12
+                                                  |  }
+                                                  |}
+                                                  |""".stripMargin)
+      root.createFile(root.join("force-app/main/default/classes/Test.cls").toString, """
+        |//MaxDependencyCount(60)
+        |public class Test {}""".stripMargin)
+
+      val orgAPI = createOrg(root)
+      assert(
+        orgAPI
+          .getDependencyCounts(
+            Array(root.join("force-app/main/default/classes/Test.cls").toString),
+            excludeTestClasses = true
+          )
+          .map(_.maxDependencyCount)
+          .forall(d => d.isRight && d.toOption.get == 60)
+      )
+    }
+  }
+
+  test("Get DependencyCounts with MaxDependencyCount comment with negative integer") {
+    FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
+      root.createFile(root.toString + "/force-app/main/default/classes/Test.cls", """
+          |//MaxDependencyCount(-1)
+          |public class Test {}
+          |""".stripMargin)
+      val orgAPI = createOrg(root)
+      assert(
+        orgAPI
+          .getDependencyCounts(
+            Array(root.toString + "/force-app/main/default/classes/Test.cls"),
+            excludeTestClasses = true
+          )
+          .map(_.maxDependencyCount)
+          .forall(d => d.isLeft && d.swap.toOption.flatten.get == "'-1' must be >=0")
+      )
+
+    }
+  }
+
+  test("Get DependencyCounts with MaxDependencyCount comment with non integer") {
+    FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
+      root.createFile(root.toString + "/force-app/main/default/classes/Test.cls", """
+        |//MaxDependencyCount(abc)
+        |public class Test {}""".stripMargin)
+
+      val orgAPI = createOrg(root)
+      assert(
+        orgAPI
+          .getDependencyCounts(
+            Array(root.toString + "/force-app/main/default/classes/Test.cls"),
+            excludeTestClasses = true
+          )
+          .map(_.maxDependencyCount)
+          .forall(d => d.isLeft && d.swap.toOption.flatten.get == "'abc' is not an integer value")
+      )
+
+    }
+  }
 }

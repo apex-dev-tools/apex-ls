@@ -4,9 +4,11 @@
 
 package com.nawforce.apexlink.deps
 
+import com.nawforce.apexlink.org.ReferenceProvider.TypeIdOps
+import com.nawforce.apexlink.types.apex.ApexDeclaration
+import com.nawforce.apexlink.types.core.TypeId
 import com.nawforce.apexparser.ApexLexer
 import com.nawforce.runtime.parsers.CodeParser
-import com.nawforce.runtime.platform.Path
 import org.antlr.v4.runtime.{CommonTokenStream, Token}
 
 import scala.collection.mutable
@@ -17,7 +19,7 @@ object MaxDependencyCountParser {
   private final val maxCountMarker       = "MaxDependencyCount("
   private final val maxCountMarkerLength = maxCountMarker.length
 
-  def parseMaxDependencyCount(path: String, default: Option[Int]): Either[Option[String], Int] = {
+  def parseMaxDependencyCount(typeId: TypeId, default: Option[Int]): Either[Option[String], Int] = {
     val dependencyLimitParseExceptions = mutable.Queue[String]()
 
     def parseTokenToDependencyLimit(t: Token): Option[Int] = {
@@ -30,12 +32,13 @@ object MaxDependencyCountParser {
       }
     }
 
-    val sourcePath = Path.safeApply(path)
-    sourcePath.readSourceData() match {
-      case Right(source) =>
+    val sourcePath = typeId.toTypeDeclaration[ApexDeclaration].map(_.location.path)
+
+    sourcePath.map(_.readSourceData()) match {
+      case Some(Right(source)) =>
         if (source.asString.indexOf(maxCountMarker) == -1)
           return if (default.isEmpty) Left(None) else Right(default.get)
-        val parser      = CodeParser(sourcePath, source)
+        val parser      = CodeParser(sourcePath.get, source)
         val tokenStream = new CommonTokenStream(new ApexLexer(parser.cis))
         tokenStream.fill()
 
@@ -49,7 +52,8 @@ object MaxDependencyCountParser {
         else if (dependencyLimitParseExceptions.nonEmpty)
           Left(Some(dependencyLimitParseExceptions.last))
         else Right(counts.max)
-      case Left(err) => Left(Some(err))
+      case Some(Left(err)) => Left(Some(err))
+      case None            => Left(Some(s"Cannot resolve type ${typeId.typeName.toString}"))
     }
   }
 
