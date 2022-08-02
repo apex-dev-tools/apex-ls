@@ -14,12 +14,19 @@
 
 package com.nawforce.apexlink.types.core
 
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.pkgforce.names.{TypeIdentifier, TypeName}
+
+import scala.reflect.ClassTag
 
 case class TypeId(module: OPM.Module, typeName: TypeName) {
   def asTypeIdentifier: TypeIdentifier = {
     TypeIdentifier(module.pkg.namespace, typeName)
+  }
+
+  private[nawforce] def toTypeDeclaration[T <: TypeDeclaration: ClassTag]: Option[T] = {
+    TypeResolver(typeName, module).toOption.collect { case td: T => td }
   }
 
   override def toString: String = asTypeIdentifier.toString

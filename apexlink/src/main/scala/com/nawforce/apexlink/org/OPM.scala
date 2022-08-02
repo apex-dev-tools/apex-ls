@@ -15,7 +15,7 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.api.{AvailableParser, BuildInfo, Org, Package, ServerOps, TypeSummary}
 import com.nawforce.apexlink.cst.CompilationUnit
-import com.nawforce.apexlink.deps.{DownWalker, TransitiveCollector}
+import com.nawforce.apexlink.deps.{DownWalker, MaxDependencyCountParser, TransitiveCollector}
 import com.nawforce.apexlink.finding.TypeFinder
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
@@ -27,7 +27,7 @@ import com.nawforce.apexlink.types.apex.{
   ApexFullDeclaration,
   TriggerDeclaration
 }
-import com.nawforce.apexlink.types.core.{DependentType, TypeDeclaration, TypeId}
+import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType}
@@ -385,7 +385,7 @@ object OPM extends TriHierarchy {
     def getDependencyCounts(
       paths: Array[String],
       excludeTestClasses: Boolean
-    ): Array[(String, Int)] = {
+    ): Array[DependencyCount] = {
 
       def getTypeAndSummaryOfPath(path: String): Option[(TypeIdentifier, TypeSummary)] =
         packages.view
@@ -407,13 +407,19 @@ object OPM extends TriHierarchy {
         transitiveDependencies.count(t => t != typeId)
       }
 
+      def getTypeIdOfPath(path: String): Option[TypeId] =
+        packages.view
+          .flatMap(pkg => pkg.getTypeOfPathInternal(Path.safeApply(path)))
+          .headOption
+
       val collector = new TransitiveCollector(this, true, true)
 
       paths
         .flatMap { path =>
           getTypeAndSummaryOfPath(path)
             .filter {
-              case (_, summary) =>
+              case (typeId, summary) =>
+                typeId.toString
                 !excludeTestClasses || !summary.modifiers.contains(ISTEST_ANNOTATION)
             }
             .map {
@@ -421,7 +427,19 @@ object OPM extends TriHierarchy {
             }
             .map {
               case (typeId, transitiveDependencies) =>
-                (path, countTransitiveDependencies(typeId, transitiveDependencies))
+                DependencyCount(
+                  path,
+                  countTransitiveDependencies(typeId, transitiveDependencies),
+                  getTypeIdOfPath(path)
+                    .map(
+                      id =>
+                        MaxDependencyCountParser.parseMaxDependencyCount(
+                          id,
+                          workspace.projectConfig.flatMap(_.maxDependencyCount)
+                        )
+                    )
+                    .getOrElse(Left(Some(s"Could not find type for path $path")))
+                )
             }
         }
     }

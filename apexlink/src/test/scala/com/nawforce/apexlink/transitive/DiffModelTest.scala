@@ -62,8 +62,8 @@ object DiffModelTest {
       val graphTransitiveCount = getGraphTransitiveDependencies(org, identifier)
       val countTransitives = org
         .getDependencyCounts(Array(path), excludeTestClasses = false)
-        .find(_._1 == path)
-        .map(_._2)
+        .find(_.path == path)
+        .map(_.count)
         .getOrElse(-1)
 
       val result =

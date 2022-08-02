@@ -14,7 +14,6 @@
 package com.nawforce.apexlink
 
 import java.nio.file.Files
-
 import com.google.common.jimfs.{Configuration, Jimfs}
 import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.path.PathLike
@@ -38,6 +37,34 @@ object FileSystemHelper {
     })
 
     ParsedCache.clear()
+    verify(new Path(rootDir))
+  }
+
+  def runWithCopy[T](dir: PathLike)(verify: PathLike => T): T = {
+    val config = Configuration
+      .unix()
+      .toBuilder
+      .setWorkingDirectory("/")
+      .build()
+    val fs      = Jimfs.newFileSystem(config)
+    val rootDir = fs.getRootDirectories.iterator().next()
+    dir.native match {
+      case nio: java.nio.file.Path =>
+        val stream = Files.walk(nio)
+        stream.forEach(streamPath => {
+          val relativePath = nio.toUri.relativize(streamPath.toUri).getPath
+          val copy         = rootDir.resolve(relativePath)
+          if (copy.getParent != null)
+            Files.createDirectories(copy.getParent)
+          if (!Files.isDirectory(streamPath))
+            Files.copy(streamPath, copy)
+        })
+        stream.close()
+      case _ =>
+    }
+
+    ParsedCache.clear()
+
     verify(new Path(rootDir))
   }
 

@@ -37,7 +37,8 @@ class MDAPIWorkspaceConfig(namespace: Option[Name], paths: Seq[PathLike]) extend
     s"MDAPIWorkspace(namespace=$namespace, paths=${paths.map(_.toString).mkString(", ")})"
 }
 
-class SFDXWorkspaceConfig(val rootPath: PathLike, project: SFDXProject) extends WorkspaceConfig {
+class SFDXWorkspaceConfig(val rootPath: PathLike, val project: SFDXProject)
+    extends WorkspaceConfig {
 
   override def layers(logger: IssueLogger): Seq[NamespaceLayer] = project.layers(logger)
 

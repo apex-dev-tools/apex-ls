@@ -25,6 +25,11 @@ import com.nawforce.pkgforce.sfdx.{
 }
 import com.nawforce.pkgforce.stream.{IssuesEvent, PackageEvent, PackageStream}
 
+/**
+  * Contains any config option that can be used by the Org
+  */
+case class ProjectConfig(maxDependencyCount: Option[Int])
+
 /** Metadata workspace, maintains information on available metadata within a project/package.
   *
   * Duplicate detection is based on the relevant MetadataDocumentType(s) being able to generate an accurate TypeName
@@ -35,7 +40,7 @@ import com.nawforce.pkgforce.stream.{IssuesEvent, PackageEvent, PackageStream}
   * During an upsert/deletion of new types the index will also need to be updated so that it maintains an accurate
   * view of the metadata files being used.
   */
-case class Workspace(layers: Seq[NamespaceLayer]) {
+case class Workspace(layers: Seq[NamespaceLayer], projectConfig: Option[ProjectConfig] = None) {
 
   // Document indexes for each layer of actual metadata
   val indexes: Map[ModuleLayer, IssuesAnd[DocumentIndex]] =
@@ -95,7 +100,12 @@ object Workspace {
         catchingLogger.issues.foreach(logger.log)
         None
       }
-      new Workspace(layers)
+      config match {
+        case config: SFDXWorkspaceConfig =>
+          new Workspace(layers, Some(ProjectConfig(config.project.maxDependencyCount)))
+        case _ => new Workspace(layers)
+      }
+
     })
   }
 }
