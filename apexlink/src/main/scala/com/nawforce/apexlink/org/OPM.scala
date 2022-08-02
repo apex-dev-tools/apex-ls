@@ -27,11 +27,11 @@ import com.nawforce.apexlink.types.apex.{
   ApexFullDeclaration,
   TriggerDeclaration
 }
-import com.nawforce.apexlink.types.core.{DependentType, TypeDeclaration, TypeId}
+import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType}
-import com.nawforce.apexparser.{ApexLexer, ApexParser}
+import com.nawforce.apexparser.ApexParser
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, TEST_METHOD_MODIFIER}
@@ -42,7 +42,6 @@ import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
-import org.antlr.v4.runtime.{CommonTokenStream, Token}
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
