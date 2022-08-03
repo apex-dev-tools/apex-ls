@@ -18,3 +18,4 @@ Class-Path:
   upickle-core_2.13-1.2.0.jar
   upickle-implicits_2.13-1.2.0.jar
   upickle_2.13-1.2.0.jar
+  vf-parser-1.0.0.jar
