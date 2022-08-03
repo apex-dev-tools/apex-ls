@@ -4,6 +4,8 @@
 
 package com.nawforce.apexlink.deps
 
+import com.nawforce.apexlink.api.Org
+import com.nawforce.apexlink.deps.MaxDependencyCountParser.{maxCountMarker, maxCountMarkerLength}
 import com.nawforce.apexlink.types.apex.ApexDeclaration
 import com.nawforce.apexlink.types.core.TypeId
 import com.nawforce.apexparser.ApexLexer
@@ -14,11 +16,16 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.util.{Failure, Success, Try}
 
-object MaxDependencyCountParser {
-  private final val maxCountMarker       = "MaxDependencyCount("
-  private final val maxCountMarkerLength = maxCountMarker.length
+class MaxDependencyCountParser(org: Org) {
+  def count(typeId: TypeId): Either[Option[String], Int] = {
+    typeId.toTypeDeclaration[ApexDeclaration] match {
+      case Some(td) => count(td)
+      case None     => Left(Some(s"Cannot resolve type ${typeId.typeName.toString}"))
+    }
 
-  def parseMaxDependencyCount(typeId: TypeId, default: Option[Int]): Either[Option[String], Int] = {
+  }
+
+  def count(td: ApexDeclaration): Either[Option[String], Int] = {
     val dependencyLimitParseExceptions = mutable.Queue[String]()
 
     def parseTokenToDependencyLimit(t: Token): Option[Int] = {
@@ -31,13 +38,13 @@ object MaxDependencyCountParser {
       }
     }
 
-    val sourcePath = typeId.toTypeDeclaration[ApexDeclaration].map(_.location.path)
-
-    sourcePath.map(_.readSourceData()) match {
-      case Some(Right(source)) =>
+    val sourcePath   = td.location.path
+    val defaultCount = org.getProjectConfig().flatMap(_.maxDependencyCount)
+    sourcePath.readSourceData() match {
+      case Right(source) =>
         if (source.asString.indexOf(maxCountMarker) == -1)
-          return if (default.isEmpty) Left(None) else Right(default.get)
-        val parser      = CodeParser(sourcePath.get, source)
+          return if (defaultCount.isEmpty) Left(None) else Right(defaultCount.get)
+        val parser      = CodeParser(sourcePath, source)
         val tokenStream = new CommonTokenStream(new ApexLexer(parser.cis))
         tokenStream.fill()
 
@@ -51,8 +58,7 @@ object MaxDependencyCountParser {
         else if (dependencyLimitParseExceptions.nonEmpty)
           Left(Some(dependencyLimitParseExceptions.last))
         else Right(counts.max)
-      case Some(Left(err)) => Left(Some(err))
-      case None            => Left(Some(s"Cannot resolve type ${typeId.typeName.toString}"))
+      case Left(err) => Left(Some(err))
     }
   }
 
@@ -70,4 +76,9 @@ object MaxDependencyCountParser {
       case Failure(_)                   => Left(Some(s"'$text' is not an integer value"))
     }
   }
+}
+
+object MaxDependencyCountParser {
+  private final val maxCountMarker       = "MaxDependencyCount("
+  private final val maxCountMarkerLength = maxCountMarker.length
 }

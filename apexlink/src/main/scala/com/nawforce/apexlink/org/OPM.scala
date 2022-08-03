@@ -39,7 +39,7 @@ import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.stream._
-import com.nawforce.pkgforce.workspace.{ModuleLayer, Workspace}
+import com.nawforce.pkgforce.workspace.{ModuleLayer, ProjectConfig, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
 
@@ -98,6 +98,8 @@ object OPM extends TriHierarchy {
       LoggerOps.info(s"Using $parserType")
       parserType
     }
+
+    override def getProjectConfig(): Option[ProjectConfig] = workspace.projectConfig
 
     /** Packages in org in deploy order, the last entry is the unmanaged package identified by namespace = None */
     override val packages: ArraySeq[PackageImpl] = {
@@ -249,6 +251,7 @@ object OPM extends TriHierarchy {
                 nodeFileSize(n.id),
                 n.nature,
                 n.transitiveCount,
+                n.maxDependencyCount,
                 n.isEntryPoint,
                 n.extending,
                 n.implementing,
@@ -431,13 +434,7 @@ object OPM extends TriHierarchy {
                   path,
                   countTransitiveDependencies(typeId, transitiveDependencies),
                   getTypeIdOfPath(path)
-                    .map(
-                      id =>
-                        MaxDependencyCountParser.parseMaxDependencyCount(
-                          id,
-                          workspace.projectConfig.flatMap(_.maxDependencyCount)
-                        )
-                    )
+                    .map(id => new MaxDependencyCountParser(this).count(id))
                     .getOrElse(Left(Some(s"Could not find type for path $path")))
                 )
             }
