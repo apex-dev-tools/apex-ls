@@ -11,7 +11,7 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
   test("Correct dependencies returned at depth 1") {
     FileSystemHelper.run(
       Map(
-        "A.cls" -> "public class A extends B { C c;}",
+        "A.cls" -> "//MaxDependencyCount(10)\n public class A extends B { C c;}",
         "B.cls" -> "public class B {C c;}",
         "C.cls" -> "public class C {D d;}",
         "D.cls" -> "public class D {}"
@@ -28,10 +28,10 @@ class DependencyGraphTest extends AnyFunSuite with TestHelper {
         result.nodeData sameElements Array(
           DependencyNode(
             TypeIdentifier(None, TypeName(Name("A"))),
-            32,
+            58,
             "class",
             3,
-            None,
+            Some(10),
             isEntryPoint = false,
             Array(TypeIdentifier(None, TypeName(Name("B")))),
             Array(),
