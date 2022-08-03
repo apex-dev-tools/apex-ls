@@ -31,9 +31,12 @@ object DependencyGraph {
 /** Node of a dependency graph, represents some kind of type declaration. */
 case class DependencyNode(
   identifier: TypeIdentifier,
-  size: Long,                          // Size of metadata in bytes
-  nature: String,                      // Nature of types, class, interface or enum
-  transitiveCount: Int,                // Sum of all dependant types
+  size: Long,           // Size of metadata in bytes
+  nature: String,       // Nature of types, class, interface or enum
+  transitiveCount: Int, // Sum of all dependant types
+  maxDependencyCount: Option[
+    Int
+  ],                                   // MaxDependencyCount value in the file or the the value from SFDXProject else None
   isEntryPoint: Boolean,               // Type is available for external use
   extending: Array[TypeIdentifier],    // Types that this type extends
   implementing: Array[TypeIdentifier], // Types that this type implements

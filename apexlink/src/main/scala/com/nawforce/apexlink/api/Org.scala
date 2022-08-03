@@ -26,7 +26,7 @@ import com.nawforce.pkgforce.api.IssuesCollection
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
-import com.nawforce.pkgforce.workspace.Workspace
+import com.nawforce.pkgforce.workspace.{ProjectConfig, Workspace}
 import com.nawforce.runtime.platform.Path
 
 /** A virtual Org used to present the analysis functionality in a familiar way.
@@ -49,6 +49,9 @@ import com.nawforce.runtime.platform.Path
   * Orgs and Packages are not thread safe, serialise all calls to them.
   */
 trait Org {
+
+  /** Get the current workspace config for the org */
+  def getProjectConfig(): Option[ProjectConfig]
 
   /** Get array of current packages. */
   def getPackages(): Array[Package]

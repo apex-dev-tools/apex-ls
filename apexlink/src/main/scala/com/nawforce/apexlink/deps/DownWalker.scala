@@ -29,6 +29,7 @@ case class NodeData(
   id: TypeIdentifier,
   nature: String,
   transitiveCount: Int,
+  maxDependencyCount: Option[Int],
   isEntryPoint: Boolean,
   extending: Array[TypeIdentifier],
   implementing: Array[TypeIdentifier],
@@ -38,7 +39,8 @@ case class NodeData(
 /** Downstream dependency walker. Collects information on the dependencies of a type. */
 class DownWalker(org: Org, apexOnly: Boolean) {
 
-  private val transitiveCollector = new TransitiveCollector(org, samePackage = true, apexOnly)
+  private val transitiveCollector      = new TransitiveCollector(org, samePackage = true, apexOnly)
+  private val maxDependencyCountParser = new MaxDependencyCountParser(org)
 
   /* Collect information on dependencies of the passed identifiers. The walk depth can be limited but the result will
    * always include the root node(s) information as the first 'n' elements of the returned Array.
@@ -114,6 +116,9 @@ class DownWalker(org: Org, apexOnly: Boolean) {
         val extending    = inherits.filter(id => id._1 == CLASS_NATURE).map(_._2)
         val implementing = inherits.filter(id => id._1 == INTERFACE_NATURE).map(_._2)
         val output       = extending ++ implementing
+        val maxDependencyCount = Option(td)
+          .collect({ case td: ApexDeclaration => td })
+          .flatMap(maxDependencyCountParser.count(_).toOption)
 
         val all =
           pkg
@@ -130,6 +135,7 @@ class DownWalker(org: Org, apexOnly: Boolean) {
           id,
           td.nature.value,
           transitiveCollector.count(id, ignoring),
+          maxDependencyCount,
           isEntryNode(td),
           extending.toArray,
           implementing.toArray,
