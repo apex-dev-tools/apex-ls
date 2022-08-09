@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
 Main-Class: com.nawforce.apexlink.ApexLink
 Class-Path: 
-  pkgforce_2.13-2.7.2.jar
+  pkgforce_2.13-2.8.0.jar
