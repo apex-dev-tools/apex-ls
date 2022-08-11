@@ -12,38 +12,75 @@ import scala.collection.mutable
 object ReferencingCollector {
 
   case class NodeInfo(td: ApexDeclaration, primary: Boolean)
+  case class TestInfo(testClass: ApexDeclaration, explain: List[ApexDeclaration]) {
+    def asTypeNameStrings(): (String, Array[String]) =
+      (testClass.typeName.toString, explain.map(_.typeName.toString).toArray)
+  }
 
   /** Given some Types, find all referencing Apex tests. To find all relevant tests the input should include related
-    *  types such as superclasses, interfaces and nexted types with the primary flag set to false. Test classes included
+    *  types such as superclasses, interfaces and nested types with the primary flag set to false. Test classes included
     *  in the input will be contained in the results.
     */
-  def testReferences(sourceTds: Set[NodeInfo]): Set[ApexDeclaration] = {
-    val results = mutable.Set[ApexDeclaration]()
+  def testReferences(sourceTds: Set[NodeInfo]): Set[TestInfo] = {
+    val results = mutable.Map[String, TestInfo]()
     visitApexReferences(sourceTds, (primary, path) => testClassVisit(results, primary, path))
-    results.toSet
+    results.values.toSet
   }
 
   /** Visitor for locating @isTest classes */
   private def testClassVisit(
-    accum: mutable.Set[ApexDeclaration],
+    accum: mutable.Map[String, TestInfo],
     primary: Boolean,
     path: List[ApexDeclaration]
   ): Boolean = {
     // Terminate search if we already have this test class
-    if (accum.contains(path.head))
+    val typeName = path.head.typeName.toString
+    if (accum.contains(typeName))
       return false
 
     // Always save test classes, we don't bail out here as we want to capture test->test dependencies
     if (path.head.modifiers.contains(ISTEST_ANNOTATION))
-      accum.add(path.head)
+      accum.put(typeName, TestInfo(path.head, path))
 
     if (!primary) {
-      // For non-primary searches we don't want to spider from interfaces beyond the first layer as we can end up
-      // in code unrelated to the primary changes. We are just looking for tests of the interface.
-      !path.tail.exists(_.nature == INTERFACE_NATURE)
+      // For non-primary searches we need to be sure we have a use relationship between holder and dependent.
+      // This is to stop the search extending into unrelated subtrees.
+      path.tail.isEmpty || doesUse(path.head, path.tail.head)
     } else {
       true
     }
+  }
+
+  /** Determine if the holder is using the dependent as apposed to extending/implementing it. */
+  private def doesUse(holder: ApexDeclaration, dependent: ApexDeclaration): Boolean = {
+    // Quick exclude of interfaces
+    if (dependent.nature == INTERFACE_NATURE)
+      return false
+
+    // Check if extends in some way, ideally we would use a positive test here but our dependency info can include
+    // transitives making that unsound, instead we reverse and detect extends but in a very specific way
+    if (doesExtend(holder, dependent))
+      return false
+
+    true
+  }
+
+  /** Determine if the holder has some form of extends relationship with the dependent. We include in this checking
+    * outer classes and super classes for extension because the holder information can pick up these kinds of
+    * relationships as well. NOTE: If we make improvements that more cleanly differentiate between direct and
+    * transitives dependencies then the scope of this can probably be reduced.
+    */
+  private def doesExtend(holder: ApexDeclaration, dependent: ApexDeclaration): Boolean = {
+    // Direct superclass
+    holder.superClassDeclaration.contains(dependent) ||
+    // Indirect superclass
+    holder.superClassDeclaration
+      .collect { case ad: ApexDeclaration => ad }
+      .exists(parent => doesExtend(parent, dependent)) ||
+    // Outer class extends
+    holder.outerTypeDeclaration
+      .collect { case ad: ApexDeclaration => ad }
+      .exists(outer => doesExtend(outer, dependent))
   }
 
   /** Visit references to the passed type declarations. The visit function is called on all unique declarations

@@ -312,8 +312,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.length == 1)
-      assert(classes.testClassNames(0) == "HelloTest")
+      assert(classes.testClassesWithPath.length == 1)
+      assert(classes.testClassesWithPath(0)._1 == "HelloTest")
     }
   }
 
@@ -329,7 +329,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.toSet == Set("HelloTest"))
+      assert(classes.testClassesWithPath.length == 1)
+      assert(classes.testClassesWithPath(0)._1 == "HelloTest")
     }
   }
 
@@ -345,7 +346,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.isEmpty)
+      assert(classes.testClassesWithPath.isEmpty)
     }
   }
 
@@ -361,7 +362,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.toSet == Set("ServiceAPITest"))
+      assert(classes.testClassesWithPath.length == 1)
+      assert(classes.testClassesWithPath(0)._1 == "ServiceAPITest")
     }
   }
 
@@ -377,7 +379,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.toSet == Set("APITest"))
+      assert(classes.testClassesWithPath.length == 1)
+      assert(classes.testClassesWithPath(0)._1 == "APITest")
     }
   }
 
@@ -393,7 +396,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.toSet == Set("ServiceAPITest"))
+      assert(classes.testClassesWithPath.length == 1)
+      assert(classes.testClassesWithPath(0)._1 == "ServiceAPITest")
     }
   }
 
@@ -409,7 +413,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.toSet == Set("ServiceAPITest", "ServiceTest"))
+      assert(classes.testClassesWithPath.map(_._1).toSet == Set("ServiceAPITest", "ServiceTest"))
     }
   }
 
@@ -425,7 +429,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassNames.toSet == Set("DerivedTest", "BaseTest", "APITest"))
+      assert(classes.testClassesWithPath.map(_._1).toSet == Set("APITest", "DerivedTest"))
     }
   }
 

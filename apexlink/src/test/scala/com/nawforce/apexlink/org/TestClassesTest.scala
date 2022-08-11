@@ -14,7 +14,7 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
 
   private def getTestClassNames(root: PathLike, paths: Array[String]): Set[String] = {
     withOrg(org => {
-      org.getTestClassNamesInternal(paths.map(p => root.join(p)))
+      org.getTestClassNamesInternal(paths.map(p => root.join(p))).map(_._1)
     })
   }
 
@@ -400,6 +400,92 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
           withNamespace(ns, "FooTest")
         )
       )
+    }
+  }
+
+  test("Shared base class should not spider") {
+    run(
+      Map(
+        "Bar.cls"     -> "public virtual class Bar {}",
+        "Foo.cls"     -> "public class Foo extends Bar {}",
+        "Baz.cls"     -> "public class Baz extends Bar {{Bar a;}}",
+        "BazTest.cls" -> "@isTest public class BazTest {{Baz a;}}"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      assert(getTestClassNames(root, Array("Foo.cls")).isEmpty)
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set(withNamespace(ns, "BazTest")))
+    }
+  }
+
+  test("Shared base class with direct reference should spider") {
+    run(
+      Map(
+        "Bar.cls"     -> "public virtual class Bar {}",
+        "Foo.cls"     -> "public class Foo extends Bar {}",
+        "Baz.cls"     -> "public class Baz extends Bar {{Foo a;}}",
+        "BazTest.cls" -> "@isTest public class BazTest {{Baz a;}}"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      assert(getTestClassNames(root, Array("Foo.cls")) == Set(withNamespace(ns, "BazTest")))
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set(withNamespace(ns, "BazTest")))
+    }
+  }
+
+  test("Shared base class with intermediate super class should not spider") {
+    run(
+      Map(
+        "Bar.cls"      -> "public virtual class Bar {}",
+        "Foo.cls"      -> "public class Foo extends Bar {}",
+        "BazSuper.cls" -> "public virtual class BazSuper extends Bar {{Bar a;}}",
+        "Baz.cls"      -> "public class Baz extends BazSuper {{Bar a;}}",
+        "BazTest.cls"  -> "@isTest public class BazTest {{Baz a;}}"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      assert(getTestClassNames(root, Array("Foo.cls")).isEmpty)
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set(withNamespace(ns, "BazTest")))
+    }
+  }
+
+  test("Shared base class with intermediate super and direct reference should spider") {
+    run(
+      Map(
+        "Bar.cls"      -> "public virtual class Bar {}",
+        "Foo.cls"      -> "public class Foo extends Bar {}",
+        "BazSuper.cls" -> "public virtual class BazSuper extends Bar {{Bar a;}}",
+        "Baz.cls"      -> "public class Baz extends BazSuper {{Foo a;}}",
+        "BazTest.cls"  -> "@isTest public class BazTest {{Baz a;}}"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      assert(getTestClassNames(root, Array("Foo.cls")) == Set(withNamespace(ns, "BazTest")))
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set(withNamespace(ns, "BazTest")))
+    }
+  }
+
+  test("Shared base class via outer should not spider") {
+    run(
+      Map(
+        "Bar.cls"     -> "public virtual class Bar {}",
+        "Foo.cls"     -> "public class Foo extends Bar {}",
+        "Baz.cls"     -> "public class Baz extends Bar {public class Inner {{Bar a;}} }",
+        "BazTest.cls" -> "@isTest public class BazTest {{Baz.Inner a;}}"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      assert(getTestClassNames(root, Array("Foo.cls")).isEmpty)
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set(withNamespace(ns, "BazTest")))
+    }
+  }
+
+  test("Shared base class via outer with direct reference should spider") {
+    run(
+      Map(
+        "Bar.cls"     -> "public virtual class Bar {}",
+        "Foo.cls"     -> "public class Foo extends Bar {}",
+        "Baz.cls"     -> "public class Baz extends Bar {public class Inner {{Foo a;}} }",
+        "BazTest.cls" -> "@isTest public class BazTest {{Baz.Inner a;}}"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      assert(getTestClassNames(root, Array("Foo.cls")) == Set(withNamespace(ns, "BazTest")))
+      assert(getTestClassNames(root, Array("Bar.cls")) == Set(withNamespace(ns, "BazTest")))
     }
   }
 

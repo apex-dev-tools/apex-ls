@@ -347,7 +347,9 @@ case class GetTestClassNames(promise: Promise[GetTestClassNamesResult], paths: A
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
     OrgInfo.current.withValue(orgImpl) {
-      promise.success(GetTestClassNamesResult(orgImpl.getTestClassNames(paths)))
+      promise.success(
+        GetTestClassNamesResult(orgImpl.getTestClassNamesInternal(paths.map(p => Path(p))).toArray)
+      )
     }
   }
 }

@@ -129,7 +129,7 @@ object GetTestClassNamesRequest {
   implicit val rw: RW[GetTestClassNamesRequest] = macroRW
 }
 
-case class GetTestClassNamesResult(testClassNames: Array[String])
+case class GetTestClassNamesResult(testClassesWithPath: Array[(String, Array[String])])
 
 object GetTestClassNamesResult {
   implicit val rw: RW[GetTestClassNamesResult] = macroRW

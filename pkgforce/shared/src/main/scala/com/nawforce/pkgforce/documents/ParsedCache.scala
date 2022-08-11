@@ -135,6 +135,7 @@ final class ParsedCache(val path: PathLike, version: Int) {
   def expire(): Unit = expire(path, System.currentTimeMillis() - ParsedCache.EXPIRE_WINDOW)
 
   private def expire(path: PathLike, minTimeStamp: Long): Boolean = {
+    if (!path.exists) return true
     val (files, directories) = path.splitDirectoryEntries()
 
     val deletedFiles =
