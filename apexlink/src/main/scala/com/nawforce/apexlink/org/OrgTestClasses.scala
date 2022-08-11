@@ -30,10 +30,10 @@ trait OrgTestClasses {
   self: OPM.OrgImpl =>
 
   def getTestClassNames(paths: Array[String]): Array[String] = {
-    getTestClassNamesInternal(paths.map(p => Path(p))).toArray
+    getTestClassNamesInternal(paths.map(p => Path(p))).map(_._1).toArray
   }
 
-  def getTestClassNamesInternal(paths: Array[PathLike]): Set[String] = {
+  def getTestClassNamesInternal(paths: Array[PathLike]): Set[(String, Array[String])] = {
     // Locate starting typeIds for the passed paths, this includes super classes & interfaces
     val startingIds = paths.flatMap { path => findPackageIdentifier(path) }
 
@@ -51,8 +51,8 @@ trait OrgTestClasses {
     // Locate tests for the sourceIds
     ReferencingCollector
       .testReferences(accum.toSet)
-      .filter(_.outerTypeName.isEmpty) // Safety check, we only want outer types here
-      .map(_.typeName.toString)
+      .filter(_.testClass.outerTypeName.isEmpty) // Safety check, we only want outer types here
+      .map(_.asTypeNameStrings())
   }
 
   /** Retrieve type info from a path */
