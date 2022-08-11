@@ -22,24 +22,25 @@ object ReferencingCollector {
     *  in the input will be contained in the results.
     */
   def testReferences(sourceTds: Set[NodeInfo]): Set[TestInfo] = {
-    val results = mutable.Map[ApexDeclaration, TestInfo]()
+    val results = mutable.Map[String, TestInfo]()
     visitApexReferences(sourceTds, (primary, path) => testClassVisit(results, primary, path))
     results.values.toSet
   }
 
   /** Visitor for locating @isTest classes */
   private def testClassVisit(
-    accum: mutable.Map[ApexDeclaration, TestInfo],
+    accum: mutable.Map[String, TestInfo],
     primary: Boolean,
     path: List[ApexDeclaration]
   ): Boolean = {
     // Terminate search if we already have this test class
-    if (accum.contains(path.head))
+    val typeName = path.head.typeName.toString
+    if (accum.contains(typeName))
       return false
 
     // Always save test classes, we don't bail out here as we want to capture test->test dependencies
     if (path.head.modifiers.contains(ISTEST_ANNOTATION))
-      accum.put(path.head, TestInfo(path.head, path))
+      accum.put(typeName, TestInfo(path.head, path))
 
     if (!primary) {
       // For non-primary searches we need to be sure we have a use relationship between holder and dependent.
