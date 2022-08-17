@@ -409,8 +409,16 @@ object PlatformTypeDeclaration {
         TypeNames.InternalObject
       } else if (cname == "void") {
         TypeNames.Void
-      } else if (cname.startsWith(platformPackage + ".SObjects")) {
-        val names  = cname.drop(platformPackage.length + 10).split('.').map(n => Name(n)).reverse
+      } else if (
+        cname.startsWith(platformPackage + ".SObjects") ||
+        cname.startsWith(platformPackage + ".SObjectStubs")
+      ) {
+        val names = cname
+          .replace("SObjectStubs", "SObjects")
+          .drop(platformPackage.length + 10)
+          .split('.')
+          .map(n => Name(n))
+          .reverse
         val params = cls.getTypeParameters.map(tp => Name(tp.getName))
         TypeName(ArraySeq.unsafeWrapArray(names :+ Names.Schema))
           .withParams(params.toSeq.map(TypeName(_)))

@@ -83,9 +83,15 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.nawforce</groupId>
+      <groupId>io.github.apex-dev-tools</groupId>
       <artifactId>runforce</artifactId>
-      <version>55.6.0</version>
+      <version>1.0.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.apex-dev-tools</groupId>
+      <artifactId>sobject-types</artifactId>
+      <version>55.0.0</version>
     </dependency>
 
     <dependency>
