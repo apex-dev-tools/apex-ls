@@ -79,7 +79,7 @@
     <dependency>
       <groupId>io.github.apex-dev-tools</groupId>
       <artifactId>runforce</artifactId>
-      <version>1.0.0</version>
+      <version>55.0.0</version>
     </dependency>
 
     <dependency>
