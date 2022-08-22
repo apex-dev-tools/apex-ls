@@ -84,7 +84,7 @@
 
     <dependency>
       <groupId>io.github.apex-dev-tools</groupId>
-      <artifactId>runforce</artifactId>
+      <artifactId>standard-types</artifactId>
       <version>55.0.0</version>
     </dependency>
 
