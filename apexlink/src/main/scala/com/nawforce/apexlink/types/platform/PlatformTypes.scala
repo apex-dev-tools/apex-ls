@@ -55,6 +55,10 @@ object PlatformTypes {
   private var loadingObservers: Seq[PlatformTypeObserver] = Seq()
 
   private def loadType(typeName: TypeName): TypeDeclaration = {
+    println(
+      typeName.toString,
+      PlatformTypeDeclaration.get(typeName, None).map(_.name).getOrElse("FoundNone")
+    )
     PlatformTypeDeclaration.get(typeName, None).getOrElse(throw new NoSuchElementException)
   }
 
