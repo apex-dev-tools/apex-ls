@@ -56,15 +56,15 @@ jobs:
     - name: sendgrid-apex 
       run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sendgrid-apex/sendgrid-apex
 
-    # Needs Investigation
+    # Project can't be deployed needs to be removed
     #- name: FindNearby
     #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/FindNearby
 
-    # No matching method found for 'getAsyncApexJobResult' on 'System.FinalizerContext'
+    # No matching method found for 'getAsyncApexJobResult' on 'System.FinalizerContext'. This project cannot be pushed.
     #- name: promiseV3 
     #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink-1.4.2.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/promiseV3/promiseV3
 
-    # Needs Investigation
+    # https://github.com/financialforcedev/ff-apex-ls/issues/259
     # - name: Apex-Opensource-Library 
     #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Apex-Opensource-Library/Apex-Opensource-Library
 
