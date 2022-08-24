@@ -345,7 +345,9 @@ object PlatformTypeDeclaration {
   private lazy val classNameMap: HashMap[DotName, DotName] = {
     val names = mutable.HashMap[DotName, DotName]()
     indexDir(platformPackagePath, DotName(Seq()), names)
+    println("Indexing Platform - ", platformPackagePath.toUri, names.size)
     indexDir(sObjectPackagePath, DotName(Seq(Names.SObjects)), names)
+    println("Indexing SObjects - ", sObjectPackagePath.toUri, names.size)
     HashMap[DotName, DotName]() ++ names
   }
 
@@ -368,6 +370,9 @@ object PlatformTypeDeclaration {
           (filename.endsWith("$.class") || !filename.contains('$'))
         ) {
           val dotName = prefix.append(Name(filename.dropRight(".class".length)))
+          if (accum.contains(dotName)) {
+            println("File is getting overwritten ", dotName.toString)
+          }
           if (dotName.names.head == Names.SObjects) {
             accum.put(DotName(Names.Schema +: dotName.names.tail), dotName)
           } else {
