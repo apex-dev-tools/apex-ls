@@ -269,8 +269,11 @@ object PlatformTypeDeclaration {
   private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
 
   /* Get a Path that leads to platform classes */
-  lazy val platformPackagePath: java.nio.file.Path = getPathFromPackage(platformPackage)
-  lazy val sObjectPackagePath: java.nio.file.Path  = getPathFromPackage(sObjectPackage)
+  //Using the system namespace to guarantee standard-types.jar wil be loaded
+  lazy val platformPackagePath: java.nio.file.Path = getPathFromPackage(
+    s"$platformPackage.System"
+  ).getParent
+  lazy val sObjectPackagePath: java.nio.file.Path = getPathFromPackage(sObjectPackage).getParent
 
   private def getPathFromPackage(packagePath: String) = {
     val path = "/" + packagePath.replaceAll("\\.", "/")
@@ -346,7 +349,7 @@ object PlatformTypeDeclaration {
     val names = mutable.HashMap[DotName, DotName]()
     indexDir(platformPackagePath, DotName(Seq()), names)
     println("Indexing Platform - ", platformPackagePath.toUri, names.size)
-    indexDir(sObjectPackagePath, DotName(Seq(Names.SObjects)), names)
+    indexDir(sObjectPackagePath, DotName(Seq()), names)
     println("Indexing SObjects - ", sObjectPackagePath.toUri, names.size)
     HashMap[DotName, DotName]() ++ names
   }
