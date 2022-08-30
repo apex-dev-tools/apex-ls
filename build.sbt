@@ -4,9 +4,7 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 ThisBuild / version := "2.8.0"
 ThisBuild / isSnapshot := true
-
 ThisBuild / scalaVersion := "2.13.3"
-ThisBuild / parallelExecution := false
 ThisBuild / organization := "com.github.nawforce"
 ThisBuild / organizationHomepage := Some(url("https://github.com/nawforce/pkgforce"))
 ThisBuild / scmInfo := Some(
@@ -43,8 +41,8 @@ lazy val buildNPM = Def.task {
 
   val jsDir     = file("js")
   val targetDir = jsDir / "target" / "scala-2.13"
-  val optSource = targetDir / "pkgforce-opt.js"
-  val optTarget = jsDir / "npm" / "src" / "pkgforce.js"
+  val optSource = targetDir / "apexls-opt.js"
+  val optTarget = jsDir / "npm" / "src" / "apexls.js"
   copy(optSource.toPath, optTarget.toPath, REPLACE_EXISTING)
 
   // Install modules in NPM
@@ -90,6 +88,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   )
   .jvmSettings(
     build := buildJVM.value,
+    Test / fork := true,
     libraryDependencies += "org.scala-lang.modules"  %% "scala-xml"       % "1.3.0",
     libraryDependencies += "org.scala-lang.modules"  %% "scala-parallel-collections"                % "1.0.0",    
     libraryDependencies += "org.scala-js"            %% "scalajs-stubs"   % "1.0.0",

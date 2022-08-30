@@ -1,5 +1,5 @@
 {
-  "name": "pkgforce",
+  "name": "apex-ls",
   "version": "2.8.0",
   "description": "Salesforce Metadata Management Utility Library",
   "publisher": "KevinJones",
@@ -12,8 +12,8 @@
     "build": "tsc",
     "test": "jest --config jestconfig.json lib"
   },
-  "main": "lib/pkgforce.js",
-  "typings": "src/pkgforce.d.ts",
+  "main": "lib/apexls.js",
+  "typings": "src/apexls.d.ts",
   "files": [
     "src/pkgforce.d.ts"
   ],
