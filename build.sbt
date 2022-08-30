@@ -75,10 +75,10 @@ lazy val build = taskKey[Unit]("Build artifacts")
 
 lazy val root = project
   .in(file("."))
-  .aggregate(pkgforce.js, pkgforce.jvm)
+  .aggregate(apexls.js, apexls.jvm)
   .settings(publish := {}, publishLocal := {}, publishM2 := {})
 
-lazy val pkgforce = crossProject(JSPlatform, JVMPlatform)
+lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
   .settings(
     scalacOptions += "-deprecation",
