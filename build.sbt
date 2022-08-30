@@ -83,12 +83,15 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   .settings(
     scalacOptions += "-deprecation",
     libraryDependencies += "io.github.apex-dev-tools"     %%% "outline-parser"         % "1.0.0",
+    libraryDependencies += "com.github.nawforce"          %%% "scala-json-rpc"         % "1.0.1", 
+    libraryDependencies += "com.github.nawforce"          %%% "scala-json-rpc-upickle-json-serializer"         % "1.0.1", 
     libraryDependencies += "com.lihaoyi"                  %%% "upickle"                % "1.2.0",
     libraryDependencies += "org.scalatest"                %%% "scalatest"              % "3.2.0" % Test
   )
   .jvmSettings(
     build := buildJVM.value,
     libraryDependencies += "org.scala-lang.modules"  %% "scala-xml"       % "1.3.0",
+    libraryDependencies += "org.scala-lang.modules"  %% "scala-parallel-collections"                % "1.0.0",    
     libraryDependencies += "org.scala-js"            %% "scalajs-stubs"   % "1.0.0",
     libraryDependencies += "io.github.apex-dev-tools" % "apex-parser"     % "3.0.0",
     libraryDependencies += "io.github.apex-dev-tools" % "vf-parser"       % "1.0.0",
