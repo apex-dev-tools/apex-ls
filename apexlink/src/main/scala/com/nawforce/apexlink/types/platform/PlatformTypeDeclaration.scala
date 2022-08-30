@@ -296,13 +296,11 @@ object PlatformTypeDeclaration {
    */
   def get(typeName: TypeName, from: Option[TypeDeclaration]): TypeResponse = {
     val tdOption = getDeclaration(typeName.asDotName)
-    println("tdOption : ", tdOption.isEmpty)
     if (tdOption.isEmpty)
       return Left(MissingType(typeName))
 
     // Quick fail on wrong number of type variables
     val td = tdOption.get
-    println("td: " + td, " ", td.typeName.params.size, typeName.params.size)
     if (td.typeName.params.size != typeName.params.size)
       return Left(WrongTypeArguments(typeName, td.typeName.params.size))
 
@@ -319,7 +317,6 @@ object PlatformTypeDeclaration {
     declarationCache.getOrElseUpdate(
       name, {
         val matched = classNameMap.get(name)
-        println("ClassMapNames ", classNameMap.keys.size)
         assert(matched.size < 2, s"Found multiple platform type matches for $name")
         matched.map(
           name =>
@@ -371,9 +368,6 @@ object PlatformTypeDeclaration {
           (filename.endsWith("$.class") || !filename.contains('$'))
         ) {
           val dotName = prefix.append(Name(filename.dropRight(".class".length)))
-          if (accum.contains(dotName)) {
-            println("File is getting overwritten ", dotName.toString)
-          }
           if (dotName.names.head == Names.SObjects) {
             accum.put(DotName(Names.Schema +: dotName.names.tail), dotName)
           } else {
