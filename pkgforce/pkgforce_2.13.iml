@@ -19,7 +19,8 @@
     <orderEntry type="library" name="Maven: io.github.apex-dev-tools:apex-types_2.13:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.13.3" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-xml_2.13:1.3.0" level="project" />
-    <orderEntry type="library" name="Maven: com.github.nawforce:runforce:55.6.0" level="project" />
+    <orderEntry type="library" name="Maven: io.github.apex-dev-tools:standard-types:55.0.0" level="project" />
+    <orderEntry type="library" name="Maven: io.github.apex-dev-tools:sobject-types:55.0.0" level="project" />
     <orderEntry type="library" name="Maven: io.github.apex-dev-tools:apex-parser:3.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.antlr:antlr4-runtime:4.8-1" level="project" />
     <orderEntry type="library" name="Maven: io.github.apex-dev-tools:vf-parser:1.0.0" level="project" />
