@@ -299,7 +299,10 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
   /** Test if this method matches the provided params when fulfilling an interface method. This is more involved than
     * a simple type name comparison as there is some rather shocking equivalence handling in Apex for interfaces.
     */
-  def fulfillsInterfaceMethodParams(from: TypeDeclaration, params: ArraySeq[TypeName]): Boolean = {
+  def fulfillsInterfaceMethodParams(
+    from: TypeDeclaration,
+    implMethod: MethodDeclaration
+  ): (Boolean, List[String]) = {
     def isSObject(typeName: TypeName): Boolean = {
       typeName == TypeNames.SObject ||
       from.moduleDeclaration.exists(_.getTypeFor(typeName, from).exists(_.isSObject))
@@ -309,20 +312,42 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
       typeName.isList && isSObject(typeName.params.head)
     }
 
+    def areBothSObjects(from: TypeName, implMethod: TypeName): Boolean = {
+      (from, implMethod) match {
+        case (x, TypeNames.SObject) => isSObject(x)
+        case _                      => false
+      }
+    }
+
+    val params = implMethod.parameters.map(_.typeName)
+
     if (parameters.length == params.length) {
-      parameters
-        .zip(params)
-        .forall(paramPair => {
-          paramPair._1.typeName == paramPair._2 ||
-            (paramPair._1.typeName.isStringOrId && paramPair._2.isStringOrId) ||
-            (paramPair._1.typeName.params.nonEmpty && areSameGenericTypes(
+      var warning: List[String] = Nil
+      (
+        parameters
+          .zip(params)
+          .forall(paramPair => {
+            lazy val isSameType   = paramPair._1.typeName == paramPair._2
+            lazy val isStringOrId = paramPair._1.typeName.isStringOrId && paramPair._2.isStringOrId
+            lazy val areSameGenerics = paramPair._1.typeName.params.nonEmpty && areSameGenericTypes(
               paramPair._1.typeName,
               paramPair._2
-            )) ||
-            (isSObjectList(paramPair._1.typeName) && isSObjectList(paramPair._2))
-        })
+            )
+            lazy val areSObjectList =
+              isSObjectList(paramPair._1.typeName) && isSObjectList(paramPair._2)
+
+            if (areBothSObjects(paramPair._1.typeName, paramPair._2)) {
+              warning =
+                warning :+ s"Method '${implMethod.signature}' implementing $signature should use param '${paramPair._1.typeName}' instead of '${paramPair._2}'"
+              true
+            } else {
+              isSameType || isStringOrId || areSameGenerics || areSObjectList
+            }
+          }),
+        warning
+      )
     } else {
-      false
+      (false, Nil)
     }
   }
 }

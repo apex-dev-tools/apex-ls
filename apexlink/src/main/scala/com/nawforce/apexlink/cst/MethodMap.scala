@@ -475,7 +475,7 @@ object MethodMap {
       .foreach(method => {
         val key     = (method.name, method.parameters.length)
         val methods = workingMap.getOrElse(key, Nil)
-        val matched = methods.find(mapMethod => isInterfaceMethod(from, method, mapMethod))
+        val matched = methods.find(mapMethod => isInterfaceMethod(from, method, mapMethod, errors))
 
         if (matched.isEmpty) {
           val module = from.moduleDeclaration.get
@@ -590,8 +590,7 @@ object MethodMap {
         setMethodError(
           method,
           s"Method '${method.name}' has wrong return type to override, should be '${matched.get.typeName}'",
-          errors,
-          isWarning = true
+          errors
         )
       } else if (!matchedMethod.isVirtualOrAbstract && !reallyPrivateMethod) {
         setMethodError(
@@ -663,8 +662,10 @@ object MethodMap {
     isWarning: Boolean = false
   ): Unit = {
     method match {
-      case am: ApexMethodLike if !isWarning =>
-        errors.append(new Issue(am.location.path, Diagnostic(ERROR_CATEGORY, am.idLocation, error)))
+      case am: ApexMethodLike if isWarning =>
+        errors.append(
+          new Issue(am.location.path, Diagnostic(WARNING_CATEGORY, am.idLocation, error))
+        )
       case am: ApexMethodLike =>
         errors.append(new Issue(am.location.path, Diagnostic(ERROR_CATEGORY, am.idLocation, error)))
       case _ => ()
@@ -715,15 +716,22 @@ object MethodMap {
   private def isInterfaceMethod(
     from: TypeDeclaration,
     interfaceMethod: MethodDeclaration,
-    implMethod: MethodDeclaration
+    implMethod: MethodDeclaration,
+    errors: mutable.Buffer[Issue]
   ): Boolean = {
+    val fulfillsInterfaceMethodParams =
+      interfaceMethod.fulfillsInterfaceMethodParams(from, implMethod)
+
     if (
       implMethod.name == interfaceMethod.name &&
       canAssign(interfaceMethod.typeName, implMethod.typeName, from) &&
-      interfaceMethod.fulfillsInterfaceMethodParams(from, implMethod.parameters.map(_.typeName))
-    )
+      fulfillsInterfaceMethodParams._1
+    ) {
+      fulfillsInterfaceMethodParams._2.foreach(
+        warning => setMethodError(implMethod, warning, errors, isWarning = true)
+      )
       true
-    else if (isEqualsLike(interfaceMethod) && isEqualsLike(implMethod))
+    } else if (isEqualsLike(interfaceMethod) && isEqualsLike(implMethod))
       true
     else if (isDatabaseBatchableStart(interfaceMethod) && isDatabaseBatchableIterable(implMethod))
       true
