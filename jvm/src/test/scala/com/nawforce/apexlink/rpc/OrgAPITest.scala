@@ -28,11 +28,12 @@ import scala.concurrent.Future
 class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
   val samplesDir: Path = {
-    var dir = Path("samples")
-    if (!dir.isDirectory)
+    var dir = Path(".").join("samples")
+    if (!dir.isDirectory) {
       dir = Path("..").join("samples")
-    assert(dir.isDirectory)
-    dir  
+    }
+    assert(dir.isDirectory, s"Failed to locate samples from ${Path(".").toString}")
+    dir
   }
 
   override def beforeEach(): Unit = {
