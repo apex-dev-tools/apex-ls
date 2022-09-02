@@ -318,13 +318,21 @@ object PlatformTypeDeclaration {
 
   /* Java package prefix for platform types */
   private val platformPackage = "com.nawforce.runforce"
+  /* Java package prefix for SObject types */
+  private val sObjectPackage = "com.nawforce.runforce.SObjects"
 
   /* Cache of loaded platform declarations */
   private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
 
   /* Get a Path that leads to platform classes */
-  lazy val platformPackagePath: java.nio.file.Path = {
-    val path = "/" + platformPackage.replaceAll("\\.", "/")
+  //Using the system namespace to guarantee standard-types.jar wil be loaded
+  lazy val platformPackagePath: java.nio.file.Path = getPathFromPackage(
+    s"$platformPackage.System"
+  ).getParent
+  lazy val sObjectPackagePath: java.nio.file.Path = getPathFromPackage(sObjectPackage).getParent
+
+  private def getPathFromPackage(packagePath: String): java.nio.file.Path = {
+    val path = "/" + packagePath.replaceAll("\\.", "/")
     val uri  = classOf[com.nawforce.runforce.Internal.Object$].getResource(path).toURI
     if (uri.getScheme.equalsIgnoreCase("file")) {
       Paths.get(uri)
@@ -449,12 +457,14 @@ object PlatformTypeDeclaration {
     .toSeq
     .distinct
     .filterNot(name => name == Names.SObjects || name == Names.Internal)
+    .filterNot(name => name.value.equalsIgnoreCase("SObjectStubs"))
     .filterNot(priorityNamespaces.contains)
 
   /* Map of class names, it's a map just to allow easy recovery of the original case by looking at value */
   private lazy val classNameMap: HashMap[DotName, DotName] = {
     val names = mutable.HashMap[DotName, DotName]()
     indexDir(platformPackagePath, DotName(Seq()), names)
+    indexDir(sObjectPackagePath, DotName(Seq()), names)
     HashMap[DotName, DotName]() ++ names
   }
 
@@ -483,7 +493,11 @@ object PlatformTypeDeclaration {
             accum.put(dotName, dotName)
           }
         } else if (Files.isDirectory(entry)) {
-          val safeFilename = filename.replace("/", "").replace("\\", "")
+          val safeFilename =
+            filename
+              .replace("/", "")
+              .replace("\\", "")
+              .replace("SObjectStubs", "SObjects")
           indexDir(entry, prefix.append(Name(safeFilename)), accum)
         }
       })

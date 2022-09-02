@@ -26,9 +26,9 @@ jobs:
         repository: apex-dev-tools/apex-samples
         path: samples
 
-    - name: Build with Maven
+    - name: Build
       run: |
-        sbt package test
+        sbt build package test
 
     - name: TriggerX
       run: ${{env.TESTCMD}} samples/TriggerX/TriggerX
@@ -58,15 +58,16 @@ jobs:
     - name: sendgrid-apex 
       run: ${{env.TESTCMD}} samples/sendgrid-apex/sendgrid-apex
 
-    # Needs Investigation
+    # Project can't be deployed needs to be removed
     #- name: FindNearby
     #  run: ${{env.TESTCMD}} samples/FindNearby
 
-    # No matching method found for 'getAsyncApexJobResult' on 'System.FinalizerContext'
+    # No matching method found for 'getAsyncApexJobResult' on 'System.FinalizerContext'.
+    # This project cannot be pushed.
     #- name: promiseV3 
     #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink-1.4.2.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/promiseV3/promiseV3
 
-    # Needs Investigation
+    # https://github.com/financialforcedev/ff-apex-ls/issues/259
     # - name: Apex-Opensource-Library 
     #  run: ${{env.TESTCMD}} samples/Apex-Opensource-Library/Apex-Opensource-Library
 
@@ -194,7 +195,7 @@ jobs:
     - name: R-apex 
       run: ${{env.TESTCMD}} samples/R-apex/R-apex
 
-    # Needs Investigation
+    # https://github.com/financialforcedev/ff-apex-ls/issues/260 & https://github.com/financialforcedev/ff-apex-ls/issues/261
     #- name: rflib 
     #  run: ${{env.TESTCMD}} samples/rflib/rflib
 
@@ -210,7 +211,7 @@ jobs:
     - name: Forceea-data-factory 
       run: ${{env.TESTCMD}} samples/Forceea-data-factory/Forceea-data-factory/dx
 
-    # Needs Investigation
+    # project is valid and can be deployed with no modification. However, there seems to be an issues around finding types that needs more investigation
     # - name: ApexTestKit
     #  run: ${{env.TESTCMD}} samples/ApexTestKit/ApexTestKit
 
@@ -262,22 +263,28 @@ jobs:
     - name: sfdx-mass-action-scheduler 
       run: ${{env.TESTCMD}} samples/sfdx-mass-action-scheduler/sfdx-mass-action-scheduler
 
-    # Needs Investigation
+    # https://github.com/financialforcedev/ff-apex-ls/issues/262
     # - name: apex-recipes
     #   run: ${{env.TESTCMD}} samples/apex-recipes/apex-recipes
 
-    # Needs Investigation
+    # Project not deployable as is. May need building for the errors to disappear
+    # Error seems to be able to about no resolving a class
     #- name: NPSP 
     #  run: ${{env.TESTCMD}} samples/NPSP
 
     - name: apex-mdapi 
       run: ${{env.TESTCMD}} samples/apex-mdapi/apex-mdapi
 
-    # Needs Investigation
+    # Issue around apex-parser
+    # https://github.com/financialforcedev/ff-apex-ls/issues/264
+    # https://github.com/financialforcedev/ff-apex-ls/issues/265
     # - name: apex-rollup 
     #  run: ${{env.TESTCMD}} samples/apex-rollup/apex-rollup
 
-    # Needs Investigation
+    # Multiple issues for this project. One of them is
+    # https://github.com/financialforcedev/ff-apex-ls/issues/267
+    # https://github.com/financialforcedev/ff-apex-ls/issues/268
+    # One more issue around not finding fields in custom SObjects that needs more investigation
     # - name: NebulaLogger
     #  run: ${{env.TESTCMD}} samples/NebulaLogger/NebulaLogger
 
@@ -356,7 +363,15 @@ jobs:
     - name: visualforce-typeahead 
       run: ${{env.TESTCMD}} samples/visualforce-typeahead/visualforce-typeahead
 
-    # Needs Investigation
+    # SObject issue could be related to https://github.com/financialforcedev/ff-apex-ls/issues/260
+    # Errors around resolving a clas that's in an unpackaged folder that contains a package.xml
     # - name: Cumulus
     #  run: ${{env.TESTCMD}} samples/Cumulus
+
+    - name: ActionPlansV4
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/ActionPlansV4/ActionPlansV4
+
+    - name: survey-force
+      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/survey-force/survey-force
+
 
