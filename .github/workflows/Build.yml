@@ -369,9 +369,9 @@ jobs:
     #  run: ${{env.TESTCMD}} apex-samples/Cumulus
 
     - name: ActionPlansV4
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti apex-samples/ActionPlansV4/ActionPlansV4
+      run: ${{env.TESTCMD}} apex-samples/ActionPlansV4/ActionPlansV4
 
     - name: survey-force
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti apex-samples/survey-force/survey-force
+      run: ${{env.TESTCMD}} apex-samples/survey-force/survey-force
 
 
