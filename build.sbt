@@ -75,10 +75,7 @@ lazy val downloadJars = Def.task {
   val files = (Compile / dependencyClasspath).value.files map { f =>
     f -> jars / f.getName
   }
-  println(files)
-
   IO.copy(files, CopyOptions().withOverwrite(true))
-
   jars.get.last
 }
 
@@ -93,25 +90,25 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
   .settings(
     scalacOptions += "-deprecation",
-    libraryDependencies += "io.github.apex-dev-tools"     %%% "outline-parser"         % "1.0.0",
-    libraryDependencies += "com.github.nawforce"          %%% "scala-json-rpc"         % "1.0.1", 
-    libraryDependencies += "com.github.nawforce"          %%% "scala-json-rpc-upickle-json-serializer"         % "1.0.1", 
-    libraryDependencies += "com.lihaoyi"                  %%% "upickle"                % "1.2.0",
-    libraryDependencies += "org.scalatest"                %%% "scalatest"              % "3.2.0" % Test
+    libraryDependencies += "io.github.apex-dev-tools" %%% "outline-parser"                         % "1.0.0",
+    libraryDependencies += "com.github.nawforce"      %%% "scala-json-rpc"                         % "1.0.1",
+    libraryDependencies += "com.github.nawforce"      %%% "scala-json-rpc-upickle-json-serializer" % "1.0.1",
+    libraryDependencies += "com.lihaoyi"              %%% "upickle"                                % "1.2.0",
+    libraryDependencies += "org.scalatest"            %%% "scalatest"                              % "3.2.0" % Test
   )
   .jvmSettings(
     build := buildJVM.value,
     Test / fork := true,
-    libraryDependencies += "org.scala-lang.modules"  %% "scala-xml"       % "1.3.0",
-    libraryDependencies += "org.scala-lang.modules"  %% "scala-parallel-collections"                % "1.0.0",    
-    libraryDependencies += "org.scala-js"            %% "scalajs-stubs"   % "1.0.0",
-    libraryDependencies += "io.github.apex-dev-tools" % "apex-parser"     % "3.0.0",
-    libraryDependencies += "io.github.apex-dev-tools" % "vf-parser"       % "1.0.0",
-    libraryDependencies += "org.antlr"                % "antlr4-runtime"  % "4.8-1",
-    libraryDependencies += "io.github.apex-dev-tools" % "sobject-types"   % "55.0.0",
-    libraryDependencies += "io.github.apex-dev-tools" % "standard-types"  % "55.0.0",
-    libraryDependencies += "com.github.nawforce"      % "uber-apex-jorje" % "1.0.0" % Test,
-    libraryDependencies += "com.google.jimfs"         % "jimfs"           % "1.1"   % Test
+    libraryDependencies += "org.scala-lang.modules"  %% "scala-xml"                  % "1.3.0",
+    libraryDependencies += "org.scala-lang.modules"  %% "scala-parallel-collections" % "1.0.0",
+    libraryDependencies += "org.scala-js"            %% "scalajs-stubs"              % "1.0.0",
+    libraryDependencies += "io.github.apex-dev-tools" % "apex-parser"                % "3.0.0",
+    libraryDependencies += "io.github.apex-dev-tools" % "vf-parser"                  % "1.0.0",
+    libraryDependencies += "org.antlr"                % "antlr4-runtime"             % "4.8-1",
+    libraryDependencies += "io.github.apex-dev-tools" % "sobject-types"              % "55.0.0",
+    libraryDependencies += "io.github.apex-dev-tools" % "standard-types"             % "55.0.0",
+    libraryDependencies += "com.github.nawforce"      % "uber-apex-jorje"            % "1.0.0" % Test,
+    libraryDependencies += "com.google.jimfs"         % "jimfs"                      % "1.1"   % Test
   )
   .jsSettings(
     build := buildNPM.value,
