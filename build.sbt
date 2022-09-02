@@ -66,7 +66,20 @@ lazy val buildNPM = Def.task {
 }
 
 lazy val buildJVM = Def.task {
+  downloadJars.value
   (Compile / compile).value
+}
+
+lazy val downloadJars = Def.task {
+  val jars = baseDirectory.value / "target" / "scala-2.13"
+  val files = (Compile / dependencyClasspath).value.files map { f =>
+    f -> jars / f.getName
+  }
+  println(files)
+
+  IO.copy(files, CopyOptions().withOverwrite(true))
+
+  jars.get.last
 }
 
 lazy val build = taskKey[Unit]("Build artifacts")
