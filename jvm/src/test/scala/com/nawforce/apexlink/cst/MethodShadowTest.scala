@@ -197,4 +197,13 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Implementing method has SObject as param") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(Account ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(SObject ac){} }"
+      ),
+      "Warning: line 1 at 48-50: Method 'void fn(System.SObject)' implementing void fn(Schema.Account) should use param 'Schema.Account' instead of 'System.SObject'\n"
+    )
+  }
 }
