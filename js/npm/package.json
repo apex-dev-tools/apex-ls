@@ -1,6 +1,6 @@
 {
   "name": "apex-ls",
-  "version": "2.8.0",
+  "version": "3.0.0",
   "description": "Salesforce Metadata Management Utility Library",
   "publisher": "KevinJones",
   "repository": "nawforce/pkgforce",
@@ -15,7 +15,7 @@
   "main": "lib/apexls.js",
   "typings": "src/apexls.d.ts",
   "files": [
-    "src/pkgforce.d.ts"
+    "src/apexls.d.ts"
   ],
   "dependencies": {
     "antlr4ts": "0.5.0-alpha.4",
