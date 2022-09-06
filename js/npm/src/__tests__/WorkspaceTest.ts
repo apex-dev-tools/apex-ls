@@ -43,7 +43,7 @@ test("SFDX Bad Project file", () => {
         expect(true).toBe(false);
     } catch (err) {
         expect(err.message).toMatch(
-            "/pkg3/sfdx-project.json line 1 Error Failed to parse - ujson.IncompleteParseException: exhausted input"
+            "Error: line 1: Failed to parse - ujson.IncompleteParseException: exhausted input"
         );
     } finally {
         unpatch();
