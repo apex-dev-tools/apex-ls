@@ -1,6 +1,9 @@
+import org.scalajs.linker.interface.Report
 import sbt.Keys.libraryDependencies
 import sbt.url
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
+
+import scala.sys.process._
 
 ThisBuild / version              := "3.0.0"
 ThisBuild / isSnapshot           := true
@@ -33,11 +36,12 @@ ThisBuild / publishTo := {
   else Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
-lazy val build = taskKey[Unit]("Build artifacts")
+lazy val build = taskKey[File]("Build artifacts")
+lazy val Dev   = config("dev") extend Compile
 
 lazy val apexls = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
   .in(file("."))
+  .configs(Dev)
   .settings(
     scalacOptions += "-deprecation",
     libraryDependencies += "io.github.apex-dev-tools" %%% "outline-parser" % "1.0.0",
@@ -61,56 +65,64 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies += "com.google.jimfs"    % "jimfs"           % "1.1"   % Test
   )
   .jsSettings(
-    build                                := buildNPM.value,
+    build                                := buildJs(Compile / fullLinkJS).value,
+    Dev / build                          := buildJs(Compile / fastLinkJS).value,
     libraryDependencies += "net.exoego" %%% "scala-js-nodejs-v14" % "0.12.0",
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
   )
 
-lazy val downloadJars = Def.task {
-  val jars = baseDirectory.value / "target" / "scala-2.13"
+lazy val buildJVM = Def.task {
+  // Copy jar deps to target for easier testing
+  val targetDir = crossTarget.value
   val files = (Compile / dependencyClasspath).value.files map { f =>
-    f -> jars / f.getName
+    f -> targetDir / f.getName
   }
   IO.copy(files, CopyOptions().withOverwrite(true))
-  jars.get.last
+
+  (Compile / Keys.`package`).value
 }
 
-lazy val buildJVM = Def.task {
-  downloadJars.value
-  (Compile / compile).value
-}
+def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = Def.task {
+  def exec: (String, File) => Unit = run(streams.value.log)(_, _)
 
-lazy val buildNPM = Def.task {
+  // Depends on scalaJS fast/full linker output
+  jsTask.value
 
-  // Update NPM module with latest compile
-  import java.nio.file.StandardCopyOption.REPLACE_EXISTING
-  import java.nio.file.Files.copy
+  val targetDir  = crossTarget.value
+  val targetFile = (jsTask / scalaJSLinkerOutputDirectory).value / "main.js"
+  val npmDir     = baseDirectory.value / "npm"
 
-  (Compile / fastOptJS).value
-  (Compile / fullOptJS).value
+  val files: Map[File, File] = Map(
+    // Update NPM README.md
+    baseDirectory.value / "../README.md" -> npmDir / "README.md",
+    // Update target with NPM modules (for testing)
+    npmDir / "package.json" -> targetDir / "package.json",
+    // Add source to NPM
+    targetFile -> npmDir / "src/apexls.js"
+  )
 
-  val jsDir     = file("js")
-  val targetDir = jsDir / "target" / "scala-2.13"
-  val optSource = targetDir / "apexls-opt.js"
-  val optTarget = jsDir / "npm" / "src" / "apexls.js"
-  copy(optSource.toPath, optTarget.toPath, REPLACE_EXISTING)
+  IO.copy(files, CopyOptions().withOverwrite(true))
 
   // Install modules in NPM
-  import scala.language.postfixOps
-  import scala.sys.process._
-
-  val npmDir = jsDir / "npm"
-  val shell: Seq[String] =
-    if (sys.props("os.name").contains("Windows")) Seq("cmd", "/c") else Seq("bash", "-c")
-  Process(shell :+ "npm i --production", npmDir) !
-
-  // Update NPM README.md
-  val readMeTarget = npmDir / "README.md"
-  copy(file("README.md").toPath, readMeTarget.toPath, REPLACE_EXISTING)
+  exec("npm i", npmDir)
 
   // Update target with NPM modules (for testing)
-  val packageJSONSource = npmDir / "package.json"
-  val packageJSONTarget = targetDir / "package.json"
-  copy(packageJSONSource.toPath, packageJSONTarget.toPath, REPLACE_EXISTING)
-  Process(shell :+ "npm i", targetDir) !
+  IO.copyDirectory(
+    npmDir / "node_modules",
+    targetDir / "node_modules",
+    CopyOptions().withOverwrite(true)
+  )
+
+  targetFile
+}
+
+// Run a command and log to provided logger
+def run(log: ProcessLogger)(cmd: String, cwd: File): Unit = {
+  val shell: Seq[String] =
+    if (sys.props("os.name").contains("Windows")) Seq("cmd", "/c") else Seq("bash", "-c")
+  val exitCode = Process(shell :+ cmd, cwd) ! log
+  if (exitCode > 0) {
+    log.err(s"Process exited with non-zero exit code: $exitCode")
+    sys.exit()
+  }
 }

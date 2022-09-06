@@ -28,7 +28,7 @@ jobs:
 
     - name: Build
       run: |
-        sbt build package test
+        sbt build test
 
     - name: TriggerX
       run: ${{env.TESTCMD}} apex-samples/TriggerX/TriggerX
