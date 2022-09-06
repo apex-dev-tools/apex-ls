@@ -1,3 +1,10 @@
 .idea/
+.bsp/
+.bloop/
 .metals/
 .vscode/
+project/.bloop/
+project/project/
+
+**/target/
+**/node_modules/

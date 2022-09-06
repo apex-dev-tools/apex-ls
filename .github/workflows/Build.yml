@@ -7,6 +7,9 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+env:
+  TESTCMD: java -cp "jvm/target/scala-2.13/*:jvm/target/scala-2.13/apexls_2.13-*.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti  
+
 jobs:
   build:
 
@@ -21,355 +24,354 @@ jobs:
       with:
         submodules: recursive
         repository: apex-dev-tools/apex-samples
-        path: samples
+        path: apex-samples
 
-    - name: Build with Maven
+    - name: Build
       run: |
-        mvn --version
-        mvn -B install -Dgpg.skip
+        sbt build package test
 
     - name: TriggerX
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/TriggerX/TriggerX
+      run: ${{env.TESTCMD}} apex-samples/TriggerX/TriggerX
 
     - name: apex-query-builder 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-query-builder/apex-query-builder
+      run: ${{env.TESTCMD}} apex-samples/apex-query-builder/apex-query-builder
 
     - name: salesforce-bot-toolkit 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/salesforce-bot-toolkit/salesforce-bot-toolkit
+      run: ${{env.TESTCMD}} apex-samples/salesforce-bot-toolkit/salesforce-bot-toolkit
 
     - name: SalesforceDurableStreamingDemo 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SalesforceDurableStreamingDemo/SalesforceDurableStreamingDemo
+      run: ${{env.TESTCMD}} apex-samples/SalesforceDurableStreamingDemo/SalesforceDurableStreamingDemo
 
     - name: amoss 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/amoss/amoss
+      run: ${{env.TESTCMD}} apex-samples/amoss/amoss
 
     - name: SimpleLightningComponents
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SimpleLightningComponents/SimpleLightningComponents
+      run: ${{env.TESTCMD}} apex-samples/SimpleLightningComponents/SimpleLightningComponents
 
     # Unreachable statement, throw + return
     #- name: FormulaShare-DX 
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/FormulaShare-DX/FormulaShare-DX
+    #  run: ${{env.TESTCMD}} apex-samples/FormulaShare-DX/FormulaShare-DX
 
     - name: Apex-for-Xero 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Apex-for-Xero/Apex-for-Xero
+      run: ${{env.TESTCMD}} apex-samples/Apex-for-Xero/Apex-for-Xero
 
     - name: sendgrid-apex 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sendgrid-apex/sendgrid-apex
+      run: ${{env.TESTCMD}} apex-samples/sendgrid-apex/sendgrid-apex
 
     # Project can't be deployed needs to be removed
     #- name: FindNearby
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/FindNearby
+    #  run: ${{env.TESTCMD}} apex-samples/FindNearby
 
     # No matching method found for 'getAsyncApexJobResult' on 'System.FinalizerContext'.
     # This project cannot be pushed.
     #- name: promiseV3 
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink-1.4.2.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/promiseV3/promiseV3
+    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink-1.4.2.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti apex-samples/promiseV3/promiseV3
 
     # https://github.com/financialforcedev/ff-apex-ls/issues/259
     # - name: Apex-Opensource-Library 
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Apex-Opensource-Library/Apex-Opensource-Library
+    #  run: ${{env.TESTCMD}} apex-samples/Apex-Opensource-Library/Apex-Opensource-Library
 
     - name: SFDCRules 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SFDCRules/SFDCRules
+      run: ${{env.TESTCMD}} apex-samples/SFDCRules/SFDCRules
 
     - name: forcelog 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/forcelog/forcelog
+      run: ${{env.TESTCMD}} apex-samples/forcelog/forcelog
 
     - name: Apex-XML-Serializer 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Apex-XML-Serializer/Apex-XML-Serializer
+      run: ${{env.TESTCMD}} apex-samples/Apex-XML-Serializer/Apex-XML-Serializer
 
     - name: ObjectMerge 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/ObjectMerge/ObjectMerge
+      run: ${{env.TESTCMD}} apex-samples/ObjectMerge/ObjectMerge
 
     - name: grid 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/grid/grid
+      run: ${{env.TESTCMD}} apex-samples/grid/grid
 
     # Unreachable statement, bad if/else logic
     #- name: soql-secure 
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/soql-secure/soql-secure
+    #  run: ${{env.TESTCMD}} apex-samples/soql-secure/soql-secure
 
     - name: box-salesforce-sdk 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/box-salesforce-sdk/box-salesforce-sdk
+      run: ${{env.TESTCMD}} apex-samples/box-salesforce-sdk/box-salesforce-sdk
 
     - name: Angular 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Angular/Angular
+      run: ${{env.TESTCMD}} apex-samples/Angular/Angular
 
     - name: Lightweight-Trigger-Framework 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Lightweight-Trigger-Framework/Lightweight-Trigger-Framework
+      run: ${{env.TESTCMD}} apex-samples/Lightweight-Trigger-Framework/Lightweight-Trigger-Framework
 
     - name: SObjectFabricator 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SObjectFabricator/SObjectFabricator
+      run: ${{env.TESTCMD}} apex-samples/SObjectFabricator/SObjectFabricator
 
     - name: ApexTriggerHandler 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/ApexTriggerHandler/ApexTriggerHandler
+      run: ${{env.TESTCMD}} apex-samples/ApexTriggerHandler/ApexTriggerHandler
 
     - name: forcedotcom-enterprise-architecture 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/forcedotcom-enterprise-architecture/forcedotcom-enterprise-architecture
+      run: ${{env.TESTCMD}} apex-samples/forcedotcom-enterprise-architecture/forcedotcom-enterprise-architecture
 
     - name: sf-sandbox-post-copy 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sf-sandbox-post-copy/sf-sandbox-post-copy
+      run: ${{env.TESTCMD}} apex-samples/sf-sandbox-post-copy/sf-sandbox-post-copy
 
     - name: Multi-File-Uploader-Force 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Multi-File-Uploader-Force/Multi-File-Uploader-Force
+      run: ${{env.TESTCMD}} apex-samples/Multi-File-Uploader-Force/Multi-File-Uploader-Force
 
     - name: logger 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/logger/logger
+      run: ${{env.TESTCMD}} apex-samples/logger/logger
 
     - name: apex-sobjectdataloader 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-sobjectdataloader/apex-sobjectdataloader
+      run: ${{env.TESTCMD}} apex-samples/apex-sobjectdataloader/apex-sobjectdataloader
 
     - name: q 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/q/q
+      run: ${{env.TESTCMD}} apex-samples/q/q
 
     - name: MyTriggers 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/MyTriggers/MyTriggers
+      run: ${{env.TESTCMD}} apex-samples/MyTriggers/MyTriggers
 
     - name: ForceDotComSprintWall 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/ForceDotComSprintWall/ForceDotComSprintWall
+      run: ${{env.TESTCMD}} apex-samples/ForceDotComSprintWall/ForceDotComSprintWall
 
     - name: apex-rest-route 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-rest-route/apex-rest-route
+      run: ${{env.TESTCMD}} apex-samples/apex-rest-route/apex-rest-route
 
     - name: flowtoolbelt 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/flowtoolbelt/flowtoolbelt
+      run: ${{env.TESTCMD}} apex-samples/flowtoolbelt/flowtoolbelt
 
     - name: user-access-visualization 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/user-access-visualization/user-access-visualization
+      run: ${{env.TESTCMD}} apex-samples/user-access-visualization/user-access-visualization
 
     - name: einstein-ai 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/einstein-ai/einstein-ai
+      run: ${{env.TESTCMD}} apex-samples/einstein-ai/einstein-ai
 
     # Duplicate type
     # - name: purealoe-lwc
-    # run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/purealoe-lwc
+    # run: ${{env.TESTCMD}} apex-samples/purealoe-lwc
 
     - name: HyperBatch 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/HyperBatch
+      run: ${{env.TESTCMD}} apex-samples/HyperBatch
 
     # Missing class DmlWrapper
     # - name: Interactions-for-Student-Recruitment
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Interactions-for-Student-Recruitment
+    #  run: ${{env.TESTCMD}} apex-samples/Interactions-for-Student-Recruitment
 
     - name: sobject-work-queue 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sobject-work-queue/sobject-work-queue
+      run: ${{env.TESTCMD}} apex-samples/sobject-work-queue/sobject-work-queue
 
     - name: ffhttp-core 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/ffhttp-core/ffhttp-core
+      run: ${{env.TESTCMD}} apex-samples/ffhttp-core/ffhttp-core
 
     - name: Force.com-Toolkit-for-Facebook 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Force.com-Toolkit-for-Facebook/Force.com-Toolkit-for-Facebook
+      run: ${{env.TESTCMD}} apex-samples/Force.com-Toolkit-for-Facebook/Force.com-Toolkit-for-Facebook
 
     - name: sfdc-oauth-playground 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sfdc-oauth-playground/sfdc-oauth-playground
+      run: ${{env.TESTCMD}} apex-samples/sfdc-oauth-playground/sfdc-oauth-playground
 
     - name: salesforce-limit-monitor 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/salesforce-limit-monitor/salesforce-limit-monitor
+      run: ${{env.TESTCMD}} apex-samples/salesforce-limit-monitor/salesforce-limit-monitor
 
     # Unreachable statement, throw + return
     #- name: Centralized-Salesforce-Dev-Framework
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Centralized-Salesforce-Dev-Framework/Centralized-Salesforce-Dev-Framework
+    #  run: ${{env.TESTCMD}} apex-samples/Centralized-Salesforce-Dev-Framework/Centralized-Salesforce-Dev-Framework
 
     - name: eventlogging 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/eventlogging/eventlogging
+      run: ${{env.TESTCMD}} apex-samples/eventlogging/eventlogging
 
     - name: quiz-host-app 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/quiz-host-app/quiz-host-app
+      run: ${{env.TESTCMD}} apex-samples/quiz-host-app/quiz-host-app
 
     - name: sfdc-related-files-lightning 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sfdc-related-files-lightning/sfdc-related-files-lightning
+      run: ${{env.TESTCMD}} apex-samples/sfdc-related-files-lightning/sfdc-related-files-lightning
 
     - name: sObject-Remote 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sObject-Remote/sObject-Remote
+      run: ${{env.TESTCMD}} apex-samples/sObject-Remote/sObject-Remote
 
     - name: apex-domainbuilder 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-domainbuilder/apex-domainbuilder
+      run: ${{env.TESTCMD}} apex-samples/apex-domainbuilder/apex-domainbuilder
 
     - name: Force.com-Helper-Classes 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Force.com-Helper-Classes/Force.com-Helper-Classes
+      run: ${{env.TESTCMD}} apex-samples/Force.com-Helper-Classes/Force.com-Helper-Classes
 
     - name: selector 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/selector/selector
+      run: ${{env.TESTCMD}} apex-samples/selector/selector
 
     - name: R-apex 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/R-apex/R-apex
+      run: ${{env.TESTCMD}} apex-samples/R-apex/R-apex
 
     # https://github.com/financialforcedev/ff-apex-ls/issues/260 & https://github.com/financialforcedev/ff-apex-ls/issues/261
     #- name: rflib 
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/rflib/rflib
+    #  run: ${{env.TESTCMD}} apex-samples/rflib/rflib
 
     - name: apex-dml-manager 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-dml-manager/apex-dml-manager
+      run: ${{env.TESTCMD}} apex-samples/apex-dml-manager/apex-dml-manager
 
     - name: ConnectApiHelper 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/ConnectApiHelper/ConnectApiHelper
+      run: ${{env.TESTCMD}} apex-samples/ConnectApiHelper/ConnectApiHelper
 
     - name: sfdc-convert-attachments-to-chatter-files 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sfdc-convert-attachments-to-chatter-files/sfdc-convert-attachments-to-chatter-files
+      run: ${{env.TESTCMD}} apex-samples/sfdc-convert-attachments-to-chatter-files/sfdc-convert-attachments-to-chatter-files
 
     - name: Forceea-data-factory 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Forceea-data-factory/Forceea-data-factory/dx
+      run: ${{env.TESTCMD}} apex-samples/Forceea-data-factory/Forceea-data-factory/dx
 
     # project is valid and can be deployed with no modification. However, there seems to be an issues around finding types that needs more investigation
     # - name: ApexTestKit
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/ApexTestKit/ApexTestKit
+    #  run: ${{env.TESTCMD}} apex-samples/ApexTestKit/ApexTestKit
 
     - name: jsonparse 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/jsonparse/jsonparse
+      run: ${{env.TESTCMD}} apex-samples/jsonparse/jsonparse
 
     - name: sirono-common 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sirono-common/sirono-common
+      run: ${{env.TESTCMD}} apex-samples/sirono-common/sirono-common
 
     - name: apex-trigger-actions-framework 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-trigger-actions-framework/apex-trigger-actions-framework
+      run: ${{env.TESTCMD}} apex-samples/apex-trigger-actions-framework/apex-trigger-actions-framework
 
     - name: esapi 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/esapi/esapi
+      run: ${{env.TESTCMD}} apex-samples/esapi/esapi
 
     - name: EnhancedLightningGrid 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/EnhancedLightningGrid/EnhancedLightningGrid
+      run: ${{env.TESTCMD}} apex-samples/EnhancedLightningGrid/EnhancedLightningGrid
 
     - name: processBuilderBlocks 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/processBuilderBlocks/processBuilderBlocks
+      run: ${{env.TESTCMD}} apex-samples/processBuilderBlocks/processBuilderBlocks
 
     - name: promise 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/promise/promise
+      run: ${{env.TESTCMD}} apex-samples/promise/promise
 
     - name: Query.apex 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Query.apex/Query.apex
+      run: ${{env.TESTCMD}} apex-samples/Query.apex/Query.apex
 
     - name: apex-unified-logging 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-unified-logging/apex-unified-logging
+      run: ${{env.TESTCMD}} apex-samples/apex-unified-logging/apex-unified-logging
 
     - name: Zippex 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Zippex/Zippex
+      run: ${{env.TESTCMD}} apex-samples/Zippex/Zippex
 
     - name: TestDataFactory 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/TestDataFactory/TestDataFactory
+      run: ${{env.TESTCMD}} apex-samples/TestDataFactory/TestDataFactory
 
     - name: automation-components 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/automation-components/automation-components
+      run: ${{env.TESTCMD}} apex-samples/automation-components/automation-components
 
     - name: force-di 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/force-di/force-di
+      run: ${{env.TESTCMD}} apex-samples/force-di/force-di
 
     - name: EDA 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/EDA/EDA
+      run: ${{env.TESTCMD}} apex-samples/EDA/EDA
 
     - name: apex-lambda 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-lambda/apex-lambda
+      run: ${{env.TESTCMD}} apex-samples/apex-lambda/apex-lambda
 
     - name: sfdx-mass-action-scheduler 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sfdx-mass-action-scheduler/sfdx-mass-action-scheduler
+      run: ${{env.TESTCMD}} apex-samples/sfdx-mass-action-scheduler/sfdx-mass-action-scheduler
 
     # https://github.com/financialforcedev/ff-apex-ls/issues/262
     # - name: apex-recipes
-    #   run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-recipes/apex-recipes
+    #   run: ${{env.TESTCMD}} apex-samples/apex-recipes/apex-recipes
 
     # Project not deployable as is. May need building for the errors to disappear
     # Error seems to be able to about no resolving a class
     #- name: NPSP 
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/NPSP
+    #  run: ${{env.TESTCMD}} apex-samples/NPSP
 
     - name: apex-mdapi 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-mdapi/apex-mdapi
+      run: ${{env.TESTCMD}} apex-samples/apex-mdapi/apex-mdapi
 
     # Issue around apex-parser
     # https://github.com/financialforcedev/ff-apex-ls/issues/264
     # https://github.com/financialforcedev/ff-apex-ls/issues/265
     # - name: apex-rollup 
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-rollup/apex-rollup
+    #  run: ${{env.TESTCMD}} apex-samples/apex-rollup/apex-rollup
 
     # Multiple issues for this project. One of them is
     # https://github.com/financialforcedev/ff-apex-ls/issues/267
     # https://github.com/financialforcedev/ff-apex-ls/issues/268
     # One more issue around not finding fields in custom SObjects that needs more investigation
     # - name: NebulaLogger
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/NebulaLogger/NebulaLogger
+    #  run: ${{env.TESTCMD}} apex-samples/NebulaLogger/NebulaLogger
 
     - name: apex-toolingapi 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/apex-toolingapi/apex-toolingapi
+      run: ${{env.TESTCMD}} apex-samples/apex-toolingapi/apex-toolingapi
 
     - name: Automated-Testing-for-Force 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Automated-Testing-for-Force/Automated-Testing-for-Force
+      run: ${{env.TESTCMD}} apex-samples/Automated-Testing-for-Force/Automated-Testing-for-Force
 
     # Unreachable statement, throw + return
     #- name: CustomMetadataLoader
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/CustomMetadataLoader/CustomMetadataLoader
+    #  run: ${{env.TESTCMD}} apex-samples/CustomMetadataLoader/CustomMetadataLoader
 
     - name: declarative-lookup-rollup-summaries 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/declarative-lookup-rollup-summaries/declarative-lookup-rollup-summaries
+      run: ${{env.TESTCMD}} apex-samples/declarative-lookup-rollup-summaries/declarative-lookup-rollup-summaries
 
     - name: df12-apex-enterprise-patterns 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/df12-apex-enterprise-patterns/df12-apex-enterprise-patterns
+      run: ${{env.TESTCMD}} apex-samples/df12-apex-enterprise-patterns/df12-apex-enterprise-patterns
 
     - name: df12-deployment-tools 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/df12-deployment-tools/df12-deployment-tools
+      run: ${{env.TESTCMD}} apex-samples/df12-deployment-tools/df12-deployment-tools
 
     - name: dreamhouse-sfdx 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/dreamhouse-sfdx/dreamhouse-sfdx
+      run: ${{env.TESTCMD}} apex-samples/dreamhouse-sfdx/dreamhouse-sfdx
 
     - name: fflib-apex-mocks 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/fflib-apex-mocks/fflib-apex-mocks
+      run: ${{env.TESTCMD}} apex-samples/fflib-apex-mocks/fflib-apex-mocks
 
     - name: fflib-apex-common 
       run: |
-        cp -r samples/fflib-apex-mocks/fflib-apex-mocks samples/fflib-apex-common
-        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/fflib-apex-common
+        cp -r apex-samples/fflib-apex-mocks/fflib-apex-mocks apex-samples/fflib-apex-common
+        ${{env.TESTCMD}} apex-samples/fflib-apex-common
 
     - name: fflib-apex-common-samplecode 
       run: |
-        cp -r samples/fflib-apex-mocks/fflib-apex-mocks samples/fflib-apex-common-samplecode
-        cp -r samples/fflib-apex-common/fflib-apex-common samples/fflib-apex-common-samplecode
-        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/fflib-apex-common-samplecode
+        cp -r apex-samples/fflib-apex-mocks/fflib-apex-mocks apex-samples/fflib-apex-common-samplecode
+        cp -r apex-samples/fflib-apex-common/fflib-apex-common apex-samples/fflib-apex-common-samplecode
+        ${{env.TESTCMD}} apex-samples/fflib-apex-common-samplecode
 
     - name: at4dx 
       run: |
-        cp -r samples/fflib-apex-mocks/fflib-apex-mocks samples/at4dx
-        cp -r samples/fflib-apex-common/fflib-apex-common samples/at4dx
-        cp -r samples/force-di/force-di samples/at4dx
-        java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/at4dx
+        cp -r apex-samples/fflib-apex-mocks/fflib-apex-mocks apex-samples/at4dx
+        cp -r apex-samples/fflib-apex-common/fflib-apex-common apex-samples/at4dx
+        cp -r apex-samples/force-di/force-di apex-samples/at4dx
+        ${{env.TESTCMD}} apex-samples/at4dx
 
     - name: HEDAP 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/HEDAP/HEDAP
+      run: ${{env.TESTCMD}} apex-samples/HEDAP/HEDAP
 
     # Unreachable statement, bad if/else logic
     #- name: Milestones-PM
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Milestones-PM/Milestones-PM
+    #  run: ${{env.TESTCMD}} apex-samples/Milestones-PM/Milestones-PM
 
     - name: Salesforce-Lookup-Rollup-Summaries 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Salesforce-Lookup-Rollup-Summaries/Salesforce-Lookup-Rollup-Summaries
+      run: ${{env.TESTCMD}} apex-samples/Salesforce-Lookup-Rollup-Summaries/Salesforce-Lookup-Rollup-Summaries
 
     - name: Salesforce-Test-Factory 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Salesforce-Test-Factory/Salesforce-Test-Factory
+      run: ${{env.TESTCMD}} apex-samples/Salesforce-Test-Factory/Salesforce-Test-Factory
 
     - name: sfdc-trigger-framework 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/sfdc-trigger-framework/sfdc-trigger-framework
+      run: ${{env.TESTCMD}} apex-samples/sfdc-trigger-framework/sfdc-trigger-framework
 
     - name: SmartFactory-for-Force.com 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/SmartFactory-for-Force/SmartFactory-for-Force
+      run: ${{env.TESTCMD}} apex-samples/SmartFactory-for-Force/SmartFactory-for-Force
 
     # Unreachable statement, double return
     #- name: twilio-salesforce
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/twilio-salesforce/twilio-salesforce
+    #  run: ${{env.TESTCMD}} apex-samples/twilio-salesforce/twilio-salesforce
 
     - name: Visualforce-Multiselect-Picklist 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Visualforce-Multiselect-Picklist/Visualforce-Multiselect-Picklist
+      run: ${{env.TESTCMD}} apex-samples/Visualforce-Multiselect-Picklist/Visualforce-Multiselect-Picklist
 
     - name: visualforce-table-grid 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/visualforce-table-grid/visualforce-table-grid
+      run: ${{env.TESTCMD}} apex-samples/visualforce-table-grid/visualforce-table-grid
 
     - name: visualforce-typeahead 
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/visualforce-typeahead/visualforce-typeahead
+      run: ${{env.TESTCMD}} apex-samples/visualforce-typeahead/visualforce-typeahead
 
     # SObject issue could be related to https://github.com/financialforcedev/ff-apex-ls/issues/260
     # Errors around resolving a clas that's in an unpackaged folder that contains a package.xml
     # - name: Cumulus
-    #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/Cumulus
+    #  run: ${{env.TESTCMD}} apex-samples/Cumulus
 
     - name: ActionPlansV4
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/ActionPlansV4/ActionPlansV4
+      run: ${{env.TESTCMD}} apex-samples/ActionPlansV4/ActionPlansV4
 
     - name: survey-force
-      run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti samples/survey-force/survey-force
+      run: ${{env.TESTCMD}} apex-samples/survey-force/survey-force
 
 
