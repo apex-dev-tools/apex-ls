@@ -122,6 +122,6 @@ def run(log: ProcessLogger)(cmd: String, cwd: File): Unit = {
   val exitCode = Process(shell :+ cmd, cwd) ! log
   if (exitCode > 0) {
     log.err(s"Process exited with non-zero exit code: $exitCode")
-    sys.exit()
+    sys.exit(exitCode)
   }
 }
