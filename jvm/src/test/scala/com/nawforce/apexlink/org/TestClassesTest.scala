@@ -31,7 +31,7 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  private def run(files: Map[String, String])(verify: (PathLike, Option[String]) => ()): Unit = {
+  private def run(files: Map[String, String])(verify: (PathLike, Option[String]) => Unit): Unit = {
 
     // Uncached, no namespace
     FileSystemHelper.run(files) { root: PathLike =>

@@ -4,7 +4,8 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    branches:
+      - '**'
   workflow_dispatch:
 
 env:
@@ -27,8 +28,10 @@ jobs:
         path: apex-samples
 
     - name: Build
-      run: |
-        sbt build package test
+      run: sbt build
+
+    - name: Test
+      run: sbt test
 
     - name: TriggerX
       run: ${{env.TESTCMD}} apex-samples/TriggerX/TriggerX

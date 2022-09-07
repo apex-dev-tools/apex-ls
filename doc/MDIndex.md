@@ -13,6 +13,3 @@ Ordering is used with packages within the index and modules within the packages 
 ## TriHierarchy
 
 IPM is an implementation of the generic TriHierarchy abstract class. The TriHierarchy is just used as means to maintain consistency with how apex-link implements a similar model. This is important to allowing apex-link and this implementation to share utility code when dealing with workspaces. We expect we will be able to remove TriHierarchy at some point to simplify the model.
-
-
-
