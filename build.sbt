@@ -2,39 +2,31 @@ import org.scalajs.linker.interface.Report
 
 import scala.sys.process._
 
-ThisBuild / version              := "3.0.0"
-ThisBuild / isSnapshot           := true
 ThisBuild / scalaVersion         := "2.13.3"
 ThisBuild / description          := "Salesforce Apex static analysis toolkit"
 ThisBuild / organization         := "io.github.apex-dev-tools"
 ThisBuild / organizationHomepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
-ThisBuild / scmInfo := Some(
-  ScmInfo(
-    url("https://github.com/apex-dev-tools/apex-ls"),
-    "git@github.com:apex-dev-tools/apex-ls.git"
-  )
-)
-ThisBuild / developers := List(
-  Developer(
-    id = "nawforce",
-    name = "Kevin Jones",
-    email = "nawforce@gmail.com",
-    url = url("https://github.com/nawforce")
-  )
-)
+ThisBuild / homepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
 ThisBuild / licenses := List(
   "BSD-3-Clause" -> new URL("https://opensource.org/licenses/BSD-3-Clause")
 )
-ThisBuild / homepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
-ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")
-ThisBuild / publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
-  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
+ThisBuild / developers := List(
+  Developer(
+    "apexdevtools",
+    "Apex Dev Tools Team",
+    "apexdevtools@gmail.com",
+    url("https://github.com/apex-dev-tools")
+  )
+)
+ThisBuild / versionScheme := Some("strict")
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 lazy val build = taskKey[File]("Build artifacts")
 lazy val Dev   = config("dev") extend Compile
+
+// Don't publish root
+publish / skip := true
 
 lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
