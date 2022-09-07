@@ -6,12 +6,12 @@ ThisBuild / version              := "3.0.0"
 ThisBuild / isSnapshot           := true
 ThisBuild / scalaVersion         := "2.13.3"
 ThisBuild / description          := "Salesforce Apex static analysis toolkit"
-ThisBuild / organization         := "com.github.financialforcedev"
-ThisBuild / organizationHomepage := Some(url("https://github.com/financialforcedev/ff-apex-ls"))
+ThisBuild / organization         := "io.github.apex-dev-tools"
+ThisBuild / organizationHomepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
 ThisBuild / scmInfo := Some(
   ScmInfo(
-    url("https://github.com/financialforcedev/ff-apex-ls"),
-    "git@github.com:financialforcedev/ff-apex-ls.git"
+    url("https://github.com/apex-dev-tools/apex-ls"),
+    "git@github.com:apex-dev-tools/apex-ls.git"
   )
 )
 ThisBuild / developers := List(
@@ -25,7 +25,7 @@ ThisBuild / developers := List(
 ThisBuild / licenses := List(
   "BSD-3-Clause" -> new URL("https://opensource.org/licenses/BSD-3-Clause")
 )
-ThisBuild / homepage := Some(url("https://github.com/financialforcedev/ff-apex-ls"))
+ThisBuild / homepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
 ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")
 ThisBuild / publishTo := {
   val nexus = "https://oss.sonatype.org/"
