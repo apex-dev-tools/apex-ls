@@ -32,6 +32,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
   .configs(Dev)
   .settings(
+    name := "apex-ls",
     scalacOptions += "-deprecation",
     libraryDependencies ++= Seq(
       "io.github.apex-dev-tools" %%% "outline-parser"                         % "1.0.0",
@@ -61,6 +62,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     build       := buildJs(Compile / fullLinkJS).value,
     Dev / build := buildJs(Compile / fastLinkJS).value,
     libraryDependencies ++= Seq("net.exoego" %%% "scala-js-nodejs-v14" % "0.12.0"),
+    scalaJSUseMainModuleInitializer := false,
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
   )
 
