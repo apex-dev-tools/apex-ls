@@ -94,8 +94,6 @@ def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = D
   val npmDir     = baseDirectory.value / "npm"
 
   val files: Map[File, File] = Map(
-    // Update NPM README.md
-    baseDirectory.value / "../README.md" -> npmDir / "README.md",
     // Update target with NPM modules (for testing)
     npmDir / "package.json" -> targetDir / "package.json",
     // Add source to NPM
