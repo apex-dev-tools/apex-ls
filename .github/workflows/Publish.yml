@@ -40,3 +40,13 @@ jobs:
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: maven-release-jvm
+          path: jvm/target/scala-2.13/*.pom
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: maven-release-sjs
+          path: js/target/scala-2.13/*.pom
