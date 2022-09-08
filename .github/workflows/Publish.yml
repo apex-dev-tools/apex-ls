@@ -17,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history/tags
 
       - uses: actions/setup-java@v3
         with:
@@ -28,7 +30,7 @@ jobs:
           node-version: 16
 
       - name: Build & Test
-        if: ${{ inputs.skip_tests }}
+        if: ${{ !inputs.skip_tests }}
         run: sbt build test
 
       - name: Publish package
