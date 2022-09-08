@@ -27,6 +27,7 @@ jobs:
       with:
         node-version: 16
         cache: 'npm'
+        cache-dependency-path: js/npm/package-lock.json
 
     - name: Checkout samples repo
       uses: actions/checkout@v3
