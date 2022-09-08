@@ -30,7 +30,7 @@ jobs:
           node-version: 16
 
       - name: Build & Test
-        if: ${{ inputs.skip_tests }}
+        if: ${{ !inputs.skip_tests }}
         run: sbt build test
 
       - name: Publish package
