@@ -2,23 +2,32 @@ name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
   pull_request:
-    branches:
-      - '**'
+    branches: [ "**" ]
   workflow_dispatch:
 
 env:
-  TESTCMD: java -cp "jvm/target/scala-2.13/*:jvm/target/scala-2.13/apexls_2.13-*.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti  
+  TESTCMD: java -cp "jvm/target/scala-2.13/*:jvm/target/scala-2.13/apex-ls_2.13-*.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-    - uses: olafurpg/setup-scala@v11
+
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: 11
+        cache: 'sbt'
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+        cache: 'npm'
+        cache-dependency-path: js/npm/package-lock.json
 
     - name: Checkout samples repo
       uses: actions/checkout@v3

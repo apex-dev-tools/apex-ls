@@ -1,0 +1,40 @@
+name: Publish
+
+on:
+  release:
+    types: [ released ]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (force release)'
+        type: boolean
+        required: true
+        default: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 11
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Build & Test
+        if: ${{ inputs.skip_tests }}
+        run: sbt build test
+
+      - name: Publish package
+        run: sbt ci-release
+        env:
+          PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+          PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+          SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
