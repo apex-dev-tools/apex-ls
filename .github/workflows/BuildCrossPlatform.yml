@@ -26,12 +26,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java_version }}
-          cache: 'sbt'
 
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'npm'
     
       - name: Build
         run: sbt build
