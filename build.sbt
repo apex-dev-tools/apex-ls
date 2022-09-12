@@ -23,6 +23,7 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 lazy val build = taskKey[File]("Build artifacts")
+lazy val localVersion = inputKey[Unit]("Publish specific local version")
 lazy val Dev   = config("dev") extend Compile
 
 // Don't publish root
@@ -108,6 +109,25 @@ def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = D
 
   targetFile
 }
+
+// Command to do a local release under a specific version
+// Defaults to last reachable tag (ignoring current commit) or 0.0.0
+// e.g. sbt "localVersion 1.2.3-SNAPSHOT"
+localVersion := {
+  import sbt.complete.Parsers.spaceDelimited
+  val args: Seq[String] = spaceDelimited("<arg>").parsed
+  val v = args.headOption.getOrElse(previousStableVersion.value.getOrElse("0.0.0"))
+
+  val newState = Project.extract(state.value).appendWithoutSession(
+    Seq(ThisBuild / version := v),
+    state.value
+  )
+  val proj = Project.extract(newState)
+
+  proj.runTask(apexls.jvm / publishLocal, newState)
+  proj.runTask(apexls.js / publishLocal, newState)
+}
+
 
 // Run a command and log to provided logger
 def run(log: ProcessLogger)(cmd: String, cwd: File): Unit = {
