@@ -128,7 +128,6 @@ pack := {
   proj.runTask(apexls.js / publishLocal, newState)
 }
 
-
 // Run a command and log to provided logger
 def run(log: ProcessLogger)(cmd: String, cwd: File): Unit = {
   val shell: Seq[String] =
