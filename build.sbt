@@ -23,7 +23,7 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 lazy val build = taskKey[File]("Build artifacts")
-lazy val localVersion = inputKey[Unit]("Publish specific local version")
+lazy val pack = inputKey[Unit]("Publish specific local version")
 lazy val Dev   = config("dev") extend Compile
 
 // Don't publish root
@@ -112,8 +112,8 @@ def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = D
 
 // Command to do a local release under a specific version
 // Defaults to last reachable tag (ignoring current commit) or 0.0.0
-// e.g. sbt "localVersion 1.2.3-SNAPSHOT"
-localVersion := {
+// e.g. sbt "pack 1.2.3-SNAPSHOT" / sbt pack
+pack := {
   import sbt.complete.Parsers.spaceDelimited
   val args: Seq[String] = spaceDelimited("<arg>").parsed
   val v = args.headOption.getOrElse(previousStableVersion.value.getOrElse("0.0.0"))
