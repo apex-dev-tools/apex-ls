@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFieldLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
@@ -121,19 +122,25 @@ final case class IdPrimary(id: Id) extends Primary {
 
     val field = findField(id.name, td, staticContext)
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
-      context.addDependency(field.get)
-      Some(
-        context
-          .getTypeAndAddDependency(field.get.typeName, td)
-          .toOption
-          .map(target => {
-            ExprContext(isStatic = Some(false), Some(target), field.get)
-          })
-          .getOrElse({
-            context.missingType(location, field.get.typeName)
-            ExprContext.empty
-          })
-      )
+      val isPrimaryShadowingPlatform =
+        TypeResolver.platformTypeOnly(TypeName(id.name), context.module).isRight
+      if (isPrimaryShadowingPlatform && !isLocalField(id.name, td, staticContext)) {
+        None
+      } else {
+        context.addDependency(field.get)
+        Some(
+          context
+            .getTypeAndAddDependency(field.get.typeName, td)
+            .toOption
+            .map(target => {
+              ExprContext(isStatic = Some(false), Some(target), field.get)
+            })
+            .getOrElse({
+              context.missingType(location, field.get.typeName)
+              ExprContext.empty
+            })
+        )
+      }
     } else {
       None
     }
@@ -159,6 +166,17 @@ final case class IdPrimary(id: Id) extends Primary {
           td.findField(encodedName.fullName, staticContext)
         else None
       })
+  }
+
+  private def isLocalField(
+    name: Name,
+    td: TypeDeclaration,
+    staticContext: Option[Boolean]
+  ): Boolean = {
+    staticContext match {
+      case Some(isStatic) => td.fields.exists(f => f.name == name && f.isStatic == isStatic)
+      case None           => td.fields.exists(f => f.name == name)
+    }
   }
 
   private def isAccessible(

@@ -14,9 +14,10 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.TestHelper
+import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.Name
+import com.nawforce.pkgforce.path.PathLike
 import org.scalatest.funsuite.AnyFunSuite
 
 class FieldTest extends AnyFunSuite with TestHelper {
@@ -63,6 +64,29 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(
       dummyIssues ==
         "Error: line 1 at 40-43: Duplicate field/property: 'foo'\nError: line 1 at 52-55: Duplicate field/property: 'foo'\n"
+    )
+  }
+
+  test("Super declaration shadowed field name") {
+    typeDeclarations(
+      Map(
+        "Foo.cls" -> "public virtual class Foo {  public final static Bar Account {get {return new Bar();}} }",
+        "Bar.cls" -> "public class Bar extends Foo { public void method(){Account.Name;} }"
+      )
+    )
+    assert(getMessages(root.join("Bar.cls")).isEmpty)
+  }
+
+  test("Local shadowed field name") {
+    typeDeclarations(
+      Map(
+        "Bar.cls" -> "public class Bar { public final static Bar Account {get {return new Bar();}} public void method(){Account.Name;} }"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Bar.cls")
+      ) == "Missing: line 1 at 98-110: Unknown field or type 'Name' on 'Bar'\n"
     )
   }
 }
