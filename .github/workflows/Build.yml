@@ -79,9 +79,8 @@ jobs:
     #- name: promiseV3 
     #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink-1.4.2.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti apex-samples/promiseV3/promiseV3
 
-    # https://github.com/financialforcedev/ff-apex-ls/issues/259
-    # - name: Apex-Opensource-Library 
-    #  run: ${{env.TESTCMD}} apex-samples/Apex-Opensource-Library/Apex-Opensource-Library
+    - name: Apex-Opensource-Library
+      run: ${{env.TESTCMD}} apex-samples/Apex-Opensource-Library/Apex-Opensource-Library
 
     - name: SFDCRules 
       run: ${{env.TESTCMD}} apex-samples/SFDCRules/SFDCRules
@@ -266,8 +265,8 @@ jobs:
     - name: force-di 
       run: ${{env.TESTCMD}} apex-samples/force-di/force-di
 
-    - name: EDA 
-      run: ${{env.TESTCMD}} apex-samples/EDA/EDA
+#    - name: EDA
+#      run: ${{env.TESTCMD}} apex-samples/EDA/EDA
 
     - name: apex-lambda 
       run: ${{env.TESTCMD}} apex-samples/apex-lambda/apex-lambda
