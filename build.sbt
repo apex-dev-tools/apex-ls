@@ -6,7 +6,7 @@ ThisBuild / scalaVersion         := "2.13.3"
 ThisBuild / description          := "Salesforce Apex static analysis toolkit"
 ThisBuild / organization         := "io.github.apex-dev-tools"
 ThisBuild / organizationHomepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
-ThisBuild / homepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
+ThisBuild / homepage             := Some(url("https://github.com/apex-dev-tools/apex-ls"))
 ThisBuild / licenses := List(
   "BSD-3-Clause" -> new URL("https://opensource.org/licenses/BSD-3-Clause")
 )
@@ -18,12 +18,12 @@ ThisBuild / developers := List(
     url("https://github.com/apex-dev-tools")
   )
 )
-ThisBuild / versionScheme := Some("strict")
+ThisBuild / versionScheme          := Some("strict")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
 
 lazy val build = taskKey[File]("Build artifacts")
-lazy val pack = inputKey[Unit]("Publish specific local version")
+lazy val pack  = inputKey[Unit]("Publish specific local version")
 lazy val Dev   = config("dev") extend Compile
 
 // Don't publish root
@@ -57,6 +57,9 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
       "io.github.apex-dev-tools" % "standard-types"             % "55.0.0",
       "com.github.nawforce"      % "uber-apex-jorje"            % "1.0.0" % Test,
       "com.google.jimfs"         % "jimfs"                      % "1.1"   % Test
+    ),
+    packageOptions += Package.ManifestAttributes(
+      "Class-Path" -> (Compile / dependencyClasspath).value.files.map(_.getName.trim).mkString(" ")
     )
   )
   .jsSettings(
@@ -116,12 +119,10 @@ def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = D
 pack := {
   import sbt.complete.Parsers.spaceDelimited
   val args: Seq[String] = spaceDelimited("<arg>").parsed
-  val v = args.headOption.getOrElse(previousStableVersion.value.getOrElse("0.0.0"))
+  val v                 = args.headOption.getOrElse(previousStableVersion.value.getOrElse("0.0.0"))
 
-  val newState = Project.extract(state.value).appendWithoutSession(
-    Seq(ThisBuild / version := v),
-    state.value
-  )
+  val newState =
+    Project.extract(state.value).appendWithoutSession(Seq(ThisBuild / version := v), state.value)
   val proj = Project.extract(newState)
 
   proj.runTask(apexls.jvm / publishLocal, newState)
