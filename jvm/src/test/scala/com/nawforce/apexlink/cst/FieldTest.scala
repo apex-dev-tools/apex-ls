@@ -14,10 +14,9 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.Name
-import com.nawforce.pkgforce.path.PathLike
 import org.scalatest.funsuite.AnyFunSuite
 
 class FieldTest extends AnyFunSuite with TestHelper {

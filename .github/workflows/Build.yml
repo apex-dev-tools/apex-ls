@@ -265,8 +265,8 @@ jobs:
     - name: force-di 
       run: ${{env.TESTCMD}} apex-samples/force-di/force-di
 
-#    - name: EDA
-#      run: ${{env.TESTCMD}} apex-samples/EDA/EDA
+    - name: EDA
+      run: ${{env.TESTCMD}} apex-samples/EDA/EDA
 
     - name: apex-lambda 
       run: ${{env.TESTCMD}} apex-samples/apex-lambda/apex-lambda

@@ -124,8 +124,10 @@ final case class IdPrimary(id: Id) extends Primary {
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
       val isPrimaryShadowingPlatform =
         TypeResolver.platformTypeOnly(TypeName(id.name), context.module).isRight
-      if (isPrimaryShadowingPlatform && !isLocalField(id.name, td, staticContext)) {
-        None
+      val isLocalField = td.fields.contains(field.get)
+      if (isPrimaryShadowingPlatform && !isLocalField) {
+        //If the id name is shadowed by platform type and not a local field then this is not a field ref
+        Some(ExprContext.empty)
       } else {
         context.addDependency(field.get)
         Some(
@@ -166,17 +168,6 @@ final case class IdPrimary(id: Id) extends Primary {
           td.findField(encodedName.fullName, staticContext)
         else None
       })
-  }
-
-  private def isLocalField(
-    name: Name,
-    td: TypeDeclaration,
-    staticContext: Option[Boolean]
-  ): Boolean = {
-    staticContext match {
-      case Some(isStatic) => td.fields.exists(f => f.name == name && f.isStatic == isStatic)
-      case None           => td.fields.exists(f => f.name == name)
-    }
   }
 
   private def isAccessible(
