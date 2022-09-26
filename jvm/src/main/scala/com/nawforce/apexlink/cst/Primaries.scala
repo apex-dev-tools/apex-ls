@@ -126,8 +126,8 @@ final case class IdPrimary(id: Id) extends Primary {
         TypeResolver.platformTypeOnly(TypeName(id.name), context.module).isRight
       val isLocalField = td.fields.contains(field.get)
       if (isPrimaryShadowingPlatform && !isLocalField) {
-        //If the id name is shadowed by platform type and not a local field then this is not a field ref
-        Some(ExprContext.empty)
+        // If the id name is shadowed by platform type and not a local field then this is not a field ref
+        None
       } else {
         context.addDependency(field.get)
         Some(
