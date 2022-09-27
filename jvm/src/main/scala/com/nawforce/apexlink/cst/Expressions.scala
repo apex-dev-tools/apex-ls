@@ -153,14 +153,21 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
         // Found one but we must check can not be resolved as local var/field
         val field = DotExpression
           .findField(primary.id.name, input.declaration.get, context.module, input.isStatic)
+
+        lazy val isShadowingPlatformOrSObject =
+          TypeResolver(TypeName(primary.id.name), input.typeDeclaration).toOption.exists(x =>
+            x match {
+              case _: PlatformTypeDeclaration => true
+              case td                         => td.isSObject
+            }
+          )
+
         if (context.isVar(primary.id.name).isEmpty && field.isEmpty) {
           Some(primary)
         } else if (
-          field.nonEmpty &&
-          TypeResolver
-            .platformTypeOnly(TypeName(primary.id.name), context.module)
-            .isRight &&
-            !input.declaration.get.fields.contains(field.get)
+          field.nonEmpty && isShadowingPlatformOrSObject && !input.declaration.get.fields.contains(
+            field.get
+          )
         ) {
           Some(primary)
         } else {
