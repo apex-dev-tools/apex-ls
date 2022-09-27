@@ -59,12 +59,14 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
       "com.google.jimfs"         % "jimfs"                      % "1.1"   % Test
     ),
     packageOptions += Package.ManifestAttributes(
-      "Class-Path" -> (Compile / dependencyClasspath).value.files.map(_.getName.trim).mkString(" ")
+      "Class-Path" -> (Compile / dependencyClasspath).value.files.map(_.getName.trim).mkString(" "),
+      "Implementation-Build" -> java.time.Instant.now().toEpochMilli.toString
     )
   )
   .jsSettings(
     build       := buildJs(Compile / fullLinkJS).value,
     Dev / build := buildJs(Compile / fastLinkJS).value,
+    Test / parallelExecution := false,
     libraryDependencies ++= Seq("net.exoego" %%% "scala-js-nodejs-v14" % "0.12.0"),
     scalaJSUseMainModuleInitializer := false,
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }

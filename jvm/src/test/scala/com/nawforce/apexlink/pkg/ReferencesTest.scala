@@ -154,10 +154,10 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
       Map(
         "Common.cls" -> common._1,
         "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
-        "B.cls"      -> "public virtual class B implements Common {  public Common fn(){return this;}}",
-        "C.cls"      -> "public virtual class C extends B { }",
-        "UsedB.cls"  -> "public class UsedB { void fun(){ new B().fn();}}",
-        "UsedC.cls"  -> "public class UsedC { void fun(){ Common c = new C(); c.fn();}}"
+        "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
+        "C.cls" -> "public virtual class C extends B { }",
+        "UsedB.cls" -> "public class UsedB { void fun(){ new B().fn();}}",
+        "UsedC.cls" -> "public class UsedC { void fun(){ Common c = new C(); c.fn();}}"
       )
     ) { root: PathLike =>
       val org  = createHappyOrg(root)
@@ -175,11 +175,6 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  /**
-    * This test is failing on the pipe but not locally. Needs more investigation so its disabled for now.
-    * https://github.com/financialforcedev/ff-apex-ls/issues/248
-    */
-  /*
   test("Indirect usage from cache") {
     val usedB =
       withCursor(
@@ -189,10 +184,10 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
       Map(
         "Common.cls" -> "public interface Common { Common fn();} ",
         "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
-        "B.cls"      -> "public virtual class B implements Common {  public Common fn(){return this;}}",
-        "C.cls"      -> "public virtual class C{ B getB(){return new B();} }",
-        "UsedB.cls"  -> usedB._1,
-        "UsedC.cls"  -> "public class UsedC {{new B().fn();}}"
+        "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
+        "C.cls" -> "public virtual class C{ B getB(){return new B();} }",
+        "UsedB.cls" -> usedB._1,
+        "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)
@@ -213,7 +208,6 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
       )
     }
   }
-   */
 
   test("Reference after change") {
     val usedB =
@@ -224,10 +218,10 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
       Map(
         "Common.cls" -> "public interface Common { Common fn();} ",
         "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
-        "B.cls"      -> "public virtual class B implements Common {  public Common fn(){return this;}}",
-        "C.cls"      -> "public virtual class C{ B getB(){return new B();} }",
-        "UsedB.cls"  -> usedB._1,
-        "UsedC.cls"  -> "public class UsedC {{new B().fn();}}"
+        "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
+        "C.cls" -> "public virtual class C{ B getB(){return new B();} }",
+        "UsedB.cls" -> usedB._1,
+        "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
       )
     ) { root: PathLike =>
       val path = root.join("UsedB.cls")
@@ -238,11 +232,11 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
       val org2 = createOrg(root)
       org2.flush()
 
-      //make change
+      // make change
       root.createFile("UsedC.cls", "public class UsedC {}")
       val org3 = createOrg(root)
       org3.flush()
-      //org with the change
+      // org with the change
       val org4 = createOrg(root)
       assert(
         org4.unmanaged
