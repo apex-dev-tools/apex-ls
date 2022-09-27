@@ -209,7 +209,6 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
     val name = target.name
     val field: Option[FieldDeclaration] =
       DotExpression.findField(name, inputType, context.module, input.isStatic)
-    println("Debug: ", name, inputType.typeName.toString, input.isStatic, field)
     if (field.nonEmpty) {
       context.addDependency(field.get)
       val target = context.getTypeAndAddDependency(field.get.typeName, inputType).toOption
