@@ -123,7 +123,7 @@ final case class IdPrimary(id: Id) extends Primary {
     val field = findField(id.name, td, staticContext)
 
     lazy val isPlatformOrSObject =
-      TypeResolver(TypeName(id.name), input.typeDeclaration).toOption.exists(x =>
+      TypeResolver(TypeName(id.name), context.module).toOption.exists(x =>
         x match {
           case _: PlatformTypeDeclaration => true
           case td                         => td.isSObject

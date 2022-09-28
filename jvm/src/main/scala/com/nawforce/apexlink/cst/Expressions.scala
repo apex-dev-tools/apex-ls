@@ -155,7 +155,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
           .findField(primary.id.name, input.declaration.get, context.module, input.isStatic)
 
         lazy val isShadowingPlatformOrSObject =
-          TypeResolver(TypeName(primary.id.name), input.typeDeclaration).toOption.exists(x =>
+          TypeResolver(TypeName(primary.id.name), context.module).toOption.exists(x =>
             x match {
               case _: PlatformTypeDeclaration => true
               case td                         => td.isSObject
