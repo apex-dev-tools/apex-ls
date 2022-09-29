@@ -119,11 +119,10 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       if (isNamespace(primary.id.name, input.declaration.get)) {
         val typeName = TypeName(target.name, Nil, Some(TypeName(primary.id.name))).intern
         val td       = context.getTypeAndAddDependency(typeName, context.thisType).toOption
-        td.map(
-          td =>
-            context.saveResult(this) {
-              ExprContext(isStatic = Some(true), Some(td), td)
-            }
+        td.map(td =>
+          context.saveResult(this) {
+            ExprContext(isStatic = Some(true), Some(td), td)
+          }
         )
       } else {
         // It might be a static reference to an outer class that failed normal analysis due to class name shadowing
@@ -152,11 +151,23 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
     expression match {
       case PrimaryExpression(primary: IdPrimary) if !safeNavigation =>
         // Found one but we must check can not be resolved as local var/field
-        if (
-          context.isVar(primary.id.name).isEmpty &&
-          DotExpression
-            .findField(primary.id.name, input.declaration.get, context.module, input.isStatic)
-            .isEmpty
+        val field = DotExpression
+          .findField(primary.id.name, input.declaration.get, context.module, input.isStatic)
+
+        lazy val isShadowingPlatformOrSObject =
+          TypeResolver(TypeName(primary.id.name), context.module).toOption.exists(x =>
+            x match {
+              case _: PlatformTypeDeclaration => true
+              case td                         => td.isSObject
+            }
+          )
+
+        if (context.isVar(primary.id.name).isEmpty && field.isEmpty) {
+          Some(primary)
+        } else if (
+          field.nonEmpty && isShadowingPlatformOrSObject && !input.declaration.get.fields.contains(
+            field.get
+          )
         ) {
           Some(primary)
         } else {
@@ -249,9 +260,8 @@ final case class DotExpressionWithMethod(
             ExprContext.empty
           } else {
             target
-              .map(
-                target =>
-                  target.verify(location, inter.typeDeclaration, inter.isStatic, input, context)
+              .map(target =>
+                target.verify(location, inter.typeDeclaration, inter.isStatic, input, context)
               )
               .getOrElse(ExprContext.empty)
           }
@@ -263,8 +273,9 @@ final case class DotExpressionWithMethod(
       })
   }
 
-  /** Intercept static method call to BusinessHours or Site as these operate on System.* rather than Schema.* classes.
-    * This hack avoids having to pass additional context into platform type loading to disambiguate.
+  /** Intercept static method call to BusinessHours or Site as these operate on System.* rather than
+    * Schema.* classes. This hack avoids having to pass additional context into platform type
+    * loading to disambiguate.
     */
   private def interceptAmbiguousMethodCall(
     input: ExprContext,
@@ -283,8 +294,8 @@ final case class DotExpressionWithMethod(
             context.thisType
           )
           .toOption
-          .flatMap(
-            td => target.map(target => target.verify(location, td, Some(true), input, context))
+          .flatMap(td =>
+            target.map(target => target.verify(location, td, Some(true), input, context))
           )
       case _ => None
     }

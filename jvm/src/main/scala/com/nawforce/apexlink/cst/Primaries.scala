@@ -14,10 +14,11 @@
 
 package com.nawforce.apexlink.cst
 
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFieldLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
-import com.nawforce.apexlink.types.platform.PlatformTypes
+import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.apexparser.ApexParserBaseVisitor
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
@@ -120,20 +121,35 @@ final case class IdPrimary(id: Id) extends Primary {
     val staticContext = Some(true).filter(input.isStatic.contains)
 
     val field = findField(id.name, td, staticContext)
-    if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
-      context.addDependency(field.get)
-      Some(
-        context
-          .getTypeAndAddDependency(field.get.typeName, td)
-          .toOption
-          .map(target => {
-            ExprContext(isStatic = Some(false), Some(target), field.get)
-          })
-          .getOrElse({
-            context.missingType(location, field.get.typeName)
-            ExprContext.empty
-          })
+
+    lazy val isPlatformOrSObject =
+      TypeResolver(TypeName(id.name), context.module).toOption.exists(x =>
+        x match {
+          case _: PlatformTypeDeclaration => true
+          case td                         => td.isSObject
+        }
       )
+
+    if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
+      val isLocalField = td.fields.contains(field.get)
+      if (isPlatformOrSObject && !isLocalField) {
+        // If the id name is shadowed by platform type and not a local field then this is not a field ref
+        None
+      } else {
+        context.addDependency(field.get)
+        Some(
+          context
+            .getTypeAndAddDependency(field.get.typeName, td)
+            .toOption
+            .map(target => {
+              ExprContext(isStatic = Some(false), Some(target), field.get)
+            })
+            .getOrElse({
+              context.missingType(location, field.get.typeName)
+              ExprContext.empty
+            })
+        )
+      }
     } else {
       None
     }
