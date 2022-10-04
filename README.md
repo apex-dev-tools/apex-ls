@@ -48,7 +48,7 @@ The jar is also executable without a client:
 
 ```sh
 # Assuming dep jars are in the same directory
-java -cp "apex-ls*.jar" com.nawforce.apexlink.ApexLink [args] <directory>
+java -cp "apex-ls*.jar" io.github.apexdevtools.apexls.Main [args] <directory>
 ```
 
 The chosen directory should contain an `sfdx-project.json`. The following arguments are available:
