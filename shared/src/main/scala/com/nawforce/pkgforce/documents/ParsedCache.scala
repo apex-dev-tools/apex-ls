@@ -97,10 +97,12 @@ final class ParsedCache(val path: PathLike, version: Int) {
     val cacheKey  = CacheKey(version, packageContext, name, contents)
     val hashParts = cacheKey.hashParts
     path.createDirectory(hashParts.head) match {
-      case Left(_) => ()
+      case Left(a) => println(s"Error creating dir: $a")
       case Right(outer) =>
+        println(s"Created dir: ${outer.toString}")
         val inner = outer.join(hashParts(1))
         inner.write(writeBinary(CacheEntry(cacheKey, value)))
+        println(s"Created: ${inner.toString}")
     }
   }
 
