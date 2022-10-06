@@ -303,7 +303,7 @@ final case class DotExpressionWithMethod(
 }
 
 object DotExpressionWithMethod {
-  private val isAmbiguousName = Set(Name("BusinessHours"), Name("Site"))
+  private val isAmbiguousName = Set(Name("BusinessHours"), Name("Site"), Name("Network"))
 }
 
 final case class ArrayExpression(expression: Expression, arrayExpression: Expression)

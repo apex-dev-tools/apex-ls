@@ -52,6 +52,23 @@ class AmbiguousObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Network field reference") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" ->
+          "public class Dummy { {SObjectField a = Network.EmailSenderAddress;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+      assert(
+        unmanagedClass("Dummy").get.blocks.head.dependencies().toSet == Set(
+          unmanagedSObject("Network").get
+        )
+      )
+    }
+  }
+
   test("BusinessHours static method call") {
     FileSystemHelper.run(
       Map(
@@ -104,6 +121,19 @@ class AmbiguousObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Network static method call") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" ->
+          "public class Dummy { {String a = Network.getNetworkId();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+      assert(unmanagedClass("Dummy").get.blocks.head.dependencies().isEmpty)
+    }
+  }
+
   test("BusinessHours SObjectType") {
     FileSystemHelper.run(
       Map(
@@ -133,6 +163,23 @@ class AmbiguousObjectTest extends AnyFunSuite with TestHelper {
       assert(
         unmanagedClass("Dummy").get.blocks.head.dependencies().toSet == Set(
           unmanagedSObject("Site").get
+        )
+      )
+    }
+  }
+
+  test("Network SObjectType") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" ->
+          "public class Dummy { {SObjectType a = Network.SObjectType;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+      assert(
+        unmanagedClass("Dummy").get.blocks.head.dependencies().toSet == Set(
+          unmanagedSObject("Network").get
         )
       )
     }
@@ -212,6 +259,23 @@ class AmbiguousObjectTest extends AnyFunSuite with TestHelper {
       assert(
         unmanagedClass("Dummy").get.blocks.head.dependencies().toSet == Set(
           unmanagedSObject("Site").get
+        )
+      )
+    }
+  }
+
+  test("Network CreatedById field") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" ->
+          "public class Dummy { {Network a; System.debug(a.CreatedById);} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+      assert(
+        unmanagedClass("Dummy").get.blocks.head.dependencies().toSet == Set(
+          unmanagedSObject("Network").get
         )
       )
     }
