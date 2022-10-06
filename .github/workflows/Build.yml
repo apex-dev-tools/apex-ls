@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  TESTCMD: java -cp "jvm/target/scala-2.13/*:jvm/target/scala-2.13/apex-ls_2.13-*.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti
+  TESTCMD: java -cp "jvm/target/scala-2.13/*:jvm/target/scala-2.13/apex-ls_2.13-*.jar" io.github.apexdevtools.apexls.Main -verbose -nocache -outlinemulti
 
 jobs:
   build:
