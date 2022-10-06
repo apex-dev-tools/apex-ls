@@ -79,7 +79,7 @@ jobs:
     #- name: promiseV3 
     #  run: java -cp "apexlink/target/dependency/*:apexlink/target/apexlink-1.4.2.jar" com.nawforce.apexlink.ApexLink -verbose -nocache -outlinemulti apex-samples/promiseV3/promiseV3
 
-    # https://github.com/financialforcedev/ff-apex-ls/issues/259
+    # Issue around Method 'System.Boolean equals(Object)' from interface 'Object' not being implemented. Needs to be fixed
     # - name: Apex-Opensource-Library 
     #  run: ${{env.TESTCMD}} apex-samples/Apex-Opensource-Library/Apex-Opensource-Library
 
@@ -207,7 +207,7 @@ jobs:
     - name: R-apex 
       run: ${{env.TESTCMD}} apex-samples/R-apex/R-apex
 
-    # https://github.com/financialforcedev/ff-apex-ls/issues/260 & https://github.com/financialforcedev/ff-apex-ls/issues/261
+    # https://github.com/apex-dev-tools/apex-ls/issues/19
     #- name: rflib 
     #  run: ${{env.TESTCMD}} apex-samples/rflib/rflib
 
@@ -275,9 +275,8 @@ jobs:
     - name: sfdx-mass-action-scheduler 
       run: ${{env.TESTCMD}} apex-samples/sfdx-mass-action-scheduler/sfdx-mass-action-scheduler
 
-    # https://github.com/financialforcedev/ff-apex-ls/issues/262
-    # - name: apex-recipes
-    #   run: ${{env.TESTCMD}} apex-samples/apex-recipes/apex-recipes
+    - name: apex-recipes
+      run: ${{env.TESTCMD}} apex-samples/apex-recipes/apex-recipes
 
     # Project not deployable as is. May need building for the errors to disappear
     # Error seems to be able to about no resolving a class
@@ -288,14 +287,12 @@ jobs:
       run: ${{env.TESTCMD}} apex-samples/apex-mdapi/apex-mdapi
 
     # Issue around apex-parser
-    # https://github.com/financialforcedev/ff-apex-ls/issues/264
-    # https://github.com/financialforcedev/ff-apex-ls/issues/265
+    # https://github.com/apex-dev-tools/apex-ls/issues/16
+    # https://github.com/apex-dev-tools/apex-ls/issues/15
     # - name: apex-rollup 
     #  run: ${{env.TESTCMD}} apex-samples/apex-rollup/apex-rollup
 
-    # Multiple issues for this project. One of them is
-    # https://github.com/financialforcedev/ff-apex-ls/issues/267
-    # https://github.com/financialforcedev/ff-apex-ls/issues/268
+    # https://github.com/apex-dev-tools/apex-ls/issues/18
     # One more issue around not finding fields in custom SObjects that needs more investigation
     # - name: NebulaLogger
     #  run: ${{env.TESTCMD}} apex-samples/NebulaLogger/NebulaLogger
@@ -375,7 +372,7 @@ jobs:
     - name: visualforce-typeahead 
       run: ${{env.TESTCMD}} apex-samples/visualforce-typeahead/visualforce-typeahead
 
-    # SObject issue could be related to https://github.com/financialforcedev/ff-apex-ls/issues/260
+    # SObject issue could be related to https://github.com/apex-dev-tools/apex-ls/issues/19
     # Errors around resolving a clas that's in an unpackaged folder that contains a package.xml
     # - name: Cumulus
     #  run: ${{env.TESTCMD}} apex-samples/Cumulus
