@@ -270,6 +270,7 @@ object TypeName {
   val ambiguousAliasMap: Map[TypeName, TypeName] = Map(
     TypeName(Name("BusinessHours")) -> TypeName(Name("BusinessHours"), Nil, Some(TypeName.Schema)),
     TypeName(Name("Site"))          -> TypeName(Name("Site"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("Network"))       -> TypeName(Name("Network"), Nil, Some(TypeName.Schema)),
     TypeName(Name("Location"))      -> TypeName(Name("Location"), Nil, Some(TypeName.System)),
     TypeName(Name("Approval"))      -> TypeName(Name("Approval"), Nil, Some(TypeName.System)),
     TypeName(Name("Address"))       -> TypeName(Name("Address"), Nil, Some(TypeName.System))
