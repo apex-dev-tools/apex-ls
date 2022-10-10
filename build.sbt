@@ -29,6 +29,9 @@ lazy val Dev   = config("dev") extend Compile
 // Don't publish root
 publish / skip := true
 
+// Limit to sequential test for both cross projects
+Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
+
 lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
   .configs(Dev)
