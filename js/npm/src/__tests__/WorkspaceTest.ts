@@ -1,4 +1,4 @@
-import { Workspaces } from "../apexls";
+import { Workspaces } from "@apexdevtools/apex-ls";
 import { vol } from "memfs";
 import { patchFs } from "fs-monkey";
 
