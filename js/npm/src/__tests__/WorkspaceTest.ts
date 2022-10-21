@@ -17,7 +17,7 @@ test("Empty directory", () => {
     try {
         const workspace = Workspaces.get("/pkg1");
         expect(workspace).toBeDefined();
-        expect(workspace.findType("Foo")).toBeNull;
+        expect(workspace.findType("Foo")).toEqual([]);
     } finally {
         unpatch();
     }
