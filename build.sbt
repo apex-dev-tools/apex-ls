@@ -100,15 +100,16 @@ def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = D
     // Update target with NPM modules (for testing)
     npmDir / "package.json" -> targetDir / "package.json",
     // Add source to NPM
-    targetFile -> npmDir / "src/apexls.js"
+    targetFile -> npmDir / "lib/apex-ls.js"
   )
 
   IO.copy(files, CopyOptions().withOverwrite(true))
 
   // Install modules in NPM
-  exec("npm i", npmDir)
+  exec("npm ci", npmDir)
 
   // Update target with NPM modules (for testing)
+  IO.delete(targetDir / "node_modules")
   IO.copyDirectory(
     npmDir / "node_modules",
     targetDir / "node_modules",
