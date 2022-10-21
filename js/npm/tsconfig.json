@@ -4,12 +4,16 @@
     "module": "commonjs",
     "sourceMap": false,
     "declaration": false,
-    "rootDir": "src",
     "allowJs": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@apexdevtools/apex-ls": [
+        "lib/apex-ls.d.ts"
+      ]
+    }
   },
   "include": [
-    "src/**/*",
-    "lib/**/*.d.ts"
+    "src/**/*"
   ]
 }
