@@ -23,6 +23,7 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
 
 lazy val build = taskKey[File]("Build artifacts")
+lazy val getVersion = taskKey[String]("Get current dynamic version")
 lazy val pack  = inputKey[Unit]("Publish specific local version")
 lazy val Dev   = config("dev") extend Compile
 
@@ -134,6 +135,10 @@ pack := {
   proj.runTask(apexls.jvm / publishLocal, newState)
   proj.runTask(apexls.js / publishLocal, newState)
 }
+
+// Returns current version
+// Use `sbt "print getVersion" --error` to print only this value to stdout
+getVersion := (ThisBuild / version).value.substring(0,5)
 
 // Run a command and log to provided logger
 def run(log: ProcessLogger)(cmd: String, cwd: File): Unit = {
