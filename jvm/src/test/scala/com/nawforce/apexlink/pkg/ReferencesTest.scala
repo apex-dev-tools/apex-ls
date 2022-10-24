@@ -175,81 +175,85 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  /* failing on pipe
   test("Indirect usage from cache") {
     val usedB =
       withCursor(
         s"public class UsedB { void fun(){ Common a = new B(); a.fn(); C c = new C();c.getB().f${CURSOR}n();}}"
       )
-    FileSystemHelper.run(
-      Map(
-        "Common.cls" -> "public interface Common { Common fn();} ",
-        "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
-        "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
-        "C.cls" -> "public virtual class C{ B getB(){return new B();} }",
-        "UsedB.cls" -> usedB._1,
-        "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
-      )
-    ) { root: PathLike =>
-      val org = createHappyOrg(root)
-      org.flush()
-      // Reload from cache
-      val org2 = createOrg(root)
-      val path = root.join("UsedB.cls")
-      assert(
-        org2.unmanaged
-          .getReferences(path, line = 1, offset = usedB._2)
-          .map(TargetLocationString(root, _))
-          .toSet ==
-          Set(
-            TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
-            TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()"),
-            TargetLocationString(root.join("UsedC.cls").toString, "new B().fn()")
-          )
-      )
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Common.cls" -> "public interface Common { Common fn();} ",
+          "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
+          "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
+          "C.cls"     -> "public virtual class C{ B getB(){return new B();} }",
+          "UsedB.cls" -> usedB._1,
+          "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
+        )
+      ) { root: PathLike =>
+        val org = createHappyOrg(root)
+        org.flush()
+
+        // Reload from cache
+        val org2 = createOrg(root)
+        val path = root.join("UsedB.cls")
+        assert(
+          org2.unmanaged
+            .getReferences(path, line = 1, offset = usedB._2)
+            .map(TargetLocationString(root, _))
+            .toSet ==
+            Set(
+              TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
+              TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()"),
+              TargetLocationString(root.join("UsedC.cls").toString, "new B().fn()")
+            )
+        )
+      }
     }
   }
-  */
 
   test("Reference after change") {
     val usedB =
       withCursor(
         s"public class UsedB { void fun(){ Common a = new B(); a.fn(); C c = new C();c.getB().f${CURSOR}n();}}"
       )
-    FileSystemHelper.run(
-      Map(
-        "Common.cls" -> "public interface Common { Common fn();} ",
-        "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
-        "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
-        "C.cls" -> "public virtual class C{ B getB(){return new B();} }",
-        "UsedB.cls" -> usedB._1,
-        "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
-      )
-    ) { root: PathLike =>
-      val path = root.join("UsedB.cls")
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Common.cls" -> "public interface Common { Common fn();} ",
+          "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
+          "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
+          "C.cls"     -> "public virtual class C{ B getB(){return new B();} }",
+          "UsedB.cls" -> usedB._1,
+          "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
+        )
+      ) { root: PathLike =>
+        val path = root.join("UsedB.cls")
 
-      val org = createHappyOrg(root)
-      org.flush()
-      // Reload from cache
-      val org2 = createOrg(root)
-      org2.flush()
+        val org = createHappyOrg(root)
+        org.flush()
 
-      // make change
-      root.createFile("UsedC.cls", "public class UsedC {}")
-      val org3 = createOrg(root)
-      org3.flush()
-      // org with the change
-      val org4 = createOrg(root)
-      assert(
-        org4.unmanaged
-          .getReferences(path, line = 1, offset = usedB._2)
-          .map(TargetLocationString(root, _))
-          sameElements
-            Array(
-              TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
-              TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()")
-            )
-      )
+        // Reload from cache
+        val org2 = createOrg(root)
+
+        // make change and flush to cache
+        root.createFile("UsedC.cls", "public class UsedC {}")
+        val org3 = createOrg(root)
+        org3.flush()
+
+        // org with the change
+        val org4 = createOrg(root)
+        assert(
+          org4.unmanaged
+            .getReferences(path, line = 1, offset = usedB._2)
+            .map(TargetLocationString(root, _))
+            sameElements
+              Array(
+                TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
+                TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()")
+              )
+        )
+      }
     }
   }
 }
