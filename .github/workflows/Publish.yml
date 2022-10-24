@@ -59,7 +59,7 @@ jobs:
       - name: Publish NPM
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_npm }}
         run: |
-          npm version $(cd ../.. && sbt "print getVersion" --error)
+          npm version "$(cd $GITHUB_WORKSPACE && sbt "print getVersion" --error)"
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
