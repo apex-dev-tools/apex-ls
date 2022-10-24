@@ -23,6 +23,7 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
 
 lazy val build = taskKey[File]("Build artifacts")
+lazy val getVersion = taskKey[String]("Get current dynamic version")
 lazy val pack  = inputKey[Unit]("Publish specific local version")
 lazy val Dev   = config("dev") extend Compile
 
@@ -100,15 +101,16 @@ def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = D
     // Update target with NPM modules (for testing)
     npmDir / "package.json" -> targetDir / "package.json",
     // Add source to NPM
-    targetFile -> npmDir / "src/apexls.js"
+    targetFile -> npmDir / "lib/apex-ls.js"
   )
 
   IO.copy(files, CopyOptions().withOverwrite(true))
 
   // Install modules in NPM
-  exec("npm i", npmDir)
+  exec("npm ci", npmDir)
 
   // Update target with NPM modules (for testing)
+  IO.delete(targetDir / "node_modules")
   IO.copyDirectory(
     npmDir / "node_modules",
     targetDir / "node_modules",
@@ -133,6 +135,10 @@ pack := {
   proj.runTask(apexls.jvm / publishLocal, newState)
   proj.runTask(apexls.js / publishLocal, newState)
 }
+
+// Returns current version
+// Use `sbt "print getVersion" --error` to print only this value to stdout
+getVersion := (ThisBuild / version).value.substring(0,5)
 
 // Run a command and log to provided logger
 def run(log: ProcessLogger)(cmd: String, cwd: File): Unit = {

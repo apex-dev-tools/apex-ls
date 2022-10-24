@@ -1,4 +1,4 @@
-import { Workspaces } from "../apexls";
+import { Workspaces } from "@apexdevtools/apex-ls";
 import { vol } from "memfs";
 import { patchFs } from "fs-monkey";
 
@@ -17,7 +17,7 @@ test("Empty directory", () => {
     try {
         const workspace = Workspaces.get("/pkg1");
         expect(workspace).toBeDefined();
-        expect(workspace.findType("Foo")).toBeNull;
+        expect(workspace.findType("Foo")).toEqual([]);
     } finally {
         unpatch();
     }

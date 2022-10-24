@@ -12,6 +12,6 @@ To use this, first create a workspace:
 
 Call findType on the workspace:
 
-    const fooPath = workspace.findType("ns001.Foo")  // Returns null if type is unknown
+    const fooPath = workspace.findType("ns001.Foo")  // Returns empty array if type is unknown
 
 A workspace here is simply the directory containing Salesforce metadata, typically it's the directory in which sfdx-project.json resides.

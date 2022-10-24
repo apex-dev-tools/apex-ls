@@ -1,12 +1,19 @@
 {
   "compilerOptions": {
-    "target": "es2015",
+    "target": "ES6",
     "module": "commonjs",
     "sourceMap": false,
     "declaration": false,
-    "rootDir": "src",
-    "outDir": "lib",
     "allowJs": true,
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@apexdevtools/apex-ls": [
+        "lib/apex-ls.d.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ]
 }

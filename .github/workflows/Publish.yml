@@ -10,6 +10,11 @@ on:
         type: boolean
         required: true
         default: false
+      pub_npm:
+        description: 'Publish to NPM (ONLY run on tag)'
+        type: boolean
+        required: true
+        default: false
 
 jobs:
   publish:
@@ -40,3 +45,13 @@ jobs:
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+
+      # Only publishes full releases to NPM
+      - name: Publish NPM
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_npm }}
+        run: |
+          npm version $(cd ../.. && sbt "print getVersion" --error)
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: js/npm
