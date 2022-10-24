@@ -10,8 +10,13 @@ on:
         type: boolean
         required: true
         default: false
+      pub_sbt:
+        description: 'Publish JARs'
+        type: boolean
+        required: true
+        default: true
       pub_npm:
-        description: 'Publish to NPM (ONLY run on tag)'
+        description: 'Publish NPM (ONLY run on tag)'
         type: boolean
         required: true
         default: false
@@ -34,11 +39,15 @@ jobs:
         with:
           node-version: 16
 
-      - name: Build & Test
-        if: ${{ !inputs.skip_tests }}
-        run: sbt build test
+      - name: Build
+        run: sbt build
 
-      - name: Publish package
+      - name: Test
+        if: ${{ !inputs.skip_tests }}
+        run: sbt test
+
+      - name: Publish JARs
+        if: ${{ inputs.pub_sbt }}
         run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
@@ -46,11 +55,13 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
 
-      # Only publishes full releases to NPM
+      # Only publishes full tagged releases to NPM
       - name: Publish NPM
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_npm }}
         run: |
-          npm version $(cd ../.. && sbt "print getVersion" --error)
+          ver="$(cd $GITHUB_WORKSPACE && sbt "print getVersion" --error)"
+          echo "Found dynamic version $ver"
+          npm version "$ver"
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
