@@ -193,8 +193,6 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
           "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
         )
       ) { root: PathLike =>
-        LoggerOps.setLoggingLevel(TRACE_LOGGING)
-
         val org = createHappyOrg(root)
         org.flush()
 
@@ -202,7 +200,6 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
         val org2 = createHappyOrg(root)
         val path = root.join("UsedB.cls")
 
-        LoggerOps.setLoggingLevel(NO_LOGGING)
         assert(
           org2.unmanaged
             .getReferences(path, line = 1, offset = usedB._2)
