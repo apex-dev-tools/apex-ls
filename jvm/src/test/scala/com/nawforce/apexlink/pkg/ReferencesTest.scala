@@ -2,6 +2,8 @@ package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
 import com.nawforce.apexlink.{FileSystemHelper, TargetLocationString, TestHelper}
+import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.pkgforce.diagnostics.LoggerOps.{NO_LOGGING, TRACE_LOGGING}
 import com.nawforce.pkgforce.path.PathLike
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -191,12 +193,16 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
           "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
         )
       ) { root: PathLike =>
+        LoggerOps.setLoggingLevel(TRACE_LOGGING)
+
         val org = createHappyOrg(root)
         org.flush()
 
         // Reload from cache
-        val org2 = createOrg(root)
+        val org2 = createHappyOrg(root)
         val path = root.join("UsedB.cls")
+
+        LoggerOps.setLoggingLevel(NO_LOGGING)
         assert(
           org2.unmanaged
             .getReferences(path, line = 1, offset = usedB._2)
