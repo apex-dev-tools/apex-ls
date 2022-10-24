@@ -16,7 +16,7 @@ on:
         required: true
         default: true
       pub_npm:
-        description: 'Publish NPM (ONLY run on tag)'
+        description: 'Publish NPM (Latest Tag)'
         type: boolean
         required: true
         default: false
@@ -38,6 +38,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Build
         run: sbt build
@@ -59,9 +60,7 @@ jobs:
       - name: Publish NPM
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_npm }}
         run: |
-          ver="$(cd $GITHUB_WORKSPACE && sbt "print getVersion" --error)"
-          echo "Found dynamic version $ver"
-          npm version "$ver"
+          npm version --allow-same-version --no-git-tag-version from-git
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
