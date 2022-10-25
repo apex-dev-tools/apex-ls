@@ -2,8 +2,6 @@ package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
 import com.nawforce.apexlink.{FileSystemHelper, TargetLocationString, TestHelper}
-import com.nawforce.pkgforce.diagnostics.LoggerOps
-import com.nawforce.pkgforce.diagnostics.LoggerOps.{NO_LOGGING, TRACE_LOGGING}
 import com.nawforce.pkgforce.path.PathLike
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -237,7 +235,7 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
         org.flush()
 
         // Reload from cache
-        val org2 = createOrg(root)
+        createOrg(root)
 
         // make change and flush to cache
         root.createFile("UsedC.cls", "public class UsedC {}")
