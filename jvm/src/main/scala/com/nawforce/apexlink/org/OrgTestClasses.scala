@@ -17,12 +17,15 @@ import com.nawforce.apexlink.api.TypeSummary
 import com.nawforce.apexlink.deps.ReferencingCollector
 import com.nawforce.apexlink.deps.ReferencingCollector.NodeInfo
 import com.nawforce.apexlink.finding.TypeResolver
-import com.nawforce.apexlink.types.apex.ApexDeclaration
+import com.nawforce.apexlink.rpc.{TargetLocation, TestItem}
+import com.nawforce.apexlink.types.apex.{ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
+import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, Modifier, TEST_METHOD_MODIFIER}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.Path
 
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
 /** Test class discovery helper */
@@ -53,6 +56,19 @@ trait OrgTestClasses {
       .testReferences(accum.toSet)
       .filter(_.testClass.outerTypeName.isEmpty) // Safety check, we only want outer types here
       .map(_.asTypeNameStrings())
+  }
+
+  def getAllExecutableTestItems: Array[TestItem] = {
+    def hasTestModifier(modifiers: ArraySeq[Modifier]): Boolean = modifiers.contains(TEST_METHOD_MODIFIER) || modifiers.contains(ISTEST_ANNOTATION)
+
+    packages.view.flatMap(_.orderedModules.flatMap(_.testClasses.toSeq))
+      .filter(cls => cls.methods.nonEmpty && hasTestModifier(cls.modifiers) && cls.methods.map(_.modifiers).exists(hasTestModifier))
+      .map(cls => {
+        val children = cls.methods.collect({ case m: ApexMethodLike => m }).filter(m => hasTestModifier(m.modifiers)).map(m => {
+          TestItem(m.name.toString, TargetLocation(m.location.path.toString, m.idLocation), None)
+        })
+        TestItem(cls.name.toString, TargetLocation(cls.location.path.toString, cls.idLocation), Some(children.toArray))
+      }).toArray
   }
 
   /** Retrieve type info from a path */

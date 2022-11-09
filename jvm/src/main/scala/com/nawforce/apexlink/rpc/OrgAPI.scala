@@ -253,6 +253,9 @@ trait OrgAPI {
 
   @api.JSONRPCMethod(name = "getAllTestMethods")
   def getAllTestMethods(): Future[Array[TestMethod]]
+
+  @api.JSONRPCMethod(name = "getAllExecutableTestItems")
+  def getAllExecutableTestItems(): Future[Array[TestItem]]
 }
 
 object OrgAPI {

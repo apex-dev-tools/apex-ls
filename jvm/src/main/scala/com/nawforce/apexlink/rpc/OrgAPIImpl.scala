@@ -424,10 +424,25 @@ case class GetAllTestMethods(promise: Promise[Array[TestMethod]]) extends APIReq
   }
 }
 
+case class GetAllExecutableTestItems(promise: Promise[Array[TestItem]]) extends APIRequest {
+  override def process(queue: OrgQueue): Unit = {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    promise.success(orgImpl.getAllExecutableTestItems)
+  }
+}
+
 object GetAllTestMethods {
   def apply(queue: OrgQueue): Future[Array[TestMethod]] = {
     val promise = Promise[Array[TestMethod]]()
     queue.add(new GetAllTestMethods(promise))
+    promise.future
+  }
+}
+
+object GetAllExecutableTestItems {
+  def apply(queue: OrgQueue): Future[Array[TestItem]] = {
+    val promise = Promise[Array[TestItem]]()
+    queue.add(new GetAllExecutableTestItems(promise))
     promise.future
   }
 }
@@ -578,5 +593,9 @@ class OrgAPIImpl extends OrgAPI {
 
   override def getAllTestMethods(): Future[Array[TestMethod]] = {
     GetAllTestMethods(OrgQueue.instance())
+  }
+
+  override def getAllExecutableTestItems(): Future[Array[TestItem]] = {
+    GetAllExecutableTestItems(OrgQueue.instance())
   }
 }
