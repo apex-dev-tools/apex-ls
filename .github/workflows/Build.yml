@@ -379,8 +379,9 @@ jobs:
     # - name: Cumulus
     #  run: ${{env.TESTCMD}} apex-samples/Cumulus
 
-    - name: ActionPlansV4
-      run: ${{env.TESTCMD}} apex-samples/ActionPlansV4/ActionPlansV4
+    # Winter 23 API
+    # - name: ActionPlansV4
+    #   run: ${{env.TESTCMD}} apex-samples/ActionPlansV4/ActionPlansV4
 
     - name: survey-force
       run: ${{env.TESTCMD}} apex-samples/survey-force/survey-force
