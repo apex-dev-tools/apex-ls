@@ -233,8 +233,9 @@ jobs:
     - name: sirono-common 
       run: ${{env.TESTCMD}} apex-samples/sirono-common/sirono-common
 
-    - name: apex-trigger-actions-framework 
-      run: ${{env.TESTCMD}} apex-samples/apex-trigger-actions-framework/apex-trigger-actions-framework
+    # Winter 23 API
+    # - name: apex-trigger-actions-framework
+    #   run: ${{env.TESTCMD}} apex-samples/apex-trigger-actions-framework/apex-trigger-actions-framework
 
     - name: esapi 
       run: ${{env.TESTCMD}} apex-samples/esapi/esapi
@@ -275,8 +276,9 @@ jobs:
     - name: sfdx-mass-action-scheduler 
       run: ${{env.TESTCMD}} apex-samples/sfdx-mass-action-scheduler/sfdx-mass-action-scheduler
 
-    - name: apex-recipes
-      run: ${{env.TESTCMD}} apex-samples/apex-recipes/apex-recipes
+    # Winter 23 API
+    # - name: apex-recipes
+    #   run: ${{env.TESTCMD}} apex-samples/apex-recipes/apex-recipes
 
     # Project not deployable as is. May need building for the errors to disappear
     # Error seems to be able to about no resolving a class
@@ -377,8 +379,9 @@ jobs:
     # - name: Cumulus
     #  run: ${{env.TESTCMD}} apex-samples/Cumulus
 
-    - name: ActionPlansV4
-      run: ${{env.TESTCMD}} apex-samples/ActionPlansV4/ActionPlansV4
+    # Winter 23 API
+    # - name: ActionPlansV4
+    #   run: ${{env.TESTCMD}} apex-samples/ActionPlansV4/ActionPlansV4
 
     - name: survey-force
       run: ${{env.TESTCMD}} apex-samples/survey-force/survey-force
