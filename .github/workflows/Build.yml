@@ -233,8 +233,9 @@ jobs:
     - name: sirono-common 
       run: ${{env.TESTCMD}} apex-samples/sirono-common/sirono-common
 
-    - name: apex-trigger-actions-framework 
-      run: ${{env.TESTCMD}} apex-samples/apex-trigger-actions-framework/apex-trigger-actions-framework
+    # Requires standard-types update for Invocable ns
+    # - name: apex-trigger-actions-framework
+    #   run: ${{env.TESTCMD}} apex-samples/apex-trigger-actions-framework/apex-trigger-actions-framework
 
     - name: esapi 
       run: ${{env.TESTCMD}} apex-samples/esapi/esapi
