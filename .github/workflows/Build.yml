@@ -233,7 +233,7 @@ jobs:
     - name: sirono-common 
       run: ${{env.TESTCMD}} apex-samples/sirono-common/sirono-common
 
-    # Requires standard-types update for Invocable ns
+    # Winter 23 API
     # - name: apex-trigger-actions-framework
     #   run: ${{env.TESTCMD}} apex-samples/apex-trigger-actions-framework/apex-trigger-actions-framework
 
@@ -276,8 +276,9 @@ jobs:
     - name: sfdx-mass-action-scheduler 
       run: ${{env.TESTCMD}} apex-samples/sfdx-mass-action-scheduler/sfdx-mass-action-scheduler
 
-    - name: apex-recipes
-      run: ${{env.TESTCMD}} apex-samples/apex-recipes/apex-recipes
+    # Winter 23 API
+    # - name: apex-recipes
+    #   run: ${{env.TESTCMD}} apex-samples/apex-recipes/apex-recipes
 
     # Project not deployable as is. May need building for the errors to disappear
     # Error seems to be able to about no resolving a class
