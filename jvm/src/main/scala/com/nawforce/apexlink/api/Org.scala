@@ -15,13 +15,7 @@
 package com.nawforce.apexlink.api
 
 import com.nawforce.apexlink.org.OPM
-import com.nawforce.apexlink.rpc.{
-  BombScore,
-  CompletionItemLink,
-  DependencyGraph,
-  LocationLink,
-  TargetLocation
-}
+import com.nawforce.apexlink.rpc.{BombScore, CompletionItemLink, DependencyGraph, LocationLink, TargetLocation, TestItem}
 import com.nawforce.pkgforce.api.IssuesCollection
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -176,6 +170,11 @@ trait Org {
     * input classes and tests that reference any supertype or interface of an input class.
     */
   def getTestClassNames(paths: Array[String]): Array[String]
+
+  /**
+    * Find test classes with all the methods that can be executed and return it as TestItem
+    */
+  def getAllExecutableTestItems: Array[TestItem]
 }
 
 object Org {
