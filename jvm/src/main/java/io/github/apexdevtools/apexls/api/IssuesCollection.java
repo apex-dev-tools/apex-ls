@@ -12,10 +12,10 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.pkgforce.api;
+package io.github.apexdevtools.apexls.api;
 
-import com.nawforce.pkgforce.api.Issue;
-import com.nawforce.pkgforce.api.IssueLocation;
+import io.github.apexdevtools.apexls.api.Issue;
+import io.github.apexdevtools.apexls.api.IssueLocation;
 
 /**
  * Access to Issues (an error or warning) for metadata files. When metadata files are changed issues my reported

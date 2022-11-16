@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.types;
+
+package io.github.apexdevtools.apexls.types;
 
 import com.financialforce.types.base.Location;
 

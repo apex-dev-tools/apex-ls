@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.api
 
-import com.nawforce.pkgforce.api.MDIndex
+import io.github.apexdevtools.apexls.api.MDIndex
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -96,8 +96,8 @@ class MDIndexInterfaceTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo implements Bar {}",
-        "sources/Bar.cls"   -> "public interface Bar {}"
+        "sources/Foo.cls" -> "public class Foo implements Bar {}",
+        "sources/Bar.cls" -> "public interface Bar {}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -118,7 +118,7 @@ class MDIndexInterfaceTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo implements Bar {public interface Bar {}}"
+        "sources/Foo.cls" -> "public class Foo implements Bar {public interface Bar {}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -139,7 +139,7 @@ class MDIndexInterfaceTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Bar.cls"   -> "public class Bar {public class Foo implements Baz {} public interface Baz {}}"
+        "sources/Bar.cls" -> "public class Bar {public class Foo implements Baz {} public interface Baz {}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -160,9 +160,9 @@ class MDIndexInterfaceTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo implements Bar, Baz {}",
-        "sources/Bar.cls"   -> "public interface Bar {}",
-        "sources/Baz.cls"   -> "public interface Baz {}"
+        "sources/Foo.cls" -> "public class Foo implements Bar, Baz {}",
+        "sources/Bar.cls" -> "public interface Bar {}",
+        "sources/Baz.cls" -> "public interface Baz {}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)

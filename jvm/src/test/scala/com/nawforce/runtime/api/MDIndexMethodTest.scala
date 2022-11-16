@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.api
 
-import com.nawforce.pkgforce.api.MDIndex
+import io.github.apexdevtools.apexls.api.MDIndex
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -190,7 +190,7 @@ class MDIndexMethodTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {String func() {return null;}}"
+        "sources/Foo.cls" -> "public class Foo {String func() {return null;}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -220,7 +220,7 @@ class MDIndexMethodTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {public static Foo func(String a) {return null;}}"
+        "sources/Foo.cls" -> "public class Foo {public static Foo func(String a) {return null;}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -256,7 +256,7 @@ class MDIndexMethodTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {Bar func(Foo a) {return null;}}"
+        "sources/Foo.cls" -> "public class Foo {Bar func(Foo a) {return null;}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -292,8 +292,8 @@ class MDIndexMethodTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {Bar func(Bar a, String b) {return null;}}",
-        "sources/Bar.cls"   -> "public class Bar {}"
+        "sources/Foo.cls" -> "public class Foo {Bar func(Bar a, String b) {return null;}}",
+        "sources/Bar.cls" -> "public class Bar {}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -333,7 +333,7 @@ class MDIndexMethodTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {void func1(final String a) {} String func2() {return null;}}"
+        "sources/Foo.cls" -> "public class Foo {void func1(final String a) {} String func2() {return null;}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)

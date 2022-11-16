@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.api
 
-import com.nawforce.pkgforce.api.MDIndex
+import io.github.apexdevtools.apexls.api.MDIndex
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -69,7 +69,7 @@ class MDIndexFindTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {}"
+        "sources/Foo.cls" -> "public class Foo {}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -115,7 +115,7 @@ class MDIndexFindTest extends AnyFunSuite {
   test("SFDX namespaced fuzzy find") {
     FileSystemHelper.run(
       Map(
-        "sfdx-project.json"  -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
         "sources/Foo.cls"    -> "public class Foo {}",
         "sources/FooBar.cls" -> "public class FooBar { public class Bar {} }"
       )
@@ -159,7 +159,7 @@ class MDIndexFindTest extends AnyFunSuite {
   test("SFDX namespaced fuzzy find list") {
     FileSystemHelper.run(
       Map(
-        "sfdx-project.json"  -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
         "sources/Foo.cls"    -> "public class Foo {}",
         "sources/FooBar.cls" -> "public class FooBar { public class Bar {} }"
       )
@@ -204,7 +204,7 @@ class MDIndexFindTest extends AnyFunSuite {
   test("SFDX find by namespace") {
     FileSystemHelper.run(
       Map(
-        "sfdx-project.json"  -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
         "sources/Foo.cls"    -> "public class Foo {}",
         "sources/FooBar.cls" -> "public class FooBar { public class Bar {} }"
       )
@@ -233,10 +233,10 @@ class MDIndexFindTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources1\"}, {\"path\": \"sources2\"}] }",
-        "sources1/Foo.cls"  -> "public class Foo {}",
-        "sources1/Bar.cls"  -> "public class Bar {}",
-        "sources2/Foo.cls"  -> "public class Foo {}",
-        "sources2/Baz.cls"  -> "public class Baz { public class Bar {} }"
+        "sources1/Foo.cls" -> "public class Foo {}",
+        "sources1/Bar.cls" -> "public class Bar {}",
+        "sources2/Foo.cls" -> "public class Foo {}",
+        "sources2/Baz.cls" -> "public class Baz { public class Bar {} }"
       )
     ) { root: PathLike =>
       val index           = new MDIndex(root)
@@ -480,7 +480,7 @@ class MDIndexFindTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo { public class Bar {} }"
+        "sources/Foo.cls" -> "public class Foo { public class Bar {} }"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)

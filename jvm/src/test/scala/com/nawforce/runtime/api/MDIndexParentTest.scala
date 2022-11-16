@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.api
 
-import com.nawforce.pkgforce.api.MDIndex
+import io.github.apexdevtools.apexls.api.MDIndex
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -84,8 +84,8 @@ class MDIndexParentTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo extends Bar {}",
-        "sources/Bar.cls"   -> "public class Bar {}"
+        "sources/Foo.cls" -> "public class Foo extends Bar {}",
+        "sources/Bar.cls" -> "public class Bar {}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -106,7 +106,7 @@ class MDIndexParentTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo extends Bar {public class Bar {}}"
+        "sources/Foo.cls" -> "public class Foo extends Bar {public class Bar {}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -127,7 +127,7 @@ class MDIndexParentTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Bar.cls"   -> "public class Bar {public class Foo extends Bar {}}"
+        "sources/Bar.cls" -> "public class Bar {public class Foo extends Bar {}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -148,7 +148,7 @@ class MDIndexParentTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Bar.cls"   -> "public class Bar {public class Foo extends Baz {} public class Baz {}}"
+        "sources/Bar.cls" -> "public class Bar {public class Foo extends Baz {} public class Baz {}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)

@@ -11,7 +11,8 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.pkgforce.api
+
+package io.github.apexdevtools.apexls.api
 
 trait IssueLocation {
   def startLineNumber(): Int

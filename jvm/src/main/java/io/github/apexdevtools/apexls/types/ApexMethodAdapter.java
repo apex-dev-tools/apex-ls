@@ -1,51 +1,55 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.types;
 
-import com.financialforce.types.IConstructorDeclaration;
+package io.github.apexdevtools.apexls.types;
+
 import com.financialforce.types.IFormalParameter;
-import com.nawforce.pkgforce.api.ApexMethod;
-import com.nawforce.pkgforce.api.ApexMethodParameter;
-import com.nawforce.pkgforce.api.ApexType;
-import com.nawforce.pkgforce.api.ApexTypeId;
+import com.financialforce.types.IMethodDeclaration;
+import io.github.apexdevtools.apexls.api.ApexMethod;
+import io.github.apexdevtools.apexls.api.ApexMethodParameter;
+import io.github.apexdevtools.apexls.api.ApexType;
+import io.github.apexdevtools.apexls.api.ApexTypeId;
 import scala.collection.immutable.ArraySeq;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class ApexConstructorAdapter implements ApexMethod {
-    final private IConstructorDeclaration cd;
+public class ApexMethodAdapter implements ApexMethod {
+    final private static NameApexTypeId VOID_APEX_TYPE_ID = new NameApexTypeId("void", "", false);
+
+    final private IMethodDeclaration md;
     final private ApexTypeAdapter definingType;
 
-    public ApexConstructorAdapter(ApexTypeAdapter definingType, IConstructorDeclaration cd) {
+    public ApexMethodAdapter(ApexTypeAdapter definingType, IMethodDeclaration md) {
         this.definingType = definingType;
-        this.cd = cd;
+        this.md = md;
     }
 
     @Override
     public String getMethodName() {
-        return cd.id().toString();
+        return md.id().toString();
     }
 
     @Override
     public boolean isConstructor() {
-        return true;
+        return false;
     }
 
     @Override
     public String getModifiers() {
-        return cd.annotationsAndModifiers();
+        return md.annotationsAndModifiers();
     }
 
     @Override
     public ApexTypeId getReturnType() {
-        return definingType;
+        if (md.typeRef().isEmpty()) return VOID_APEX_TYPE_ID;
+        return NameApexTypeId.apply(md.typeRef());
     }
 
     @Override
     public List<ApexMethodParameter> getParameters() {
-        ArraySeq<IFormalParameter> parameters = cd.formalParameters();
+        ArraySeq<IFormalParameter> parameters = md.formalParameters();
         ApexMethodParameter[] result = new ApexMethodParameter[parameters.length()];
         for (int i = 0; i < parameters.length(); i++)
             result[i] = new ApexMethodParameterAdapter(parameters.apply(i));
@@ -54,7 +58,7 @@ public class ApexConstructorAdapter implements ApexMethod {
 
     @Override
     public ApexLocationAdapter getLocation() {
-        return new ApexLocationAdapter(cd.bodyLocation().get());
+        return new ApexLocationAdapter(md.bodyLocation().get());
     }
 
     @Override
@@ -67,14 +71,14 @@ public class ApexConstructorAdapter implements ApexMethod {
         if (this == other) return true;
         if (other == null) return false;
         if (getClass() != other.getClass()) return false;
-        ApexConstructorAdapter otherMethod = (ApexConstructorAdapter) other;
-        return cd == otherMethod.cd && definingType == otherMethod.definingType;
+        ApexMethodAdapter otherMethod = (ApexMethodAdapter) other;
+        return md == otherMethod.md && definingType == otherMethod.definingType;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 31 * hash + cd.hashCode();
+        hash = 31 * hash + md.hashCode();
         hash = 31 * hash + definingType.hashCode();
         return hash;
     }

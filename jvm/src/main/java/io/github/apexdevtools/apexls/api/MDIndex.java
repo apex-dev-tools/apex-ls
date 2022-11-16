@@ -2,11 +2,11 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.pkgforce.api;
+package io.github.apexdevtools.apexls.api;
 
 import com.nawforce.pkgforce.diagnostics.IssuesManager;
 import com.nawforce.pkgforce.path.PathLike;
-import com.nawforce.pkgforce.types.ApexTypeAdapter;
+import io.github.apexdevtools.apexls.types.ApexTypeAdapter;
 import com.nawforce.runtime.platform.Path;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;

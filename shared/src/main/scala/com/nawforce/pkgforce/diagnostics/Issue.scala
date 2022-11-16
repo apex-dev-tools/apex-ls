@@ -28,7 +28,7 @@
 
 package com.nawforce.pkgforce.diagnostics
 
-import com.nawforce.pkgforce.api.IssueLocation
+import io.github.apexdevtools.apexls.api.IssueLocation
 import com.nawforce.pkgforce.diagnostics.DiagnosticCategory.isErrorType
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.platform.Path
@@ -38,7 +38,7 @@ import scala.collection.compat.immutable.ArraySeq
 
 /** An issue recoded against a specific file location. */
 final case class Issue(path: PathLike, diagnostic: Diagnostic)
-    extends com.nawforce.pkgforce.api.Issue {
+    extends io.github.apexdevtools.apexls.api.Issue {
 
   override def filePath(): String = path.toString
 
@@ -59,8 +59,8 @@ object Issue {
   implicit val rw: RW[Issue] = macroRW
 
   implicit val ordering: Ordering[Issue] = Ordering
-    .by[Issue, Int](
-      issue => if (DiagnosticCategory.isErrorType(issue.diagnostic.category)) 0 else 1
+    .by[Issue, Int](issue =>
+      if (DiagnosticCategory.isErrorType(issue.diagnostic.category)) 0 else 1
     )
     .orElseBy(_.diagnostic.location.startLine)
     .orElseBy(_.diagnostic.location.startPosition)
