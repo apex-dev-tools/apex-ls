@@ -1,10 +1,11 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.types;
+
+package io.github.apexdevtools.apexls.types;
 
 import com.financialforce.types.base.TypeRef;
-import com.nawforce.pkgforce.api.*;
+import io.github.apexdevtools.apexls.api.*;
 import com.nawforce.runtime.types.platform.SObjectTypeDeclaration;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;

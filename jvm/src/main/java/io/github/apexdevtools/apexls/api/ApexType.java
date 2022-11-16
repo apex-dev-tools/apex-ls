@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.api;
+
+package io.github.apexdevtools.apexls.api;
 
 import java.util.List;
 

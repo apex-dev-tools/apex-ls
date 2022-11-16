@@ -1,14 +1,15 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.types;
+
+package io.github.apexdevtools.apexls.types;
 
 import com.financialforce.types.IConstructorDeclaration;
 import com.financialforce.types.IFormalParameter;
-import com.nawforce.pkgforce.api.ApexMethod;
-import com.nawforce.pkgforce.api.ApexMethodParameter;
-import com.nawforce.pkgforce.api.ApexType;
-import com.nawforce.pkgforce.api.ApexTypeId;
+import io.github.apexdevtools.apexls.api.ApexMethod;
+import io.github.apexdevtools.apexls.api.ApexMethodParameter;
+import io.github.apexdevtools.apexls.api.ApexType;
+import io.github.apexdevtools.apexls.api.ApexTypeId;
 import scala.collection.immutable.ArraySeq;
 
 import java.util.Arrays;

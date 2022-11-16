@@ -13,7 +13,7 @@
  */
 package com.nawforce.runtime.cmds
 
-import com.nawforce.pkgforce.api.MDIndex
+import io.github.apexdevtools.apexls.api.MDIndex
 import com.nawforce.runtime.platform.Path
 
 object Indexer {

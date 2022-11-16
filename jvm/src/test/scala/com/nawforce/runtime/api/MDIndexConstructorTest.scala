@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.api
 
-import com.nawforce.pkgforce.api.MDIndex
+import io.github.apexdevtools.apexls.api.MDIndex
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -132,7 +132,7 @@ class MDIndexConstructorTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {Foo() {}}"
+        "sources/Foo.cls" -> "public class Foo {Foo() {}}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -162,8 +162,8 @@ class MDIndexConstructorTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {private Foo(String a, Bar b) {}}",
-        "sources/Bar.cls"   -> "public class Bar {}"
+        "sources/Foo.cls" -> "public class Foo {private Foo(String a, Bar b) {}}",
+        "sources/Bar.cls" -> "public class Bar {}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)
@@ -203,8 +203,8 @@ class MDIndexConstructorTest extends AnyFunSuite {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"sources\"}], \"namespace\": \"ns\"}",
-        "sources/Foo.cls"   -> "public class Foo {Foo() {} private Foo(String a, Bar b) {}}",
-        "sources/Bar.cls"   -> "public class Bar {}"
+        "sources/Foo.cls" -> "public class Foo {Foo() {} private Foo(String a, Bar b) {}}",
+        "sources/Bar.cls" -> "public class Bar {}"
       )
     ) { root: PathLike =>
       val index = new MDIndex(root)

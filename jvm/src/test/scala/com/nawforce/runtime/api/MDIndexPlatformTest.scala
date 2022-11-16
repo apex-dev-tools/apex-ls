@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.api
 
-import com.nawforce.pkgforce.api.MDIndex
+import io.github.apexdevtools.apexls.api.MDIndex
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite

@@ -13,15 +13,15 @@
  */
 package com.nawforce.pkgforce.diagnostics
 
-import com.nawforce.pkgforce.api.{IssueLocation, IssuesCollection, Issue => APIIssue}
+import io.github.apexdevtools.apexls.api.{IssueLocation, IssuesCollection, Issue => APIIssue}
 import com.nawforce.pkgforce.diagnostics
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.platform.Path
 
 import scala.collection.mutable
 
-/** IssuesCollection implementation, holds Issues for each metadata file and tracks when they change to allow
-  * clients to be more selective when pulling issues.
+/** IssuesCollection implementation, holds Issues for each metadata file and tracks when they change
+  * to allow clients to be more selective when pulling issues.
   */
 class IssuesManager extends IssuesCollection with IssueLogger {
   private val log             = mutable.HashMap[PathLike, List[Issue]]() withDefaultValue List()
@@ -131,8 +131,8 @@ class IssuesManager extends IssuesCollection with IssueLogger {
     files.foreach(file => {
       var fileIssues = log
         .getOrElse(file, Nil)
-        .filter(
-          issue => includeWarnings || DiagnosticCategory.isErrorType(issue.diagnostic.category)
+        .filter(issue =>
+          includeWarnings || DiagnosticCategory.isErrorType(issue.diagnostic.category)
         )
         .sorted(Issue.ordering)
       if (maxIssuesPerFile > 0)
