@@ -10,7 +10,9 @@
   "types": "lib/apex-ls.d.ts",
   "scripts": {
     "prepack": "cp ../../LICENSE .",
-    "test": "jest"
+    "test": "jest",
+    "test-samples": "jest --config sys.jestconfig.json",
+    "test-snapshot": "npm run test-samples -- --updateSnapshot"
   },
   "dependencies": {
     "@apexdevtools/apex-parser": "3.1.0",
