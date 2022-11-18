@@ -38,7 +38,7 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
   }
 
   test("Unescaped terminator in find") {
-    SOSLParser.parse("[Find 'some'thing']") should matchPattern {
+    SOSLParser.parse("[Find 'some'thing'']") should matchPattern {
       case Left(ArraySeq(SOSLParser.ParserIssue(1, 12, err)))
           if err.startsWith("mismatched input 'thing' expecting") =>
     }
