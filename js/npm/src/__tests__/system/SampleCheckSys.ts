@@ -1,6 +1,6 @@
 import { spawnSync } from "child_process";
 import { readdirSync, lstatSync } from "fs";
-import { basename, resolve } from "path"
+import { basename, resolve, sep } from "path"
 
 describe("Check samples", () => {
 
@@ -67,9 +67,16 @@ describe("Check samples", () => {
             console.log(`[${name}] check output: No issues found \n`);
         }
 
+        // Strip unique abs paths and empty lines for snapshotting
+        const sanitisedLogs: string[] = logs.split("\n")
+            .reduce((a, c) => {
+                c && a.push(c.replaceAll(`${path}${sep}`, ""));
+                return a;
+            }, []);
+
         const result = {
             status: jvmCheck.status,
-            output: logs.split("\n").filter(l => l)
+            output: sanitisedLogs
         };
 
         expect(result).toMatchSnapshot();
