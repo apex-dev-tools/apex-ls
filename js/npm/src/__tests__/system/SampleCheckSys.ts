@@ -1,6 +1,10 @@
+import chalk from "chalk";
 import { spawnSync } from "child_process";
 import { readdirSync, lstatSync } from "fs";
 import { basename, resolve, sep } from "path"
+
+const errorCats = ["Syntax", "Error", "Missing"];
+const warnCats = ["Warning", "Unused"];
 
 describe("Check samples", () => {
 
@@ -59,24 +63,39 @@ describe("Check samples", () => {
         // Check it was not cancelled due to timeout
         expect(jvmCheck.signal).toBeNull();
 
-        const logs = jvmCheck.stdout.toString("utf8");
-        if (logs) {
-            console.log(`[${name}] check output:`);
-            console.log(logs);
-        } else {
-            console.log(`[${name}] check output: No issues found \n`);
-        }
+        const status = jvmCheck.status;
 
         // Strip unique abs paths and empty lines for snapshotting
-        const sanitisedLogs: string[] = logs.split("\n")
+        const logs: string[] = jvmCheck.stdout
+            .toString("utf8")
+            .split("\n")
             .reduce((a, c) => {
                 c && a.push(c.replaceAll(`${path}${sep}`, ""));
                 return a;
             }, []);
 
+        if (logs.length) {
+            console.log(`[${name}](status: ${status}) check output:`);
+            console.log(
+                logs.map(l => {
+                    if (errorCats.some(cat => l.startsWith(cat))) {
+                        return chalk.red(l);
+                    } else if (warnCats.some(cat => l.startsWith(cat))) {
+                        return chalk.yellow(l);
+                    }
+                    return l;
+                }).join("\n")
+            );
+            console.log(); // \n
+        } else {
+            console.log(
+                `[${name}](status: ${status}) check output: ${chalk.green("No issues found")}\n`
+            );
+        }
+
         const result = {
-            status: jvmCheck.status,
-            output: sanitisedLogs
+            status,
+            logs
         };
 
         expect(result).toMatchSnapshot();
