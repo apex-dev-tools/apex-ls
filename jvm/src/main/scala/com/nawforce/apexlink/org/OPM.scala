@@ -13,6 +13,7 @@
  */
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.analysis.OrgAnalysis
 import com.nawforce.apexlink.api.{AvailableParser, BuildInfo, Org, Package, ServerOps, TypeSummary}
 import com.nawforce.apexlink.cst.CompilationUnit
 import com.nawforce.apexlink.deps.{DownWalker, MaxDependencyCountParser, TransitiveCollector}
@@ -42,18 +43,22 @@ import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, ProjectConfig, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
+import io.github.apexdevtools.apexls.spi.AnalysisProvider
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
 import java.util
+import java.util.ServiceLoader
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.hashing.MurmurHash3
+import scala.jdk.CollectionConverters._
 
-/** Org/Package/Module hierarchy. This is based on generics to maintain consistency while we migrate features over
-  * to pkgforce. The generics force the use of inner classes which is not so desirable,
+/** Org/Package/Module hierarchy. This is based on generics to maintain consistency while we migrate
+  * features over to pkgforce. The generics force the use of inner classes which is not so
+  * desirable,
   */
 object OPM extends TriHierarchy {
   type TOrg     = OrgImpl
@@ -70,15 +75,17 @@ object OPM extends TriHierarchy {
     // The workspace loaded into this Org
     val workspace: Workspace = initWorkspace.getOrElse(new Workspace(Seq()))
 
-    /** Issues log for all packages in org. This is managed independently as errors may be raised against files
-      * for which there is no natural type representation.
+    /** Issues log for all packages in org. This is managed independently as errors may be raised
+      * against files for which there is no natural type representation.
       */
     private[nawforce] val issueManager = new IssuesManager
 
     /** Manager for post validation plugins */
     private[nawforce] val pluginsManager = new PluginsManager
 
-    /** Parsed Apex data cache, the cache holds summary information about Apex types to speed startup */
+    /** Parsed Apex data cache, the cache holds summary information about Apex types to speed
+      * startup
+      */
     private[nawforce] val parsedCache =
       ParsedCache.create(MurmurHash3.stringHash(BuildInfo.implementationBuild)) match {
         case Right(pc) => Some(pc)
@@ -101,7 +108,9 @@ object OPM extends TriHierarchy {
 
     override def getProjectConfig(): Option[ProjectConfig] = workspace.projectConfig
 
-    /** Packages in org in deploy order, the last entry is the unmanaged package identified by namespace = None */
+    /** Packages in org in deploy order, the last entry is the unmanaged package identified by
+      * namespace = None
+      */
     override val packages: ArraySeq[PackageImpl] = {
 
       def createModule(
@@ -157,6 +166,9 @@ object OPM extends TriHierarchy {
       CodeParser.clearCaches()
       if (autoFlush)
         flusher.refreshAndFlush()
+
+      val analysis = new OrgAnalysis(this)
+      analysis.afterLoad()
     }
 
     /** Get all loaded packages. */
@@ -193,8 +205,8 @@ object OPM extends TriHierarchy {
     def getTypeIdentifiers(apexOnly: Boolean): Array[TypeIdentifier] = {
       refreshLock.synchronized {
         OrgInfo.current.withValue(this) {
-          packages.foldLeft(Array[TypeIdentifier]())(
-            (acc, pkg) => acc ++ pkg.getTypeIdentifiers(apexOnly)
+          packages.foldLeft(Array[TypeIdentifier]())((acc, pkg) =>
+            acc ++ pkg.getTypeIdentifiers(apexOnly)
           )
         }
       }
@@ -267,8 +279,8 @@ object OPM extends TriHierarchy {
             def safeLink(nature: String)(identifier: TypeIdentifier): Unit = {
               nodeIndex
                 .get(identifier)
-                .foreach(
-                  target => if (source != target) linkData += DependencyLink(source, target, nature)
+                .foreach(target =>
+                  if (source != target) linkData += DependencyLink(source, target, nature)
                 )
             }
 
@@ -392,14 +404,12 @@ object OPM extends TriHierarchy {
 
       def getTypeAndSummaryOfPath(path: String): Option[(TypeIdentifier, TypeSummary)] =
         packages.view
-          .flatMap(
-            pkg =>
-              Option(pkg.getTypeOfPath(path))
-                .flatMap(
-                  typeId =>
-                    Option(pkg.getSummaryOfType(typeId))
-                      .flatMap(summary => Option(typeId, summary))
-                )
+          .flatMap(pkg =>
+            Option(pkg.getTypeOfPath(path))
+              .flatMap(typeId =>
+                Option(pkg.getSummaryOfType(typeId))
+                  .flatMap(summary => Option(typeId, summary))
+              )
           )
           .headOption
 
@@ -420,23 +430,21 @@ object OPM extends TriHierarchy {
       paths
         .flatMap { path =>
           getTypeAndSummaryOfPath(path)
-            .filter {
-              case (typeId, summary) =>
-                typeId.toString
-                !excludeTestClasses || !summary.modifiers.contains(ISTEST_ANNOTATION)
+            .filter { case (typeId, summary) =>
+              typeId.toString
+              !excludeTestClasses || !summary.modifiers.contains(ISTEST_ANNOTATION)
             }
-            .map {
-              case (typeId, _) => (typeId, collector.transitives(typeId))
+            .map { case (typeId, _) =>
+              (typeId, collector.transitives(typeId))
             }
-            .map {
-              case (typeId, transitiveDependencies) =>
-                DependencyCount(
-                  path,
-                  countTransitiveDependencies(typeId, transitiveDependencies),
-                  getTypeIdOfPath(path)
-                    .map(id => new MaxDependencyCountParser(this).count(id))
-                    .getOrElse(Left(Some(s"Could not find type for path $path")))
-                )
+            .map { case (typeId, transitiveDependencies) =>
+              DependencyCount(
+                path,
+                countTransitiveDependencies(typeId, transitiveDependencies),
+                getTypeIdOfPath(path)
+                  .map(id => new MaxDependencyCountParser(this).count(id))
+                  .getOrElse(Left(Some(s"Could not find type for path $path")))
+              )
             }
         }
     }
@@ -445,15 +453,13 @@ object OPM extends TriHierarchy {
       val allClasses = packages.flatMap(_.orderedModules.flatMap(_.testClasses.toSeq))
 
       allClasses
-        .flatMap(
-          c =>
-            c.methods
-              .filter(
-                m =>
-                  m.modifiers.contains(ISTEST_ANNOTATION) || m.modifiers
-                    .contains(TEST_METHOD_MODIFIER)
-              )
-              .map(m => TestMethod(c.name.toString(), m.name.toString()))
+        .flatMap(c =>
+          c.methods
+            .filter(m =>
+              m.modifiers.contains(ISTEST_ANNOTATION) || m.modifiers
+                .contains(TEST_METHOD_MODIFIER)
+            )
+            .map(m => TestMethod(c.name.toString(), m.name.toString()))
         )
         .toSet
         .toArray
@@ -520,8 +526,8 @@ object OPM extends TriHierarchy {
         PlatformTypeDeclaration.namespaces
     }
 
-    /** Load a class to obtain it's FullDeclaration, issues are not updated, this just returns a temporary version of
-      * the class so that it can be inspected.
+    /** Load a class to obtain it's FullDeclaration, issues are not updated, this just returns a
+      * temporary version of the class so that it can be inspected.
       */
     protected def loadClass(
       path: PathLike,
@@ -532,8 +538,8 @@ object OPM extends TriHierarchy {
           getPackageModule(path)
             .map(module => {
               val existingIssues = org.issueManager.pop(path)
-              val parser         = CodeParser(doc.path, SourceData(source.getBytes(StandardCharsets.UTF_8)))
-              val result         = parser.parseClassReturningParser()
+              val parser = CodeParser(doc.path, SourceData(source.getBytes(StandardCharsets.UTF_8)))
+              val result = parser.parseClassReturningParser()
               try {
                 (
                   Some(result.value),
@@ -563,8 +569,8 @@ object OPM extends TriHierarchy {
           getPackageModule(path)
             .map(module => {
               val existingIssues = org.issueManager.pop(path)
-              val parser         = CodeParser(doc.path, SourceData(source.getBytes(StandardCharsets.UTF_8)))
-              val result         = parser.parseTriggerReturningParser()
+              val parser = CodeParser(doc.path, SourceData(source.getBytes(StandardCharsets.UTF_8)))
+              val result = parser.parseTriggerReturningParser()
               try {
                 (Some(result.value), TriggerDeclaration.construct(parser, module, result.value._2))
               } catch {
@@ -643,8 +649,8 @@ object OPM extends TriHierarchy {
       types.values
     }
 
-    /** Iterate metadata defined types, this will include referenced platform SObjects irrespective of if they have been
-      * extended or not which is perhaps not quite accurate to the method name.
+    /** Iterate metadata defined types, this will include referenced platform SObjects irrespective
+      * of if they have been extended or not which is perhaps not quite accurate to the method name.
       */
     def getMetadataDefinedTypeIdentifiers(apexOnly: Boolean): Iterable[TypeIdentifier] = {
       types.values

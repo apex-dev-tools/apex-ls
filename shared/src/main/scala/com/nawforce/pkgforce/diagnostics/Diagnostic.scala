@@ -14,16 +14,17 @@
 package com.nawforce.pkgforce.diagnostics
 
 import com.nawforce.pkgforce.path.Location
+import io.github.apexdevtools.apexls.api.{Issue => APIIssue}
 import upickle.default.{macroRW, ReadWriter => RW}
 
 @upickle.implicits.key("DiagnosticCategory")
 sealed abstract class DiagnosticCategory(val value: String)
 
-case object SYNTAX_CATEGORY  extends DiagnosticCategory("Syntax")
-case object ERROR_CATEGORY   extends DiagnosticCategory("Error")
-case object MISSING_CATEGORY extends DiagnosticCategory("Missing")
-case object WARNING_CATEGORY extends DiagnosticCategory("Warning")
-case object UNUSED_CATEGORY  extends DiagnosticCategory("Unused")
+case object SYNTAX_CATEGORY  extends DiagnosticCategory(APIIssue.SYNTAX_ISSUE)
+case object ERROR_CATEGORY   extends DiagnosticCategory(APIIssue.ERROR_ISSUE)
+case object MISSING_CATEGORY extends DiagnosticCategory(APIIssue.MISSING_ISSUE)
+case object WARNING_CATEGORY extends DiagnosticCategory(APIIssue.WARNING_ISSUE)
+case object UNUSED_CATEGORY  extends DiagnosticCategory(APIIssue.UNUSED_ISSUE)
 
 object DiagnosticCategory {
   def apply(value: String): DiagnosticCategory = {
@@ -48,7 +49,9 @@ object DiagnosticCategory {
   implicit val rw: RW[DiagnosticCategory] = macroRW
 }
 
-/** A diagnostic message, category tells us what type of diagnostic this is while location and messages provide details */
+/** A diagnostic message, category tells us what type of diagnostic this is while location and
+  * messages provide details
+  */
 @upickle.implicits.key("Diagnostic")
 case class Diagnostic(category: DiagnosticCategory, location: Location, message: String)
 

@@ -15,6 +15,10 @@
 package io.github.apexdevtools.apexls.api
 
 trait Issue {
+
+  /* The generator of this issue, default to APEX_LS_PROVIDER */
+  def provider(): String
+
   /* The file path where the issue was found */
   def filePath(): String
 
@@ -28,10 +32,22 @@ trait Issue {
   def message(): String
 
   /* Is this considered an error issue, rather than a warning */
-  def isError(): java.lang.Boolean
+  def isError: java.lang.Boolean
 
   /* Format as String, filePath is omitted to avoid duplicating over multiple Issues */
   def asString: String = category() + ": " + fileLocation().displayPosition + ": " + message()
 
   override def toString: String = filePath() + ": " + asString
+}
+
+object Issue {
+  // Default source name for apex-ls generated diagnostics
+  final val APEX_LS_PROVIDER = "apex-ls"
+
+  // Category constants, these should become enums after moving to Scala3
+  final val SYNTAX_ISSUE  = "Syntax"
+  final val ERROR_ISSUE   = "Error"
+  final val MISSING_ISSUE = "Missing"
+  final val WARNING_ISSUE = "Warning"
+  final val UNUSED_ISSUE  = "Unused"
 }

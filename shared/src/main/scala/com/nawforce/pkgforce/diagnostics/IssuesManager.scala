@@ -68,6 +68,15 @@ class IssuesManager extends IssuesCollection with IssueLogger {
       log.put(path, newIssues)
   }
 
+  def replaceProviderIssues(
+    providerId: String,
+    path: Path,
+    issues: Seq[diagnostics.Issue]
+  ): Unit = {
+    hasChanged.add(path)
+    log.put(path, log.getOrElse(path, Nil).filterNot(_.provider == providerId) ++ issues)
+  }
+
   override def hasUpdatedIssues: Array[String] = {
     hasChanged.map(_.toString).toArray
   }

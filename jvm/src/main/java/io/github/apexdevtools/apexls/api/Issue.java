@@ -15,6 +15,20 @@
 package io.github.apexdevtools.apexls.api;
 
 public abstract class Issue {
+
+    // Default source name for apex-ls generated diagnostics
+    public final static String APEX_LS_PROVIDER = "apex-ls";
+
+    // Category constants, these should become enums after moving to Scala3
+    public final static String SYNTAX_ISSUE = "Syntax";
+    public final static String ERROR_ISSUE = "Error";
+    public final static String MISSING_ISSUE = "Missing";
+    public final static String WARNING_ISSUE = "Warning";
+    public final static String UNUSED_ISSUE = "Unused";
+
+    /* The generator of this issue, default to APEX_LS_PROVIDER */
+    public abstract String provider();
+
     /* The file path where the issue was found */
     public abstract String filePath();
 
