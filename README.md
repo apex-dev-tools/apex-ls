@@ -46,10 +46,10 @@ The library can be consumed in JVM and ScalaJS projects, however the features av
 
 The jar is also executable without a client:
 
-```sh
-# Assuming dep jars are in the same directory
-java -cp "apex-ls*.jar" io.github.apexdevtools.apexls.Main [args] <directory>
-```
+  ```sh
+  # Assuming dep jars are in the same directory
+  java -cp "apex-ls*.jar" io.github.apexdevtools.apexls.Main [args] <directory>
+  ```
 
 The chosen directory should contain an `sfdx-project.json`. The following arguments are available:
 
@@ -80,9 +80,18 @@ Available build commands:
 
 ### Testing
 
-In addition to the regular automated tests, we test against a number of sample projects collected in the [apex-samples](https://github.com/apex-dev-tools/apex-samples) repo. The workflow for pull requests checks each of these samples to identify possible regressions or previously undetected code issues.
+In addition to the regular automated tests, we system test against a number of sample projects collected in the [apex-samples](https://github.com/apex-dev-tools/apex-samples) repository. Follow the README instructions in apex-samples to checkout the submodules or use `git clone --recurse-submodules <repo-url>`. To run the tests:
 
-To manually run against one of these samples, follow the README instructions in apex-samples to checkout the submodules or use `git clone --recurse-submodules <repo>`. Then from the directory containing the apex-ls jar, run the program pointing to the chosen sample.
+  ```sh
+  # Set SAMPLES env var to samples repo location
+  export SAMPLES=<abs path to apex-samples>
+
+  # Exec test script
+  cd js/npm
+  npm run test-samples
+  ```
+
+System test failures relating to the snapshots may highlight regressions. Though if an error is expected or the samples have changed, instead use `npm run test-snapshot` to update the snapshots, then commit the changes.
 
 ### Release
 
