@@ -26,19 +26,19 @@ import scala.collection.immutable.ArraySeq
 class SOSLParserTest extends AnyFunSuite with Matchers {
 
   test("Empty find") {
-    assert(SOSLParser.parse("[Find {}]").isRight)
+    assert(SOSLParser.parse("[Find '']").isRight)
   }
 
   test("Simple find") {
-    assert(SOSLParser.parse("[Find {something}]").isRight)
+    assert(SOSLParser.parse("[Find 'something']").isRight)
   }
 
   test("Escaped terminator in find") {
-    assert(SOSLParser.parse("[Find {some\\}thing}]").isRight)
+    assert(SOSLParser.parse("[Find 'some\\'thing']").isRight)
   }
 
   test("Unescaped terminator in find") {
-    SOSLParser.parse("[Find {some}thing}]") should matchPattern {
+    SOSLParser.parse("[Find 'some'thing'']") should matchPattern {
       case Left(ArraySeq(SOSLParser.ParserIssue(1, 12, err)))
           if err.startsWith("mismatched input 'thing' expecting") =>
     }
@@ -94,7 +94,7 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
     assert(
       SOSLParser
         .parse(
-          "[FIND {test} RETURNING Account (id where name like '%test%'), " +
+          "[FIND 'test' RETURNING Account (id where name like '%test%'), " +
             "Contact (id where name like '%test%') WITH DIVISION = 'Global']"
         )
         .isRight
@@ -105,7 +105,7 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
     assert(
       SOSLParser
         .parse(
-          "[FIND {tourism} RETURNING FAQ__kav(Id, Title WHERE PublishStatus='archived') " +
+          "[FIND 'tourism' RETURNING FAQ__kav(Id, Title WHERE PublishStatus='archived') " +
             "WITH DATA CATEGORY Geography__c AT Iceland__c]"
         )
         .isRight
@@ -116,7 +116,7 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
     assert(
       SOSLParser
         .parse(
-          "[FIND {San Francisco} IN ALL FIELDS RETURNING " +
+          "[FIND 'San Francisco' IN ALL FIELDS RETURNING " +
             "KnowledgeArticleVersion(id, title WHERE PublishStatus = 'Online' AND Language = 'en_US') " +
             "WITH SNIPPET(target_length=120)]"
         )
@@ -128,7 +128,7 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
     assert(
       SOSLParser
         .parse(
-          "[FIND {test} RETURNING User (id), FeedItem (id, ParentId WHERE " +
+          "[FIND 'test' RETURNING User (id), FeedItem (id, ParentId WHERE " +
             "CreatedDate = THIS_YEAR Order by CreatedDate DESC) WITH NETWORK " +
             "IN ('NetworkId1', 'NetworkId2', 'NetworkId3')]"
         )
@@ -140,7 +140,7 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
     assert(
       SOSLParser
         .parse(
-          "[FIND {test} RETURNING User (id), FeedItem (id, ParentId WHERE CreatedDate =  " +
+          "[FIND 'test' RETURNING User (id), FeedItem (id, ParentId WHERE CreatedDate =  " +
             "THIS_YEAR Order by CreatedDate DESC) WITH NETWORK = '00000000000000']"
         )
         .isRight
@@ -150,20 +150,20 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
   test("With Pricebook") {
     assert(
       SOSLParser
-        .parse("[Find {laptop} RETURNING Product2 WITH PricebookId = '01sxx0000002MffAAE']")
+        .parse("[Find 'laptop' RETURNING Product2 WITH PricebookId = '01sxx0000002MffAAE']")
         .isRight
     )
   }
 
   test("With Metadata") {
     assert(
-      SOSLParser.parse("[FIND {Acme} RETURNING Account(Id, Name) WITH METADATA='LABELS']").isRight
+      SOSLParser.parse("[FIND 'Acme' RETURNING Account(Id, Name) WITH METADATA='LABELS']").isRight
     )
   }
 
   test("Limit Clause") {
     assert(
-      SOSLParser.parse("[FIND {test} RETURNING Account(id LIMIT 20), Contact LIMIT 100]").isRight
+      SOSLParser.parse("[FIND 'test' RETURNING Account(id LIMIT 20), Contact LIMIT 100]").isRight
     )
   }
 
@@ -171,7 +171,7 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
     assert(
       SOSLParser
         .parse(
-          "[FIND {Keyword} RETURNING KnowledgeArticleVersion (Title WHERE " +
+          "[FIND 'Keyword' RETURNING KnowledgeArticleVersion (Title WHERE " +
             "PublishStatus='Online' and language='en_US') UPDATE TRACKING ]"
         )
         .isRight
@@ -189,13 +189,12 @@ object SOSLParser {
     val result = parser.parseSOSL()
     if (result.issues.nonEmpty) {
       Left(
-        result.issues.toIndexedSeq.map(
-          issue =>
-            ParserIssue(
-              issue.diagnostic.location.startLine,
-              issue.diagnostic.location.startPosition,
-              issue.diagnostic.message
-            )
+        result.issues.toIndexedSeq.map(issue =>
+          ParserIssue(
+            issue.diagnostic.location.startLine,
+            issue.diagnostic.location.startPosition,
+            issue.diagnostic.message
+          )
         )
       )
     } else {

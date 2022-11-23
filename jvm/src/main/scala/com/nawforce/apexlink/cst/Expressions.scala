@@ -737,7 +737,6 @@ object Expression {
         case expr: Arth1ExpressionContext =>
           val op = CodeParser
             .toScala(expr.DIV())
-            .orElse(CodeParser.toScala(expr.MOD()))
             .orElse(CodeParser.toScala(expr.MUL()))
           val expressions = CodeParser.toScala(expr.expression())
           if (expressions.length == 2) {
@@ -905,7 +904,6 @@ object Expression {
             .orElse(CodeParser.toScala(expr.ASSIGN()))
             .orElse(CodeParser.toScala(expr.DIV_ASSIGN()))
             .orElse(CodeParser.toScala(expr.LSHIFT_ASSIGN()))
-            .orElse(CodeParser.toScala(expr.MOD_ASSIGN()))
             .orElse(CodeParser.toScala(expr.MUL_ASSIGN()))
             .orElse(CodeParser.toScala(expr.OR_ASSIGN()))
             .orElse(CodeParser.toScala(expr.RSHIFT_ASSIGN()))
