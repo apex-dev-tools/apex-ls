@@ -111,7 +111,7 @@ object Block {
     blockContext: BlockContext,
     isTrigger: Boolean = false
   ): Block = {
-    if (ServerOps.getLazyBlocks) {
+    if (ServerOps.isLazyBlocksEnabled) {
       LazyBlock(parser.extractSource(blockContext), new WeakReference(blockContext), isTrigger)
     } else {
       construct(parser, blockContext, isTrigger)
@@ -308,9 +308,8 @@ object ForInit {
   def construct(parser: CodeParser, from: ForInitContext): ForInit = {
     CodeParser
       .toScala(from.localVariableDeclaration())
-      .map(
-        lvd =>
-          LocalVariableForInit(LocalVariableDeclaration.construct(parser, lvd, isTrigger = false))
+      .map(lvd =>
+        LocalVariableForInit(LocalVariableDeclaration.construct(parser, lvd, isTrigger = false))
       )
       .getOrElse({
         val expressions =
@@ -452,8 +451,8 @@ object CatchClause {
 final case class ReturnStatement(expression: Option[Expression]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     assertReturnType(context, expression.map(_.verify(context)))
-      .foreach(
-        msg => context.log(Issue(this.location.path, ERROR_CATEGORY, this.location.location, msg))
+      .foreach(msg =>
+        context.log(Issue(this.location.path, ERROR_CATEGORY, this.location.location, msg))
       )
     verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }

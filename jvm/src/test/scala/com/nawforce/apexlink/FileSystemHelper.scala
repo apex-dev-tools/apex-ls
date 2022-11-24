@@ -48,20 +48,16 @@ object FileSystemHelper {
       .build()
     val fs      = Jimfs.newFileSystem(config)
     val rootDir = fs.getRootDirectories.iterator().next()
-    dir.native match {
-      case nio: java.nio.file.Path =>
-        val stream = Files.walk(nio)
-        stream.forEach(streamPath => {
-          val relativePath = nio.toUri.relativize(streamPath.toUri).getPath
-          val copy         = rootDir.resolve(relativePath)
-          if (copy.getParent != null)
-            Files.createDirectories(copy.getParent)
-          if (!Files.isDirectory(streamPath))
-            Files.copy(streamPath, copy)
-        })
-        stream.close()
-      case _ =>
-    }
+    val stream  = Files.walk(dir.native)
+    stream.forEach(streamPath => {
+      val relativePath = dir.native.toUri.relativize(streamPath.toUri).getPath
+      val copy         = rootDir.resolve(relativePath)
+      if (copy.getParent != null)
+        Files.createDirectories(copy.getParent)
+      if (!Files.isDirectory(streamPath))
+        Files.copy(streamPath, copy)
+    })
+    stream.close()
 
     ParsedCache.clear()
 

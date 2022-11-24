@@ -205,7 +205,7 @@ object Org {
     LoggerOps.infoTime(
       s"Org created",
       show = true,
-      s" with autoFlush = ${ServerOps.getAutoFlush}, build = ${BuildInfo.implementationBuild}"
+      s" with autoFlush = ${ServerOps.isAutoFlushEnabled}, build = ${BuildInfo.implementationBuild}"
     ) {
       val ws  = Workspace(path)
       val org = new OPM.OrgImpl(path, ws.value)

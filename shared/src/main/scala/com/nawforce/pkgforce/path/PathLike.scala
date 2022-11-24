@@ -15,6 +15,7 @@ package com.nawforce.pkgforce.path
 
 import com.nawforce.runtime.parsers.SourceData
 
+import java.nio.file.Path
 import scala.collection.compat.immutable.ArraySeq
 
 /* File system path abstraction, to make life simple relative paths are NOT supported */
@@ -46,7 +47,7 @@ abstract class PathLike {
   def size: Long
 
   // As native representation, platform specific escape
-  def native: Any
+  def native: Path
 
   // Join some new text to end of path & normalise
   def join(arg: String): PathLike

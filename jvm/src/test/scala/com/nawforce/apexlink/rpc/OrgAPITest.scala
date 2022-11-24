@@ -55,7 +55,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       _ <- orgAPI.setCacheDirectory(None)
     } yield {
       assert(Environment.cacheDir.isEmpty)
-      assert(!ServerOps.getAutoFlush)
+      assert(!ServerOps.isAutoFlushEnabled)
     }
   }
 
@@ -67,7 +67,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       _ <- orgAPI.setCacheDirectory(Some(testPath.toString))
     } yield {
       val result: Assertion =
-        assert(Environment.cacheDir.contains(testPath) && ServerOps.getAutoFlush)
+        assert(Environment.cacheDir.contains(testPath) && ServerOps.isAutoFlushEnabled)
       result.onComplete(_ => {
         Environment.setCacheDirOverride(None)
         testPath.delete()
@@ -503,7 +503,9 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
   test("Get DependencyCounts with maxDependencyCount info from SFDX project") {
     FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
-      root.createFile("sfdx-project.json", """
+      root.createFile(
+        "sfdx-project.json",
+        """
           |{
           |  "packageDirectories": [
           |    {
@@ -518,7 +520,8 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
           |     "maxDependencyCount" : 12
           |  }
           |}
-          |""".stripMargin)
+          |""".stripMargin
+      )
 
       val orgAPI = createOrg(root)
       assert(
@@ -540,7 +543,9 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
   test("Get DependencyCounts with MaxDependencyCount comment") {
     FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
-      root.createFile("sfdx-project.json", """
+      root.createFile(
+        "sfdx-project.json",
+        """
                                                   |{
                                                   |  "packageDirectories": [
                                                   |    {
@@ -555,10 +560,14 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
                                                   |     "maxDependencyCount" : 12
                                                   |  }
                                                   |}
-                                                  |""".stripMargin)
-      root.createFile(root.join("force-app/main/default/classes/Test.cls").toString, """
+                                                  |""".stripMargin
+      )
+      root.createFile(
+        root.join("force-app/main/default/classes/Test.cls").toString,
+        """
         |//MaxDependencyCount(60)
-        |public class Test {}""".stripMargin)
+        |public class Test {}""".stripMargin
+      )
 
       val orgAPI = createOrg(root)
       assert(
@@ -575,10 +584,13 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
   test("Get DependencyCounts with MaxDependencyCount comment with negative integer") {
     FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
-      root.createFile(root.toString + "/force-app/main/default/classes/Test.cls", """
+      root.createFile(
+        root.toString + "/force-app/main/default/classes/Test.cls",
+        """
           |//MaxDependencyCount(-1)
           |public class Test {}
-          |""".stripMargin)
+          |""".stripMargin
+      )
       val orgAPI = createOrg(root)
       assert(
         orgAPI
@@ -595,9 +607,12 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
   test("Get DependencyCounts with MaxDependencyCount comment with non integer") {
     FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
-      root.createFile(root.toString + "/force-app/main/default/classes/Test.cls", """
+      root.createFile(
+        root.toString + "/force-app/main/default/classes/Test.cls",
+        """
         |//MaxDependencyCount(abc)
-        |public class Test {}""".stripMargin)
+        |public class Test {}""".stripMargin
+      )
 
       val orgAPI = createOrg(root)
       assert(

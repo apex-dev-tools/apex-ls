@@ -3,16 +3,15 @@
  */
 package com.nawforce.apexlink.analysis
 
+import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.org.OPM.OrgImpl
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue}
 import com.nawforce.pkgforce.documents.ApexNature
-import com.nawforce.pkgforce.path.{Location, PathFactory}
-import com.nawforce.runtime.platform
+import com.nawforce.pkgforce.path.{Location, PathFactory, PathLike}
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.apexls.spi.AnalysisProvider
 import io.github.apexdevtools.apexls.api.{Issue => APIIssue}
+import io.github.apexdevtools.apexls.spi.AnalysisProvider
 
-import java.nio.file.{Path => JVMPath}
 import java.util.ServiceLoader
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -22,27 +21,42 @@ class OrgAnalysis(org: OrgImpl) {
   private val analysisProviders = ServiceLoader.load(classOf[AnalysisProvider])
 
   def afterLoad(): Unit = {
-    val files = mutable.Set[JVMPath]()
+    if (!ServerOps.isExternalAnalysisEnabled)
+      return
+
+    val files = mutable.Set[PathLike]()
     org.packages.foreach(pkg =>
       pkg.modules.foreach(module =>
         module.index
           .get(ApexNature)
-          .foreach(doc => files.add(doc.path.native.asInstanceOf[JVMPath]))
+          .foreach(doc => files.add(doc.path))
       )
     )
+    val issueManager = org.issues
+    val syntaxGroups = files.groupBy(file => issueManager.hasSyntaxIssues(file))
+    // Clear provider issues if file already has syntax errors to reduce noise
+    syntaxGroups
+      .getOrElse(true, Set())
+      .foreach(path => org.issues.clearProviderIssues(path))
 
     analysisProviders
       .iterator()
       .asScala
       .foreach(provider => {
         val providerId = provider.getProviderId
+
+        // Collect and replace for other files
         val issuesByFile =
           ArraySeq
             .unsafeWrapArray(
               provider
-                .collectIssues(org.path.native.asInstanceOf[JVMPath], files.toArray)
+                .collectIssues(
+                  org.path.native,
+                  syntaxGroups.getOrElse(false, Set()).map(_.native).toArray
+                )
             )
             .groupBy(issue => Path(issue.filePath))
+
         issuesByFile.foreach(kv =>
           org.issues.replaceProviderIssues(providerId, kv._1, kv._2.map(toIssue(providerId, _)))
         )

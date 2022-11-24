@@ -93,7 +93,7 @@ object OPM extends TriHierarchy {
       }
 
     /** Is this Org using auto-flushing of the parsedCache. */
-    private val autoFlush = ServerOps.getAutoFlush
+    private val autoFlush = ServerOps.isAutoFlushEnabled
 
     /** The Org flusher. */
     private val flusher =

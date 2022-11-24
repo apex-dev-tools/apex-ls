@@ -16,54 +16,50 @@ package com.nawforce.apexlink.api
 
 sealed trait AvailableParser { val shortName: String }
 case object ANTLRParser extends AvailableParser {
-  val shortName         = "ANTLR".toLowerCase
+  val shortName: String = "ANTLR".toLowerCase
   override def toString = "ANTLR"
 }
 case object OutlineParserSingleThreaded extends AvailableParser {
-  val shortName         = "OutlineSingle".toLowerCase
+  val shortName: String = "OutlineSingle".toLowerCase
   override def toString = "Outline Parser - Single Threaded"
 }
 case object OutlineParserMultithreaded extends AvailableParser {
-  val shortName         = "OutlineMulti".toLowerCase
+  val shortName: String = "OutlineMulti".toLowerCase
   override def toString = "Outline Parser - Multithreaded"
 }
 
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
-  private var lazyBlocks: Boolean             = true
-  private var duplicateObjectMonitor: Boolean = false
-  private var autoFlush: Boolean              = true
-  private var currentParser: AvailableParser  = ANTLRParser
+  private var lazyBlocks: Boolean            = true
+  private var autoFlush: Boolean             = true
+  private var externalAnalysis: Boolean      = false
+  private var currentParser: AvailableParser = ANTLRParser
 
-  /** Are we using lazy blocks, this is enabled by default */
-  def getLazyBlocks: Boolean = {
+  def isLazyBlocksEnabled: Boolean = {
     lazyBlocks
   }
 
-  /** Update lazy block flag */
   def setLazyBlocks(enable: Boolean): Unit = {
     lazyBlocks = enable
   }
 
-  /** Is duplicate object monitor enabled, this is disabled by default */
-  def getDuplicateObjectMonitoring: Boolean = {
-    duplicateObjectMonitor
-  }
-
-  /** Update duplicate object monitor flag */
-  def setDuplicateObjectMonitoring(enable: Boolean): Unit = {
-    duplicateObjectMonitor = enable
-  }
-
-  /** Is auto flushing, this is enabled by default */
-  def getAutoFlush: Boolean = {
+  def isAutoFlushEnabled: Boolean = {
     autoFlush
   }
 
-  /** Update auto flushing flag */
   def setAutoFlush(enable: Boolean): Boolean = {
     val current = autoFlush
     autoFlush = enable
+    current
+  }
+
+  def isExternalAnalysisEnabled: Boolean = {
+    externalAnalysis
+  }
+
+  def setExternalAnalysis(enable: Boolean): Boolean = {
+    val current = externalAnalysis
+    externalAnalysis = enable
     current
   }
 

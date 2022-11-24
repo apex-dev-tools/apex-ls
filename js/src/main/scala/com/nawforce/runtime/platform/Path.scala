@@ -33,7 +33,8 @@ final class Path private (path: String) extends PathLike {
       case _: js.JavaScriptException => None
     }
   }
-  override def native: Any = path
+
+  override def native: java.nio.file.Path = throw new Error("Unsupported operation")
 
   override def basename: String     = pathObject.base.toOption.get
   override def parent: Path         = join("..")
