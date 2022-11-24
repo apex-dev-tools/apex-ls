@@ -43,5 +43,6 @@ jobs:
       run: echo "SAMPLES=$GITHUB_WORKSPACE/apex-samples" >> "$GITHUB_ENV"
 
     - name: System Test
+      shell: 'script -q -e -c "bash {0}"' # Color support
       run: npm run test-samples
       working-directory: js/npm
