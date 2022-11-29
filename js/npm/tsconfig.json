@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES6",
+    "lib": [
+      "es2021"
+    ],
     "module": "commonjs",
     "sourceMap": false,
     "declaration": false,

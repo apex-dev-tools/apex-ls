@@ -23,7 +23,6 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
 
 lazy val build = taskKey[File]("Build artifacts")
-lazy val getVersion = taskKey[String]("Get current dynamic version")
 lazy val pack  = inputKey[Unit]("Publish specific local version")
 lazy val Dev   = config("dev") extend Compile
 
@@ -54,7 +53,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules"  %% "scala-xml"                  % "1.3.0",
       "org.scala-lang.modules"  %% "scala-parallel-collections" % "1.0.0",
       "org.scala-js"            %% "scalajs-stubs"              % "1.0.0",
-      "io.github.apex-dev-tools" % "apex-parser"                % "3.0.0",
+      "io.github.apex-dev-tools" % "apex-parser"                % "3.1.0",
       "io.github.apex-dev-tools" % "vf-parser"                  % "1.0.0",
       "org.antlr"                % "antlr4-runtime"             % "4.8-1",
       "io.github.apex-dev-tools" % "sobject-types"              % "56.0.1",
@@ -135,10 +134,6 @@ pack := {
   proj.runTask(apexls.jvm / publishLocal, newState)
   proj.runTask(apexls.js / publishLocal, newState)
 }
-
-// Returns current version
-// Use `sbt "print getVersion" --error` to print only this value to stdout
-getVersion := (ThisBuild / version).value.substring(0,5)
 
 // Run a command and log to provided logger
 def run(log: ProcessLogger)(cmd: String, cwd: File): Unit = {

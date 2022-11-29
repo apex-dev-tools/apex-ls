@@ -10,16 +10,19 @@
   "types": "lib/apex-ls.d.ts",
   "scripts": {
     "prepack": "cp ../../LICENSE .",
-    "test": "jest"
+    "test": "jest",
+    "test-samples": "jest --config sys.jestconfig.json",
+    "test-snapshot": "npm run test-samples -- --updateSnapshot"
   },
   "dependencies": {
-    "antlr4ts": "0.5.0-alpha.4",
-    "@apexdevtools/apex-parser": "3.0.0",
+    "@apexdevtools/apex-parser": "3.1.0",
     "@apexdevtools/vf-parser": "1.0.0",
-    "@xmldom/xmldom": "0.7.6"
+    "@xmldom/xmldom": "0.7.9",
+    "antlr4ts": "0.5.0-alpha.4"
   },
   "devDependencies": {
     "@types/jest": "^29.2.0",
+    "chalk": "^4.1.2",
     "fs-monkey": "^1.0.3",
     "jest": "^29.2.0",
     "memfs": "^3.4.7",

@@ -1,6 +1,7 @@
 {
   "preset": "ts-jest",
   "testEnvironment": "node",
+  "testRegex": "/__tests__/system/.*Sys.ts$",
   "moduleNameMapper": {
     "@apexdevtools/apex-ls": "<rootDir>/lib/apex-ls"
   },
