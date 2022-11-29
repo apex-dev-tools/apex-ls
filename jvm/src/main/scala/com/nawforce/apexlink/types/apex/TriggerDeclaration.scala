@@ -80,17 +80,16 @@ final case class TriggerDeclaration(
     ConstructorDeclaration.emptyConstructorDeclarations
 
   private var depends: Option[SkinnySet[Dependent]] = None
-  private val objectTypeName                        = TypeName(objectNameId.name, Nil, Some(TypeNames.Schema))
+  private val objectTypeName = TypeName(objectNameId.name, Nil, Some(TypeNames.Schema))
 
   override def validate(): Unit = {
     LoggerOps.debugTime(s"Validated ${location.path}") {
       nameId.validate()
 
       val duplicateCases = cases.groupBy(_.name).collect { case (_, Seq(_, y, _*)) => y }
-      duplicateCases.foreach(
-        triggerCase =>
-          OrgInfo
-            .logError(objectNameId.location, s"Duplicate trigger case for '${triggerCase.name}'")
+      duplicateCases.foreach(triggerCase =>
+        OrgInfo
+          .logError(objectNameId.location, s"Duplicate trigger case for '${triggerCase.name}'")
       )
 
       val context = new TypeVerifyContext(None, this, None)
@@ -126,7 +125,7 @@ final case class TriggerDeclaration(
   }
 
   override def dependencies(): Iterable[Dependent] = {
-    depends.map(_.toIterable).getOrElse(Array().toIterable)
+    depends.map(_.toIterable).getOrElse(Array[Dependent]())
   }
 
   override def gatherDependencies(

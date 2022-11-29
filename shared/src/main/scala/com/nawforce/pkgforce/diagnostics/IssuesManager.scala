@@ -125,7 +125,7 @@ class IssuesManager extends IssuesCollection with IssueLogger {
       if (paths == null || paths.isEmpty)
         log.keys.toSeq.sortBy(_.toString)
       else
-        paths.toIterable
+        paths.toSeq
 
     val buffer = mutable.ArrayBuffer[Issue]()
     files.foreach(file => {

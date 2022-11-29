@@ -57,7 +57,7 @@ abstract class ClassBodyDeclaration(modifierResults: ModifierResults)
   protected var depends: Option[SkinnySet[Dependent]] = None
 
   override def dependencies(): Iterable[Dependent] = {
-    depends.map(_.toIterable).getOrElse(Array().toIterable)
+    depends.map(_.toIterable).getOrElse(Array[Dependent]())
   }
 
   def setDepends(dependencies: SkinnySet[Dependent]): Unit = {
@@ -94,111 +94,104 @@ object ClassBodyDeclaration {
     val declarations: Seq[ClassBodyDeclaration] =
       CodeParser
         .toScala(memberDeclarationContext.methodDeclaration())
-        .map(
-          x =>
-            Seq(
-              ApexMethodDeclaration.construct(
-                parser,
+        .map(x =>
+          Seq(
+            ApexMethodDeclaration.construct(
+              parser,
+              thisType,
+              typeContext,
+              MethodModifiers
+                .classMethodModifiers(parser, modifiers, x.id(), methodOwnerNature, isOuter),
+              x
+            )
+          )
+        )
+        .orElse(
+          CodeParser
+            .toScala(memberDeclarationContext.fieldDeclaration())
+            .map(x =>
+              ApexFieldDeclaration.construct(
                 thisType,
-                typeContext,
-                MethodModifiers
-                  .classMethodModifiers(parser, modifiers, x.id(), methodOwnerNature, isOuter),
+                FieldModifiers.fieldModifiers(
+                  parser,
+                  modifiers,
+                  isOuter,
+                  CodeParser.toScala(x.variableDeclarators().variableDeclarator()).head.id()
+                ),
                 x
               )
             )
         )
         .orElse(
           CodeParser
-            .toScala(memberDeclarationContext.fieldDeclaration())
-            .map(
-              x =>
-                ApexFieldDeclaration.construct(
+            .toScala(memberDeclarationContext.constructorDeclaration())
+            .map(x =>
+              ApexConstructorDeclaration
+                .construct(
+                  parser,
                   thisType,
-                  FieldModifiers.fieldModifiers(
-                    parser,
-                    modifiers,
-                    isOuter,
-                    CodeParser.toScala(x.variableDeclarators().variableDeclarator()).head.id()
-                  ),
+                  typeContext,
+                  ApexModifiers.constructorModifiers(parser, modifiers, x),
                   x
                 )
-            )
-        )
-        .orElse(
-          CodeParser
-            .toScala(memberDeclarationContext.constructorDeclaration())
-            .map(
-              x =>
-                ApexConstructorDeclaration
-                  .construct(
-                    parser,
-                    thisType,
-                    typeContext,
-                    ApexModifiers.constructorModifiers(parser, modifiers, x),
-                    x
-                  )
-                  .toSeq
+                .toSeq
             )
         )
         .orElse(
           CodeParser
             .toScala(memberDeclarationContext.interfaceDeclaration())
-            .map(
-              x =>
-                Seq(
-                  InterfaceDeclaration.constructInner(
-                    parser,
-                    thisType,
-                    ApexModifiers.interfaceModifiers(parser, modifiers, outer = false, x.id()),
-                    x
-                  )
+            .map(x =>
+              Seq(
+                InterfaceDeclaration.constructInner(
+                  parser,
+                  thisType,
+                  ApexModifiers.interfaceModifiers(parser, modifiers, outer = false, x.id()),
+                  x
                 )
+              )
             )
         )
         .orElse(
           CodeParser
             .toScala(memberDeclarationContext.enumDeclaration())
-            .map(
-              x =>
-                Seq(
-                  EnumDeclaration.constructInner(
-                    parser,
-                    thisType,
-                    ApexModifiers.enumModifiers(parser, modifiers, outer = false, x.id()),
-                    x
-                  )
+            .map(x =>
+              Seq(
+                EnumDeclaration.constructInner(
+                  parser,
+                  thisType,
+                  ApexModifiers.enumModifiers(parser, modifiers, outer = false, x.id()),
+                  x
                 )
+              )
             )
         )
         .orElse(
           CodeParser
             .toScala(memberDeclarationContext.propertyDeclaration())
-            .map(
-              x =>
-                Seq(
-                  ApexPropertyDeclaration
-                    .construct(
-                      parser,
-                      thisType,
-                      FieldModifiers.fieldModifiers(parser, modifiers, isOuter, x.id()),
-                      x
-                    )
-                )
+            .map(x =>
+              Seq(
+                ApexPropertyDeclaration
+                  .construct(
+                    parser,
+                    thisType,
+                    FieldModifiers.fieldModifiers(parser, modifiers, isOuter, x.id()),
+                    x
+                  )
+              )
             )
         )
         .orElse(
           CodeParser
             .toScala(memberDeclarationContext.classDeclaration())
-            .map(
-              x =>
-                Seq(
-                  ClassDeclaration.constructInner(
-                    parser,
-                    thisType,
-                    ApexModifiers.classModifiers(parser, modifiers, outer = false, x.id()),
-                    x
-                  )
+            .map(x =>
+              Seq(
+                ClassDeclaration.constructInner(
+                  parser,
+                  thisType,
+                  ApexModifiers.classModifiers(parser, modifiers, outer = false, x.id()),
+                  x
                 )
+              )
             )
         )
         .getOrElse(Seq())
