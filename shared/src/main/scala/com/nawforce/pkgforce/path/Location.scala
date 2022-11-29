@@ -14,7 +14,7 @@
 
 package com.nawforce.pkgforce.path
 
-import com.nawforce.pkgforce.api.IssueLocation
+import io.github.apexdevtools.apexls.api.IssueLocation
 import upickle.default.{macroRW, ReadWriter => RW}
 
 /** Internal implementation for identifying sub-parts of a file. */
@@ -78,8 +78,9 @@ trait UnsafeLocatable extends Locatable {
   }
 }
 
-/** Base for things that might be positioned at some location, data is stored unwrapped to avoid object overhead. It's
-  * an UnsafeLocatable because we can't be sure the mutable location will ever be set
+/** Base for things that might be positioned at some location, data is stored unwrapped to avoid
+  * object overhead. It's an UnsafeLocatable because we can't be sure the mutable location will ever
+  * be set
   */
 class Positionable extends UnsafeLocatable {
   private var locationPath: PathLike = _
@@ -113,7 +114,9 @@ class Positionable extends UnsafeLocatable {
   }
 }
 
-/** Extension of Locatable for things that can also provide an additional location for some form of identifier. */
+/** Extension of Locatable for things that can also provide an additional location for some form of
+  * identifier.
+  */
 trait IdLocatable extends Locatable {
   def idLocation: Location
   def idPathLocation: PathLocation = PathLocation(location.path, idLocation)

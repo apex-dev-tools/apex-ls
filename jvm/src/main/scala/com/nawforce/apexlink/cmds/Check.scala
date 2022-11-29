@@ -21,7 +21,7 @@ import com.nawforce.apexlink.api.{
   ServerOps
 }
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
-import com.nawforce.pkgforce.api.IssueLocation
+import io.github.apexdevtools.apexls.api.IssueLocation
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
 import com.nawforce.runtime.platform.{Environment, Path}
 
@@ -225,7 +225,7 @@ object Check {
     override def writeMessage(category: String, location: IssueLocation, message: String): Unit = {
       buffer ++= (if (firstMessage) "" else ",\n")
       buffer ++= s"""{${locationAsJSON(location)}, "category": "$category", "message": "${JSON
-        .encode(message)}"}"""
+          .encode(message)}"}"""
       firstMessage = false
     }
 
@@ -238,8 +238,8 @@ object Check {
 
     private def locationAsJSON(location: IssueLocation): String =
       s""""start": {"line": ${location.startLineNumber()}, "offset": ${location
-        .startCharOffset()} }, "end": {"line": ${location.endLineNumber()}, "offset": ${location
-        .endCharOffset()} }"""
+          .startCharOffset()} }, "end": {"line": ${location.endLineNumber()}, "offset": ${location
+          .endCharOffset()} }"""
   }
 
   object JSON {

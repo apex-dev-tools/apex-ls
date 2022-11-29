@@ -1,9 +1,10 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.api;
 
-import com.nawforce.pkgforce.types.ApexLocationAdapter;
+package io.github.apexdevtools.apexls.api;
+
+import io.github.apexdevtools.apexls.types.ApexLocationAdapter;
 
 import java.util.List;
 

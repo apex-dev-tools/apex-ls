@@ -1,12 +1,13 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.types;
+
+package io.github.apexdevtools.apexls.types;
 
 import com.financialforce.types.IPropertyDeclaration;
-import com.nawforce.pkgforce.api.ApexField;
-import com.nawforce.pkgforce.api.ApexType;
-import com.nawforce.pkgforce.api.ApexTypeId;
+import io.github.apexdevtools.apexls.api.ApexField;
+import io.github.apexdevtools.apexls.api.ApexType;
+import io.github.apexdevtools.apexls.api.ApexTypeId;
 import scala.collection.immutable.ArraySeq;
 
 public class ApexPropertyAdapter implements ApexField {

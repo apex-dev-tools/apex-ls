@@ -12,7 +12,7 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.pkgforce.api;
+package io.github.apexdevtools.apexls.api;
 
 public abstract class Issue {
     /* The file path where the issue was found */

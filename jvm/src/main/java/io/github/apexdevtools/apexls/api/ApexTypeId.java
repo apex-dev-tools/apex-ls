@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.api;
+
+package io.github.apexdevtools.apexls.api;
 
 /*
  * An identifier of an Apex type. This supports less functionality than the original apex.db implementation to allow

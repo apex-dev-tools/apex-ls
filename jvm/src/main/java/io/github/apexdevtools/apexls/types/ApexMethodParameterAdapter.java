@@ -1,11 +1,12 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.pkgforce.types;
+
+package io.github.apexdevtools.apexls.types;
 
 import com.financialforce.types.IFormalParameter;
-import com.nawforce.pkgforce.api.ApexMethodParameter;
-import com.nawforce.pkgforce.api.ApexTypeId;
+import io.github.apexdevtools.apexls.api.ApexMethodParameter;
+import io.github.apexdevtools.apexls.api.ApexTypeId;
 
 public class ApexMethodParameterAdapter  implements ApexMethodParameter {
     final private IFormalParameter fp;

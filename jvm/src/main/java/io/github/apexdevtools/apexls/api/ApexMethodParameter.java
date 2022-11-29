@@ -2,7 +2,7 @@
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
 
-package com.nawforce.pkgforce.api;
+package io.github.apexdevtools.apexls.api;
 
 public interface ApexMethodParameter {
     String getModifier();
