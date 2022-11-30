@@ -25,7 +25,7 @@ import scala.scalajs.js.JSConverters._
 
 final class Path private (path: String) extends PathLike {
 
-  private val pathObject = io.scalajs.nodejs.path.Path.parse(path)
+  private lazy val pathObject = io.scalajs.nodejs.path.Path.parse(path)
   private def stat = {
     try {
       Some(io.scalajs.nodejs.fs.Fs.statSync(path))
@@ -33,7 +33,6 @@ final class Path private (path: String) extends PathLike {
       case _: js.JavaScriptException => None
     }
   }
-  override def native: Any = path
 
   override def basename: String     = pathObject.base.toOption.get
   override def parent: Path         = join("..")
@@ -198,5 +197,12 @@ object Path {
 
   def safeApply(path: String): Path = {
     apply(Option(path).getOrElse(Process.cwd()))
+  }
+
+  def apply(path: PathLike): Path = {
+    path match {
+      case p: Path => p
+      case _       => Path(path.toString)
+    }
   }
 }
