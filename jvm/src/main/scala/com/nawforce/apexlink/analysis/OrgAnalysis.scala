@@ -7,7 +7,7 @@ import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.org.OPM.OrgImpl
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue}
 import com.nawforce.pkgforce.documents.ApexNature
-import com.nawforce.pkgforce.path.{Location, PathFactory, PathLike}
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.platform.Path
 import io.github.apexdevtools.apexls.api.{Issue => APIIssue}
 import io.github.apexdevtools.apexls.spi.AnalysisProvider
@@ -24,12 +24,12 @@ class OrgAnalysis(org: OrgImpl) {
     if (!ServerOps.isExternalAnalysisEnabled)
       return
 
-    val files = mutable.Set[PathLike]()
+    val files = mutable.Set[Path]()
     org.packages.foreach(pkg =>
       pkg.modules.foreach(module =>
         module.index
           .get(ApexNature)
-          .foreach(doc => files.add(doc.path))
+          .foreach(doc => files.add(Path(doc.path)))
       )
     )
     val issueManager = org.issues
@@ -51,7 +51,7 @@ class OrgAnalysis(org: OrgImpl) {
             .unsafeWrapArray(
               provider
                 .collectIssues(
-                  org.path.native,
+                  Path(org.path.toString).native,
                   syntaxGroups.getOrElse(false, Set()).map(_.native).toArray
                 )
             )
@@ -66,7 +66,7 @@ class OrgAnalysis(org: OrgImpl) {
   private def toIssue(providerId: String, issue: APIIssue): Issue = {
     // Convert from JVM only APIIssue back to Scala compatible Issue
     new Issue(
-      PathFactory(issue.filePath()),
+      Path(issue.filePath()),
       new Diagnostic(
         DiagnosticCategory(issue.category()),
         new Location(
