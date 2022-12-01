@@ -178,4 +178,11 @@ object Path {
   def safeApply(path: String): Path = {
     apply(Option(path).getOrElse(""))
   }
+
+  def apply(path: PathLike): Path = {
+    path match {
+      case p: Path => p
+      case _       => Path(path.toString)
+    }
+  }
 }
