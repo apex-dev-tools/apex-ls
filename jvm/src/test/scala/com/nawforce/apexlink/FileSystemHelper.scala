@@ -22,7 +22,7 @@ import com.nawforce.runtime.platform.Path
 object FileSystemHelper {
 
   // Abstract virtual filesystem for testing
-  def run[T](files: Map[String, String])(verify: PathLike => T): T = {
+  def run[T](files: Map[String, String])(verify: Path => T): T = {
     val config = Configuration
       .unix()
       .toBuilder

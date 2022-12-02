@@ -28,11 +28,25 @@ case object OutlineParserMultithreaded extends AvailableParser {
   override def toString = "Outline Parser - Multithreaded"
 }
 
+sealed trait AnalysisMode {
+  val shortName: String
+  override def toString: String = shortName
+}
+case object NoAnalysis extends AnalysisMode {
+  val shortName: String = "NoAnalysis"
+}
+case object RefreshAnalysis extends AnalysisMode {
+  val shortName: String = "RefreshAnalysis"
+}
+case object LoadAndRefreshAnalysis extends AnalysisMode {
+  val shortName: String = "LoadAndRefreshAnalysis"
+}
+
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
   private var lazyBlocks: Boolean            = true
   private var autoFlush: Boolean             = true
-  private var externalAnalysis: Boolean      = false
+  private var externalAnalysis: AnalysisMode = RefreshAnalysis
   private var currentParser: AvailableParser = ANTLRParser
 
   def isLazyBlocksEnabled: Boolean = {
@@ -53,13 +67,13 @@ object ServerOps {
     current
   }
 
-  def isExternalAnalysisEnabled: Boolean = {
+  def externalAnalysisMode: AnalysisMode = {
     externalAnalysis
   }
 
-  def setExternalAnalysis(enable: Boolean): Boolean = {
+  def setExternalAnalysisMode(mode: AnalysisMode): AnalysisMode = {
     val current = externalAnalysis
-    externalAnalysis = enable
+    externalAnalysis = mode
     current
   }
 
