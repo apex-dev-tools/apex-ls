@@ -29,17 +29,17 @@ case object OutlineParserMultithreaded extends AvailableParser {
 }
 
 sealed trait AnalysisMode {
-  val shortName: String
+  val shortName: String         = toString.toLowerCase
   override def toString: String = shortName
 }
 case object NoAnalysis extends AnalysisMode {
-  val shortName: String = "NoAnalysis"
+  override def toString: String = "NoAnalysis"
 }
 case object RefreshAnalysis extends AnalysisMode {
-  val shortName: String = "RefreshAnalysis"
+  override def toString: String = "RefreshAnalysis"
 }
 case object LoadAndRefreshAnalysis extends AnalysisMode {
-  val shortName: String = "LoadAndRefreshAnalysis"
+  override def toString: String = "LoadAndRefreshAnalysis"
 }
 
 /** Collection of Ops functions for changing global behaviours */
@@ -75,6 +75,15 @@ object ServerOps {
     val current = externalAnalysis
     externalAnalysis = mode
     current
+  }
+
+  def setExternalAnalysisMode(mode: String): AnalysisMode = {
+    setExternalAnalysisMode(mode.toLowerCase match {
+      case NoAnalysis.shortName             => NoAnalysis
+      case RefreshAnalysis.shortName        => RefreshAnalysis
+      case LoadAndRefreshAnalysis.shortName => LoadAndRefreshAnalysis
+      case _                                => NoAnalysis
+    })
   }
 
   def getCurrentParser: AvailableParser = {

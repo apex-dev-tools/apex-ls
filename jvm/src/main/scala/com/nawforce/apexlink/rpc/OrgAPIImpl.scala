@@ -474,6 +474,11 @@ class OrgAPIImpl extends OrgAPI {
     Future.successful(())
   }
 
+  override def setExternalAnalysisMode(mode: String): Future[Unit] = {
+    ServerOps.setExternalAnalysisMode(mode)
+    Future.successful(())
+  }
+
   override def setParser(parser: String): Future[Unit] = {
     ServerOps.setCurrentParser(parser)
     Future.successful(())
