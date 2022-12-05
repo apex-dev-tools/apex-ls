@@ -37,8 +37,11 @@ import upickle.default.{macroRW, ReadWriter => RW}
 import scala.collection.compat.immutable.ArraySeq
 
 /** An issue recoded against a specific file location. */
-final case class Issue(path: PathLike, diagnostic: Diagnostic)
-    extends io.github.apexdevtools.apexls.api.Issue {
+final case class Issue(
+  path: PathLike,
+  diagnostic: Diagnostic,
+  provider: String = io.github.apexdevtools.apexls.api.Issue.APEX_LS_PROVIDER
+) extends io.github.apexdevtools.apexls.api.Issue {
 
   override def filePath(): String = path.toString
 
@@ -48,7 +51,7 @@ final case class Issue(path: PathLike, diagnostic: Diagnostic)
 
   override def category(): String = diagnostic.category.value
 
-  override def isError(): java.lang.Boolean = isErrorType(diagnostic.category)
+  override def isError: java.lang.Boolean = isErrorType(diagnostic.category)
 }
 
 object Issue {

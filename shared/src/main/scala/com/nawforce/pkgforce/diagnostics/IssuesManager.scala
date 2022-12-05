@@ -17,6 +17,7 @@ import io.github.apexdevtools.apexls.api.{IssueLocation, IssuesCollection, Issue
 import com.nawforce.pkgforce.diagnostics
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.platform.Path
+import io.github.apexdevtools.apexls.api.Issue.APEX_LS_PROVIDER
 
 import scala.collection.mutable
 
@@ -66,6 +67,28 @@ class IssuesManager extends IssuesCollection with IssueLogger {
       log.remove(path)
     else
       log.put(path, newIssues)
+  }
+
+  def clearProviderIssues(path: PathLike): Unit = {
+    hasChanged.add(path)
+    log.put(path, log.getOrElse(path, Nil).filter(_.provider == APEX_LS_PROVIDER))
+  }
+
+  def replaceProviderIssues(
+    providerId: String,
+    path: PathLike,
+    issues: Seq[diagnostics.Issue]
+  ): Unit = {
+    hasChanged.add(path)
+    log.put(path, log.getOrElse(path, Nil).filterNot(_.provider == providerId) ++ issues)
+  }
+
+  def hasSyntaxIssues(path: PathLike): Boolean = {
+    log
+      .getOrElse(path, Nil)
+      .exists(issue =>
+        issue.diagnostic.category == SYNTAX_CATEGORY && issue.provider == APEX_LS_PROVIDER
+      )
   }
 
   override def hasUpdatedIssues: Array[String] = {

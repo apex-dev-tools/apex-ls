@@ -82,6 +82,15 @@ trait TestHelper {
     }
   }
 
+  def withExternalAnalysis[T](op: => T): T = {
+    val current = ServerOps.setExternalAnalysis(true)
+    try {
+      op
+    } finally {
+      ServerOps.setExternalAnalysis(current)
+    }
+  }
+
   def withEmptyOrg[T](op: OPM.OrgImpl => T): T = {
     val org = emptyOrg()
     OrgInfo.current.withValue(org) {
@@ -210,8 +219,8 @@ trait TestHelper {
          |        ${if (field._2.nonEmpty) s"<type>${field._2.get}</type>" else ""}
          |        ${if (field._3.nonEmpty) s"<referenceTo>${field._3.get}</referenceTo>" else ""}
          |        ${if (field._3.nonEmpty)
-        s"<relationshipName>${field._1.replaceAll("__c$", "")}</relationshipName>"
-      else ""}
+          s"<relationshipName>${field._1.replaceAll("__c$", "")}</relationshipName>"
+        else ""}
          |    </fields>
          |""".stripMargin
     })
@@ -258,10 +267,10 @@ trait TestHelper {
        |    <fullName>$name</fullName>
        |    <type>$fieldType</type>
        |    ${if (relationshipName.nonEmpty) s"<referenceTo>${relationshipName.get}</referenceTo>"
-    else ""}
+      else ""}
        |    ${if (relationshipName.nonEmpty)
-      s"<relationshipName>${name.replaceAll("__c$", "")}</relationshipName>"
-    else ""}
+        s"<relationshipName>${name.replaceAll("__c$", "")}</relationshipName>"
+      else ""}
        |    ${if (xml.nonEmpty) s"$xml"}
        |</CustomField>
        |""".stripMargin
