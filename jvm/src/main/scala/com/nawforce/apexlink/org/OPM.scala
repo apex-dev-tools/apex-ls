@@ -160,16 +160,16 @@ object OPM extends TriHierarchy {
       }
     }
 
-    /** After packages/module setup load metadata & flush to cache */
+    // After packages/module setup load metadata & flush to cache
     OrgInfo.current.withValue(this) {
       packages.foreach(_.modules.foreach(_.freeze()))
       CodeParser.clearCaches()
       if (autoFlush)
         flusher.refreshAndFlush()
-
-      val analysis = new OrgAnalysis(this)
-      analysis.afterLoad()
     }
+
+    // Once loaded we can run external analysis
+    OrgAnalysis.afterLoad(this)
 
     /** Get all loaded packages. */
     def getPackages(): Array[Package] = {

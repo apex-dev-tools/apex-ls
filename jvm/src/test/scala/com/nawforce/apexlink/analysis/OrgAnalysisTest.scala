@@ -3,15 +3,17 @@
  */
 package com.nawforce.apexlink.analysis
 
+import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, NoAnalysis, RefreshAnalysis}
 import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue => InternalIssue}
 import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.runtime.platform.Path
 import io.github.apexdevtools.apexls.api.Issue
 import io.github.apexdevtools.apexls.spi.AnalysisProvider
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
-import java.nio.file.Path
+import java.nio.file.{Path => JVMPath}
 
 class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
 
@@ -19,15 +21,26 @@ class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
     MockAnalysisProvider.reset()
   }
 
-  test("Custom analysis is not called by default") {
-    FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
-      createHappyOrg(root)
-      assert(MockAnalysisProvider.requests.isEmpty)
+  test("Load analysis is not called when all analysis disabled") {
+    withExternalAnalysis(NoAnalysis) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        createHappyOrg(root)
+        assert(MockAnalysisProvider.requests.isEmpty)
+      }
     }
   }
 
-  test("Custom analysis is called when setup") {
-    withExternalAnalysis {
+  test("Load analysis is not called when only refresh analysis enabled") {
+    withExternalAnalysis(RefreshAnalysis) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        createHappyOrg(root)
+        assert(MockAnalysisProvider.requests.isEmpty)
+      }
+    }
+  }
+
+  test("Load analysis is called when setup") {
+    withExternalAnalysis(LoadAndRefreshAnalysis) {
       FileSystemHelper.run(Map("foo/Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
         createHappyOrg(root)
         assert(MockAnalysisProvider.requests.length == 1)
@@ -43,8 +56,8 @@ class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
     }
   }
 
-  test("Custom analysis is skipped on syntax error") {
-    withExternalAnalysis {
+  test("Load analysis is skipped on syntax error") {
+    withExternalAnalysis(LoadAndRefreshAnalysis) {
       FileSystemHelper.run(Map("foo/Dummy.cls" -> "public class Dummy {")) { root: PathLike =>
         createOrg(root)
         assert(MockAnalysisProvider.requests.length == 1)
@@ -54,8 +67,8 @@ class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
     }
   }
 
-  test("Custom analysis merges returned issues") {
-    withExternalAnalysis {
+  test("Load analysis merges returned issues") {
+    withExternalAnalysis(LoadAndRefreshAnalysis) {
       FileSystemHelper.run(Map("foo/Dummy.cls" -> "public class Dummy {Bar b;}")) {
         root: PathLike =>
           val testClassPath = root.join("foo").join("Dummy.cls")
@@ -78,20 +91,62 @@ class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
       }
     }
   }
+
+  test("Refresh analysis is not called when all analysis disabled") {
+    withExternalAnalysis(NoAnalysis) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        val org = createHappyOrg(root)
+        assert(MockAnalysisProvider.requests.isEmpty)
+        org.unmanaged.refresh(root.join("Dummy.cls"), highPriority = true)
+        assert(MockAnalysisProvider.requests.isEmpty)
+      }
+    }
+  }
+
+  test("Refresh analysis is called when refresh only enabled") {
+    withExternalAnalysis(RefreshAnalysis) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: Path =>
+        val org = createHappyOrg(root)
+        assert(MockAnalysisProvider.requests.isEmpty)
+        val dummyPath = root.join("Dummy.cls")
+        org.unmanaged.refresh(dummyPath, highPriority = true)
+        assert(MockAnalysisProvider.requests.size == 1)
+        assert(MockAnalysisProvider.requests.head._1 == root.native)
+        assert(MockAnalysisProvider.requests.head._2 sameElements Array(dummyPath.native))
+      }
+    }
+  }
+
+  test("Refresh analysis is called when LoadAndRefresh enabled") {
+    withExternalAnalysis(LoadAndRefreshAnalysis) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: Path =>
+        val org = createHappyOrg(root)
+        assert(MockAnalysisProvider.requests.size == 1)
+        val dummyPath = root.join("Dummy.cls")
+        org.unmanaged.refresh(dummyPath, highPriority = true)
+        assert(MockAnalysisProvider.requests.size == 2)
+        assert(MockAnalysisProvider.requests.head._1 == root.native)
+        assert(MockAnalysisProvider.requests.head._2 sameElements Array(dummyPath.native))
+        assert(MockAnalysisProvider.requests(1)._1 == root.native)
+        assert(MockAnalysisProvider.requests(1)._2 sameElements Array(dummyPath.native))
+      }
+    }
+  }
+
 }
 
 class MockAnalysisProvider extends AnalysisProvider {
   override def getProviderId: String = "MOCK"
 
-  override def collectIssues(workspacePath: Path, files: Array[Path]): Array[Issue] = {
+  override def collectIssues(workspacePath: JVMPath, files: Array[JVMPath]): Array[Issue] = {
     MockAnalysisProvider.requests = (workspacePath, files) :: MockAnalysisProvider.requests
     MockAnalysisProvider.issues
   }
 }
 
 object MockAnalysisProvider {
-  var issues: Array[Issue]                = Array()
-  var requests: List[(Path, Array[Path])] = Nil
+  var issues: Array[Issue]                      = Array()
+  var requests: List[(JVMPath, Array[JVMPath])] = Nil
 
   def reset(): Unit = {
     issues = Array()

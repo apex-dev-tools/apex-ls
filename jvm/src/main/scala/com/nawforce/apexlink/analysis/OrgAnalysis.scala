@@ -3,7 +3,7 @@
  */
 package com.nawforce.apexlink.analysis
 
-import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, NoAnalysis, ServerOps}
 import com.nawforce.apexlink.org.OPM.OrgImpl
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue}
 import com.nawforce.pkgforce.documents.ApexNature
@@ -21,7 +21,7 @@ class OrgAnalysis(org: OrgImpl) {
   private val analysisProviders = ServiceLoader.load(classOf[AnalysisProvider])
 
   def afterLoad(): Unit = {
-    if (!ServerOps.isExternalAnalysisEnabled)
+    if (ServerOps.externalAnalysisMode != LoadAndRefreshAnalysis)
       return
 
     val files = mutable.Set[Path]()
@@ -32,9 +32,20 @@ class OrgAnalysis(org: OrgImpl) {
           .foreach(doc => files.add(Path(doc.path)))
       )
     )
+    runAnalysis(files.toSet)
+  }
+
+  def afterRefresh(files: Set[Path]): Unit = {
+    if (ServerOps.externalAnalysisMode == NoAnalysis)
+      return
+
+    runAnalysis(files)
+  }
+
+  private def runAnalysis(files: Set[Path]): Unit = {
     val issueManager = org.issues
     val syntaxGroups = files.groupBy(file => issueManager.hasSyntaxIssues(file))
-    // Clear provider issues if file already has syntax errors to reduce noise
+    // Clear provider issues for files that already have syntax errors to reduce noise
     syntaxGroups
       .getOrElse(true, Set())
       .foreach(path => org.issues.clearProviderIssues(path))
@@ -51,7 +62,7 @@ class OrgAnalysis(org: OrgImpl) {
             .unsafeWrapArray(
               provider
                 .collectIssues(
-                  Path(org.path.toString).native,
+                  Path(org.path).native,
                   syntaxGroups.getOrElse(false, Set()).map(_.native).toArray
                 )
             )
@@ -79,5 +90,17 @@ class OrgAnalysis(org: OrgImpl) {
       ),
       providerId
     )
+  }
+}
+
+object OrgAnalysis {
+  def afterLoad(org: OrgImpl): Unit = {
+    val analysis = new OrgAnalysis(org)
+    analysis.afterLoad()
+  }
+
+  def afterRefresh(org: OrgImpl, files: Set[Path]): Unit = {
+    val analysis = new OrgAnalysis(org)
+    analysis.afterRefresh(files)
   }
 }
