@@ -21,6 +21,7 @@ ThisBuild / developers := List(
 ThisBuild / versionScheme          := Some("strict")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
+ThisBuild / resolvers += Resolver.mavenLocal
 
 lazy val build = taskKey[File]("Build artifacts")
 lazy val pack  = inputKey[Unit]("Publish specific local version")
