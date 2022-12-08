@@ -14,16 +14,11 @@
 
 package com.nawforce.apexlink.cmds
 
-import com.nawforce.apexlink.api.{
-  Org,
-  OutlineParserMultithreaded,
-  OutlineParserSingleThreaded,
-  ServerOps
-}
+import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
-import io.github.apexdevtools.apexls.api.IssueLocation
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
-import com.nawforce.runtime.platform.{Environment, Path}
+import com.nawforce.runtime.platform.Environment
+import io.github.apexdevtools.apexls.api.IssueLocation
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -76,8 +71,9 @@ object Check {
     }
 
     try {
-      // Setup cache flushing and logging defaults
+      // Setup cache flushing, analysis & logging defaults
       ServerOps.setAutoFlush(false)
+      ServerOps.setExternalAnalysisMode(LoadAndRefreshAnalysis)
       if (useOutlineParserSingleThreaded)
         ServerOps.setCurrentParser(OutlineParserSingleThreaded)
       else if (useOutlineParserMultithreaded)
