@@ -30,9 +30,10 @@ function findProjectDir(wd: string): [string, string] {
     ];
 }
 
-function printLogs(logs: string[], name: string, status: number): void {
+function printLogs(logs: string[], errLogs: string[], name: string, status: number): void {
+    const prefix = `[${name}](status: ${status}) check output:`;
     if (logs.length) {
-        console.log(`[${name}](status: ${status}) check output:`);
+        console.log(prefix);
         console.log(
             logs.map(l => {
                 if (isErrorCat(l)) {
@@ -44,9 +45,13 @@ function printLogs(logs: string[], name: string, status: number): void {
             }).join("\n")
         );
         console.log(); // \n
+    } else if (errLogs.length) {
+        console.log(`${prefix} ${chalk.redBright("Exception")}`);
+        console.log(errLogs);
+        console.log(); // \n
     } else {
         console.log(
-            `[${name}](status: ${status}) check output: ${chalk.green("No issues found")}\n`
+            `${prefix} ${chalk.green("No issues found")}\n`
         );
     }
 }
@@ -124,7 +129,13 @@ describe("Check samples", () => {
             .split("\n")
             .filter(l => l);
 
-        printLogs(logs, name, status);
+        // only print exceptions, do not snapshot
+        const errLogs = jvmCheck.stderr
+            .toString("utf8")
+            .split("\n")
+            .filter(l => l);
+
+        printLogs(logs, errLogs, name, status);
 
         const result = {
             status,
