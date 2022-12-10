@@ -644,24 +644,12 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
   "logs": [
     [
       "fs-core/main/default/classes/FormulaShareRuleAncestor.cls",
-      "Error: line 30 at 8-25: Expecting instance for operation, not type 'System.Type'",
-      "Error: line 30 at 8-25: Incompatible types in assignment, from 'System.String' to 'System.Type'",
       "Warning: line 53 at 16-102: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
       "Warning: line 64 at 8-94: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
     ],
     [
       "fs-core/main/default/classes/FormulaShareRuleBottomObject.cls",
       "Warning: line 52 at 8-101: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareRuleChild.cls",
-      "Error: line 26 at 8-22: Expecting instance for operation, not type 'System.Type'",
-      "Error: line 26 at 8-22: Incompatible types in assignment, from 'System.String' to 'System.Type'",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareRuleDescendant.cls",
-      "Error: line 30 at 8-27: Expecting instance for operation, not type 'System.Type'",
-      "Error: line 30 at 8-27: Incompatible types in assignment, from 'System.String' to 'System.Type'",
     ],
     [
       "fs-core/main/default/classes/FormulaShareRuleFactory.cls",
@@ -677,21 +665,12 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
     ],
     [
       "fs-core/main/default/classes/FormulaShareRuleInlaw.cls",
-      "Error: line 30 at 8-22: Expecting instance for operation, not type 'System.Type'",
-      "Error: line 30 at 8-22: Incompatible types in assignment, from 'System.String' to 'System.Type'",
       "Warning: line 45 at 8-101: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
     ],
     [
       "fs-core/main/default/classes/FormulaShareRuleSibling.cls",
-      "Error: line 30 at 8-24: Expecting instance for operation, not type 'System.Type'",
-      "Error: line 30 at 8-24: Incompatible types in assignment, from 'System.String' to 'System.Type'",
       "Warning: line 53 at 12-98: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
       "Warning: line 90 at 12-105: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareRuleStandard.cls",
-      "Error: line 30 at 8-25: Expecting instance for operation, not type 'System.Type'",
-      "Error: line 30 at 8-25: Incompatible types in assignment, from 'System.String' to 'System.Type'",
     ],
     [
       "fs-core/main/default/classes/FormulaShareService.cls",
