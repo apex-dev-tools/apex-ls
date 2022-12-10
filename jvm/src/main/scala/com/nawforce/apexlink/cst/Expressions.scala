@@ -123,9 +123,9 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
 
         if (localVar.isEmpty && field.isEmpty) {
           interceptMissingId(input, context, primary.id)
-        } else if (field.nonEmpty && !td.fields.contains(field.get)) {
-          // Handle cases of shadowing non local field names
-          interceptFieldId(input, context, primary.id)
+        } else if (field.nonEmpty) {
+          // Handle cases of shadowing
+          interceptFoundField(input, context, primary.id, field.get)
         } else {
           None
         }
@@ -159,33 +159,44 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       TypeResolver(TypeName(id.name), context.module).toOption match {
         // It might be a static reference to an outer class that failed normal analysis due to class name shadowing
         // This occurs where say A has an inner of B and in C with an inner of A we reference 'A.B' which is valid.
-        case Some(td: ApexClassDeclaration) => verifyStaticReference(td, context)
+        case Some(td: ApexClassDeclaration) => verifyShadowedStatic(td, context)
         case _                              => None
       }
     }
   }
 
-  private def interceptFieldId(
+  private def interceptFoundField(
     input: ExprContext,
     context: ExpressionVerifyContext,
-    id: Id
+    id: Id,
+    field: FieldDeclaration
   ): Option[ExprContext] = {
-    // It may be an Platform reference shadowed by one of the existing field or var names
-    // e.g. String contact; Contact.Name, "String has no property Name"
-    TypeResolver(TypeName(id.name), context.module).toOption match {
-      case Some(td: PlatformTypeDeclaration) => verifyStaticReference(td, context)
-      case Some(td) if td.isSObject          => verifyStaticReference(td, context)
-      case _                                 => None
+    // It may be a Platform reference shadowed by an existing field
+    // e.g. String contact; contact.Name -> "String has no property Name"
+    // Test the target field exists on the shadowed field or try fallback to the static
+    val targetField = context
+      .getTypeFor(field.typeName, input.declaration.get)
+      .toOption
+      .flatMap(f => DotExpression.findField(target.name, f, context.module, Some(field.isStatic)))
+
+    if (targetField.isEmpty) {
+      TypeResolver(TypeName(id.name), context.module).toOption match {
+        case Some(td: PlatformTypeDeclaration) => verifyShadowedStatic(td, context)
+        case Some(td) if td.isSObject          => verifyShadowedStatic(td, context)
+        case _                                 => None
+      }
+    } else {
+      None
     }
   }
 
-  private def verifyStaticReference(
-    staticType: TypeDeclaration,
+  private def verifyShadowedStatic(
+    td: TypeDeclaration,
     context: ExpressionVerifyContext
   ): Option[ExprContext] = {
-    val result = verifyWithId(ExprContext(isStatic = Some(true), staticType), context)
+    val result = verifyWithId(ExprContext(isStatic = Some(true), td), context)
     if (result.isDefined) {
-      context.addDependency(staticType)
+      context.addDependency(td)
       Some(result)
     } else {
       None
@@ -236,7 +247,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
 
     // TODO: Private/protected types?
     if (input.isStatic.contains(true)) {
-      val nt = input.declaration.get.findLocalType(TypeName(name))
+      val nt = inputType.findLocalType(TypeName(name))
       if (nt.nonEmpty) {
         return ExprContext(isStatic = Some(true), nt.get)
       }
