@@ -76,16 +76,4 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(getMessages(root.join("Bar.cls")).isEmpty)
   }
 
-  test("Local shadowed field name") {
-    typeDeclarations(
-      Map(
-        "Bar.cls" -> "public class Bar { public final static Bar Account {get {return new Bar();}} public void method(){Account.Name;} }"
-      )
-    )
-    assert(
-      getMessages(
-        root.join("Bar.cls")
-      ) == "Missing: line 1 at 98-110: Unknown field or type 'Name' on 'Bar'\n"
-    )
-  }
 }

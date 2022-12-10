@@ -122,34 +122,20 @@ final case class IdPrimary(id: Id) extends Primary {
 
     val field = findField(id.name, td, staticContext)
 
-    lazy val isPlatformOrSObject =
-      TypeResolver(TypeName(id.name), context.module).toOption.exists(x =>
-        x match {
-          case _: PlatformTypeDeclaration => true
-          case td                         => td.isSObject
-        }
-      )
-
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
-      val isLocalField = td.fields.contains(field.get)
-      if (isPlatformOrSObject && !isLocalField) {
-        // If the id name is shadowed by platform type and not a local field then this is not a field ref
-        None
-      } else {
-        context.addDependency(field.get)
-        Some(
-          context
-            .getTypeAndAddDependency(field.get.typeName, td)
-            .toOption
-            .map(target => {
-              ExprContext(isStatic = Some(false), Some(target), field.get)
-            })
-            .getOrElse({
-              context.missingType(location, field.get.typeName)
-              ExprContext.empty
-            })
-        )
-      }
+      context.addDependency(field.get)
+      Some(
+        context
+          .getTypeAndAddDependency(field.get.typeName, td)
+          .toOption
+          .map(target => {
+            ExprContext(isStatic = Some(false), Some(target), field.get)
+          })
+          .getOrElse({
+            context.missingType(location, field.get.typeName)
+            ExprContext.empty
+          })
+      )
     } else {
       None
     }

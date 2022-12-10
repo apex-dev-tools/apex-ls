@@ -114,66 +114,92 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
 
     // When we have a leading IdPrimary there are a couple of special cases to handle, we could with a better
     // understanding of how these are handled, likely it via some parser hack
-    val intercept = getInterceptPrimary(input, context).flatMap(primary => {
-      // It might be a namespace
-      if (isNamespace(primary.id.name, input.declaration.get)) {
-        val typeName = TypeName(target.name, Nil, Some(TypeName(primary.id.name))).intern
-        val td       = context.getTypeAndAddDependency(typeName, context.thisType).toOption
-        td.map(td =>
-          context.saveResult(this) {
-            ExprContext(isStatic = Some(true), Some(td), td)
-          }
-        )
-      } else {
-        // It might be a static reference to an outer class that failed normal analysis due to class name shadowing
-        // This occurs where say A has an inner of B and in C with an inner of A we reference 'A.B' which is valid.
-        TypeResolver(TypeName(primary.id.name), context.module).toOption match {
-          case Some(td: ApexClassDeclaration) =>
-            val result = verifyWithId(ExprContext(isStatic = Some(true), td), context)
-            if (result.isDefined) {
-              context.addDependency(td)
-              Some(result)
-            } else {
-              None
-            }
-          case _ => None
-        }
-      }
-    })
-    intercept.map(result => context.saveResult(this)(result))
-    intercept.getOrElse(verifyInternal(input, context))
-  }
-
-  private def getInterceptPrimary(
-    input: ExprContext,
-    context: ExpressionVerifyContext
-  ): Option[IdPrimary] = {
-    expression match {
-      case PrimaryExpression(primary: IdPrimary) if !safeNavigation =>
-        // Found one but we must check can not be resolved as local var/field
+    getInterceptPrimary()
+      .flatMap(primary => {
+        val td       = input.declaration.get
+        val localVar = context.isVar(primary.id.name)
         val field = DotExpression
-          .findField(primary.id.name, input.declaration.get, context.module, input.isStatic)
+          .findField(primary.id.name, td, context.module, input.isStatic)
 
-        lazy val isShadowingPlatformOrSObject =
-          TypeResolver(TypeName(primary.id.name), context.module).toOption.exists(x =>
-            x match {
-              case _: PlatformTypeDeclaration => true
-              case td                         => td.isSObject
-            }
-          )
-
-        if (context.isVar(primary.id.name).isEmpty && field.isEmpty) {
-          Some(primary)
-        } else if (
-          field.nonEmpty && isShadowingPlatformOrSObject && !input.declaration.get.fields.contains(
-            field.get
-          )
-        ) {
-          Some(primary)
+        if (localVar.isEmpty && field.isEmpty) {
+          interceptMissingId(input, context, primary.id)
+        } else if (localVar.isEmpty && field.nonEmpty) {
+          // Handle cases of shadowing
+          interceptFoundField(input, context, primary.id, field.get)
         } else {
           None
         }
-      case _ => None
+      })
+      .map(result => context.saveResult(this)(result))
+      .getOrElse(verifyInternal(input, context))
+  }
+
+  private def getInterceptPrimary(): Option[IdPrimary] = {
+    expression match {
+      case PrimaryExpression(primary: IdPrimary) if !safeNavigation => Some(primary)
+      case _                                                        => None
+    }
+  }
+
+  private def interceptMissingId(
+    input: ExprContext,
+    context: ExpressionVerifyContext,
+    id: Id
+  ): Option[ExprContext] = {
+    // It might be a namespace
+    if (isNamespace(id.name, input.declaration.get)) {
+      val typeName = TypeName(target.name, Nil, Some(TypeName(id.name))).intern
+      val td       = context.getTypeAndAddDependency(typeName, context.thisType).toOption
+      td.map(td =>
+        context.saveResult(this) {
+          ExprContext(isStatic = Some(true), Some(td), td)
+        }
+      )
+    } else {
+      TypeResolver(TypeName(id.name), context.module).toOption match {
+        // It might be a static reference to an outer class that failed normal analysis due to class name shadowing
+        // This occurs where say A has an inner of B and in C with an inner of A we reference 'A.B' which is valid.
+        case Some(td: ApexClassDeclaration) => verifyShadowedStatic(td, context)
+        case _                              => None
+      }
+    }
+  }
+
+  private def interceptFoundField(
+    input: ExprContext,
+    context: ExpressionVerifyContext,
+    id: Id,
+    field: FieldDeclaration
+  ): Option[ExprContext] = {
+    // It may be a Platform reference shadowed by an existing field
+    // e.g. String contact; contact.Name -> "String has no property Name"
+    // Test the target field exists on the shadowed field or try fallback to the static
+    val targetField = context
+      .getTypeFor(field.typeName, input.declaration.get)
+      .toOption
+      .flatMap(f => DotExpression.findField(target.name, f, context.module, Some(false)))
+
+    if (targetField.isEmpty) {
+      TypeResolver(TypeName(id.name), context.module).toOption match {
+        case Some(td: PlatformTypeDeclaration) => verifyShadowedStatic(td, context)
+        case Some(td) if td.isSObject          => verifyShadowedStatic(td, context)
+        case _                                 => None
+      }
+    } else {
+      None
+    }
+  }
+
+  private def verifyShadowedStatic(
+    td: TypeDeclaration,
+    context: ExpressionVerifyContext
+  ): Option[ExprContext] = {
+    val result = verifyWithId(ExprContext(isStatic = Some(true), td), context)
+    if (result.isDefined) {
+      context.addDependency(td)
+      Some(result)
+    } else {
+      None
     }
   }
 
@@ -221,7 +247,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
 
     // TODO: Private/protected types?
     if (input.isStatic.contains(true)) {
-      val nt = input.declaration.get.findLocalType(TypeName(name))
+      val nt = inputType.findLocalType(TypeName(name))
       if (nt.nonEmpty) {
         return ExprContext(isStatic = Some(true), nt.get)
       }
@@ -473,7 +499,9 @@ object MethodCall {
 
 final case class NewExpression(creator: Creator) extends Expression {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
-    context.saveResult(this) { creator.verify(input, context) }
+    context.saveResult(this) {
+      creator.verify(input, context)
+    }
   }
 }
 
