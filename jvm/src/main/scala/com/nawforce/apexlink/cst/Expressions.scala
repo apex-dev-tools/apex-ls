@@ -123,7 +123,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
 
         if (localVar.isEmpty && field.isEmpty) {
           interceptMissingId(input, context, primary.id)
-        } else if (field.nonEmpty) {
+        } else if (localVar.isEmpty && field.nonEmpty) {
           // Handle cases of shadowing
           interceptFoundField(input, context, primary.id, field.get)
         } else {
@@ -177,7 +177,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
     val targetField = context
       .getTypeFor(field.typeName, input.declaration.get)
       .toOption
-      .flatMap(f => DotExpression.findField(target.name, f, context.module, Some(field.isStatic)))
+      .flatMap(f => DotExpression.findField(target.name, f, context.module, Some(false)))
 
     if (targetField.isEmpty) {
       TypeResolver(TypeName(id.name), context.module).toOption match {
