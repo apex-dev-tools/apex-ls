@@ -15,8 +15,8 @@
 package io.github.apexdevtools.apexls.api
 
 import com.nawforce.pkgforce.names.DotName
-import com.nawforce.pkgforce.path.PathFactory
 import com.nawforce.pkgforce.workspace.{Workspace => SWorkspace}
+import com.nawforce.runtime.platform.Path
 
 import scala.collection.mutable
 import scala.scalajs.js
@@ -46,7 +46,7 @@ object Workspaces {
     if (ws.nonEmpty)
       return ws.get
 
-    val issuesAndWorkspace = SWorkspace(PathFactory(wsPath))
+    val issuesAndWorkspace = SWorkspace(Path(wsPath))
     if (issuesAndWorkspace.issues.nonEmpty) {
       throw new WorkspaceException(issuesAndWorkspace.issues.head.asString)
     }

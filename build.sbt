@@ -21,6 +21,7 @@ ThisBuild / developers := List(
 ThisBuild / versionScheme          := Some("strict")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
+ThisBuild / resolvers += Resolver.mavenLocal
 
 lazy val build = taskKey[File]("Build artifacts")
 lazy val pack  = inputKey[Unit]("Publish specific local version")
@@ -56,8 +57,8 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
       "io.github.apex-dev-tools" % "apex-parser"                % "3.1.0",
       "io.github.apex-dev-tools" % "vf-parser"                  % "1.0.0",
       "org.antlr"                % "antlr4-runtime"             % "4.8-1",
-      "io.github.apex-dev-tools" % "sobject-types"              % "56.0.1",
-      "io.github.apex-dev-tools" % "standard-types"             % "55.0.0",
+      "io.github.apex-dev-tools" % "sobject-types"              % "56.0.2",
+      "io.github.apex-dev-tools" % "standard-types"             % "56.0.0",
       "com.github.nawforce"      % "uber-apex-jorje"            % "1.0.0" % Test,
       "com.google.jimfs"         % "jimfs"                      % "1.1"   % Test
     ),

@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.analysis.OrgAnalysis
 import com.nawforce.apexlink.api.{Package, TypeSummary}
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
@@ -58,12 +59,11 @@ trait PackageAPI extends Package {
   override def getTypeIdentifier(typeName: TypeName): TypeIdentifier = {
     org.refreshLock.synchronized {
       orderedModules.headOption
-        .flatMap(
-          module =>
-            TypeResolver(typeName, module) match {
-              case Right(td: TypeDeclaration) => Some(TypeIdentifier(this.namespace, td.typeName))
-              case _                          => None
-            }
+        .flatMap(module =>
+          TypeResolver(typeName, module) match {
+            case Right(td: TypeDeclaration) => Some(TypeIdentifier(this.namespace, td.typeName))
+            case _                          => None
+          }
         )
         .orNull
     }
@@ -203,10 +203,9 @@ trait PackageAPI extends Package {
         getDependentType(typeId.typeName)
           .map(
             _.getTypeDependencyHolders.toSet
-              .filter(
-                id =>
-                  !apexOnly || TypeResolver(id.typeName, orderedModules.head).toOption
-                    .exists(_.isInstanceOf[ApexDeclaration])
+              .filter(id =>
+                !apexOnly || TypeResolver(id.typeName, orderedModules.head).toOption
+                  .exists(_.isInstanceOf[ApexDeclaration])
               )
               .map(_.asTypeIdentifier)
               .toArray
@@ -237,8 +236,8 @@ trait PackageAPI extends Package {
   override def getTypeIdentifiers(apexOnly: Boolean): Array[TypeIdentifier] = {
     org.refreshLock.synchronized {
       modules
-        .foldLeft(Set[TypeIdentifier]())(
-          (acc, module) => acc ++ module.getMetadataDefinedTypeIdentifiers(apexOnly)
+        .foldLeft(Set[TypeIdentifier]())((acc, module) =>
+          acc ++ module.getMetadataDefinedTypeIdentifiers(apexOnly)
         )
         .toArray
     }
@@ -325,19 +324,19 @@ trait PackageAPI extends Package {
     removed.foreach(references.remove)
 
     // Then additions or modifications
-    splitRequests
+    val toUpsert = splitRequests
       .getOrElse(false, Seq())
-      .foreach(r => {
-        LoggerOps.debug(s"Refreshing ${r._1}")
-        try {
-          refreshInternal(r._1).map(refreshResult => {
-            references ++= refreshResult._2
-            references.remove(refreshResult._1)
-          })
-        } catch {
-          case ex: IllegalArgumentException => LoggerOps.debug(ex.getMessage)
-        }
-      })
+    toUpsert.foreach(r => {
+      LoggerOps.debug(s"Refreshing ${r._1}")
+      try {
+        refreshInternal(r._1).map(refreshResult => {
+          references ++= refreshResult._2
+          references.remove(refreshResult._1)
+        })
+      } catch {
+        case ex: IllegalArgumentException => LoggerOps.debug(ex.getMessage)
+      }
+    })
 
     // Then batched invalidation
     // FUTURE: We could remove the handled requests from the missing but don't know if a type was added
@@ -347,6 +346,11 @@ trait PackageAPI extends Package {
 
     // Close any open plugins
     org.pluginsManager.closePlugins()
+
+    // Run external analysis, we don't refresh on types referencing the changed files here as we assume external
+    // analysis would not be capable of doing multi-file work, at least for now.
+    OrgAnalysis.afterRefresh(this.org, toUpsert.map(request => Path(request._1)).toSet)
+
     true
   }
 
@@ -355,19 +359,18 @@ trait PackageAPI extends Package {
    * be of the exact same shape as the summary it replaces. */
   protected def reValidate(references: Set[TypeId]): Unit = {
 
-    val tds = references.flatMap(
-      typeId =>
-        typeId.module.moduleType(typeId.typeName) match {
-          case Some(sobject: SObjectDeclaration) =>
-            // TODO: Over general, reload only needed when a base SObject is changed
-            sobject.paths.find(typeId.module.isVisibleFile).map(path => refreshInternal(path))
-            None
-          case Some(summary: SummaryDeclaration) =>
-            // Replace direct use summary types, no need to revalidate these
-            refreshInternal(summary.location.path)
-            None
-          case x => x
-        }
+    val tds = references.flatMap(typeId =>
+      typeId.module.moduleType(typeId.typeName) match {
+        case Some(sobject: SObjectDeclaration) =>
+          // TODO: Over general, reload only needed when a base SObject is changed
+          sobject.paths.find(typeId.module.isVisibleFile).map(path => refreshInternal(path))
+          None
+        case Some(summary: SummaryDeclaration) =>
+          // Replace direct use summary types, no need to revalidate these
+          refreshInternal(summary.location.path)
+          None
+        case x => x
+      }
     )
 
     // Everything else needs re-validation

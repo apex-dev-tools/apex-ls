@@ -61,7 +61,9 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
         issuesAndWS.value.get.events.toList should matchPattern {
           case List(
                 IssuesEvent(
-                  ArraySeq(Issue(labelsFile, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _)))
+                  ArraySeq(
+                    Issue(labelsFile, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _)
+                  )
                 )
               ) if labelsFile == root.join("pkg").join("CustomLabels.labels") =>
         }
@@ -346,7 +348,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
                       SYNTAX_CATEGORY,
                       Location(2, 0, 2, 0),
                       "no viable alternative at input '<apex:component'"
-                    )
+                    ),
+                    _
                   )
                 )
               )
@@ -376,7 +379,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
                       ERROR_CATEGORY,
                       Location(1, 0, 2, 5),
                       "Root element must be 'apex:component'"
-                    )
+                    ),
+                    _
                   )
                 )
               )
@@ -417,7 +421,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
       issuesAndWS.value.get.events.toList should matchPattern {
         case List(
               IssuesEvent(
-                ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _)))
+                ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
               )
             ) if objectPath == root.join("pkg").join("MyObject.object") =>
       }
@@ -487,7 +491,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
         case List(
               SObjectEvent(sourceInfo, path, false, None, None),
               IssuesEvent(
-                ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _)))
+                ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
               )
             )
             if sourceInfo.get.location == location && path == reportingPath && objectPath == root
@@ -538,7 +542,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
         case List(
               SObjectEvent(sourceInfo, path, false, None, None),
               IssuesEvent(
-                ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _)))
+                ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
               )
             )
             if sourceInfo.get.location == location && path == reportingPath && objectPath == root

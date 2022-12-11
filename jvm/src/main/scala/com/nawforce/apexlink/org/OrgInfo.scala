@@ -29,7 +29,7 @@ object OrgInfo {
 
   /** Log an issue against the in-scope org */
   private[nawforce] def log(issue: Issue): Unit = {
-    if (issue.path != null)
+    if (issue.path != null && current.value != null)
       current.value.issueManager.add(issue)
   }
 

@@ -22,7 +22,7 @@ import com.nawforce.runtime.platform.Path
 object FileSystemHelper {
 
   // Abstract virtual filesystem for testing
-  def run[T](files: Map[String, String])(verify: PathLike => T): T = {
+  def run[T](files: Map[String, String])(verify: Path => T): T = {
     val config = Configuration
       .unix()
       .toBuilder
@@ -40,7 +40,7 @@ object FileSystemHelper {
     verify(new Path(rootDir))
   }
 
-  def runWithCopy[T](dir: PathLike)(verify: PathLike => T): T = {
+  def runWithCopy[T](dir: Path)(verify: Path => T): T = {
     val config = Configuration
       .unix()
       .toBuilder
@@ -48,23 +48,18 @@ object FileSystemHelper {
       .build()
     val fs      = Jimfs.newFileSystem(config)
     val rootDir = fs.getRootDirectories.iterator().next()
-    dir.native match {
-      case nio: java.nio.file.Path =>
-        val stream = Files.walk(nio)
-        stream.forEach(streamPath => {
-          val relativePath = nio.toUri.relativize(streamPath.toUri).getPath
-          val copy         = rootDir.resolve(relativePath)
-          if (copy.getParent != null)
-            Files.createDirectories(copy.getParent)
-          if (!Files.isDirectory(streamPath))
-            Files.copy(streamPath, copy)
-        })
-        stream.close()
-      case _ =>
-    }
-
+    val nio     = dir.native
+    val stream  = Files.walk(nio)
+    stream.forEach(streamPath => {
+      val relativePath = nio.toUri.relativize(streamPath.toUri).getPath
+      val copy         = rootDir.resolve(relativePath)
+      if (copy.getParent != null)
+        Files.createDirectories(copy.getParent)
+      if (!Files.isDirectory(streamPath))
+        Files.copy(streamPath, copy)
+    })
+    stream.close()
     ParsedCache.clear()
-
     verify(new Path(rootDir))
   }
 

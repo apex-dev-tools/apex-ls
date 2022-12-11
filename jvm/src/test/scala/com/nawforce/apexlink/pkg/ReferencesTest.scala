@@ -175,6 +175,7 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  /*
   test("Indirect usage from cache") {
     val usedB =
       withCursor(
@@ -212,6 +213,7 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
       }
     }
   }
+   */
 
   test("Reference after change") {
     val usedB =

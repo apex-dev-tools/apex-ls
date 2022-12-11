@@ -45,9 +45,6 @@ abstract class PathLike {
   // Size of regular file, returns 0 otherwise
   def size: Long
 
-  // As native representation, platform specific escape
-  def native: Any
-
   // Join some new text to end of path & normalise
   def join(arg: String): PathLike
 

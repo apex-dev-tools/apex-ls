@@ -14,7 +14,7 @@
 package com.nawforce.apexlink
 
 import com.nawforce.apexlink.TestHelper.{CURSOR, locToString}
-import com.nawforce.apexlink.api.{Org, ServerOps, TypeSummary}
+import com.nawforce.apexlink.api.{AnalysisMode, Org, ServerOps, TypeSummary}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.rpc.{LocationLink, TargetLocation}
@@ -79,6 +79,15 @@ trait TestHelper {
       op
     } finally {
       ServerOps.setAutoFlush(current)
+    }
+  }
+
+  def withExternalAnalysis[T](mode: AnalysisMode)(op: => T): T = {
+    val current = ServerOps.setExternalAnalysisMode(mode)
+    try {
+      op
+    } finally {
+      ServerOps.setExternalAnalysisMode(current)
     }
   }
 
@@ -210,8 +219,8 @@ trait TestHelper {
          |        ${if (field._2.nonEmpty) s"<type>${field._2.get}</type>" else ""}
          |        ${if (field._3.nonEmpty) s"<referenceTo>${field._3.get}</referenceTo>" else ""}
          |        ${if (field._3.nonEmpty)
-        s"<relationshipName>${field._1.replaceAll("__c$", "")}</relationshipName>"
-      else ""}
+          s"<relationshipName>${field._1.replaceAll("__c$", "")}</relationshipName>"
+        else ""}
          |    </fields>
          |""".stripMargin
     })
@@ -258,10 +267,10 @@ trait TestHelper {
        |    <fullName>$name</fullName>
        |    <type>$fieldType</type>
        |    ${if (relationshipName.nonEmpty) s"<referenceTo>${relationshipName.get}</referenceTo>"
-    else ""}
+      else ""}
        |    ${if (relationshipName.nonEmpty)
-      s"<relationshipName>${name.replaceAll("__c$", "")}</relationshipName>"
-    else ""}
+        s"<relationshipName>${name.replaceAll("__c$", "")}</relationshipName>"
+      else ""}
        |    ${if (xml.nonEmpty) s"$xml"}
        |</CustomField>
        |""".stripMargin

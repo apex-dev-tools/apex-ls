@@ -173,6 +173,9 @@ trait OrgAPI {
   @api.JSONRPCMethod(name = "setLoggingLevel")
   def setLoggingLevel(level: String): Future[Unit]
 
+  @api.JSONRPCMethod(name = "setExternalAnalysisMode")
+  def setExternalAnalysisMode(mode: String): Future[Unit]
+
   @api.JSONRPCMethod(name = "setCacheDirectory")
   def setCacheDirectory(path: Option[String]): Future[Unit]
 

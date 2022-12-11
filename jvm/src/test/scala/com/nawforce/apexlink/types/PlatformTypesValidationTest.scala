@@ -40,7 +40,7 @@ class PlatformTypesValidationTest extends AnyFunSuite {
   )
 
   test("Right number of types (should exclude inners)") {
-    assert(PlatformTypeDeclaration.classNames.size == 2264)
+    assert(PlatformTypeDeclaration.classNames.size == 2299)
   }
 
   test("SObject type is visible") {
@@ -127,12 +127,11 @@ class PlatformTypesValidationTest extends AnyFunSuite {
       case ENUM_NATURE =>
         assert(typeDeclaration.nestedTypes.isEmpty)
       case CLASS_NATURE =>
-        typeDeclaration.nestedTypes.foreach(
-          nested =>
-            validateTypeDeclaration(
-              className.append(nested.name),
-              nested.asInstanceOf[PlatformTypeDeclaration]
-            )
+        typeDeclaration.nestedTypes.foreach(nested =>
+          validateTypeDeclaration(
+            className.append(nested.name),
+            nested.asInstanceOf[PlatformTypeDeclaration]
+          )
         )
       case _ => assert(false)
     }
@@ -144,8 +143,9 @@ class PlatformTypesValidationTest extends AnyFunSuite {
       case ENUM_NATURE =>
         assert(typeDeclaration.fields.nonEmpty)
         assert(
-          typeDeclaration.fields.filter(_.typeName.toString == typeDeclaration.typeName.toString)
-            sameElements typeDeclaration.fields
+          typeDeclaration.fields.filter(
+            _.typeName.toString == typeDeclaration.typeName.toString
+          ) == typeDeclaration.fields
         )
       case CLASS_NATURE =>
         typeDeclaration.fields.foreach(f => {
