@@ -2,7 +2,7 @@ import org.scalajs.linker.interface.Report
 
 import scala.sys.process._
 
-ThisBuild / scalaVersion         := "2.13.3"
+ThisBuild / scalaVersion         := "2.13.10"
 ThisBuild / description          := "Salesforce Apex static analysis toolkit"
 ThisBuild / organization         := "io.github.apex-dev-tools"
 ThisBuild / organizationHomepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
@@ -40,9 +40,9 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     name := "apex-ls",
     scalacOptions += "-deprecation",
     libraryDependencies ++= Seq(
-      "io.github.apex-dev-tools" %%% "outline-parser"                         % "1.0.0",
-      "com.github.nawforce"      %%% "scala-json-rpc"                         % "1.0.1",
-      "com.github.nawforce"      %%% "scala-json-rpc-upickle-json-serializer" % "1.0.1",
+      "io.github.apex-dev-tools" %%% "outline-parser"                         % "1.1.0",
+      "com.github.nawforce"      %%% "scala-json-rpc"                         % "1.1.0",
+      "com.github.nawforce"      %%% "scala-json-rpc-upickle-json-serializer" % "1.1.0",
       "com.lihaoyi"              %%% "upickle"                                % "1.2.0",
       "org.scalatest"            %%% "scalatest"                              % "3.2.0" % Test
     )
@@ -68,8 +68,8 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     )
   )
   .jsSettings(
-    build       := buildJs(Compile / fullLinkJS).value,
-    Dev / build := buildJs(Compile / fastLinkJS).value,
+    build                    := buildJs(Compile / fullLinkJS).value,
+    Dev / build              := buildJs(Compile / fastLinkJS).value,
     Test / parallelExecution := false,
     libraryDependencies ++= Seq("net.exoego" %%% "scala-js-nodejs-v14" % "0.12.0"),
     scalaJSUseMainModuleInitializer := false,

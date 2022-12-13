@@ -20,7 +20,7 @@ final class IdentityBox[T <: AnyRef](var value: T) {
 
   override def equals(that: Any): Boolean = {
     that match {
-      case other: IdentityBox[T] => other.value eq this.value
+      case other: IdentityBox[_] => other.value eq this.value
       case _                     => false
     }
   }

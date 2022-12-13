@@ -55,8 +55,8 @@ final case class Component(
   override val fields: ArraySeq[FieldDeclaration] = {
     attributes
       .getOrElse(ArraySeq())
-      .map(
-        a => CustomFieldDeclaration(a, TypeNames.Any, None)
+      .map(a =>
+        CustomFieldDeclaration(a, TypeNames.Any, None)
       ) ++ PlatformTypes.componentType.fields
   }
 
@@ -68,7 +68,7 @@ final case class Component(
   }
 
   override def dependencies(): Iterable[Dependent] =
-    depends.map(_.toIterable).getOrElse(Array().toIterable)
+    depends.getOrElse(Array[Dependent]())
 
   override def validate(): Unit = {
     super.validate()
@@ -170,8 +170,8 @@ final case class ComponentDeclaration(
     val sourceInfo = events.map(_.sourceInfo).distinct
     val componentDeclaration =
       new ComponentDeclaration(sourceInfo, module, components, nestedComponents)
-    componentDeclaration.namespaceDeclaration.foreach(
-      td => componentDeclaration.namespaceDeclaration = Some(td.merge(events))
+    componentDeclaration.namespaceDeclaration.foreach(td =>
+      componentDeclaration.namespaceDeclaration = Some(td.merge(events))
     )
     componentDeclaration.cDeclaration = componentDeclaration.cDeclaration.merge(events)
     componentDeclaration
@@ -185,8 +185,8 @@ trait NestedComponents extends TypeDeclaration {
   def addTypeDependencyHolder(typeId: TypeId): Unit
 }
 
-/** Component.ns implementation for exposing components from dependent packages. As the exposed components are
-  * owned elsewhere there is no need to set a controller here.
+/** Component.ns implementation for exposing components from dependent packages. As the exposed
+  * components are owned elsewhere there is no need to set a controller here.
   */
 final class PackageComponents(module: OPM.Module, componentDeclaration: ComponentDeclaration)
     extends InnerBasicTypeDeclaration(

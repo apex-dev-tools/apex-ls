@@ -45,7 +45,7 @@ case class Page(module: OPM.Module, location: PathLocation, name: Name, vfContai
   private var depends: Option[Set[Dependent]] = None
 
   override def dependencies(): Iterable[Dependent] =
-    depends.map(_.toIterable).getOrElse(Array().toIterable)
+    depends.getOrElse(Array[Dependent]())
 
   def validate(): Unit = {
     depends = Some(vfContainer.validate())
@@ -73,8 +73,8 @@ object Page {
   }
 }
 
-/** Page 'namespace' implementation. Provides access to pages in the package as well as pages that are accessible in
-  * base packages via the `namespace__name` format.
+/** Page 'namespace' implementation. Provides access to pages in the package as well as pages that
+  * are accessible in base packages via the `namespace__name` format.
   */
 final case class PageDeclaration(
   sources: ArraySeq[SourceInfo],
