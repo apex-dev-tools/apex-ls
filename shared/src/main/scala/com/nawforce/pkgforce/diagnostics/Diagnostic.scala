@@ -14,7 +14,7 @@
 package com.nawforce.pkgforce.diagnostics
 
 import com.nawforce.pkgforce.path.Location
-import io.github.apexdevtools.apexls.api.{Issue => APIIssue}
+import io.github.apexdevtools.api.{Issue => APIIssue}
 import upickle.default.{macroRW, ReadWriter => RW}
 
 @upickle.implicits.key("DiagnosticCategory")

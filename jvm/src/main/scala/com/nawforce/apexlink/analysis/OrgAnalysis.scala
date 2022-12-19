@@ -9,8 +9,8 @@ import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue}
 import com.nawforce.pkgforce.documents.ApexNature
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.apexls.api.{Issue => APIIssue}
-import io.github.apexdevtools.apexls.spi.AnalysisProvider
+import io.github.apexdevtools.api.{Issue => APIIssue}
+import io.github.apexdevtools.spi.AnalysisProvider
 
 import java.util.ServiceLoader
 import scala.collection.immutable.ArraySeq

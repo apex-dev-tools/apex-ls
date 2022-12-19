@@ -28,7 +28,7 @@
 
 package com.nawforce.pkgforce.diagnostics
 
-import io.github.apexdevtools.apexls.api.IssueLocation
+import io.github.apexdevtools.api.IssueLocation
 import com.nawforce.pkgforce.diagnostics.DiagnosticCategory.isErrorType
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.platform.Path
@@ -40,8 +40,8 @@ import scala.collection.compat.immutable.ArraySeq
 final case class Issue(
   path: PathLike,
   diagnostic: Diagnostic,
-  provider: String = io.github.apexdevtools.apexls.api.Issue.APEX_LS_PROVIDER
-) extends io.github.apexdevtools.apexls.api.Issue {
+  provider: String = io.github.apexdevtools.api.Issue.APEX_LS_PROVIDER
+) extends io.github.apexdevtools.api.Issue {
 
   override def filePath(): String = path.toString
 

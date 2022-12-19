@@ -10,6 +10,8 @@ import io.github.apexdevtools.apexls.types.ApexTypeAdapter;
 import com.nawforce.runtime.platform.Path;
 import com.nawforce.runtime.workspace.IModuleTypeDeclaration;
 import com.nawforce.runtime.workspace.IPM;
+import io.github.apexdevtools.api.Issue;
+import io.github.apexdevtools.api.IssueLocation;
 import scala.jdk.javaapi.CollectionConverters;
 import scala.jdk.javaapi.OptionConverters;
 
@@ -17,7 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
-
 public class MDIndex implements IssuesCollection {
     private final IPM.Index index;
     private final Optional<IPM.Module> rootModule;
