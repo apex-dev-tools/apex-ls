@@ -96,19 +96,13 @@ object PMDReport {
       val issues = kv._2
 
       val violations = issues.map(issue => {
-        val rule = issue.provider() match {
-          case "PMD" =>
-            extractRuleName(issue.message()).getOrElse(issue.category())
-          case _ => issue.category()
-        }
-
         <violation beginline={issue.fileLocation().startLineNumber().toString} 
                    endline={issue.fileLocation().endLineNumber().toString}
                    begincolumn={issue.fileLocation().startCharOffset().toString} 
                    endcolumn={issue.fileLocation().endCharOffset().toString}
-                   rule={rule}
+                   rule={issue.rule.name()}
                    ruleset={issue.provider()}
-                   priority={if (issue.isError) "1" else "2"}
+                   priority={issue.rule.priority().toString}
         >
           {issue.message()}
         </violation>
@@ -128,15 +122,5 @@ object PMDReport {
     val printer = new scala.xml.PrettyPrinter(80, 2)
     XML.save(REPORT_NAME, XML.loadString(printer.format(pmd)), "UTF-8", xmlDecl = true, null)
     STATUS_OK
-  }
-
-  private def extractRuleName(message: String): Option[String] = {
-    val r         = "([A-z]*)".r
-    val ruleNames = r.findAllIn(message).toArray
-    if (ruleNames.nonEmpty && ruleNames.last.length > 2) {
-      Some(ruleNames.last.substring(1, ruleNames.last.length - 2))
-    } else {
-      None
-    }
   }
 }
