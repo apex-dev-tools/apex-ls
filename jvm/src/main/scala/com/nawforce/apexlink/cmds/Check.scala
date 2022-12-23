@@ -161,7 +161,7 @@ object Check {
           writer.startDocument(lastPath)
         }
 
-        writer.writeMessage(issue.category(), issue.fileLocation(), issue.message)
+        writer.writeMessage(issue.rule().name(), issue.fileLocation(), issue.message)
 
       }
     })

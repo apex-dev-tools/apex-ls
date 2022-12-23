@@ -79,7 +79,7 @@ class OrgAnalysis(org: OrgImpl) {
     new Issue(
       Path(issue.filePath()),
       new Diagnostic(
-        DiagnosticCategory(issue.category()),
+        DiagnosticCategory(issue.rule().name()),
         new Location(
           issue.fileLocation().startLineNumber(),
           issue.fileLocation().startCharOffset(),

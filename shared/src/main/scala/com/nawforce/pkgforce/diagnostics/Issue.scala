@@ -28,13 +28,19 @@
 
 package com.nawforce.pkgforce.diagnostics
 
-import io.github.apexdevtools.api.IssueLocation
+import io.github.apexdevtools.api.{IssueLocation, Rule}
 import com.nawforce.pkgforce.diagnostics.DiagnosticCategory.isErrorType
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.platform.Path
 import upickle.default.{macroRW, ReadWriter => RW}
 
 import scala.collection.compat.immutable.ArraySeq
+
+/** Shim between DiagnosticCategory & Rule, upickle is unhappy if DiagnosticCategory extends Rule */
+final case class DiagnosticRule(category: DiagnosticCategory) extends Rule {
+  override def name(): String      = category.name
+  override def priority(): Integer = category.priority
+}
 
 /** An issue recoded against a specific file location. */
 final case class Issue(
@@ -49,7 +55,7 @@ final case class Issue(
 
   override def message(): String = diagnostic.message
 
-  override def category(): String = diagnostic.category.value
+  override def rule(): Rule = DiagnosticRule(diagnostic.category)
 
   override def isError: java.lang.Boolean = isErrorType(diagnostic.category)
 }
