@@ -14,8 +14,8 @@
 
 package io.github.apexdevtools.apexls.api;
 
-import io.github.apexdevtools.apexls.api.Issue;
-import io.github.apexdevtools.apexls.api.IssueLocation;
+import io.github.apexdevtools.api.Issue;
+import io.github.apexdevtools.api.IssueLocation;
 
 /**
  * Access to Issues (an error or warning) for metadata files. When metadata files are changed issues my reported
