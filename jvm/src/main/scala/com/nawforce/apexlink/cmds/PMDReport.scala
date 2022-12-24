@@ -7,9 +7,10 @@ package com.nawforce.apexlink.cmds
 import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
-import com.nawforce.runtime.platform.Environment
+import com.nawforce.runtime.platform.{Environment, Path}
 
 import java.time.Instant
+import scala.collection.immutable
 import scala.xml.XML
 
 /** Generate a report using PMD format XML, see
@@ -68,7 +69,7 @@ object PMDReport {
 
       // Don't use unused analysis unless we have both verbose and unused flags
       if (!verbose || !unused) {
-        PluginsManager.removePlugins(Seq(classOf[UnusedPlugin]))
+        PluginsManager.removePlugins(immutable.Seq(classOf[UnusedPlugin]))
       }
 
       // Load org and flush to cache if we are using it
@@ -78,7 +79,8 @@ object PMDReport {
       }
 
       // Output report
-      writeIssues(org, verbose)
+      val outputPath = Path(dirs.head).join(REPORT_NAME)
+      writeIssues(outputPath, org, verbose)
 
     } catch {
       case ex: Throwable =>
@@ -87,7 +89,7 @@ object PMDReport {
     }
   }
 
-  private def writeIssues(org: Org, includeWarnings: Boolean): Int = {
+  private def writeIssues(outputPath: Path, org: Org, includeWarnings: Boolean): Int = {
 
     val issues       = org.issues.issuesForFiles(null, includeWarnings, 0)
     val issuesByFile = issues.groupBy(_.filePath())
@@ -120,7 +122,13 @@ object PMDReport {
     </pmd>
 
     val printer = new scala.xml.PrettyPrinter(80, 2)
-    XML.save(REPORT_NAME, XML.loadString(printer.format(pmd)), "UTF-8", xmlDecl = true, null)
+    XML.save(
+      outputPath.toString,
+      XML.loadString(printer.format(pmd)),
+      "UTF-8",
+      xmlDecl = true,
+      null
+    )
     STATUS_OK
   }
 }
