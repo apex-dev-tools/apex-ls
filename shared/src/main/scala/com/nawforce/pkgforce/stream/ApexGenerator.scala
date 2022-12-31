@@ -16,16 +16,21 @@ package com.nawforce.pkgforce.stream
 
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.platform.Path
 
 final case class ApexEvent(path: PathLike) extends PackageEvent
 
 /** Convert Apex documents into PackageEvents */
 object ApexGenerator {
 
-  def iterator(index: DocumentIndex): Iterator[PackageEvent] =
-    index.get(ApexNature).flatMap(toEvents)
-
-  private def toEvents(document: MetadataDocument): Iterator[PackageEvent] = {
-    Iterator(ApexEvent(document.path))
+  def iterator(index: DocumentIndex): Iterator[PackageEvent] = {
+    // TODO: Replace this tmp approach when events removed
+    val docs = index.get(ApexNature)
+    docs.iterator.flatMap(md => {
+      md._2
+        .map(p => Path(p))
+        .find(p => MetadataDocument(p).exists(_.nature == ApexNature))
+        .map(p => ApexEvent(Path(p)))
+    })
   }
 }

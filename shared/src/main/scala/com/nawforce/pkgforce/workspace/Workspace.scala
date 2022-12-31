@@ -25,42 +25,41 @@ import com.nawforce.pkgforce.sfdx.{
 }
 import com.nawforce.pkgforce.stream.{IssuesEvent, PackageEvent, PackageStream}
 
-/**
-  * Contains any config option that can be used by the Org
+/** Contains any config option that can be used by the Org
   */
 case class ProjectConfig(maxDependencyCount: Option[Int])
 
 /** Metadata workspace, maintains information on available metadata within a project/package.
   *
-  * Duplicate detection is based on the relevant MetadataDocumentType(s) being able to generate an accurate TypeName
-  * for the metadata. Where multiple metadata items may contribute to a type, e.g. labels, make sure that
-  * duplicatesAllowed is set which will bypass the duplicate detection. Duplicates are reported as errors and then
-  * ignored.
+  * Duplicate detection is based on the relevant MetadataDocumentType(s) being able to generate an
+  * accurate TypeName for the metadata. Where multiple metadata items may contribute to a type, e.g.
+  * labels, make sure that duplicatesAllowed is set which will bypass the duplicate detection.
+  * Duplicates are reported as errors and then ignored.
   *
-  * During an upsert/deletion of new types the index will also need to be updated so that it maintains an accurate
-  * view of the metadata files being used.
+  * During an upsert/deletion of new types the index will also need to be updated so that it
+  * maintains an accurate view of the metadata files being used.
   */
 case class Workspace(layers: Seq[NamespaceLayer], projectConfig: Option[ProjectConfig] = None) {
 
   // Document indexes for each layer of actual metadata
   val indexes: Map[ModuleLayer, IssuesAnd[DocumentIndex]] =
-    layers.foldLeft(Map[ModuleLayer, IssuesAnd[DocumentIndex]]())(
-      (acc, layer) => acc ++ layer.indexes
+    layers.foldLeft(Map[ModuleLayer, IssuesAnd[DocumentIndex]]())((acc, layer) =>
+      acc ++ layer.indexes
     )
 
-  def get(typeName: TypeName): Set[MetadataDocument] = {
+  def get(typeName: TypeName): List[MetadataDocument] = {
     val indexes = deployOrderedIndexes.toSeq.reverse.map(_.value)
     indexes
       .find(_.get(typeName).nonEmpty)
       .map(index => {
         index.get(typeName)
       })
-      .getOrElse(Set())
+      .getOrElse(List())
   }
 
   def events: Iterator[PackageEvent] = {
-    deployOrderedIndexes.flatMap(
-      index => PackageStream.eventStream(index.value) ++ IssuesEvent.iterator(index.issues)
+    deployOrderedIndexes.flatMap(index =>
+      PackageStream.eventStream(index.value) ++ IssuesEvent.iterator(index.issues)
     )
   }
 

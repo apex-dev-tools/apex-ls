@@ -19,6 +19,7 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{LocationAnd, PathLocation}
 import com.nawforce.runtime.parsers.PageParser
+import com.nawforce.runtime.platform.Path
 
 import scala.collection.compat.immutable.ArraySeq
 
@@ -31,8 +32,15 @@ final case class PageEvent(
 /** Convert page documents into PackageEvents */
 object PageGenerator {
 
+  // TODO: Replace this tmp approach when events removed
   def iterator(index: DocumentIndex): Iterator[PackageEvent] =
-    index.get(PageNature).flatMap(toEvents)
+    index
+      .get(PageNature)
+      .values
+      .flatten
+      .flatMap(p => MetadataDocument(Path(p)).map(toEvents))
+      .flatten
+      .iterator
 
   private def toEvents(document: MetadataDocument): Iterator[PackageEvent] = {
     val source = document.source

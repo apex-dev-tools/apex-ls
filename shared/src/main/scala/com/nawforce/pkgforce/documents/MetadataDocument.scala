@@ -20,8 +20,8 @@ import com.nawforce.runtime.parsers.SourceData
 
 import scala.collection.compat.immutable.ArraySeq
 
-/** The type of some metadata, such as Trigger metadata. Partial type metadata signals that multiple documents
-  * may contribute to the same type.
+/** The type of some metadata, such as Trigger metadata. Partial type metadata signals that multiple
+  * documents may contribute to the same type.
   */
 sealed abstract class MetadataNature(val partialType: Boolean = false)
 
@@ -58,11 +58,17 @@ abstract class MetadataDocument(val path: PathLike, val name: Name) {
     }
   }
 
+  def controllingNature: MetadataNature = nature
+
   /** Return true to avoid indexing bad metadata such as empty files */
   def ignorable(): Boolean = false
 
-  /** Generate a typename for this metadata, if this is not unique you may need to set duplicatesAllowed. */
+  /** Typename for this specific metadata document */
   def typeName(namespace: Option[Name]): TypeName
+
+  /** Typename that this metadata document is considered part of, e.g. a field is part of an SObject
+    */
+  def controllingTypeName(namespace: Option[Name]): TypeName = typeName(namespace)
 
   /** Obtain source data for this document */
   def source: IssuesAnd[Option[SourceData]] = {
@@ -159,8 +165,18 @@ final case class BigObjectDocument(_path: PathLike, _name: Name)
 final case class PlatformEventDocument(_path: PathLike, _name: Name)
     extends SimpleSObjectLike(_path, _name)
 
+abstract class SObjectPart(_path: PathLike, _name: Name) extends MetadataDocument(_path, _name) {
+
+  override def controllingNature: MetadataNature = SObjectNature
+
+  override def controllingTypeName(namespace: Option[Name]): TypeName = {
+    val sobjectName = path.parent.parent.basename
+    TypeName(NamespacePrefix(namespace, sobjectName), Nil, Some(TypeName.Schema))
+  }
+}
+
 final case class SObjectFieldDocument(_path: PathLike, _name: Name)
-    extends MetadataDocument(_path, _name) {
+    extends SObjectPart(_path, _name) {
   override def typeName(namespace: Option[Name]): TypeName = {
     val sobjectName = path.parent.parent.basename
     val fieldsType =
@@ -172,7 +188,7 @@ final case class SObjectFieldDocument(_path: PathLike, _name: Name)
 }
 
 final case class SObjectFieldSetDocument(_path: PathLike, _name: Name)
-    extends MetadataDocument(_path, _name) {
+    extends SObjectPart(_path, _name) {
   override def typeName(namespace: Option[Name]): TypeName = {
     val sobjectName = path.parent.parent.basename
     val fieldSetType = TypeName.sObjectTypeFieldSets$(
@@ -183,7 +199,7 @@ final case class SObjectFieldSetDocument(_path: PathLike, _name: Name)
 }
 
 final case class SObjectSharingReasonDocument(_path: PathLike, _name: Name)
-    extends MetadataDocument(_path, _name) {
+    extends SObjectPart(_path, _name) {
   override def typeName(namespace: Option[Name]): TypeName = {
     val sobjectName = path.parent.parent.basename
     val sharingReasonType = TypeName.sObjectTypeRowClause$(

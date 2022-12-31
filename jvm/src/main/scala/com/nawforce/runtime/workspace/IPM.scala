@@ -3,7 +3,6 @@
  */
 package com.nawforce.runtime.workspace
 
-import com.financialforce.oparser.FormalParameter
 import com.financialforce.types._
 import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
 import com.nawforce.pkgforce.diagnostics._
@@ -236,7 +235,7 @@ object IPM extends TriHierarchy {
       val namespace = pkg.namespace
 
       index
-        .get(SObjectNature)
+        .getControllingDocuments(SObjectNature)
         .foreach(md => {
           val td           = SObjectTypeDeclaration(this, md)
           val absoluteName = md.typeName(namespace).toString
@@ -249,7 +248,7 @@ object IPM extends TriHierarchy {
     private def loadClasses(): Unit = {
       val namespace = pkg.namespace
       val classes = new ApexClassLoader(loadingPool, this, ModuleClassFactory)
-        .loadClasses(index.get(ApexNature), pkg.org.issues)
+        .loadClasses(index.getControllingDocuments(ApexNature).iterator, pkg.org.issues)
       classes.foreach { docAndType =>
         insertClass(docAndType._1.typeName(namespace).toString, docAndType._2)
       }
@@ -317,8 +316,8 @@ object IPM extends TriHierarchy {
     }
 
     private def insertSObject(name: String, decl: SObjectTypeDeclaration): Unit = {
-      lowerNames.add(name.toLowerCase)
-      types.put(Name(name), decl)
+      // lowerNames.add(name.toLowerCase)
+      // types.put(Name(name), decl)
     }
 
     override def isVisibleFile(path: PathLike): Boolean = {
@@ -488,12 +487,12 @@ object IPM extends TriHierarchy {
       name: String,
       typeRef: UnresolvedTypeRef
     ): (String, UnresolvedTypeRef) = {
-      //This will stop defaulting names for ambiguous names so we can resolve them correctly in TypeFinder
+      // This will stop defaulting names for ambiguous names so we can resolve them correctly in TypeFinder
       val isNameAmbiguous = ambiguousAliasMap.contains(TypeName(Name(name)))
       if (
         !defaultNamespace || isNameAmbiguous ||
         (typeRef.typeNameSegments.length > 1 &&
-        typeRef.typeNameSegments.head.id.lowerCaseName.equalsIgnoreCase(namespace.get.value))
+          typeRef.typeNameSegments.head.id.lowerCaseName.equalsIgnoreCase(namespace.get.value))
       ) {
         (name, typeRef)
       } else {
@@ -536,7 +535,7 @@ object IPM extends TriHierarchy {
   }
 
   class SchemaPlatformModule(override val pkg: PlatformPackage) extends PlatformModule(pkg) {
-    //TODO:
+    // TODO:
   }
 
   object PlatformModule {

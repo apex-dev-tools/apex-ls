@@ -16,19 +16,25 @@ package com.nawforce.pkgforce.stream
 
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.path.{Location, PathLocation}
+import com.nawforce.runtime.platform.Path
 
 final case class FlowEvent(sourceInfo: SourceInfo) extends PackageEvent
 
 object FlowGenerator {
-  def iterator(index: DocumentIndex): Iterator[PackageEvent] =
-    index.get(FlowNature).flatMap(toEvents)
-
-  private def toEvents(document: MetadataDocument): Iterator[PackageEvent] = {
-    val source = document.source
-    source.value
-      .map(source => {
-        Iterator(FlowEvent(SourceInfo(PathLocation(document.path, Location.all), source)))
+  def iterator(index: DocumentIndex): Iterator[PackageEvent] = {
+    // TODO: Replace this tmp approach when events removed
+    index
+      .get(FlowNature)
+      .flatMap(doc => {
+        MetadataDocument(Path(doc._2.head)).flatMap(md => {
+          val source = md.source
+          source.value
+            .map(source => {
+              Iterator(FlowEvent(SourceInfo(PathLocation(md.path, Location.all), source)))
+            })
+        })
       })
-      .getOrElse(Iterator.empty) ++ IssuesEvent.iterator(source.issues)
+      .flatten
+      .iterator
   }
 }

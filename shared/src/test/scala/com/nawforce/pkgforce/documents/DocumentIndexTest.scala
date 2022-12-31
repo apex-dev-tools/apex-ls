@@ -67,7 +67,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         assert(logger.issues.isEmpty)
         assert(index.get(ApexNature).size == 1)
         assert(
-          index.get(ApexNature).toList ==
+          index.getControllingDocuments(ApexNature) ==
             List(ApexClassDocument(root.join("pkg").join("Foo.cls"), Name("Foo")))
         )
     }
@@ -80,7 +80,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         assert(logger.issues.isEmpty)
         assert(index.get(ApexNature).size == 1)
         assert(
-          index.get(ApexNature).toList ==
+          index.getControllingDocuments(ApexNature) ==
             List(ApexClassDocument(root.join("pkg").join("foo").join("Foo.cls"), Name("Foo")))
         )
     }
@@ -96,7 +96,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.issues.isEmpty)
       assert(
-        index.get(ApexNature).map(_.toString()).toSet == Set(
+        index.getControllingDocuments(ApexNature).map(_.toString()).toSet == Set(
           ApexClassDocument(root.join("pkg").join("Foo.cls"), Name("Foo")).toString,
           ApexClassDocument(root.join("pkg").join("bar").join("Bar.cls"), Name("Bar")).toString
         )
@@ -121,13 +121,13 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   test("duplicate labels no error") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/foo/CustomLabels.labels"  -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
+        "pkg/foo/CustomLabels.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
         "/pkg/bar/CustomLabels.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.issues.isEmpty)
-      assert(index.get(LabelNature).size == 2)
+      assert(index.getControllingDocuments(LabelNature).size == 2)
     }
   }
 
@@ -140,7 +140,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.issues.isEmpty)
       assert(
-        index.get(SObjectNature).toList ==
+        index.getControllingDocuments(SObjectNature) ==
           List(SObjectDocument(root.join("pkg").join("Foo.object"), Name("Foo")))
       )
     }
@@ -155,7 +155,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.issues.isEmpty)
       assert(
-        index.get(SObjectNature).toList ==
+        index.getControllingDocuments(SObjectNature) ==
           List(SObjectDocument(root.join("pkg").join("Foo.object-meta.xml"), Name("Foo")))
       )
     }
@@ -169,20 +169,16 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.issues.isEmpty)
+      assert(index.get(FieldNature).isEmpty)
+
+      val sobjects = index.get(SObjectNature)
+      assert(sobjects.size == 1)
+      assert(sobjects.contains("schema.foo"))
       assert(
-        index.get(FieldNature).toList ==
-          List(
-            SObjectFieldDocument(
-              root.join("pkg").join("Foo").join("fields").join("Bar.field-meta.xml"),
-              Name("Bar")
-            )
-          )
-      )
-      assert(
-        index.get(SObjectNature).toList ==
-          List(
-            SObjectDocument(root.join("pkg").join("Foo").join("Foo.object-meta.xml"), Name("Foo"))
-          )
+        sobjects("schema.foo").toSet == Set(
+          root.join("pkg").join("Foo").join("fields").join("Bar.field-meta.xml"),
+          root.join("pkg").join("Foo").join("Foo.object-meta.xml")
+        )
       )
     }
   }
@@ -195,20 +191,15 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.issues.isEmpty)
+      assert(index.get(FieldSetNature).isEmpty)
+      val sobjects = index.get(SObjectNature)
+      assert(sobjects.size == 1)
+      assert(sobjects.contains("schema.foo"))
       assert(
-        index.get(FieldSetNature).toList ==
-          List(
-            SObjectFieldSetDocument(
-              root.join("pkg").join("Foo").join("fieldSets").join("Bar.fieldSet-meta.xml"),
-              Name("Bar")
-            )
-          )
-      )
-      assert(
-        index.get(SObjectNature).toList ==
-          List(
-            SObjectDocument(root.join("pkg").join("Foo").join("Foo.object-meta.xml"), Name("Foo"))
-          )
+        sobjects("schema.foo").toSet == Set(
+          root.join("pkg").join("Foo").join("fieldSets").join("Bar.fieldSet-meta.xml"),
+          root.join("pkg").join("Foo").join("Foo.object-meta.xml")
+        )
       )
     }
   }
