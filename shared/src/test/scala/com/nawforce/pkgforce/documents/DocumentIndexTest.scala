@@ -13,7 +13,7 @@
  */
 package com.nawforce.pkgforce.documents
 
-import com.nawforce.pkgforce.diagnostics.{CatchingLogger, ERROR_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.IssuesManager
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -22,16 +22,16 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
 
-  private var logger: CatchingLogger = _
+  private var logger: IssuesManager = _
 
   before {
-    logger = new CatchingLogger()
+    logger = new IssuesManager()
   }
 
   test("bad dir has no files") {
     FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("foo"))
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(index.size == 0)
     }
   }
@@ -39,7 +39,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   test("empty dir has no files") {
     FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
       val index = DocumentIndex(logger, None, root)
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(index.size == 0)
     }
   }
@@ -47,7 +47,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   test("dot dir is ignored") {
     FileSystemHelper.run(Map[String, String](".pkg/Foo.cls" -> "")) { root: PathLike =>
       val index = DocumentIndex(logger, None, root)
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(index.size == 0)
     }
   }
@@ -55,7 +55,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   test("node_modules dir is ignored") {
     FileSystemHelper.run(Map[String, String]("node_modules/Foo.cls" -> "")) { root: PathLike =>
       val index = DocumentIndex(logger, None, root)
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(index.size == 0)
     }
   }
@@ -64,7 +64,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     FileSystemHelper.run(Map[String, String]("pkg/Foo.cls" -> "public class Foo {}")) {
       root: PathLike =>
         val index = DocumentIndex(logger, None, root.join("pkg"))
-        assert(logger.issues.isEmpty)
+        assert(logger.isEmpty)
         assert(index.get(ApexNature).size == 1)
         assert(
           index.getControllingDocuments(ApexNature) ==
@@ -77,7 +77,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     FileSystemHelper.run(Map[String, String]("pkg/foo/Foo.cls" -> "public class Foo {}")) {
       root: PathLike =>
         val index = DocumentIndex(logger, None, root.join("pkg"))
-        assert(logger.issues.isEmpty)
+        assert(logger.isEmpty)
         assert(index.get(ApexNature).size == 1)
         assert(
           index.getControllingDocuments(ApexNature) ==
@@ -94,7 +94,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(ApexNature).map(_.toString()).toSet == Set(
           ApexClassDocument(root.join("pkg").join("Foo.cls"), Name("Foo")).toString,
@@ -113,8 +113,9 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(index.get(ApexNature).size == 1)
-      assert(logger.issues.head.diagnostic.category == ERROR_CATEGORY)
-      assert(logger.issues.head.diagnostic.message.contains("File creates duplicate type 'Foo'"))
+      val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+      assert(issues.length == 1)
+      assert(issues.head.toString.contains("Error: line 1: File creates duplicate type 'Foo' as"))
     }
   }
 
@@ -126,7 +127,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(index.getControllingDocuments(LabelNature).size == 2)
     }
   }
@@ -138,7 +139,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
           List(SObjectDocument(root.join("pkg").join("Foo.object"), Name("Foo")))
@@ -153,7 +154,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
           List(SObjectDocument(root.join("pkg").join("Foo.object-meta.xml"), Name("Foo")))
@@ -168,7 +169,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(index.get(FieldNature).isEmpty)
 
       val sobjects = index.get(SObjectNature)
@@ -190,7 +191,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.issues.isEmpty)
+      assert(logger.isEmpty)
       assert(index.get(FieldSetNature).isEmpty)
       val sobjects = index.get(SObjectNature)
       assert(sobjects.size == 1)

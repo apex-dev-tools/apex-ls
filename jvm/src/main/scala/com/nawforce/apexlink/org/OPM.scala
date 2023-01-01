@@ -43,18 +43,15 @@ import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, ProjectConfig, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.apexls.spi.AnalysisProvider
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
 import java.util
-import java.util.ServiceLoader
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.hashing.MurmurHash3
-import scala.jdk.CollectionConverters._
 
 /** Org/Package/Module hierarchy. This is based on generics to maintain consistency while we migrate
   * features over to pkgforce. The generics force the use of inner classes which is not so
@@ -65,20 +62,18 @@ object OPM extends TriHierarchy {
   type TPackage = PackageImpl
   type TModule  = Module
 
-  class OrgImpl(val path: PathLike, initWorkspace: Option[Workspace])
-      extends TriOrg
+  class OrgImpl(
+    val path: PathLike,
+    val issueManager: IssuesManager,
+    initWorkspace: Option[Workspace]
+  ) extends TriOrg
       with Org
       with OrgTestClasses {
     // Acquire lock for all operations that may be impacted by refresh
     val refreshLock = new ReentrantLock(true)
 
     // The workspace loaded into this Org
-    val workspace: Workspace = initWorkspace.getOrElse(new Workspace(Seq()))
-
-    /** Issues log for all packages in org. This is managed independently as errors may be raised
-      * against files for which there is no natural type representation.
-      */
-    private[nawforce] val issueManager = new IssuesManager
+    val workspace: Workspace = initWorkspace.getOrElse(new Workspace(issueManager, Seq()))
 
     /** Manager for post validation plugins */
     private[nawforce] val pluginsManager = new PluginsManager
@@ -134,8 +129,7 @@ object OPM extends TriHierarchy {
               acc,
               workspace,
               ArraySeq.unsafeWrapArray(pkgLayer.layers.toArray),
-              createModule,
-              issueManager
+              createModule
             )
           })
 
@@ -150,8 +144,7 @@ object OPM extends TriHierarchy {
                 declared,
                 workspace,
                 ArraySeq.empty,
-                createModule,
-                issueManager
+                createModule
               )
             )
           else
@@ -473,8 +466,7 @@ object OPM extends TriHierarchy {
     override val basePackages: ArraySeq[PackageImpl],
     workspace: Workspace,
     layers: ArraySeq[ModuleLayer],
-    mdlFactory: (PackageImpl, ArraySeq[Module], DocumentIndex) => Module,
-    logger: IssueLogger
+    mdlFactory: (PackageImpl, ArraySeq[Module], DocumentIndex) => Module
   ) extends TriPackage
       with PackageAPI
       with DefinitionProvider
@@ -485,10 +477,7 @@ object OPM extends TriHierarchy {
     val modules: ArraySeq[Module] =
       layers
         .foldLeft(ArraySeq[Module]())((acc, layer) => {
-          val issuesAndIndex = workspace.indexes(layer)
-          logger.logAll(issuesAndIndex.issues)
-          val module = mdlFactory(this, acc, issuesAndIndex.value)
-          acc :+ module
+          acc :+ mdlFactory(this, acc, workspace.indexes(layer))
         })
 
     /** Is this or any base package of this a ghost package. */
@@ -640,9 +629,6 @@ object OPM extends TriHierarchy {
     override def isVisibleFile(path: PathLike): Boolean = {
       index.isVisibleFile(path)
     }
-
-    /** Count of loaded types, for debug info */
-    def typeCount: Int = types.size
 
     /* Iterator over available types */
     def getTypes: Iterable[TypeDeclaration] = {

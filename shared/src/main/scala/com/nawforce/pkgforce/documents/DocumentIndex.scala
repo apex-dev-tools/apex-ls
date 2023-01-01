@@ -21,23 +21,15 @@ import com.nawforce.runtime.platform.Path
 
 import scala.collection.mutable
 
-/** Metadata document index, maintains information on available metadata within a project/package.
-  *
-  * Duplicate detection is based on the relevant MetadataDocumentType(s) being able to generate an
-  * accurate TypeName for the metadata. Where a document defined a unique type duplicates are
-  * reported as errors and then ignored.
-  *
-  * During an upsert/deletion of new types the index will also need to be updated so that it
-  * maintains an accurate view of the metadata files being used.
-  */
-
-/** Basic mutable store of documents partitioned by nature & type. Documents are grouped under a
-  * controlling typeName to make it easier to validate them later, so cls-meta.xml files are grouped
-  * with .cls and fields, fieldSets & sharing reasons are grouped with object-meta.xml files.
+/** Metadata document index, maintains information on available metadata files and reports errors
+  * against them for things like duplicates or missing meta files. See DocumentScanner for initial
+  * generation of the index. Documents are grouped under a controlling typeName to make it easier to
+  * validate them later, so cls-meta.xml files are grouped with .cls and fields, fieldSets & sharing
+  * reasons are grouped with object-meta.xml files.
   */
 class DocumentIndex(
-  logger: IssueLogger,
   val path: PathLike,
+  logger: IssuesManager,
   namespace: Option[Name],
   ignore: Option[ForceIgnore]
 ) extends DocumentCollector {
@@ -217,19 +209,23 @@ class DocumentIndex(
 
 object DocumentIndex {
 
-  /** Construct a new DocumentIndex from a recursive descent scan of the passed path. */
+  /** Construct a new DocumentIndex over the passed path. */
   def apply(
-    logger: IssueLogger,
+    logger: IssuesManager,
     namespace: Option[Name],
     projectPath: PathLike,
     path: PathLike
   ): DocumentIndex = {
-    val ignore = logger.logAndGet(ForceIgnore(projectPath.join(".forceignore")))
-    new DocumentIndex(logger, path, namespace, ignore)
+    new DocumentIndex(
+      path,
+      logger,
+      namespace,
+      logger.logAndGet(ForceIgnore(projectPath.join(".forceignore")))
+    )
   }
 
   /** Simplified construction for MDAPI only projects where projectDir = module path. */
-  def apply(logger: IssueLogger, namespace: Option[Name], path: PathLike): DocumentIndex = {
+  def apply(logger: IssuesManager, namespace: Option[Name], path: PathLike): DocumentIndex = {
     DocumentIndex(logger, namespace, path, path)
   }
 }

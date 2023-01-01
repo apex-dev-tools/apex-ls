@@ -13,33 +13,35 @@
  */
 package com.nawforce.pkgforce.workspace
 
-import com.nawforce.pkgforce.diagnostics.{CatchingLogger, IssuesAnd}
+import com.nawforce.pkgforce.diagnostics.IssuesManager
 import com.nawforce.pkgforce.documents.DocumentIndex
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
 
-/** Project metadata is modeled as an ordered sequence of namespace layers which contain an ordered sequence of module
-  * layers. The layers should be ordered by deploy order, this means external layers defined via $.plugins.dependencies
-  * will appear first before the namespace layer for the target project. Namespaces must be unique, which means you
-  * can not use dependencies to reference a second sfdx-project.json using the same namespace, all 2GP modules must be
-  * contained in a single sfdx-project.json.
+/** Project metadata is modeled as an ordered sequence of namespace layers which contain an ordered
+  * sequence of module layers. The layers should be ordered by deploy order, this means external
+  * layers defined via $.plugins.dependencies will appear first before the namespace layer for the
+  * target project. Namespaces must be unique, which means you can not use dependencies to reference
+  * a second sfdx-project.json using the same namespace, all 2GP modules must be contained in a
+  * single sfdx-project.json.
   */
 sealed trait Layer
 
-/** A namespace layer provides the namespace for some list of module layers. The list will be empty for 'ghosted' packages
-  * where only knowledge of a namespace is provided. In a 1GP package each layer will depend on its predecessor, with
-  * 2GP the layer dependencies are declared.
+/** A namespace layer provides the namespace for some list of module layers. The list will be empty
+  * for 'ghosted' packages where only knowledge of a namespace is provided. In a 1GP package each
+  * layer will depend on its predecessor, with 2GP the layer dependencies are declared.
   */
 case class NamespaceLayer(namespace: Option[Name], isGulped: Boolean, layers: Seq[ModuleLayer])
     extends Layer {
-  def indexes: Map[ModuleLayer, IssuesAnd[DocumentIndex]] =
-    layers.foldLeft(Map[ModuleLayer, IssuesAnd[DocumentIndex]]())(
-      (acc, layer) => acc + (layer -> layer.index(namespace))
+  def indexes(logger: IssuesManager): Map[ModuleLayer, DocumentIndex] =
+    layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
+      acc + (layer -> layer.index(logger, namespace))
     )
 }
 
-/** A package layer encompasses a packageDirectory from sfdx-project.json or a 1GP style MDAPI metadata directory. The
-  * dependencies should only reference layers defined within the same NamespaceLayer.
+/** A package layer encompasses a packageDirectory from sfdx-project.json or a 1GP style MDAPI
+  * metadata directory. The dependencies should only reference layers defined within the same
+  * NamespaceLayer.
   */
 case class ModuleLayer(
   projectPath: PathLike,
@@ -53,9 +55,7 @@ case class ModuleLayer(
     path.toString.substring(root.toString.length)
   }
 
-  def index(namespace: Option[Name]): IssuesAnd[DocumentIndex] = {
-    val logger = new CatchingLogger
-    val index  = DocumentIndex(logger, namespace, projectPath, path)
-    IssuesAnd(logger.issues, index)
+  def index(logger: IssuesManager, namespace: Option[Name]): DocumentIndex = {
+    DocumentIndex(logger, namespace, projectPath, path)
   }
 }

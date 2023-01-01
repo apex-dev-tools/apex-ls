@@ -28,9 +28,7 @@ object IPM extends TriHierarchy {
     val issues: IssuesManager = new IssuesManager
 
     val workspace: Workspace = {
-      val wsAndIssues = Workspace.apply(path)
-      wsAndIssues.issues.foreach(issues.add)
-      wsAndIssues.value.getOrElse(new Workspace(Seq()))
+      Workspace(path, issues).getOrElse(new Workspace(issues, Seq()))
     }
 
     override val packages: ArraySeq[Package] = {
@@ -211,10 +209,7 @@ object IPM extends TriHierarchy {
     val modules: ArraySeq[Module] =
       layers
         .foldLeft(ArraySeq[Module]())((acc, layer) => {
-          val issuesAndIndex = workspace.indexes(layer)
-          logger.logAll(issuesAndIndex.issues)
-          val module = mdlFactory(this, issuesAndIndex.value, acc)
-          acc :+ module
+          acc :+ mdlFactory(this, workspace.indexes(layer), acc)
         })
   }
 
