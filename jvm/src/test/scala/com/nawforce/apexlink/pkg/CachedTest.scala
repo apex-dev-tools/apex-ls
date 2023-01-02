@@ -13,14 +13,15 @@
  */
 package com.nawforce.apexlink.pkg
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryDeclaration}
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -83,6 +84,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       // Change super class
       root.createFile("Bar.cls", newBar)
       root.join("Foo.cls").delete()
+      root.join("Foo.cls-meta.xml").delete()
       val org3 = createOrg(root)
       val pkg3 = org3.unmanaged
       assert(org3.issues.isEmpty)
@@ -92,6 +94,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
 
       // Test if we notice change, i.e. Foo should not be cached
       root.createFile("Foo.cls", foo)
+      root.createFile("Foo.cls-meta.xml", "")
       val org4 = createOrg(root)
       val pkg4 = org4.unmanaged
       assert(org4.issues.isEmpty)
@@ -427,7 +430,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
     FileSystemHelper.run(
       Map(
         "Test.flow-meta.xml" -> "",
-        "Dummy.cls"          -> "public class Dummy { {Flow.Interview i = new Flow.Interview.Test(new Map<String, Object>());} }"
+        "Dummy.cls" -> "public class Dummy { {Flow.Interview i = new Flow.Interview.Test(new Map<String, Object>());} }"
       )
     ) { root: PathLike =>
       val org1 = createOrg(root)
@@ -471,7 +474,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
           |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
           |}""".stripMargin,
         "pkg1/Test.flow-meta.xml" -> "",
-        "pkg2/Dummy.cls"          -> "public class Dummy { {Flow.Interview i = new Flow.Interview.pkg1.Test(new Map<String, Object>());} }"
+        "pkg2/Dummy.cls" -> "public class Dummy { {Flow.Interview i = new Flow.Interview.pkg1.Test(new Map<String, Object>());} }"
       )
     ) { root: PathLike =>
       val org1 = createOrg(root)
@@ -627,7 +630,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assert(
         getMessages(org3) ==
           "/Dummy.cls: Missing: line 1 at 37-61: No type declaration found for 'Component.Test'\n" +
-            "/Dummy.cls: Missing: line 1 at 45-59: No type declaration found for 'Component.Test'\n"
+          "/Dummy.cls: Missing: line 1 at 45-59: No type declaration found for 'Component.Test'\n"
       )
     }
   }
@@ -642,7 +645,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
             |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
             |}""".stripMargin,
         "pkg1/Test.component" -> "<apex:component/>",
-        "pkg2/Dummy.cls"      -> "public class Dummy { {Component.pkg1.Test c = new Component.pkg1.Test();} }"
+        "pkg2/Dummy.cls" -> "public class Dummy { {Component.pkg1.Test c = new Component.pkg1.Test();} }"
       )
     ) { root: PathLike =>
       val org1 = createOrg(root)
@@ -676,7 +679,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assert(
         getMessages(org3) ==
           "/pkg2/Dummy.cls: Missing: line 1 at 42-71: No type declaration found for 'Component.pkg1.Test'\n" +
-            "/pkg2/Dummy.cls: Missing: line 1 at 50-69: No type declaration found for 'Component.pkg1.Test'\n"
+          "/pkg2/Dummy.cls: Missing: line 1 at 50-69: No type declaration found for 'Component.pkg1.Test'\n"
       )
     }
   }

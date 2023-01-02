@@ -9,7 +9,7 @@ import com.nawforce.runtime.platform.{Environment, Path}
 object FileSystemHelper {
 
   // Abstract virtual filesystem for testing
-  def run[T](files: Map[String, String], setupCache: Boolean = false)(verify: PathLike => T): T = {
+  def run[T](files: Map[String, String])(verify: Path => T): T = {
     val os = System.getProperty("os.name")
     val config =
       if (os.contains("Windows")) {
@@ -28,7 +28,7 @@ object FileSystemHelper {
 
     val fs      = Jimfs.newFileSystem(config)
     val rootDir = fs.getRootDirectories.iterator().next()
-    files.foreach(kv => {
+    populateMetaFiles(files).foreach(kv => {
       // Allow UNIX style for test files on Windows
       var newPath = kv._1
       if (Environment.isWindows) {
@@ -42,10 +42,41 @@ object FileSystemHelper {
       Files.write(path, kv._2.getBytes())
     })
 
-    // Make sure cache is empty if we are going to use it
-    if (setupCache)
-      ParsedCache.clear()
+    ParsedCache.clear()
+    verify(new Path(rootDir))
+  }
 
+  /* Many test were written without providing class/trigger metafiles so we add them in */
+  private def populateMetaFiles(files: Map[String, String]): Map[String, String] = {
+    val classesAndTriggers = files.keys.filter(path =>
+      path.toLowerCase.endsWith(".cls") || path.toLowerCase.endsWith(".trigger")
+    )
+    val missingMetaFiles =
+      classesAndTriggers.map(path => s"$path-meta.xml").filterNot(files.contains)
+    missingMetaFiles.map(path => (path, "")).toMap ++ files
+  }
+
+  // Copy files to allow mutation of test data
+  def runWithCopy[T](dir: Path)(verify: Path => T): T = {
+    val config = Configuration
+      .unix()
+      .toBuilder
+      .setWorkingDirectory("/")
+      .build()
+    val fs      = Jimfs.newFileSystem(config)
+    val rootDir = fs.getRootDirectories.iterator().next()
+    val nio     = dir.native
+    val stream  = Files.walk(nio)
+    stream.forEach(streamPath => {
+      val relativePath = nio.toUri.relativize(streamPath.toUri).getPath
+      val copy         = rootDir.resolve(relativePath)
+      if (copy.getParent != null)
+        Files.createDirectories(copy.getParent)
+      if (!Files.isDirectory(streamPath))
+        Files.copy(streamPath, copy)
+    })
+    stream.close()
+    ParsedCache.clear()
     verify(new Path(rootDir))
   }
 

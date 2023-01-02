@@ -3,10 +3,11 @@
  */
 package com.nawforce.apexlink.analysis
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, NoAnalysis, RefreshAnalysis}
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue => InternalIssue}
 import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.Path
 import io.github.apexdevtools.apexls.api.Issue
 import io.github.apexdevtools.apexls.spi.AnalysisProvider

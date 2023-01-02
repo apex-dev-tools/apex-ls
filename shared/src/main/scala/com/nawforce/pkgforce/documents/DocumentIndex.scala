@@ -32,24 +32,29 @@ class DocumentIndex(
   logger: IssuesManager,
   namespace: Option[Name],
   ignore: Option[ForceIgnore]
-) extends DocumentCollector {
+) {
 
   /** Store Nature->Type name (lowercase)->Path string */
   private val documents =
     new mutable.HashMap[MetadataNature, mutable.HashMap[String, List[PathLike]]]()
 
-  // Run scanner and then post-validate
-  DocumentScanner.index(path, logger, ignore, this)
+  /** Basic validator for metadata documents */
+  private val validator = new MetadataValidator(logger)
+
+  // Run scanner to prime the index & then validate everything
+  DocumentIndex.indexPath(path, ignore, this)
+  documents.foreach(byNature => {
+    byNature._2.foreach(byTypename => validator.validate(byNature._1, byTypename._1, byTypename._2))
+  })
 
   def size: Int = documents.values.map(_.values.size).sum
 
-  /** Get all documents for specific type of metadata */
+  /** Get all documents for specific type of metadata, beware mutable Map to avoid conversion */
   def get(nature: MetadataNature): mutable.Map[String, List[PathLike]] = {
     documents.getOrElse(nature, mutable.Map())
   }
 
-  /** Get the controlling docs for a specific nature TODO: Handle duplicates?
-    */
+  /** Get the controlling docs for a specific nature. */
   def getControllingDocuments(nature: MetadataNature): List[MetadataDocument] = {
     documents
       .getOrElse(nature, mutable.Map())
@@ -72,13 +77,16 @@ class DocumentIndex(
     }
   }
 
+  /** Get all documents for specific typename, this is a little more expensive than searching for a
+    * specific nature (see above) but also more general.
+    */
   def get(typeName: TypeName): List[MetadataDocument] = {
     val rawTypeName = typeName.rawStringLower
     documents.values
-      .flatMap(_.get(rawTypeName))
-      .flatten
+      .find(_.contains(rawTypeName))
+      .getOrElse(mutable.Map[String, List[PathLike]]())
+      .getOrElse(rawTypeName, Nil)
       .flatMap(path => MetadataDocument(Path(path)))
-      .toList
   }
 
   /** Upsert a document. Document defining new or existing types return true, if the document would
@@ -90,7 +98,7 @@ class DocumentIndex(
 
     // Partial can always be upserted
     if (document.nature.partialType) {
-      onAdd(logger, document)
+      indexDocument(document, deferValidation = false)
       return true
     }
 
@@ -98,7 +106,7 @@ class DocumentIndex(
     val typeName = document.typeName(namespace)
     val existing = get(document.nature, typeName)
     if (existing.isEmpty) {
-      onAdd(logger, document)
+      indexDocument(document, deferValidation = false)
       return true
     }
 
@@ -136,31 +144,11 @@ class DocumentIndex(
     existing
   }
 
-  override def onAdd(logger: IssueLogger, document: MetadataDocument): Unit = {
+  private def indexDocument(document: MetadataDocument, deferValidation: Boolean): Unit = {
 
     // Reject if document may be ignored
     if (document.ignorable())
       return
-
-    /* TODO: Remove */
-    // Duplicate detect for documents that define a complete type
-    val typeName = document.typeName(namespace)
-    if (!document.nature.partialType) {
-      val existing = get(document.nature, typeName)
-      if (existing.nonEmpty) {
-        logger.log(
-          Issue(
-            document.path,
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location.empty,
-              s"File creates duplicate type '$typeName' as '${existing.head.path}', ignoring"
-            )
-          )
-        )
-        return
-      }
-    }
 
     // If we find a field or fieldSet without a SObject metadata, fake it exists to make later processing easier
     if (document.nature == FieldNature || document.nature == FieldSetNature) {
@@ -228,4 +216,47 @@ object DocumentIndex {
   def apply(logger: IssuesManager, namespace: Option[Name], path: PathLike): DocumentIndex = {
     DocumentIndex(logger, namespace, path, path)
   }
+
+  private def indexPath(
+    path: PathLike,
+    forceIgnore: Option[ForceIgnore],
+    index: DocumentIndex
+  ): Unit = {
+
+    if (isExcluded(path))
+      return
+    if (path.isDirectory) {
+      if (forceIgnore.forall(_.includeDirectory(path))) {
+        val entries = path.splitDirectoryEntries()
+        // Enforce top-down handling
+        entries._1.foreach(file => addPath(file, forceIgnore, index))
+        entries._2.foreach(dir => indexPath(dir, forceIgnore, index))
+      } else {
+        LoggerOps.debug(s"Ignoring directory $path")
+      }
+    } else {
+      addPath(path, forceIgnore, index)
+    }
+  }
+
+  private def addPath(
+    path: PathLike,
+    forceIgnore: Option[ForceIgnore],
+    index: DocumentIndex
+  ): Unit = {
+    // Not testing if this is a regular file to improve scan performance, will fail later on read
+    if (forceIgnore.forall(_.includeFile(path))) {
+      val dt = MetadataDocument(path)
+      dt.foreach(dt => index.indexDocument(dt, deferValidation = true))
+    } else {
+      LoggerOps.debug(s"Ignoring file $path")
+    }
+  }
+
+  /** Exclude some paths that we would waste time searching. */
+  private def isExcluded(path: PathLike): Boolean = {
+    val basename = path.basename
+    basename.startsWith(".") || basename == "node_modules"
+  }
+
 }

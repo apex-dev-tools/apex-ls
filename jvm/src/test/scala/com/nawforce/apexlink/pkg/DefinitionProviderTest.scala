@@ -14,8 +14,9 @@
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
-import com.nawforce.apexlink.{FileSystemHelper, LocationLinkString, TestHelper}
+import com.nawforce.apexlink.{LocationLinkString, TestHelper}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class DefinitionProviderTest extends AnyFunSuite with TestHelper {
@@ -298,7 +299,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> contentAndCursorPos._1,
-        "Foo.cls"   -> "public class Foo { static void method(Integer p) {} static void method(String p) {}}"
+        "Foo.cls" -> "public class Foo { static void method(Integer p) {} static void method(String p) {}}"
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)

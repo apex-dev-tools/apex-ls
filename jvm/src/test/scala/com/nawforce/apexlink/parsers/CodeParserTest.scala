@@ -14,8 +14,9 @@
 package com.nawforce.apexlink.parsers
 
 import com.nawforce.apexlink.api.ServerOps
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
 import org.scalatest.BeforeAndAfter

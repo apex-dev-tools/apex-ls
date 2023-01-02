@@ -13,9 +13,9 @@
  */
 package com.nawforce.apexlink.types
 
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class StandardObjectTest extends AnyFunSuite with TestHelper {
@@ -486,7 +486,7 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
       Map(
         "Account/Account.object-meta.xml"      -> customObject("Account", Seq()),
         "Account/fields/Bar__c.field-meta.xml" -> customField("Bar__c", "Text", None),
-        "Dummy.cls"                            -> "public class Dummy { {SObjectField a = Account.Bar__c;} }"
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Account.Bar__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -504,7 +504,7 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
       Map(
         "Account/Account.object-meta.xml"            -> customObject("Account", Seq()),
         "Account/fieldSets/TestFS.fieldSet-meta.xml" -> customFieldSet("TestFS"),
-        "Dummy.cls"                                  -> "public class Dummy { {FieldSet a = SObjectType.Account.FieldSets.TestFS;} }"
+        "Dummy.cls" -> "public class Dummy { {FieldSet a = SObjectType.Account.FieldSets.TestFS;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)

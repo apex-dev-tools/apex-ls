@@ -61,36 +61,43 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("class file found") {
-    FileSystemHelper.run(Map[String, String]("pkg/Foo.cls" -> "public class Foo {}")) {
-      root: PathLike =>
-        val index = DocumentIndex(logger, None, root.join("pkg"))
-        assert(logger.isEmpty)
-        assert(index.get(ApexNature).size == 1)
-        assert(
-          index.getControllingDocuments(ApexNature) ==
-            List(ApexClassDocument(root.join("pkg").join("Foo.cls"), Name("Foo")))
-        )
+    FileSystemHelper.run(
+      Map[String, String]("pkg/Foo.cls" -> "public class Foo {}", "pkg/Foo.cls-meta.xml" -> "")
+    ) { root: PathLike =>
+      val index = DocumentIndex(logger, None, root.join("pkg"))
+      assert(logger.isEmpty)
+      assert(index.get(ApexNature).size == 1)
+      assert(
+        index.getControllingDocuments(ApexNature) ==
+          List(ApexClassDocument(root.join("pkg").join("Foo.cls"), Name("Foo")))
+      )
     }
   }
 
   test("nested class file found") {
-    FileSystemHelper.run(Map[String, String]("pkg/foo/Foo.cls" -> "public class Foo {}")) {
-      root: PathLike =>
-        val index = DocumentIndex(logger, None, root.join("pkg"))
-        assert(logger.isEmpty)
-        assert(index.get(ApexNature).size == 1)
-        assert(
-          index.getControllingDocuments(ApexNature) ==
-            List(ApexClassDocument(root.join("pkg").join("foo").join("Foo.cls"), Name("Foo")))
-        )
+    FileSystemHelper.run(
+      Map[String, String](
+        "pkg/foo/Foo.cls"          -> "public class Foo {}",
+        "pkg/foo/Foo.cls-meta.xml" -> ""
+      )
+    ) { root: PathLike =>
+      val index = DocumentIndex(logger, None, root.join("pkg"))
+      assert(logger.isEmpty)
+      assert(index.get(ApexNature).size == 1)
+      assert(
+        index.getControllingDocuments(ApexNature) ==
+          List(ApexClassDocument(root.join("pkg").join("foo").join("Foo.cls"), Name("Foo")))
+      )
     }
   }
 
   test("multiple classes found") {
     FileSystemHelper.run(
       Map[String, String](
-        "/pkg/Foo.cls"     -> "public class Foo {}",
-        "/pkg/bar/Bar.cls" -> "public class Bar {}"
+        "/pkg/Foo.cls"              -> "public class Foo {}",
+        "/pkg/Foo.cls-meta.xml"     -> "",
+        "/pkg/bar/Bar.cls"          -> "public class Bar {}",
+        "/pkg/bar/Bar.cls-meta.xml" -> ""
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
@@ -115,7 +122,10 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       assert(index.get(ApexNature).size == 1)
       val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
       assert(issues.length == 1)
-      assert(issues.head.toString.contains("Error: line 1: File creates duplicate type 'Foo' as"))
+      assert(
+        issues.head.toString ==
+          "/pkg/bar/Foo.cls: Error: line 1: Duplicate for type 'foo' found in '/pkg/bar/Foo.cls', ignoring this file, see also /pkg/foo/Foo.cls"
+      )
     }
   }
 
