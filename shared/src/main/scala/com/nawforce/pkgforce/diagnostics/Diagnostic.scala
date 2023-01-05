@@ -14,26 +14,25 @@
 package com.nawforce.pkgforce.diagnostics
 
 import com.nawforce.pkgforce.path.Location
-import io.github.apexdevtools.apexls.api.{Issue => APIIssue}
 import upickle.default.{macroRW, ReadWriter => RW}
 
 @upickle.implicits.key("DiagnosticCategory")
-sealed abstract class DiagnosticCategory(val value: String)
+sealed abstract class DiagnosticCategory(val name: String, val priority: Integer)
 
-case object SYNTAX_CATEGORY  extends DiagnosticCategory(APIIssue.SYNTAX_ISSUE)
-case object ERROR_CATEGORY   extends DiagnosticCategory(APIIssue.ERROR_ISSUE)
-case object MISSING_CATEGORY extends DiagnosticCategory(APIIssue.MISSING_ISSUE)
-case object WARNING_CATEGORY extends DiagnosticCategory(APIIssue.WARNING_ISSUE)
-case object UNUSED_CATEGORY  extends DiagnosticCategory(APIIssue.UNUSED_ISSUE)
+case object SYNTAX_CATEGORY  extends DiagnosticCategory("Syntax", 2)
+case object ERROR_CATEGORY   extends DiagnosticCategory("Error", 2)
+case object MISSING_CATEGORY extends DiagnosticCategory("Missing", 2)
+case object WARNING_CATEGORY extends DiagnosticCategory("Warning", 4)
+case object UNUSED_CATEGORY  extends DiagnosticCategory("Unused", 4)
 
 object DiagnosticCategory {
   def apply(value: String): DiagnosticCategory = {
     value match {
-      case SYNTAX_CATEGORY.value  => SYNTAX_CATEGORY
-      case ERROR_CATEGORY.value   => ERROR_CATEGORY
-      case MISSING_CATEGORY.value => MISSING_CATEGORY
-      case WARNING_CATEGORY.value => WARNING_CATEGORY
-      case UNUSED_CATEGORY.value  => UNUSED_CATEGORY
+      case SYNTAX_CATEGORY.name  => SYNTAX_CATEGORY
+      case ERROR_CATEGORY.name   => ERROR_CATEGORY
+      case MISSING_CATEGORY.name => MISSING_CATEGORY
+      case WARNING_CATEGORY.name => WARNING_CATEGORY
+      case UNUSED_CATEGORY.name  => UNUSED_CATEGORY
     }
   }
 

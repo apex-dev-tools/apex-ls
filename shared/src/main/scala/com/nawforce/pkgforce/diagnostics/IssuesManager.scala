@@ -13,11 +13,12 @@
  */
 package com.nawforce.pkgforce.diagnostics
 
-import io.github.apexdevtools.apexls.api.{IssueLocation, IssuesCollection, Issue => APIIssue}
+import io.github.apexdevtools.api.{IssueLocation, Issue => APIIssue}
+import io.github.apexdevtools.apexls.api.IssuesCollection
 import com.nawforce.pkgforce.diagnostics
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.apexls.api.Issue.APEX_LS_PROVIDER
+import io.github.apexdevtools.api.Issue.APEX_LS_PROVIDER
 
 import scala.collection.mutable
 

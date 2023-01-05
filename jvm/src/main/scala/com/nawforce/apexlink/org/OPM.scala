@@ -43,7 +43,7 @@ import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, ProjectConfig, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.apexls.spi.AnalysisProvider
+import io.github.apexdevtools.spi.AnalysisProvider
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
