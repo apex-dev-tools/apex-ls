@@ -18,7 +18,7 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
 import com.nawforce.runtime.platform.Environment
-import io.github.apexdevtools.apexls.api.IssueLocation
+import io.github.apexdevtools.api.IssueLocation
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -161,7 +161,7 @@ object Check {
           writer.startDocument(lastPath)
         }
 
-        writer.writeMessage(issue.category(), issue.fileLocation(), issue.message)
+        writer.writeMessage(issue.rule().name(), issue.fileLocation(), issue.message)
 
       }
     })

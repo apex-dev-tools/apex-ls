@@ -9,8 +9,8 @@ import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue => InternalIssue
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.apexls.api.Issue
-import io.github.apexdevtools.apexls.spi.AnalysisProvider
+import io.github.apexdevtools.api.Issue
+import io.github.apexdevtools.spi.AnalysisProvider
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 

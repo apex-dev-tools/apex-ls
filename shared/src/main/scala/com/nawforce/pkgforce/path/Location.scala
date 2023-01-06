@@ -14,7 +14,7 @@
 
 package com.nawforce.pkgforce.path
 
-import io.github.apexdevtools.apexls.api.IssueLocation
+import io.github.apexdevtools.api.IssueLocation
 import upickle.default.{macroRW, ReadWriter => RW}
 
 /** Internal implementation for identifying sub-parts of a file. */
