@@ -1,10 +1,9 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
+package io.github.apexdevtools.apexls
 
-package com.nawforce.apexlink.cmds
-
-import com.nawforce.apexlink.api._
+import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, Org, ServerOps}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
 import com.nawforce.runtime.platform.{Environment, Path}
