@@ -39,12 +39,12 @@ class DocumentIndex(
     new mutable.HashMap[MetadataNature, mutable.HashMap[String, List[PathLike]]]()
 
   /** Basic validator for metadata documents */
-  private val validator = new MetadataValidator(logger)
+  private val validator = new MetadataValidator(logger, namespace)
 
   // Run scanner to prime the index & then validate everything
   DocumentIndex.indexPath(path, ignore, this)
   documents.foreach(byNature => {
-    byNature._2.foreach(byTypename => validator.validate(byNature._1, byTypename._1, byTypename._2))
+    byNature._2.foreach(byTypename => validator.validate(byNature._1, byTypename._2))
   })
 
   def size: Int = documents.values.map(_.values.size).sum

@@ -14,38 +14,37 @@
 package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, IssuesManager}
+import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Location, PathLike}
 
 /** Basic validation of metadata files from just examining the file name. */
-class MetadataValidator(logger: IssuesManager) {
+class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
 
-  def validate(nature: MetadataNature, typeName: String, documents: List[PathLike]): Unit = {
+  def validate(nature: MetadataNature, documents: List[PathLike]): Unit = {
     nature match {
-      case ApexNature    => validateApex(typeName, documents)
-      case TriggerNature => validateTrigger(typeName, documents)
+      case ApexNature    => validateApex(documents)
+      case TriggerNature => validateTrigger(documents)
       case _             => ()
     }
   }
 
-  private def validateApex(typeName: String, documents: List[PathLike]): Unit = {
+  private def validateApex(documents: List[PathLike]): Unit = {
     val allDocs = documents.flatMap(MetadataDocument(_))
-    getSingleControllingDocument(ApexNature, typeName, allDocs).foreach(controllingDoc => {
+    getSingleControllingDocument(ApexNature, allDocs).foreach(controllingDoc => {
       assertSingleMetaDocument(
         controllingDoc,
         ApexMetaNature,
-        typeName,
         allDocs.filterNot(_ == controllingDoc)
       )
     })
   }
 
-  private def validateTrigger(typeName: String, documents: List[PathLike]): Unit = {
+  private def validateTrigger(documents: List[PathLike]): Unit = {
     val allDocs = documents.flatMap(MetadataDocument(_))
-    getSingleControllingDocument(TriggerNature, typeName, allDocs).foreach(controllingDoc => {
+    getSingleControllingDocument(TriggerNature, allDocs).foreach(controllingDoc => {
       assertSingleMetaDocument(
         controllingDoc,
         TriggerMetaNature,
-        typeName,
         allDocs.filterNot(_ == controllingDoc)
       )
     })
@@ -53,12 +52,12 @@ class MetadataValidator(logger: IssuesManager) {
 
   private def getSingleControllingDocument(
     nature: MetadataNature,
-    typeName: String,
     documents: List[MetadataDocument]
   ): Option[MetadataDocument] = {
     val controllingDocs = documents.filter(_.nature == nature)
     if (controllingDocs.isEmpty) {
       documents.foreach(document => {
+        val typeName = document.typeName(namespace)
         logger.log(
           Issue(
             document.path,
@@ -73,6 +72,7 @@ class MetadataValidator(logger: IssuesManager) {
       None
     } else if (controllingDocs.size > 1) {
       controllingDocs.tail.foreach(document => {
+        val typeName = document.typeName(namespace)
         val otherPaths =
           controllingDocs.filterNot(_.path == document.path).map(_.path).mkString(", ")
         logger.log(
@@ -95,9 +95,9 @@ class MetadataValidator(logger: IssuesManager) {
   private def assertSingleMetaDocument(
     controllingDoc: MetadataDocument,
     nature: MetadataNature,
-    typeName: String,
     documents: List[MetadataDocument]
   ): Unit = {
+    val typeName = controllingDoc.typeName(namespace)
     val metaDocs = documents.filter(_.nature == nature)
     if (metaDocs.isEmpty) {
       logger.log(
