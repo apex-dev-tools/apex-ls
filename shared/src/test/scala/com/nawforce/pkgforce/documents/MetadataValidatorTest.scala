@@ -27,10 +27,9 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("single class ok") {
-    val validator = new MetadataValidator(logger)
+    val validator = new MetadataValidator(logger, None)
     validator.validate(
       ApexNature,
-      "foo",
       List(Path("/pkg/foo/Foo.cls"), Path("/pkg/foo/Foo.cls-meta.xml"))
     )
 
@@ -39,10 +38,9 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("duplicate classes error") {
-    val validator = new MetadataValidator(logger)
+    val validator = new MetadataValidator(logger, None)
     validator.validate(
       ApexNature,
-      "foo",
       List(Path("/pkg/foo/Foo.cls"), Path("/pkg/foo/Foo.cls-meta.xml"), Path("/pkg/bar/Foo.cls"))
     )
 
@@ -50,27 +48,26 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        "/pkg/bar/Foo.cls: Error: line 1: Duplicate for type 'foo' found in '/pkg/bar/Foo.cls', ignoring this file, see also /pkg/foo/Foo.cls"
+        "/pkg/bar/Foo.cls: Error: line 1: Duplicate for type 'Foo' found in '/pkg/bar/Foo.cls', ignoring this file, see also /pkg/foo/Foo.cls"
     )
   }
 
   test("missing class meta errors") {
-    val validator = new MetadataValidator(logger)
-    validator.validate(ApexNature, "foo", List(Path("/pkg/foo/Foo.cls")))
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(ApexNature, List(Path("/pkg/foo/Foo.cls")))
 
     val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        "/pkg/foo/Foo.cls: Error: line 1: Type 'foo' is defined, but meta file is missing for '/pkg/foo/Foo.cls'"
+        "/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but meta file is missing for '/pkg/foo/Foo.cls'"
     )
   }
 
   test("wrong directory class meta errors") {
-    val validator = new MetadataValidator(logger)
+    val validator = new MetadataValidator(logger, None)
     validator.validate(
       ApexNature,
-      "foo",
       List(Path("/pkg/foo/Foo.cls"), Path("/pkg/bar/Foo.cls-meta.xml"))
     )
 
@@ -78,15 +75,14 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        "/pkg/foo/Foo.cls: Error: line 1: Type 'foo' is defined, but its meta file is in a different directory see /pkg/bar/Foo.cls-meta.xml"
+        "/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but its meta file is in a different directory see /pkg/bar/Foo.cls-meta.xml"
     )
   }
 
   test("multiple class meta errors") {
-    val validator = new MetadataValidator(logger)
+    val validator = new MetadataValidator(logger, None)
     validator.validate(
       ApexNature,
-      "foo",
       List(
         Path("/pkg/foo/Foo.cls"),
         Path("/pkg/foo/Foo.cls-meta.xml"),
@@ -98,15 +94,14 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        "/pkg/foo/Foo.cls: Error: line 1: Type 'foo' is defined, but multiple meta files found at /pkg/foo/Foo.cls-meta.xml, /pkg/bar/Foo.cls-meta.xml"
+        "/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but multiple meta files found at /pkg/foo/Foo.cls-meta.xml, /pkg/bar/Foo.cls-meta.xml"
     )
   }
 
   test("single trigger ok") {
-    val validator = new MetadataValidator(logger)
+    val validator = new MetadataValidator(logger, None)
     validator.validate(
       TriggerNature,
-      "foo",
       List(Path("/pkg/foo/Foo.trigger"), Path("/pkg/foo/Foo.trigger-meta.xml"))
     )
 
@@ -115,10 +110,9 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("duplicate triggers error") {
-    val validator = new MetadataValidator(logger)
+    val validator = new MetadataValidator(logger, None)
     validator.validate(
       TriggerNature,
-      "foo",
       List(Path("/pkg/foo/Foo.trigger"), Path("/pkg/bar/Foo.trigger"))
     )
 
@@ -126,27 +120,26 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        "/pkg/bar/Foo.trigger: Error: line 1: Duplicate for type 'foo' found in '/pkg/bar/Foo.trigger', ignoring this file, see also /pkg/foo/Foo.trigger"
+        "/pkg/bar/Foo.trigger: Error: line 1: Duplicate for type '__sfdc_trigger/Foo' found in '/pkg/bar/Foo.trigger', ignoring this file, see also /pkg/foo/Foo.trigger"
     )
   }
 
   test("missing trigger meta errors") {
-    val validator = new MetadataValidator(logger)
-    validator.validate(TriggerNature, "foo", List(Path("/pkg/foo/Foo.trigger")))
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(TriggerNature, List(Path("/pkg/foo/Foo.trigger")))
 
     val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        "/pkg/foo/Foo.trigger: Error: line 1: Type 'foo' is defined, but meta file is missing for '/pkg/foo/Foo.trigger'"
+        "/pkg/foo/Foo.trigger: Error: line 1: Type '__sfdc_trigger/Foo' is defined, but meta file is missing for '/pkg/foo/Foo.trigger'"
     )
   }
 
   test("wrong directory trigger meta errors") {
-    val validator = new MetadataValidator(logger)
+    val validator = new MetadataValidator(logger, None)
     validator.validate(
       TriggerNature,
-      "foo",
       List(Path("/pkg/foo/Foo.trigger"), Path("/pkg/bar/Foo.trigger-meta.xml"))
     )
 
@@ -154,15 +147,14 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        "/pkg/foo/Foo.trigger: Error: line 1: Type 'foo' is defined, but its meta file is in a different directory see /pkg/bar/Foo.trigger-meta.xml"
+        "/pkg/foo/Foo.trigger: Error: line 1: Type '__sfdc_trigger/Foo' is defined, but its meta file is in a different directory see /pkg/bar/Foo.trigger-meta.xml"
     )
   }
 
   test("multiple class trigger errors") {
-    val validator = new MetadataValidator(logger)
+    val validator = new MetadataValidator(logger, None)
     validator.validate(
       TriggerNature,
-      "foo",
       List(
         Path("/pkg/foo/Foo.trigger"),
         Path("/pkg/foo/Foo.trigger-meta.xml"),
@@ -174,7 +166,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        "/pkg/foo/Foo.trigger: Error: line 1: Type 'foo' is defined, but multiple meta files found at /pkg/foo/Foo.trigger-meta.xml, /pkg/bar/Foo.trigger-meta.xml"
+        "/pkg/foo/Foo.trigger: Error: line 1: Type '__sfdc_trigger/Foo' is defined, but multiple meta files found at /pkg/foo/Foo.trigger-meta.xml, /pkg/bar/Foo.trigger-meta.xml"
     )
   }
 

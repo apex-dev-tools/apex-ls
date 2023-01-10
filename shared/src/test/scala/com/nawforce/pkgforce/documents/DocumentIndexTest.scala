@@ -124,7 +124,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       assert(issues.length == 1)
       assert(
         issues.head.toString ==
-          "/pkg/bar/Foo.cls: Error: line 1: Duplicate for type 'foo' found in '/pkg/bar/Foo.cls', ignoring this file, see also /pkg/foo/Foo.cls"
+          "/pkg/bar/Foo.cls: Error: line 1: Duplicate for type 'Foo' found in '/pkg/bar/Foo.cls', ignoring this file, see also /pkg/foo/Foo.cls"
       )
     }
   }
