@@ -82,22 +82,18 @@ object Workspace {
       } else {
         Some(new MDAPIWorkspaceConfig(None, Seq(path)))
       }
-    if (catchingLogger.issues.nonEmpty) {
-      catchingLogger.issues.foreach(logger.log)
-      return None
-    }
+    val layers = config.map(_.layers(catchingLogger)).getOrElse(Seq())
 
-    config.map(config => {
-      val layers = config.layers(catchingLogger)
-      if (catchingLogger.issues.nonEmpty) {
-        catchingLogger.issues.foreach(logger.log)
-        return None
-      }
-      config match {
+    catchingLogger.issues.foreach(logger.log)
+
+    if (catchingLogger.issues.exists(_.isError)) {
+      None
+    } else {
+      config.map {
         case config: SFDXWorkspaceConfig =>
           new Workspace(logger, layers, Some(ProjectConfig(config.project.maxDependencyCount)))
         case _ => new Workspace(logger, layers)
       }
-    })
+    }
   }
 }
