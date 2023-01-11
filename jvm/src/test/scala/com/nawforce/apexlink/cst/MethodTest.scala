@@ -64,8 +64,8 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Method call with non-ambiguous target") {
     FileSystemHelper.run(
       Map(
-        "A.cls"     -> "public virtual class A {}",
-        "B.cls"     -> "public virtual class B extends A {}",
+        "A.cls" -> "public virtual class A {}",
+        "B.cls" -> "public virtual class B extends A {}",
         "Dummy.cls" -> "public class Dummy extends B { {Dummy d; d.func(d);} void func(A a) {} void func(B b) {} }"
       )
     ) { root: PathLike =>
@@ -158,7 +158,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     typeDeclarations(
       Map(
         "MyInterface.cls" -> "public interface MyInterface {}",
-        "Dummy.cls"       -> "public class Dummy implements MyInterface { public Boolean equals(MyInterface other) {return true;} {Boolean b = equals(this);} }"
+        "Dummy.cls" -> "public class Dummy implements MyInterface { public Boolean equals(MyInterface other) {return true;} {Boolean b = equals(this);} }"
       )
     )
     assert(dummyIssues.isEmpty)
@@ -167,7 +167,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Static method private override different return") {
     FileSystemHelper.run(
       Map(
-        "Base.cls"   -> "public virtual class Base { static Base getInstance() {return null;} }",
+        "Base.cls" -> "public virtual class Base { static Base getInstance() {return null;} }",
         "Extend.cls" -> "public class Extend extends Base { static Extend getInstance() {return null;} { getInstance();} }"
       )
     ) { root: PathLike =>
@@ -178,7 +178,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Static method protected override different return") {
     FileSystemHelper.run(
       Map(
-        "Base.cls"  -> "public virtual class Base { static protected Base getInstance() {return null;} }",
+        "Base.cls" -> "public virtual class Base { static protected Base getInstance() {return null;} }",
         "Dummy.cls" -> "public class Dummy extends Base { static protected Dummy getInstance() {return null;} { getInstance();} }"
       )
     ) { root: PathLike =>
@@ -189,7 +189,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Static method public override different return") {
     FileSystemHelper.run(
       Map(
-        "Base.cls"  -> "public virtual class Base { static public Base getInstance() {return null;} }",
+        "Base.cls" -> "public virtual class Base { static public Base getInstance() {return null;} }",
         "Dummy.cls" -> "public class Dummy extends Base { static public Dummy getInstance() {return null;} { getInstance();} }"
       )
     ) { root: PathLike =>
@@ -200,7 +200,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Instance method private none-override different return") {
     FileSystemHelper.run(
       Map(
-        "Base.cls"  -> "public virtual class Base { Base getInstance() {return null;} }",
+        "Base.cls" -> "public virtual class Base { Base getInstance() {return null;} }",
         "Dummy.cls" -> "public class Dummy extends Base { Dummy getInstance() {return null;} { this.getInstance();} }"
       )
     ) { root: PathLike =>
@@ -211,7 +211,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Instance method private none-override same return") {
     FileSystemHelper.run(
       Map(
-        "Base.cls"  -> "public virtual class Base { void getInstance() {} }",
+        "Base.cls" -> "public virtual class Base { void getInstance() {} }",
         "Dummy.cls" -> "public class Dummy extends Base { void getInstance() {return null;} { this.getInstance();} }"
       )
     ) { root: PathLike =>
@@ -222,7 +222,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Instance method protected override different return") {
     FileSystemHelper.run(
       Map(
-        "Base.cls"   -> "public virtual class Base { protected virtual Base getInstance() {return null;} }",
+        "Base.cls" -> "public virtual class Base { protected virtual Base getInstance() {return null;} }",
         "Extend.cls" -> "public class Extend extends Base { protected override Extend getInstance() {return null;} { this.getInstance();} }"
       )
     ) { root: PathLike =>
@@ -237,7 +237,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Instance method public override different return") {
     FileSystemHelper.run(
       Map(
-        "Base.cls"   -> "public virtual class Base { public virtual Base getInstance() {return null;} }",
+        "Base.cls" -> "public virtual class Base { public virtual Base getInstance() {return null;} }",
         "Extend.cls" -> "public class Extend extends Base { public override Extend getInstance() {return null;} { this.getInstance();} }"
       )
     ) { root: PathLike =>
@@ -276,10 +276,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       createOrg(root)
-      assert(
-        getMessages(root.join("force-app").join("Dummy.cls")) ==
-          "Warning: line 1 at 39-58: Ambiguous method call for 'publish' on 'System.EventBus' taking arguments 'any', wrong argument types for calling 'public static System.List<Database.SaveResult> publish(System.List<System.SObject> sobjects)', likely due to unknown type\n"
-      )
+      assert(getMessages(root.join("force-app").join("Dummy.cls")).isEmpty)
     }
   }
 }
