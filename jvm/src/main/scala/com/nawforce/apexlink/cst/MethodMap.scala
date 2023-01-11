@@ -169,8 +169,8 @@ final case class MethodMap(
     }
   }
 
-  /** Find the most specific method call match. This uses a most-specific selection model similar to that
-    * outlined in JLS6 15.12.2.5.
+  /** Find the most specific method call match. This uses a most-specific selection model similar to
+    * that outlined in JLS6 15.12.2.5.
     */
   private def mostSpecificMatch(
     strict: Boolean,
@@ -188,17 +188,18 @@ final case class MethodMap(
       None
     else if (assignable.length == 1)
       Some(Right(assignable.head))
-    else {
+    else if (params.contains(TypeNames.Any)) {
+      // We might get multiple matches when input contains an any, just pick first
+      Some(Right(assignable.head))
+    } else {
       Some(
         assignable
-          .find(
-            method =>
-              assignable.forall(
-                m =>
-                  m == method || method
-                    .hasMoreSpecificParams(m.parameters, params, context)
-                    .contains(true)
-              )
+          .find(method =>
+            assignable.forall(m =>
+              m == method || method
+                .hasMoreSpecificParams(m.parameters, params, context)
+                .contains(true)
+            )
           )
           .map(Right(_))
           .getOrElse(Left(AMBIGUOUS_ERROR))
@@ -227,8 +228,9 @@ object MethodMap {
     workingMap.map(kv => (kv._1, kv._2.toArray)).toMap
   }
 
-  /** Construct for an arbitrary type declaration, for Apex classes used the other apply function which builds
-    * up a proper MethodMap. This is just for other type declarations with non-complex needs.
+  /** Construct for an arbitrary type declaration, for Apex classes used the other apply function
+    * which builds up a proper MethodMap. This is just for other type declarations with non-complex
+    * needs.
     */
   def apply(td: TypeDeclaration): MethodMap = {
     val workingMap = new WorkingMap()
@@ -265,8 +267,8 @@ object MethodMap {
       case am: ApexMethodLike => am.resetShadows()
       case _                  =>
     }
-    instanceLocals.foreach(
-      method => applyInstanceMethod(workingMap, method, td.inTest, td.isComplete, errors)
+    instanceLocals.foreach(method =>
+      applyInstanceMethod(workingMap, method, td.inTest, td.isComplete, errors)
     )
 
     // Now strip out none test visible/abstract inherited privates excluding when a super class is in the same file as
@@ -276,10 +278,8 @@ object MethodMap {
     workingMap.foreach(keyAndMethodGroup => {
       val methods = keyAndMethodGroup._2.filterNot(method => {
         method.visibility == PRIVATE_MODIFIER && !method.isAbstract &&
-          !(method.isTestVisible || isApexLocalMethod(
-            td,
-            method
-          ) || sameFileSuperclassPrivateMethods.contains(method))
+        !(method.isTestVisible || isApexLocalMethod(td, method) || sameFileSuperclassPrivateMethods
+          .contains(method))
       })
       workingMap.put(keyAndMethodGroup._1, methods)
     })
@@ -396,8 +396,8 @@ object MethodMap {
     if (td.superClass.nonEmpty) {
       val superClass = td.superClassDeclaration
       if (superClass.nonEmpty && superClass.get.paths == td.paths) {
-        return superClass.get.methods.filter(
-          method => method.visibility == PRIVATE_MODIFIER && !method.isStatic
+        return superClass.get.methods.filter(method =>
+          method.visibility == PRIVATE_MODIFIER && !method.isStatic
         )
       }
     }
@@ -480,12 +480,10 @@ object MethodMap {
         if (matched.isEmpty) {
           val module = from.moduleDeclaration.get
           lazy val hasGhostedMethods =
-            methods.exists(
-              method =>
-                module.isGhostedType(method.typeName) ||
-                  methods.exists(
-                    method => method.parameters.map(_.typeName).exists(module.isGhostedType)
-                  )
+            methods.exists(method =>
+              module.isGhostedType(method.typeName) ||
+                methods
+                  .exists(method => method.parameters.map(_.typeName).exists(module.isGhostedType))
             )
 
           if (isAbstract) {
@@ -495,18 +493,17 @@ object MethodMap {
                 .filterNot(_.hasSameSignature(method, allowPlatformGenericEquivalence = true))
             )
           } else if (!module.isGulped && !hasGhostedMethods) {
-            location.foreach(
-              l =>
-                errors.append(
-                  new Issue(
-                    l.path,
-                    Diagnostic(
-                      ERROR_CATEGORY,
-                      l.location,
-                      s"Method '${method.signature}' from interface '${interface.typeName}' must be implemented"
-                    )
+            location.foreach(l =>
+              errors.append(
+                new Issue(
+                  l.path,
+                  Diagnostic(
+                    ERROR_CATEGORY,
+                    l.location,
+                    s"Method '${method.signature}' from interface '${interface.typeName}' must be implemented"
                   )
                 )
+              )
             )
           }
         } else {
@@ -528,8 +525,8 @@ object MethodMap {
       workingMap.put(key, method :: methods.filterNot(_ eq matched.get))
   }
 
-  /** Add an instance method into the working map. The is littered with very horrible conditional logic based on
-    * what we have been able to work out from testing.
+  /** Add an instance method into the working map. The is littered with very horrible conditional
+    * logic based on what we have been able to work out from testing.
     */
   private def applyInstanceMethod(
     workingMap: WorkingMap,
@@ -549,7 +546,9 @@ object MethodMap {
         val matchedSignature = matchedMethod.signature.toLowerCase()
         specialOverrideMethodSignatures.contains(matchedSignature) ||
         (matchedSignature == batchOverrideMethodSignature &&
-        method.typeName.outer.contains(TypeNames.System) && method.typeName.name == XNames.Iterable)
+          method.typeName.outer.contains(
+            TypeNames.System
+          ) && method.typeName.name == XNames.Iterable)
       }
 
       lazy val isPlatformMethod =
@@ -569,14 +568,14 @@ object MethodMap {
               setMethodError(
                 method,
                 s"Method '${method.name}' is a duplicate of an existing method at ${matchedMethod.idLocation
-                  .displayPosition()}",
+                    .displayPosition()}",
                 errors
               )
             else
               setMethodError(
                 method,
                 s"Method '${method.name}' can not use same platform generic interface as existing method at ${matchedMethod.idLocation
-                  .displayPosition()}",
+                    .displayPosition()}",
                 errors
               )
           case _ => ()
@@ -680,8 +679,8 @@ object MethodMap {
     }
   }
 
-  /** Determine if two methods are declared in the same Apex class. The implementation is a bit awkward due to
-    * how apex defined and platform methods diff in representation.
+  /** Determine if two methods are declared in the same Apex class. The implementation is a bit
+    * awkward due to how apex defined and platform methods diff in representation.
     */
   private def areInSameApexClass(m1: MethodDeclaration, m2: MethodDeclaration): Boolean = {
     (m1, m2) match {
@@ -691,9 +690,10 @@ object MethodMap {
     }
   }
 
-  /** Determine if two methods are considered the same without looking at the return type. For 'equals' we
-    * consider them the same if they both have a single parameter even if that parameter differs. This is
-    * because defining equals in a class will hide the Object equals method if the arguments don't match.
+  /** Determine if two methods are considered the same without looking at the return type. For
+    * 'equals' we consider them the same if they both have a single parameter even if that parameter
+    * differs. This is because defining equals in a class will hide the Object equals method if the
+    * arguments don't match.
     */
   private def areSameMethodsIgnoringReturn(
     method: MethodDeclaration,
@@ -710,8 +710,8 @@ object MethodMap {
       false
   }
 
-  /** Check if the implMethod fulfills the contract of the interfaceMethod. As usual there are plenty of oddities
-    * to handle to determine this.
+  /** Check if the implMethod fulfills the contract of the interfaceMethod. As usual there are
+    * plenty of oddities to handle to determine this.
     */
   private def isInterfaceMethod(
     from: TypeDeclaration,
@@ -727,8 +727,8 @@ object MethodMap {
       canAssign(interfaceMethod.typeName, implMethod.typeName, from) &&
       fulfillsInterfaceMethodParams._1
     ) {
-      fulfillsInterfaceMethodParams._2.foreach(
-        warning => setMethodError(implMethod, warning, errors, isWarning = true)
+      fulfillsInterfaceMethodParams._2.foreach(warning =>
+        setMethodError(implMethod, warning, errors, isWarning = true)
       )
       true
     } else if (isEqualsLike(interfaceMethod) && isEqualsLike(implMethod))
