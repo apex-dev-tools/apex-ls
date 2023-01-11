@@ -49,8 +49,13 @@ exports[`Check samples Sample: ActionPlansV4 1`] = `
 
 exports[`Check samples Sample: Angular 1`] = `
 {
-  "logs": [],
-  "status": 0,
+  "logs": [
+    [
+      "AngularJSDemoController.cls",
+      "Error: line 1: Type 'AngularJSDemoController' is defined, but meta file is missing for 'AngularJSDemoController.cls'",
+    ],
+  ],
+  "status": 4,
 }
 `;
 
@@ -598,8 +603,49 @@ exports[`Check samples Sample: FindNearby 1`] = `
 
 exports[`Check samples Sample: Force.com-Helper-Classes 1`] = `
 {
-  "logs": [],
-  "status": 0,
+  "logs": [
+    [
+      "src/classes/Async.cls",
+      "Error: line 1: Type 'Async' is defined, but meta file is missing for 'src/classes/Async.cls'",
+    ],
+    [
+      "src/classes/Async_Test.cls",
+      "Error: line 1: Type 'Async_Test' is defined, but meta file is missing for 'src/classes/Async_Test.cls'",
+    ],
+    [
+      "src/classes/InvokeUpdateTriggerBatch.cls",
+      "Error: line 1: Type 'InvokeUpdateTriggerBatch' is defined, but meta file is missing for 'src/classes/InvokeUpdateTriggerBatch.cls'",
+    ],
+    [
+      "src/classes/InvokeUpdateTriggerBatch_Test.cls",
+      "Error: line 1: Type 'InvokeUpdateTriggerBatch_Test' is defined, but meta file is missing for 'src/classes/InvokeUpdateTriggerBatch_Test.cls'",
+    ],
+    [
+      "src/classes/SearchHelper.cls",
+      "Error: line 1: Type 'SearchHelper' is defined, but meta file is missing for 'src/classes/SearchHelper.cls'",
+    ],
+    [
+      "src/classes/SearchHelper_Test.cls",
+      "Error: line 1: Type 'SearchHelper_Test' is defined, but meta file is missing for 'src/classes/SearchHelper_Test.cls'",
+    ],
+    [
+      "src/classes/StateFormatter.cls",
+      "Error: line 1: Type 'StateFormatter' is defined, but meta file is missing for 'src/classes/StateFormatter.cls'",
+    ],
+    [
+      "src/classes/StateFormatter_Test.cls",
+      "Error: line 1: Type 'StateFormatter_Test' is defined, but meta file is missing for 'src/classes/StateFormatter_Test.cls'",
+    ],
+    [
+      "src/classes/SuperMap.cls",
+      "Error: line 1: Type 'SuperMap' is defined, but meta file is missing for 'src/classes/SuperMap.cls'",
+    ],
+    [
+      "src/classes/SuperMap_Test.cls",
+      "Error: line 1: Type 'SuperMap_Test' is defined, but meta file is missing for 'src/classes/SuperMap_Test.cls'",
+    ],
+  ],
+  "status": 4,
 }
 `;
 
@@ -1795,8 +1841,13 @@ exports[`Check samples Sample: apex-sobjectdataloader 1`] = `
 
 exports[`Check samples Sample: apex-toolingapi 1`] = `
 {
-  "logs": [],
-  "status": 0,
+  "logs": [
+    [
+      "examples/code_coverage_chart/src/classes/CodeCoverageChartCtrl.cls",
+      "Error: line 1: Type 'CodeCoverageChartCtrl' is defined, but meta file is missing for 'examples/code_coverage_chart/src/classes/CodeCoverageChartCtrl.cls'",
+    ],
+  ],
+  "status": 4,
 }
 `;
 
