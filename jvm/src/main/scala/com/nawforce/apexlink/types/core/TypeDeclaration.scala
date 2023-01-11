@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.types.core
 
 import com.nawforce.apexlink.api._
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
+import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignable}
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
@@ -23,7 +23,7 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
-import com.nawforce.apexlink.types.apex.PreReValidatable
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, PreReValidatable}
 import com.nawforce.apexlink.types.other.Component
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.synthetic.{
@@ -88,15 +88,8 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
         )
       else {
         Option(location)
-          .map(
-            l =>
-              LocatableCustomFieldDeclaration(
-                l,
-                name,
-                TypeNames.SObjectField,
-                None,
-                asStatic = true
-              )
+          .map(l =>
+            LocatableCustomFieldDeclaration(l, name, TypeNames.SObjectField, None, asStatic = true)
           )
           .getOrElse(CustomFieldDeclaration(name, TypeNames.SObjectField, None, asStatic = true))
       }
@@ -137,8 +130,8 @@ trait ParameterDeclaration {
 trait Parameters {
   val parameters: ArraySeq[ParameterDeclaration]
 
-  /** Test if this params are compatible with those passed. Ideally this would just be a comparison of type names
-    * but there is a quirk in how platform generic interfaces are handled.
+  /** Test if this params are compatible with those passed. Ideally this would just be a comparison
+    * of type names but there is a quirk in how platform generic interfaces are handled.
     */
   def hasCompatibleParameters(
     params: ArraySeq[TypeName],
@@ -149,8 +142,8 @@ trait Parameters {
         .zip(params)
         .forall(paramPair => {
           paramPair._1.typeName == paramPair._2 ||
-            (allowPlatformGenericEquivalence &&
-              paramPair._1.typeName.params.nonEmpty && areSameGenericTypes(
+          (allowPlatformGenericEquivalence &&
+            paramPair._1.typeName.params.nonEmpty && areSameGenericTypes(
               paramPair._1.typeName,
               paramPair._2
             ))
@@ -160,9 +153,10 @@ trait Parameters {
     }
   }
 
-  /** Determine if this params is a more specific version of the passed params. For this to be true all the parameters
-    * of this parameters must be assignable to the corresponding parameter of the other method. However when dealing with
-    * RecordSets (SOQL results) we also prioritise degrees of specificness and use those to select as well.
+  /** Determine if this params is a more specific version of the passed params. For this to be true
+    * all the parameters of this parameters must be assignable to the corresponding parameter of the
+    * other method. However when dealing with RecordSets (SOQL results) we also prioritise degrees
+    * of specificness and use those to select as well.
     */
   def hasMoreSpecificParams(
     otherParams: ArraySeq[ParameterDeclaration],
@@ -180,26 +174,28 @@ trait Parameters {
         val thisScore   = scoreRecordSetAssignability(tuple._3.typeName, sObjectType)
         thisScore.nonEmpty && (otherScore.isEmpty || thisScore.get < otherScore.get)
       } else {
-        isAssignable(tuple._2.typeName, tuple._3.typeName, strict = false, context)
+        isAssignable(tuple._2.typeName, tuple._3.typeName, strictConversions = false, context)
       }
     }))
   }
 
-  /** Determine if parameter type names are considered the same. During method and constructor calls some platform generics are
-    * considered equivalent regardless of the type parameters used. Yeah, its a mess of a language.
+  /** Determine if parameter type names are considered the same. During method and constructor calls
+    * some platform generics are considered equivalent regardless of the type parameters used. Yeah,
+    * its a mess of a language.
     */
   protected def areSameGenericTypes(param: TypeName, other: TypeName): Boolean = {
     param.equalsIgnoreParamTypes(other) &&
     ( // Ignore generic type params on these
       (param.outer.contains(TypeNames.System) && param.name == XNames.Iterable) ||
-      (param.outer.contains(TypeNames.System) && param.name == XNames.Iterator) ||
-      (param.outer.contains(TypeNames.Database) && param.name == Names.Batchable)
+        (param.outer.contains(TypeNames.System) && param.name == XNames.Iterator) ||
+        (param.outer.contains(TypeNames.Database) && param.name == Names.Batchable)
     )
   }
 
-  /** Create a score for toType reflecting it's priority (low is high) when matching against a RecordSet of
-    * sObjectType. The ordering here was empirically derived, having all of these available as possible
-    * matches does not create an ambiguity error, although the single record conversion may fail at runtime.
+  /** Create a score for toType reflecting it's priority (low is high) when matching against a
+    * RecordSet of sObjectType. The ordering here was empirically derived, having all of these
+    * available as possible matches does not create an ambiguity error, although the single record
+    * conversion may fail at runtime.
     */
   private def scoreRecordSetAssignability(toType: TypeName, sObjectType: TypeName): Option[Int] = {
     if (toType == TypeNames.listOf(sObjectType))
@@ -225,8 +221,9 @@ trait ConstructorDeclaration extends DependencyHolder with Parameters {
     modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
   def isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
 
-  /** Test if the passed constructor has params compatible with this method. Ideally this would just be a comparison of
-    * type names but there is a quirk in how platform generic interfaces are handled.
+  /** Test if the passed constructor has params compatible with this method. Ideally this would just
+    * be a comparison of type names but there is a quirk in how platform generic interfaces are
+    * handled.
     */
   def hasSameParameters(
     other: ConstructorDeclaration,
@@ -286,8 +283,8 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
     hasSameParameters(other, allowPlatformGenericEquivalence)
   }
 
-  /** Test if the passed method has params compatible with this method. Ideally this would just be a comparison of
-    * type names but there is a quirk in how platform generic interfaces are handled.
+  /** Test if the passed method has params compatible with this method. Ideally this would just be a
+    * comparison of type names but there is a quirk in how platform generic interfaces are handled.
     */
   def hasSameParameters(
     other: MethodDeclaration,
@@ -296,59 +293,29 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
     hasCompatibleParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
   }
 
-  /** Test if this method matches the provided params when fulfilling an interface method. This is more involved than
-    * a simple type name comparison as there is some rather shocking equivalence handling in Apex for interfaces.
+  /** Test if this method matches the provided params when fulfilling an interface method. The basic
+    * approach here is that each param of the interface method must be assignable to the implMethod
+    * so that only widening of the types is supported.
     */
   def fulfillsInterfaceMethodParams(
-    from: TypeDeclaration,
+    from: ApexClassDeclaration,
     implMethod: MethodDeclaration
-  ): (Boolean, List[String]) = {
-    def isSObject(typeName: TypeName): Boolean = {
-      typeName == TypeNames.SObject ||
-      from.moduleDeclaration.exists(_.getTypeFor(typeName, from).exists(_.isSObject))
-    }
+  ): Boolean = {
+    if (name != implMethod.name || parameters.length != implMethod.parameters.length)
+      return false
 
-    def isSObjectList(typeName: TypeName): Boolean = {
-      typeName.isList && isSObject(typeName.params.head)
-    }
-
-    def areBothSObjects(from: TypeName, implMethod: TypeName): Boolean = {
-      (from, implMethod) match {
-        case (x, TypeNames.SObject) => isSObject(x)
-        case _                      => false
-      }
-    }
-
-    val params = implMethod.parameters.map(_.typeName)
-
-    if (parameters.length == params.length) {
-      var warning: List[String] = Nil
-      (
-        parameters
-          .zip(params)
-          .forall(paramPair => {
-            lazy val isSameType   = paramPair._1.typeName == paramPair._2
-            lazy val isStringOrId = paramPair._1.typeName.isStringOrId && paramPair._2.isStringOrId
-            lazy val areSameGenerics = paramPair._1.typeName.params.nonEmpty && areSameGenericTypes(
-              paramPair._1.typeName,
-              paramPair._2
-            )
-            lazy val areSObjectList =
-              isSObjectList(paramPair._1.typeName) && isSObjectList(paramPair._2)
-
-            if (areBothSObjects(paramPair._1.typeName, paramPair._2)) {
-              warning =
-                warning :+ s"Method '${implMethod.signature}' implementing $signature should use param '${paramPair._1.typeName}' instead of '${paramPair._2}'"
-              true
-            } else {
-              isSameType || isStringOrId || areSameGenerics || areSObjectList
-            }
-          }),
-        warning
-      )
-    } else {
-      (false, Nil)
-    }
+    val context    = new TypeVerifyContext(None, from, None)
+    val paramTypes = implMethod.parameters.map(_.typeName)
+    parameters
+      .zip(paramTypes)
+      .forall(paramPair => {
+        isAssignable(
+          paramPair._2,
+          paramPair._1.typeName,
+          AssignableOptions(strictConversions = false, disableSObjectNarrowing = true),
+          context
+        )
+      })
   }
 }
 
@@ -462,16 +429,14 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
 
   protected lazy val fieldsByName: mutable.Map[Name, FieldDeclaration] = {
     val fieldsByName = mutable.Map(fields.map(f => (f.name, f)): _*)
-    superClassDeclaration.foreach(
-      td =>
-        td.fieldsByName
-          .foreach(f => fieldsByName.getOrElseUpdate(f._1, f._2))
+    superClassDeclaration.foreach(td =>
+      td.fieldsByName
+        .foreach(f => fieldsByName.getOrElseUpdate(f._1, f._2))
     )
-    outerTypeDeclaration.foreach(
-      td =>
-        td.fields
-          .filter(_.isStatic)
-          .foreach(f => fieldsByName.getOrElseUpdate(f.name, f))
+    outerTypeDeclaration.foreach(td =>
+      td.fields
+        .filter(_.isStatic)
+        .foreach(f => fieldsByName.getOrElseUpdate(f.name, f))
     )
     fieldsByName
   }
@@ -570,10 +535,9 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
 
   def implements(typeName: TypeName, ignoreGenerics: Boolean): Boolean = {
     val interfaces = interfaceDeclarations
-    interfaces.exists(
-      in =>
-        (ignoreGenerics && in.typeName.equalsNamesOnly(typeName)) ||
-          in.typeName == typeName
+    interfaces.exists(in =>
+      (ignoreGenerics && in.typeName.equalsNamesOnly(typeName)) ||
+        in.typeName == typeName
     ) ||
     interfaces.exists(_.implements(typeName, ignoreGenerics)) ||
     superClassDeclaration.exists(_.implements(typeName, ignoreGenerics))

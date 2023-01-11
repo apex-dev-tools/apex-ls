@@ -10,33 +10,63 @@ object AssignableSupport {
   implicit class AssignableName(fromType: TypeName) {
 
     def isAssignableTo(toType: TypeName, strict: Boolean, context: VerifyContext): Boolean =
-      isAssignable(toType, fromType, strict, context)
+      isAssignable(
+        toType,
+        fromType,
+        AssignableOptions(strictConversions = strict, disableSObjectNarrowing = false),
+        context
+      )
 
   }
 
   implicit class AssignableType(fromType: TypeDeclaration) {
 
     def isAssignableTo(toType: TypeName, strict: Boolean, context: VerifyContext): Boolean =
-      isAssignable(toType, fromType, strict, context)
+      isAssignable(
+        toType,
+        fromType,
+        AssignableOptions(strictConversions = strict, disableSObjectNarrowing = false),
+        context
+      )
 
     def couldBeEqualTo(toType: TypeDeclaration, context: VerifyContext): Boolean =
       couldBeEqual(toType, fromType, context)
 
   }
 
+  case class AssignableOptions(
+    strictConversions: Boolean, // When enabled limits allowed implicit type conversions
+    disableSObjectNarrowing: Boolean // When enabled disallows narrowing of SObject conversions, i.e. Account->SObject
+  )
+
   def couldBeEqual(
     toType: TypeDeclaration,
     fromType: TypeDeclaration,
     context: VerifyContext
   ): Boolean = {
-    isAssignable(toType.typeName, fromType, strict = false, context) ||
-    isAssignable(fromType.typeName, toType, strict = false, context)
+    val options = AssignableOptions(strictConversions = false, disableSObjectNarrowing = false)
+    isAssignable(toType.typeName, fromType, options, context) ||
+    isAssignable(fromType.typeName, toType, options, context)
   }
 
   def isAssignable(
     toType: TypeName,
     fromType: TypeName,
-    strict: Boolean,
+    strictConversions: Boolean,
+    context: VerifyContext
+  ): Boolean = {
+    isAssignable(
+      toType,
+      fromType,
+      AssignableOptions(strictConversions, disableSObjectNarrowing = false),
+      context
+    )
+  }
+
+  def isAssignable(
+    toType: TypeName,
+    fromType: TypeName,
+    options: AssignableOptions,
     context: VerifyContext
   ): Boolean = {
     context.getTypeFor(fromType, context.thisType) match {
@@ -44,36 +74,50 @@ object AssignableSupport {
         // Allow some ghosted assignments to support Lists
         (toType == TypeNames.SObject && context.module.isGhostedType(fromType) && fromType.outer
           .contains(TypeNames.Schema)) ||
-          (toType == TypeNames.InternalObject && context.module.isGhostedType(fromType))
+        (toType == TypeNames.InternalObject && context.module.isGhostedType(fromType))
       case Right(fromDeclaration) =>
-        isAssignable(toType, fromDeclaration, strict, context)
+        isAssignable(toType, fromDeclaration, options, context)
     }
   }
 
   def isAssignable(
     toType: TypeName,
     fromType: TypeDeclaration,
-    strict: Boolean,
+    strictConversions: Boolean,
+    context: VerifyContext
+  ): Boolean = {
+    isAssignable(
+      toType,
+      fromType,
+      AssignableOptions(strictConversions, disableSObjectNarrowing = false),
+      context
+    )
+  }
+
+  def isAssignable(
+    toType: TypeName,
+    fromType: TypeDeclaration,
+    options: AssignableOptions,
     context: VerifyContext
   ): Boolean = {
     if (
       fromType.typeName == TypeNames.Null ||
       fromType.typeName == TypeNames.Any ||
       fromType.typeName == toType ||
-      (!strict && toType == TypeNames.InternalObject) ||
+      (!options.strictConversions && toType == TypeNames.InternalObject) ||
       context.module.isGhostedType(toType)
     ) {
       true
-    } else if (!strict && fromType.typeName.isRecordSet) {
+    } else if (!options.strictConversions && fromType.typeName.isRecordSet) {
       isRecordSetAssignable(toType, context)
     } else if (toType.params.nonEmpty || fromType.typeName.params.nonEmpty) {
       isAssignableGeneric(toType, fromType, context)
     } else {
-      (if (strict)
+      (if (options.strictConversions)
          strictAssignable.contains(toType, fromType.typeName)
        else
          looseAssignable.contains(toType, fromType.typeName)) ||
-      isSObjectAssignable(toType, fromType.typeName, context) ||
+      isSObjectNarrowable(toType, fromType.typeName, options, context) ||
       fromType.extendsOrImplements(toType)
     }
   }
@@ -116,24 +160,30 @@ object AssignableSupport {
   ): Boolean = {
     val toParams   = toType.params
     val fromParams = fromType.params
+    val options    = AssignableOptions(strictConversions = false, disableSObjectNarrowing = false)
 
     (fromType.name match {
-      case Names.List$ | Names.Set$ => isSObjectAssignable(toParams.head, fromParams.head, context)
-      case Names.Map$               => isSObjectAssignable(toParams(1), fromParams(1), context)
-      case _                        => false
+      case Names.List$ | Names.Set$ =>
+        isSObjectNarrowable(toParams.head, fromParams.head, options, context)
+      case Names.Map$ => isSObjectNarrowable(toParams(1), fromParams(1), options, context)
+      case _          => false
     }) ||
     toParams
       .zip(fromParams)
-      .map(p => isAssignable(p._1, p._2, strict = false, context))
+      .map(p => isAssignable(p._1, p._2, options, context))
       .forall(b => b)
   }
 
-  private def isSObjectAssignable(
+  /* Test if an System.SObject can be cast to a specific SObject type. This conversion is generally unsafe but is
+   * supported in various (but not all) places in Apex. */
+  private def isSObjectNarrowable(
     toType: TypeName,
     fromType: TypeName,
+    options: AssignableOptions,
     context: VerifyContext
   ): Boolean = {
     if (
+      !options.disableSObjectNarrowing &&
       fromType == TypeNames.SObject &&
       toType != TypeNames.SObject
     ) {
@@ -142,8 +192,7 @@ object AssignableSupport {
         case Right(toDeclaration) => toDeclaration.isSObject
       }
     } else {
-      // SObject s = SObject
-      fromType == TypeNames.SObject
+      false
     }
   }
 
@@ -153,7 +202,12 @@ object AssignableSupport {
     context: VerifyContext
   ): Boolean = {
     if (fromType == TypeNames.QueryLocator && toType.isIterable && toType.params.nonEmpty) {
-      isAssignable(toType.params.head, TypeNames.SObject, strict = false, context)
+      isAssignable(
+        toType.params.head,
+        TypeNames.SObject,
+        AssignableOptions(strictConversions = false, disableSObjectNarrowing = false),
+        context
+      )
     } else {
       false
     }

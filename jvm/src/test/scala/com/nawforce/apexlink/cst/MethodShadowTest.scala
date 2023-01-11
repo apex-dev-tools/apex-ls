@@ -47,7 +47,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of missing method") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { public override void func2() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func2() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { private virtual void func() {}}"
       ),
       "Error: line 1 at 61-66: Method 'func2' does not override a virtual or abstract method\n"
@@ -57,7 +57,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of private virtual") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { private virtual void func() {}}"
       ),
       "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
@@ -81,7 +81,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of protected virtual") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { protected virtual void func() {}}"
       ),
       ""
@@ -91,7 +91,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of public virtual") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { public virtual void func() {}}"
       ),
       ""
@@ -101,7 +101,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Duplicate Override of public virtual") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { public override void func() {} public override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} public override void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { public virtual void func() {}}"
       ),
       "Error: line 1 at 92-96: Method 'func' is a duplicate of an existing method at line 1 at 61-65\n"
@@ -111,7 +111,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of public virtual (with protected)") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { protected override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { protected override void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { public virtual void func() {}}"
       ),
       "Error: line 1 at 64-68: Method 'func' can not reduce visibility in override\n"
@@ -121,7 +121,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of private abstract") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public abstract class SuperClass { private abstract void func();}"
       ),
       "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
@@ -131,7 +131,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of protected abstract") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public abstract class SuperClass { protected abstract void func();}"
       ),
       ""
@@ -141,7 +141,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of protected abstract (with private)") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { private override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { private override void func() {} }",
         "SuperClass.cls" -> "public abstract class SuperClass { protected abstract void func();}"
       ),
       "Error: line 1 at 62-66: Method 'func' can not reduce visibility in override\n"
@@ -151,7 +151,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of public abstract") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public abstract class SuperClass { public abstract void func();}"
       ),
       ""
@@ -161,7 +161,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   test("Override of private virtual (test visible)") {
     testMethods(
       Map(
-        "Dummy.cls"      -> "@IsTest public class Dummy extends SuperClass { public override void func() {} }",
+        "Dummy.cls" -> "@IsTest public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass {@TestVisible private virtual void func() {}}"
       ),
       ""
@@ -197,13 +197,94 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Implementing method has SObject as param") {
+  test("Implementing method has generic SObject as param instead of specific SObject") {
     testMethods(
       Map(
         "Foo.cls"   -> "public interface Foo { void fn(Account ac); }",
         "Dummy.cls" -> "public class Dummy implements Foo { public void fn(SObject ac){} }"
       ),
-      "Warning: line 1 at 48-50: Method 'void fn(System.SObject)' implementing void fn(Schema.Account) should use param 'Schema.Account' instead of 'System.SObject'\n"
+      ""
     )
   }
+
+  test("Implementing method has specific SObject as param instead of generic SObject") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(SObject ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Account ac){} }"
+      ),
+      "Error: line 1 at 13-18: Method 'void fn(System.SObject)' from interface 'Foo' must be implemented\n"
+    )
+  }
+
+  test("Implementing method has generic SObject") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(SObject ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(SObject ac){} }"
+      ),
+      ""
+    )
+  }
+
+  test("Implementing method has specific SObject") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(Account ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Account ac){} }"
+      ),
+      ""
+    )
+  }
+
+  test("Implementing method has different specific SObject as param instead of specific SObject") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(Account ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Opportunity ac){} }"
+      ),
+      "Error: line 1 at 13-18: Method 'void fn(Schema.Account)' from interface 'Foo' must be implemented\n"
+    )
+  }
+
+  test("Implementing method has Id as param instead of String") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(String ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Id ac){} }"
+      ),
+      ""
+    )
+  }
+
+  test("Implementing method has String as param instead of Id") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(Id ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(String ac){} }"
+      ),
+      ""
+    )
+  }
+
+  test("Implementing method has Long as param instead of Integer") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(Integer ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Long ac){} }"
+      ),
+      ""
+    )
+  }
+
+  test("Implementing method has Integer as param instead of Long") {
+    testMethods(
+      Map(
+        "Foo.cls"   -> "public interface Foo { void fn(Long ac); }",
+        "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Integer ac){} }"
+      ),
+      "Error: line 1 at 13-18: Method 'void fn(System.Long)' from interface 'Foo' must be implemented\n"
+    )
+  }
+
 }
