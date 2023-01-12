@@ -29,7 +29,10 @@ object FileSystemHelper {
 
     // Load files into memfs
     Memfs.vol.fromJSON(
-      files.map(kv => ("/" + kv._1, kv._2)).toJSDictionary.asInstanceOf[js.Dynamic]
+      populateMetaFiles(files)
+        .map(kv => ("/" + kv._1, kv._2))
+        .toJSDictionary
+        .asInstanceOf[js.Dynamic]
     )
 
     // Make a cache directory so don't need home access
@@ -55,6 +58,16 @@ object FileSystemHelper {
       makeDir(path.parent)
       path.parent.createDirectory(path.basename)
     }
+  }
+
+  /* Many test were written without providing class/trigger metafiles so we add them in */
+  private def populateMetaFiles(files: Map[String, String]): Map[String, String] = {
+    val classesAndTriggers = files.keys.filter(path =>
+      path.toLowerCase.endsWith(".cls") || path.toLowerCase.endsWith(".trigger")
+    )
+    val missingMetaFiles =
+      classesAndTriggers.map(path => s"$path-meta.xml").filterNot(files.contains)
+    missingMetaFiles.map(path => (path, "")).toMap ++ files
   }
 
   // Temp directory based model

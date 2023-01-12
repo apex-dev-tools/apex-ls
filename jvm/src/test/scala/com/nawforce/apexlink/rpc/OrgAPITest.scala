@@ -14,11 +14,12 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.{FileSystemHelper, ParserHelper, TestHelper}
 import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.{ParserHelper, TestHelper}
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.{Environment, Path}
 import org.scalatest.funsuite.AsyncFunSuite
 import org.scalatest.{Assertion, BeforeAndAfterEach}

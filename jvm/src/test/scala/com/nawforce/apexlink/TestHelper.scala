@@ -23,6 +23,7 @@ import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.runtime.FileSystemHelper
 
 trait TestHelper {
 

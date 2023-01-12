@@ -19,6 +19,7 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{LocationAnd, PathLocation}
 import com.nawforce.runtime.parsers.PageParser
+import com.nawforce.runtime.platform.Path
 import com.nawforce.vfparser.VFParser
 
 import scala.collection.compat.immutable.ArraySeq
@@ -33,8 +34,15 @@ final case class ComponentEvent(
 /** Convert component documents into PackageEvents */
 object ComponentGenerator {
 
+  // TODO: Replace this tmp approach when events removed
   def iterator(index: DocumentIndex): Iterator[PackageEvent] =
-    index.get(ComponentNature).flatMap(toEvents)
+    index
+      .get(ComponentNature)
+      .values
+      .flatten
+      .flatMap(p => MetadataDocument(Path(p)).map(toEvents))
+      .flatten
+      .iterator
 
   private def toEvents(document: MetadataDocument): Iterator[PackageEvent] = {
     val source = document.source
@@ -79,38 +87,36 @@ object ComponentGenerator {
     ArraySeq.unsafeWrapArray(
       PageParser
         .toScala(root.content())
-        .map(
-          content =>
-            PageParser
-              .toScala(content.element())
-              .filter(
-                el =>
-                  Option(el.Name(0))
-                    .exists(name => PageParser.getText(name).equalsIgnoreCase("apex:attribute"))
-              )
-              .flatMap(attribute => {
-                val name = PageParser
-                  .toScala(attribute.attribute())
-                  .find(a => PageParser.getText(a.attributeName()).equalsIgnoreCase("name"))
-                if (name.isEmpty) {
-                  val location = parser.getPathLocation(component)
-                  logger.logError(
-                    location.path,
-                    location.location,
-                    "apex:attribute is missing 'name' attribute"
+        .map(content =>
+          PageParser
+            .toScala(content.element())
+            .filter(el =>
+              Option(el.Name(0))
+                .exists(name => PageParser.getText(name).equalsIgnoreCase("apex:attribute"))
+            )
+            .flatMap(attribute => {
+              val name = PageParser
+                .toScala(attribute.attribute())
+                .find(a => PageParser.getText(a.attributeName()).equalsIgnoreCase("name"))
+              if (name.isEmpty) {
+                val location = parser.getPathLocation(component)
+                logger.logError(
+                  location.path,
+                  location.location,
+                  "apex:attribute is missing 'name' attribute"
+                )
+                None
+              } else {
+                Some(
+                  Name(
+                    PageParser
+                      .toScala(name.get.attributeValues())
+                      .map(PageParser.getText)
+                      .mkString
                   )
-                  None
-                } else {
-                  Some(
-                    Name(
-                      PageParser
-                        .toScala(name.get.attributeValues())
-                        .map(PageParser.getText)
-                        .mkString
-                    )
-                  )
-                }
-              })
+                )
+              }
+            })
         )
         .getOrElse(Seq())
         .toArray

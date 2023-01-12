@@ -13,10 +13,11 @@
  */
 package com.nawforce.apexlink.pkg
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.org.OPM
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class RefreshSObjectTest extends AnyFunSuite with TestHelper {
@@ -234,7 +235,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
     withManualFlush {
       FileSystemHelper.run(
         Map(
-          "sfdx-project.json"         -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
+          "sfdx-project.json" -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
           "base/Foo__c/Foo__c.object" -> customObject("Foo", Seq()),
           "ext/Foo__c/Foo__c.object" -> customObject(
             "Foo",
@@ -263,7 +264,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
     withManualFlush {
       FileSystemHelper.run(
         Map(
-          "sfdx-project.json"                       -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
+          "sfdx-project.json" -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
           "base/Foo__c/Foo__c.object-meta.xml"      -> customObject("Foo", Seq()),
           "ext/Foo__c/fields/Baz__c.field-meta.xml" -> customField("Baz__c", "Text", None)
         )
@@ -305,7 +306,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
-        //assert(getMessages() == "/ext/Foo__c.object: Error: line 1: SObject is extending an unknown SObject, '/ext/Foo__c.object'\n")
+        // assert(getMessages() == "/ext/Foo__c.object: Error: line 1: SObject is extending an unknown SObject, '/ext/Foo__c.object'\n")
         assert(getMessages().contains("Extending unknown SObject error"))
       }
     }
@@ -329,7 +330,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
-        //assert(getMessages() == "/ext/Foo__c/fields/Baz__c.field-meta.xml: Error: line 1: SObject is extending an unknown SObject, '/ext/Foo__c'\n")
+        // assert(getMessages() == "/ext/Foo__c/fields/Baz__c.field-meta.xml: Error: line 1: SObject is extending an unknown SObject, '/ext/Foo__c'\n")
         assert(getMessages().contains("Extending unknown SObject error"))
       }
     }
@@ -561,7 +562,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
       FileSystemHelper.run(
         Map(
           "Foo__mdt/Foo__mdt.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-          "Dummy.cls"                -> "public class Dummy { {Foo__mdt a = new Foo__mdt(Bar__c = '');}}"
+          "Dummy.cls" -> "public class Dummy { {Foo__mdt a = new Foo__mdt(Bar__c = '');}}"
         )
       ) { root: PathLike =>
         val org = createOrg(root)
@@ -582,7 +583,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
       FileSystemHelper.run(
         Map(
           "Foo__mdt/Foo__mdt.object" -> customObject("Foo", Seq()),
-          "Dummy.cls"                -> "public class Dummy { {Foo__mdt a = new Foo__mdt(Bar__c = '');}}"
+          "Dummy.cls" -> "public class Dummy { {Foo__mdt a = new Foo__mdt(Bar__c = '');}}"
         )
       ) { root: PathLike =>
         val org = createOrg(root)

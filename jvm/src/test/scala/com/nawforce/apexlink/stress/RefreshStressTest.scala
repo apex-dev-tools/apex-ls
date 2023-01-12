@@ -42,7 +42,9 @@ object RefreshStressTest {
     println(s"Starting issue count $baselineIssues")
 
     val classFiles =
-      org.packages.flatten(pkg => pkg.modules.flatMap(m => m.index.get(ApexNature).map(_.path)))
+      org.packages.flatten(pkg =>
+        pkg.modules.flatMap(m => m.index.getControllingDocuments(ApexNature).map(_.path))
+      )
 
     while (true) {
       val randoFile = classFiles(ThreadLocalRandom.current.nextInt(0, classFiles.size))
