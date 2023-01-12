@@ -164,51 +164,9 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 187 at 3-82: Local variable is hiding class field 'token', see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
     ],
     [
-      "Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectUnitOfWork.cls",
-      "Warning: line 217 at 13-36: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 243 at 16-27: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 309 at 16-36: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 327 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 341 at 16-29: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 366 at 16-29: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 427 at 16-30: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 457 at 16-31: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 498 at 16-42: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 509 at 16-48: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 537 at 16-54: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 564 at 16-54: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
       "Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 100:2 to 103:3: Local variable is hiding class field 'unitOfWork', see Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
       "Warning: line 66 at 2-73: Local variable is hiding class field 'unitOfWork', see Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
-    ],
-    [
-      "Cumulus/force-app/infrastructure/apex-common/test/classes/mocks/fflib_SObjectMocks.cls",
-      "Warning: line 100 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 100 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 105 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 105 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 110 at 14-34: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 115 at 20-40: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 120 at 14-27: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 134 at 14-27: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 143 at 20-33: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 143 at 20-33: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 153 at 14-28: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 158 at 14-37: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 173 at 14-29: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 183 at 14-40: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 193 at 14-46: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 203 at 14-52: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 211 at 14-52: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 90 at 14-25: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
     ],
     [
       "Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls",
@@ -249,15 +207,6 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 674 at 12-53: Local variable is hiding class field 'columns', see Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 631 at 28-49",
       "Warning: line 844 at 12-33: Local variable is hiding class field 'donorName', see Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 830 at 28-45",
       "Warning: line 864 at 16-56: Local variable is hiding class field 'errors', see Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 835 at 28-48",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/CMT_FilterRule.cls",
-      "Warning: line 205 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 223 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 265 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 317 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 359 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 399 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
     ],
     [
       "Cumulus/force-app/main/default/classes/CON_ContactMerge_TEST.cls",
@@ -733,51 +682,9 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
       "Warning: line 189 at 3-82: Local variable is hiding class field 'token', see fs-core/main/libs/apex-common/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
     ],
     [
-      "fs-core/main/libs/apex-common/classes/fflib_SObjectUnitOfWork.cls",
-      "Warning: line 217 at 13-36: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 243 at 16-27: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 309 at 16-36: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 327 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 341 at 16-29: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 366 at 16-29: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 434 at 16-30: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 464 at 16-31: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 505 at 16-42: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 516 at 16-48: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 544 at 16-54: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 571 at 16-54: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
       "fs-core/main/libs/apex-common/classes/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fs-core/main/libs/apex-common/classes/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fs-core/main/libs/apex-common/classes/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
-    ],
-    [
-      "fs-core/main/libs/apex-common/classes/test/classes/mocks/fflib_SObjectMocks.cls",
-      "Warning: line 100 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 100 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 105 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 105 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 110 at 14-34: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 115 at 20-40: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 120 at 14-27: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 134 at 14-27: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 143 at 20-33: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 143 at 20-33: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 153 at 14-28: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 158 at 14-37: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 173 at 14-29: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 183 at 14-40: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 193 at 14-46: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 203 at 14-52: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 211 at 14-52: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 90 at 14-25: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
     ],
     [
       "fs-core/main/libs/fflib-apex-mocks/classes/fflib_AnswerTest.cls",
@@ -901,51 +808,9 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 187 at 3-82: Local variable is hiding class field 'token', see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
     ],
     [
-      "NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectUnitOfWork.cls",
-      "Warning: line 217 at 13-36: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 243 at 16-27: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 309 at 16-36: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 327 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 341 at 16-29: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 366 at 16-29: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 427 at 16-30: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 457 at 16-31: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 498 at 16-42: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 509 at 16-48: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 537 at 16-54: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 564 at 16-54: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
       "NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 100:2 to 103:3: Local variable is hiding class field 'unitOfWork', see NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
       "Warning: line 66 at 2-73: Local variable is hiding class field 'unitOfWork', see NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
-    ],
-    [
-      "NPSP/force-app/infrastructure/apex-common/test/classes/mocks/fflib_SObjectMocks.cls",
-      "Warning: line 100 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 100 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 105 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 105 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 110 at 14-34: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 115 at 20-40: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 120 at 14-27: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 134 at 14-27: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 143 at 20-33: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 143 at 20-33: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 153 at 14-28: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 158 at 14-37: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 173 at 14-29: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 183 at 14-40: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 193 at 14-46: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 203 at 14-52: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 211 at 14-52: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 90 at 14-25: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
     ],
     [
       "NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls",
@@ -986,15 +851,6 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 674 at 12-53: Local variable is hiding class field 'columns', see NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 631 at 28-49",
       "Warning: line 844 at 12-33: Local variable is hiding class field 'donorName', see NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 830 at 28-45",
       "Warning: line 864 at 16-56: Local variable is hiding class field 'errors', see NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 835 at 28-48",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/CMT_FilterRule.cls",
-      "Warning: line 205 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 223 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 265 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 317 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 359 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 399 at 23-33: Method 'System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule)' implementing System.Boolean isIncluded(System.SObject, npsp.CMT_FilterRule) should use param 'System.SObject' instead of 'System.SObject'",
     ],
     [
       "NPSP/force-app/main/default/classes/CON_ContactMerge_TEST.cls",
@@ -1458,13 +1314,7 @@ exports[`Check samples Sample: SmartFactory-for-Force 1`] = `
 
 exports[`Check samples Sample: TestDataFactory 1`] = `
 {
-  "logs": [
-    [
-      "force-app/main/default/classes/TestDataFactory.cls",
-      "Warning: line 223 at 20-30: Method 'void setSObject(System.Integer, System.SObject)' implementing void setSObject(System.Integer, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 246 at 20-35: Method 'void setRelationship(System.Integer, System.String, System.SObject)' implementing void setRelationship(System.Integer, System.String, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
@@ -1530,82 +1380,21 @@ exports[`Check samples Sample: amoss 1`] = `
 
 exports[`Check samples Sample: apex-dml-manager 1`] = `
 {
-  "logs": [
-    [
-      "src/classes/DMLManager.cls",
-      "Warning: line 314 at 22-30: Method 'void dmlMerge(System.SObject, System.List<System.SObject>)' implementing void dmlMerge(System.SObject, System.List<System.SObject>) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: apex-domainbuilder 1`] = `
 {
-  "logs": [
-    [
-      "force-app/main/default/classes/fflib_SObjectUnitOfWork.cls",
-      "Warning: line 217 at 13-36: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 243 at 16-27: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 309 at 16-36: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 327 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 341 at 16-29: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 366 at 16-29: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 427 at 16-30: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 457 at 16-31: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 498 at 16-42: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 509 at 16-48: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 537 at 16-54: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 564 at 16-54: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: apex-lambda 1`] = `
 {
-  "logs": [
-    [
-      "sfdx-source/apex-fp/main/classes/function/FieldsMatch.cls",
-      "Warning: line 38 at 16-20: Method 'System.Boolean call(System.SObject)' implementing System.Boolean call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "sfdx-source/apex-fp/main/classes/function/MapToObject.cls",
-      "Warning: line 68 at 15-19: Method 'Object call(System.SObject)' implementing Object call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "sfdx-source/apex-fp/main/classes/function/MapToSObject.cls",
-      "Warning: line 67 at 16-20: Method 'System.SObject call(System.SObject)' implementing System.SObject call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "sfdx-source/apex-fp/main/classes/function/ModifySObject.cls",
-      "Warning: line 31 at 13-17: Method 'void call(System.SObject)' implementing void call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "sfdx-source/apex-fp/main/classes/function/RecordFieldsMatch.cls",
-      "Warning: line 5 at 16-20: Method 'System.Boolean call(System.SObject)' implementing System.Boolean call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "sfdx-source/apex-fp/main/classes/function/SObjectFunctions.cls",
-      "Warning: line 36 at 17-21: Method 'System.Boolean call(System.SObject)' implementing System.Boolean call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 49 at 14-18: Method 'void call(System.SObject)' implementing void call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "sfdx-source/apex-fp/main/classes/function/SObjectNotNull.cls",
-      "Warning: line 2 at 16-20: Method 'System.Boolean call(System.SObject)' implementing System.Boolean call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "sfdx-source/apex-fp/test/classes/collection/SObjectCollectionTest.cls",
-      "Warning: line 655 at 17-21: Method 'System.SObject call(System.SObject)' implementing System.SObject call(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
@@ -1920,9 +1709,6 @@ exports[`Check samples Sample: at4dx 1`] = `
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectUnitOfWork.cls",
       "Missing: line 30 at 13-41: No type declaration found for 'fflib_SObjectUnitOfWork'",
       "Missing: line 39 at 109-112: No type declaration found for 'fflib_SObjectUnitOfWork.IDML'",
-      "Warning: line 59 at 16-24: Method 'void register(System.SObject)' implementing void register(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 92 at 16-24: Method 'void register(System.SObject, Schema.SObjectField, System.SObject)' implementing void register(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 92 at 16-24: Method 'void register(System.SObject, Schema.SObjectField, System.SObject)' implementing void register(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
     ],
     [
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectUnitOfWorkDIModule.cls",
@@ -2145,32 +1931,6 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
       "dlrs/libs/fflib-common/classes/fflib_SObjectDescribe.cls",
       "Warning: line 192:6 to 194:7: Local variable is hiding class field 'token', see dlrs/libs/fflib-common/classes/fflib_SObjectDescribe.cls: line 41 at 10-35",
     ],
-    [
-      "dlrs/libs/fflib-common/classes/fflib_SObjectMocks.cls",
-      "Warning: line 115 at 16-36: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 127 at 16-29: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 136 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 136 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 158 at 16-31: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 63 at 16-27: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 81 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 81 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 98 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 98 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "dlrs/libs/fflib-common/classes/fflib_SObjectUnitOfWork.cls",
-      "Warning: line 191 at 14-25: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 214 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 214 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 244 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 244 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 268 at 14-34: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 281 at 14-27: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 305 at 14-27: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 305 at 14-27: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 343 at 14-29: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
   ],
   "status": 0,
 }
@@ -2206,16 +1966,7 @@ exports[`Check samples Sample: einstein-ai 1`] = `
 
 exports[`Check samples Sample: esapi 1`] = `
 {
-  "logs": [
-    [
-      "force-app/main/default/classes/SFDCAccessController.cls",
-      "Warning: line 1018 at 23-35: Method 'System.SObject insertAsUser(System.SObject, System.List<Schema.SObjectField>)' implementing System.SObject insertAsUser(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 1154 at 23-35: Method 'System.SObject updateAsUser(System.SObject, System.List<System.String>)' implementing System.SObject updateAsUser(System.SObject, System.List<System.String>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 1196 at 23-35: Method 'System.SObject updateAsUser(System.SObject, System.List<Schema.SObjectField>)' implementing System.SObject updateAsUser(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 1378 at 20-32: Method 'void deleteAsUser(System.SObject)' implementing void deleteAsUser(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 987 at 23-35: Method 'System.SObject insertAsUser(System.SObject, System.List<System.String>)' implementing System.SObject insertAsUser(System.SObject, System.List<System.String>) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
@@ -2249,27 +2000,6 @@ exports[`Check samples Sample: fflib-apex-common 1`] = `
     [
       "sfdx-source/apex-common/main/classes/fflib_SObjectDescribe.cls",
       "Warning: line 187 at 3-82: Local variable is hiding class field 'token', see sfdx-source/apex-common/main/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
-    ],
-    [
-      "sfdx-source/apex-common/main/classes/fflib_SObjectUnitOfWork.cls",
-      "Warning: line 217 at 13-36: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 243 at 16-27: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 269 at 16-27: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 291 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 309 at 16-36: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 327 at 16-36: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 341 at 16-29: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 366 at 16-29: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 402 at 16-29: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 427 at 16-30: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 457 at 16-31: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 498 at 16-42: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 509 at 16-48: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 537 at 16-54: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 564 at 16-54: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
     ],
     [
       "sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -2375,24 +2105,6 @@ exports[`Check samples Sample: fflib-apex-common 1`] = `
       "Missing: line 87 at 3-13: No type declaration found for 'fflib_ApexMocks'",
       "Missing: line 92 at 3-8: No type declaration found for 'fflib_ApexMocks'",
       "Missing: line 97 at 3-8: No type declaration found for 'fflib_ApexMocks'",
-      "Warning: line 100 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 100 at 14-25: Method 'void registerNew(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerNew(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 105 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 105 at 14-34: Method 'void registerRelationship(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerRelationship(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 110 at 14-34: Method 'void registerRelationship(Messaging.SingleEmailMessage, System.SObject)' implementing void registerRelationship(Messaging.SingleEmailMessage, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 115 at 20-40: Method 'void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object)' implementing void registerRelationship(System.SObject, Schema.SObjectField, Schema.SObjectField, Object) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 120 at 14-27: Method 'void registerDirty(System.SObject)' implementing void registerDirty(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 134 at 14-27: Method 'void registerDirty(System.SObject, System.List<Schema.SObjectField>)' implementing void registerDirty(System.SObject, System.List<Schema.SObjectField>) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 143 at 20-33: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 143 at 20-33: Method 'void registerDirty(System.SObject, Schema.SObjectField, System.SObject)' implementing void registerDirty(System.SObject, Schema.SObjectField, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 153 at 14-28: Method 'void registerUpsert(System.SObject)' implementing void registerUpsert(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 158 at 14-37: Method 'void registerEmptyRecycleBin(System.SObject)' implementing void registerEmptyRecycleBin(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 173 at 14-29: Method 'void registerDeleted(System.SObject)' implementing void registerDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 183 at 14-40: Method 'void registerPermanentlyDeleted(System.SObject)' implementing void registerPermanentlyDeleted(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 193 at 14-46: Method 'void registerPublishBeforeTransaction(System.SObject)' implementing void registerPublishBeforeTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 203 at 14-52: Method 'void registerPublishAfterSuccessTransaction(System.SObject)' implementing void registerPublishAfterSuccessTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 211 at 14-52: Method 'void registerPublishAfterFailureTransaction(System.SObject)' implementing void registerPublishAfterFailureTransaction(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 90 at 14-25: Method 'void registerNew(System.SObject)' implementing void registerNew(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
     ],
   ],
   "status": 4,
@@ -2909,55 +2621,7 @@ exports[`Check samples Sample: salesforce-limit-monitor 1`] = `
 
 exports[`Check samples Sample: selector 1`] = `
 {
-  "logs": [
-    [
-      "src/classes/AndPredicate.cls",
-      "Warning: line 34 at 19-27: Method 'System.Boolean evaluate(System.SObject)' implementing System.Boolean evaluate(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 47 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 47 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "src/classes/FieldChangedPredicate.cls",
-      "Warning: line 15 at 19-27: Method 'System.Boolean evaluate(System.SObject)' implementing System.Boolean evaluate(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 20 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 20 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "src/classes/FieldNewPredicate.cls",
-      "Warning: line 15 at 19-27: Method 'System.Boolean evaluate(System.SObject)' implementing System.Boolean evaluate(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 20 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 20 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "src/classes/FilterTest.cls",
-      "Warning: line 197 at 23-31: Method 'System.Boolean evaluate(System.SObject)' implementing System.Boolean evaluate(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 202 at 23-31: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 202 at 23-31: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "src/classes/InsertPredicate.cls",
-      "Warning: line 13 at 27-35: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 13 at 27-35: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "src/classes/IsNewPredicate.cls",
-      "Warning: line 3 at 19-27: Method 'System.Boolean evaluate(System.SObject)' implementing System.Boolean evaluate(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 8 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 8 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "src/classes/NotPredicate.cls",
-      "Warning: line 10 at 19-27: Method 'System.Boolean evaluate(System.SObject)' implementing System.Boolean evaluate(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 15 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 15 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-    [
-      "src/classes/OrPredicate.cls",
-      "Warning: line 34 at 19-27: Method 'System.Boolean evaluate(System.SObject)' implementing System.Boolean evaluate(System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 47 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-      "Warning: line 47 at 19-27: Method 'System.Boolean evaluate(System.SObject, System.SObject)' implementing System.Boolean evaluate(System.SObject, System.SObject) should use param 'System.SObject' instead of 'System.SObject'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
