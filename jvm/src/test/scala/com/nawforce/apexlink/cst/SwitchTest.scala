@@ -14,9 +14,10 @@
 
 package com.nawforce.apexlink.cst
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api.{ANTLRParser, ServerOps}
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class SwitchTest extends AnyFunSuite with TestHelper {

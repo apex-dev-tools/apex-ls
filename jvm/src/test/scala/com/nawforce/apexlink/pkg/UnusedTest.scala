@@ -13,13 +13,14 @@
  */
 package com.nawforce.apexlink.pkg
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.UnusedPlugin.onlyTestCodeReferenceText
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryDeclaration}
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class UnusedTest extends AnyFunSuite with TestHelper {

@@ -25,21 +25,46 @@ class DocumentTest extends AnyFunSuite {
   test("cls file") {
     MetadataDocument(root.join("Foo.cls")) match {
       case Some(ApexClassDocument(path, Name("Foo"))) if path == root.join("Foo.cls") => ()
-      case x                                                                          => assert(false, x)
+      case x => assert(false, x)
+    }
+  }
+
+  test("cls meta file") {
+    MetadataDocument(root.join("Foo.cls-meta.xml")) match {
+      case Some(ApexClassMetaDocument(path, Name("Foo")))
+          if path == root.join("Foo.cls-meta.xml") =>
+        ()
+      case x => assert(false, x)
+    }
+  }
+
+  test("trigger file") {
+    MetadataDocument(root.join("Foo.trigger")) match {
+      case Some(ApexTriggerDocument(path, Name("Foo"))) if path == root.join("Foo.trigger") => ()
+      case x => assert(false, x)
+    }
+  }
+
+  test("trigger meta file") {
+    MetadataDocument(root.join("Foo.trigger-meta.xml")) match {
+      case Some(ApexTriggerMetaDocument(path, Name("Foo")))
+          if path == root.join("Foo.trigger-meta.xml") =>
+        ()
+      case x => assert(false, x)
     }
   }
 
   test("component file") {
     MetadataDocument(root.join("Foo.component")) match {
       case Some(ComponentDocument(path, Name("Foo"))) if path == root.join("Foo.component") => ()
-      case x                                                                                => assert(false, x)
+      case x => assert(false, x)
     }
   }
 
   test("object file") {
     MetadataDocument(root.join("Foo.object")) match {
       case Some(SObjectDocument(path, Name("Foo"))) if path == root.join("Foo.object") => ()
-      case x                                                                           => assert(false, x)
+      case x => assert(false, x)
     }
   }
 
@@ -54,7 +79,7 @@ class DocumentTest extends AnyFunSuite {
   test("custom object file") {
     MetadataDocument(root.join("Foo__c.object")) match {
       case Some(SObjectDocument(path, Name("Foo__c"))) if path == root.join("Foo__c.object") => ()
-      case x                                                                                 => assert(false, x)
+      case x => assert(false, x)
     }
   }
 
@@ -141,21 +166,21 @@ class DocumentTest extends AnyFunSuite {
   test("labels file") {
     MetadataDocument(root.join("Foo.labels")) match {
       case Some(LabelsDocument(path, Name("Foo"))) if path == root.join("Foo.labels") => ()
-      case x                                                                          => assert(false, x)
+      case x => assert(false, x)
     }
   }
 
   test("labels file (sfdx)") {
     MetadataDocument(root.join("Foo.labels-meta.xml")) match {
       case Some(LabelsDocument(path, Name("Foo"))) if path == root.join("Foo.labels-meta.xml") => ()
-      case x                                                                                   => assert(false, x)
+      case x => assert(false, x)
     }
   }
 
   test("page file") {
     MetadataDocument(root.join("Foo.page")) match {
       case Some(PageDocument(path, Name("Foo"))) if path == root.join("Foo.page") => ()
-      case x                                                                      => assert(false, x)
+      case x => assert(false, x)
     }
   }
 

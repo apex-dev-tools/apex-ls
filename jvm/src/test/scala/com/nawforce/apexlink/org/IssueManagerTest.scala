@@ -13,9 +13,10 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.pkgforce.diagnostics.{Issue, SYNTAX_CATEGORY}
 import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class IssueManagerTest extends AnyFunSuite with TestHelper {

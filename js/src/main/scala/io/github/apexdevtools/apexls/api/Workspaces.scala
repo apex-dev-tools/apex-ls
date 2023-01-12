@@ -14,6 +14,7 @@
 
 package io.github.apexdevtools.apexls.api
 
+import com.nawforce.pkgforce.diagnostics.IssuesManager
 import com.nawforce.pkgforce.names.DotName
 import com.nawforce.pkgforce.workspace.{Workspace => SWorkspace}
 import com.nawforce.runtime.platform.Path
@@ -46,12 +47,14 @@ object Workspaces {
     if (ws.nonEmpty)
       return ws.get
 
-    val issuesAndWorkspace = SWorkspace(Path(wsPath))
-    if (issuesAndWorkspace.issues.nonEmpty) {
-      throw new WorkspaceException(issuesAndWorkspace.issues.head.asString)
+    val issuesManager = new IssuesManager
+    val workspace     = SWorkspace(Path(wsPath), issuesManager)
+    val issues        = issuesManager.hasUpdatedIssues
+    if (issues.nonEmpty) {
+      throw new WorkspaceException(issues.head)
     }
 
-    issuesAndWorkspace.value
+    workspace
       .map(workspace => {
         val jsWorkspace = new Workspace(workspace)
         workspaces.put(wsPath, new Workspace(workspace))

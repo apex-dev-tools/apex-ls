@@ -16,16 +16,22 @@ package com.nawforce.pkgforce.stream
 
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.platform.Path
 
 final case class TriggerEvent(path: PathLike) extends PackageEvent
 
 /** Convert trigger documents into PackageEvents */
 object TriggerGenerator {
 
-  def iterator(index: DocumentIndex): Iterator[PackageEvent] =
-    index.get(TriggerNature).flatMap(toEvents)
-
-  private def toEvents(document: MetadataDocument): Iterator[PackageEvent] = {
-    Iterator(TriggerEvent(document.path))
+  def iterator(index: DocumentIndex): Iterator[PackageEvent] = {
+    // TODO: Replace this tmp approach when events removed
+    val docs = index.get(TriggerNature)
+    docs.iterator.flatMap(md => {
+      md._2
+        .map(p => Path(p))
+        .find(p => MetadataDocument(p).exists(_.nature == TriggerNature))
+        .map(p => TriggerEvent(Path(p)))
+    })
   }
+
 }

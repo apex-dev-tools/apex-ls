@@ -13,10 +13,10 @@
  */
 package com.nawforce.apexlink.pkg
 
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.pkgforce.names.{Name, Names}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class DeleteTest extends AnyFunSuite with TestHelper {

@@ -13,11 +13,11 @@
  */
 package com.nawforce.apexlink.types
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class InterviewTest extends AnyFunSuite with TestHelper {

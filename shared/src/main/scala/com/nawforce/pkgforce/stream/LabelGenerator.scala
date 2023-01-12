@@ -19,6 +19,7 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Location, PathLocation}
 import com.nawforce.pkgforce.xml.XMLException
+import com.nawforce.runtime.platform.Path
 import com.nawforce.runtime.xml.XMLDocument
 
 final case class LabelFileEvent(sourceInfo: SourceInfo) extends PackageEvent
@@ -27,8 +28,15 @@ final case class LabelEvent(location: PathLocation, name: Name, isProtected: Boo
 
 object LabelGenerator {
 
+  // TODO: Replace this tmp approach when events removed
   def iterator(index: DocumentIndex): Iterator[PackageEvent] =
-    index.get(LabelNature).flatMap(toEvents)
+    index
+      .get(LabelNature)
+      .values
+      .flatten
+      .flatMap(p => MetadataDocument(Path(p)).map(toEvents))
+      .flatten
+      .iterator
 
   private def toEvents(document: MetadataDocument): Iterator[PackageEvent] = {
     val source = document.source

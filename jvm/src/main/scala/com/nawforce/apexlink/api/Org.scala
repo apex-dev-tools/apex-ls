@@ -24,7 +24,7 @@ import com.nawforce.apexlink.rpc.{
   TestItem
 }
 import io.github.apexdevtools.apexls.api.IssuesCollection
-import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.pkgforce.diagnostics.{IssuesManager, LoggerOps}
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.pkgforce.workspace.{ProjectConfig, Workspace}
@@ -207,9 +207,9 @@ object Org {
       show = true,
       s" with autoFlush = ${ServerOps.isAutoFlushEnabled}, build = ${BuildInfo.implementationBuild}"
     ) {
-      val ws  = Workspace(path)
-      val org = new OPM.OrgImpl(path, ws.value)
-      ws.issues.foreach(org.issueManager.add)
+      val issueManager = new IssuesManager()
+      val ws           = Workspace(path, issueManager)
+      val org          = new OPM.OrgImpl(path, issueManager, ws)
       org
     }
   }

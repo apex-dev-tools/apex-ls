@@ -1,9 +1,10 @@
 package com.nawforce.apexlink.pkg
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.rpc.{DependencyLink, DependencyNode}
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class DependencyGraphTest extends AnyFunSuite with TestHelper {

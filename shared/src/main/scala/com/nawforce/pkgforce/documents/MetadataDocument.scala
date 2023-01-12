@@ -20,14 +20,16 @@ import com.nawforce.runtime.parsers.SourceData
 
 import scala.collection.compat.immutable.ArraySeq
 
-/** The type of some metadata, such as Trigger metadata. Partial type metadata signals that multiple documents
-  * may contribute to the same type.
+/** The type of some metadata, such as Trigger metadata. Partial type metadata signals that multiple
+  * documents may contribute to the same type.
   */
 sealed abstract class MetadataNature(val partialType: Boolean = false)
 
 case object LabelNature         extends MetadataNature(partialType = true)
 case object ApexNature          extends MetadataNature
+case object ApexMetaNature      extends MetadataNature
 case object TriggerNature       extends MetadataNature
+case object TriggerMetaNature   extends MetadataNature
 case object ComponentNature     extends MetadataNature
 case object PageNature          extends MetadataNature
 case object FlowNature          extends MetadataNature
@@ -40,29 +42,20 @@ case object SharingReasonNature extends MetadataNature
 abstract class MetadataDocument(val path: PathLike, val name: Name) {
 
   /** Type of metadata, this could be stored but we prefer to save space ;-) */
-  def nature: MetadataNature = {
-    this match {
-      case _: LabelsDocument               => LabelNature
-      case _: ApexClassDocument            => ApexNature
-      case _: ApexTriggerDocument          => TriggerNature
-      case _: ComponentDocument            => ComponentNature
-      case _: PageDocument                 => PageNature
-      case _: FlowDocument                 => FlowNature
-      case _: PlatformEventDocument        => SObjectNature
-      case _: BigObjectDocument            => SObjectNature
-      case _: CustomMetadataDocument       => SObjectNature
-      case _: SObjectDocument              => SObjectNature
-      case _: SObjectFieldDocument         => FieldNature
-      case _: SObjectFieldSetDocument      => FieldSetNature
-      case _: SObjectSharingReasonDocument => SharingReasonNature
-    }
-  }
+  def nature: MetadataNature
+
+  /** The nature this metadata is considered a part of, e.g. fields are parts of SObjects */
+  def controllingNature: MetadataNature = nature
 
   /** Return true to avoid indexing bad metadata such as empty files */
   def ignorable(): Boolean = false
 
-  /** Generate a typename for this metadata, if this is not unique you may need to set duplicatesAllowed. */
+  /** Typename for this specific metadata document */
   def typeName(namespace: Option[Name]): TypeName
+
+  /** Typename that this metadata document is considered part of, e.g. a field is part of an SObject
+    */
+  def controllingTypeName(namespace: Option[Name]): TypeName = typeName(namespace)
 
   /** Obtain source data for this document */
   def source: IssuesAnd[Option[SourceData]] = {
@@ -77,6 +70,8 @@ abstract class MetadataDocument(val path: PathLike, val name: Name) {
 final case class LabelsDocument(_path: PathLike, _name: Name)
     extends MetadataDocument(_path, _name) {
 
+  override def nature: MetadataNature = LabelNature
+
   override def typeName(namespace: Option[Name]): TypeName = TypeName.Label
 }
 
@@ -84,6 +79,9 @@ abstract class ClassDocument(_path: PathLike, _name: Name) extends MetadataDocum
 
 final case class ApexClassDocument(_path: PathLike, _name: Name)
     extends ClassDocument(_path, _name) {
+
+  override def nature: MetadataNature = ApexNature
+
   override def typeName(namespace: Option[Name]): TypeName = {
     TypeName(name, Seq(), namespace.map(TypeName(_)))
   }
@@ -96,8 +94,30 @@ object ApexClassDocument {
   }
 }
 
+final case class ApexClassMetaDocument(_path: PathLike, _name: Name)
+    extends MetadataDocument(_path, _name) {
+
+  override def nature: MetadataNature = ApexMetaNature
+
+  override def controllingNature: MetadataNature = ApexNature
+
+  override def typeName(namespace: Option[Name]): TypeName = {
+    TypeName(name, Seq(), namespace.map(TypeName(_)))
+  }
+}
+
+object ApexClassMetaDocument {
+  def apply(path: PathLike): ApexClassMetaDocument = {
+    assert(path.basename.toLowerCase.endsWith(".cls-meta.xml"))
+    new ApexClassMetaDocument(path, Name(path.basename.replaceFirst("(?i)\\.cls-meta.xml$", "")))
+  }
+}
+
 final case class ApexTriggerDocument(_path: PathLike, _name: Name)
     extends MetadataDocument(_path, _name) {
+
+  override def nature: MetadataNature = TriggerNature
+
   override def typeName(namespace: Option[Name]): TypeName = {
     val qname: String = namespace
       .map(ns => s"__sfdc_trigger/${ns.value}/${name.value}")
@@ -113,8 +133,36 @@ object ApexTriggerDocument {
   }
 }
 
+final case class ApexTriggerMetaDocument(_path: PathLike, _name: Name)
+    extends ClassDocument(_path, _name) {
+
+  override def nature: MetadataNature = TriggerMetaNature
+
+  override def controllingNature: MetadataNature = TriggerNature
+
+  override def typeName(namespace: Option[Name]): TypeName = {
+    val qname: String = namespace
+      .map(ns => s"__sfdc_trigger/${ns.value}/${name.value}")
+      .getOrElse(s"__sfdc_trigger/${name.value}")
+    TypeName(Name(qname))
+  }
+}
+
+object ApexTriggerMetaDocument {
+  def apply(path: PathLike): ApexTriggerMetaDocument = {
+    assert(path.basename.toLowerCase.endsWith(".trigger-meta.xml"))
+    new ApexTriggerMetaDocument(
+      path,
+      Name(path.basename.replaceFirst("(?i)\\.trigger-meta.xml$", ""))
+    )
+  }
+}
+
 final case class ComponentDocument(_path: PathLike, _name: Name)
     extends MetadataDocument(_path, _name) {
+
+  override def nature: MetadataNature = ComponentNature
+
   override def typeName(namespace: Option[Name]): TypeName = {
     namespace
       .map(ns => TypeName(name, Nil, Some(TypeName(ns, Nil, Some(TypeName.Component)))))
@@ -122,7 +170,9 @@ final case class ComponentDocument(_path: PathLike, _name: Name)
   }
 }
 
-abstract class SObjectLike(_path: PathLike, _name: Name) extends MetadataDocument(_path, _name) {}
+abstract class SObjectLike(_path: PathLike, _name: Name) extends MetadataDocument(_path, _name) {
+  override def nature: MetadataNature = SObjectNature
+}
 
 final case class SObjectDocument(_path: PathLike, _name: Name) extends SObjectLike(_path, _name) {
 
@@ -159,8 +209,21 @@ final case class BigObjectDocument(_path: PathLike, _name: Name)
 final case class PlatformEventDocument(_path: PathLike, _name: Name)
     extends SimpleSObjectLike(_path, _name)
 
+abstract class SObjectPart(_path: PathLike, _name: Name) extends MetadataDocument(_path, _name) {
+
+  override def controllingNature: MetadataNature = SObjectNature
+
+  override def controllingTypeName(namespace: Option[Name]): TypeName = {
+    val sobjectName = path.parent.parent.basename
+    TypeName(NamespacePrefix(namespace, sobjectName), Nil, Some(TypeName.Schema))
+  }
+}
+
 final case class SObjectFieldDocument(_path: PathLike, _name: Name)
-    extends MetadataDocument(_path, _name) {
+    extends SObjectPart(_path, _name) {
+
+  override def nature: MetadataNature = FieldNature
+
   override def typeName(namespace: Option[Name]): TypeName = {
     val sobjectName = path.parent.parent.basename
     val fieldsType =
@@ -172,7 +235,10 @@ final case class SObjectFieldDocument(_path: PathLike, _name: Name)
 }
 
 final case class SObjectFieldSetDocument(_path: PathLike, _name: Name)
-    extends MetadataDocument(_path, _name) {
+    extends SObjectPart(_path, _name) {
+
+  override def nature: MetadataNature = FieldSetNature
+
   override def typeName(namespace: Option[Name]): TypeName = {
     val sobjectName = path.parent.parent.basename
     val fieldSetType = TypeName.sObjectTypeFieldSets$(
@@ -183,7 +249,10 @@ final case class SObjectFieldSetDocument(_path: PathLike, _name: Name)
 }
 
 final case class SObjectSharingReasonDocument(_path: PathLike, _name: Name)
-    extends MetadataDocument(_path, _name) {
+    extends SObjectPart(_path, _name) {
+
+  override def nature: MetadataNature = SharingReasonNature
+
   override def typeName(namespace: Option[Name]): TypeName = {
     val sobjectName = path.parent.parent.basename
     val sharingReasonType = TypeName.sObjectTypeRowClause$(
@@ -194,12 +263,18 @@ final case class SObjectSharingReasonDocument(_path: PathLike, _name: Name)
 }
 
 final case class PageDocument(_path: PathLike, _name: Name) extends MetadataDocument(_path, _name) {
+
+  override def nature: MetadataNature = PageNature
+
   override def typeName(namespace: Option[Name]): TypeName = {
     TypeName(NamespacePrefix(namespace, name.value), Nil, Some(TypeName.Page))
   }
 }
 
 final case class FlowDocument(_path: PathLike, _name: Name) extends MetadataDocument(_path, _name) {
+
+  override def nature: MetadataNature = FlowNature
+
   override def typeName(namespace: Option[Name]): TypeName = {
     namespace
       .map(ns => TypeName(name, Nil, Some(TypeName(ns, Nil, Some(TypeName.Interview)))))
@@ -211,7 +286,9 @@ object MetadataDocument {
   // These are slightly over general, additional constraints are applied below
   private val extensions: Seq[String] = Seq(
     "cls",
+    "cls-meta.xml",
     "trigger",
+    "trigger-meta.xml",
     "component",
     "object",
     "object-meta.xml",
@@ -256,6 +333,8 @@ object MetadataDocument {
     } else if (parts.length == 3 && parts(2) == "xml") {
       val name = Name(parts.head)
       parts(1) match {
+        case "cls-meta"     => Some(ApexClassMetaDocument(path, name))
+        case "trigger-meta" => Some(ApexTriggerMetaDocument(path, name))
         case "field-meta"
             if path.parent.basename.equalsIgnoreCase("fields") && !path.parent.parent.isRoot =>
           Some(SObjectFieldDocument(path, name))
