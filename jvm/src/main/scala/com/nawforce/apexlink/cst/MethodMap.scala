@@ -188,7 +188,10 @@ final case class MethodMap(
       None
     else if (assignable.length == 1)
       Some(Right(assignable.head))
-    else {
+    else if (params.contains(TypeNames.Any)) {
+      // We might get multiple matches when input contains an any, just pick first
+      Some(Right(assignable.head))
+    } else {
       Some(
         assignable
           .find(method =>

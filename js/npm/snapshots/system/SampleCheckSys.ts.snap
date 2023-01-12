@@ -23,8 +23,6 @@ exports[`Check samples Sample: ActionPlansV4 1`] = `
     [
       "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTriggerHandlers.cls",
       "Missing: line 330 at 42-73: Unknown field 'IsClosed' on SObject 'Schema.Event'",
-      "Warning: line 337 at 5-94: Ambiguous method call for 'delete' on 'System.Database' taking arguments 'any'",
-      "Warning: line 349 at 5-133: Ambiguous method call for 'delete' on 'System.Database' taking arguments 'any'",
     ],
     [
       "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls",
@@ -179,17 +177,8 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 65:8 to 73:9: Local variable is hiding class field 'contactRecord', see Cumulus/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls: line 38 at 19-41",
     ],
     [
-      "Cumulus/force-app/main/default/classes/AFFL_Affiliations_TDTM.cls",
-      "Warning: line 709 at 12-51: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 710 at 12-49: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "Cumulus/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls",
       "Warning: line 54:8 to 61:9: Local variable is hiding class field 'opportunity', see Cumulus/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls: line 43 at 11-35",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/BDI_Donations.cls",
-      "Warning: line 319 at 19-72: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
     ],
     [
       "Cumulus/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls",
@@ -209,47 +198,14 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 864 at 16-56: Local variable is hiding class field 'errors', see Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 835 at 28-48",
     ],
     [
-      "Cumulus/force-app/main/default/classes/CON_ContactMerge_TEST.cls",
-      "Warning: line 114 at 16-65: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 1147 at 16-65: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "Cumulus/force-app/main/default/classes/CRLP_ApiService.cls",
       "Warning: line 247 at 8-58: Local variable is hiding class field 'changedRollupTypes', see Cumulus/force-app/main/default/classes/CRLP_ApiService.cls: line 43 at 12-63",
       "Warning: line 269 at 8-58: Local variable is hiding class field 'changedRollupTypes', see Cumulus/force-app/main/default/classes/CRLP_ApiService.cls: line 43 at 12-63",
     ],
     [
-      "Cumulus/force-app/main/default/classes/CRLP_Batch_Base_NonSkew.cls",
-      "Warning: line 201 at 19-77: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/CRLP_Batch_Base_Skew.cls",
-      "Warning: line 120 at 19-77: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/CRLP_DefaultConfigBuilder.cls",
-      "Warning: line 59 at 8-78: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls",
       "Warning: line 222 at 12-37: Local variable is hiding class field 'label', see Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
       "Warning: line 258 at 12-37: Local variable is hiding class field 'label', see Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/CRLP_SkewDispatcher_BATCH.cls",
-      "Warning: line 120 at 15-73: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/DonationSelector.cls",
-      "Warning: line 103 at 12-73: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 105 at 12-70: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 106 at 12-73: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 107 at 12-71: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 108 at 12-63: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 109 at 12-70: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 114 at 12-70: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 115 at 12-63: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 95 at 12-68: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
     ],
     [
       "Cumulus/force-app/main/default/classes/ElevateBatchCapturer.cls",
@@ -265,28 +221,8 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 979:8 to 984:9: Local variable is hiding class field 'templates', see Cumulus/force-app/main/default/classes/GE_GiftEntryController.cls: line 841 at 25-56",
     ],
     [
-      "Cumulus/force-app/main/default/classes/GE_Template_TEST.cls",
-      "Warning: line 286 at 24-93: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 296 at 24-85: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "Cumulus/force-app/main/default/classes/GiftBatchService.cls",
       "Warning: line 228:12 to 229:99: Local variable is hiding class field 'batch', see Cumulus/force-app/main/default/classes/GiftBatchService.cls: line 169 at 16-41",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/LD_LeadConvertOverride_CTRL.cls",
-      "Warning: line 838 at 12-55: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/NPSP_Address.cls",
-      "Warning: line 85 at 16-70: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/PMT_PaymentCreator.cls",
-      "Warning: line 291 at 19-82: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 291 at 86-148: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 395 at 16-78: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 398 at 20-82: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
     ],
     [
       "Cumulus/force-app/main/default/classes/PS_CommitmentRequest.cls",
@@ -295,65 +231,6 @@ exports[`Check samples Sample: Cumulus 1`] = `
     [
       "Cumulus/force-app/main/default/classes/RD2_AppView.cls",
       "Warning: line 68 at 8-65: Local variable is hiding class field 'parentSobjectType', see Cumulus/force-app/main/default/classes/RD2_AppView.cls: line 39 at 24-49",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD2_ChangeLog.cls",
-      "Warning: line 149 at 12-79: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 64 at 16-98: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 78 at 16-77: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD2_CustomFieldMapper.cls",
-      "Warning: line 139 at 12-108: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD2_DataMigration_TEST.cls",
-      "Warning: line 1038:45 to 1039:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1098:45 to 1099:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1151:15 to 1152:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1182:45 to 1183:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1232:45 to 1233:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1310:45 to 1311:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1379:45 to 1380:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1435:49 to 1436:50: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1490:49 to 1491:50: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1556:49 to 1557:50: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1761:49 to 1762:50: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 2045:15 to 2046:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 231:45 to 232:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD2_ETableController.cls",
-      "Warning: line 224 at 162-224: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 308 at 34-95: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 310 at 134-190: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 310 at 60-127: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 312 at 76-137: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD2_EntryFormController.cls",
-      "Warning: line 123 at 16-89: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 170 at 16-78: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 171 at 16-83: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 172 at 16-87: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 173 at 16-77: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 174 at 16-89: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 178 at 16-83: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 180 at 16-98: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 195 at 12-73: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 196 at 12-74: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 197 at 12-85: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 198 at 12-83: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD2_OpportunityEvaluationService_TEST.cls",
-      "Warning: line 1870 at 12-84: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 1884 at 45-117: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 235:12 to 237:58: Ambiguous method call for 'withAccount' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD2_OpportunityService_TEST.cls",
-      "Warning: line 1065:26 to 1066:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
     ],
     [
       "Cumulus/force-app/main/default/classes/RD2_RecurringDonationsOpp_TEST.cls",
@@ -369,43 +246,8 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 338 at 12-60: Local variable is hiding class field 'stateLabel', see Cumulus/force-app/main/default/classes/RD2_StatusMappingSettings_CTRL.cls: line 316 at 28-46",
     ],
     [
-      "Cumulus/force-app/main/default/classes/RD2_ValidationService_TEST.cls",
-      "Warning: line 1530:15 to 1531:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD2_VisualizeScheduleController_TEST.cls",
-      "Warning: line 456:45 to 457:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RD_RecurringDonations.cls",
-      "Warning: line 1050 at 28-114: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-      "Warning: line 491 at 24-111: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-      "Warning: line 573 at 28-113: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-      "Warning: line 685 at 62-135: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 792 at 20-119: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/REL_Relationships_Cm_TDTM.cls",
-      "Warning: line 78 at 55-81: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 88 at 51-92: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/REL_Relationships_Con_TDTM.cls",
-      "Warning: line 72 at 51-76: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 83 at 47-87: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/RLLP_OppRollup.cls",
-      "Warning: line 990 at 28-205: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-      "Warning: line 992 at 28-94: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-    ],
-    [
       "Cumulus/force-app/main/default/classes/SoftCreditsDTO.cls",
       "Warning: line 44:8 to 45:54: Local variable is hiding class field 'softCredits', see Cumulus/force-app/main/default/classes/SoftCreditsDTO.cls: line 37 at 11-36",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/TEST_OpportunityBuilder.cls",
-      "Warning: line 308:15 to 309:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_BatchJobService.cls",
@@ -428,22 +270,12 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Missing: line 93 at 8-20: No variable or type found for 'SfdoLogUtils' on 'npsp.SfdoInstrumentationService'",
     ],
     [
-      "Cumulus/force-app/main/selector/ContactMergeSelector.cls",
-      "Warning: line 131 at 16-68: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "Cumulus/force-app/main/service/DonationHistoryService.cls",
       "Missing: line 77 at 15-95: Unknown field or type 'npe01__Payments_Enabled__c' on 'System.SObject'",
     ],
     [
       "Cumulus/force-app/tdtm/classes/TDTM_DMLgt200_TEST.cls",
       "Warning: line 382 at 8-30: Local variable is hiding class field 'insertCnt', see Cumulus/force-app/tdtm/classes/TDTM_DMLgt200_TEST.cls: line 51 at 25-49",
-    ],
-    [
-      "Cumulus/force-app/tdtm/classes/TDTM_Runnable_TEST.cls",
-      "Warning: line 126 at 43-92: Ambiguous method call for 'extractIds' on 'npsp.UTIL_SObject' taking arguments 'any'",
-      "Warning: line 89 at 43-92: Ambiguous method call for 'extractIds' on 'npsp.UTIL_SObject' taking arguments 'any'",
-      "Warning: line 90 at 43-92: Ambiguous method call for 'extractIds' on 'npsp.UTIL_SObject' taking arguments 'any'",
     ],
     [
       "Cumulus/force-app/test/ADDR_Addresses_TEST.cls",
@@ -747,21 +579,8 @@ exports[`Check samples Sample: Milestones-PM 1`] = `
 {
   "logs": [
     [
-      "src/classes/Milestone1_Milestone_Batch_Delete.cls",
-      "Warning: line 47 at 9-94: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "src/classes/Milestone1_Milestone_Batch_Update.cls",
-      "Warning: line 41 at 9-103: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "src/classes/Milestone1_Project_Batch_Update.cls",
-      "Warning: line 40 at 9-99: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
       "src/classes/Milestone1_Summary2.cls",
       "Error: line 98 at 20-32: Unreachable block or statement",
-      "Warning: line 185:61 to 191:71: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
     ],
     [
       "src/classes/Milestone1_XML_Export_Utility.cls",
@@ -823,17 +642,8 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 65:8 to 73:9: Local variable is hiding class field 'contactRecord', see NPSP/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls: line 38 at 19-41",
     ],
     [
-      "NPSP/force-app/main/default/classes/AFFL_Affiliations_TDTM.cls",
-      "Warning: line 709 at 12-51: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 710 at 12-49: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "NPSP/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls",
       "Warning: line 54:8 to 61:9: Local variable is hiding class field 'opportunity', see NPSP/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls: line 43 at 11-35",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/BDI_Donations.cls",
-      "Warning: line 319 at 19-72: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
     ],
     [
       "NPSP/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls",
@@ -853,47 +663,14 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 864 at 16-56: Local variable is hiding class field 'errors', see NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 835 at 28-48",
     ],
     [
-      "NPSP/force-app/main/default/classes/CON_ContactMerge_TEST.cls",
-      "Warning: line 114 at 16-65: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 1147 at 16-65: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "NPSP/force-app/main/default/classes/CRLP_ApiService.cls",
       "Warning: line 247 at 8-58: Local variable is hiding class field 'changedRollupTypes', see NPSP/force-app/main/default/classes/CRLP_ApiService.cls: line 43 at 12-63",
       "Warning: line 269 at 8-58: Local variable is hiding class field 'changedRollupTypes', see NPSP/force-app/main/default/classes/CRLP_ApiService.cls: line 43 at 12-63",
     ],
     [
-      "NPSP/force-app/main/default/classes/CRLP_Batch_Base_NonSkew.cls",
-      "Warning: line 201 at 19-77: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/CRLP_Batch_Base_Skew.cls",
-      "Warning: line 120 at 19-77: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/CRLP_DefaultConfigBuilder.cls",
-      "Warning: line 59 at 8-78: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls",
       "Warning: line 222 at 12-37: Local variable is hiding class field 'label', see NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
       "Warning: line 258 at 12-37: Local variable is hiding class field 'label', see NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/CRLP_SkewDispatcher_BATCH.cls",
-      "Warning: line 120 at 15-73: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/DonationSelector.cls",
-      "Warning: line 103 at 12-73: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 105 at 12-70: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 106 at 12-73: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 107 at 12-71: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 108 at 12-63: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 109 at 12-70: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 114 at 12-70: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 115 at 12-63: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 95 at 12-68: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
     ],
     [
       "NPSP/force-app/main/default/classes/ElevateBatchCapturer.cls",
@@ -909,28 +686,8 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 979:8 to 984:9: Local variable is hiding class field 'templates', see NPSP/force-app/main/default/classes/GE_GiftEntryController.cls: line 841 at 25-56",
     ],
     [
-      "NPSP/force-app/main/default/classes/GE_Template_TEST.cls",
-      "Warning: line 286 at 24-93: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 296 at 24-85: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "NPSP/force-app/main/default/classes/GiftBatchService.cls",
       "Warning: line 228:12 to 229:99: Local variable is hiding class field 'batch', see NPSP/force-app/main/default/classes/GiftBatchService.cls: line 169 at 16-41",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/LD_LeadConvertOverride_CTRL.cls",
-      "Warning: line 838 at 12-55: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/NPSP_Address.cls",
-      "Warning: line 85 at 16-70: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/PMT_PaymentCreator.cls",
-      "Warning: line 291 at 19-82: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 291 at 86-148: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 395 at 16-78: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 398 at 20-82: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
     ],
     [
       "NPSP/force-app/main/default/classes/PS_CommitmentRequest.cls",
@@ -939,65 +696,6 @@ exports[`Check samples Sample: NPSP 1`] = `
     [
       "NPSP/force-app/main/default/classes/RD2_AppView.cls",
       "Warning: line 68 at 8-65: Local variable is hiding class field 'parentSobjectType', see NPSP/force-app/main/default/classes/RD2_AppView.cls: line 39 at 24-49",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD2_ChangeLog.cls",
-      "Warning: line 149 at 12-79: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 64 at 16-98: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 78 at 16-77: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD2_CustomFieldMapper.cls",
-      "Warning: line 139 at 12-108: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD2_DataMigration_TEST.cls",
-      "Warning: line 1038:45 to 1039:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1098:45 to 1099:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1151:15 to 1152:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1182:45 to 1183:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1232:45 to 1233:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1310:45 to 1311:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1379:45 to 1380:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1435:49 to 1436:50: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1490:49 to 1491:50: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1556:49 to 1557:50: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 1761:49 to 1762:50: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 2045:15 to 2046:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-      "Warning: line 231:45 to 232:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD2_ETableController.cls",
-      "Warning: line 224 at 162-224: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 308 at 34-95: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 310 at 134-190: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 310 at 60-127: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 312 at 76-137: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD2_EntryFormController.cls",
-      "Warning: line 123 at 16-89: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 170 at 16-78: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 171 at 16-83: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 172 at 16-87: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 173 at 16-77: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 174 at 16-89: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 178 at 16-83: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 180 at 16-98: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 195 at 12-73: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 196 at 12-74: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 197 at 12-85: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 198 at 12-83: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD2_OpportunityEvaluationService_TEST.cls",
-      "Warning: line 1870 at 12-84: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 1884 at 45-117: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 235:12 to 237:58: Ambiguous method call for 'withAccount' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD2_OpportunityService_TEST.cls",
-      "Warning: line 1065:26 to 1066:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
     ],
     [
       "NPSP/force-app/main/default/classes/RD2_RecurringDonationsOpp_TEST.cls",
@@ -1013,43 +711,8 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 338 at 12-60: Local variable is hiding class field 'stateLabel', see NPSP/force-app/main/default/classes/RD2_StatusMappingSettings_CTRL.cls: line 316 at 28-46",
     ],
     [
-      "NPSP/force-app/main/default/classes/RD2_ValidationService_TEST.cls",
-      "Warning: line 1530:15 to 1531:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD2_VisualizeScheduleController_TEST.cls",
-      "Warning: line 456:45 to 457:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RD_RecurringDonations.cls",
-      "Warning: line 1050 at 28-114: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-      "Warning: line 491 at 24-111: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-      "Warning: line 573 at 28-113: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-      "Warning: line 685 at 62-135: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-      "Warning: line 792 at 20-119: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/REL_Relationships_Cm_TDTM.cls",
-      "Warning: line 78 at 55-81: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 88 at 51-92: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/REL_Relationships_Con_TDTM.cls",
-      "Warning: line 72 at 51-76: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-      "Warning: line 83 at 47-87: Ambiguous method call for 'get' on 'System.SObject' taking arguments 'any'",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/RLLP_OppRollup.cls",
-      "Warning: line 990 at 28-205: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-      "Warning: line 992 at 28-94: Ambiguous method call for 'put' on 'System.SObject' taking arguments 'any",
-    ],
-    [
       "NPSP/force-app/main/default/classes/SoftCreditsDTO.cls",
       "Warning: line 44:8 to 45:54: Local variable is hiding class field 'softCredits', see NPSP/force-app/main/default/classes/SoftCreditsDTO.cls: line 37 at 11-36",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/TEST_OpportunityBuilder.cls",
-      "Warning: line 308:15 to 309:46: Ambiguous method call for 'withContact' on 'npsp.TEST_OpportunityBuilder' taking arguments 'any'",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls",
@@ -1072,22 +735,12 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Missing: line 93 at 8-20: No variable or type found for 'SfdoLogUtils' on 'npsp.SfdoInstrumentationService'",
     ],
     [
-      "NPSP/force-app/main/selector/ContactMergeSelector.cls",
-      "Warning: line 131 at 16-68: Ambiguous method call for 'valueOf' on 'System.String' taking arguments 'any'",
-    ],
-    [
       "NPSP/force-app/main/service/DonationHistoryService.cls",
       "Missing: line 77 at 15-95: Unknown field or type 'npe01__Payments_Enabled__c' on 'System.SObject'",
     ],
     [
       "NPSP/force-app/tdtm/classes/TDTM_DMLgt200_TEST.cls",
       "Warning: line 382 at 8-30: Local variable is hiding class field 'insertCnt', see NPSP/force-app/tdtm/classes/TDTM_DMLgt200_TEST.cls: line 51 at 25-49",
-    ],
-    [
-      "NPSP/force-app/tdtm/classes/TDTM_Runnable_TEST.cls",
-      "Warning: line 126 at 43-92: Ambiguous method call for 'extractIds' on 'npsp.UTIL_SObject' taking arguments 'any'",
-      "Warning: line 89 at 43-92: Ambiguous method call for 'extractIds' on 'npsp.UTIL_SObject' taking arguments 'any'",
-      "Warning: line 90 at 43-92: Ambiguous method call for 'extractIds' on 'npsp.UTIL_SObject' taking arguments 'any'",
     ],
     [
       "NPSP/force-app/test/ADDR_Addresses_TEST.cls",
@@ -1129,12 +782,6 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Error: line 85 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
     ],
     [
-      "nebula-logger/core/main/log-management/classes/LogBatchPurger.cls",
-      "Warning: line 202:31 to 209:17: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-      "Warning: line 212:31 to 219:17: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-      "Warning: line 222:31 to 229:17: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
       "nebula-logger/core/main/log-management/classes/LogEntryEventHandler.cls",
       "Missing: line 237 at 31-54: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
     ],
@@ -1166,10 +813,6 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Missing: line 971 at 12-45: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
     ],
     [
-      "nebula-logger/plugins/async-failure-additions/plugin/classes/LogBatchApexErrorEventHandler_Tests.cls",
-      "Warning: line 80 at 15-70: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
       "nebula-logger/plugins/big-object-archiving/plugin/classes/LogEntryArchiveBuilder.cls",
       "Missing: line 318 at 40-77: Unknown field 'SObjectType' on SObject 'Schema.LogEntryArchive__b'",
       "Missing: line 61 at 27-55: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
@@ -1185,10 +828,6 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "nebula-logger/plugins/log-retention-rules/plugin/classes/LogRetentionFilter.cls",
       "Warning: line 106 at 12-127: Local variable is hiding class field 'conditionsLogic', see nebula-logger/plugins/log-retention-rules/plugin/classes/LogRetentionFilter.cls: line 47 at 16-39",
       "Warning: line 414 at 16-78: Local variable is hiding class field 'fieldDescribe', see nebula-logger/plugins/log-retention-rules/plugin/classes/LogRetentionFilter.cls: line 394 at 16-57",
-    ],
-    [
-      "nebula-logger/recipes/classes/Account_Batch_Logger_Example.cls",
-      "Warning: line 23 at 15-108: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
     ],
     [
       "nebula-logger/recipes/classes/Account_Queueable_Logger_Example.cls",
@@ -1689,7 +1328,6 @@ exports[`Check samples Sample: at4dx 1`] = `
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectDomainDIModule.cls",
       "Missing: line 31 at 13-45: No type declaration found for 'di_Module'",
       "Missing: line 60 at 30-59: No type declaration found for 'di_Injector.InjectorException'",
-      "Warning: line 39:8 to 41:80: Ambiguous method call for 'addAll' on 'System.List<Schema.ApplicationFactory_DomainBinding__mdt>' taking arguments 'any'",
     ],
     [
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls",
@@ -1703,7 +1341,6 @@ exports[`Check samples Sample: at4dx 1`] = `
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelectorDIModule.cls",
       "Missing: line 31 at 13-47: No type declaration found for 'di_Module'",
       "Missing: line 61 at 30-59: No type declaration found for 'di_Injector.InjectorException'",
-      "Warning: line 39:8 to 42:9: Ambiguous method call for 'addAll' on 'System.List<Schema.ApplicationFactory_SelectorBinding__mdt>' taking arguments 'any'",
     ],
     [
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectUnitOfWork.cls",
@@ -1725,18 +1362,15 @@ exports[`Check samples Sample: at4dx 1`] = `
       "Missing: line 50 at 16-29: No type declaration found for 'fflib_SObjectUnitOfWork.IDML'",
       "Missing: line 50 at 32-67: No type declaration found for 'fflib_SObjectUnitOfWork.IDML'",
       "Missing: line 58 at 26-55: No type declaration found for 'di_Injector.InjectorException'",
-      "Warning: line 34:8 to 38:33: Ambiguous method call for 'addAll' on 'System.List<Schema.ApplicationFactory_UnitOfWorkBinding__mdt>' taking arguments 'any'",
     ],
     [
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSelectorFieldsetDIModule.cls",
       "Missing: line 27 at 13-48: No type declaration found for 'di_Module'",
-      "Warning: line 37:8 to 44:10: Ambiguous method call for 'addAll' on 'System.List<Schema.SelectorConfig_FieldSetInclusion__mdt>' taking arguments 'any'",
     ],
     [
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationServiceDIModule.cls",
       "Missing: line 31 at 13-39: No type declaration found for 'di_Module'",
       "Missing: line 50 at 26-55: No type declaration found for 'di_Injector.InjectorException'",
-      "Warning: line 39 at 8-143: Ambiguous method call for 'addAll' on 'System.List<Schema.ApplicationFactory_ServiceBinding__mdt>' taking arguments 'any'",
     ],
     [
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/IApplicationSObjectDomain.cls",
@@ -1764,10 +1398,6 @@ exports[`Check samples Sample: at4dx 1`] = `
       "Missing: line 180 at 22-49: No type declaration found for 'di_Binding.BindingException'",
       "Missing: line 185 at 22-49: No type declaration found for 'di_Binding.BindingException'",
       "Missing: line 27 at 13-37: No type declaration found for 'di_Binding.Provider'",
-      "Warning: line 106:8 to 114:132: Ambiguous method call for 'addAll' on 'System.List<Schema.DomainProcessBinding__mdt>' taking arguments 'any'",
-      "Warning: line 335 at 20-78: Ambiguous method call for 'addAll' on 'System.List<System.SObject>' taking arguments 'any'",
-      "Warning: line 391 at 20-78: Ambiguous method call for 'addAll' on 'System.List<System.SObject>' taking arguments 'any'",
-      "Warning: line 96:8 to 104:132: Ambiguous method call for 'addAll' on 'System.List<Schema.DomainProcessBinding__mdt>' taking arguments 'any'",
     ],
     [
       "at4dx/sfdx-source/core/main/classes/framework-domain-process-injection/DomainProcessInjectionDIModule.cls",
@@ -1786,7 +1416,6 @@ exports[`Check samples Sample: at4dx 1`] = `
       "Missing: line 57 at 34-120: No type declaration found for 'fflib_SObjectDescribe'",
       "Missing: line 62 at 26-41: No type declaration found for 'ModuleException'",
       "Missing: line 70 at 26-41: No type declaration found for 'ModuleException'",
-      "Warning: line 37:8 to 50:9: Ambiguous method call for 'addAll' on 'System.List<Schema.PlatformEvents_Subscription__mdt>' taking arguments 'any'",
     ],
     [
       "at4dx/sfdx-source/core/main/classes/framework-selector-method-injection/AbstractSelectorMethodInjectable.cls",
@@ -2244,7 +1873,6 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
       "Missing: line 32 at 34-54: No type declaration found for 'fflib_Application.SelectorFactory'",
       "Missing: line 65 at 21-66: No type declaration found for 'fflib_QueryFactory'",
       "Missing: line 67:21 to 69:55: No type declaration found for 'fflib_QueryFactory'",
-      "Warning: line 104:9 to 105:91: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
     ],
     [
       "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/classes/selectors/OpportunityLineItemsSelector.cls",
@@ -2333,8 +1961,6 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
       "Missing: line 27 at 13-40: No type declaration found for 'fflib_SObjectDomain'",
       "Missing: line 85 at 14-25: No type declaration found for 'fflib_SObjectDomain.IConstructable'",
       "Missing: line 87 at 29-38: No type declaration found for 'fflib_SObjectDomain'",
-      "Warning: line 51 at 4-148: Ambiguous method call for 'addError' on 'System.Id' taking arguments 'any'",
-      "Warning: line 64 at 4-121: Ambiguous method call for 'addError' on 'System.String' taking arguments 'any'",
     ],
     [
       "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/triggers/DeveloperWorkItems.trigger",
@@ -2472,10 +2098,6 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
 {
   "logs": [
     [
-      "src/classes/TestData.cls",
-      "Warning: line 216 at 3-78: Ambiguous method call for 'emptyRecycleBin' on 'System.Database' taking arguments 'any'",
-    ],
-    [
       "src/classes/fflib_SObjectDescribe.cls",
       "Warning: line 181 at 3-82: Local variable is hiding class field 'token', see src/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
     ],
@@ -2486,12 +2108,7 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
 
 exports[`Check samples Sample: forcelog 1`] = `
 {
-  "logs": [
-    [
-      "src/tests/ForceLogTest.cls",
-      "Warning: line 954:35 to 958:10: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
@@ -2609,12 +2226,7 @@ exports[`Check samples Sample: salesforce-bot-toolkit 1`] = `
 
 exports[`Check samples Sample: salesforce-limit-monitor 1`] = `
 {
-  "logs": [
-    [
-      "force-app/main/default/classes/LimitsUtil.cls",
-      "Warning: line 37:4 to 39:5: Ambiguous method call for 'delete' on 'System.Database' taking arguments 'any'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
@@ -2642,13 +2254,7 @@ exports[`Check samples Sample: sf-sandbox-post-copy 1`] = `
 
 exports[`Check samples Sample: sfdc-convert-attachments-to-chatter-files 1`] = `
 {
-  "logs": [
-    [
-      "src/classes/ConvertAttachmentsToFilesBatchable.cls",
-      "Warning: line 44:19 to 52:14: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-      "Warning: line 56:19 to 66:14: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
@@ -2676,16 +2282,7 @@ exports[`Check samples Sample: sfdc-trigger-framework 1`] = `
 
 exports[`Check samples Sample: sfdx-mass-action-scheduler 1`] = `
 {
-  "logs": [
-    [
-      "force-app/main/default/classes/MA_SetConfigUniqueNameBatchable.cls",
-      "Warning: line 25:15 to 32:10: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-    [
-      "force-app/main/default/classes/MA_UpgradeMassActionLogsBatchable.cls",
-      "Warning: line 26:15 to 41:10: Ambiguous method call for 'getQueryLocator' on 'System.Database' taking arguments 'any'",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
