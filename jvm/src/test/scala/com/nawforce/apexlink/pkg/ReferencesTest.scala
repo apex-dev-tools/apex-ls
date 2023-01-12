@@ -1,8 +1,9 @@
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
-import com.nawforce.apexlink.{FileSystemHelper, TargetLocationString, TestHelper}
+import com.nawforce.apexlink.{TargetLocationString, TestHelper}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class ReferencesTest extends AnyFunSuite with TestHelper {

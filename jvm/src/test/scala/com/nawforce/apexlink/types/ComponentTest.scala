@@ -14,11 +14,11 @@
 
 package com.nawforce.apexlink.types
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class ComponentTest extends AnyFunSuite with TestHelper {
@@ -100,7 +100,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
           |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
           |}""".stripMargin,
         "pkg/Test.component" -> "<apex:component/>",
-        "pkg/Dummy.cls"      -> "public class Dummy { {Component.Test c = new Component.pkg.Test();} }"
+        "pkg/Dummy.cls" -> "public class Dummy { {Component.Test c = new Component.pkg.Test();} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -147,7 +147,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
             |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
             |}""".stripMargin,
         "pkg1/Test.component" -> "<apex:component/>",
-        "pkg2/Dummy.cls"      -> "public class Dummy { {Component.pkg1.Test c = new Component.pkg1.Test();} }"
+        "pkg2/Dummy.cls" -> "public class Dummy { {Component.pkg1.Test c = new Component.pkg1.Test();} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)

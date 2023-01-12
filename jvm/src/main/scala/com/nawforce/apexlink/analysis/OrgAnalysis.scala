@@ -6,7 +6,7 @@ package com.nawforce.apexlink.analysis
 import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, NoAnalysis, ServerOps}
 import com.nawforce.apexlink.org.OPM.OrgImpl
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue}
-import com.nawforce.pkgforce.documents.ApexNature
+import com.nawforce.pkgforce.documents.{ApexNature, MetadataDocument}
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.platform.Path
 import io.github.apexdevtools.api.{Issue => APIIssue}
@@ -25,12 +25,17 @@ class OrgAnalysis(org: OrgImpl) {
       return
 
     val files = mutable.Set[Path]()
+    // TODO: Tidy?
     org.packages.foreach(pkg =>
-      pkg.modules.foreach(module =>
-        module.index
-          .get(ApexNature)
-          .foreach(doc => files.add(Path(doc.path)))
-      )
+      pkg.modules.foreach(module => {
+        val docs = module.index.get(ApexNature)
+        docs.iterator.foreach(md => {
+          md._2
+            .map(p => Path(p))
+            .filter(p => MetadataDocument(p).exists(_.nature == ApexNature))
+            .foreach(p => files.add(p))
+        })
+      })
     )
     runAnalysis(files.toSet)
   }

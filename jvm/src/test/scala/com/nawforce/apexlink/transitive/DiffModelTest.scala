@@ -42,10 +42,11 @@ object DiffModelTest {
       System.err.println("Warning: workspace has errors")
 
     val apexPkgAndFiles =
-      org.packages.flatten(
-        pkg =>
-          pkg.modules
-            .flatMap(module => module.index.get(ApexNature).map(doc => (pkg, doc.path.toString)))
+      org.packages.flatten(pkg =>
+        pkg.modules
+          .flatMap(module =>
+            module.index.getControllingDocuments(ApexNature).map(doc => (pkg, doc.path.toString))
+          )
       )
     println(s"Comparing output for ${apexPkgAndFiles.length} apex files")
 
@@ -115,10 +116,9 @@ object DiffModelTest {
   private def getDependencies(org: Org, identifier: TypeIdentifier): Array[TypeIdentifier] = {
     org
       .getPackages()
-      .flatMap(
-        pkg =>
-          Option(pkg.getDependencies(identifier, outerInheritanceOnly = false, apexOnly = true))
-            .getOrElse(Array())
+      .flatMap(pkg =>
+        Option(pkg.getDependencies(identifier, outerInheritanceOnly = false, apexOnly = true))
+          .getOrElse(Array())
       )
   }
 }

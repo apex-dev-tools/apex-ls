@@ -13,14 +13,14 @@
  */
 package com.nawforce.apexlink.pkg
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.rpc.BombScore
 import com.nawforce.apexlink.types.apex.SummaryDeclaration
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
 import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.immutable.ArraySeq

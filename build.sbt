@@ -77,14 +77,19 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   )
 
 lazy val buildJVM = Def.task {
-  // Copy jar deps to target for easier testing
   val targetDir = crossTarget.value
+  val targetJar = (Compile / Keys.`package`).value
+
+  // Delete extra jars from target dir
+  IO.delete((targetDir * "*.jar").get().filterNot(_.equals(targetJar)))
+
+  // Copy jar deps to target for easier testing
   val files = (Compile / dependencyClasspath).value.files map { f =>
     f -> targetDir / f.getName
   }
   IO.copy(files, CopyOptions().withOverwrite(true))
 
-  (Compile / Keys.`package`).value
+  targetJar
 }
 
 def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = Def.task {

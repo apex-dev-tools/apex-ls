@@ -52,16 +52,20 @@ final case class CustomFieldEvent(
   rawType: Name,
   referenceTo: Option[(Name, Name)],
   relatedField: Option[(Name, Name)]
-)                                                                       extends PackageEvent
+) extends PackageEvent
 final case class FieldsetEvent(sourceInfo: SourceInfo, name: Name)      extends PackageEvent
 final case class SharingReasonEvent(sourceInfo: SourceInfo, name: Name) extends PackageEvent
 
-/** Convert SObject documents/folders into PackageEvents. We must call this even if there is not object-meta.xml file
-  * present to collect the SFDX fields, fieldSets and sharingRules.
+/** Convert SObject documents/folders into PackageEvents. We must call this even if there is not
+  * object-meta.xml file present to collect the SFDX fields, fieldSets and sharingRules.
   */
 object SObjectGenerator {
 
-  def iterator(index: DocumentIndex): Iterator[PackageEvent] = iterator(index.get(SObjectNature))
+  def iterator(index: DocumentIndex): Iterator[PackageEvent] = {
+    // TODO: Replace this tmp approach when events removed
+    val docs: Iterator[MetadataDocument] = index.getControllingDocuments(SObjectNature).iterator
+    iterator(docs)
+  }
 
   private def iterator(documents: Iterator[MetadataDocument]): Iterator[PackageEvent] = {
 
@@ -126,8 +130,8 @@ object SObjectGenerator {
       )
     ) ++
       IssuesEvent.iterator(customSettingsType.issues) ++ IssuesEvent.iterator(
-      sharingModelType.issues
-    ) ++
+        sharingModelType.issues
+      ) ++
       doc
         .map(doc => {
           val rootElement = doc.rootElement

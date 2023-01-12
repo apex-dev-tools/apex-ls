@@ -13,11 +13,10 @@
  */
 package com.nawforce.apexlink.finding
 
-import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.{FileSystemHelper, TestHelper}
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class TypeFindingTest extends AnyFunSuite with TestHelper {
