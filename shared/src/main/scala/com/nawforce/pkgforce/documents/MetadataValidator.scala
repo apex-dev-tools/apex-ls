@@ -24,6 +24,7 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
     nature match {
       case ApexNature    => validateApex(documents)
       case TriggerNature => validateTrigger(documents)
+      case SObjectNature => validateSObjectLike(documents)
       case _             => ()
     }
   }
@@ -133,6 +134,50 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
           )
         )
       )
+    }
+  }
+
+  private def validateSObjectLike(documents: List[PathLike]): Unit = {
+    val allDocs         = documents.flatMap(MetadataDocument(_))
+    val controllingDocs = allDocs.filter(_.nature == SObjectNature)
+    val typeName        = allDocs.head.controllingTypeName(namespace)
+
+    val isSObject: Boolean = controllingDocs.headOption
+      .getOrElse({
+        // If we don't have a controlling doc, fake it to work out is this is an actual SObject
+        MetadataDocument(
+          documents.head.parent.join(s"${typeName.name.toString}.object-meta.xml")
+        ).get
+      })
+      .isInstanceOf[SObjectDocument]
+
+    if (!isSObject && controllingDocs.isEmpty) {
+
+      logger.log(
+        Issue(
+          documents.head,
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location.empty,
+            s"Components of type '$typeName' are defined, but the required object-meta.xml file is missing"
+          )
+        )
+      )
+    } else if (controllingDocs.length > 1) {
+      controllingDocs.foreach(controllingDoc => {
+        val typeName   = controllingDoc.typeName(namespace)
+        val otherPaths = controllingDocs.filterNot(_ == controllingDoc).map(_.path).mkString(", ")
+        logger.log(
+          Issue(
+            controllingDoc.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location.empty,
+              s"Type '$typeName' is defined, but duplicate object-meta.xml files found at $otherPaths"
+            )
+          )
+        )
+      })
     }
   }
 }

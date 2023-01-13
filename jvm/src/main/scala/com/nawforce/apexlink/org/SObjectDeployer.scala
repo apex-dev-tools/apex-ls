@@ -36,9 +36,10 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.{BufferedIterator, mutable}
 
-/** 'Deploy' a module from a stream of PackageEvents. Deploying here really means constructing a set of TypeDeclarations
-  * and validating them against each other. This process mutates the passed types Map for compatibility with dependency
-  * analysis code. The class handling code here is performance sensitive so this may also aid with efficiency.
+/** 'Deploy' a module from a stream of PackageEvents. Deploying here really means constructing a set
+  * of TypeDeclarations and validating them against each other. This process mutates the passed
+  * types Map for compatibility with dependency analysis code. The class handling code here is
+  * performance sensitive so this may also aid with efficiency.
   *
   * FUTURE: Remove Module dependency.
   */
@@ -213,11 +214,11 @@ class SObjectDeployer(module: OPM.Module) {
       .orElse(
         // rare case of chained related fields
         derivedFields
-          .find {
-            case (obj, f) => obj == objName && f.name == field._2
+          .find { case (obj, f) =>
+            obj == objName && f.name == field._2
           }
-          .flatMap(
-            rf => rf._2.relatedField.flatMap(findRelatedField(_, createdSObjects, derivedFields))
+          .flatMap(rf =>
+            rf._2.relatedField.flatMap(findRelatedField(_, createdSObjects, derivedFields))
           )
       )
   }
@@ -227,22 +228,21 @@ class SObjectDeployer(module: OPM.Module) {
     fields: Array[FieldDeclaration],
     createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration]
   ): Unit = {
-    createdSObjects.get(objectName).foreach {
-      case td: SObjectDeclaration =>
-        val newFields = fields.filter(f => !td.fields.exists(_.name == f.name))
+    createdSObjects.get(objectName).foreach { case td: SObjectDeclaration =>
+      val newFields = fields.filter(f => !td.fields.exists(_.name == f.name))
 
-        createdSObjects.put(
+      createdSObjects.put(
+        td.typeName,
+        extendExistingSObject(
+          Some(td),
+          Array(),
           td.typeName,
-          extendExistingSObject(
-            Some(td),
-            Array(),
-            td.typeName,
-            td.sobjectNature,
-            ArraySeq.unsafeWrapArray(newFields),
-            ArraySeq(),
-            ArraySeq()
-          )
+          td.sobjectNature,
+          ArraySeq.unsafeWrapArray(newFields),
+          ArraySeq(),
+          ArraySeq()
         )
+      )
     }
   }
 
@@ -280,8 +280,7 @@ class SObjectDeployer(module: OPM.Module) {
         case (false, false) =>
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
         case (false, true) =>
-          //OrgImpl.log(IssueOps.extendingUnknownSObject(sources.head.location, event.reportingPath))
-          //Add additional debug for revman issue
+          // Add additional debug for revman issue
           val message =
             s"""Extending unknown SObject error:
               |  sources: ${sources.map(_.location.toString).mkString(",")}
@@ -394,8 +393,8 @@ class SObjectDeployer(module: OPM.Module) {
     )
   }
 
-  /** Create an SObject to replace some existing SObject so that it can be extended. If no existing can be found then
-    * an error is raised and the operation is new SObject is not created.
+  /** Create an SObject to replace some existing SObject so that it can be extended. If no existing
+    * can be found then an error is raised and the operation is new SObject is not created.
     */
   private def createReplacementSObject(
     sources: Array[SourceInfo],
@@ -427,9 +426,8 @@ class SObjectDeployer(module: OPM.Module) {
     } else {
       val sobjectType = resolveBaseType(typeName)
       if (
-        sobjectType.isEmpty || !sobjectType.get.superClassDeclaration.exists(
-          superClass => superClass.typeName == TypeNames.SObject
-        )
+        sobjectType.isEmpty || !sobjectType.get.superClassDeclaration
+          .exists(superClass => superClass.typeName == TypeNames.SObject)
       ) {
         OrgInfo.logError(sources.head.location, s"No SObject declaration found for '$typeName'")
         return Array()
@@ -448,14 +446,16 @@ class SObjectDeployer(module: OPM.Module) {
     }
   }
 
-  /** Search for a type in dependent modules. Note. this skips the SObject handling in TypeFinder deliberately. */
+  /** Search for a type in dependent modules. Note. this skips the SObject handling in TypeFinder
+    * deliberately.
+    */
   private def resolveBaseType(typeName: TypeName): Option[TypeDeclaration] = {
     val td = module.baseModules.headOption.flatMap(_.findType(typeName).toOption)
     if (td.nonEmpty)
       return td
 
-    val pkgTd = module.basePackages.headOption.flatMap(
-      basePkg => basePkg.modules.headOption.flatMap(_.findType(typeName).toOption)
+    val pkgTd = module.basePackages.headOption.flatMap(basePkg =>
+      basePkg.modules.headOption.flatMap(_.findType(typeName).toOption)
     )
     if (pkgTd.nonEmpty)
       return pkgTd
@@ -463,8 +463,8 @@ class SObjectDeployer(module: OPM.Module) {
     PlatformTypes.get(typeName, None).toOption
   }
 
-  /** Create an SObject by extending a base SObject with new fields, fieldSets and sharing reasons. If you don't pass
-    * a base object than this will extend System.SObject.
+  /** Create an SObject by extending a base SObject with new fields, fieldSets and sharing reasons.
+    * If you don't pass a base object than this will extend System.SObject.
     */
   def extendExistingSObject(
     base: Option[TypeDeclaration],
@@ -507,8 +507,8 @@ class SObjectDeployer(module: OPM.Module) {
       collectFields(typeName, nature, extend.fields ++ fields, hasOwner = base.isEmpty)
     val combinedFieldsets = ArraySeq.unsafeWrapArray(
       fieldSets
-        .foldLeft(asSObject.map(_.fieldSets).getOrElse(ArraySeq()).toSet)(
-          (acc, fieldset) => acc + fieldset
+        .foldLeft(asSObject.map(_.fieldSets).getOrElse(ArraySeq()).toSet)((acc, fieldset) =>
+          acc + fieldset
         )
         .toArray
     )
@@ -557,7 +557,9 @@ class SObjectDeployer(module: OPM.Module) {
     }
   }
 
-  /** Construct a full set of fields for a custom objects from the custom fields defined in the event. */
+  /** Construct a full set of fields for a custom objects from the custom fields defined in the
+    * event.
+    */
   private def customObjectFields(
     typeName: TypeName,
     nature: SObjectNature,
@@ -597,7 +599,9 @@ class SObjectDeployer(module: OPM.Module) {
     )
   }
 
-  /** Construct a full set of fields for a custom metadata from the custom fields defined in the event. */
+  /** Construct a full set of fields for a custom metadata from the custom fields defined in the
+    * event.
+    */
   private def customMetadataFields(
     typeName: TypeName,
     fields: ArraySeq[FieldDeclaration]
@@ -617,7 +621,9 @@ class SObjectDeployer(module: OPM.Module) {
     )
   }
 
-  /** Construct a full set of fields for a platform event from the custom fields defined in the event. */
+  /** Construct a full set of fields for a platform event from the custom fields defined in the
+    * event.
+    */
   private def platformEventFields(
     typeName: TypeName,
     fields: ArraySeq[FieldDeclaration]
@@ -647,7 +653,9 @@ class SObjectDeployer(module: OPM.Module) {
 
 object SObjectDeployer {
 
-  /** Standard fields for custom objects, this is a superset, filtering may be needed to trim do to available. */
+  /** Standard fields for custom objects, this is a superset, filtering may be needed to trim do to
+    * available.
+    */
   val standardCustomObjectFields: ArraySeq[FieldDeclaration] = {
     PlatformTypes.sObjectType.fields ++
       ArraySeq(

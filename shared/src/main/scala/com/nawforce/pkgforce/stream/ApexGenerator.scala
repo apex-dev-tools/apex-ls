@@ -24,7 +24,6 @@ final case class ApexEvent(path: PathLike) extends PackageEvent
 object ApexGenerator {
 
   def iterator(index: DocumentIndex): Iterator[PackageEvent] = {
-    // TODO: Replace this tmp approach when events removed
     val docs = index.get(ApexNature)
     docs.iterator.flatMap(md => {
       md._2

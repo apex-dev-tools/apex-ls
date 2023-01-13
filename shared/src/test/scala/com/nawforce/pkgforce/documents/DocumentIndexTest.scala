@@ -171,47 +171,4 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       )
     }
   }
-
-  test("sfdx field ghosts object") {
-    FileSystemHelper.run(
-      Map[String, String](
-        "pkg/Foo/fields/Bar.field-meta.xml" -> "<CustomField xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
-      )
-    ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.isEmpty)
-      assert(index.get(FieldNature).isEmpty)
-
-      val sobjects = index.get(SObjectNature)
-      assert(sobjects.size == 1)
-      assert(sobjects.contains("schema.foo"))
-      assert(
-        sobjects("schema.foo").toSet == Set(
-          root.join("pkg").join("Foo").join("fields").join("Bar.field-meta.xml"),
-          root.join("pkg").join("Foo").join("Foo.object-meta.xml")
-        )
-      )
-    }
-  }
-
-  test("sfdx fieldset ghosts object") {
-    FileSystemHelper.run(
-      Map[String, String](
-        "pkg/Foo/fieldSets/Bar.fieldSet-meta.xml" -> "<FieldSet xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
-      )
-    ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.isEmpty)
-      assert(index.get(FieldSetNature).isEmpty)
-      val sobjects = index.get(SObjectNature)
-      assert(sobjects.size == 1)
-      assert(sobjects.contains("schema.foo"))
-      assert(
-        sobjects("schema.foo").toSet == Set(
-          root.join("pkg").join("Foo").join("fieldSets").join("Bar.fieldSet-meta.xml"),
-          root.join("pkg").join("Foo").join("Foo.object-meta.xml")
-        )
-      )
-    }
-  }
 }

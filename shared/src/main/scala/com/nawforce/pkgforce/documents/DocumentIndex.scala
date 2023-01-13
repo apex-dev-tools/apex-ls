@@ -145,27 +145,15 @@ class DocumentIndex(
   }
 
   private def indexDocument(document: MetadataDocument, deferValidation: Boolean): Unit = {
-
-    // Reject if document may be ignored
     if (document.ignorable())
       return
 
-    // If we find a field or fieldSet without a SObject metadata, fake it exists to make later processing easier
-    if (document.nature == FieldNature || document.nature == FieldSetNature) {
-      val objectDir = document.path.parent.parent
-      val metaFile  = objectDir.join(objectDir.basename + ".object-meta.xml")
-      val docType   = SObjectDocument(metaFile, Name(objectDir.basename))
-      val typeName  = docType.typeName(namespace)
-      if (get(SObjectNature, typeName).isEmpty) {
-        safeDocumentMap(SObjectNature).put(typeName.rawStringLower, List(metaFile))
-      }
-    }
-
-    {
-      val docMap   = safeDocumentMap(document.controllingNature)
-      val typeName = document.controllingTypeName(namespace).rawStringLower
-      docMap.put(typeName, (document.path :: docMap.getOrElse(typeName, Nil)).distinct)
-    }
+    val docMap   = safeDocumentMap(document.controllingNature)
+    val typeName = document.controllingTypeName(namespace).rawStringLower
+    val docs     = (document.path :: docMap.getOrElse(typeName, Nil)).distinct
+    docMap.put(typeName, docs)
+    if (!deferValidation)
+      validator.validate(document.controllingNature, docs)
   }
 
   private def safeDocumentMap(nature: MetadataNature): mutable.HashMap[String, List[PathLike]] = {
