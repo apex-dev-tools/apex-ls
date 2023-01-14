@@ -308,21 +308,27 @@ object MethodMap {
       .filterNot(ignorableStatics.contains)
       .foreach(method => applyStaticMethod(workingMap, method))
 
+    val ad = td match {
+      case ad: ApexClassDeclaration => Some(ad)
+      case _: TypeDeclaration       => None
+    }
+
     // Validate any interface use in classes
-    if (td.nature == CLASS_NATURE && td.moduleDeclaration.nonEmpty) {
-      workingMap.put(
-        (Names.Clone, 0),
-        List(
-          CustomMethodDeclaration(
-            Location.empty,
-            Names.Clone,
-            td.typeName,
-            CustomMethodDeclaration.emptyParameters
+    ad.filter(_.nature == CLASS_NATURE)
+      .foreach(ad => {
+        workingMap.put(
+          (Names.Clone, 0),
+          List(
+            CustomMethodDeclaration(
+              Location.empty,
+              Names.Clone,
+              td.typeName,
+              CustomMethodDeclaration.emptyParameters
+            )
           )
         )
-      )
-      checkInterfaces(td, location, td.isAbstract, workingMap, interfaces, errors)
-    }
+        checkInterfaces(ad, location, td.isAbstract, workingMap, interfaces, errors)
+      })
 
     // Validate all required methods are implemented
     checkCompleteness(td, location, errors, workingMap)
@@ -330,24 +336,7 @@ object MethodMap {
     // Finally, construct the actual MethodMap
     val testVisiblePrivateSet =
       if (testVisiblePrivate.isEmpty) emptyMethodDeclarationsSet else testVisiblePrivate.toSet
-    td match {
-      case td: ApexClassDeclaration =>
-        new MethodMap(
-          Some(td.typeName),
-          Some(td),
-          toMap(workingMap),
-          testVisiblePrivateSet,
-          errors.toList
-        )
-      case td: TypeDeclaration =>
-        new MethodMap(
-          Some(td.typeName),
-          None,
-          toMap(workingMap),
-          testVisiblePrivateSet,
-          errors.toList
-        )
-    }
+    new MethodMap(Some(td.typeName), ad, toMap(workingMap), testVisiblePrivateSet, errors.toList)
   }
 
   private def checkCompleteness(
@@ -438,7 +427,7 @@ object MethodMap {
   }
 
   private def checkInterfaces(
-    from: TypeDeclaration,
+    from: ApexClassDeclaration,
     location: Option[PathLocation],
     isAbstract: Boolean,
     workingMap: WorkingMap,
@@ -453,7 +442,7 @@ object MethodMap {
   }
 
   private def checkInterface(
-    from: TypeDeclaration,
+    from: ApexClassDeclaration,
     location: Option[PathLocation],
     isAbstract: Boolean,
     workingMap: WorkingMap,
@@ -475,7 +464,7 @@ object MethodMap {
       .foreach(method => {
         val key     = (method.name, method.parameters.length)
         val methods = workingMap.getOrElse(key, Nil)
-        val matched = methods.find(mapMethod => isInterfaceMethod(from, method, mapMethod, errors))
+        val matched = methods.find(mapMethod => isInterfaceMethod(from, method, mapMethod))
 
         if (matched.isEmpty) {
           val module = from.moduleDeclaration.get
@@ -714,22 +703,15 @@ object MethodMap {
     * plenty of oddities to handle to determine this.
     */
   private def isInterfaceMethod(
-    from: TypeDeclaration,
+    from: ApexClassDeclaration,
     interfaceMethod: MethodDeclaration,
-    implMethod: MethodDeclaration,
-    errors: mutable.Buffer[Issue]
+    implMethod: MethodDeclaration
   ): Boolean = {
-    val fulfillsInterfaceMethodParams =
-      interfaceMethod.fulfillsInterfaceMethodParams(from, implMethod)
-
     if (
       implMethod.name == interfaceMethod.name &&
       canAssign(interfaceMethod.typeName, implMethod.typeName, from) &&
-      fulfillsInterfaceMethodParams._1
+      interfaceMethod.fulfillsInterfaceMethodParams(from, implMethod)
     ) {
-      fulfillsInterfaceMethodParams._2.foreach(warning =>
-        setMethodError(implMethod, warning, errors, isWarning = true)
-      )
       true
     } else if (isEqualsLike(interfaceMethod) && isEqualsLike(implMethod))
       true
@@ -747,7 +729,7 @@ object MethodMap {
       from match {
         case ad: ApexDeclaration =>
           val context = new TypeVerifyContext(None, ad, None)
-          isAssignable(toType, fromType, strict = false, context)
+          isAssignable(toType, fromType, strictConversions = false, context)
         case _ =>
           false
       }
