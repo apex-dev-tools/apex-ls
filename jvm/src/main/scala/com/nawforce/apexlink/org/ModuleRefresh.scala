@@ -147,8 +147,10 @@ trait ModuleRefresh {
     doc match {
       case doc: ApexClassDocument =>
         source.flatMap(s => FullDeclaration.create(this, doc, s, forceConstruct = true)).toSeq
+      case _: ApexClassMetaDocument => Seq()
       case _: ApexTriggerDocument =>
         source.flatMap(s => TriggerDeclaration.create(this, doc.path, s)).toSeq
+      case _: ApexTriggerMetaDocument => Seq()
       case doc: SObjectLike =>
         if (doc.path.toString.endsWith("object-meta.xml"))
           refreshSObject(doc.path.parent)

@@ -136,9 +136,10 @@ class DocumentIndex(
     val existing = docMap.get(typeName).exists(d => d.contains(document.path))
     if (existing) {
       val residual = docMap(typeName).filterNot(_ == document.path)
-      if (residual.nonEmpty)
-        docMap.put(typeName, docMap(typeName).filterNot(_ == document.path))
-      else
+      if (residual.nonEmpty) {
+        docMap.put(typeName, residual)
+        validator.validate(document.controllingNature, residual)
+      } else
         docMap.remove(typeName)
     }
     existing

@@ -152,7 +152,6 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
       .isInstanceOf[SObjectDocument]
 
     if (!isSObject && controllingDocs.isEmpty) {
-
       logger.log(
         Issue(
           documents.head,
