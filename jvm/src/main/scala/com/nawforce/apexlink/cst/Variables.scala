@@ -40,7 +40,7 @@ final case class VariableDeclarator(typeName: TypeName, id: Id, init: Option[Exp
           rhsCtx.isDefined && !isAssignable(
             lhsType.typeName,
             rhsCtx.typeDeclaration,
-            strict = false,
+            strictConversions = false,
             context
           )
         ) {

@@ -467,7 +467,7 @@ final case class ReturnStatement(expression: Option[Expression]) extends Stateme
       Some(s"Missing return value of type '$expectedType'")
     else {
       expr.flatMap(e => {
-        if (e.isDefined && !isAssignable(expectedType, e.typeDeclaration, strict = false, context))
+        if (e.isDefined && !isAssignable(expectedType, e.typeDeclaration, strictConversions = false, context))
           Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
         else
           None
