@@ -171,14 +171,9 @@ object SObjectGenerator {
               })
         })
         .getOrElse(Iterator()) ++
-      collectMetadata(documents, ".field-meta.xml", "CustomField", createField).iterator ++
-      collectMetadata(documents, ".fieldSet-meta.xml", "FieldSet", createFieldSet).iterator ++
-      collectMetadata(
-        documents,
-        ".sharingReason-meta.xml",
-        "SharingReason",
-        createSharingReason
-      ).iterator
+      collectMetadata(documents, FieldNature, "CustomField", createField).iterator ++
+      collectMetadata(documents, FieldSetNature, "FieldSet", createFieldSet).iterator ++
+      collectMetadata(documents, SharingReasonNature, "SharingReason", createSharingReason).iterator
   }
 
   private def getReportingPath(
@@ -327,12 +322,12 @@ object SObjectGenerator {
   // TODO: Use doc nature
   private def collectMetadata(
     docs: List[MetadataDocument],
-    suffix: String,
+    nature: MetadataNature,
     rootElement: String,
     op: (SourceInfo, XMLElementLike, PathLike) => Iterator[PackageEvent]
   ): List[PackageEvent] = {
     docs
-      .filter(_.path.toString.endsWith(suffix))
+      .filter(_.nature == nature)
       .flatMap(doc => {
         catchXMLExceptions(doc.path) {
           doc.path.readSourceData() match {
