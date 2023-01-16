@@ -80,7 +80,7 @@ Available build commands:
 
 ### Testing
 
-In addition to the regular automated tests, we system test against a number of sample projects collected in the [apex-samples](https://github.com/apex-dev-tools/apex-samples) repository. Follow the README instructions in apex-samples to checkout the submodules or use `git clone -b <latest-tag> --recurse-submodules <repo-url>`. To run the tests:
+In addition to the regular automated tests, we system test against a number of sample projects collected in the [apex-samples](https://github.com/apex-dev-tools/apex-samples) repository. Follow the README instructions in apex-samples to checkout the submodules. To run the tests:
 
   ```sh
   # Set SAMPLES env var to samples repo location
