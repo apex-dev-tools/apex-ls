@@ -80,7 +80,7 @@ Available build commands:
 
 ### Testing
 
-In addition to the regular automated tests, we system test against a number of sample projects collected in the [apex-samples](https://github.com/apex-dev-tools/apex-samples) repository. Follow the README instructions in apex-samples to checkout the submodules or use `git clone --recurse-submodules <repo-url>`. To run the tests:
+In addition to the regular automated tests, we system test against a number of sample projects collected in the [apex-samples](https://github.com/apex-dev-tools/apex-samples) repository. Follow the README instructions in apex-samples to checkout the submodules or use `git clone -b <latest-tag> --recurse-submodules <repo-url>`. To run the tests:
 
   ```sh
   # Set SAMPLES env var to samples repo location
@@ -92,6 +92,8 @@ In addition to the regular automated tests, we system test against a number of s
   ```
 
 System test failures relating to the snapshots may highlight regressions. Though if an error is expected or the samples have changed, instead use `npm run test-snapshot` to update the snapshots, then commit the changes.
+
+The tag version of apex-samples used by builds is set in the [build file](.github/workflows/Build.yml).
 
 ### Release
 
