@@ -410,8 +410,16 @@ final case class CatchClause(
     modifiers.issues.foreach(context.log)
 
     block.foreach(block => {
-      val blockContext = new InnerBlockVerifyContext(context).setControlRoot(context)
-      blockContext.addVar(Name(id), qname, qname.asTypeName())
+      val blockContext      = new InnerBlockVerifyContext(context).setControlRoot(context)
+      val exceptionTypeName = qname.asTypeName()
+      val exceptionType =
+        blockContext.getTypeAndAddDependency(exceptionTypeName, context.thisType) match {
+          case Left(_) =>
+            context.missingType(qname.location, exceptionTypeName)
+            context.module.any
+          case Right(td) => td
+        }
+      blockContext.addVar(Name(id), None, exceptionType)
       block.verify(blockContext)
       context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
     })
