@@ -419,6 +419,7 @@ final case class CatchClause(
             context.module.any
           case Right(td) => td
         }
+      // definition = None disables issues like 'Unused' for exceptions
       blockContext.addVar(Name(id), None, exceptionType)
       block.verify(blockContext)
       context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
