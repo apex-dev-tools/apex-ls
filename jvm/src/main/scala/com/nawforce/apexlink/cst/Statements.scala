@@ -410,14 +410,8 @@ final case class CatchClause(
     modifiers.issues.foreach(context.log)
 
     block.foreach(block => {
-      val blockContext      = new InnerBlockVerifyContext(context).setControlRoot(context)
-      val exceptionTypeName = qname.asTypeName()
-      blockContext.getTypeAndAddDependency(exceptionTypeName, context.thisType) match {
-        case Left(_) =>
-          context.missingType(qname.location, exceptionTypeName)
-        case Right(exceptionType) =>
-          blockContext.addVar(Name(id), None, exceptionType)
-      }
+      val blockContext = new InnerBlockVerifyContext(context).setControlRoot(context)
+      blockContext.addVar(Name(id), qname, qname.asTypeName())
       block.verify(blockContext)
       context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
     })
@@ -467,7 +461,14 @@ final case class ReturnStatement(expression: Option[Expression]) extends Stateme
       Some(s"Missing return value of type '$expectedType'")
     else {
       expr.flatMap(e => {
-        if (e.isDefined && !isAssignable(expectedType, e.typeDeclaration, strictConversions = false, context))
+        if (
+          e.isDefined && !isAssignable(
+            expectedType,
+            e.typeDeclaration,
+            strictConversions = false,
+            context
+          )
+        )
           Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
         else
           None
