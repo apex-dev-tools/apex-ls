@@ -412,12 +412,15 @@ final case class CatchClause(
     block.foreach(block => {
       val blockContext      = new InnerBlockVerifyContext(context).setControlRoot(context)
       val exceptionTypeName = qname.asTypeName()
-      blockContext.getTypeAndAddDependency(exceptionTypeName, context.thisType) match {
-        case Left(_) =>
-          context.missingType(qname.location, exceptionTypeName)
-        case Right(exceptionType) =>
-          blockContext.addVar(Name(id), None, exceptionType)
-      }
+      val exceptionType =
+        blockContext.getTypeAndAddDependency(exceptionTypeName, context.thisType) match {
+          case Left(_) =>
+            context.missingType(qname.location, exceptionTypeName)
+            context.module.any
+          case Right(td) => td
+        }
+      // definition = None disables issues like 'Unused' for exceptions
+      blockContext.addVar(Name(id), None, exceptionType)
       block.verify(blockContext)
       context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
     })
@@ -467,7 +470,14 @@ final case class ReturnStatement(expression: Option[Expression]) extends Stateme
       Some(s"Missing return value of type '$expectedType'")
     else {
       expr.flatMap(e => {
-        if (e.isDefined && !isAssignable(expectedType, e.typeDeclaration, strictConversions = false, context))
+        if (
+          e.isDefined && !isAssignable(
+            expectedType,
+            e.typeDeclaration,
+            strictConversions = false,
+            context
+          )
+        )
           Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
         else
           None
