@@ -62,104 +62,98 @@ class DocumentTest extends AnyFunSuite {
   }
 
   test("object file") {
-    MetadataDocument(root.join("Foo.object")) match {
-      case Some(SObjectDocument(path, Name("Foo"))) if path == root.join("Foo.object") => ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Foo", "Foo.object")
+    MetadataDocument(target) match {
+      case Some(SObjectDocument(path, Name("Foo"))) if path == target => ()
+      case x                                                          => assert(false, x)
     }
   }
 
   test("object file (sfdx)") {
-    MetadataDocument(root.join("Foo.object-meta.xml")) match {
-      case Some(SObjectDocument(path, Name("Foo"))) if path == root.join("Foo.object-meta.xml") =>
-        ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Foo", "Foo.object-meta.xml")
+    MetadataDocument(target) match {
+      case Some(SObjectDocument(path, Name("Foo"))) if path == target => ()
+      case x                                                          => assert(false, x)
     }
   }
 
   test("custom object file") {
-    MetadataDocument(root.join("Foo__c.object")) match {
-      case Some(SObjectDocument(path, Name("Foo__c"))) if path == root.join("Foo__c.object") => ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Foo__c", "Foo__c.object")
+    MetadataDocument(target) match {
+      case Some(SObjectDocument(path, Name("Foo__c"))) if path == target => ()
+      case x                                                             => assert(false, x)
     }
   }
 
   test("custom object file (sfdx)") {
-    MetadataDocument(root.join("Foo__c.object-meta.xml")) match {
-      case Some(SObjectDocument(path, Name("Foo__c")))
-          if path == root.join("Foo__c.object-meta.xml") =>
-        ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Foo__c", "Foo__c.object-meta.xml")
+    MetadataDocument(target) match {
+      case Some(SObjectDocument(path, Name("Foo__c"))) if path == target => ()
+      case x                                                             => assert(false, x)
     }
   }
 
   test("custom metadata file") {
-    MetadataDocument(root.join("Foo__mdt.object")) match {
-      case Some(CustomMetadataDocument(path, Name("Foo__mdt")))
-          if path == root.join("Foo__mdt.object") =>
-        ()
+    val target = root.join("objects", "Foo__mdt", "Foo__mdt.object")
+    MetadataDocument(target) match {
+      case Some(CustomMetadataDocument(path, Name("Foo__mdt"))) if path == target => ()
       case x => assert(false, x)
     }
   }
 
   test("custom metadata file (sfdx)") {
-    MetadataDocument(root.join("Foo__mdt.object-meta.xml")) match {
-      case Some(CustomMetadataDocument(path, Name("Foo__mdt")))
-          if path == root.join("Foo__mdt.object-meta.xml") =>
-        ()
+    val target = root.join("objects", "Foo__mdt", "Foo__mdt.object-meta.xml")
+    MetadataDocument(target) match {
+      case Some(CustomMetadataDocument(path, Name("Foo__mdt"))) if path == target => ()
       case x => assert(false, x)
     }
   }
 
   test("big object file") {
-    MetadataDocument(root.join("Foo__b.object")) match {
-      case Some(BigObjectDocument(path, Name("Foo__b"))) if path == root.join("Foo__b.object") =>
-        ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Foo__b", "Foo__b.object")
+    MetadataDocument(target) match {
+      case Some(BigObjectDocument(path, Name("Foo__b"))) if path == target => ()
+      case x                                                               => assert(false, x)
     }
   }
 
   test("big object file (sfdx)") {
-    MetadataDocument(root.join("Foo__b.object-meta.xml")) match {
-      case Some(BigObjectDocument(path, Name("Foo__b")))
-          if path == root.join("Foo__b.object-meta.xml") =>
-        ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Foo__b", "Foo__b.object-meta.xml")
+    MetadataDocument(target) match {
+      case Some(BigObjectDocument(path, Name("Foo__b"))) if path == target => ()
+      case x                                                               => assert(false, x)
     }
   }
 
   test("platform event file") {
-    MetadataDocument(root.join("Foo__e.object")) match {
-      case Some(PlatformEventDocument(path, Name("Foo__e")))
-          if path == root.join("Foo__e.object") =>
-        ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Foo__e", "Foo__e.object")
+    MetadataDocument(target) match {
+      case Some(PlatformEventDocument(path, Name("Foo__e"))) if path == target => ()
+      case x                                                                   => assert(false, x)
     }
   }
 
   test("platform event file (sfdx)") {
-    MetadataDocument(root.join("Foo__e.object-meta.xml")) match {
-      case Some(PlatformEventDocument(path, Name("Foo__e")))
-          if path == root.join("Foo__e.object-meta.xml") =>
-        ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Foo__e", "Foo__e.object-meta.xml")
+    MetadataDocument(target) match {
+      case Some(PlatformEventDocument(path, Name("Foo__e"))) if path == target => ()
+      case x                                                                   => assert(false, x)
     }
   }
 
   test("field file (sfdx)") {
-    MetadataDocument(root.join("object/fields/Foo.field-meta.xml")) match {
-      case Some(SObjectFieldDocument(path, Name("Foo")))
-          if path == root.join("object/fields/Foo.field-meta.xml") =>
-        ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Bar__c", "fields", "Foo__c.field-meta.xml")
+    MetadataDocument(target) match {
+      case Some(SObjectFieldDocument(path, Name("Foo__c"))) if path == target => ()
+      case x                                                                  => assert(false, x)
     }
   }
 
   test("fieldset file (sfdx)") {
-    MetadataDocument(root.join("object/fieldSets/Foo.fieldSet-meta.xml")) match {
-      case Some(SObjectFieldSetDocument(path, Name("Foo")))
-          if path == root.join("object/fieldSets/Foo.fieldSet-meta.xml") =>
-        ()
-      case x => assert(false, x)
+    val target = root.join("objects", "Bar__c", "fieldSets", "Foo__c.fieldSet-meta.xml")
+    MetadataDocument(target) match {
+      case Some(SObjectFieldSetDocument(path, Name("Foo__c"))) if path == target => ()
+      case x                                                                     => assert(false, x)
     }
   }
 

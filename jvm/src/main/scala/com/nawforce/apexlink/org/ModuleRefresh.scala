@@ -60,6 +60,7 @@ trait ModuleRefresh {
 
       // Update internal document tracking
       if (sourceOpt.isEmpty) {
+        pkg.org.issueManager.pop(doc.path)
         if (!index.remove(doc)) {
           LoggerOps.debug(s"Refresh of deleted ${doc.path} was not in use, ignoring.")
           return Seq()
@@ -68,9 +69,6 @@ trait ModuleRefresh {
         LoggerOps.debug(s"Refresh of ${doc.path} would create duplicate type, ignoring.")
         return Seq()
       }
-
-      // Clear errors as might fail to create type, SObjects are handled later due to multiple files
-      pkg.org.issueManager.pop(doc.path)
 
       // Create type & forward holders to limit need for invalidation chaining
       val newTypes = createTypes(doc, sourceOpt)
@@ -148,61 +146,46 @@ trait ModuleRefresh {
       case doc: ApexClassDocument =>
         source.flatMap(s => FullDeclaration.create(this, doc, s, forceConstruct = true)).toSeq
       case _: ApexClassMetaDocument => Seq()
+
       case _: ApexTriggerDocument =>
         source.flatMap(s => TriggerDeclaration.create(this, doc.path, s)).toSeq
       case _: ApexTriggerMetaDocument => Seq()
-      case doc: SObjectLike =>
-        if (doc.path.toString.endsWith("object-meta.xml"))
-          refreshSObject(doc.path.parent)
-        else
-          refreshSObject(doc.path)
-      case _: SObjectFieldDocument | _: SObjectFieldSetDocument | _: SObjectSharingReasonDocument =>
-        val sObjectDir = doc.path.parent.parent
-        MetadataDocument(sObjectDir.join(s"${sObjectDir.basename}.object-meta.xml")) match {
-          case Some(_: SObjectLike) => refreshSObject(sObjectDir)
-          case _                    => Seq()
+
+      case _: SObjectLike | _: SObjectFieldDocument | _: SObjectFieldSetDocument |
+          _: SObjectSharingReasonDocument =>
+        val controllingTypeName = doc.controllingTypeName(namespace)
+        val docs                = index.get(SObjectNature, controllingTypeName)
+        if (docs.nonEmpty) {
+          val deployer = new SObjectDeployer(this)
+          val sobjects = deployer.createSObjects(
+            SObjectGenerator
+              .toEvents(docs)
+              .buffered
+          )
+          sobjects.foreach(sobject =>
+            schemaSObjectType.add(sobject.typeName.name, hasFieldSets = true)
+          )
+          sobjects.toIndexedSeq
+        } else {
+          Seq()
         }
       case _: LabelsDocument =>
         Seq(createLabelDeclaration())
+
       case _: PageDocument =>
         val events = PageGenerator.iterator(index)
         val stream = new PackageStream(ArraySeq.unsafeWrapArray(events.toArray))
         Seq(PageDeclaration(this).merge(stream))
+
       case _: ComponentDocument =>
         val events = ComponentGenerator.iterator(index)
         val stream = new PackageStream(ArraySeq.unsafeWrapArray(events.toArray))
         Seq(ComponentDeclaration(this).merge(stream))
+
       case _: FlowDocument =>
         val events = FlowGenerator.iterator(index)
         val stream = new PackageStream(ArraySeq.unsafeWrapArray(events.toArray))
         Seq(InterviewDeclaration(this).merge(stream))
-    }
-  }
-
-  private def refreshSObject(sObjectPath: PathLike): Seq[DependentType] = {
-    if (sObjectPath.exists) {
-      clearSObjectErrors(sObjectPath)
-      val deployer = new SObjectDeployer(this)
-      val sobjects = deployer.createSObjects(
-        SObjectGenerator
-          .iterator(DocumentIndex(pkg.org.issueManager, namespace, sObjectPath))
-          .buffered
-      )
-
-      sobjects.foreach(sobject => schemaSObjectType.add(sobject.typeName.name, hasFieldSets = true))
-      sobjects.toIndexedSeq
-    } else {
-      Seq()
-    }
-  }
-
-  private def clearSObjectErrors(path: PathLike): Unit = {
-    if (!path.isDirectory) {
-      pkg.org.issueManager.pop(path)
-    } else {
-      val (files, directories) = path.splitDirectoryEntries()
-      files.foreach(file => pkg.org.issueManager.pop(file))
-      directories.foreach(clearSObjectErrors)
     }
   }
 

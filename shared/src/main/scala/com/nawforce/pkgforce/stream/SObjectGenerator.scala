@@ -41,9 +41,8 @@ case object HierarchyCustomSetting extends CustomSettingType
 
 final case class SObjectEvent(
   sourceInfo: Option[SourceInfo],
-  // TODO: This might not be right due to multiple dirs
-  reportingPath: PathLike, // SFDX SObject directory or MDAPI .object file
-  isDefining: Boolean,     // Metadata is defining a new SObject
+  name: Name,
+  isDefining: Boolean, // Metadata is defining a new SObject
   customSettingsType: Option[CustomSettingType],
   sharingModel: Option[SharingModel]
 ) extends PackageEvent
@@ -67,7 +66,9 @@ object SObjectGenerator {
     val sObjectEvents: mutable.Map[Name, Array[PackageEvent]] =
       index
         .get(SObjectNature)
-        .map(docInfo => (Name(docInfo._1), toEvents(docInfo._2).toArray))
+        .map(docInfo =>
+          (Name(docInfo._1), toEvents(docInfo._2.flatMap(MetadataDocument(_))).toArray)
+        )
         .to(mutable.Map)
 
     // SObjects need ordering so lookup target is output before the object using lookup
@@ -97,9 +98,7 @@ object SObjectGenerator {
     output.iterator
   }
 
-  private def toEvents(docs: List[PathLike]): Iterator[PackageEvent] = {
-    val documents = docs.flatMap(MetadataDocument(_))
-
+  def toEvents(documents: List[MetadataDocument]): Iterator[PackageEvent] = {
     // Parse controlling doc, if we have one
     val controllingDoc  = documents.find(_.nature == SObjectNature)
     val controllingPath = controllingDoc.map(_.path)
@@ -125,7 +124,7 @@ object SObjectGenerator {
     Iterator(
       SObjectEvent(
         sourceInfo,
-        getReportingPath(controllingPath, documents),
+        getName(controllingPath, documents),
         isDefining,
         customSettingsType.value,
         sharingModelType.value
@@ -176,16 +175,17 @@ object SObjectGenerator {
       collectMetadata(documents, SharingReasonNature, "SharingReason", createSharingReason).iterator
   }
 
-  private def getReportingPath(
+  private def getName(
     controllingPath: Option[PathLike],
     documents: List[MetadataDocument]
-  ): PathLike = {
-    if (controllingPath.exists(p => p.toString.endsWith(".object")))
-      controllingPath.get
-    else if (documents.head.nature == SObjectNature)
-      documents.head.path.parent
-    else
-      documents.head.path.parent.parent
+  ): Name = {
+    // Either .object/.object-meta-xml or component in subdirectory
+    Name(
+      controllingPath
+        .map(path => path.parent)
+        .getOrElse(documents.head.path.parent.parent)
+        .basename
+    )
   }
 
   private def extractCustomSettingsType(
@@ -319,7 +319,6 @@ object SObjectGenerator {
     }
   }
 
-  // TODO: Use doc nature
   private def collectMetadata(
     docs: List[MetadataDocument],
     nature: MetadataNature,

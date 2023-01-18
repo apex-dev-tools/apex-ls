@@ -34,8 +34,8 @@ final class Path(val native: java.nio.file.Path) extends PathLike {
   override def isFile: Boolean      = Files.isRegularFile(native)
   override def size: Long           = if (isFile) Files.size(native) else 0
 
-  override def join(arg: String): Path = {
-    new Path(native.resolve(arg).normalize())
+  override def join(args: String*): Path = {
+    new Path(native.resolve(args.mkString(Path.separator)).normalize())
   }
 
   override def createFile(name: String, data: String): Either[String, Path] = {

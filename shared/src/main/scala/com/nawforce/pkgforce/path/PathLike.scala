@@ -45,8 +45,8 @@ abstract class PathLike {
   // Size of regular file, returns 0 otherwise
   def size: Long
 
-  // Join some new text to end of path & normalise
-  def join(arg: String): PathLike
+  // Join some path segments to end of path & normalise
+  def join(args: String*): PathLike
 
   // Create a file if this is a directory (silently overwriting), returns new Path or error message
   def createFile(name: String, data: String): Either[String, PathLike]

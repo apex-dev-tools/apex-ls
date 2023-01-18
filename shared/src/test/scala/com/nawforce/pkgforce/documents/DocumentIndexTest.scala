@@ -61,43 +61,36 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("class file found") {
-    FileSystemHelper.run(
-      Map[String, String]("pkg/Foo.cls" -> "public class Foo {}", "pkg/Foo.cls-meta.xml" -> "")
-    ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.isEmpty)
-      assert(index.get(ApexNature).size == 1)
-      assert(
-        index.getControllingDocuments(ApexNature) ==
-          List(ApexClassDocument(root.join("pkg").join("Foo.cls"), Name("Foo")))
-      )
+    FileSystemHelper.run(Map[String, String]("pkg/Foo.cls" -> "public class Foo {}")) {
+      root: PathLike =>
+        val index = DocumentIndex(logger, None, root.join("pkg"))
+        assert(logger.isEmpty)
+        assert(index.get(ApexNature).size == 1)
+        assert(
+          index.getControllingDocuments(ApexNature) ==
+            List(ApexClassDocument(root.join("pkg").join("Foo.cls"), Name("Foo")))
+        )
     }
   }
 
   test("nested class file found") {
-    FileSystemHelper.run(
-      Map[String, String](
-        "pkg/foo/Foo.cls"          -> "public class Foo {}",
-        "pkg/foo/Foo.cls-meta.xml" -> ""
-      )
-    ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
-      assert(logger.isEmpty)
-      assert(index.get(ApexNature).size == 1)
-      assert(
-        index.getControllingDocuments(ApexNature) ==
-          List(ApexClassDocument(root.join("pkg").join("foo").join("Foo.cls"), Name("Foo")))
-      )
+    FileSystemHelper.run(Map[String, String]("pkg/foo/Foo.cls" -> "public class Foo {}")) {
+      root: PathLike =>
+        val index = DocumentIndex(logger, None, root.join("pkg"))
+        assert(logger.isEmpty)
+        assert(index.get(ApexNature).size == 1)
+        assert(
+          index.getControllingDocuments(ApexNature) ==
+            List(ApexClassDocument(root.join("pkg").join("foo").join("Foo.cls"), Name("Foo")))
+        )
     }
   }
 
   test("multiple classes found") {
     FileSystemHelper.run(
       Map[String, String](
-        "/pkg/Foo.cls"              -> "public class Foo {}",
-        "/pkg/Foo.cls-meta.xml"     -> "",
-        "/pkg/bar/Bar.cls"          -> "public class Bar {}",
-        "/pkg/bar/Bar.cls-meta.xml" -> ""
+        "/pkg/Foo.cls"     -> "public class Foo {}",
+        "/pkg/bar/Bar.cls" -> "public class Bar {}"
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
@@ -142,33 +135,85 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
-  test("object file found") {
+  test("standard object file found and correctly named after dir") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/Foo.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
+        "pkg/objects/Bar/Foo.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
-          List(SObjectDocument(root.join("pkg").join("Foo.object"), Name("Foo")))
+          List(SObjectDocument(root.join("pkg", "objects", "Bar", "Foo.object"), Name("Bar")))
       )
     }
   }
 
-  test("object file found (sfdx)") {
+  test("standard object file found and correctly named after dir (sfdx)") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/Foo.object-meta.xml" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
+        "pkg/objects/Bar/Foo.object-meta.xml" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
-          List(SObjectDocument(root.join("pkg").join("Foo.object-meta.xml"), Name("Foo")))
+          List(
+            SObjectDocument(root.join("pkg", "objects", "Bar", "Foo.object-meta.xml"), Name("Bar"))
+          )
       )
     }
   }
+
+  test("custom object file found and correctly named after dir") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "pkg/objects/Bar__c/Foo__c.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
+      )
+    ) { root: PathLike =>
+      val index = DocumentIndex(logger, None, root.join("pkg"))
+      assert(logger.isEmpty)
+      assert(
+        index.getControllingDocuments(SObjectNature) ==
+          List(
+            SObjectDocument(root.join("pkg", "objects", "Bar__c", "Foo__c.object"), Name("Bar__c"))
+          )
+      )
+    }
+  }
+
+  test("custom object file found and correctly named after dir (sfdx)") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "pkg/objects/Bar__c/Foo__c.object-meta.xml" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
+      )
+    ) { root: PathLike =>
+      val index = DocumentIndex(logger, None, root.join("pkg"))
+      assert(logger.isEmpty)
+      assert(
+        index.getControllingDocuments(SObjectNature) ==
+          List(
+            SObjectDocument(
+              root.join("pkg", "objects", "Bar__c", "Foo__c.object-meta.xml"),
+              Name("Bar__c")
+            )
+          )
+      )
+    }
+  }
+
+  test("object file not in objects dir ignored") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "pkg/Bar/Foo.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
+      )
+    ) { root: PathLike =>
+      val index = DocumentIndex(logger, None, root.join("pkg"))
+      assert(logger.isEmpty)
+      assert(index.getControllingDocuments(SObjectNature).isEmpty)
+    }
+  }
+
 }

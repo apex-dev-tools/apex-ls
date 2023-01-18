@@ -49,9 +49,10 @@ class IssuesManager extends IssuesCollection with IssueLogger {
   }
 
   def pop(path: PathLike): List[diagnostics.Issue] = {
-    hasChanged.add(path)
     val issues = log.getOrElse(path, Nil)
     log.remove(path)
+    if (issues.nonEmpty)
+      hasChanged.add(path)
     issues
   }
 

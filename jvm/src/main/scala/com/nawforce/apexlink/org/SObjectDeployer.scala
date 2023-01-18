@@ -61,10 +61,9 @@ class SObjectDeployer(module: OPM.Module) {
 
     while (objectsEvents.hasNext) {
       val sObjectEvent = objectsEvents.next().asInstanceOf[SObjectEvent]
-      val doc          = sobjectDoc(sObjectEvent)
-      val encodedName  = EncodedName(doc.name).defaultNamespace(module.namespace)
+      val encodedName  = EncodedName(sObjectEvent.name).defaultNamespace(module.namespace)
       val typeName     = TypeName(encodedName.fullName, Nil, Some(TypeNames.Schema))
-      val nature       = SObjectNature(doc, sObjectEvent)
+      val nature       = SObjectNature(sObjectEvent.name, sObjectEvent)
 
       val fieldEvents         = bufferEvents[CustomFieldEvent](objectsEvents)
       val fieldSetEvents      = bufferEvents[FieldsetEvent](objectsEvents)
@@ -106,12 +105,6 @@ class SObjectDeployer(module: OPM.Module) {
     addDerivedFieldsToObjects(derivedFields, createdSObjects)
 
     createdSObjects.values.toArray
-  }
-
-  /** Fake MetadataDocument for the SObject, this may not exist when extending SObjects. */
-  private def sobjectDoc(event: SObjectEvent): MetadataDocument = {
-    val name = event.reportingPath.basename.replaceFirst("\\.object$", "")
-    MetadataDocument(event.reportingPath.join(name + ".object")).get
   }
 
   private def createCustomField(field: CustomFieldEvent): Array[FieldDeclaration] = {
@@ -280,26 +273,18 @@ class SObjectDeployer(module: OPM.Module) {
         case (false, false) =>
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
         case (false, true) =>
-          // Add additional debug for revman issue
-          val message =
-            s"""Extending unknown SObject error:
-              |  sources: ${sources.map(_.location.toString).mkString(",")}
-              |  event: $event
-              |  typeName: $typeName
-              |  nature: $nature
-              |  fields: ${fields.map(_.name).mkString(",")}
-              |  fieldSets: ${fieldSets.map(_.value).mkString(",")}
-              |  sharingReasons: ${fieldSets.map(_.value).mkString(",")}
-              |""".stripMargin
-          OrgInfo.log(
-            Issue(
-              module.pkg.org.path.join("sfdx-project.json"),
-              Diagnostic(ERROR_CATEGORY, Location.empty, message)
-            )
-          )
+          // Limit logging to once per file
+          val paths = sources.map(_.location.path).distinct
+          paths.foreach(path => {
+            sources
+              .find(_.location.path == path)
+              .foreach(source => {
+                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, event.name))
+              })
+          })
           Array.empty
         case (true, false) =>
-          OrgInfo.log(IssueOps.redefiningSObject(sources.head.location, event.reportingPath))
+          OrgInfo.log(IssueOps.redefiningSObject(sources.head.location, event.name))
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
       }
     }
@@ -429,7 +414,9 @@ class SObjectDeployer(module: OPM.Module) {
         sobjectType.isEmpty || !sobjectType.get.superClassDeclaration
           .exists(superClass => superClass.typeName == TypeNames.SObject)
       ) {
-        OrgInfo.logError(sources.head.location, s"No SObject declaration found for '$typeName'")
+        sources.headOption.foreach(source => {
+          OrgInfo.logError(source.location, s"No SObject declaration found for '$typeName'")
+        })
         return Array()
       }
       Array(

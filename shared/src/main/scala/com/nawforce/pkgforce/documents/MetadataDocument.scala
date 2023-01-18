@@ -26,17 +26,17 @@ import scala.collection.compat.immutable.ArraySeq
 sealed abstract class MetadataNature(val partialType: Boolean = false)
 
 case object LabelNature         extends MetadataNature(partialType = true)
-case object ApexNature          extends MetadataNature
-case object ApexMetaNature      extends MetadataNature
-case object TriggerNature       extends MetadataNature
-case object TriggerMetaNature   extends MetadataNature
+case object ApexNature          extends MetadataNature(partialType = true)
+case object ApexMetaNature      extends MetadataNature(partialType = true)
+case object TriggerNature       extends MetadataNature(partialType = true)
+case object TriggerMetaNature   extends MetadataNature(partialType = true)
 case object ComponentNature     extends MetadataNature
 case object PageNature          extends MetadataNature
 case object FlowNature          extends MetadataNature
-case object SObjectNature       extends MetadataNature
-case object FieldNature         extends MetadataNature
-case object FieldSetNature      extends MetadataNature
-case object SharingReasonNature extends MetadataNature
+case object SObjectNature       extends MetadataNature(partialType = true)
+case object FieldNature         extends MetadataNature(partialType = true)
+case object FieldSetNature      extends MetadataNature(partialType = true)
+case object SharingReasonNature extends MetadataNature(partialType = true)
 
 /** A piece of Metadata described in a file */
 abstract class MetadataDocument(val path: PathLike, val name: Name) {
@@ -315,45 +315,55 @@ object MetadataDocument {
       parts = Array(s"${parts.head}.${parts(1)}") ++ parts.takeRight(parts.length - 2)
     }
 
+    // Used to test correct structuring of SObjects & components of
+    lazy val isObjectChild        = path.parent.parent.basename == "objects"
+    lazy val isObjectGrandChild   = path.parent.parent.parent.basename == "objects"
+    lazy val isFieldsChild        = isObjectGrandChild && path.parent.basename == "fields"
+    lazy val isFieldSetChild      = isObjectGrandChild && path.parent.basename == "fieldSets"
+    lazy val isSharingReasonChild = isObjectGrandChild && path.parent.basename == "sharingReasons"
+
+    // For some docs the name just comes from the filename, for SObjects we use enclosing directory name so
+    // we can detect errors between that, the filename and the fullName in the doc itself.
+    val name             = Name(parts.head)
+    lazy val sObjectName = Name(path.parent.basename)
+
     if (parts.length == 2) {
-      val name = Name(parts.head)
       parts(1) match {
-        case "cls"                                    => Some(ApexClassDocument(path, name))
-        case "trigger"                                => Some(ApexTriggerDocument(path, name))
-        case "object" if name.value.endsWith("__mdt") => Some(CustomMetadataDocument(path, name))
-        case "object" if name.value.endsWith("__b")   => Some(BigObjectDocument(path, name))
-        case "object" if name.value.endsWith("__e")   => Some(PlatformEventDocument(path, name))
-        case "object"                                 => Some(SObjectDocument(path, name))
-        case "component"                              => Some(ComponentDocument(path, name))
-        case "flow"                                   => Some(FlowDocument(path, name))
-        case "labels"                                 => Some(LabelsDocument(path, name))
-        case "page"                                   => Some(PageDocument(path, name))
-        case _                                        => None
+        case "cls"     => Some(ApexClassDocument(path, name))
+        case "trigger" => Some(ApexTriggerDocument(path, name))
+        case "object" if isObjectChild && name.value.endsWith("__mdt") =>
+          Some(CustomMetadataDocument(path, sObjectName))
+        case "object" if isObjectChild && name.value.endsWith("__b") =>
+          Some(BigObjectDocument(path, sObjectName))
+        case "object" if isObjectChild && name.value.endsWith("__e") =>
+          Some(PlatformEventDocument(path, sObjectName))
+        case "object" if isObjectChild => Some(SObjectDocument(path, sObjectName))
+        case "component"               => Some(ComponentDocument(path, name))
+        case "flow"                    => Some(FlowDocument(path, name))
+        case "labels"                  => Some(LabelsDocument(path, name))
+        case "page"                    => Some(PageDocument(path, name))
+        case _                         => None
       }
     } else if (parts.length == 3 && parts(2) == "xml") {
-      val name = Name(parts.head)
       parts(1) match {
         case "cls-meta"     => Some(ApexClassMetaDocument(path, name))
         case "trigger-meta" => Some(ApexTriggerMetaDocument(path, name))
-        case "field-meta"
-            if path.parent.basename.equalsIgnoreCase("fields") && !path.parent.parent.isRoot =>
+        case "field-meta" if isFieldsChild =>
           Some(SObjectFieldDocument(path, name))
-        case "fieldSet-meta"
-            if path.parent.basename.equalsIgnoreCase("fieldSets") && !path.parent.parent.isRoot =>
+        case "fieldSet-meta" if isFieldSetChild =>
           Some(SObjectFieldSetDocument(path, name))
-        case "sharingReason-meta"
-            if path.parent.basename.equalsIgnoreCase(
-              "sharingReasons"
-            ) && !path.parent.parent.isRoot =>
+        case "sharingReason-meta" if isSharingReasonChild =>
           Some(SObjectSharingReasonDocument(path, name))
-        case "object-meta" if name.value.endsWith("__mdt") =>
-          Some(CustomMetadataDocument(path, name))
-        case "object-meta" if name.value.endsWith("__b") => Some(BigObjectDocument(path, name))
-        case "object-meta" if name.value.endsWith("__e") => Some(PlatformEventDocument(path, name))
-        case "object-meta"                               => Some(SObjectDocument(path, name))
-        case "flow-meta"                                 => Some(FlowDocument(path, name))
-        case "labels-meta"                               => Some(LabelsDocument(path, name))
-        case _                                           => None
+        case "object-meta" if isObjectChild && name.value.endsWith("__mdt") =>
+          Some(CustomMetadataDocument(path, sObjectName))
+        case "object-meta" if isObjectChild && name.value.endsWith("__b") =>
+          Some(BigObjectDocument(path, sObjectName))
+        case "object-meta" if isObjectChild && name.value.endsWith("__e") =>
+          Some(PlatformEventDocument(path, sObjectName))
+        case "object-meta" if isObjectChild => Some(SObjectDocument(path, sObjectName))
+        case "flow-meta"                    => Some(FlowDocument(path, name))
+        case "labels-meta"                  => Some(LabelsDocument(path, name))
+        case _                              => None
       }
     } else {
       None

@@ -14,13 +14,14 @@
 package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, IssuesManager}
-import com.nawforce.pkgforce.names.Name
+import com.nawforce.pkgforce.names.{EncodedName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 
 /** Basic validation of metadata files from just examining the file name. */
 class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
 
   def validate(nature: MetadataNature, documents: List[PathLike]): Unit = {
+    documents.foreach(logger.pop)
     nature match {
       case ApexNature    => validateApex(documents)
       case TriggerNature => validateTrigger(documents)
@@ -143,13 +144,12 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
     val typeName        = allDocs.head.controllingTypeName(namespace)
 
     val isSObject: Boolean = controllingDocs.headOption
+      .map(_.isInstanceOf[SObjectDocument])
       .getOrElse({
-        // If we don't have a controlling doc, fake it to work out is this is an actual SObject
-        MetadataDocument(
-          documents.head.parent.join(s"${typeName.name.toString}.object-meta.xml")
-        ).get
+        // If we don't have a controlling doc use controlling typename ext to test if an actual SObject
+        val encName = EncodedName(typeName.name)
+        encName.ext.isEmpty || encName.ext.exists(_.value == "c")
       })
-      .isInstanceOf[SObjectDocument]
 
     if (!isSObject && controllingDocs.isEmpty) {
       logger.log(
@@ -178,5 +178,33 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
         )
       })
     }
+
+    assertUniqueName(FieldNature, allDocs)
+    assertUniqueName(FieldSetNature, allDocs)
+    assertUniqueName(SharingReasonNature, allDocs)
+  }
+
+  private def assertUniqueName(nature: MetadataNature, documents: List[MetadataDocument]): Unit = {
+    documents
+      .filter(_.nature == nature)
+      .groupBy(_.name)
+      .filter(_._2.size > 1)
+      .foreach(duplicate => {
+        duplicate._2.foreach(duplicated => {
+          val typeName = duplicated.typeName(namespace)
+          val otherPaths =
+            duplicate._2.filterNot(_ == duplicated).map(_.path).mkString(", ")
+          logger.log(
+            Issue(
+              duplicated.path,
+              Diagnostic(
+                ERROR_CATEGORY,
+                Location.empty,
+                s"Type '${typeName.toString}' is defined, but duplicate metadata found at $otherPaths"
+              )
+            )
+          )
+        })
+      })
   }
 }

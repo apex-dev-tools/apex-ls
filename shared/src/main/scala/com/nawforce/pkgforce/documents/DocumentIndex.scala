@@ -139,8 +139,9 @@ class DocumentIndex(
       if (residual.nonEmpty) {
         docMap.put(typeName, residual)
         validator.validate(document.controllingNature, residual)
-      } else
+      } else {
         docMap.remove(typeName)
+      }
     }
     existing
   }

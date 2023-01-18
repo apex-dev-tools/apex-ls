@@ -42,8 +42,8 @@ class TriggerTest extends AnyFunSuite with TestHelper {
   test("Custom object") {
     FileSystemHelper.run(
       Map(
-        "Stupid__c/Stupid__c.object" -> customObject("Stupid", Seq()),
-        "Dummy.trigger"              -> "trigger Dummy on Stupid__c (before insert) { }"
+        "objects/Stupid__c/Stupid__c.object" -> customObject("Stupid", Seq()),
+        "Dummy.trigger"                      -> "trigger Dummy on Stupid__c (before insert) { }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)

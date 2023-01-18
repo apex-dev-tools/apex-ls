@@ -58,12 +58,12 @@ case object BigObjectNature extends SObjectNature("Big Object", extendable = fal
 case object PlatformObjectNature extends SObjectNature("Platform Object", extendable = true)
 
 object SObjectNature {
-  def apply(doc: MetadataDocument, event: SObjectEvent): SObjectNature = {
-    doc match {
-      case _: CustomMetadataDocument => CustomMetadataNature
-      case _: BigObjectDocument      => BigObjectNature
-      case _: PlatformEventDocument  => PlatformEventNature
-      case _: SObjectDocument =>
+  def apply(name: Name, event: SObjectEvent): SObjectNature = {
+    name match {
+      case name if name.value.endsWith("__mdt") => CustomMetadataNature
+      case name if name.value.endsWith("__b")   => BigObjectNature
+      case name if name.value.endsWith("__e")   => PlatformEventNature
+      case _ =>
         event.customSettingsType match {
           case Some(ListCustomSetting)      => ListCustomSettingNature
           case Some(HierarchyCustomSetting) => HierarchyCustomSettingsNature
