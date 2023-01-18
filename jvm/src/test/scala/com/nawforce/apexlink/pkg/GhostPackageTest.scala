@@ -278,4 +278,43 @@ class GhostPackageTest extends AnyFunSuite with TestHelper {
       assert(packagedClass("pkg", "Dummy").get.dependencies().isEmpty)
     }
   }
+
+  test("Ghost package suppresses local variable reference error") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"namespace": "pkg",
+            |"packageDirectories": [{"path": "pkg"}],
+            |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
+            |}""".stripMargin,
+        "pkg/Dummy.cls" -> "public class Dummy { void func() { ghosted.A a = new ghosted.A(); a.foo(); } }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(!hasIssues)
+      assert(packagedClass("pkg", "Dummy").get.dependencies().isEmpty)
+    }
+  }
+
+  test("Ghost package suppresses exception variable reference error") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"namespace": "pkg",
+            |"packageDirectories": [{"path": "pkg"}],
+            |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
+            |}""".stripMargin,
+        "pkg/Dummy.cls" ->
+          """public class Dummy {
+            |void func() { try {} catch (ghosted.SomeException e) { e.getMessage(); } }
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(!hasIssues)
+      assert(packagedClass("pkg", "Dummy").get.dependencies().isEmpty)
+    }
+  }
 }
