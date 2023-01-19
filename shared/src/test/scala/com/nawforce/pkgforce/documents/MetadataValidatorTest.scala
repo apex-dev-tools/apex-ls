@@ -436,4 +436,55 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
+  test("dual components") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      ComponentNature,
+      List(Path("/dir1/Foo.component"), Path("/dir2/Foo.component"))
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/Foo.component: Error: line 1: Duplicate for type 'Component.Foo', see also /dir2/Foo.component"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/Foo.component: Error: line 1: Duplicate for type 'Component.Foo', see also /dir1/Foo.component"
+    )
+  }
+
+  test("dual pages") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(PageNature, List(Path("/dir1/Foo.page"), Path("/dir2/Foo.page")))
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/Foo.page: Error: line 1: Duplicate for type 'Page.Foo', see also /dir2/Foo.page"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/Foo.page: Error: line 1: Duplicate for type 'Page.Foo', see also /dir1/Foo.page"
+    )
+  }
+
+  test("dual flows") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(FlowNature, List(Path("/dir1/Foo.flow"), Path("/dir2/Foo.flow")))
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/Foo.flow: Error: line 1: Duplicate for type 'Flow.Interview.Foo', see also /dir2/Foo.flow"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/Foo.flow: Error: line 1: Duplicate for type 'Flow.Interview.Foo', see also /dir1/Foo.flow"
+    )
+  }
+
 }

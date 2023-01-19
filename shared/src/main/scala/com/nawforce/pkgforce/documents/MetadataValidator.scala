@@ -21,12 +21,23 @@ import com.nawforce.pkgforce.path.{Location, PathLike}
 class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
 
   def validate(nature: MetadataNature, documents: List[PathLike]): Unit = {
+    // Clear any previous issues, this is start of a re-validation
     documents.foreach(logger.pop)
+
+    // Not all of these will be validated, using a full list to get missing case warning
     nature match {
-      case ApexNature    => validateApex(documents)
-      case TriggerNature => validateTrigger(documents)
-      case SObjectNature => validateSObjectLike(documents)
-      case _             => ()
+      case LabelNature         => ()
+      case ApexNature          => validateApex(documents)
+      case ApexMetaNature      => ()
+      case TriggerNature       => validateTrigger(documents)
+      case TriggerMetaNature   => ()
+      case ComponentNature     => validateComponent(documents)
+      case PageNature          => validatePage(documents)
+      case FlowNature          => validateFlow(documents)
+      case SObjectNature       => validateSObjectLike(documents)
+      case FieldNature         => ()
+      case FieldSetNature      => ()
+      case SharingReasonNature => ()
     }
   }
 
@@ -135,6 +146,37 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
           )
         )
       )
+    }
+  }
+
+  private def validateComponent(documents: List[PathLike]): Unit = {
+    assertSingleDocument(documents)
+  }
+
+  private def validatePage(documents: List[PathLike]): Unit = {
+    assertSingleDocument(documents)
+  }
+
+  private def validateFlow(documents: List[PathLike]): Unit = {
+    assertSingleDocument(documents)
+  }
+
+  private def assertSingleDocument(documents: List[PathLike]): Unit = {
+    if (documents.length > 1) {
+      val allDocs = documents.flatMap(MetadataDocument(_))
+      allDocs.foreach(document => {
+        val otherPaths = documents.filterNot(_ == document.path).mkString(", ")
+        logger.log(
+          Issue(
+            document.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location.empty,
+              s"Duplicate for type '${document.typeName(namespace)}', see also $otherPaths"
+            )
+          )
+        )
+      })
     }
   }
 

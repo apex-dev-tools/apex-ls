@@ -66,7 +66,7 @@ trait ModuleRefresh {
           return Seq()
         }
       } else if (!index.upsert(pkg.org.issueManager, doc)) {
-        LoggerOps.debug(s"Refresh of ${doc.path} would create duplicate type, ignoring.")
+        LoggerOps.debug(s"Refresh of non-index file ${doc.path}.")
         return Seq()
       }
 

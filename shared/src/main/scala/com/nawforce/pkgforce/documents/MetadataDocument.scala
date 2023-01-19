@@ -20,23 +20,21 @@ import com.nawforce.runtime.parsers.SourceData
 
 import scala.collection.compat.immutable.ArraySeq
 
-/** The type of some metadata, such as Trigger metadata. Partial type metadata signals that multiple
-  * documents may contribute to the same type.
-  */
-sealed abstract class MetadataNature(val partialType: Boolean = false)
+/** The types of metadata we understand */
+sealed abstract class MetadataNature
 
-case object LabelNature         extends MetadataNature(partialType = true)
-case object ApexNature          extends MetadataNature(partialType = true)
-case object ApexMetaNature      extends MetadataNature(partialType = true)
-case object TriggerNature       extends MetadataNature(partialType = true)
-case object TriggerMetaNature   extends MetadataNature(partialType = true)
+case object LabelNature         extends MetadataNature
+case object ApexNature          extends MetadataNature
+case object ApexMetaNature      extends MetadataNature
+case object TriggerNature       extends MetadataNature
+case object TriggerMetaNature   extends MetadataNature
 case object ComponentNature     extends MetadataNature
 case object PageNature          extends MetadataNature
 case object FlowNature          extends MetadataNature
-case object SObjectNature       extends MetadataNature(partialType = true)
-case object FieldNature         extends MetadataNature(partialType = true)
-case object FieldSetNature      extends MetadataNature(partialType = true)
-case object SharingReasonNature extends MetadataNature(partialType = true)
+case object SObjectNature       extends MetadataNature
+case object FieldNature         extends MetadataNature
+case object FieldSetNature      extends MetadataNature
+case object SharingReasonNature extends MetadataNature
 
 /** A piece of Metadata described in a file */
 abstract class MetadataDocument(val path: PathLike, val name: Name) {

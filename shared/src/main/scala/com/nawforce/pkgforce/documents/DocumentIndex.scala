@@ -89,43 +89,12 @@ class DocumentIndex(
       .flatMap(path => MetadataDocument(Path(path)))
   }
 
-  /** Upsert a document. Document defining new or existing types return true, if the document would
-    * create a duplicate type it is not added to the store and false is returned.
-    */
+  /** Upsert a document. Returns false if document is not visible to the index. */
   def upsert(logger: IssueLogger, document: MetadataDocument): Boolean = {
-
-    if (!isVisibleFile(document.path)) return false
-
-    // Partial can always be upserted
-    if (document.nature.partialType) {
-      indexDocument(document, deferValidation = false)
-      return true
-    }
-
-    // As can metadata defining a new type
-    val typeName = document.typeName(namespace)
-    val existing = get(document.nature, typeName)
-    if (existing.isEmpty) {
-      indexDocument(document, deferValidation = false)
-      return true
-    }
-
-    // Or existing documents
-    if (existing.contains(document))
-      return true
-
-    // Otherwise we should ignore it, sad but true
-    logger.log(
-      Issue(
-        document.path,
-        Diagnostic(
-          ERROR_CATEGORY,
-          Location.empty,
-          s"Duplicate type '$typeName' found in '${document.path}', ignoring this file"
-        )
-      )
-    )
-    false
+    if (!isVisibleFile(document.path))
+      return false
+    indexDocument(document, deferValidation = false)
+    true
   }
 
   /** Remove a document from the store. Returns true if the document was in the store and removed.
