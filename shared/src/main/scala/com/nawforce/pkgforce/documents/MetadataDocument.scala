@@ -212,8 +212,18 @@ abstract class SObjectPart(_path: PathLike, _name: Name) extends MetadataDocumen
   override def controllingNature: MetadataNature = SObjectNature
 
   override def controllingTypeName(namespace: Option[Name]): TypeName = {
+    TypeName(sobjectName(namespace), Nil, Some(TypeName.Schema))
+  }
+
+  def sobjectName(namespace: Option[Name]): Name = {
     val sobjectName = path.parent.parent.basename
-    TypeName(NamespacePrefix(namespace, sobjectName), Nil, Some(TypeName.Schema))
+    val isCustom    = sobjectName.endsWith("__c")
+    val prefix =
+      if (isCustom)
+        namespace.map(ns => s"${ns}__").getOrElse("")
+      else
+        ""
+    Name(prefix + sobjectName)
   }
 }
 
@@ -223,12 +233,13 @@ final case class SObjectFieldDocument(_path: PathLike, _name: Name)
   override def nature: MetadataNature = FieldNature
 
   override def typeName(namespace: Option[Name]): TypeName = {
-    val sobjectName = path.parent.parent.basename
-    val fieldsType =
-      TypeName.sObjectTypeFields$(
-        TypeName(NamespacePrefix(namespace, sobjectName), Nil, Some(TypeName.Schema))
+    TypeName(
+      NamespacePrefix(namespace, name.value),
+      Nil,
+      Some(
+        TypeName.sObjectTypeFields$(TypeName(sobjectName(namespace), Nil, Some(TypeName.Schema)))
       )
-    TypeName(name, Nil, Some(fieldsType))
+    )
   }
 }
 
@@ -238,11 +249,13 @@ final case class SObjectFieldSetDocument(_path: PathLike, _name: Name)
   override def nature: MetadataNature = FieldSetNature
 
   override def typeName(namespace: Option[Name]): TypeName = {
-    val sobjectName = path.parent.parent.basename
-    val fieldSetType = TypeName.sObjectTypeFieldSets$(
-      TypeName(NamespacePrefix(namespace, sobjectName), Nil, Some(TypeName.Schema))
+    TypeName(
+      NamespacePrefix(namespace, name.value),
+      Nil,
+      Some(
+        TypeName.sObjectTypeFieldSets$(TypeName(sobjectName(namespace), Nil, Some(TypeName.Schema)))
+      )
     )
-    TypeName(name, Nil, Some(fieldSetType))
   }
 }
 
@@ -252,11 +265,13 @@ final case class SObjectSharingReasonDocument(_path: PathLike, _name: Name)
   override def nature: MetadataNature = SharingReasonNature
 
   override def typeName(namespace: Option[Name]): TypeName = {
-    val sobjectName = path.parent.parent.basename
-    val sharingReasonType = TypeName.sObjectTypeRowClause$(
-      TypeName(NamespacePrefix(namespace, sobjectName), Nil, Some(TypeName.Schema))
+    TypeName(
+      NamespacePrefix(namespace, name.value),
+      Nil,
+      Some(
+        TypeName.sObjectTypeRowClause$(TypeName(sobjectName(namespace), Nil, Some(TypeName.Schema)))
+      )
     )
-    TypeName(name, Nil, Some(sharingReasonType))
   }
 }
 
