@@ -135,17 +135,17 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
-  test("standard object file found and correctly named after dir") {
+  test("standard object file found and correctly named after file") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/objects/Bar/Foo.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
+        "pkg/objects/Foo.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
-          List(SObjectDocument(root.join("pkg", "objects", "Bar", "Foo.object"), Name("Bar")))
+          List(SObjectDocument(root.join("pkg", "objects", "Foo.object"), Name("Foo")))
       )
     }
   }
@@ -167,19 +167,17 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
-  test("custom object file found and correctly named after dir") {
+  test("custom object file found and correctly named after file") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/objects/Bar__c/Foo__c.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
+        "pkg/objects/Foo__c.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
-          List(
-            SObjectDocument(root.join("pkg", "objects", "Bar__c", "Foo__c.object"), Name("Bar__c"))
-          )
+          List(SObjectDocument(root.join("pkg", "objects", "Foo__c.object"), Name("Foo__c")))
       )
     }
   }

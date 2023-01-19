@@ -62,7 +62,7 @@ class DocumentTest extends AnyFunSuite {
   }
 
   test("object file") {
-    val target = root.join("objects", "Foo", "Foo.object")
+    val target = root.join("objects", "Foo.object")
     MetadataDocument(target) match {
       case Some(SObjectDocument(path, Name("Foo"))) if path == target => ()
       case x                                                          => assert(false, x)
@@ -78,7 +78,7 @@ class DocumentTest extends AnyFunSuite {
   }
 
   test("custom object file") {
-    val target = root.join("objects", "Foo__c", "Foo__c.object")
+    val target = root.join("objects", "Foo__c.object")
     MetadataDocument(target) match {
       case Some(SObjectDocument(path, Name("Foo__c"))) if path == target => ()
       case x                                                             => assert(false, x)
@@ -94,7 +94,7 @@ class DocumentTest extends AnyFunSuite {
   }
 
   test("custom metadata file") {
-    val target = root.join("objects", "Foo__mdt", "Foo__mdt.object")
+    val target = root.join("objects", "Foo__mdt.object")
     MetadataDocument(target) match {
       case Some(CustomMetadataDocument(path, Name("Foo__mdt"))) if path == target => ()
       case x => assert(false, x)
@@ -110,7 +110,7 @@ class DocumentTest extends AnyFunSuite {
   }
 
   test("big object file") {
-    val target = root.join("objects", "Foo__b", "Foo__b.object")
+    val target = root.join("objects", "Foo__b.object")
     MetadataDocument(target) match {
       case Some(BigObjectDocument(path, Name("Foo__b"))) if path == target => ()
       case x                                                               => assert(false, x)
@@ -126,7 +126,7 @@ class DocumentTest extends AnyFunSuite {
   }
 
   test("platform event file") {
-    val target = root.join("objects", "Foo__e", "Foo__e.object")
+    val target = root.join("objects", "Foo__e.object")
     MetadataDocument(target) match {
       case Some(PlatformEventDocument(path, Name("Foo__e"))) if path == target => ()
       case x                                                                   => assert(false, x)

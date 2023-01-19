@@ -54,7 +54,7 @@ class SchemaManagerTest extends AnyFunSuite with TestHelper {
   test("Custom object visible") {
     FileSystemHelper.run(
       Map(
-        "objects/Foo__c/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", "Text", None))),
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", "Text", None))),
         "Dummy.cls" -> "public class Dummy { {DescribeSObjectResult r = SObjectType.Foo__c;} }"
       )
     ) { root: PathLike =>

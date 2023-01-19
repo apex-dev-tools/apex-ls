@@ -182,9 +182,14 @@ object SObjectGenerator {
     // Either .object/.object-meta-xml or component in subdirectory
     Name(
       controllingPath
-        .map(path => path.parent)
-        .getOrElse(documents.head.path.parent.parent)
-        .basename
+        .map(path => {
+          if (path.toString.endsWith(".object")) {
+            path.basename.substring(0, path.basename.length - 7)
+          } else {
+            path.parent.basename
+          }
+        })
+        .getOrElse(documents.head.path.parent.parent.basename)
     )
   }
 

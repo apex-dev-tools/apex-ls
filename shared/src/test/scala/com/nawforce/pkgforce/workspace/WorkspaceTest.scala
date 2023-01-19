@@ -398,14 +398,14 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object event") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
       )
     ) { root: PathLike =>
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(SObjectEvent(sourceInfo, name, false, None, None))
@@ -417,7 +417,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object event parse error") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\""
       )
     ) { root: PathLike =>
@@ -429,7 +429,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
               IssuesEvent(
                 ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
               )
-            ) if objectPath == root.join("objects", "MyObject__c", "MyObject__c.object") =>
+            ) if objectPath == root.join("objects", "MyObject__c.object") =>
       }
     }
   }
@@ -437,7 +437,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("List Custom Setting") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>List</customSettingsType>
           |</CustomObject>
@@ -447,7 +447,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(SObjectEvent(sourceInfo, name, false, Some(ListCustomSetting), None))
@@ -459,7 +459,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Hierarchical Custom Setting") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>Hierarchy</customSettingsType>
           |</CustomObject>
@@ -469,7 +469,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(SObjectEvent(sourceInfo, name, false, Some(HierarchyCustomSetting), None))
@@ -481,7 +481,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Bad Custom Setting") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>Bad</customSettingsType>
           |</CustomObject>
@@ -491,7 +491,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
@@ -510,7 +510,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("ReadWrite SharingModel") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <sharingModel>ReadWrite</sharingModel>
           |</CustomObject>
@@ -520,7 +520,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(SObjectEvent(sourceInfo, name, false, None, Some(ReadWriteSharingModel)))
@@ -532,7 +532,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Bad SharingModel") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |   <sharingModel>Something</sharingModel>
           |</CustomObject>
@@ -542,7 +542,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
@@ -561,7 +561,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with fields") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <fields><fullName>Name__c</fullName><type>Text</type></fields>
           |</CustomObject>
@@ -571,7 +571,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
@@ -585,7 +585,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with fieldsset") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <fieldSets><fullName>Name</fullName></fieldSets>
           |</CustomObject>
@@ -595,7 +595,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(SObjectEvent(sourceInfo, name, false, None, None), FieldsetEvent(_, Name("Name")))
@@ -607,7 +607,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with sharing reason") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyObject__c/MyObject__c.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <sharingReasons><fullName>Name</fullName></sharingReasons>
           |</CustomObject>
@@ -617,7 +617,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val path     = root.join("objects", "MyObject__c", "MyObject__c.object")
+      val path     = root.join("objects", "MyObject__c.object")
       val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
@@ -733,11 +733,11 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Master/Detail natural ordered") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyMaster__c/MyMaster__c.object" ->
+        "objects/MyMaster__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |</CustomObject>
           |""".stripMargin,
-        "sub/objects/MyDetail__c/MyDetail__c.object" ->
+        "sub/objects/MyDetail__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>Lookup__c</fullName>
@@ -752,9 +752,9 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val masterPath     = root.join("objects", "MyMaster__c", "MyMaster__c.object")
+      val masterPath     = root.join("objects", "MyMaster__c.object")
       val masterLocation = PathLocation(masterPath, Location.all)
-      val detailPath     = root.join("sub", "objects", "MyDetail__c", "MyDetail__c.object")
+      val detailPath     = root.join("sub", "objects", "MyDetail__c.object")
       val detailLocation = PathLocation(detailPath, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
@@ -778,11 +778,11 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Master/Detail reverse ordered") {
     FileSystemHelper.run(
       Map[String, String](
-        "sub/objects/MyMaster__c/MyMaster__c.object" ->
+        "sub/objects/MyMaster__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |</CustomObject>
             |""".stripMargin,
-        "objects/MyDetail__c/MyDetail__c.object" ->
+        "objects/MyDetail__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>Lookup__c</fullName>
@@ -797,9 +797,9 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val masterPath     = root.join("sub", "objects", "MyMaster__c", "MyMaster__c.object")
+      val masterPath     = root.join("sub", "objects", "MyMaster__c.object")
       val masterLocation = PathLocation(masterPath, Location.all)
-      val detailPath     = root.join("objects", "MyDetail__c", "MyDetail__c.object")
+      val detailPath     = root.join("objects", "MyDetail__c.object")
       val detailLocation = PathLocation(detailPath, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
@@ -823,7 +823,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Master/Detail related field") {
     FileSystemHelper.run(
       Map[String, String](
-        "objects/MyMaster__c/MyMaster__c.object" ->
+        "objects/MyMaster__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>MyDetailSummary__c</fullName>
@@ -832,7 +832,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
             |   </fields>
             |</CustomObject>
             |""".stripMargin,
-        "sub/objects/MyDetail__c/MyDetail__c.object" ->
+        "sub/objects/MyDetail__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>Lookup__c</fullName>
@@ -851,9 +851,9 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val masterPath     = root.join("objects", "MyMaster__c", "MyMaster__c.object")
+      val masterPath     = root.join("objects", "MyMaster__c.object")
       val masterLocation = PathLocation(masterPath, Location.all)
-      val detailPath     = root.join("sub", "objects", "MyDetail__c", "MyDetail__c.object")
+      val detailPath     = root.join("sub", "objects", "MyDetail__c.object")
       val detailLocation = PathLocation(detailPath, Location.all)
       ws.get.events.toList should matchPattern {
         case List(

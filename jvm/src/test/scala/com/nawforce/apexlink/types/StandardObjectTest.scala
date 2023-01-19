@@ -22,11 +22,11 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
 
   test("Not a standard object") {
     FileSystemHelper.run(
-      Map("objects/Foo/Foo.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))))
+      Map("objects/Foo.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))))
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("objects", "Foo", "Foo.object")) ==
+        getMessages(root.join("objects", "Foo.object")) ==
           "Error: line 1: No SObject declaration found for 'Schema.Foo'\n"
       )
     }
@@ -34,16 +34,11 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
 
   test("Not a sObject") {
     FileSystemHelper.run(
-      Map(
-        "objects/String/String.object" -> customObject(
-          "String",
-          Seq(("Bar__c", Some("Text"), None))
-        )
-      )
+      Map("objects/String.object" -> customObject("String", Seq(("Bar__c", Some("Text"), None))))
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("objects", "String", "String.object")) ==
+        getMessages(root.join("objects", "String.object")) ==
           "Error: line 1: No SObject declaration found for 'Schema.String'\n"
       )
     }
@@ -69,11 +64,8 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
   test("Custom field") {
     FileSystemHelper.run(
       Map(
-        "objects/Account/Account.object" -> customObject(
-          "Account",
-          Seq(("Bar__c", Some("Text"), None))
-        ),
-        "Dummy.cls" -> "public class Dummy { {Account a; a.Bar__c = '';} }"
+        "objects/Account.object" -> customObject("Account", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"              -> "public class Dummy { {Account a; a.Bar__c = '';} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -302,11 +294,8 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
   test("Custom field reference") {
     FileSystemHelper.run(
       Map(
-        "objects/Account/Account.object" -> customObject(
-          "Account",
-          Seq(("Bar__c", Some("Text"), None))
-        ),
-        "Dummy.cls" -> "public class Dummy { {SObjectField a = Account.Bar__c;} }"
+        "objects/Account.object" -> customObject("Account", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"              -> "public class Dummy { {SObjectField a = Account.Bar__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -345,7 +334,7 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
   test("Lookup related list") {
     FileSystemHelper.run(
       Map(
-        "objects/Foo__c/Foo__c.object" -> customObject(
+        "objects/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Lookup__c", Some("Lookup"), Some("Account")))
         ),
@@ -366,7 +355,7 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
   test("Lookup related list to field") {
     FileSystemHelper.run(
       Map(
-        "objects/Foo__c/Foo__c.object" -> customObject(
+        "objects/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Lookup__c", Some("Lookup"), Some("Account")), ("Bar__c", Some("Text"), None))
         ),
@@ -590,15 +579,12 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
   test("Custom field without a type") {
     FileSystemHelper.run(
       Map(
-        "objects/Account/Account.object" -> customObject(
-          "Account",
-          Seq(("AccountNumber__c", None, None))
-        )
+        "objects/Account.object" -> customObject("Account", Seq(("AccountNumber__c", None, None)))
       )
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("objects", "Account", "Account.object"))
+        getMessages(root.join("objects", "Account.object"))
           .startsWith(
             "Error: line 10: Expecting element 'fields' to have a single 'type' child element\n"
           )
