@@ -170,4 +170,321 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
+  test("sobject single meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(SObjectNature, List(Path("/objects/Foo__c/Foo__c.object-meta.xml")))
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.isEmpty)
+  }
+
+  test("sobject dual meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(
+        Path("/dir1/objects/Foo__c/Foo__c.object-meta.xml"),
+        Path("/dir2/objects/Foo__c/Foo__c.object-meta.xml")
+      )
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/objects/Foo__c/Foo__c.object-meta.xml: Error: line 1: Type 'Schema.Foo__c' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__c/Foo__c.object-meta.xml"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/objects/Foo__c/Foo__c.object-meta.xml: Error: line 1: Type 'Schema.Foo__c' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__c/Foo__c.object-meta.xml"
+    )
+  }
+
+  test("sobject only field") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(Path("/objects/Foo__c/fields/MyField__c.field-meta.xml"))
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.isEmpty)
+  }
+
+  test("sobject duplicate field") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(
+        Path("/dir1/objects/Foo__c/fields/MyField__c.field-meta.xml"),
+        Path("/dir2/objects/Foo__c/fields/MyField__c.field-meta.xml")
+      )
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/objects/Foo__c/fields/MyField__c.field-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.Fields.MyField__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/fields/MyField__c.field-meta.xml"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/objects/Foo__c/fields/MyField__c.field-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.Fields.MyField__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/fields/MyField__c.field-meta.xml"
+    )
+  }
+
+  test("sobject only fieldset") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(Path("/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml"))
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.isEmpty)
+  }
+
+  test("sobject duplicate fieldset") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(
+        Path("/dir1/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml"),
+        Path("/dir2/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml")
+      )
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.FieldSets.MyFieldSet__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.FieldSets.MyFieldSet__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml"
+    )
+
+  }
+
+  test("sobject only sharing reason") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(Path("/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"))
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.isEmpty)
+  }
+
+  test("sobject duplicate sharing reason") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(
+        Path("/dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"),
+        Path("/dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml")
+      )
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.RowCause.MySharingReason__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.RowCause.MySharingReason__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"
+    )
+
+  }
+
+  test("platform event single meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(SObjectNature, List(Path("/objects/Foo__e/Foo__e.object-meta.xml")))
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.isEmpty)
+  }
+
+  test("platform event dual meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(
+        Path("/dir1/objects/Foo__e/Foo__e.object-meta.xml"),
+        Path("/dir2/objects/Foo__e/Foo__e.object-meta.xml")
+      )
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/objects/Foo__e/Foo__e.object-meta.xml: Error: line 1: Type 'Schema.Foo__e' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__e/Foo__e.object-meta.xml"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/objects/Foo__e/Foo__e.object-meta.xml: Error: line 1: Type 'Schema.Foo__e' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__e/Foo__e.object-meta.xml"
+    )
+  }
+
+  test("platform event no meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(Path("/objects/Foo__e/fields/MyField__c.field-meta.xml"))
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 1)
+    assert(
+      issues.head.toString ==
+        "/objects/Foo__e/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__e' are defined, but the required object-meta.xml file is missing"
+    )
+  }
+
+  test("custom metadata event single meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(SObjectNature, List(Path("/objects/Foo__mdt/Foo__mdt.object-meta.xml")))
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.isEmpty)
+  }
+
+  test("custom metadata event dual meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(
+        Path("/dir1/objects/Foo__mdt/Foo__mdt.object-meta.xml"),
+        Path("/dir2/objects/Foo__mdt/Foo__mdt.object-meta.xml")
+      )
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/objects/Foo__mdt/Foo__mdt.object-meta.xml: Error: line 1: Type 'Schema.Foo__mdt' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__mdt/Foo__mdt.object-meta.xml"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/objects/Foo__mdt/Foo__mdt.object-meta.xml: Error: line 1: Type 'Schema.Foo__mdt' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__mdt/Foo__mdt.object-meta.xml"
+    )
+  }
+
+  test("custom metadata no meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(Path("/objects/Foo__mdt/fields/MyField__c.field-meta.xml"))
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 1)
+    assert(
+      issues.head.toString ==
+        "/objects/Foo__mdt/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__mdt' are defined, but the required object-meta.xml file is missing"
+    )
+  }
+
+  test("big object single meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(SObjectNature, List(Path("/objects/Foo__b/Foo__b.object-meta.xml")))
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.isEmpty)
+  }
+
+  test("big object dual meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(
+        Path("/dir1/objects/Foo__b/Foo__b.object-meta.xml"),
+        Path("/dir2/objects/Foo__b/Foo__b.object-meta.xml")
+      )
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/objects/Foo__b/Foo__b.object-meta.xml: Error: line 1: Type 'Schema.Foo__b' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__b/Foo__b.object-meta.xml"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/objects/Foo__b/Foo__b.object-meta.xml: Error: line 1: Type 'Schema.Foo__b' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__b/Foo__b.object-meta.xml"
+    )
+  }
+
+  test("big object no meta") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      SObjectNature,
+      List(Path("/objects/Foo__b/fields/MyField__c.field-meta.xml"))
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 1)
+    assert(
+      issues.head.toString ==
+        "/objects/Foo__b/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__b' are defined, but the required object-meta.xml file is missing"
+    )
+  }
+
+  test("dual components") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(
+      ComponentNature,
+      List(Path("/dir1/Foo.component"), Path("/dir2/Foo.component"))
+    )
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/Foo.component: Error: line 1: Duplicate for type 'Component.Foo', see also /dir2/Foo.component"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/Foo.component: Error: line 1: Duplicate for type 'Component.Foo', see also /dir1/Foo.component"
+    )
+  }
+
+  test("dual pages") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(PageNature, List(Path("/dir1/Foo.page"), Path("/dir2/Foo.page")))
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/Foo.page: Error: line 1: Duplicate for type 'Page.Foo', see also /dir2/Foo.page"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/Foo.page: Error: line 1: Duplicate for type 'Page.Foo', see also /dir1/Foo.page"
+    )
+  }
+
+  test("dual flows") {
+    val validator = new MetadataValidator(logger, None)
+    validator.validate(FlowNature, List(Path("/dir1/Foo.flow"), Path("/dir2/Foo.flow")))
+
+    val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+    assert(issues.length == 2)
+    assert(
+      issues.head.toString ==
+        "/dir1/Foo.flow: Error: line 1: Duplicate for type 'Flow.Interview.Foo', see also /dir2/Foo.flow"
+    )
+    assert(
+      issues(1).toString ==
+        "/dir2/Foo.flow: Error: line 1: Duplicate for type 'Flow.Interview.Foo', see also /dir1/Foo.flow"
+    )
+  }
+
 }

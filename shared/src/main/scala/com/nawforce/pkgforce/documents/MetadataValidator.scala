@@ -14,17 +14,30 @@
 package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, IssuesManager}
-import com.nawforce.pkgforce.names.Name
+import com.nawforce.pkgforce.names.{EncodedName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 
 /** Basic validation of metadata files from just examining the file name. */
 class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
 
   def validate(nature: MetadataNature, documents: List[PathLike]): Unit = {
+    // Clear any previous issues, this is start of a re-validation
+    documents.foreach(logger.pop)
+
+    // Not all of these will be validated, using a full list to get missing case warning
     nature match {
-      case ApexNature    => validateApex(documents)
-      case TriggerNature => validateTrigger(documents)
-      case _             => ()
+      case LabelNature         => ()
+      case ApexNature          => validateApex(documents)
+      case ApexMetaNature      => ()
+      case TriggerNature       => validateTrigger(documents)
+      case TriggerMetaNature   => ()
+      case ComponentNature     => validateComponent(documents)
+      case PageNature          => validatePage(documents)
+      case FlowNature          => validateFlow(documents)
+      case SObjectNature       => validateSObjectLike(documents)
+      case FieldNature         => ()
+      case FieldSetNature      => ()
+      case SharingReasonNature => ()
     }
   }
 
@@ -134,5 +147,106 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
         )
       )
     }
+  }
+
+  private def validateComponent(documents: List[PathLike]): Unit = {
+    assertSingleDocument(documents)
+  }
+
+  private def validatePage(documents: List[PathLike]): Unit = {
+    assertSingleDocument(documents)
+  }
+
+  private def validateFlow(documents: List[PathLike]): Unit = {
+    assertSingleDocument(documents)
+  }
+
+  private def assertSingleDocument(documents: List[PathLike]): Unit = {
+    if (documents.length > 1) {
+      val allDocs = documents.flatMap(MetadataDocument(_))
+      allDocs.foreach(document => {
+        val otherPaths = documents.filterNot(_ == document.path).mkString(", ")
+        logger.log(
+          Issue(
+            document.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location.empty,
+              s"Duplicate for type '${document.typeName(namespace)}', see also $otherPaths"
+            )
+          )
+        )
+      })
+    }
+  }
+
+  private def validateSObjectLike(documents: List[PathLike]): Unit = {
+    val allDocs         = documents.flatMap(MetadataDocument(_))
+    val controllingDocs = allDocs.filter(_.nature == SObjectNature)
+    val typeName        = allDocs.head.controllingTypeName(namespace)
+
+    val isSObject: Boolean = controllingDocs.headOption
+      .map(_.isInstanceOf[SObjectDocument])
+      .getOrElse({
+        // If we don't have a controlling doc use controlling typename ext to test if an actual SObject
+        val encName = EncodedName(typeName.name)
+        encName.ext.isEmpty || encName.ext.exists(_.value == "c")
+      })
+
+    if (!isSObject && controllingDocs.isEmpty) {
+      logger.log(
+        Issue(
+          documents.head,
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location.empty,
+            s"Components of type '$typeName' are defined, but the required object-meta.xml file is missing"
+          )
+        )
+      )
+    } else if (controllingDocs.length > 1) {
+      controllingDocs.foreach(controllingDoc => {
+        val typeName   = controllingDoc.typeName(namespace)
+        val otherPaths = controllingDocs.filterNot(_ == controllingDoc).map(_.path).mkString(", ")
+        logger.log(
+          Issue(
+            controllingDoc.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location.empty,
+              s"Type '$typeName' is defined, but duplicate object-meta.xml files found at $otherPaths"
+            )
+          )
+        )
+      })
+    }
+
+    assertUniqueName(FieldNature, allDocs)
+    assertUniqueName(FieldSetNature, allDocs)
+    assertUniqueName(SharingReasonNature, allDocs)
+  }
+
+  private def assertUniqueName(nature: MetadataNature, documents: List[MetadataDocument]): Unit = {
+    documents
+      .filter(_.nature == nature)
+      .groupBy(_.name)
+      .filter(_._2.size > 1)
+      .foreach(duplicate => {
+        duplicate._2.foreach(duplicated => {
+          val typeName = duplicated.typeName(namespace)
+          val otherPaths =
+            duplicate._2.filterNot(_ == duplicated).map(_.path).mkString(", ")
+          logger.log(
+            Issue(
+              duplicated.path,
+              Diagnostic(
+                ERROR_CATEGORY,
+                Location.empty,
+                s"Type '${typeName.toString}' is defined, but duplicate metadata found at $otherPaths"
+              )
+            )
+          )
+        })
+      })
   }
 }

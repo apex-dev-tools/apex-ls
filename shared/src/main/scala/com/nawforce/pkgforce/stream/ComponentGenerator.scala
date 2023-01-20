@@ -34,7 +34,6 @@ final case class ComponentEvent(
 /** Convert component documents into PackageEvents */
 object ComponentGenerator {
 
-  // TODO: Replace this tmp approach when events removed
   def iterator(index: DocumentIndex): Iterator[PackageEvent] =
     index
       .get(ComponentNature)

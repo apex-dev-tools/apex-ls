@@ -28,7 +28,6 @@ final case class LabelEvent(location: PathLocation, name: Name, isProtected: Boo
 
 object LabelGenerator {
 
-  // TODO: Replace this tmp approach when events removed
   def iterator(index: DocumentIndex): Iterator[PackageEvent] =
     index
       .get(LabelNature)

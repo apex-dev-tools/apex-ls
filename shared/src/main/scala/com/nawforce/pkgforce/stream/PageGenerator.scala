@@ -32,7 +32,6 @@ final case class PageEvent(
 /** Convert page documents into PackageEvents */
 object PageGenerator {
 
-  // TODO: Replace this tmp approach when events removed
   def iterator(index: DocumentIndex): Iterator[PackageEvent] =
     index
       .get(PageNature)

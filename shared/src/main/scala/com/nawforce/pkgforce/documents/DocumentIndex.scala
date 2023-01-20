@@ -89,43 +89,12 @@ class DocumentIndex(
       .flatMap(path => MetadataDocument(Path(path)))
   }
 
-  /** Upsert a document. Document defining new or existing types return true, if the document would
-    * create a duplicate type it is not added to the store and false is returned.
-    */
+  /** Upsert a document. Returns false if document is not visible to the index. */
   def upsert(logger: IssueLogger, document: MetadataDocument): Boolean = {
-
-    if (!isVisibleFile(document.path)) return false
-
-    // Partial can always be upserted
-    if (document.nature.partialType) {
-      indexDocument(document, deferValidation = false)
-      return true
-    }
-
-    // As can metadata defining a new type
-    val typeName = document.typeName(namespace)
-    val existing = get(document.nature, typeName)
-    if (existing.isEmpty) {
-      indexDocument(document, deferValidation = false)
-      return true
-    }
-
-    // Or existing documents
-    if (existing.contains(document))
-      return true
-
-    // Otherwise we should ignore it, sad but true
-    logger.log(
-      Issue(
-        document.path,
-        Diagnostic(
-          ERROR_CATEGORY,
-          Location.empty,
-          s"Duplicate type '$typeName' found in '${document.path}', ignoring this file"
-        )
-      )
-    )
-    false
+    if (!isVisibleFile(document.path))
+      return false
+    indexDocument(document, deferValidation = false)
+    true
   }
 
   /** Remove a document from the store. Returns true if the document was in the store and removed.
@@ -136,36 +105,26 @@ class DocumentIndex(
     val existing = docMap.get(typeName).exists(d => d.contains(document.path))
     if (existing) {
       val residual = docMap(typeName).filterNot(_ == document.path)
-      if (residual.nonEmpty)
-        docMap.put(typeName, docMap(typeName).filterNot(_ == document.path))
-      else
+      if (residual.nonEmpty) {
+        docMap.put(typeName, residual)
+        validator.validate(document.controllingNature, residual)
+      } else {
         docMap.remove(typeName)
+      }
     }
     existing
   }
 
   private def indexDocument(document: MetadataDocument, deferValidation: Boolean): Unit = {
-
-    // Reject if document may be ignored
     if (document.ignorable())
       return
 
-    // If we find a field or fieldSet without a SObject metadata, fake it exists to make later processing easier
-    if (document.nature == FieldNature || document.nature == FieldSetNature) {
-      val objectDir = document.path.parent.parent
-      val metaFile  = objectDir.join(objectDir.basename + ".object-meta.xml")
-      val docType   = SObjectDocument(metaFile, Name(objectDir.basename))
-      val typeName  = docType.typeName(namespace)
-      if (get(SObjectNature, typeName).isEmpty) {
-        safeDocumentMap(SObjectNature).put(typeName.rawStringLower, List(metaFile))
-      }
-    }
-
-    {
-      val docMap   = safeDocumentMap(document.controllingNature)
-      val typeName = document.controllingTypeName(namespace).rawStringLower
-      docMap.put(typeName, (document.path :: docMap.getOrElse(typeName, Nil)).distinct)
-    }
+    val docMap   = safeDocumentMap(document.controllingNature)
+    val typeName = document.controllingTypeName(namespace).rawStringLower
+    val docs     = (document.path :: docMap.getOrElse(typeName, Nil)).distinct
+    docMap.put(typeName, docs)
+    if (!deferValidation)
+      validator.validate(document.controllingNature, docs)
   }
 
   private def safeDocumentMap(nature: MetadataNature): mutable.HashMap[String, List[PathLike]] = {

@@ -24,6 +24,9 @@ import com.nawforce.apexlink.types.schema.SObjectDeclaration
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
+import com.nawforce.runtime.platform.Path
+
+import scala.collection.immutable.ArraySeq
 
 trait TestHelper {
 
@@ -204,6 +207,30 @@ trait TestHelper {
   }
 
   def dummyIssues: String = getMessages(root.join("Dummy.cls"))
+
+  def createDirectories(dir: PathLike, names: String*): PathLike = {
+    if (names.isEmpty) {
+      dir
+    } else {
+      dir.createDirectory(names.head) match {
+        case Left(err)   => assert(false, err); Path("")
+        case Right(path) => createDirectories(path, names.tail: _*)
+      }
+    }
+  }
+
+  def createFile(dir: PathLike, name: String, content: String, subDirs: String*): PathLike = {
+    createDirectories(dir, subDirs: _*).createFile(name, content).toOption.get
+  }
+
+  def createFiles(dir: PathLike, files: Map[String, String]): List[PathLike] = {
+    files
+      .map(pathAndContent => {
+        val parts = ArraySeq.unsafeWrapArray(pathAndContent._1.split('/'))
+        createFile(dir, parts.last, pathAndContent._2, parts.take(parts.length - 1): _*)
+      })
+      .toList
+  }
 
   def customObject(
     label: String,

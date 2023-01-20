@@ -24,12 +24,17 @@ class DeleteTest extends AnyFunSuite with TestHelper {
   test("Valid delete") {
     withManualFlush {
       FileSystemHelper.run(Map("pkg/Foo.cls" -> "public class Foo {}")) { root: PathLike =>
-        val path = root.join("pkg/Foo.cls")
-        val org  = createOrg(root)
-        val pkg  = org.unmanaged
+        val org = createOrg(root)
+        val pkg = org.unmanaged
 
+        val path = root.join("pkg/Foo.cls")
         path.delete()
         pkg.refresh(path, highPriority = false)
+
+        val pathMeta = root.join("pkg/Foo.cls-meta.xml")
+        pathMeta.delete()
+        pkg.refresh(pathMeta, highPriority = false)
+
         assert(org.flush())
 
         assert(pkg.getTypeOfPath(path.toString) == null)
@@ -70,6 +75,11 @@ class DeleteTest extends AnyFunSuite with TestHelper {
           val path = root.join("pkg/Foo.trigger")
           path.delete()
           pkg.refresh(path, highPriority = false)
+
+          val pathMeta = root.join("pkg/Foo.trigger-meta.xml")
+          pathMeta.delete()
+          pkg.refresh(pathMeta, highPriority = false)
+
           assert(org.flush())
 
           val fooTypeId = pkg.getTypeOfPath(root.join("pkg/Foo.trigger").toString)

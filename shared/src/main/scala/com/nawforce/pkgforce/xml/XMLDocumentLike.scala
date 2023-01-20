@@ -40,7 +40,7 @@ trait XMLElementLike {
     if (name.label != value) {
       throw XMLException(
         Location(line),
-        s"Expected element named '$name', but found '${name.label}'"
+        s"Expected element named '$value', but found '${name.label}'"
       )
     }
   }

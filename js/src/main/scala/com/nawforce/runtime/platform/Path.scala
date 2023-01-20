@@ -42,11 +42,12 @@ final class Path private (path: String) extends PathLike {
   override def isFile: Boolean      = stat.exists(_.isFile())
   override def size: Long           = stat.map(_.size.toLong).getOrElse(0)
 
-  override def join(arg: String): Path = {
-    if (io.scalajs.nodejs.path.Path.isAbsolute(arg))
-      Path(arg)
+  override def join(args: String*): Path = {
+    val all = args.mkString(Path.separator)
+    if (io.scalajs.nodejs.path.Path.isAbsolute(all))
+      Path(all)
     else
-      Path(io.scalajs.nodejs.path.Path.join(path, arg))
+      Path(io.scalajs.nodejs.path.Path.join(path, all))
   }
 
   override def createFile(name: String, data: String): Either[String, Path] = {

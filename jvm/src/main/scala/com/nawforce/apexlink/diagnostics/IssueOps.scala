@@ -18,7 +18,7 @@ import com.nawforce.apexlink.types.schema.SObjectNature
 import com.nawforce.apexparser.ApexParser
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names.{Name, TypeName}
-import com.nawforce.pkgforce.path.{PathLike, PathLocation}
+import com.nawforce.pkgforce.path.PathLocation
 import com.nawforce.runtime.parsers.CodeParser
 
 object IssueOps {
@@ -88,13 +88,13 @@ object IssueOps {
       )
     )
 
-  def extendingUnknownSObject(location: PathLocation, sobjectPath: PathLike): Issue = {
+  def extendingUnknownSObject(location: PathLocation, name: Name): Issue = {
     Issue(
       location.path,
       Diagnostic(
         ERROR_CATEGORY,
         location.location,
-        s"SObject is extending an unknown SObject, '$sobjectPath'"
+        s"SObject appears to be extending an unknown SObject, '$name'"
       )
     )
   }
@@ -110,18 +110,18 @@ object IssueOps {
       Diagnostic(
         ERROR_CATEGORY,
         location.location,
-        s"${nature} can not be extended in namespace '$extendingNS' when defined in namespace '$baseNS'"
+        s"$nature can not be extended in namespace '$extendingNS' when defined in namespace '$baseNS'"
       )
     )
   }
 
-  def redefiningSObject(location: PathLocation, sobjectPath: PathLike): Issue = {
+  def redefiningSObject(location: PathLocation, name: Name): Issue = {
     Issue(
       location.path,
       Diagnostic(
         WARNING_CATEGORY,
         location.location,
-        s"SObject appears to be re-defining an SObject that already exists, remove the 'label' field if it is extending an existing SObject,'$sobjectPath'"
+        s"SObject appears to be re-defining an SObject that already exists '$name', remove the 'label' field if it is extending the SObject"
       )
     )
   }

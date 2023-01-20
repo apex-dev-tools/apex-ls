@@ -607,7 +607,7 @@ exports[`Check samples Sample: MyTriggers 1`] = `
     ],
     [
       "MyTriggers/framework/objects/MyTriggerSetting__mdt/MyTriggerSetting__mdt.object-meta.xml",
-      "Warning: line 1: SObject appears to be re-defining an SObject that already exists, remove the 'label' field if it is extending an existing SObject,'MyTriggers/framework/objects/MyTriggerSetting__mdt'",
+      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'MyTriggerSetting__mdt', remove the 'label' field if it is extending the SObject",
     ],
   ],
   "status": 0,

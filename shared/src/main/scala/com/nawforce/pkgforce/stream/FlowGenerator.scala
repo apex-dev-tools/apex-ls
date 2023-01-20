@@ -22,7 +22,6 @@ final case class FlowEvent(sourceInfo: SourceInfo) extends PackageEvent
 
 object FlowGenerator {
   def iterator(index: DocumentIndex): Iterator[PackageEvent] = {
-    // TODO: Replace this tmp approach when events removed
     index
       .get(FlowNature)
       .flatMap(doc => {

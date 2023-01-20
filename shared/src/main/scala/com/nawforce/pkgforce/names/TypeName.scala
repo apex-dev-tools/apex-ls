@@ -20,10 +20,11 @@ import scala.collection.mutable.ArrayBuffer
 
 /** Representation of a type name with optional type arguments.
   *
-  * The outer value provides an optional enclosing type name to allow for qualifying inner types. The outer may also
-  * be used to scope a type to a specific namespace. The mapping between a type name and its toString value is
-  * mostly straight forward but for some internally defined types toString will produce better formatted output so
-  * it is advised you always use this when displaying a TypeName.
+  * The outer value provides an optional enclosing type name to allow for qualifying inner types.
+  * The outer may also be used to scope a type to a specific namespace. The mapping between a type
+  * name and its toString value is mostly straight forward but for some internally defined types
+  * toString will produce better formatted output so it is advised you always use this when
+  * displaying a TypeName.
   */
 @upickle.implicits.key("TypeName")
 final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeName]) {
@@ -79,7 +80,7 @@ final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeN
             Seq(TypeName(name, Nil, Some(TypeName.Schema))),
             Some(TypeName.Internal)
           ) =>
-        s"Schema.$name.RowCause"
+        s"Schema.SObjectType.$name.RowCause"
       case _ => rawString
     }
   }
@@ -96,14 +97,14 @@ final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeN
 
   def rawString(sb: StringBuffer): Unit = {
     outer.foreach(outer => {
-      outer.rawString(sb)
+      sb.append(outer.toString())
       sb.append('.')
     })
     sb.append(name)
     if (params.nonEmpty) {
       sb.append('<')
       for (i <- params.indices) {
-        params(i).rawString(sb)
+        sb.append(params(i).toString())
         if (i < params.length - 1)
           sb.append(", ")
       }

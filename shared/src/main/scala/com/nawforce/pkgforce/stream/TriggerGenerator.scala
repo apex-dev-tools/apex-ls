@@ -24,7 +24,6 @@ final case class TriggerEvent(path: PathLike) extends PackageEvent
 object TriggerGenerator {
 
   def iterator(index: DocumentIndex): Iterator[PackageEvent] = {
-    // TODO: Replace this tmp approach when events removed
     val docs = index.get(TriggerNature)
     docs.iterator.flatMap(md => {
       md._2

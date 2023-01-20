@@ -398,18 +398,18 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object event") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
       )
     ) { root: PathLike =>
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
-        case List(SObjectEvent(sourceInfo, path, false, None, None))
-            if sourceInfo.get.location == location && path == reportingPath =>
+        case List(SObjectEvent(sourceInfo, name, false, None, None))
+            if sourceInfo.get.location == location && name == Name("MyObject__c") =>
       }
     }
   }
@@ -417,7 +417,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object event parse error") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\""
       )
     ) { root: PathLike =>
@@ -429,7 +429,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
               IssuesEvent(
                 ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
               )
-            ) if objectPath == root.join("pkg").join("MyObject.object") =>
+            ) if objectPath == root.join("objects", "MyObject__c.object") =>
       }
     }
   }
@@ -437,7 +437,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("List Custom Setting") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>List</customSettingsType>
           |</CustomObject>
@@ -447,11 +447,11 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
-        case List(SObjectEvent(sourceInfo, path, false, Some(ListCustomSetting), None))
-            if sourceInfo.get.location == location && path == reportingPath =>
+        case List(SObjectEvent(sourceInfo, name, false, Some(ListCustomSetting), None))
+            if sourceInfo.get.location == location && name == Name("MyObject__c") =>
       }
     }
   }
@@ -459,7 +459,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Hierarchical Custom Setting") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>Hierarchy</customSettingsType>
           |</CustomObject>
@@ -469,11 +469,11 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
-        case List(SObjectEvent(sourceInfo, path, false, Some(HierarchyCustomSetting), None))
-            if sourceInfo.get.location == location && path == reportingPath =>
+        case List(SObjectEvent(sourceInfo, name, false, Some(HierarchyCustomSetting), None))
+            if sourceInfo.get.location == location && name == Name("MyObject__c") =>
       }
     }
   }
@@ -481,7 +481,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Bad Custom Setting") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>Bad</customSettingsType>
           |</CustomObject>
@@ -491,18 +491,18 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo, path, false, None, None),
+              SObjectEvent(sourceInfo, name, false, None, None),
               IssuesEvent(
                 ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
               )
             )
-            if sourceInfo.get.location == location && path == reportingPath && objectPath == root
-              .join("pkg")
-              .join("MyObject.object") =>
+            if sourceInfo.get.location == location && name == Name(
+              "MyObject__c"
+            ) && objectPath == path =>
       }
     }
   }
@@ -510,7 +510,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("ReadWrite SharingModel") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <sharingModel>ReadWrite</sharingModel>
           |</CustomObject>
@@ -520,11 +520,11 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
-        case List(SObjectEvent(sourceInfo, path, false, None, Some(ReadWriteSharingModel)))
-            if sourceInfo.get.location == location && path == reportingPath =>
+        case List(SObjectEvent(sourceInfo, name, false, None, Some(ReadWriteSharingModel)))
+            if sourceInfo.get.location == location && name == Name("MyObject__c") =>
       }
     }
   }
@@ -532,7 +532,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Bad SharingModel") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |   <sharingModel>Something</sharingModel>
           |</CustomObject>
@@ -542,18 +542,18 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo, path, false, None, None),
+              SObjectEvent(sourceInfo, name, false, None, None),
               IssuesEvent(
                 ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
               )
             )
-            if sourceInfo.get.location == location && path == reportingPath && objectPath == root
-              .join("pkg")
-              .join("MyObject.object") =>
+            if sourceInfo.get.location == location && name == Name(
+              "MyObject__c"
+            ) && objectPath == path =>
       }
     }
   }
@@ -561,7 +561,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with fields") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <fields><fullName>Name__c</fullName><type>Text</type></fields>
           |</CustomObject>
@@ -571,13 +571,13 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo, path, false, None, None),
+              SObjectEvent(sourceInfo, name, false, None, None),
               CustomFieldEvent(_, Name("Name__c"), Name("Text"), None, None)
-            ) if sourceInfo.get.location == location && path == reportingPath =>
+            ) if sourceInfo.get.location == location && name == Name("MyObject__c") =>
       }
     }
   }
@@ -585,7 +585,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with fieldsset") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <fieldSets><fullName>Name</fullName></fieldSets>
           |</CustomObject>
@@ -595,11 +595,11 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
-        case List(SObjectEvent(sourceInfo, path, false, None, None), FieldsetEvent(_, Name("Name")))
-            if sourceInfo.get.location == location && path == reportingPath =>
+        case List(SObjectEvent(sourceInfo, name, false, None, None), FieldsetEvent(_, Name("Name")))
+            if sourceInfo.get.location == location && name == Name("MyObject__c") =>
       }
     }
   }
@@ -607,7 +607,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with sharing reason") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject.object" ->
+        "objects/MyObject__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <sharingReasons><fullName>Name</fullName></sharingReasons>
           |</CustomObject>
@@ -617,13 +617,13 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val reportingPath = root.join("pkg").join("MyObject.object")
-      val location      = PathLocation(reportingPath, Location.all)
+      val path     = root.join("objects", "MyObject__c.object")
+      val location = PathLocation(path, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo, path, false, None, None),
+              SObjectEvent(sourceInfo, name, false, None, None),
               SharingReasonEvent(_, Name("Name"))
-            ) if sourceInfo.get.location == location && path == reportingPath =>
+            ) if sourceInfo.get.location == location && name == Name("MyObject__c") =>
       }
     }
   }
@@ -631,8 +631,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with fields (sfdx)") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject/MyObject.object-meta.xml" -> "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
-        "pkg/MyObject/fields/Name__c.field-meta.xml" ->
+        "objects/MyObject__c/MyObject__c.object-meta.xml" -> "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
+        "objects/MyObject__c/fields/Name__c.field-meta.xml" ->
           s"""<?xml version="1.0" encoding="UTF-8"?>
           |<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
           |    <fullName>Name__c</fullName>
@@ -645,19 +645,19 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
 
-      val objectPath = root.join("pkg").join("MyObject")
+      val objectPath = root.join("objects", "MyObject__c")
       val objectLocation =
-        PathLocation(objectPath.join("MyObject.object-meta.xml"), Location.all)
-      val fieldPath     = objectPath.join("fields").join("Name__c.field-meta.xml")
+        PathLocation(objectPath.join("MyObject__c.object-meta.xml"), Location.all)
+      val fieldPath     = objectPath.join("fields", "Name__c.field-meta.xml")
       val fieldLocation = PathLocation(fieldPath, Location.all)
 
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo, path, false, None, None),
+              SObjectEvent(sourceInfo, name, false, None, None),
               CustomFieldEvent(sourceInfoField, Name("Name__c"), Name("Text"), None, None)
             )
             if sourceInfo.get.location == objectLocation &&
-              sourceInfoField.location == fieldLocation && path == objectPath =>
+              sourceInfoField.location == fieldLocation && name == Name("MyObject__c") =>
       }
     }
   }
@@ -665,8 +665,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with fieldSet (sfdx)") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject/MyObject.object-meta.xml" -> "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
-        "pkg/MyObject/fieldSets/Name.fieldSet-meta.xml" ->
+        "objects/MyObject__c/MyObject__c.object-meta.xml" -> "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
+        "objects/MyObject__c/fieldSets/Name.fieldSet-meta.xml" ->
           s"""<?xml version="1.0" encoding="UTF-8"?>
              |<FieldSet xmlns="http://soap.sforce.com/2006/04/metadata">
              |    <fullName>Name</fullName>
@@ -678,20 +678,20 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
 
-      val objectPath = root.join("pkg").join("MyObject")
+      val objectPath = root.join("objects", "MyObject__c")
       val objectLocation =
-        PathLocation(objectPath.join("MyObject.object-meta.xml"), Location.all)
+        PathLocation(objectPath.join("MyObject__c.object-meta.xml"), Location.all)
       val fieldsetPath     = objectPath.join("fieldSets").join("Name.fieldSet-meta.xml")
       val fieldsetLocation = PathLocation(fieldsetPath, Location.all)
 
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo, path, false, None, None),
+              SObjectEvent(sourceInfo, name, false, None, None),
               FieldsetEvent(sourceInfoFieldset, Name("Name"))
             )
             if sourceInfo.get.location == objectLocation &&
               sourceInfoFieldset.location == fieldsetLocation
-              && path == objectPath =>
+              && name == Name("MyObject__c") =>
       }
     }
   }
@@ -699,8 +699,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Custom Object with sharingReason (sfdx)") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyObject/MyObject.object-meta.xml" -> "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
-        "pkg/MyObject/sharingReasons/Name.sharingReason-meta.xml" ->
+        "objects/MyObject__c/MyObject__c.object-meta.xml" -> "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
+        "objects/MyObject__c/sharingReasons/Name.sharingReason-meta.xml" ->
           s"""<?xml version="1.0" encoding="UTF-8"?>
              |<SharingReason xmlns="http://soap.sforce.com/2006/04/metadata">
              |    <fullName>Name</fullName>
@@ -712,20 +712,20 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
 
-      val objectPath = root.join("pkg").join("MyObject")
+      val objectPath = root.join("objects", "MyObject__c")
       val objectLocation =
-        PathLocation(objectPath.join("MyObject.object-meta.xml"), Location.all)
+        PathLocation(objectPath.join("MyObject__c.object-meta.xml"), Location.all)
       val sharingPath     = objectPath.join("sharingReasons").join("Name.sharingReason-meta.xml")
       val sharingLocation = PathLocation(sharingPath, Location.all)
 
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo, path, false, None, None),
+              SObjectEvent(sourceInfo, name, false, None, None),
               SharingReasonEvent(sourceInfoSharingReason, Name("Name"))
             )
             if sourceInfo.get.location == objectLocation &&
               sourceInfoSharingReason.location == sharingLocation
-              && path == objectPath =>
+              && name == Name("MyObject__c") =>
       }
     }
   }
@@ -733,16 +733,16 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Master/Detail natural ordered") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyMaster.object" ->
+        "objects/MyMaster__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |</CustomObject>
           |""".stripMargin,
-        "pkg/sub/MyDetail.object" ->
+        "sub/objects/MyDetail__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>Lookup__c</fullName>
             |     <type>MasterDetail</type>
-            |     <referenceTo>MyMaster</referenceTo>
+            |     <referenceTo>MyMaster__c</referenceTo>
             |     <relationshipName>Master</relationshipName>
             |   </fields>
             |</CustomObject>
@@ -752,25 +752,25 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val masterReportingPath = root.join("pkg").join("MyMaster.object")
-      val masterLocation      = PathLocation(masterReportingPath, Location.all)
-      val detailReportingPath = root.join("pkg").join("sub").join("MyDetail.object")
-      val detailLocation      = PathLocation(detailReportingPath, Location.all)
+      val masterPath     = root.join("objects", "MyMaster__c.object")
+      val masterLocation = PathLocation(masterPath, Location.all)
+      val detailPath     = root.join("sub", "objects", "MyDetail__c.object")
+      val detailLocation = PathLocation(detailPath, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo1, masterPath, false, None, None),
-              SObjectEvent(sourceInfo2, detailPath, false, None, None),
+              SObjectEvent(sourceInfo1, masterName, false, None, None),
+              SObjectEvent(sourceInfo2, detailName, false, None, None),
               CustomFieldEvent(
                 _,
                 Name("Lookup__c"),
                 Name("MasterDetail"),
-                Some((Name("MyMaster"), Name("Master"))),
+                Some((Name("MyMaster__c"), Name("Master"))),
                 None
               )
             )
             if sourceInfo1.get.location == masterLocation &&
               sourceInfo2.get.location == detailLocation &&
-              masterPath == masterReportingPath && detailPath == detailReportingPath =>
+              masterName == Name("MyMaster__c") && detailName == Name("MyDetail__c") =>
       }
     }
   }
@@ -778,18 +778,18 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Master/Detail reverse ordered") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/sub/MyMaster.object" ->
+        "sub/objects/MyMaster__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-          |</CustomObject>
-          |""".stripMargin,
-        "pkg/MyDetail.object" ->
+            |</CustomObject>
+            |""".stripMargin,
+        "objects/MyDetail__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
-            |    <fullName>Lookup__c</fullName>
-            |    <type>MasterDetail</type>
-            |    <referenceTo>MyMaster</referenceTo>
-            |    <relationshipName>Master</relationshipName>
-            |  </fields>
+            |     <fullName>Lookup__c</fullName>
+            |     <type>MasterDetail</type>
+            |     <referenceTo>MyMaster__c</referenceTo>
+            |     <relationshipName>Master</relationshipName>
+            |   </fields>
             |</CustomObject>
             |""".stripMargin
       )
@@ -797,27 +797,25 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-
-      val masterReportingPath = root.join("pkg").join("sub").join("MyMaster.object")
-      val masterLocation      = PathLocation(masterReportingPath, Location.all)
-      val detailReportingPath = root.join("pkg").join("MyDetail.object")
-      val detailLocation      = PathLocation(detailReportingPath, Location.all)
-
+      val masterPath     = root.join("sub", "objects", "MyMaster__c.object")
+      val masterLocation = PathLocation(masterPath, Location.all)
+      val detailPath     = root.join("objects", "MyDetail__c.object")
+      val detailLocation = PathLocation(detailPath, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo1, masterPath, false, None, None),
-              SObjectEvent(sourceInfo2, detailPath, false, None, None),
+              SObjectEvent(sourceInfo1, masterName, false, None, None),
+              SObjectEvent(sourceInfo2, detailName, false, None, None),
               CustomFieldEvent(
                 _,
                 Name("Lookup__c"),
                 Name("MasterDetail"),
-                Some((Name("MyMaster"), Name("Master"))),
+                Some((Name("MyMaster__c"), Name("Master"))),
                 None
               )
             )
             if sourceInfo1.get.location == masterLocation &&
               sourceInfo2.get.location == detailLocation &&
-              masterPath == masterReportingPath && detailPath == detailReportingPath =>
+              masterName == Name("MyMaster__c") && detailName == Name("MyDetail__c") =>
       }
     }
   }
@@ -825,21 +823,21 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Master/Detail related field") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/MyMaster.object" ->
+        "objects/MyMaster__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>MyDetailSummary__c</fullName>
             |     <type>Summary</type>
-            |     <summarizedField>MyDetail.Child__c</summarizedField>
+            |     <summarizedField>MyDetail__c.Child__c</summarizedField>
             |   </fields>
             |</CustomObject>
             |""".stripMargin,
-        "pkg/sub/MyDetail.object" ->
+        "sub/objects/MyDetail__c.object" ->
           """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>Lookup__c</fullName>
             |     <type>MasterDetail</type>
-            |     <referenceTo>MyMaster</referenceTo>
+            |     <referenceTo>MyMaster__c</referenceTo>
             |     <relationshipName>Master</relationshipName>
             |   </fields>
             |   <fields>
@@ -853,33 +851,33 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       val ws = Workspace(root, logger)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
-      val masterReportingPath = root.join("pkg").join("MyMaster.object")
-      val masterLocation      = PathLocation(masterReportingPath, Location.all)
-      val detailReportingPath = root.join("pkg").join("sub").join("MyDetail.object")
-      val detailLocation      = PathLocation(detailReportingPath, Location.all)
+      val masterPath     = root.join("objects", "MyMaster__c.object")
+      val masterLocation = PathLocation(masterPath, Location.all)
+      val detailPath     = root.join("sub", "objects", "MyDetail__c.object")
+      val detailLocation = PathLocation(detailPath, Location.all)
       ws.get.events.toList should matchPattern {
         case List(
-              SObjectEvent(sourceInfo1, masterPath, false, None, None),
+              SObjectEvent(sourceInfo1, masterName, false, None, None),
               CustomFieldEvent(
                 _,
                 Name("MyDetailSummary__c"),
                 Name("Summary"),
                 None,
-                Some((Name("MyDetail"), Name("Child__c")))
+                Some((Name("MyDetail__c"), Name("Child__c")))
               ),
-              SObjectEvent(sourceInfo2, detailPath, false, None, None),
+              SObjectEvent(sourceInfo2, detailName, false, None, None),
               CustomFieldEvent(
                 _,
                 Name("Lookup__c"),
                 Name("MasterDetail"),
-                Some((Name("MyMaster"), Name("Master"))),
+                Some((Name("MyMaster__c"), Name("Master"))),
                 None
               ),
               CustomFieldEvent(_, Name("Child__c"), Name("Number"), None, None)
             )
             if sourceInfo1.get.location == masterLocation &&
               sourceInfo2.get.location == detailLocation &&
-              masterPath == masterReportingPath && detailPath == detailReportingPath =>
+              masterName == Name("MyMaster__c") && detailName == Name("MyDetail__c") =>
       }
     }
   }

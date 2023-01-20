@@ -25,11 +25,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
 
   test("Bad field type") {
     FileSystemHelper.run(
-      Map("Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Silly"), None))))
+      Map("objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Silly"), None))))
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Foo__c.object")) ==
+        getMessages(root.join("objects", "Foo__c.object")) ==
           "Error: line 10: Unrecognised type 'Silly' on custom field 'Bar__c'\n"
       )
     }
@@ -38,8 +38,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Illegal Map construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObject a = new Foo__c{'a' => 'b'};} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {SObject a = new Foo__c{'a' => 'b'};} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -58,8 +58,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Illegal Set construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObject a = new Foo__c{'a', 'b'};} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {SObject a = new Foo__c{'a', 'b'};} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -78,8 +78,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("No-arg construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObject a = new Foo__c();} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {SObject a = new Foo__c();} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -95,8 +95,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Single arg construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {Object a = new Foo__c(Bar__c = 'A');} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {Object a = new Foo__c(Bar__c = 'A');} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -112,8 +112,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Bad arg construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {Object a = new Foo__c(Baz__c = 'A');} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {Object a = new Foo__c(Baz__c = 'A');} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -132,7 +132,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Multi arg construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject(
+        "objects/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Bar__c", Some("Text"), None), ("Baz__c", Some("Text"), None))
         ),
@@ -152,8 +152,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Duplicate arg construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {Object a = new Foo__c(Bar__c = 'A', Bar__c = 'A');} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy { {Object a = new Foo__c(Bar__c = 'A', Bar__c = 'A');} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -172,8 +172,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("None name=value construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {Object a = new Foo__c('Silly');} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {Object a = new Foo__c('Silly');} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -192,8 +192,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Id & Name construction") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {Object a = new Foo__c(Id='', Name='');} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {Object a = new Foo__c(Id='', Name='');} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -209,8 +209,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Lookup construction Id") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Lookup"), Some("Account")))),
-        "Dummy.cls"     -> "public class Dummy { {Object a = new Foo__c(Id='', Name='');} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo",
+          Seq(("Bar__c", Some("Lookup"), Some("Account")))
+        ),
+        "Dummy.cls" -> "public class Dummy { {Object a = new Foo__c(Id='', Name='');} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -226,8 +229,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Lookup construction relationship") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Lookup"), Some("Account")))),
-        "Dummy.cls"     -> "public class Dummy { {Object a = new Foo__c(Bar__r = null);} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo",
+          Seq(("Bar__c", Some("Lookup"), Some("Account")))
+        ),
+        "Dummy.cls" -> "public class Dummy { {Object a = new Foo__c(Bar__r = null);} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -243,7 +249,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("MasterDetail construction Id") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject(
+        "objects/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Bar__c", Some("MasterDetail"), Some("Account")))
         ),
@@ -263,7 +269,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("MasterDetail construction relationship") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject(
+        "objects/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Bar__c", Some("MasterDetail"), Some("Account")))
         ),
@@ -289,8 +295,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
           |"packageDirectories": [{"path": "pkg2"}],
           |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
           |}""".stripMargin,
-        "pkg1/Foo__c.object" -> customObject("Foo__c", Seq(("Bar__c", Some("Text"), None))),
-        "pkg2/Dummy.cls"     -> "public class Dummy { {Object a = new pkg1__Foo__c();} }"
+        "pkg1/objects/Foo__c.object" -> customObject("Foo__c", Seq(("Bar__c", Some("Text"), None))),
+        "pkg2/Dummy.cls"             -> "public class Dummy { {Object a = new pkg1__Foo__c();} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -306,8 +312,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("RecordTypeId field") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo__c", new ofRef(Array(("Bar__c", Some("Text"), None)))),
-        "Dummy.cls"     -> "public class Dummy { {Foo__c a; a.RecordTypeId = '';} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo__c",
+          new ofRef(Array(("Bar__c", Some("Text"), None)))
+        ),
+        "Dummy.cls" -> "public class Dummy { {Foo__c a; a.RecordTypeId = '';} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -323,8 +332,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Standard field reference") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo__c", new ofRef(Array(("Bar__c", Some("Text"), None)))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__c.Name;} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo__c",
+          new ofRef(Array(("Bar__c", Some("Text"), None)))
+        ),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.Name;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -340,8 +352,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Custom field reference") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", new ofRef(Array(("Bar__c", Some("Text"), None)))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__c.Bar__c;} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo",
+          new ofRef(Array(("Bar__c", Some("Text"), None)))
+        ),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.Bar__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -357,8 +372,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Invalid field reference") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", new ofRef(Array(("Bar__c", Some("Text"), None)))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__c.Baz__c;} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo",
+          new ofRef(Array(("Bar__c", Some("Text"), None)))
+        ),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.Baz__c;} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -383,8 +401,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
             |"packageDirectories": [{"path": "pkg2"}],
             |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
             |}""".stripMargin,
-        "pkg1/Foo__c.object" -> customObject("Foo__c", Seq(("Bar__c", Some("Text"), None))),
-        "pkg2/Dummy.cls"     -> "public class Dummy { {pkg1__Foo__c a = null;} }"
+        "pkg1/objects/Foo__c.object" -> customObject("Foo__c", Seq(("Bar__c", Some("Text"), None))),
+        "pkg2/Dummy.cls"             -> "public class Dummy { {pkg1__Foo__c a = null;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -400,8 +418,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Standard field reference describe") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo__c", new ofRef(Array(("Bar__c", Some("Text"), None)))),
-        "Dummy.cls"     -> "public class Dummy { {DescribeFieldResult a = Foo__c.Bar__c.getDescribe();} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo__c",
+          new ofRef(Array(("Bar__c", Some("Text"), None)))
+        ),
+        "Dummy.cls" -> "public class Dummy { {DescribeFieldResult a = Foo__c.Bar__c.getDescribe();} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -417,8 +438,11 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Standard field reference describe via fields") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo__c", new ofRef(Array(("Bar__c", Some("Text"), None)))),
-        "Dummy.cls"     -> "public class Dummy { {DescribeFieldResult a = Foo__c.fields.Bar__c.getDescribe();} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo__c",
+          new ofRef(Array(("Bar__c", Some("Text"), None)))
+        ),
+        "Dummy.cls" -> "public class Dummy { {DescribeFieldResult a = Foo__c.fields.Bar__c.getDescribe();} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -434,8 +458,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("UserRecordAccess available") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo__c", Seq()),
-        "Dummy.cls"     -> "public class Dummy { {Foo__c a; Boolean x = a.UserRecordAccess.HasDeleteAccess;} }"
+        "objects/Foo__c.object" -> customObject("Foo__c", Seq()),
+        "Dummy.cls" -> "public class Dummy { {Foo__c a; Boolean x = a.UserRecordAccess.HasDeleteAccess;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -452,9 +476,12 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Lookup related list") {
     FileSystemHelper.run(
       Map(
-        "Bar__c.object" -> customObject("Bar", Seq()),
-        "Foo__c.object" -> customObject("Foo", Seq(("Lookup__c", Some("Lookup"), Some("Bar__c")))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Bar__c.Lookup__r;} }"
+        "objects/Bar__c.object" -> customObject("Bar", Seq()),
+        "objects/Foo__c.object" -> customObject(
+          "Foo",
+          Seq(("Lookup__c", Some("Lookup"), Some("Bar__c")))
+        ),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Bar__c.Lookup__r;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -477,7 +504,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
             |"packageDirectories": [{"path": "pkg"}],
             |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
             |}""".stripMargin,
-        "pkg/Foo__c.object" -> customObject(
+        "pkg/objects/Foo__c/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Lookup__c", Some("Lookup"), Some("ghosted__Bar__c")))
         ),
@@ -499,7 +526,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
             |"packageDirectories": [{"path": "pkg"}],
             |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
             |}""".stripMargin,
-        "pkg/Foo__c.object" -> customObject(
+        "pkg/objects/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Lookup__c", Some("Lookup"), Some("ghosted__Bar__c")))
         ),
@@ -518,8 +545,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Object describable") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {DescribeSObjectResult a = SObjectType.Foo__c;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy { {DescribeSObjectResult a = SObjectType.Foo__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -549,8 +576,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Field describable") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {DescribeFieldResult a = SObjectType.Foo__c.Fields.Bar__c;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy { {DescribeFieldResult a = SObjectType.Foo__c.Fields.Bar__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -566,8 +593,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Field describable via Object") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__c.SObjectType.Fields.Bar__c;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.SObjectType.Fields.Bar__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -583,8 +610,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Field describable via Object (without Fields)") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__c.SObjectType.Bar__c;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.SObjectType.Bar__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -600,8 +627,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Unknown Field describe error") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {DescribeSObjectResult a = SObjectType.Foo__c.Fields.Baz__c;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy { {DescribeSObjectResult a = SObjectType.Foo__c.Fields.Baz__c;} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -620,8 +647,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("FieldSet describable") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(), Set("TestFS")),
-        "Dummy.cls"     -> "public class Dummy { {FieldSet a = SObjectType.Foo__c.FieldSets.TestFS;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(), Set("TestFS")),
+        "Dummy.cls" -> "public class Dummy { {FieldSet a = SObjectType.Foo__c.FieldSets.TestFS;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -637,8 +664,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Unknown FieldSet describe error") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(), Set("TestFS")),
-        "Dummy.cls"     -> "public class Dummy { {DescribeSObjectResult a = SObjectType.Foo__c.FieldSets.OtherFS;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(), Set("TestFS")),
+        "Dummy.cls" -> "public class Dummy { {DescribeSObjectResult a = SObjectType.Foo__c.FieldSets.OtherFS;} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -657,9 +684,9 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Sfdx field reference") {
     FileSystemHelper.run(
       Map(
-        "Foo__c/Foo__c.object-meta.xml"       -> customObject("Foo", Seq()),
-        "Foo__c/fields/Bar__c.field-meta.xml" -> customField("Bar__c", "Text", None),
-        "Dummy.cls"                           -> "public class Dummy { {SObjectField a = Foo__c.Bar__c;} }"
+        "objects/Foo__c/Foo__c.object-meta.xml"       -> customObject("Foo", Seq()),
+        "objects/Foo__c/fields/Bar__c.field-meta.xml" -> customField("Bar__c", "Text", None),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.Bar__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -675,9 +702,9 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Sfdx FieldSet describable") {
     FileSystemHelper.run(
       Map(
-        "Foo__c/Foo__c.object-meta.xml"             -> customObject("Foo", Seq()),
-        "Foo__c/fieldSets/TestFS.fieldSet-meta.xml" -> customFieldSet("TestFS"),
-        "Dummy.cls"                                 -> "public class Dummy { {FieldSet a = SObjectType.Foo__c.FieldSets.TestFS;} }"
+        "objects/Foo__c/Foo__c.object-meta.xml"             -> customObject("Foo", Seq()),
+        "objects/Foo__c/fieldSets/TestFS.fieldSet-meta.xml" -> customFieldSet("TestFS"),
+        "Dummy.cls" -> "public class Dummy { {FieldSet a = SObjectType.Foo__c.FieldSets.TestFS;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -693,8 +720,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Schema sObject access describable") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectType a = Schema.Foo__c.SObjectType;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy { {SObjectType a = Schema.Foo__c.SObjectType;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -710,8 +737,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Share visible") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__Share.ParentId;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {SObjectField a = Foo__Share.ParentId;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -726,8 +753,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("History visible") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__History.Field;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {SObjectField a = Foo__History.Field;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -742,8 +769,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Feed visible") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__Feed.BestCommentId;} }"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__Feed.BestCommentId;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -758,8 +785,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("SObjectField reference on custom object") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
-        "Dummy.cls"     -> "public class Dummy {public static SObjectField a = Foo__c.SObjectField.Bar__c;}"
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "Dummy.cls" -> "public class Dummy {public static SObjectField a = Foo__c.SObjectField.Bar__c;}"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -775,7 +802,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Standard fields") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
         "Dummy.cls" ->
           s"""public class Dummy {
                |  public static Foo__c a;
@@ -816,7 +843,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("ControllerByParent has no Owner") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject(
+        "objects/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Bar__c", Some("Text"), None)),
           Set(),
@@ -837,7 +864,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
       assert(
         getMessages() ==
           "/Dummy.cls: Missing: line 4 at 17-26: Unknown field 'OwnerId' on SObject 'Schema.Foo__c'\n" +
-            "/Dummy.cls: Missing: line 5 at 17-24: Unknown field 'Owner' on SObject 'Schema.Foo__c'\n"
+          "/Dummy.cls: Missing: line 5 at 17-24: Unknown field 'Owner' on SObject 'Schema.Foo__c'\n"
       )
     }
   }
@@ -845,9 +872,12 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Lookup SObjectField (via Id field)") {
     FileSystemHelper.run(
       Map(
-        "Bar__c.object" -> customObject("Bar", Seq(("MyField__c", Some("Text"), None))),
-        "Foo__c.object" -> customObject("Foo", Seq(("MyBar__c", Some("Lookup"), Some("Bar__c")))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__c.MyBar__c.MyField__c;} }"
+        "objects/Bar__c.object" -> customObject("Bar", Seq(("MyField__c", Some("Text"), None))),
+        "objects/Foo__c.object" -> customObject(
+          "Foo",
+          Seq(("MyBar__c", Some("Lookup"), Some("Bar__c")))
+        ),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.MyBar__c.MyField__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -864,9 +894,12 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Lookup SObjectField (via relationship field)") {
     FileSystemHelper.run(
       Map(
-        "Bar__c.object" -> customObject("Bar", Seq(("MyField__c", Some("Text"), None))),
-        "Foo__c.object" -> customObject("Foo", Seq(("MyBar__c", Some("Lookup"), Some("Bar__c")))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__c.MyBar__r.MyField__c;} }"
+        "objects/Bar__c.object" -> customObject("Bar", Seq(("MyField__c", Some("Text"), None))),
+        "objects/Foo__c.object" -> customObject(
+          "Foo",
+          Seq(("MyBar__c", Some("Lookup"), Some("Bar__c")))
+        ),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.MyBar__r.MyField__c;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -877,12 +910,15 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Lookup SObjectField (via relationship field twice)") {
     FileSystemHelper.run(
       Map(
-        "Bar__c.object" -> customObject(
+        "objects/Bar__c.object" -> customObject(
           "Bar",
           Seq(("MyField__c", Some("Lookup"), Some("Account")))
         ),
-        "Foo__c.object" -> customObject("Foo", Seq(("MyBar__c", Some("Lookup"), Some("Bar__c")))),
-        "Dummy.cls"     -> "public class Dummy { {SObjectField a = Foo__c.MyBar__r.MyField__r.Id;} }"
+        "objects/Foo__c.object" -> customObject(
+          "Foo",
+          Seq(("MyBar__c", Some("Lookup"), Some("Bar__c")))
+        ),
+        "Dummy.cls" -> "public class Dummy { {SObjectField a = Foo__c.MyBar__r.MyField__r.Id;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -900,7 +936,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Standard RowClause") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
+        "objects/Foo__c.object" -> customObject("Foo", Seq(("Bar__c", Some("Text"), None))),
         "Dummy.cls" ->
           """
           | public class Dummy {
@@ -922,7 +958,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Custom RowClause") {
     FileSystemHelper.run(
       Map(
-        "Foo__c.object" -> customObject(
+        "objects/Foo__c.object" -> customObject(
           "Foo",
           Seq(("Bar__c", Some("Text"), None)),
           Set(),
@@ -949,8 +985,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
   test("Sfdx Custom RowClause") {
     FileSystemHelper.run(
       Map(
-        "Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq()),
-        "Foo__c/sharingReasons/MyReason__c.sharingReason-meta.xml" -> customSharingReason(
+        "objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq()),
+        "objects/Foo__c/sharingReasons/MyReason__c.sharingReason-meta.xml" -> customSharingReason(
           "MyReason__c"
         ),
         "Dummy.cls" ->
@@ -978,8 +1014,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
           """{
             |"packageDirectories": [{"path": "mod1"}, {"path": "mod2"}]
             |}""".stripMargin,
-        "mod1/Foo__c.object" -> customObject("Foo__c", Seq(("Bar__c", Some("Text"), None))),
-        "mod2/Foo__c.object" -> customObject(
+        "mod1/objects/Foo__c.object" -> customObject("Foo__c", Seq(("Bar__c", Some("Text"), None))),
+        "mod2/objects/Foo__c.object" -> customObject(
           "Foo__c",
           Seq(("Baz__c", Some("Text"), None)),
           Set(),
@@ -1013,10 +1049,10 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
             |  }
             |]
             |}""".stripMargin,
-        "mod1/Foo__c/Foo__c.object-meta.xml"       -> customObject("Foo__c", Seq()),
-        "mod1/Foo__c/fields/Bar__c.field-meta.xml" -> customField("Bar__c", "Text", None),
-        "mod2/Foo__c/fields/Baz__c.field-meta.xml" -> customField("Baz__c", "Text", None),
-        "mod2/Dummy.cls"                           -> "public class Dummy { {Foo__c a = null; a.Bar__c = ''; a.Baz__c = '';} }"
+        "mod1/objects/Foo__c/Foo__c.object-meta.xml"       -> customObject("Foo__c", Seq()),
+        "mod1/objects/Foo__c/fields/Bar__c.field-meta.xml" -> customField("Bar__c", "Text", None),
+        "mod2/objects/Foo__c/fields/Baz__c.field-meta.xml" -> customField("Baz__c", "Text", None),
+        "mod2/Dummy.cls" -> "public class Dummy { {Foo__c a = null; a.Bar__c = ''; a.Baz__c = '';} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -1038,7 +1074,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
             |"packageDirectories": [{"path": "pkg"}],
             |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
             |}""".stripMargin,
-        "pkg/Foo__c/Foo__c.object-meta.xml" -> customObject(
+        "pkg/objects/Foo__c/Foo__c.object-meta.xml" -> customObject(
           "Foo",
           Seq(("Bar__c", Some("Lookup"), Some("ghosted__Bar__c")))
         ),
@@ -1066,7 +1102,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
             |"packageDirectories": [{"path": "pkg"}],
             |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
             |}""".stripMargin,
-        "pkg/Foo__c/Foo__c.object-meta.xml" -> customObject(
+        "pkg/objects/Foo__c/Foo__c.object-meta.xml" -> customObject(
           "Foo",
           Seq(("Bar__c", Some("Lookup"), Some("ghosted__Bar__c")))
         ),
