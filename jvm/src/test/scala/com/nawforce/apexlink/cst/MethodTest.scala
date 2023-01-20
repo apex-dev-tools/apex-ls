@@ -273,11 +273,15 @@ class MethodTest extends AnyFunSuite with TestHelper {
           |"packageDirectories": [{"path": "force-app"}],
           |"plugins": {"dependencies": [{"namespace": "ext"}]}
           |}""".stripMargin,
-        "force-app/Dummy.cls" -> "public class Dummy { {ext.Something a; EventBus.publish(a); } }"
+        "force-app/Dummy.cls" ->
+          """public class Dummy { {
+            |ext.Something a;
+            | // Legal as should return an Any as we don't know which 'publish' was intended  
+            |String b = EventBus.publish(a); } }
+            |""".stripMargin
       )
     ) { root: PathLike =>
-      createOrg(root)
-      assert(getMessages(root.join("force-app").join("Dummy.cls")).isEmpty)
+      createHappyOrg(root)
     }
   }
 }
