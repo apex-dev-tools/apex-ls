@@ -353,6 +353,69 @@ class MetadataDocumentTest extends AnyFunSuite {
     }
   }
 
+  test("custom metadata field file (sfdx)") {
+    val target = root.join("objects", "Bar__mdt", "fields", "Foo__c.field-meta.xml")
+    val doc    = MetadataDocument(target)
+    doc match {
+      case Some(SObjectFieldDocument(path, Name("Foo__c"))) if path == target =>
+        assert(doc.get.typeName(None).toString == "Schema.SObjectType.Bar__mdt.Fields.Foo__c")
+        assert(
+          doc.get
+            .typeName(Some(Name("ns")))
+            .toString == "Schema.SObjectType.ns__Bar__mdt.Fields.ns__Foo__c"
+        )
+        assert(doc.get.controllingTypeName(None).toString == "Schema.Bar__mdt")
+        assert(
+          doc.get
+            .controllingTypeName(Some(Name("ns")))
+            .toString == "Schema.ns__Bar__mdt"
+        )
+      case x => assert(false, x)
+    }
+  }
+
+  test("custom metadata fieldset file (sfdx)") {
+    val target = root.join("objects", "Bar__mdt", "fieldSets", "Foo__c.fieldSet-meta.xml")
+    val doc    = MetadataDocument(target)
+    doc match {
+      case Some(SObjectFieldSetDocument(path, Name("Foo__c"))) if path == target =>
+        assert(doc.get.typeName(None).toString == "Schema.SObjectType.Bar__mdt.FieldSets.Foo__c")
+        assert(
+          doc.get
+            .typeName(Some(Name("ns")))
+            .toString == "Schema.SObjectType.ns__Bar__mdt.FieldSets.ns__Foo__c"
+        )
+        assert(doc.get.controllingTypeName(None).toString == "Schema.Bar__mdt")
+        assert(
+          doc.get
+            .controllingTypeName(Some(Name("ns")))
+            .toString == "Schema.ns__Bar__mdt"
+        )
+      case x => assert(false, x)
+    }
+  }
+
+  test("custom metadata sharing reason file (sfdx)") {
+    val target = root.join("objects", "Bar__mdt", "sharingReasons", "Foo__c.sharingReason-meta.xml")
+    val doc    = MetadataDocument(target)
+    doc match {
+      case Some(SObjectSharingReasonDocument(path, Name("Foo__c"))) if path == target =>
+        assert(doc.get.typeName(None).toString == "Schema.SObjectType.Bar__mdt.RowCause.Foo__c")
+        assert(
+          doc.get
+            .typeName(Some(Name("ns")))
+            .toString == "Schema.SObjectType.ns__Bar__mdt.RowCause.ns__Foo__c"
+        )
+        assert(doc.get.controllingTypeName(None).toString == "Schema.Bar__mdt")
+        assert(
+          doc.get
+            .controllingTypeName(Some(Name("ns")))
+            .toString == "Schema.ns__Bar__mdt"
+        )
+      case x => assert(false, x)
+    }
+  }
+
   test("labels file") {
     MetadataDocument(root.join("Foo.labels")) match {
       case Some(LabelsDocument(path, Name("Foo"))) if path == root.join("Foo.labels") => ()

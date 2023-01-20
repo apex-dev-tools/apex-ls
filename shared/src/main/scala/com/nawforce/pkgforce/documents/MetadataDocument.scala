@@ -216,13 +216,14 @@ abstract class SObjectPart(_path: PathLike, _name: Name) extends MetadataDocumen
   }
 
   def sobjectName(namespace: Option[Name]): Name = {
-    val sobjectName = path.parent.parent.basename
-    val isCustom    = sobjectName.endsWith("__c")
+    val sobjectName        = path.parent.parent.basename
+    val encodedSObjectName = EncodedName(sobjectName)
+    val isStandard         = encodedSObjectName.ext.isEmpty
     val prefix =
-      if (isCustom)
-        namespace.map(ns => s"${ns}__").getOrElse("")
-      else
+      if (isStandard)
         ""
+      else
+        namespace.map(ns => s"${ns}__").getOrElse("")
     Name(prefix + sobjectName)
   }
 }
