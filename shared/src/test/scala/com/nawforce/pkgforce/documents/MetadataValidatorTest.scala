@@ -14,6 +14,7 @@
 package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.diagnostics.IssuesManager
+import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.Path
 import org.scalatest.BeforeAndAfter
@@ -78,7 +79,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("Ignored class has no meta error") {
-    FileSystemHelper.run(Map("pkg/foo/Foo.cls" -> "")) { root: Path =>
+    FileSystemHelper.run(Map("pkg/foo/Foo.cls" -> "")) { root: PathLike =>
       val validator = new MetadataValidator(logger, None)
       validator.validate(ApexNature, List(root.join("pkg", "foo", "Foo.cls-meta.xml")))
 
@@ -172,7 +173,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("Ignored trigger has no meta error") {
-    FileSystemHelper.run(Map("pkg/foo/Foo.trigger" -> "")) { root: Path =>
+    FileSystemHelper.run(Map("pkg/foo/Foo.trigger" -> "")) { root: PathLike =>
       val validator = new MetadataValidator(logger, None)
       validator.validate(TriggerNature, List(root.join("pkg", "foo", "Foo.trigger-meta.xml")))
 
