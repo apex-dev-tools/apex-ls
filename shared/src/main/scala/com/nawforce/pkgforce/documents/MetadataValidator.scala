@@ -18,7 +18,7 @@ import com.nawforce.pkgforce.names.{EncodedName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 
 /** Basic validation of metadata files from just examining the file name. */
-class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
+class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean) {
 
   def validate(nature: MetadataNature, documents: List[PathLike]): Unit = {
     // Clear any previous issues, this is start of a re-validation
@@ -112,7 +112,9 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
   ): Unit = {
     val typeName = controllingDoc.typeName(namespace)
     val metaDocs = documents.filter(_.nature == nature)
-    if (metaDocs.isEmpty) {
+
+    // Gulped metadata does not currently generate meta files for cls/trigger
+    if (!isGulped && metaDocs.isEmpty) {
       logger.log(
         Issue(
           controllingDoc.path,
@@ -135,7 +137,7 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name]) {
           )
         )
       )
-    } else if (controllingDoc.path.parent != metaDocs.head.path.parent) {
+    } else if (metaDocs.nonEmpty && controllingDoc.path.parent != metaDocs.head.path.parent) {
       logger.log(
         Issue(
           controllingDoc.path,

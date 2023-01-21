@@ -30,7 +30,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
 
   test("bad dir has no files") {
     FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("foo"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("foo"))
       assert(logger.isEmpty)
       assert(index.size == 0)
     }
@@ -38,7 +38,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
 
   test("empty dir has no files") {
     FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root)
+      val index = DocumentIndex(logger, None, isGulped = false, root)
       assert(logger.isEmpty)
       assert(index.size == 0)
     }
@@ -46,7 +46,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
 
   test("dot dir is ignored") {
     FileSystemHelper.run(Map[String, String](".pkg/Foo.cls" -> "")) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root)
+      val index = DocumentIndex(logger, None, isGulped = false, root)
       assert(logger.isEmpty)
       assert(index.size == 0)
     }
@@ -54,7 +54,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
 
   test("node_modules dir is ignored") {
     FileSystemHelper.run(Map[String, String]("node_modules/Foo.cls" -> "")) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root)
+      val index = DocumentIndex(logger, None, isGulped = false, root)
       assert(logger.isEmpty)
       assert(index.size == 0)
     }
@@ -63,7 +63,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   test("class file found") {
     FileSystemHelper.run(Map[String, String]("pkg/Foo.cls" -> "public class Foo {}")) {
       root: PathLike =>
-        val index = DocumentIndex(logger, None, root.join("pkg"))
+        val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
         assert(logger.isEmpty)
         assert(index.get(ApexNature).size == 1)
         assert(
@@ -76,7 +76,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   test("nested class file found") {
     FileSystemHelper.run(Map[String, String]("pkg/foo/Foo.cls" -> "public class Foo {}")) {
       root: PathLike =>
-        val index = DocumentIndex(logger, None, root.join("pkg"))
+        val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
         assert(logger.isEmpty)
         assert(index.get(ApexNature).size == 1)
         assert(
@@ -93,7 +93,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         "/pkg/bar/Bar.cls" -> "public class Bar {}"
       )
     ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(ApexNature).map(_.toString()).toSet == Set(
@@ -111,7 +111,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         "/pkg/bar/Foo.cls" -> "public class Foo {}"
       )
     ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
       assert(index.get(ApexNature).size == 1)
       val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
       assert(issues.length == 1)
@@ -129,7 +129,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         "/pkg/bar/CustomLabels.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
       )
     ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
       assert(logger.isEmpty)
       assert(index.getControllingDocuments(LabelNature).size == 2)
     }
@@ -141,7 +141,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         "pkg/objects/Foo.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
@@ -156,7 +156,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         "pkg/objects/Bar/Foo.object-meta.xml" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
@@ -173,7 +173,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         "pkg/objects/Foo__c.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
@@ -188,7 +188,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         "pkg/objects/Bar__c/Foo__c.object-meta.xml" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
       assert(logger.isEmpty)
       assert(
         index.getControllingDocuments(SObjectNature) ==
@@ -208,7 +208,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
         "pkg/Bar/Foo.object" -> "<CustomObject xmlns=\\\"http://soap.sforce.com/2006/04/metadata\\\"/>"
       )
     ) { root: PathLike =>
-      val index = DocumentIndex(logger, None, root.join("pkg"))
+      val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
       assert(logger.isEmpty)
       assert(index.getControllingDocuments(SObjectNature).isEmpty)
     }
