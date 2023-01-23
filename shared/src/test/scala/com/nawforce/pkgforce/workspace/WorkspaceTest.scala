@@ -893,6 +893,25 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Deleted apex event ") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "pkg/MyClass.cls" -> "",
+        "pkg/MyClass.cls-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+          |<ApexClass xmlns="http://soap.sforce.com/2006/04/metadata">
+          |  <apiVersion>52.0</apiVersion>
+          |  <status>Deleted</status>
+          |</ApexClass>""".stripMargin
+      )
+    ) { root: PathLike =>
+      val ws = Workspace(root, logger)
+      assert(logger.isEmpty)
+      assert(ws.nonEmpty)
+      assert(ws.get.events.isEmpty)
+    }
+  }
+
   test("Trigger event") {
     FileSystemHelper.run(Map[String, String]("pkg/MyTrigger.trigger" -> "")) { root: PathLike =>
       val ws = Workspace(root, logger)
@@ -904,4 +923,24 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
       }
     }
   }
+
+  test("Deleted trigger event ") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "pkg/MyTrigger.trigger" -> "",
+        "pkg/MyTrigger.trigger-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<ApexClass xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <apiVersion>52.0</apiVersion>
+            |  <status>Deleted</status>
+            |</ApexClass>""".stripMargin
+      )
+    ) { root: PathLike =>
+      val ws = Workspace(root, logger)
+      assert(logger.isEmpty)
+      assert(ws.nonEmpty)
+      assert(ws.get.events.isEmpty)
+    }
+  }
+
 }

@@ -15,6 +15,7 @@ package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.Path
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -33,8 +34,54 @@ class MetadataDocumentTest extends AnyFunSuite {
     MetadataDocument(root.join("Foo.cls-meta.xml")) match {
       case Some(ApexClassMetaDocument(path, Name("Foo")))
           if path == root.join("Foo.cls-meta.xml") =>
-        ()
       case x => assert(false, x)
+    }
+  }
+
+  test("invalid cls meta file is considered active") {
+    FileSystemHelper.run(Map("Foo.cls-meta.xml" -> "")) { root: PathLike =>
+      val md = MetadataDocument(root.join("Foo.cls-meta.xml")).collect {
+        case md: ApexClassMetaDocument => md
+      }
+      assert(md.get.isActive)
+    }
+  }
+
+  test("active cls meta file is considered active") {
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<ApexClass xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <apiVersion>52.0</apiVersion>
+            |  <status>Active</status>
+            |</ApexClass>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      val md = MetadataDocument(root.join("Foo.cls-meta.xml")).collect {
+        case md: ApexClassMetaDocument => md
+      }
+      assert(md.get.isActive)
+    }
+  }
+
+  test("deleted cls meta file is not considered active") {
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<ApexClass xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <apiVersion>52.0</apiVersion>
+            |  <status>Deleted</status>
+            |</ApexClass>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      val md = MetadataDocument(root.join("Foo.cls-meta.xml")).collect {
+        case md: ApexClassMetaDocument => md
+      }
+      assert(!md.get.isActive)
     }
   }
 
@@ -51,6 +98,53 @@ class MetadataDocumentTest extends AnyFunSuite {
           if path == root.join("Foo.trigger-meta.xml") =>
         ()
       case x => assert(false, x)
+    }
+  }
+
+  test("invalid trigger meta file is considered active") {
+    FileSystemHelper.run(Map("Foo.trigger-meta.xml" -> "")) { root: PathLike =>
+      val md = MetadataDocument(root.join("Foo.trigger-meta.xml")).collect {
+        case md: ApexTriggerMetaDocument => md
+      }
+      assert(md.get.isActive)
+    }
+  }
+
+  test("active trigger meta file is considered active") {
+    FileSystemHelper.run(
+      Map(
+        "Foo.trigger-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<ApexTrigger xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <apiVersion>52.0</apiVersion>
+            |  <status>Active</status>
+            |</ApexTrigger>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      val md = MetadataDocument(root.join("Foo.trigger-meta.xml")).collect {
+        case md: ApexTriggerMetaDocument => md
+      }
+      assert(md.get.isActive)
+    }
+  }
+
+  test("deleted trigger meta file is not considered active") {
+    FileSystemHelper.run(
+      Map(
+        "Foo.trigger-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<ApexTrigger xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <apiVersion>52.0</apiVersion>
+            |  <status>Deleted</status>
+            |</ApexTrigger>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      val md = MetadataDocument(root.join("Foo.trigger-meta.xml")).collect {
+        case md: ApexTriggerMetaDocument => md
+      }
+      assert(!md.get.isActive)
     }
   }
 

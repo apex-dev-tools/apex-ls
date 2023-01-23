@@ -17,6 +17,7 @@ import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names._
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.parsers.SourceData
+import com.nawforce.runtime.xml.XMLDocument
 
 import scala.collection.compat.immutable.ArraySeq
 
@@ -92,8 +93,34 @@ object ApexClassDocument {
   }
 }
 
-final case class ApexClassMetaDocument(_path: PathLike, _name: Name)
+abstract class MetaMetadataDocument(_path: PathLike, _name: Name)
     extends MetadataDocument(_path, _name) {
+
+  def isActive: Boolean = {
+    // Perf Hack: checking meta files is low value, work out if Status is Deleted cheaply
+    path.read() match {
+      case Left(_) => true
+      case Right(contents) =>
+        if (contents.contains("Deleted")) {
+          path.readSourceData() match {
+            case Left(_) => true
+            case Right(sd) =>
+              val doc = XMLDocument(path, sd)
+              doc.value.forall(doc => {
+                !doc.rootElement
+                  .getOptionalSingleChild("status")
+                  .exists(elem => elem.text == "Deleted")
+              })
+          }
+        } else {
+          true
+        }
+    }
+  }
+}
+
+final case class ApexClassMetaDocument(_path: PathLike, _name: Name)
+    extends MetaMetadataDocument(_path, _name) {
 
   override def nature: MetadataNature = ApexMetaNature
 
@@ -132,7 +159,7 @@ object ApexTriggerDocument {
 }
 
 final case class ApexTriggerMetaDocument(_path: PathLike, _name: Name)
-    extends ClassDocument(_path, _name) {
+    extends MetaMetadataDocument(_path, _name) {
 
   override def nature: MetadataNature = TriggerMetaNature
 
