@@ -14,6 +14,8 @@
 package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.diagnostics.IssuesManager
+import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.Path
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
@@ -26,7 +28,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     logger = new IssuesManager()
   }
 
-  test("single class ok") {
+  test("Single class ok") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       ApexNature,
@@ -37,7 +39,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("duplicate classes error") {
+  test("Duplicate classes error") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       ApexNature,
@@ -52,7 +54,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("missing class meta errors") {
+  test("Missing class meta errors") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(ApexNature, List(Path("/pkg/foo/Foo.cls")))
 
@@ -64,15 +66,29 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("missing class meta error suppressed for gulped metadata") {
-    val validator = new MetadataValidator(logger, None, isGulped = true)
-    validator.validate(ApexNature, List(Path("/pkg/foo/Foo.cls")))
+  test("Missing class errors") {
+    val validator = new MetadataValidator(logger, None, isGulped = false)
+    validator.validate(ApexNature, List(Path("/pkg/foo/Foo.cls-meta.xml")))
 
     val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
-    assert(issues.isEmpty)
+    assert(issues.length == 1)
+    assert(
+      issues.head.toString ==
+        "/pkg/foo/Foo.cls-meta.xml: Error: line 1: Type 'Foo' is not defined, but expected due to '/pkg/foo/Foo.cls-meta.xml', ignoring this file"
+    )
   }
 
-  test("wrong directory class meta errors") {
+  test("Ignored class has no meta error") {
+    FileSystemHelper.run(Map("pkg/foo/Foo.cls" -> "")) { root: PathLike =>
+      val validator = new MetadataValidator(logger, None, isGulped = false)
+      validator.validate(ApexNature, List(root.join("pkg", "foo", "Foo.cls-meta.xml")))
+
+      val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+      assert(issues.isEmpty)
+    }
+  }
+
+  test("Wrong directory class meta errors") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       ApexNature,
@@ -87,7 +103,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("multiple class meta errors") {
+  test("Multiple class meta errors") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       ApexNature,
@@ -106,7 +122,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("single trigger ok") {
+  test("Single trigger ok") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       TriggerNature,
@@ -117,7 +133,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("duplicate triggers error") {
+  test("Duplicate triggers error") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       TriggerNature,
@@ -132,7 +148,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("missing trigger meta errors") {
+  test("Missing trigger meta errors") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(TriggerNature, List(Path("/pkg/foo/Foo.trigger")))
 
@@ -144,15 +160,29 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("missing trigger meta error suppressed for gulped metadata") {
-    val validator = new MetadataValidator(logger, None, isGulped = true)
-    validator.validate(TriggerNature, List(Path("/pkg/foo/Foo.trigger")))
+  test("Missing trigger errors") {
+    val validator = new MetadataValidator(logger, None, isGulped = false)
+    validator.validate(TriggerNature, List(Path("/pkg/foo/Foo.trigger-meta.xml")))
 
     val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
-    assert(issues.isEmpty)
+    assert(issues.length == 1)
+    assert(
+      issues.head.toString ==
+        "/pkg/foo/Foo.trigger-meta.xml: Error: line 1: Type '__sfdc_trigger/Foo' is not defined, but expected due to '/pkg/foo/Foo.trigger-meta.xml', ignoring this file"
+    )
   }
 
-  test("wrong directory trigger meta errors") {
+  test("Ignored trigger has no meta error") {
+    FileSystemHelper.run(Map("pkg/foo/Foo.trigger" -> "")) { root: PathLike =>
+      val validator = new MetadataValidator(logger, None, isGulped = false)
+      validator.validate(TriggerNature, List(root.join("pkg", "foo", "Foo.trigger-meta.xml")))
+
+      val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
+      assert(issues.isEmpty)
+    }
+  }
+
+  test("Wrong directory trigger meta errors") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       TriggerNature,
@@ -167,7 +197,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("multiple class trigger errors") {
+  test("Multiple class trigger errors") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       TriggerNature,
@@ -186,7 +216,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("sobject single meta") {
+  test("SObject single meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(SObjectNature, List(Path("/objects/Foo__c/Foo__c.object-meta.xml")))
 
@@ -194,7 +224,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("sobject dual meta") {
+  test("SObject dual meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -216,7 +246,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("sobject only field") {
+  test("SObject only field") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -227,7 +257,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("sobject duplicate field") {
+  test("SObject duplicate field") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -249,7 +279,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("sobject only fieldset") {
+  test("SObject only fieldset") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -260,7 +290,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("sobject duplicate fieldset") {
+  test("SObject duplicate fieldset") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -283,7 +313,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
 
   }
 
-  test("sobject only sharing reason") {
+  test("SObject only sharing reason") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -294,7 +324,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("sobject duplicate sharing reason") {
+  test("SObject duplicate sharing reason") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -317,7 +347,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
 
   }
 
-  test("platform event single meta") {
+  test("Platform event single meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(SObjectNature, List(Path("/objects/Foo__e/Foo__e.object-meta.xml")))
 
@@ -325,7 +355,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("platform event dual meta") {
+  test("Platform event dual meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -347,7 +377,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("platform event no meta") {
+  test("Platform event no meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -362,7 +392,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("custom metadata event single meta") {
+  test("Custom metadata event single meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(SObjectNature, List(Path("/objects/Foo__mdt/Foo__mdt.object-meta.xml")))
 
@@ -370,7 +400,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("custom metadata event dual meta") {
+  test("Custom metadata event dual meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -392,7 +422,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("custom metadata no meta") {
+  test("Custom metadata no meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -407,7 +437,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("big object single meta") {
+  test("Big object single meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(SObjectNature, List(Path("/objects/Foo__b/Foo__b.object-meta.xml")))
 
@@ -415,7 +445,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.isEmpty)
   }
 
-  test("big object dual meta") {
+  test("Big object dual meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -437,7 +467,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("big object no meta") {
+  test("Big object no meta") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
@@ -452,7 +482,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("dual components") {
+  test("Dual components") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       ComponentNature,
@@ -471,7 +501,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("dual pages") {
+  test("Dual pages") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(PageNature, List(Path("/dir1/Foo.page"), Path("/dir2/Foo.page")))
 
@@ -487,7 +517,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     )
   }
 
-  test("dual flows") {
+  test("Dual flows") {
     val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(FlowNature, List(Path("/dir1/Foo.flow"), Path("/dir2/Foo.flow")))
 

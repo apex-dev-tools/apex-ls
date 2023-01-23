@@ -16,6 +16,7 @@ package com.nawforce.pkgforce.documents
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, IssuesManager}
 import com.nawforce.pkgforce.names.{EncodedName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.runtime.platform.Path
 
 /** Basic validation of metadata files from just examining the file name. */
 class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean) {
@@ -43,7 +44,7 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped
 
   private def validateApex(documents: List[PathLike]): Unit = {
     val allDocs = documents.flatMap(MetadataDocument(_))
-    getSingleControllingDocument(ApexNature, allDocs).foreach(controllingDoc => {
+    getSingleControllingDocument(ApexNature, ApexMetaNature, allDocs).foreach(controllingDoc => {
       assertSingleMetaDocument(
         controllingDoc,
         ApexMetaNature,
@@ -54,34 +55,45 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped
 
   private def validateTrigger(documents: List[PathLike]): Unit = {
     val allDocs = documents.flatMap(MetadataDocument(_))
-    getSingleControllingDocument(TriggerNature, allDocs).foreach(controllingDoc => {
-      assertSingleMetaDocument(
-        controllingDoc,
-        TriggerMetaNature,
-        allDocs.filterNot(_ == controllingDoc)
-      )
-    })
+    getSingleControllingDocument(TriggerNature, TriggerMetaNature, allDocs).foreach(
+      controllingDoc => {
+        assertSingleMetaDocument(
+          controllingDoc,
+          TriggerMetaNature,
+          allDocs.filterNot(_ == controllingDoc)
+        )
+      }
+    )
   }
 
   private def getSingleControllingDocument(
-    nature: MetadataNature,
+    controllingNature: MetadataNature,
+    metaNature: MetadataNature,
     documents: List[MetadataDocument]
   ): Option[MetadataDocument] = {
-    val controllingDocs = documents.filter(_.nature == nature)
+    val controllingDocs = documents.filter(_.nature == controllingNature)
     if (controllingDocs.isEmpty) {
-      documents.foreach(document => {
-        val typeName = document.typeName(namespace)
-        logger.log(
-          Issue(
-            document.path,
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location.empty,
-              s"Type '$typeName' is not defined, but expected due to '${document.path}', ignoring this file"
+      // Bypass error if controlling might exist but is ignored
+      val metaDocs = documents.filter(_.nature == metaNature)
+      val isControllingIgnored = metaDocs.size == 1 && metaDocs.headOption.exists(md => {
+        val controllingPath = md.path.parent.join(md.path.basename.replaceFirst("-meta.xml$", ""))
+        controllingPath != md.path && controllingPath.isFile
+      })
+      if (!isControllingIgnored) {
+        documents.foreach(document => {
+          val typeName = document.typeName(namespace)
+          logger.log(
+            Issue(
+              document.path,
+              Diagnostic(
+                ERROR_CATEGORY,
+                Location.empty,
+                s"Type '$typeName' is not defined, but expected due to '${document.path}', ignoring this file"
+              )
             )
           )
-        )
-      })
+        })
+      }
       None
     } else if (controllingDocs.size > 1) {
       controllingDocs.tail.foreach(document => {
