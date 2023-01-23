@@ -15,7 +15,7 @@ package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names.{Name, TypeName}
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.sfdx.ForceIgnore
 import com.nawforce.runtime.platform.Path
 
@@ -31,6 +31,7 @@ class DocumentIndex(
   val path: PathLike,
   logger: IssuesManager,
   namespace: Option[Name],
+  isGulped: Boolean,
   ignore: Option[ForceIgnore]
 ) {
 
@@ -39,7 +40,7 @@ class DocumentIndex(
     new mutable.HashMap[MetadataNature, mutable.HashMap[String, List[PathLike]]]()
 
   /** Basic validator for metadata documents */
-  private val validator = new MetadataValidator(logger, namespace)
+  private val validator = new MetadataValidator(logger, namespace, isGulped)
 
   // Run scanner to prime the index & then validate everything
   DocumentIndex.indexPath(path, ignore, this)
@@ -90,7 +91,7 @@ class DocumentIndex(
   }
 
   /** Upsert a document. Returns false if document is not visible to the index. */
-  def upsert(logger: IssueLogger, document: MetadataDocument): Boolean = {
+  def upsert(document: MetadataDocument): Boolean = {
     if (!isVisibleFile(document.path))
       return false
     indexDocument(document, deferValidation = false)
@@ -160,6 +161,7 @@ object DocumentIndex {
   def apply(
     logger: IssuesManager,
     namespace: Option[Name],
+    isGulped: Boolean,
     projectPath: PathLike,
     path: PathLike
   ): DocumentIndex = {
@@ -167,13 +169,19 @@ object DocumentIndex {
       path,
       logger,
       namespace,
+      isGulped,
       logger.logAndGet(ForceIgnore(projectPath.join(".forceignore")))
     )
   }
 
   /** Simplified construction for MDAPI only projects where projectDir = module path. */
-  def apply(logger: IssuesManager, namespace: Option[Name], path: PathLike): DocumentIndex = {
-    DocumentIndex(logger, namespace, path, path)
+  def apply(
+    logger: IssuesManager,
+    namespace: Option[Name],
+    isGulped: Boolean,
+    path: PathLike
+  ): DocumentIndex = {
+    DocumentIndex(logger, namespace, isGulped, path, path)
   }
 
   private def indexPath(
