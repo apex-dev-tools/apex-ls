@@ -247,7 +247,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("SObject only field") {
-    val validator = new MetadataValidator(logger, None, isGulped = false
+    val validator = new MetadataValidator(logger, None, isGulped = false)
     validator.validate(
       SObjectNature,
       List(Path("/objects/Foo__c/fields/MyField__c.field-meta.xml"))
