@@ -21,12 +21,12 @@ import com.nawforce.apexlink.types.core.MethodDeclaration.{
   emptyMethodDeclarations,
   emptyMethodDeclarationsSet
 }
-import com.nawforce.apexlink.types.core.{MethodDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{MethodDeclaration, ParameterDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.{GenericPlatformMethod, PlatformMethod}
 import com.nawforce.apexlink.types.synthetic.CustomMethodDeclaration
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics._
-import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, PRIVATE_MODIFIER}
+import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, Modifier, PRIVATE_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
 import com.nawforce.pkgforce.path.{Location, PathLocation}
@@ -189,8 +189,9 @@ final case class MethodMap(
     else if (assignable.length == 1)
       Some(Right(assignable.head))
     else if (params.contains(TypeNames.Any)) {
-      // We might get multiple matches when input contains an any, just pick first
-      Some(Right(assignable.head))
+      // We might get multiple matches when input contains an any, wrap one to fake the return an Any
+      // in case the assignable methods have different return types
+      Some(Right(new AnyReturnMethodDeclaration(assignable.head)))
     } else {
       Some(
         assignable
@@ -206,6 +207,16 @@ final case class MethodMap(
       )
     }
   }
+}
+
+/* Method wrapper that enforces an Any return type on the method */
+class AnyReturnMethodDeclaration(method: MethodDeclaration) extends MethodDeclaration {
+  override val name: Name                                 = method.name
+  override val modifiers: ArraySeq[Modifier]              = method.modifiers
+  override val parameters: ArraySeq[ParameterDeclaration] = method.parameters
+
+  override def typeName: TypeName = TypeName.Any
+  override def hasBlock: Boolean  = method.hasBlock
 }
 
 object MethodMap {

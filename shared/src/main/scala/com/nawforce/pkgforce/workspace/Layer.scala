@@ -35,7 +35,7 @@ case class NamespaceLayer(namespace: Option[Name], isGulped: Boolean, layers: Se
     extends Layer {
   def indexes(logger: IssuesManager): Map[ModuleLayer, DocumentIndex] =
     layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
-      acc + (layer -> layer.index(logger, namespace))
+      acc + (layer -> layer.index(logger, namespace, isGulped))
     )
 }
 
@@ -55,7 +55,7 @@ case class ModuleLayer(
     path.toString.substring(root.toString.length)
   }
 
-  def index(logger: IssuesManager, namespace: Option[Name]): DocumentIndex = {
-    DocumentIndex(logger, namespace, projectPath, path)
+  def index(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean): DocumentIndex = {
+    DocumentIndex(logger, namespace, isGulped, projectPath, path)
   }
 }

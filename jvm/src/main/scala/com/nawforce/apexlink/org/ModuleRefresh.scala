@@ -65,7 +65,7 @@ trait ModuleRefresh {
           LoggerOps.debug(s"Refresh of deleted ${doc.path} was not in use, ignoring.")
           return Seq()
         }
-      } else if (!index.upsert(pkg.org.issueManager, doc)) {
+      } else if (!index.upsert(doc)) {
         LoggerOps.debug(s"Refresh of non-index file ${doc.path}.")
         return Seq()
       }
