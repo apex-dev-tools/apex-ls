@@ -26,10 +26,14 @@ object TriggerGenerator {
   def iterator(index: DocumentIndex): Iterator[PackageEvent] = {
     val docs = index.get(TriggerNature)
     docs.iterator.flatMap(md => {
-      md._2
-        .map(p => Path(p))
-        .find(p => MetadataDocument(p).exists(_.nature == TriggerNature))
-        .map(p => TriggerEvent(Path(p)))
+      val docs     = md._2.flatMap(path => MetadataDocument(path))
+      val metaDocs = docs.collect { case d: ApexTriggerMetaDocument => d }
+      val isActive = metaDocs.isEmpty || metaDocs.exists(_.isActive)
+      if (isActive) {
+        docs.find(_.nature == TriggerNature).map(doc => TriggerEvent(doc.path))
+      } else {
+        Iterator.empty
+      }
     })
   }
 
