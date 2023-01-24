@@ -784,7 +784,6 @@ object SObjectDeployer {
 
   def historyFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] =
     historyFields ++ Array(
-      CustomFieldDeclaration(XNames.ParentId, typeName, None),
       CustomFieldDeclaration(
         Names.SObjectType,
         TypeNames.sObjectType$(typeName),
@@ -805,11 +804,11 @@ object SObjectDeployer {
       CustomFieldDeclaration(XNames.CreatedById, TypeNames.IdType, None),
       CustomFieldDeclaration(XNames.CreatedDate, TypeNames.Datetime, None),
       CustomFieldDeclaration(XNames.DataType, TypeNames.String, None),
-      CustomFieldDeclaration(XNames.Field, TypeNames.SObject, None),
+      CustomFieldDeclaration(XNames.Field, TypeNames.String, None),
       CustomFieldDeclaration(XNames.IsDeleted, TypeNames.Boolean, None),
       CustomFieldDeclaration(XNames.NewValue, TypeNames.InternalObject, None),
       CustomFieldDeclaration(XNames.OldValue, TypeNames.InternalObject, None),
-      CustomFieldDeclaration(XNames.ParentId, TypeNames.InternalObject, None)
+      CustomFieldDeclaration(XNames.ParentId, TypeNames.IdType, None)
     )
 
   val derivedFieldTypes: Set[Name] =
