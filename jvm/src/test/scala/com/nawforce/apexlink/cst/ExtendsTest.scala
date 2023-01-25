@@ -47,6 +47,44 @@ class ExtendsTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Private superclass") {
+    assert(
+      typeDeclarations(
+        Map(
+          "Outer.cls" -> "global class Outer { private virtual class SuperClass {}}",
+          "Dummy.cls" -> "global class Dummy extends Outer.SuperClass {}"
+        )
+      ).size == 2
+    )
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 13-18: Parent class 'Outer.SuperClass' is private, it must be public or global\n"
+    )
+  }
+
+  test("Private superclass (from test)") {
+    assert(
+      typeDeclarations(
+        Map(
+          "Outer.cls" -> "global class Outer { private virtual class SuperClass {}}",
+          "Dummy.cls" -> "@isTest public class Dummy {class InTest extends Outer.SuperClass {}}"
+        )
+      ).size == 2
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Private superclass (peer)") {
+    assert(
+      typeDeclarations(
+        Map(
+          "Dummy.cls" -> "global class Dummy {private virtual class SuperClass {} class Inner extends SuperClass {}}"
+        )
+      ).nonEmpty
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("Non-virtual superclass") {
     assert(
       typeDeclarations(

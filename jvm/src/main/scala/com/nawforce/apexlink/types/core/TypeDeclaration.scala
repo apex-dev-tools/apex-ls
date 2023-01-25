@@ -395,8 +395,12 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
   def constructors: ArraySeq[ConstructorDeclaration]
 
   def isComplete: Boolean
+
   lazy val isExternallyVisible: Boolean =
     modifiers.exists(TypeDeclaration.externalTypeModifiers.contains)
+  lazy val visibility: Modifier =
+    // We can have more than one visibility modifier, search in priority order
+    ApexModifiers.visibilityModifiers.find(modifiers.contains).getOrElse(PRIVATE_MODIFIER)
   lazy val isAbstract: Boolean = modifiers.contains(ABSTRACT_MODIFIER)
   lazy val isVirtual: Boolean  = modifiers.contains(VIRTUAL_MODIFIER)
   lazy val isExtensible: Boolean =
