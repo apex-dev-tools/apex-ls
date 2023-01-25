@@ -15,7 +15,7 @@
     "test-snapshot": "npm run test-samples -- --updateSnapshot"
   },
   "dependencies": {
-    "@apexdevtools/apex-parser": "3.1.0",
+    "@apexdevtools/apex-parser": "3.2.0",
     "@apexdevtools/vf-parser": "1.0.0",
     "@xmldom/xmldom": "0.7.9",
     "antlr4ts": "0.5.0-alpha.4"
