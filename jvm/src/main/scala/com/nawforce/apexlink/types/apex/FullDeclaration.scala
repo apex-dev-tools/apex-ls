@@ -145,7 +145,7 @@ abstract class FullDeclaration(
       )
     }
 
-    //check custom exception is named and extended correctly
+    // check custom exception is named and extended correctly
     val isNamedCorrectly = id.name.endsWith(Names.Exception)
     val isExtendedCorrectly =
       superClassDeclaration.map(_.typeName).contains(TypeNames.Exception) || superClassDeclaration
@@ -165,15 +165,27 @@ abstract class FullDeclaration(
       case _ =>
     }
 
-    // Check super class is visible
-    superClassDeclaration.foreach(context.addDependency)
-    if (superClass.nonEmpty) {
-      if (superClassDeclaration.isEmpty) {
-        context.missingType(id.location, superClass.get)
-      } else if (superClassDeclaration.get.nature != CLASS_NATURE) {
+    // Check super class is good
+    superClass.foreach(superClass => {
+      if (superClassDeclaration.isEmpty)
+        context.missingType(id.location, superClass)
+    })
+    superClassDeclaration.foreach(superClassDeclaration => {
+      context.addDependency(superClassDeclaration)
+      if (superClassDeclaration.nature != CLASS_NATURE) {
         OrgInfo.logError(id.location, s"Parent type '${superClass.get.asDotName}' must be a class")
       } else if (
-        superClassDeclaration.get.modifiers
+        !inTest &&
+        superClassDeclaration.visibility == PRIVATE_MODIFIER &&
+        superClassDeclaration.outermostTypeDeclaration != outermostTypeDeclaration
+      ) {
+        // Private is OK with Outer extends Inner, Inner extends Inner or Test classes
+        OrgInfo.logError(
+          id.location,
+          s"Parent class '${superClass.get.asDotName}' is private, it must be public or global"
+        )
+      } else if (
+        superClassDeclaration.modifiers
           .intersect(Seq(VIRTUAL_MODIFIER, ABSTRACT_MODIFIER))
           .isEmpty
       ) {
@@ -182,13 +194,13 @@ abstract class FullDeclaration(
           s"Parent class '${superClass.get.asDotName}' must be declared virtual or abstract"
         )
       }
-    }
+    })
 
     // Check for duplicate nested types
     val duplicateNestedType =
       (this +: nestedTypes).groupBy(_.name).collect { case (_, Seq(_, y, _*)) => y }
-    duplicateNestedType.foreach(
-      td => OrgInfo.logError(td.location, s"Duplicate type name '${td.name.toString}'")
+    duplicateNestedType.foreach(td =>
+      OrgInfo.logError(td.location, s"Duplicate type name '${td.name.toString}'")
     )
 
     // Check interfaces are visible
@@ -386,29 +398,27 @@ object FullDeclaration {
       .orElse(
         CodeParser
           .toScala(typeDecl.interfaceDeclaration())
-          .map(
-            id =>
-              InterfaceDeclaration.construct(
-                parser,
-                ThisType(module, thisType, inTest = false),
-                None,
-                ApexModifiers.interfaceModifiers(parser, modifiers, outer = true, id.id()),
-                id
-              )
+          .map(id =>
+            InterfaceDeclaration.construct(
+              parser,
+              ThisType(module, thisType, inTest = false),
+              None,
+              ApexModifiers.interfaceModifiers(parser, modifiers, outer = true, id.id()),
+              id
+            )
           )
       )
       .orElse(
         CodeParser
           .toScala(typeDecl.enumDeclaration())
-          .map(
-            ed =>
-              EnumDeclaration.construct(
-                parser,
-                ThisType(module, thisType, inTest = false),
-                None,
-                ApexModifiers.enumModifiers(parser, modifiers, outer = true, ed.id()),
-                ed
-              )
+          .map(ed =>
+            EnumDeclaration.construct(
+              parser,
+              ThisType(module, thisType, inTest = false),
+              None,
+              ApexModifiers.enumModifiers(parser, modifiers, outer = true, ed.id()),
+              ed
+            )
           )
       )
 
