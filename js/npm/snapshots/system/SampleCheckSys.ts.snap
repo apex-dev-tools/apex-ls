@@ -66,10 +66,6 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
       "Warning: line 83:8 to 87:10: Local variable is hiding class field 'accounts', see force-app/commons/core/classes/SObjectCacheTest.cls: line 26:11 to 36:6",
     ],
     [
-      "force-app/commons/core/classes/collections/CollectionImpl.cls",
-      "Error: line 419 at 18-33: Method 'System.Boolean equals(Object)' from interface 'Object' must be implemented",
-    ],
-    [
       "force-app/commons/core/classes/collections/CollectionTest.cls",
       "Warning: line 911:8 to 913:18: Local variable is hiding class field 'opportunities', see force-app/commons/core/classes/collections/CollectionTest.cls: line 27:19 to 58:6",
     ],
@@ -86,7 +82,7 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
       "Warning: line 70 at 8-45: Local variable is hiding class field 'sobjectType', see force-app/commons/selectorLayer/classes/core/QueryObject.cls: line 38 at 20-44",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
