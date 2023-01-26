@@ -16,6 +16,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.cst.AssignableSupport.{couldBeEqual, isAssignable}
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.types.apex.ApexFieldLike
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.names.TypeName
@@ -25,7 +26,7 @@ abstract class Operation {
     leftType: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext]
 
   def getCommonBase(
@@ -91,6 +92,41 @@ abstract class Operation {
     rightType: TypeName
   ): Option[TypeDeclaration] = {
     Operation.bitwiseAssignmentOps.get((leftType, rightType))
+  }
+
+  def getReadOnlyError(
+    exprContext: ExprContext,
+    verifyContext: ExpressionVerifyContext
+  ): Option[String] = {
+    exprContext.locatable match {
+      case Some(variable: VariableDeclarator) if variable.isReadOnly =>
+        Some(s"Variable '${variable.id.name.value}' can not be assigned to, it is final")
+      case Some(field: ApexFieldDeclaration)
+          if field.isReadOnly && !isFieldFinalInitialisationContext(field, verifyContext) =>
+        // Final fields can be set in ctor & init blocks
+        Some(s"Field '${field.name.value}' can not be assigned to, it is final")
+      case Some(id: Id) if verifyContext.isVar(id.name).exists(_.isReadOnly) =>
+        // For params the locatable only gives Id currently, so we need extra verification
+        verifyContext
+          .isVar(id.name)
+          .flatMap(varDetails =>
+            if (varDetails.isReadOnly && varDetails.definition.contains(id))
+              Some(s"Parameter '${id.name.value}' can not be assigned to, it is final")
+            else None
+          )
+      case _ => None
+    }
+  }
+
+  private def isFieldFinalInitialisationContext(
+    field: ApexFieldDeclaration,
+    context: VerifyContext
+  ): Boolean = {
+    context match {
+      case bodyContext: BodyDeclarationVerifyContext =>
+        bodyContext.isFieldFinalInitialisationContext(field)
+      case _ => context.parent().exists(parent => isFieldFinalInitialisationContext(field, parent))
+    }
   }
 }
 
@@ -192,19 +228,28 @@ case object AssignmentOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    if (rightContext.typeName == TypeNames.Null) {
-      Right(leftContext)
-    } else if (
-      isAssignable(leftContext.typeName, rightContext.typeDeclaration, strictConversions = false, context)
-    ) {
-      Right(leftContext)
-    } else {
-      Left(
-        s"Incompatible types in assignment, from '${rightContext.typeName}' to '${leftContext.typeName}'"
-      )
-    }
+    getReadOnlyError(leftContext, context)
+      .map(err => Left(err))
+      .getOrElse({
+        if (rightContext.typeName == TypeNames.Null) {
+          Right(leftContext)
+        } else if (
+          isAssignable(
+            leftContext.typeName,
+            rightContext.typeDeclaration,
+            strictConversions = false,
+            context
+          )
+        ) {
+          Right(leftContext)
+        } else {
+          Left(
+            s"Incompatible types in assignment, from '${rightContext.typeName}' to '${leftContext.typeName}'"
+          )
+        }
+      })
   }
 }
 
@@ -213,12 +258,24 @@ case object LogicalOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    if (!isAssignable(TypeNames.Boolean, rightContext.typeDeclaration, strictConversions = false, context)) {
+    if (
+      !isAssignable(
+        TypeNames.Boolean,
+        rightContext.typeDeclaration,
+        strictConversions = false,
+        context
+      )
+    ) {
       Left(s"Right expression of logical $op must a boolean, not '${rightContext.typeName}'")
     } else if (
-      !isAssignable(TypeNames.Boolean, leftContext.typeDeclaration, strictConversions = false, context)
+      !isAssignable(
+        TypeNames.Boolean,
+        leftContext.typeDeclaration,
+        strictConversions = false,
+        context
+      )
     ) {
       Left(s"Left expression of logical $op must a boolean, not '${leftContext.typeName}'")
     } else {
@@ -232,7 +289,7 @@ case object CompareOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
 
     if (isNumericKind(leftContext.typeName)) {
@@ -272,7 +329,7 @@ case object ExactEqualityOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
 
     if (isNonReferenceKind(leftContext.typeName)) {
@@ -301,7 +358,7 @@ case object EqualityOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
     if (couldBeEqual(leftContext.typeDeclaration, rightContext.typeDeclaration, context))
       Right(ExprContext(isStatic = Some(false), PlatformTypes.booleanType))
@@ -315,7 +372,7 @@ case object PlusOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
     if (leftContext.typeName == TypeNames.String || rightContext.typeName == TypeNames.String) {
       Right(ExprContext(isStatic = Some(false), PlatformTypes.stringType))
@@ -336,7 +393,7 @@ case object ArithmeticOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
     val td = getArithmeticResult(leftContext.typeName, rightContext.typeName)
     if (td.isEmpty) {
@@ -353,19 +410,24 @@ case object ArithmeticAddSubtractAssignmentOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    if (leftContext.typeName == TypeNames.String && op == "+=") {
-      Right(ExprContext(isStatic = Some(false), PlatformTypes.stringType))
-    } else {
-      val td = getArithmeticAddSubtractAssigmentResult(leftContext.typeName, rightContext.typeName)
-      if (td.isEmpty) {
-        return Left(
-          s"Arithmetic operation not allowed between types '${leftContext.typeName}' and '${rightContext.typeName}'"
-        )
-      }
-      Right(ExprContext(isStatic = Some(false), td.get))
-    }
+    getReadOnlyError(leftContext, context)
+      .map(err => Left(err))
+      .getOrElse({
+        if (leftContext.typeName == TypeNames.String && op == "+=") {
+          Right(ExprContext(isStatic = Some(false), PlatformTypes.stringType))
+        } else {
+          val td =
+            getArithmeticAddSubtractAssigmentResult(leftContext.typeName, rightContext.typeName)
+          if (td.isEmpty) {
+            return Left(
+              s"Arithmetic operation not allowed between types '${leftContext.typeName}' and '${rightContext.typeName}'"
+            )
+          }
+          Right(ExprContext(isStatic = Some(false), td.get))
+        }
+      })
   }
 }
 
@@ -374,15 +436,20 @@ case object ArithmeticMultiplyDivideAssignmentOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    val td = getArithmeticMultiplyDivideAssigmentResult(leftContext.typeName, rightContext.typeName)
-    if (td.isEmpty) {
-      return Left(
-        s"Arithmetic operation not allowed between types '${leftContext.typeName}' and '${rightContext.typeName}'"
-      )
-    }
-    Right(ExprContext(isStatic = Some(false), td.get))
+    getReadOnlyError(leftContext, context)
+      .map(err => Left(err))
+      .getOrElse({
+        val td =
+          getArithmeticMultiplyDivideAssigmentResult(leftContext.typeName, rightContext.typeName)
+        if (td.isEmpty) {
+          return Left(
+            s"Arithmetic operation not allowed between types '${leftContext.typeName}' and '${rightContext.typeName}'"
+          )
+        }
+        Right(ExprContext(isStatic = Some(false), td.get))
+      })
   }
 }
 
@@ -391,7 +458,7 @@ case object BitwiseOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
     val td = getBitwiseResult(leftContext.typeName, rightContext.typeName)
     if (td.isEmpty) {
@@ -408,15 +475,19 @@ case object BitwiseAssignmentOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    val td = getBitwiseAssignmentResult(leftContext.typeName, rightContext.typeName)
-    if (td.isEmpty) {
-      return Left(
-        s"Bitwise operation only allowed between Integer, Long & Boolean types, not '${leftContext.typeName}' and '${rightContext.typeName}'"
-      )
-    }
-    Right(ExprContext(isStatic = Some(false), td.get))
+    getReadOnlyError(leftContext, context)
+      .map(err => Left(err))
+      .getOrElse({
+        val td = getBitwiseAssignmentResult(leftContext.typeName, rightContext.typeName)
+        if (td.isEmpty) {
+          return Left(
+            s"Bitwise operation only allowed between Integer, Long & Boolean types, not '${leftContext.typeName}' and '${rightContext.typeName}'"
+          )
+        }
+        Right(ExprContext(isStatic = Some(false), td.get))
+      })
   }
 }
 
@@ -425,14 +496,26 @@ case object ConditionalOperation extends Operation {
     leftContext: ExprContext,
     rightContext: ExprContext,
     op: String,
-    context: VerifyContext
+    context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
 
     // Future: How does this really function, Java mechanics are very complex
-    if (isAssignable(leftContext.typeName, rightContext.typeDeclaration, strictConversions = false, context)) {
+    if (
+      isAssignable(
+        leftContext.typeName,
+        rightContext.typeDeclaration,
+        strictConversions = false,
+        context
+      )
+    ) {
       Right(leftContext)
     } else if (
-      isAssignable(rightContext.typeName, leftContext.typeDeclaration, strictConversions = false, context)
+      isAssignable(
+        rightContext.typeName,
+        leftContext.typeDeclaration,
+        strictConversions = false,
+        context
+      )
     ) {
       Right(rightContext)
     } else {

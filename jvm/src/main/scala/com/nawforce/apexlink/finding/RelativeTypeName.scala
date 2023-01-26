@@ -24,9 +24,9 @@ import com.nawforce.pkgforce.path.PathLocation
 
 import scala.collection.mutable
 
-/** Context to aid RelativeTypeName resolve via the originating ApexDeclaration. This needs freezing after
-  * RelativeTypeNames are constructed due to the FullDeclaration not being constructed until after its constituent
-  * parts, such as constructors and methods which use RelativeTypeName.
+/** Context to aid RelativeTypeName resolve via the originating ApexDeclaration. This needs freezing
+  * after RelativeTypeNames are constructed due to the FullDeclaration not being constructed until
+  * after its constituent parts, such as constructors and methods which use RelativeTypeName.
   */
 final class RelativeTypeContext {
   var contextTypeDeclaration: TypeDeclaration = _
@@ -103,9 +103,8 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
             context.log(error.asIssue(location))
         case Some(Right(td)) =>
           context.addDependency(td)
-          td.typeName.params.foreach(
-            typeName =>
-              context.getTypeAndAddDependency(typeName, typeContext.contextTypeDeclaration)
+          td.typeName.params.foreach(typeName =>
+            context.getTypeAndAddDependency(typeName, typeContext.contextTypeDeclaration)
           )
         case None => ()
       }
@@ -113,15 +112,25 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
   }
 
   /** Helper for introducing formal parameters into a block context. */
-  def addVar(definition: CST, name: Name, context: BlockVerifyContext): Unit = {
+  def addVar(
+    definition: CST,
+    name: Name,
+    isReadyOnly: Boolean,
+    context: BlockVerifyContext
+  ): Unit = {
     typeContext.resolve(relativeTypeName) match {
       case Some(Right(td)) =>
-        context.addVar(name, Some(definition), td)
+        context.addVar(name, Some(definition), isReadyOnly, td)
         context.addDependency(td)
       case _ =>
         Option(definition.location)
           .foreach(location => context.missingType(location, relativeTypeName))
-        context.addVar(name, None, typeContext.contextTypeDeclaration.moduleDeclaration.get.any)
+        context.addVar(
+          name,
+          None,
+          isReadyOnly,
+          typeContext.contextTypeDeclaration.moduleDeclaration.get.any
+        )
     }
   }
 

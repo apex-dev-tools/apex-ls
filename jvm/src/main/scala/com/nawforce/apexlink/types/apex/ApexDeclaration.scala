@@ -35,7 +35,9 @@ import scala.util.hashing.MurmurHash3
 
 trait PreReValidatable {
 
-  /** Called before validate() when a type is about to be re-validated to allow for cached state cleaning. */
+  /** Called before validate() when a type is about to be re-validated to allow for cached state
+    * cleaning.
+    */
   def preReValidate(): Unit = {}
 }
 
@@ -47,8 +49,8 @@ trait ApexBlockLike extends BlockDeclaration with Locatable {
   def summary: BlockSummary = BlockSummary(location.location, isStatic, dependencySummary())
 }
 
-/** Unifying trait for ApexConstructorLike and CustomConstructorDeclaration. Both need to appear to be visible from a
-  * a type but have little in common beyond allowing for creation of a summary.
+/** Unifying trait for ApexConstructorLike and CustomConstructorDeclaration. Both need to appear to
+  * be visible from a a type but have little in common beyond allowing for creation of a summary.
   */
 trait ApexVisibleConstructorLike extends ConstructorDeclaration {
   def summary: ConstructorSummary
@@ -70,8 +72,8 @@ trait ApexConstructorLike extends ApexVisibleConstructorLike with IdLocatable {
   }
 }
 
-/** Unifying trait for ApexMethodLike and CustomMethodDeclaration. Both need to appear to be visible from a
-  * a type but have little in common beyond allowing for constructions of a summary.
+/** Unifying trait for ApexMethodLike and CustomMethodDeclaration. Both need to appear to be visible
+  * from a a type but have little in common beyond allowing for constructions of a summary.
   */
 trait ApexVisibleMethodLike extends MethodDeclaration {
   def summary: MethodSummary
@@ -162,6 +164,8 @@ trait ApexFieldLike extends FieldDeclaration with IdLocatable {
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
   val nature: Nature
   val idTarget: Option[TypeName] = None
+
+  def isReadOnly: Boolean = modifiers.contains(FINAL_MODIFIER)
 
   def summary: FieldSummary = {
     FieldSummary(
@@ -293,8 +297,8 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   }
 
   lazy val isPageController: Boolean = {
-    getTypeDependencyHolders.toIterable.exists(
-      tid => tid.typeName == TypeNames.Page || tid.typeName == TypeNames.Component
+    getTypeDependencyHolders.toIterable.exists(tid =>
+      tid.typeName == TypeNames.Page || tid.typeName == TypeNames.Component
     )
   }
 

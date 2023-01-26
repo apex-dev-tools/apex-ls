@@ -49,9 +49,8 @@ object WhenLiteral {
       .orElse(
         CodeParser
           .toScala(literal.IntegerLiteral())
-          .map(
-            l =>
-              WhenIntegerLiteral(CodeParser.toScala(literal.SUB()).nonEmpty, CodeParser.getText(l))
+          .map(l =>
+            WhenIntegerLiteral(CodeParser.toScala(literal.SUB()).nonEmpty, CodeParser.getText(l))
           )
       )
       .orElse(
@@ -167,7 +166,12 @@ final case class WhenIdsValue(ids: Seq[Id]) extends WhenValue {
 
   override def verify(context: BlockVerifyContext): Unit = {
     if (ids.size > 1) {
-      context.addVar(ids(1).name, ids(1), TypeName(ids.head.name, Nil, Some(TypeNames.Schema)))
+      context.addVar(
+        ids(1).name,
+        ids(1),
+        isReadOnly = false,
+        TypeName(ids.head.name, Nil, Some(TypeNames.Schema))
+      )
     }
   }
 }
@@ -230,8 +234,8 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
       checkWhenElseIsLast()
       checkForDoubleNull()
       val duplicates = values.groupBy(identity).collect { case (_, Seq(_, y, _*)) => y }
-      duplicates.headOption.foreach(
-        dup => OrgInfo.logError(expression.location, s"Duplicate when case for $dup")
+      duplicates.headOption.foreach(dup =>
+        OrgInfo.logError(expression.location, s"Duplicate when case for $dup")
       )
     }
 

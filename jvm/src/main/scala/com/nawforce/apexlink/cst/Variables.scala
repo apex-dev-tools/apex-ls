@@ -21,12 +21,16 @@ import com.nawforce.apexparser.ApexParser.{
   VariableDeclaratorsContext
 }
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
-import com.nawforce.pkgforce.modifiers.{ApexModifiers, ModifierResults}
+import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.runtime.parsers.CodeParser
 
-final case class VariableDeclarator(typeName: TypeName, id: Id, init: Option[Expression])
-    extends CST {
+final case class VariableDeclarator(
+  typeName: TypeName,
+  isReadOnly: Boolean,
+  id: Id,
+  init: Option[Expression]
+) extends CST {
   def verify(input: ExprContext, context: BlockVerifyContext): Unit = {
     id.validate()
 
@@ -61,17 +65,18 @@ final case class VariableDeclarator(typeName: TypeName, id: Id, init: Option[Exp
   }
 
   def addVars(context: BlockVerifyContext): Unit = {
-    context.addVar(id.name, this, typeName)
+    context.addVar(id.name, this, isReadOnly, typeName)
   }
 }
 
 object VariableDeclarator {
   def construct(
     typeName: TypeName,
+    isReadOnly: Boolean,
     variableDeclarator: VariableDeclaratorContext
   ): VariableDeclarator = {
     val init = CodeParser.toScala(variableDeclarator.expression()).map(Expression.construct)
-    VariableDeclarator(typeName, Id.construct(variableDeclarator.id()), init)
+    VariableDeclarator(typeName, isReadOnly, Id.construct(variableDeclarator.id()), init)
       .withContext(variableDeclarator)
   }
 }
@@ -89,6 +94,7 @@ final case class VariableDeclarators(declarators: Seq[VariableDeclarator]) exten
 object VariableDeclarators {
   def construct(
     typeName: TypeName,
+    isReadOnly: Boolean,
     variableDeclaratorsContext: VariableDeclaratorsContext
   ): VariableDeclarators = {
     val variableDeclarators: Seq[VariableDeclaratorContext] = {
@@ -98,7 +104,9 @@ object VariableDeclarators {
         })
         .getOrElse(Seq())
     }
-    VariableDeclarators(variableDeclarators.map(x => VariableDeclarator.construct(typeName, x)))
+    VariableDeclarators(
+      variableDeclarators.map(x => VariableDeclarator.construct(typeName, isReadOnly, x))
+    )
       .withContext(variableDeclaratorsContext)
   }
 }
@@ -145,16 +153,20 @@ object LocalVariableDeclaration {
     isTrigger: Boolean
   ): LocalVariableDeclaration = {
     val typeName = TypeReference.construct(from.typeRef())
-    LocalVariableDeclaration(
-      ApexModifiers.localVariableModifiers(
-        parser,
-        CodeParser.toScala(from.modifier()),
-        from,
-        isTrigger
-      ),
-      typeName,
-      VariableDeclarators.construct(typeName, from.variableDeclarators())
+    val modifiers = ApexModifiers.localVariableModifiers(
+      parser,
+      CodeParser.toScala(from.modifier()),
+      from,
+      isTrigger
     )
-      .withContext(from)
+    LocalVariableDeclaration(
+      modifiers,
+      typeName,
+      VariableDeclarators.construct(
+        typeName,
+        modifiers.modifiers.contains(FINAL_MODIFIER),
+        from.variableDeclarators()
+      )
+    ).withContext(from)
   }
 }

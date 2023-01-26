@@ -131,38 +131,35 @@ object ClassDeclaration {
 
     val bodyDeclarations =
       classBodyDeclarations
-        .flatMap(
-          cbd =>
-            CodeParser
-              .toScala(cbd.block())
-              .map(
-                x =>
-                  ArraySeq(
-                    ApexInitializerBlock.construct(
-                      parser,
-                      thisType,
-                      ApexModifiers
-                        .initializerBlockModifiers(CodeParser.toScala(cbd.STATIC()).isDefined),
-                      x
-                    )
-                  )
+        .flatMap(cbd =>
+          CodeParser
+            .toScala(cbd.block())
+            .map(x =>
+              ArraySeq(
+                ApexInitializerBlock.construct(
+                  parser,
+                  thisType,
+                  ApexModifiers
+                    .initializerBlockModifiers(CodeParser.toScala(cbd.STATIC()).isDefined),
+                  x
+                )
               )
-              .orElse(
-                CodeParser
-                  .toScala(cbd.memberDeclaration())
-                  .map(
-                    x =>
-                      ClassBodyDeclaration.construct(
-                        parser,
-                        thisType,
-                        typeContext,
-                        modifiers.methodOwnerNature,
-                        outerTypeName.isEmpty,
-                        CodeParser.toScala(cbd.modifier()),
-                        x
-                      )
+            )
+            .orElse(
+              CodeParser
+                .toScala(cbd.memberDeclaration())
+                .map(x =>
+                  ClassBodyDeclaration.construct(
+                    parser,
+                    thisType,
+                    typeContext,
+                    modifiers.methodOwnerNature,
+                    outerTypeName.isEmpty,
+                    CodeParser.toScala(cbd.modifier()),
+                    x
                   )
-              )
+                )
+            )
         )
         .flatten
 
@@ -416,7 +413,8 @@ object EnumDeclaration {
         thisType,
         ApexModifiers.enumConstantModifiers(),
         thisType.typeName,
-        VariableDeclarator(thisType.typeName, Id.construct(constant), None).withContext(constant)
+        VariableDeclarator(thisType.typeName, isReadOnly = true, Id.construct(constant), None)
+          .withContext(constant)
       ).withContext(constant)
     })
 

@@ -17,7 +17,13 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.types.apex.{ApexFieldLike, ThisType}
 import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.apexparser.ApexParser.{PropertyBlockContext, PropertyDeclarationContext}
-import com.nawforce.pkgforce.modifiers.{ApexModifiers, Modifier, ModifierResults, PRIVATE_MODIFIER}
+import com.nawforce.pkgforce.modifiers.{
+  ApexModifiers,
+  FINAL_MODIFIER,
+  Modifier,
+  ModifierResults,
+  PRIVATE_MODIFIER
+}
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.{ApexNode, Nature, PROPERTY_NATURE}
 import com.nawforce.pkgforce.path.Location
@@ -150,7 +156,12 @@ final case class SetterPropertyBlock(
   ): Unit = {
     block.foreach(block => {
       val blockContext = new OuterBlockVerifyContext(context, isStatic)
-      blockContext.addVar(Name("value"), None, propertyType)
+      blockContext.addVar(
+        Name("value"),
+        None,
+        modifiers.modifiers.contains(FINAL_MODIFIER),
+        propertyType
+      )
       block.verify(blockContext)
       context.typePlugin.onBlockValidated(block, isStatic, blockContext)
     })

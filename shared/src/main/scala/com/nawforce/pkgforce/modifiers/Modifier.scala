@@ -175,7 +175,7 @@ object ModifierOps {
 // FUTURE: Cross modifier/annotation checking
 
 object ApexModifiers {
-  val visibilityModifiers =
+  val visibilityModifiers: Seq[Modifier] =
     Seq(GLOBAL_MODIFIER, PUBLIC_MODIFIER, PROTECTED_MODIFIER, PRIVATE_MODIFIER)
   private val sharingModifiers =
     Seq(WITH_SHARING_MODIFIER, WITHOUT_SHARING_MODIFIER, INHERITED_SHARING_MODIFIER)
@@ -262,22 +262,20 @@ object ApexModifiers {
       val annotation = CodeParser.toScala(modifierContext.annotation())
       val modifiers =
         annotation
-          .map(
-            a =>
-              ModifierOps(
-                "@" + CodeParser.getText(a.qualifiedName()).toLowerCase,
-                CodeParser.toScala(a.elementValue()).map(ev => CodeParser.getText(ev)).getOrElse("")
-              )
+          .map(a =>
+            ModifierOps(
+              "@" + CodeParser.getText(a.qualifiedName()).toLowerCase,
+              CodeParser.toScala(a.elementValue()).map(ev => CodeParser.getText(ev)).getOrElse("")
+            )
           )
           .getOrElse(ModifierOps(CodeParser.getText(modifierContext).toLowerCase, ""))
 
-      modifiers.map(
-        m =>
-          (
-            m,
-            LogEntryContext(parser, modifierContext),
-            if (annotation.nonEmpty) "Annotation" else "Modifier"
-          )
+      modifiers.map(m =>
+        (
+          m,
+          LogEntryContext(parser, modifierContext),
+          if (annotation.nonEmpty) "Annotation" else "Modifier"
+        )
       )
     })
   }
@@ -289,16 +287,15 @@ object ApexModifiers {
     logger: ModifierLogger
   ): ArraySeq[Modifier] = {
 
-    val allowable = modifiers.partition {
-      case (modifier, _, _) => allow.contains(modifier)
+    val allowable = modifiers.partition { case (modifier, _, _) =>
+      allow.contains(modifier)
     }
 
-    allowable._2.foreach {
-      case (modifier, logEntryContext, modifierType) =>
-        logger.logError(
-          logEntryContext,
-          s"${modifierType} '${modifier.name}' is not supported on $pluralName"
-        )
+    allowable._2.foreach { case (modifier, logEntryContext, modifierType) =>
+      logger.logError(
+        logEntryContext,
+        s"$modifierType '${modifier.name}' is not supported on $pluralName"
+      )
     }
     allowable._1.map(_._1)
   }
@@ -652,5 +649,5 @@ object ApexModifiers {
   }
 
   def enumConstantModifiers(): ModifierResults =
-    ModifierResults(ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER), ArraySeq())
+    ModifierResults(ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER, FINAL_MODIFIER), ArraySeq())
 }
