@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.types
 
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.pkgforce.modifiers._
@@ -21,7 +22,7 @@ import com.nawforce.pkgforce.names.{DotName, Name, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE}
 import org.scalatest.funsuite.AnyFunSuite
 
-class PlatformTypesValidationTest extends AnyFunSuite {
+class PlatformTypesValidationTest extends AnyFunSuite with TestHelper {
 
   private val generics = Map[String, String](
     "System.List"                     -> "System.List<T>",
@@ -189,5 +190,15 @@ class PlatformTypesValidationTest extends AnyFunSuite {
 
     assert(td.fields.exists(_.name == Name("DEBUG")))
     assert(td.methods.exists(_.name == Name("ordinal")))
+  }
+
+  test("Extending platform type fulfills base Object interface") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          "public class DummyException extends Exception implements API { public interface API {} }"
+      )
+    )
+    assert(dummyIssues.isEmpty)
   }
 }
