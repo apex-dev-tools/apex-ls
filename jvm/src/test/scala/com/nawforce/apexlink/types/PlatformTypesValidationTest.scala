@@ -195,7 +195,7 @@ class PlatformTypesValidationTest extends AnyFunSuite with TestHelper {
   test("Extending platform type fulfills base Object interface") {
     typeDeclarations(
       Map(
-        "Dummy.cls" ->
+        "DummyException.cls" ->
           "public class DummyException extends Exception implements API { public interface API {} }"
       )
     )
