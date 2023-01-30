@@ -198,6 +198,68 @@ class MethodTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Static aura enabled method with allowed params and return types") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @AuraEnabled public static String fn(List<String> ids){return null;} }"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Static aura enabled method with disallowed param") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @AuraEnabled public static void fn(Set<String> ids){} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support parameter type of System.Set<System.String>\n"
+      )
+    }
+  }
+
+  test("Static aura enabled method with disallowed inner param") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @AuraEnabled public static void fn(List<Set<String>> ids){} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support parameter type of System.List<System.Set<System.String>>\n"
+      )
+    }
+  }
+
+  test("Static aura enabled method with disallowed return type") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @AuraEnabled public static Set<Id> fn(String ids){ return null;} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support return type of System.Set<System.Id>\n"
+      )
+    }
+  }
+
+  test("Static aura enabled method with return typ with disallowed inner type") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @AuraEnabled public static Map<String,Set<Id>> fn(String ids){ return null;} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support return type of System.Map<System.String, System.Set<System.Id>>\n"
+      )
+    }
+  }
+
   test("Instance method private none-override different return") {
     FileSystemHelper.run(
       Map(
