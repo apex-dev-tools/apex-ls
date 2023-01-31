@@ -41,7 +41,7 @@ object Workspaces {
   private val workspaces = new mutable.HashMap[String, Workspace]()
 
   @JSExport
-  def get(wsPath: String): Workspace = {
+  def get(wsPath: String, ignoreIssues:Boolean = false): Workspace = {
 
     val ws = workspaces.get(wsPath)
     if (ws.nonEmpty)
@@ -50,7 +50,7 @@ object Workspaces {
     val issuesManager = new IssuesManager
     val workspace     = SWorkspace(Path(wsPath), issuesManager)
     val issues        = issuesManager.hasUpdatedIssues
-    if (issues.nonEmpty) {
+    if (issues.nonEmpty && !ignoreIssues) {
       throw new WorkspaceException(issues.head)
     }
 
