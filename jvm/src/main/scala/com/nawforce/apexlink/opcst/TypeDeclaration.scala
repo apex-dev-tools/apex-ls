@@ -39,7 +39,7 @@ import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.apex.ThisType
 import com.nawforce.apexlink.types.core.ParameterDeclaration
 import com.nawforce.apexparser.ApexParser.BlockContext
-import com.nawforce.pkgforce.modifiers.{MethodOwnerNature, ModifierResults}
+import com.nawforce.pkgforce.modifiers.{FINAL_MODIFIER, MethodOwnerNature, ModifierResults}
 import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
@@ -107,47 +107,42 @@ private[opcst] object OutlineParserClassDeclaration {
 
     val typeContext = new RelativeTypeContext
 
-    val constructors = ctd.constructors.flatMap(
-      c =>
-        OutlineParserClassBodyDeclaration.constructConstructorDeclaration(
-          path,
-          c,
-          source,
-          typeContext,
-          outerTypeName.isEmpty,
-          thisType
-        )
+    val constructors = ctd.constructors.flatMap(c =>
+      OutlineParserClassBodyDeclaration.constructConstructorDeclaration(
+        path,
+        c,
+        source,
+        typeContext,
+        outerTypeName.isEmpty,
+        thisType
+      )
     )
 
-    val methods = ctd.methods.flatMap(
-      m =>
-        OutlineParserClassBodyDeclaration.constructClassMethodDeclaration(
-          path,
-          m,
-          source,
-          typeContext,
-          modifierResults.methodOwnerNature,
-          outerTypeName.isEmpty,
-          thisType
-        )
+    val methods = ctd.methods.flatMap(m =>
+      OutlineParserClassBodyDeclaration.constructClassMethodDeclaration(
+        path,
+        m,
+        source,
+        typeContext,
+        modifierResults.methodOwnerNature,
+        outerTypeName.isEmpty,
+        thisType
+      )
     )
 
-    val fields = ctd.fields.flatMap(
-      f =>
-        OutlineParserClassBodyDeclaration
-          .constructFieldDeclaration(path, f, source, outerTypeName.isEmpty, thisType)
+    val fields = ctd.fields.flatMap(f =>
+      OutlineParserClassBodyDeclaration
+        .constructFieldDeclaration(path, f, source, outerTypeName.isEmpty, thisType)
     )
 
-    val initializers = ctd.initializers.flatMap(
-      i =>
-        OutlineParserClassBodyDeclaration
-          .constructInitializerBlock(i, source, outerTypeName.isEmpty, thisType)
+    val initializers = ctd.initializers.flatMap(i =>
+      OutlineParserClassBodyDeclaration
+        .constructInitializerBlock(i, source, outerTypeName.isEmpty, thisType)
     )
 
-    val properties = ctd.properties.flatMap(
-      p =>
-        OutlineParserClassBodyDeclaration
-          .constructPropertyDeclaration(path, p, source, outerTypeName.isEmpty, thisType)
+    val properties = ctd.properties.flatMap(p =>
+      OutlineParserClassBodyDeclaration
+        .constructPropertyDeclaration(path, p, source, outerTypeName.isEmpty, thisType)
     )
 
     val innerTypes = ctd.innerTypes.flatMap {
@@ -245,10 +240,9 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     val typeContext = new RelativeTypeContext
     val id          = OutlineParserId.construct(itd.id, source.path)
 
-    val methods = itd.methods.flatMap(
-      m =>
-        OutlineParserClassBodyDeclaration
-          .constructInterfaceMethodDeclaration(path, m, source, typeContext, thisType)
+    val methods = itd.methods.flatMap(m =>
+      OutlineParserClassBodyDeclaration
+        .constructInterfaceMethodDeclaration(path, m, source, typeContext, thisType)
     )
 
     val declaration = InterfaceDeclaration(
@@ -287,7 +281,7 @@ private[opcst] object OutlineParserEnumDeclaration {
     val modifierResults =
       enumModifiers(path, ie.id, ie.annotations, ie.modifiers, outer = false)
     val thisType = outerType.asInner(ie.id.name)
-    val rv       = construct(ie, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
+    val rv = construct(ie, source, thisType, Some(outerType.typeName), modifierResults, Some(-1))
     Some(rv)
   }
 
@@ -337,7 +331,12 @@ private[opcst] object OutlineParserEnumDeclaration {
 
     val modifierResults = enumConstantModifiers()
     val vd =
-      OutlineParserClassBodyDeclaration.constructVariableDeclarator(id, source, thisType.typeName)
+      OutlineParserClassBodyDeclaration.constructVariableDeclarator(
+        id,
+        source,
+        thisType.typeName,
+        isReadOnly = true
+      )
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, thisType.typeName, vd)
     stampLocation(
@@ -516,7 +515,13 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val modifierResults = fieldModifiers(path, fd.id, fd.annotations, fd.modifiers, isOuter)
     val fieldTypeName   = TypeReference.construct(fd.typeRef.asInstanceOf[UnresolvedTypeRef])
-    val vd              = constructVariableDeclarator(fd, source, fieldTypeName, isOuter)
+    val vd = constructVariableDeclarator(
+      fd,
+      source,
+      fieldTypeName,
+      modifierResults.modifiers.contains(FINAL_MODIFIER),
+      isOuter
+    )
 
     val declaration = ApexFieldDeclaration(thisType, modifierResults, fieldTypeName, vd)
     val location = OPLocation(
@@ -540,16 +545,17 @@ private[opcst] object OutlineParserClassBodyDeclaration {
   def constructVariableDeclarator(
     id: OPId,
     source: Source,
-    typeName: TypeName
+    typeName: TypeName,
+    isReadOnly: Boolean
   ): VariableDeclarator = {
-
-    VariableDeclarator(typeName, OutlineParserId.construct(id, source.path), None)
+    VariableDeclarator(typeName, isReadOnly, OutlineParserId.construct(id, source.path), None)
   }
 
   def constructVariableDeclarator(
     fd: OPFieldDeclaration,
     source: Source,
     typeName: TypeName,
+    isReadOnly: Boolean,
     isOuter: Boolean
   ): VariableDeclarator = {
 
@@ -588,7 +594,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     val init: Option[Expression] = if (fd.blockLocation.isDefined) parseInitializer() else None
 
     val declaration =
-      VariableDeclarator(typeName, OutlineParserId.construct(fd.id, source.path), init)
+      VariableDeclarator(typeName, isReadOnly, OutlineParserId.construct(fd.id, source.path), init)
     stampLocation(declaration, extendLocation(fd.id.location, startLineOffset = -1), source.path)
     declaration
   }

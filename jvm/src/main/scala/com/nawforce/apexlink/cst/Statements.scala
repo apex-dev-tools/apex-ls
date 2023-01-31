@@ -21,7 +21,7 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
-import com.nawforce.pkgforce.modifiers.{ApexModifiers, ModifierResults}
+import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
@@ -233,7 +233,7 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
   }
 
   def addVars(context: BlockVerifyContext): Unit = {
-    context.addVar(id.name, this, typeName)
+    context.addVar(id.name, this, isReadOnly = false, typeName)
   }
 }
 
@@ -420,7 +420,12 @@ final case class CatchClause(
           case Right(td) => td
         }
       // definition = None disables issues like 'Unused' for exceptions
-      blockContext.addVar(Name(id), None, exceptionType)
+      blockContext.addVar(
+        Name(id),
+        None,
+        modifiers.modifiers.contains(FINAL_MODIFIER),
+        exceptionType
+      )
       block.verify(blockContext)
       context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
     })

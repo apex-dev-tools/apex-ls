@@ -370,7 +370,11 @@ object ApexFieldDeclaration {
   ): Seq[ApexFieldDeclaration] = {
     val typeName = TypeReference.construct(fieldDeclaration.typeRef())
     VariableDeclarators
-      .construct(typeName, fieldDeclaration.variableDeclarators())
+      .construct(
+        typeName,
+        modifiers.modifiers.contains(FINAL_MODIFIER),
+        fieldDeclaration.variableDeclarators()
+      )
       .declarators
       .map(vd => {
         ApexFieldDeclaration(thisType, modifiers, typeName, vd).withContext(fieldDeclaration)
@@ -399,7 +403,14 @@ final case class ApexConstructorDeclaration(
     parameters.foreach(_.verify(context))
 
     val blockContext = new OuterBlockVerifyContext(context, isStaticContext = false)
-    parameters.foreach(param => blockContext.addVar(param.name, param.id, param.typeName))
+    parameters.foreach(param =>
+      blockContext.addVar(
+        param.name,
+        param.id,
+        param.modifiers.modifiers.contains(FINAL_MODIFIER),
+        param.typeName
+      )
+    )
     block.verify(blockContext)
     context.typePlugin.onBlockValidated(block, isStatic = false, blockContext)
 
@@ -441,7 +452,7 @@ final case class FormalParameter(
   override def typeName: TypeName = relativeTypeName.typeName
 
   def addVar(context: BlockVerifyContext): Unit = {
-    relativeTypeName.addVar(id, id.name, context)
+    relativeTypeName.addVar(id, id.name, modifiers.modifiers.contains(FINAL_MODIFIER), context)
   }
 
   def verify(context: BodyDeclarationVerifyContext): Unit = {

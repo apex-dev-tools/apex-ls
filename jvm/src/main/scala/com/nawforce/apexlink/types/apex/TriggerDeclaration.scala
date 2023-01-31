@@ -109,7 +109,7 @@ final case class TriggerDeclaration(
           block.foreach(block => {
             try {
               val triggerContext = new OuterBlockVerifyContext(context, isStaticContext = false)
-              triggerContext.addVar(Names.Trigger, None, tc)
+              triggerContext.addVar(Names.Trigger, None, isReadOnly = true, tc)
               block.verify(triggerContext)
               context.typePlugin.onBlockValidated(block, isStatic = false, triggerContext)
             } finally {

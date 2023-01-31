@@ -49,7 +49,8 @@ trait VerifyContext {
   /** Declare a dependency on dependent */
   def addDependency(dependent: Dependent): Unit
 
-  /** Locate a type, typeName may be relative so searching must be performed wrt a typeDeclaration */
+  /** Locate a type, typeName may be relative so searching must be performed wrt a typeDeclaration
+    */
   def getTypeFor(typeName: TypeName, from: TypeDeclaration): TypeResponse
 
   /** Helper to locate a relative or absolute type and add as dependency if found */
@@ -264,6 +265,21 @@ final class BodyDeclarationVerifyContext(
       _.suppressIssues
     )
 
+  def isFieldFinalInitialisationContext(field: ApexFieldDeclaration): Boolean = {
+    // Determine if legal to initialise a final field from this context
+    classBodyDeclaration match {
+      case _: ApexConstructorDeclaration =>
+        !field.isStatic &&
+        (thisType.typeName == field.thisType.typeName ||
+          thisType.extendsOrImplements(field.thisType.typeName))
+      case block: ApexInitializerBlock =>
+        field.isStatic == block.isStatic && block.thisType.typeId == field.thisTypeId
+      case property: ApexPropertyDeclaration =>
+        property == field
+      case _ => false
+    }
+  }
+
   def saveResult(cst: CST, altLocation: Location)(op: => ExprContext): ExprContext = {
     super.saveResult(cst, altLocation, None)(op)
   }
@@ -275,7 +291,11 @@ final class BodyDeclarationVerifyContext(
     super.getTypeAndAddDependency(typeName, from, parentContext.module)
 }
 
-case class VarTypeAndDefinition(declaration: TypeDeclaration, definition: Option[CST])
+case class VarTypeAndDefinition(
+  declaration: TypeDeclaration,
+  definition: Option[CST],
+  isReadOnly: Boolean
+)
 
 abstract class BlockVerifyContext(parentContext: VerifyContext)
     extends VerifyContext
@@ -317,10 +337,15 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
     varType
   }
 
-  def addVar(name: Name, definition: Option[CST], typeDeclaration: TypeDeclaration): Unit =
-    vars.put(name, VarTypeAndDefinition(typeDeclaration, definition))
+  def addVar(
+    name: Name,
+    definition: Option[CST],
+    isReadOnly: Boolean,
+    typeDeclaration: TypeDeclaration
+  ): Unit =
+    vars.put(name, VarTypeAndDefinition(typeDeclaration, definition, isReadOnly))
 
-  def addVar(name: Name, definition: CST, typeName: TypeName): Unit = {
+  def addVar(name: Name, definition: CST, isReadOnly: Boolean, typeName: TypeName): Unit = {
     if (getVar(name, markUsed = false).nonEmpty) {
       logError(definition.location, s"Duplicate variable '$name'")
     }
@@ -331,8 +356,8 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
 
     vars.put(
       name,
-      td.map(VarTypeAndDefinition(_, Some(definition)))
-        .getOrElse(VarTypeAndDefinition(module.any, None))
+      td.map(VarTypeAndDefinition(_, Some(definition), isReadOnly))
+        .getOrElse(VarTypeAndDefinition(module.any, None, isReadOnly))
     )
   }
 
