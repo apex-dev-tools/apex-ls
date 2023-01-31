@@ -511,7 +511,9 @@ object MethodMap {
       )
 
     interface.methods
-      .filterNot(_.isStatic)
+      .filterNot(m =>
+        m.isStatic || specialOverrideMethodSignatures.contains(m.signature.toLowerCase())
+      )
       .foreach(method => {
         val key     = (method.name, method.parameters.length)
         val methods = workingMap.getOrElse(key, Nil)

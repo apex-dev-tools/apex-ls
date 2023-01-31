@@ -6,6 +6,7 @@ import { basename, resolve, sep } from "path"
 const isCategory = (...cats: string[]) => (str: string) => cats.some(c => str.startsWith(c));
 const isErrorCat = isCategory("Syntax", "Error", "Missing");
 const isWarnCat = isCategory("Warning", "Unused");
+const isSyntaxCat = isCategory("Syntax");
 
 // .each runs first before any hooks like beforeAll
 function getSamples(): string[][] {
@@ -35,13 +36,13 @@ function printLogs(logs: string[], errLogs: string[], name: string, status: numb
     if (logs.length) {
         console.log(prefix);
         console.log(
-            logs.map(l => {
-                if (isErrorCat(l)) {
-                    return chalk.red(l);
-                } else if (isWarnCat(l)) {
-                    return chalk.yellow(l);
+            logs.map(msg => {
+                if (isErrorCat(msg)) {
+                    return chalk.red(msg);
+                } else if (isWarnCat(msg)) {
+                    return chalk.yellow(msg);
                 }
-                return l;
+                return msg;
             }).join("\n")
         );
         console.log(); // \n
@@ -56,6 +57,24 @@ function printLogs(logs: string[], errLogs: string[], name: string, status: numb
     }
 }
 
+function applyMessageFilters(msg: string): string {
+    if (isSyntaxCat(msg)) {
+        // Syntax errors can include large list of tokens
+        // that changes on parser update causing failure
+        if (msg.length > 250) {
+            return msg.split(" expecting {", 2)[0];
+        }
+    }
+    if (isWarnCat(msg)) {
+        // msg for ambiguous flips between the related methods
+        // need to cut the end off
+        if (msg.includes("Ambiguous method call")) {
+            return msg.split(",", 2)[0];
+        }
+    }
+    return msg;
+}
+
 function prepareSnapshotLogs(logs: string[], path: string): string[][] {
     const headings: number[] = [];
 
@@ -65,10 +84,10 @@ function prepareSnapshotLogs(logs: string[], path: string): string[][] {
         // Strip unique abs paths
         let msg = log.replaceAll(`${path}${sep}`, "");
 
-        // msg for ambiguous flips between the related methods
-        // need to cut the end off
-        if (!isHead && msg.includes("Ambiguous method call")) {
-            msg = msg.split(",", 2)[0];
+        // Modify frequently changing messages
+        // to make snapshot deterministic
+        if (!isHead) {
+            msg = applyMessageFilters(msg);
         }
 
         const length = parsed.push(msg);
@@ -86,7 +105,7 @@ function prepareSnapshotLogs(logs: string[], path: string): string[][] {
             // sort to remove message order changes
             ...msgs.sort()
         ];
-    })
+    });
 }
 
 describe("Check samples", () => {
