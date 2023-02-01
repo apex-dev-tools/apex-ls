@@ -17,7 +17,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
 
     assert(
       dummyIssues ==
-        "Error: line 1 at 40-47: Variable 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 40-47: Variable 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -25,7 +25,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {{final String a; a = 'a';}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 37-44: Variable 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 37-44: Variable 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -33,7 +33,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final String a=''; void func(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 51-59: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 51-59: Field 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -41,7 +41,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final String a; void func(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 48-56: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 48-56: Field 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -49,7 +49,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final static String a=''; void func(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 58-66: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 58-66: Field 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -57,7 +57,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final static String a; void func(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 55-63: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 55-63: Field 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -75,7 +75,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final static String a; {a += 'a';}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 44-52: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 44-52: Field 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -97,7 +97,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final static String a; Dummy(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 51-59: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 51-59: Field 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -105,7 +105,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {void func(final Integer a) {a &= 1;}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 48-54: Parameter 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 48-54: Parameter 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -113,7 +113,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {static void func(final Integer a) {a &= 1;}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 55-61: Parameter 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 55-61: Parameter 'a' can not be assigned to, it is final\n"
     )
   }
 
@@ -121,7 +121,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {enum MyEnum {A} void func(){MyEnum.A = null;} }")
     assert(
       dummyIssues ==
-        "Error: line 1 at 48-63: Field 'A' can not be assigned to, it is final\n"
+        "Warning: line 1 at 48-63: Field 'A' can not be assigned to, it is final\n"
     )
   }
 
