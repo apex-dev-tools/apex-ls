@@ -639,6 +639,18 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
         s"Expecting instance for operation, not type '${rightInter.typeName}'"
       )
 
+    // TODO Remove temporary warning, add getReadOnlyError calls back to each operation verify
+    operation match {
+      case AssignmentOperation | BitwiseAssignmentOperation |
+          ArithmeticAddSubtractAssignmentOperation | ArithmeticMultiplyDivideAssignmentOperation =>
+        operation
+          .getReadOnlyError(leftInter, context)
+          .foreach(msg =>
+            context.log(Issue(location.path, WARNING_CATEGORY, location.location, msg))
+          )
+      case _ =>
+    }
+
     operation.verify(leftInter, rightInter, op, context) match {
       case Left(error) =>
         OrgInfo.logError(location, error)

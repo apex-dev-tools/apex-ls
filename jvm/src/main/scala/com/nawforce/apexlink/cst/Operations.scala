@@ -230,26 +230,22 @@ case object AssignmentOperation extends Operation {
     op: String,
     context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    getReadOnlyError(leftContext, context)
-      .map(err => Left(err))
-      .getOrElse({
-        if (rightContext.typeName == TypeNames.Null) {
-          Right(leftContext)
-        } else if (
-          isAssignable(
-            leftContext.typeName,
-            rightContext.typeDeclaration,
-            strictConversions = false,
-            context
-          )
-        ) {
-          Right(leftContext)
-        } else {
-          Left(
-            s"Incompatible types in assignment, from '${rightContext.typeName}' to '${leftContext.typeName}'"
-          )
-        }
-      })
+    if (rightContext.typeName == TypeNames.Null) {
+      Right(leftContext)
+    } else if (
+      isAssignable(
+        leftContext.typeName,
+        rightContext.typeDeclaration,
+        strictConversions = false,
+        context
+      )
+    ) {
+      Right(leftContext)
+    } else {
+      Left(
+        s"Incompatible types in assignment, from '${rightContext.typeName}' to '${leftContext.typeName}'"
+      )
+    }
   }
 }
 
@@ -412,22 +408,18 @@ case object ArithmeticAddSubtractAssignmentOperation extends Operation {
     op: String,
     context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    getReadOnlyError(leftContext, context)
-      .map(err => Left(err))
-      .getOrElse({
-        if (leftContext.typeName == TypeNames.String && op == "+=") {
-          Right(ExprContext(isStatic = Some(false), PlatformTypes.stringType))
-        } else {
-          val td =
-            getArithmeticAddSubtractAssigmentResult(leftContext.typeName, rightContext.typeName)
-          if (td.isEmpty) {
-            return Left(
-              s"Arithmetic operation not allowed between types '${leftContext.typeName}' and '${rightContext.typeName}'"
-            )
-          }
-          Right(ExprContext(isStatic = Some(false), td.get))
-        }
-      })
+    if (leftContext.typeName == TypeNames.String && op == "+=") {
+      Right(ExprContext(isStatic = Some(false), PlatformTypes.stringType))
+    } else {
+      val td =
+        getArithmeticAddSubtractAssigmentResult(leftContext.typeName, rightContext.typeName)
+      if (td.isEmpty) {
+        return Left(
+          s"Arithmetic operation not allowed between types '${leftContext.typeName}' and '${rightContext.typeName}'"
+        )
+      }
+      Right(ExprContext(isStatic = Some(false), td.get))
+    }
   }
 }
 
@@ -438,18 +430,14 @@ case object ArithmeticMultiplyDivideAssignmentOperation extends Operation {
     op: String,
     context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    getReadOnlyError(leftContext, context)
-      .map(err => Left(err))
-      .getOrElse({
-        val td =
-          getArithmeticMultiplyDivideAssigmentResult(leftContext.typeName, rightContext.typeName)
-        if (td.isEmpty) {
-          return Left(
-            s"Arithmetic operation not allowed between types '${leftContext.typeName}' and '${rightContext.typeName}'"
-          )
-        }
-        Right(ExprContext(isStatic = Some(false), td.get))
-      })
+    val td =
+      getArithmeticMultiplyDivideAssigmentResult(leftContext.typeName, rightContext.typeName)
+    if (td.isEmpty) {
+      return Left(
+        s"Arithmetic operation not allowed between types '${leftContext.typeName}' and '${rightContext.typeName}'"
+      )
+    }
+    Right(ExprContext(isStatic = Some(false), td.get))
   }
 }
 
@@ -477,17 +465,13 @@ case object BitwiseAssignmentOperation extends Operation {
     op: String,
     context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    getReadOnlyError(leftContext, context)
-      .map(err => Left(err))
-      .getOrElse({
-        val td = getBitwiseAssignmentResult(leftContext.typeName, rightContext.typeName)
-        if (td.isEmpty) {
-          return Left(
-            s"Bitwise operation only allowed between Integer, Long & Boolean types, not '${leftContext.typeName}' and '${rightContext.typeName}'"
-          )
-        }
-        Right(ExprContext(isStatic = Some(false), td.get))
-      })
+    val td = getBitwiseAssignmentResult(leftContext.typeName, rightContext.typeName)
+    if (td.isEmpty) {
+      return Left(
+        s"Bitwise operation only allowed between Integer, Long & Boolean types, not '${leftContext.typeName}' and '${rightContext.typeName}'"
+      )
+    }
+    Right(ExprContext(isStatic = Some(false), td.get))
   }
 }
 
