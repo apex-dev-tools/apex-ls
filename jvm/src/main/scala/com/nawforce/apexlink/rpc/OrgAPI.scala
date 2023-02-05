@@ -157,10 +157,22 @@ object GetDependencyCountsResult {
   implicit val rw: RW[GetDependencyCountsResult] = macroRW
 }
 
-case class TestMethod(className: String, methodName: String)
+case class TestClassItemsResult(items: Array[ClassTestItem])
 
-object TestMethod {
-  implicit val rw: RW[TestMethod] = macroRW
+object TestClassItemsResult {
+  implicit val rw: RW[TestClassItemsResult]         = macroRW
+  implicit val rwClassTestItem: RW[ClassTestItem]   = macroRW
+  implicit val rwTargetLocation: RW[TargetLocation] = macroRW
+  implicit val rwLocation: RW[Location]             = macroRW
+}
+
+case class TestMethodItemsResult(items: Array[MethodTestItem])
+
+object TestMethodItemsResult {
+  implicit val rw: RW[TestMethodItemsResult]        = macroRW
+  implicit val rwClassTestItem: RW[MethodTestItem]  = macroRW
+  implicit val rwTargetLocation: RW[TargetLocation] = macroRW
+  implicit val rwLocation: RW[Location]             = macroRW
 }
 
 trait OrgAPI {
@@ -243,6 +255,15 @@ trait OrgAPI {
   @api.JSONRPCMethod(name = "getTestClassNames")
   def getTestClassNames(paths: GetTestClassNamesRequest): Future[GetTestClassNamesResult]
 
+  @api.JSONRPCMethod(name = "getTestClassItems")
+  def getTestClassItems(paths: Array[String]): Future[TestClassItemsResult]
+
+  @api.JSONRPCMethod(name = "getTestClassItemsChanged")
+  def getTestClassItemsChanged(paths: Array[String]): Future[TestClassItemsResult]
+
+  @api.JSONRPCMethod(name = "getTestMethodItems")
+  def getTestMethodItems(paths: Array[String]): Future[TestMethodItemsResult]
+
   @api.JSONRPCMethod(name = "getDependencyCounts")
   def getDependencyCounts(paths: GetDependencyCountsRequest): Future[GetDependencyCountsResult]
 
@@ -253,12 +274,6 @@ trait OrgAPI {
     offset: Int,
     content: String
   ): Future[Array[CompletionItemLink]]
-
-  @api.JSONRPCMethod(name = "getAllTestMethods")
-  def getAllTestMethods(): Future[Array[TestMethod]]
-
-  @api.JSONRPCMethod(name = "getAllExecutableTestItems")
-  def getAllExecutableTestItems(): Future[Array[TestItem]]
 }
 
 object OrgAPI {

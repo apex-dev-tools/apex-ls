@@ -17,11 +17,12 @@ package com.nawforce.apexlink.api
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.rpc.{
   BombScore,
+  ClassTestItem,
   CompletionItemLink,
   DependencyGraph,
   LocationLink,
-  TargetLocation,
-  TestItem
+  MethodTestItem,
+  TargetLocation
 }
 import io.github.apexdevtools.apexls.api.IssuesCollection
 import com.nawforce.pkgforce.diagnostics.{IssuesManager, LoggerOps}
@@ -188,9 +189,28 @@ trait Org {
     */
   def getTestClassNames(paths: Array[String]): Array[String]
 
-  /** Find test classes with all the methods that can be executed and return it as TestItem
+  /** Find all available test class items or those for given paths.
+    *
+    * This provides a summary of available test classes, the path and location within the file. It
+    * does not provide test methods. Use a follow-up call to getTestMethodItems to retrieve method
+    * locations for a set of paths. Pass an empty array to retrieve all.
     */
-  def getAllExecutableTestItems: Array[TestItem]
+  def getTestClassItems(paths: Array[String]): Array[ClassTestItem]
+
+  /** Find test class items related to a given set of files.
+    *
+    * Similar to getTestClassNames, however it additionally provides the test class path and
+    * location.
+    */
+  def getTestClassItemsChanged(paths: Array[String]): Array[ClassTestItem]
+
+  /** Find all test method items or those for given paths.
+    *
+    * This provides a summary of available test methods, class name and the path and location within
+    * the file. Pass an empty array to retrieve all.
+    */
+  def getTestMethodItems(paths: Array[String]): Array[MethodTestItem]
+
 }
 
 object Org {

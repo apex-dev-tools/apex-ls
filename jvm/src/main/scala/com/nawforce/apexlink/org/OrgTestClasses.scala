@@ -17,7 +17,7 @@ import com.nawforce.apexlink.api.TypeSummary
 import com.nawforce.apexlink.deps.ReferencingCollector
 import com.nawforce.apexlink.deps.ReferencingCollector.NodeInfo
 import com.nawforce.apexlink.finding.TypeResolver
-import com.nawforce.apexlink.rpc.{TargetLocation, TestItem}
+import com.nawforce.apexlink.rpc.{ClassTestItem, MethodTestItem, TargetLocation}
 import com.nawforce.apexlink.types.apex.{ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, Modifier, TEST_METHOD_MODIFIER}
@@ -37,6 +37,71 @@ trait OrgTestClasses {
   }
 
   def getTestClassNamesInternal(paths: Array[PathLike]): Set[(String, Array[String])] = {
+    findTestClassReferences(paths).map(_.asTypeNameStrings())
+  }
+
+  def getTestClassItems(paths: Array[String]): Array[ClassTestItem] = {
+    findTestClasses(paths).map(cls => {
+      ClassTestItem(cls.name.toString, TargetLocation(cls.location.path.toString, cls.idLocation))
+    })
+  }
+
+  def getTestClassItemsChanged(paths: Array[String]): Array[ClassTestItem] = {
+    findTestClassReferences(paths.map(p => Path(p)))
+      .map(info => {
+        val cls = info.testClass
+        ClassTestItem(cls.name.toString, TargetLocation(cls.location.path.toString, cls.idLocation))
+      })
+      .toArray
+  }
+
+  def getTestMethodItems(paths: Array[String]): Array[MethodTestItem] = {
+    findTestClasses(paths).flatMap(cls => {
+      cls.methods
+        .collect({ case m: ApexMethodLike => m })
+        .filter(m => hasTestModifier(m.modifiers))
+        .map(m => {
+          MethodTestItem(
+            m.name.toString,
+            cls.name.toString,
+            TargetLocation(m.location.path.toString, m.idLocation)
+          )
+        })
+    })
+  }
+
+  private def findTestClasses(paths: Array[String]): Array[ApexDeclaration] = {
+    if (paths.isEmpty) {
+      getAllTestClasses()
+    } else {
+      findTestClassesFromPaths(paths)
+    }
+  }
+
+  private def getAllTestClasses(): Array[ApexDeclaration] = {
+    packages.view.flatMap(_.orderedModules.flatMap(_.testClasses.toSeq)).toArray
+  }
+
+  private def findTestClassesFromPaths(paths: Array[String]): Array[ApexDeclaration] = {
+    paths
+      .map(p => Path(p))
+      .flatMap(path => {
+        findPackageIdentifier(path).flatMap(typeId => {
+          typeId.module
+            .findPackageType(typeId.typeName, None)
+            .collect { case td: ApexDeclaration if td.inTest => td }
+            .filter(_.outerTypeName.isEmpty)
+        })
+      })
+  }
+
+  private def hasTestModifier(modifiers: ArraySeq[Modifier]): Boolean = {
+    modifiers.contains(TEST_METHOD_MODIFIER) || modifiers.contains(ISTEST_ANNOTATION)
+  }
+
+  private def findTestClassReferences(
+    paths: Array[PathLike]
+  ): Set[ReferencingCollector.TestInfo] = {
     // Locate starting typeIds for the passed paths, this includes super classes & interfaces
     val startingIds = paths.flatMap { path => findPackageIdentifier(path) }
 
@@ -46,29 +111,16 @@ trait OrgTestClasses {
       typeId.module
         .findPackageType(typeId.typeName, None)
         .collect { case td: ApexDeclaration => td }
-        .foreach(
-          td => (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
+        .foreach(td =>
+          (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
         )
     })
 
     // Locate tests for the sourceIds
-    ReferencingCollector
+    val refs = ReferencingCollector
       .testReferences(accum.toSet)
       .filter(_.testClass.outerTypeName.isEmpty) // Safety check, we only want outer types here
-      .map(_.asTypeNameStrings())
-  }
-
-  def getAllExecutableTestItems: Array[TestItem] = {
-    def hasTestModifier(modifiers: ArraySeq[Modifier]): Boolean = modifiers.contains(TEST_METHOD_MODIFIER) || modifiers.contains(ISTEST_ANNOTATION)
-
-    packages.view.flatMap(_.orderedModules.flatMap(_.testClasses.toSeq))
-      .filter(cls => cls.methods.nonEmpty && hasTestModifier(cls.modifiers) && cls.methods.map(_.modifiers).exists(hasTestModifier))
-      .map(cls => {
-        val children = cls.methods.collect({ case m: ApexMethodLike => m }).filter(m => hasTestModifier(m.modifiers)).map(m => {
-          TestItem(m.name.toString, TargetLocation(m.location.path.toString, m.idLocation), None)
-        })
-        TestItem(cls.name.toString, TargetLocation(cls.location.path.toString, cls.idLocation), Some(children.toArray))
-      }).toArray
+    refs
   }
 
   /** Retrieve type info from a path */
@@ -89,11 +141,12 @@ trait OrgTestClasses {
     sourcesForInterfaces(td, accum)
   }
 
-  /** Collect source information on interfaces, recursive over super classes & includes interfaces. */
+  /** Collect source information on interfaces, recursive over super classes & includes interfaces.
+    */
   private def sourcesForSuperclass(td: ApexDeclaration, accum: mutable.Set[NodeInfo]): Unit = {
     td.superClass.foreach { superclass =>
-      toApexDeclaration(superclass, td).foreach(
-        superClassTd => sourcesForType(superClassTd, primary = false, accum)
+      toApexDeclaration(superclass, td).foreach(superClassTd =>
+        sourcesForType(superClassTd, primary = false, accum)
       )
     }
   }

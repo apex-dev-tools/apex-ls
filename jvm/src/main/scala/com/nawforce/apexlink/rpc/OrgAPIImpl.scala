@@ -28,7 +28,8 @@ trait APIRequest {
   def process(org: OrgQueue): Unit
 }
 
-class OrgQueue(path: String) { self =>
+class OrgQueue(path: String) {
+  self =>
   val org: Org = Org.newOrg(path)
 
   private val queue      = new LinkedBlockingQueue[APIRequest]()
@@ -325,6 +326,7 @@ object GetImplementation {
     promise.future
   }
 }
+
 case class GetDependencyBombs(promise: Promise[Array[BombScore]], count: Int) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
@@ -417,32 +419,50 @@ object GetCompletionItems {
   }
 }
 
-case class GetAllTestMethods(promise: Promise[Array[TestMethod]]) extends APIRequest {
+case class GetTestClassItems(promise: Promise[TestClassItemsResult], paths: Array[String])
+    extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    promise.success(orgImpl.getAllTestMethods)
+    promise.success(TestClassItemsResult(orgImpl.getTestClassItems(paths)))
   }
 }
 
-case class GetAllExecutableTestItems(promise: Promise[Array[TestItem]]) extends APIRequest {
-  override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    promise.success(orgImpl.getAllExecutableTestItems)
-  }
-}
-
-object GetAllTestMethods {
-  def apply(queue: OrgQueue): Future[Array[TestMethod]] = {
-    val promise = Promise[Array[TestMethod]]()
-    queue.add(new GetAllTestMethods(promise))
+object GetTestClassItems {
+  def apply(queue: OrgQueue, paths: Array[String]): Future[TestClassItemsResult] = {
+    val promise = Promise[TestClassItemsResult]()
+    queue.add(new GetTestClassItems(promise, paths))
     promise.future
   }
 }
 
-object GetAllExecutableTestItems {
-  def apply(queue: OrgQueue): Future[Array[TestItem]] = {
-    val promise = Promise[Array[TestItem]]()
-    queue.add(new GetAllExecutableTestItems(promise))
+case class GetTestClassItemsChanged(promise: Promise[TestClassItemsResult], paths: Array[String])
+    extends APIRequest {
+  override def process(queue: OrgQueue): Unit = {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    promise.success(TestClassItemsResult(orgImpl.getTestClassItemsChanged(paths)))
+  }
+}
+
+object GetTestClassItemsChanged {
+  def apply(queue: OrgQueue, paths: Array[String]): Future[TestClassItemsResult] = {
+    val promise = Promise[TestClassItemsResult]()
+    queue.add(new GetTestClassItemsChanged(promise, paths))
+    promise.future
+  }
+}
+
+case class GetTestMethodItems(promise: Promise[TestMethodItemsResult], paths: Array[String])
+    extends APIRequest {
+  override def process(queue: OrgQueue): Unit = {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    promise.success(TestMethodItemsResult(orgImpl.getTestMethodItems(paths)))
+  }
+}
+
+object GetTestMethodItems {
+  def apply(queue: OrgQueue, paths: Array[String]): Future[TestMethodItemsResult] = {
+    val promise = Promise[TestMethodItemsResult]()
+    queue.add(new GetTestMethodItems(promise, paths))
     promise.future
   }
 }
@@ -596,11 +616,16 @@ class OrgAPIImpl extends OrgAPI {
     GetCompletionItems(OrgQueue.instance(), path, line, offset, content)
   }
 
-  override def getAllTestMethods(): Future[Array[TestMethod]] = {
-    GetAllTestMethods(OrgQueue.instance())
+  override def getTestClassItems(paths: Array[String]): Future[TestClassItemsResult] = {
+    GetTestClassItems(OrgQueue.instance(), paths)
   }
 
-  override def getAllExecutableTestItems(): Future[Array[TestItem]] = {
-    GetAllExecutableTestItems(OrgQueue.instance())
+  override def getTestClassItemsChanged(paths: Array[String]): Future[TestClassItemsResult] = {
+    GetTestClassItemsChanged(OrgQueue.instance(), paths)
   }
+
+  override def getTestMethodItems(paths: Array[String]): Future[TestMethodItemsResult] = {
+    GetTestMethodItems(OrgQueue.instance(), paths)
+  }
+
 }
