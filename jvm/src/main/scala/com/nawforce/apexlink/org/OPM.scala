@@ -442,22 +442,6 @@ object OPM extends TriHierarchy {
             }
         }
     }
-
-    def getAllTestMethods: Array[TestMethod] = {
-      val allClasses = packages.flatMap(_.orderedModules.flatMap(_.testClasses.toSeq))
-
-      allClasses
-        .flatMap(c =>
-          c.methods
-            .filter(m =>
-              m.modifiers.contains(ISTEST_ANNOTATION) || m.modifiers
-                .contains(TEST_METHOD_MODIFIER)
-            )
-            .map(m => TestMethod(c.name.toString(), m.name.toString()))
-        )
-        .toSet
-        .toArray
-    }
   }
 
   class PackageImpl(
