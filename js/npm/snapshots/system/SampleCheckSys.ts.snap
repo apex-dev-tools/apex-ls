@@ -2,46 +2,8 @@
 
 exports[`Check samples Sample: ActionPlansV4 1`] = `
 {
-  "logs": [
-    [
-      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlanCreationController.cls",
-      "Warning: line 768 at 3-93: Local variable is hiding class field 'taskIndex', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlanCreationController.cls: line 29 at 9-26",
-    ],
-    [
-      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlanTemplateCreationController.cls",
-      "Warning: line 251 at 3-93: Local variable is hiding class field 'taskIndex', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlanTemplateCreationController.cls: line 24 at 9-26",
-    ],
-    [
-      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansRedirect.cls",
-      "Warning: line 36 at 2-34: Local variable is hiding class field 'recordId', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansRedirect.cls: line 24 at 9-21",
-    ],
-    [
-      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTaskTriggerUtilities.cls",
-      "Warning: line 347 at 3-77: Local variable is hiding class field 'dependentApts', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTaskTriggerUtilities.cls: line 24 at 16-70",
-      "Warning: line 43 at 3-77: Local variable is hiding class field 'dependentApts', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTaskTriggerUtilities.cls: line 24 at 16-70",
-    ],
-    [
-      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTriggerHandlers.cls",
-      "Missing: line 330 at 42-73: Unknown field 'IsClosed' on SObject 'Schema.Event'",
-    ],
-    [
-      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls",
-      "Warning: line 595 at 3-114: Local variable is hiding class field 'apSettings', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls: line 567 at 16-52",
-    ],
-    [
-      "sfdx-source/LabsActionPlans/main/default/tests/ActionPlansObjectTriggersTest.cls",
-      "Warning: line 286 at 3-72: Local variable is hiding class field 'aps', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansObjectTriggersTest.cls: line 23 at 16-45",
-      "Warning: line 326 at 3-72: Local variable is hiding class field 'aps', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansObjectTriggersTest.cls: line 23 at 16-45",
-      "Warning: line 372 at 3-73: Local variable is hiding class field 'aps', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansObjectTriggersTest.cls: line 23 at 16-45",
-    ],
-    [
-      "sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls",
-      "Warning: line 211 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
-      "Warning: line 450 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
-      "Warning: line 57 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
-    ],
-  ],
-  "status": 4,
+  "logs": [],
+  "status": 0,
 }
 `;
 
@@ -68,10 +30,6 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
     [
       "force-app/commons/core/classes/collections/CollectionTest.cls",
       "Warning: line 911:8 to 913:18: Local variable is hiding class field 'opportunities', see force-app/commons/core/classes/collections/CollectionTest.cls: line 27:19 to 58:6",
-    ],
-    [
-      "force-app/commons/core/classes/dataStructures/BitSet.cls",
-      "Warning: line 47 at 8-46: Local variable is hiding class field 'bits', see force-app/commons/core/classes/dataStructures/BitSet.cls: line 40 at 12-29",
     ],
     [
       "force-app/commons/core/classes/xml/XmlNode.cls",
@@ -153,10 +111,6 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_QueryFactory.cls: line 84 at 9-47",
     ],
     [
-      "Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectDescribe.cls",
-      "Warning: line 187 at 3-82: Local variable is hiding class field 'token', see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
-    ],
-    [
       "Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 100:2 to 103:3: Local variable is hiding class field 'unitOfWork', see Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
       "Warning: line 66 at 2-73: Local variable is hiding class field 'unitOfWork', see Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
@@ -179,11 +133,6 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Cumulus/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls",
       "Warning: line 209:8 to 213:20: Local variable is hiding class field 'account1', see Cumulus/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls: line 59 at 25-54",
       "Warning: line 365:8 to 369:20: Local variable is hiding class field 'account1', see Cumulus/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls: line 59 at 25-54",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/BDI_MigrationMappingUtility.cls",
-      "Warning: line 176 at 8-102: Local variable is hiding class field 'dataImportSettings', see Cumulus/force-app/main/default/classes/BDI_MigrationMappingUtility.cls: line 105 at 12-55",
-      "Warning: line 178 at 8-76: Local variable is hiding class field 'helper', see Cumulus/force-app/main/default/classes/BDI_MigrationMappingUtility.cls: line 99 at 12-46",
     ],
     [
       "Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls",
@@ -447,7 +396,6 @@ exports[`Check samples Sample: Forceea-data-factory 1`] = `
       "Warning: line 2079 at 8-81: Local variable is hiding class field 'variables', see dx/force-app/main/default/classes/FObject.cls: line 257 at 11-89",
       "Warning: line 2260 at 8-26: Local variable is hiding class field 'errors', see dx/force-app/main/default/classes/FObject.cls: line 191 at 12-51",
       "Warning: line 2294 at 8-26: Local variable is hiding class field 'errors', see dx/force-app/main/default/classes/FObject.cls: line 191 at 12-51",
-      "Warning: line 2337 at 8-26: Local variable is hiding class field 'errors', see dx/force-app/main/default/classes/FObject.cls: line 191 at 12-51",
       "Warning: line 4192 at 8-59: Local variable is hiding class field 'permutationValues', see dx/force-app/main/default/classes/FObject.cls: line 227 at 11-75",
       "Warning: line 4583 at 8-50: Local variable is hiding class field 'fields', see dx/force-app/main/default/classes/FObject.cls: line 195 at 11-52",
     ],
@@ -497,16 +445,10 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
     [
       "fs-core/main/default/classes/FormulaShareService.cls",
       "Warning: line 140 at 3-104: Local variable is hiding class field 'settings', see fs-core/main/default/classes/FormulaShareService.cls: line 48 at 8-44",
-      "Warning: line 41 at 2-98: Local variable is hiding class field 'rules', see fs-core/main/default/classes/FormulaShareService.cls: line 64 at 22-82",
-      "Warning: line 716 at 3-71: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareService.cls: line 63 at 22-46",
     ],
     [
       "fs-core/main/libs/apex-common/classes/fflib_QueryFactory.cls",
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see fs-core/main/libs/apex-common/classes/fflib_QueryFactory.cls: line 84 at 9-47",
-    ],
-    [
-      "fs-core/main/libs/apex-common/classes/fflib_SObjectDescribe.cls",
-      "Warning: line 189 at 3-82: Local variable is hiding class field 'token', see fs-core/main/libs/apex-common/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
     ],
     [
       "fs-core/main/libs/apex-common/classes/test/classes/fflib_ApplicationTest.cls",
@@ -618,10 +560,6 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_QueryFactory.cls: line 84 at 9-47",
     ],
     [
-      "NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectDescribe.cls",
-      "Warning: line 187 at 3-82: Local variable is hiding class field 'token', see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
-    ],
-    [
       "NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 100:2 to 103:3: Local variable is hiding class field 'unitOfWork', see NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
       "Warning: line 66 at 2-73: Local variable is hiding class field 'unitOfWork', see NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
@@ -644,11 +582,6 @@ exports[`Check samples Sample: NPSP 1`] = `
       "NPSP/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls",
       "Warning: line 209:8 to 213:20: Local variable is hiding class field 'account1', see NPSP/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls: line 59 at 25-54",
       "Warning: line 365:8 to 369:20: Local variable is hiding class field 'account1', see NPSP/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls: line 59 at 25-54",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/BDI_MigrationMappingUtility.cls",
-      "Warning: line 176 at 8-102: Local variable is hiding class field 'dataImportSettings', see NPSP/force-app/main/default/classes/BDI_MigrationMappingUtility.cls: line 105 at 12-55",
-      "Warning: line 178 at 8-76: Local variable is hiding class field 'helper', see NPSP/force-app/main/default/classes/BDI_MigrationMappingUtility.cls: line 99 at 12-46",
     ],
     [
       "NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls",
@@ -781,10 +714,6 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Missing: line 237 at 31-54: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
     ],
     [
-      "nebula-logger/core/main/log-management/classes/LogHandler.cls",
-      "Warning: line 248 at 8-89: Local variable is hiding class field 'loggerScenariosById', see nebula-logger/core/main/log-management/classes/LogHandler.cls: line 18 at 12-59",
-    ],
-    [
       "nebula-logger/core/main/log-management/classes/LoggerSettingsController.cls",
       "Missing: line 297 at 18-43: Unknown field 'SetupOwner' on SObject 'Schema.LoggerSettings__c'",
       "Missing: line 305 at 33-58: Unknown field 'SetupOwner' on SObject 'Schema.LoggerSettings__c'",
@@ -847,9 +776,6 @@ exports[`Check samples Sample: ObjectMerge 1`] = `
     [
       "src/classes/ObjectMergeHandleUsers.cls",
       "Warning: line 158 at 8-62: Local variable is hiding class field 'userIdsToDeactivate', see src/classes/ObjectMergeHandleUsers.cls: line 35 at 12-40",
-      "Warning: line 41 at 8-39: Local variable is hiding class field 'pairIds', see src/classes/ObjectMergeHandleUsers.cls: line 34 at 12-28",
-      "Warning: line 58 at 12-55: Local variable is hiding class field 'userIdsToDeactivate', see src/classes/ObjectMergeHandleUsers.cls: line 35 at 12-40",
-      "Warning: line 80 at 16-58: Local variable is hiding class field 'ownerIdMap', see src/classes/ObjectMergeHandleUsers.cls: line 36 at 12-35",
     ],
     [
       "src/classes/ObjectMergeUtility.cls",
@@ -878,19 +804,8 @@ exports[`Check samples Sample: R-apex 1`] = `
   "logs": [
     [
       "force-app/main/default/classes/R.cls",
-      "Warning: line 10182 at 12-43: Local variable is hiding class field 'first', see force-app/main/default/classes/R.cls: line 4322 at 18-47",
       "Warning: line 10373 at 12-90: Local variable is hiding class field 'length', see force-app/main/default/classes/Func.cls: line 109 at 12-32",
-      "Warning: line 10447 at 12-42: Local variable is hiding class field 'size', see force-app/main/default/classes/R.cls: line 3701 at 18-39",
       "Warning: line 10481 at 12-44: Local variable is hiding class field 'length', see force-app/main/default/classes/Func.cls: line 109 at 12-32",
-      "Warning: line 7976 at 12-43: Local variable is hiding class field 'first', see force-app/main/default/classes/R.cls: line 4322 at 18-47",
-      "Warning: line 7977 at 12-31: Local variable is hiding class field 'last', see force-app/main/default/classes/R.cls: line 4341 at 18-45",
-      "Warning: line 7980 at 16-43: Local variable is hiding class field 'size', see force-app/main/default/classes/R.cls: line 3701 at 18-39",
-      "Warning: line 7994 at 16-47: Local variable is hiding class field 'size', see force-app/main/default/classes/R.cls: line 3701 at 18-39",
-      "Warning: line 8011 at 12-43: Local variable is hiding class field 'first', see force-app/main/default/classes/R.cls: line 4322 at 18-47",
-      "Warning: line 8012 at 12-42: Local variable is hiding class field 'last', see force-app/main/default/classes/R.cls: line 4341 at 18-45",
-      "Warning: line 8015 at 16-43: Local variable is hiding class field 'size', see force-app/main/default/classes/R.cls: line 3701 at 18-39",
-      "Warning: line 8030 at 16-47: Local variable is hiding class field 'size', see force-app/main/default/classes/R.cls: line 3701 at 18-39",
-      "Warning: line 8241 at 12-42: Local variable is hiding class field 'comparator', see force-app/main/default/classes/R.cls: line 3437 at 18-57",
     ],
   ],
   "status": 0,
@@ -1074,12 +989,7 @@ exports[`Check samples Sample: apex-recipes 1`] = `
 
 exports[`Check samples Sample: apex-rest-route 1`] = `
 {
-  "logs": [
-    [
-      "force-app/main/default/classes/RestRouteTestRoutes.cls",
-      "Warning: line 40 at 12-48: Local variable is hiding class field 'companies', see force-app/main/default/classes/RestRouteTestRoutes.cls: line 176 at 17-127",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
@@ -1218,10 +1128,6 @@ exports[`Check samples Sample: apex-rollup 1`] = `
       "Warning: line 90 at 4-34: Local variable is hiding class field 'objIds', see extra-tests/classes/RollupQueryBuilderTests.cls: line 4 at 23-62",
     ],
     [
-      "rollup/core/classes/RollupAsyncProcessor.cls",
-      "Warning: line 794 at 4-82: Local variable is hiding class field 'isDeferralAllowed', see rollup/core/classes/Rollup.cls: line 32 at 17-50",
-    ],
-    [
       "rollup/core/classes/RollupCalcItemReplacer.cls",
       "Warning: line 236 at 4-76: Local variable is hiding class field 'parentQueryFields', see rollup/core/classes/RollupCalcItemReplacer.cls: line 12 at 16-64",
     ],
@@ -1229,10 +1135,6 @@ exports[`Check samples Sample: apex-rollup 1`] = `
       "rollup/core/classes/RollupCalculator.cls",
       "Warning: line 420 at 6-95: Local variable is hiding class field 'defaultVal', see rollup/core/classes/RollupCalculator.cls: line 8 at 18-36",
       "Warning: line 790 at 6-96: Local variable is hiding class field 'defaultVal', see rollup/core/classes/RollupCalculator.cls: line 8 at 18-36",
-    ],
-    [
-      "rollup/core/classes/RollupFullRecalcProcessor.cls",
-      "Warning: line 158 at 8-91: Local variable is hiding class field 'specificControl', see rollup/core/classes/Rollup.cls: line 19 at 17-52",
     ],
     [
       "rollup/core/classes/RollupLogger.cls",
@@ -1304,10 +1206,6 @@ exports[`Check samples Sample: at4dx 1`] = `
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
     ],
     [
-      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDescribe.cls",
-      "Warning: line 187 at 3-82: Local variable is hiding class field 'token', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
-    ],
-    [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
@@ -1337,10 +1235,6 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
     [
       "dlrs/libs/fflib-common/classes/fflib_QueryFactory.cls",
       "Warning: line 446 at 4-75: Local variable is hiding class field 'relationship', see dlrs/libs/fflib-common/classes/fflib_QueryFactory.cls: line 87 at 10-48",
-    ],
-    [
-      "dlrs/libs/fflib-common/classes/fflib_SObjectDescribe.cls",
-      "Warning: line 192:6 to 194:7: Local variable is hiding class field 'token', see dlrs/libs/fflib-common/classes/fflib_SObjectDescribe.cls: line 41 at 10-35",
     ],
   ],
   "status": 0,
@@ -1409,10 +1303,6 @@ exports[`Check samples Sample: fflib-apex-common 1`] = `
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
     ],
     [
-      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDescribe.cls",
-      "Warning: line 187 at 3-82: Local variable is hiding class field 'token', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
-    ],
-    [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
@@ -1428,10 +1318,6 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
     [
       "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls",
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
-    ],
-    [
-      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDescribe.cls",
-      "Warning: line 187 at 3-82: Local variable is hiding class field 'token', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -1466,12 +1352,7 @@ exports[`Check samples Sample: force-di 1`] = `
 
 exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
 {
-  "logs": [
-    [
-      "src/classes/fflib_SObjectDescribe.cls",
-      "Warning: line 181 at 3-82: Local variable is hiding class field 'token', see src/classes/fflib_SObjectDescribe.cls: line 41 at 9-34",
-    ],
-  ],
+  "logs": [],
   "status": 0,
 }
 `;
