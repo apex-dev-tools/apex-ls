@@ -90,4 +90,9 @@ class VarTest extends AnyFunSuite with TestHelper {
         .startsWith("Warning: line 1 at 80-88: Local variable is hiding class field 'a', see ")
     )
   }
+
+  test("Shadow local var in static context") {
+    typeDeclaration("public class Dummy { String a; static void func() {String a;}}")
+    assert(dummyIssues.isEmpty)
+  }
 }
