@@ -76,4 +76,9 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(getMessages(root.join("Bar.cls")).isEmpty)
   }
 
+  test("protected static field") {
+    typeDeclarations(Map("Dummy.cls" -> "public class Dummy { protected static String foo; }"))
+    assert(dummyIssues == "Error: line 1 at 38-49: protected field 'foo' cannot be static\n")
+  }
+
 }
