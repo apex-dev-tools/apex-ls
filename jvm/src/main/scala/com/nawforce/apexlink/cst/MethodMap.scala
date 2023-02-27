@@ -675,6 +675,16 @@ object MethodMap {
             s"Method '${method.name}' can not override a private method",
             errors
           )
+      } else if (
+        !method.isOverride &&
+          matchedMethod.isAbstract &&
+          !(method.visibility == PRIVATE_MODIFIER && matchedMethod.visibility == PRIVATE_MODIFIER)
+      ) {
+        setMethodError(
+          method,
+          s"Method '${method.name}' must use the 'override' keyword when implementing an abstract method",
+          errors
+        )
       }
     } else if (method.isOverride && isComplete) {
       setMethodError(
