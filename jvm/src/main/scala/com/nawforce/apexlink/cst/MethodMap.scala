@@ -23,7 +23,7 @@ import com.nawforce.apexlink.types.platform.{GenericPlatformMethod, PlatformMeth
 import com.nawforce.apexlink.types.synthetic.CustomMethodDeclaration
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics._
-import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, AURA_ENABLED_ANNOTATION, Modifier, PRIVATE_MODIFIER}
+import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, AURA_ENABLED_ANNOTATION, Modifier, PRIVATE_MODIFIER, PROTECTED_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
 import com.nawforce.pkgforce.path.{Location, PathLocation}
@@ -314,6 +314,14 @@ object MethodMap {
           )
         })
       })
+    // Add errors for any static methods with protected modifier
+    staticLocals.filter(s=>s.modifiers.contains(PROTECTED_MODIFIER)).foreach(m=>{
+      setMethodError(
+        m,
+        s"protected method '${m.name}' cannot be static",
+        errors
+      )
+    })
     staticLocals
       .filterNot(ignorableStatics.contains)
       .foreach(method => applyStaticMethod(workingMap, method))
