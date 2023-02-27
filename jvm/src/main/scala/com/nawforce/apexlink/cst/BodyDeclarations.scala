@@ -18,16 +18,10 @@ import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.Referenceable
-import com.nawforce.apexlink.types.apex.{
-  ApexBlockLike,
-  ApexConstructorLike,
-  ApexFieldLike,
-  ApexMethodLike,
-  ThisType
-}
+import com.nawforce.apexlink.types.apex.{ApexBlockLike, ApexConstructorLike, ApexFieldLike, ApexMethodLike, ThisType}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexparser.ApexParser._
-import com.nawforce.pkgforce.diagnostics.Issue
+import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers._
@@ -353,6 +347,18 @@ final case class ApexFieldDeclaration(
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     val staticContext = if (isStatic) Some(true) else None
+
+
+    if(isStatic && modifiers.contains(PROTECTED_MODIFIER)) {
+      context.log(
+        Issue(
+          location.path,
+          ERROR_CATEGORY,
+          location.location,
+          s"protected field '${id.name}' cannot be static"
+        )
+      )
+    }
 
     variableDeclarator.verify(
       ExprContext(staticContext, context.thisType),
