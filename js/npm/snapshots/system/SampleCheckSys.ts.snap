@@ -2,8 +2,46 @@
 
 exports[`Check samples Sample: ActionPlansV4 1`] = `
 {
-  "logs": [],
-  "status": 0,
+  "logs": [
+    [
+      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlanCreationController.cls",
+      "Warning: line 768 at 3-93: Local variable is hiding class field 'taskIndex', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlanCreationController.cls: line 29 at 9-26",
+    ],
+    [
+      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlanTemplateCreationController.cls",
+      "Warning: line 251 at 3-93: Local variable is hiding class field 'taskIndex', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlanTemplateCreationController.cls: line 24 at 9-26",
+    ],
+    [
+      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansRedirect.cls",
+      "Warning: line 36 at 2-34: Local variable is hiding class field 'recordId', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansRedirect.cls: line 24 at 9-21",
+    ],
+    [
+      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTaskTriggerUtilities.cls",
+      "Warning: line 347 at 3-77: Local variable is hiding class field 'dependentApts', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTaskTriggerUtilities.cls: line 24 at 16-70",
+      "Warning: line 43 at 3-77: Local variable is hiding class field 'dependentApts', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTaskTriggerUtilities.cls: line 24 at 16-70",
+    ],
+    [
+      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTriggerHandlers.cls",
+      "Missing: line 330 at 42-73: Unknown field 'IsClosed' on SObject 'Schema.Event'",
+    ],
+    [
+      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls",
+      "Warning: line 595 at 3-114: Local variable is hiding class field 'apSettings', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls: line 567 at 16-52",
+    ],
+    [
+      "sfdx-source/LabsActionPlans/main/default/tests/ActionPlansObjectTriggersTest.cls",
+      "Warning: line 286 at 3-72: Local variable is hiding class field 'aps', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansObjectTriggersTest.cls: line 23 at 16-45",
+      "Warning: line 326 at 3-72: Local variable is hiding class field 'aps', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansObjectTriggersTest.cls: line 23 at 16-45",
+      "Warning: line 372 at 3-73: Local variable is hiding class field 'aps', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansObjectTriggersTest.cls: line 23 at 16-45",
+    ],
+    [
+      "sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls",
+      "Warning: line 211 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
+      "Warning: line 450 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
+      "Warning: line 57 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
+    ],
+  ],
+  "status": 4,
 }
 `;
 
