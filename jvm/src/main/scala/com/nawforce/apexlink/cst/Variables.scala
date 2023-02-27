@@ -120,7 +120,7 @@ final case class LocalVariableDeclaration(
 
     variableDeclarators.declarators.foreach(vd => {
       context.thisType.findField(vd.id.name, None).foreach {
-        case field: ApexFieldDeclaration =>
+        case field: ApexFieldDeclaration if field.isStatic == context.isStatic =>
           context.log(
             new Issue(
               location.path,
