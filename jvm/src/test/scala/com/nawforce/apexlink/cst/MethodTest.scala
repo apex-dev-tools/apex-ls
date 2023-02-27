@@ -176,17 +176,6 @@ class MethodTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Static method protected override different return") {
-    FileSystemHelper.run(
-      Map(
-        "Base.cls" -> "public virtual class Base { static protected Base getInstance() {return null;} }",
-        "Dummy.cls" -> "public class Dummy extends Base { static protected Dummy getInstance() {return null;} { getInstance();} }"
-      )
-    ) { root: PathLike =>
-      createHappyOrg(root)
-    }
-  }
-
   test("Static method public override different return") {
     FileSystemHelper.run(
       Map(
@@ -256,6 +245,19 @@ class MethodTest extends AnyFunSuite with TestHelper {
       createOrg(root)
       assert(
         getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support return type of System.Map<System.String, System.Set<System.Id>>\n"
+      )
+    }
+  }
+
+  test("Static method with protected modifier") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { static protected Dummy getInstance() {return null;} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 44-55: protected method 'getInstance' cannot be static\n"
       )
     }
   }
