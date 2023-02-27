@@ -325,6 +325,17 @@ class MethodTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("public method implementing a private abstract method") {
+    FileSystemHelper.run(
+      Map(
+        "Base.cls" -> "public abstract class Base { abstract void fn(); }",
+        "Extend.cls" -> "public class Extend extends Base { public void fn() {}}"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
   test("public abstract method implementation with no override keyword") {
     FileSystemHelper.run(
       Map(
@@ -360,6 +371,19 @@ class MethodTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       createHappyOrg(root)
+    }
+  }
+
+  test("private inner abstract method implementation with no override keyword on public implementation") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { public void fn(){} }}"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+      )
     }
   }
 
