@@ -23,7 +23,7 @@ import com.nawforce.apexlink.types.platform.{GenericPlatformMethod, PlatformMeth
 import com.nawforce.apexlink.types.synthetic.CustomMethodDeclaration
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics._
-import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, AURA_ENABLED_ANNOTATION, Modifier, PRIVATE_MODIFIER, PROTECTED_MODIFIER, PUBLIC_MODIFIER}
+import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, AURA_ENABLED_ANNOTATION, Modifier, PRIVATE_MODIFIER, PROTECTED_MODIFIER }
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
 import com.nawforce.pkgforce.path.{Location, PathLocation}
