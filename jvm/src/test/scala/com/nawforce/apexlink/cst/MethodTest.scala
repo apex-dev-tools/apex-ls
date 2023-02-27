@@ -314,6 +314,66 @@ class MethodTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("private abstract method implementation") {
+    FileSystemHelper.run(
+      Map(
+        "Base.cls" -> "public abstract class Base { abstract void fn(); }",
+        "Extend.cls" -> "public class Extend extends Base { void fn() {}}"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("public abstract method implementation with no override keyword") {
+    FileSystemHelper.run(
+      Map(
+        "Base.cls" -> "public abstract class Base { public abstract void fn(); }",
+        "Extend.cls" -> "public class Extend extends Base { public void fn() {}}"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Extend.cls")) == "Error: line 1 at 47-49: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+      )
+    }
+  }
+
+  test("protected abstract method implementation with no override keyword") {
+    FileSystemHelper.run(
+      Map(
+        "Base.cls" -> "public abstract class Base { protected abstract void fn(); }",
+        "Extend.cls" -> "public class Extend extends Base { protected void fn() {}}"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Extend.cls")) == "Error: line 1 at 50-52: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+      )
+    }
+  }
+
+  test("private inner abstract method implementation with no override keyword") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { void fn() {} }}"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("public inner abstract method implementation with no override keyword") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public abstract class Dummy { public abstract void fn(); class inner extends Dummy { public void fn() {} }}"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(getMessages(root.join("Dummy.cls")) == "Error: line 1 at 97-99: Method 'fn' must use the 'override' keyword when implementing an abstract method\n")
+    }
+  }
+
   test("Method call with ghosted type") {
     FileSystemHelper.run(
       Map(
