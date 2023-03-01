@@ -18,7 +18,7 @@ import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.MethodDeclaration.{emptyMethodDeclarations, emptyMethodDeclarationsSet}
-import com.nawforce.apexlink.types.core.{MethodDeclaration, ParameterDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{FieldDeclaration, MethodDeclaration, ParameterDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.{GenericPlatformMethod, PlatformMethod}
 import com.nawforce.apexlink.types.synthetic.CustomMethodDeclaration
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
@@ -317,11 +317,8 @@ object MethodMap {
       })
 
     //Add errors for any static methods that shadow instance methods
-    staticLocals.flatMap(st=> {
-      val key = (st.name, st.parameters.length)
-      val methods =  workingMap.getOrElse(key, Nil)
-      methods.find(f => f.nameAndParameterTypes.toLowerCase == st.nameAndParameterTypes.toLowerCase).map((st, _))
-    }).foreach(methodAndStaticMethod=>{
+    staticLocals.flatMap(st=> instanceLocals.find(f => f.nameAndParameterTypes.toLowerCase == st.nameAndParameterTypes.toLowerCase).map((st, _)))
+      .foreach(methodAndStaticMethod=>{
       setMethodError(
         methodAndStaticMethod._1,
         s"static method '${methodAndStaticMethod._1.name}' is a duplicate of an existing instance method",
@@ -722,12 +719,20 @@ object MethodMap {
   }
 
   private def checkShadowedFields(method: MethodDeclaration, td: TypeDeclaration, errors: mutable.Buffer[Issue]): Unit = {
+    val fieldsByName:mutable.Map[Name, FieldDeclaration] = mutable.Map(td.fields.map(f => (f.name, f)): _*)
+
     val staticContext = Option.when(method.isStatic)(true)
     method.parameters
-      .map(param => (param, td.findField(param.name, staticContext)))
-      .filter(_._2.nonEmpty)
+      .flatMap(param => {
+        val matches = fieldsByName.get(param.name)
+        val shadowed = staticContext match {
+          case Some(isStatic) => matches.find(f => f.isStatic == isStatic)
+          case None => matches
+        }
+        shadowed.map((param, _))
+      })
       .foreach(paramAndField => {
-        val msg = if (paramAndField._2.get.isStatic) s"Method argument '${paramAndField._1.name}' is shadowing a static field" else s"Method argument '${paramAndField._1.name}' is shadowing field"
+        val msg = if (paramAndField._2.isStatic) s"Method argument '${paramAndField._1.name}' is shadowing a static field" else s"Method argument '${paramAndField._1.name}' is shadowing field"
         paramAndField._1 match {
           case fp:FormalParameter =>  errors.append(
             new Issue(fp.id.location.path, Diagnostic(WARNING_CATEGORY, fp.id.location.location, msg))
