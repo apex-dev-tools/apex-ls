@@ -277,9 +277,10 @@ object MethodMap {
       case am: ApexMethodLike => am.resetShadows()
       case _                  =>
     }
-    instanceLocals.foreach(method =>
+    instanceLocals.foreach(method => {
+      checkShadowedFields(method, td, errors)
       applyInstanceMethod(workingMap, method, td.inTest, td.isComplete, errors)
-    )
+    })
 
     // Now strip out none test visible/abstract inherited privates excluding when a super class is in the same file as
     // td, in that case the private methods are visible. Yeah, this is very odd behaviour, but might be related to how
@@ -342,7 +343,10 @@ object MethodMap {
     })
     staticLocals
       .filterNot(ignorableStatics.contains)
-      .foreach(method => applyStaticMethod(workingMap, method))
+      .foreach(method => {
+        checkShadowedFields(method, td, errors)
+        applyStaticMethod(workingMap, method)
+      })
 
     val ad = td match {
       case ad: ApexClassDeclaration => Some(ad)
@@ -715,6 +719,22 @@ object MethodMap {
       case None          => workingMap.put(key, method :: methods)
       case Some(matched) => workingMap.put(key, method :: methods.filterNot(_ eq matched))
     }
+  }
+
+  private def checkShadowedFields(method: MethodDeclaration, td: TypeDeclaration, errors: mutable.Buffer[Issue]): Unit = {
+    val staticContext = Option.when(method.isStatic)(true)
+    method.parameters
+      .map(param => (param, td.findField(param.name, staticContext)))
+      .filter(_._2.nonEmpty)
+      .foreach(paramAndField => {
+        val msg = if (paramAndField._2.get.isStatic) s"Method argument '${paramAndField._1.name}' is shadowing a static field" else s"Method argument '${paramAndField._1.name}' is shadowing field"
+        paramAndField._1 match {
+          case fp:FormalParameter =>  errors.append(
+            new Issue(fp.id.location.path, Diagnostic(WARNING_CATEGORY, fp.id.location.location, msg))
+          )
+          case _ =>
+        }
+      })
   }
 
   private def areSameReturnType(matchedTypeName: TypeName, methodTypeName: TypeName): Boolean = {
