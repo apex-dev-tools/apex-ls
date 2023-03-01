@@ -287,4 +287,49 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Instance method shadowing a static method") {
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy { void getInstance() {}  static void getInstance(){}}"
+      ),
+      "Error: line 1 at 26-37: method 'getInstance' is a duplicate of an existing static method\n" +
+        "Error: line 1 at 56-67: static method 'getInstance' is a duplicate of an existing instance method\n"
+    )
+  }
+
+  test("Instance method parameter shadowing instance field") {
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy {String a; void getInstance(String a) {}}"
+      ),
+      "Warning: line 1 at 54-55: Method argument 'a' is shadowing field\n"
+    )
+  }
+
+  test("Instance method parameter shadowing static field") {
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy {static String a = 'a'; void getInstance(String a) {}}"
+      ),
+      "Warning: line 1 at 67-68: Method argument 'a' is shadowing a static field\n"
+    )
+  }
+
+  test("Static method parameter shadowing instance field") {
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy { String a; static void getInstance(String a) {}}"
+      ),
+      "" //causes no warnings
+    )
+  }
+
+  test("Static method parameter shadowing static field") {
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy { static String a; static void getInstance(String a) {}}"
+      ),
+      "Warning: line 1 at 69-70: Method argument 'a' is shadowing a static field\n"
+    )
+  }
 }
