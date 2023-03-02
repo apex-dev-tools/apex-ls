@@ -5,11 +5,14 @@ exports[`Check samples Sample: ActionPlansV4 1`] = `
   "logs": [
     [
       "sfdx-source/LabsActionPlans/main/default/classes/ActionPlanCreationController.cls",
+      "Warning: line 1047 at 56-72: Method argument 'relatedRecordIDs' is shadowing field",
+      "Warning: line 1047 at 81-98: Method argument 'relatedObjectName' is shadowing field",
       "Warning: line 768 at 3-93: Local variable is hiding class field 'taskIndex', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlanCreationController.cls: line 29 at 9-26",
     ],
     [
       "sfdx-source/LabsActionPlans/main/default/classes/ActionPlanTemplateCreationController.cls",
       "Warning: line 251 at 3-93: Local variable is hiding class field 'taskIndex', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlanTemplateCreationController.cls: line 24 at 9-26",
+      "Warning: line 328 at 50-60: Method argument 'templateId' is shadowing field",
     ],
     [
       "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansRedirect.cls",
@@ -66,12 +69,42 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
       "Warning: line 83:8 to 87:10: Local variable is hiding class field 'accounts', see force-app/commons/core/classes/SObjectCacheTest.cls: line 26:11 to 36:6",
     ],
     [
+      "force-app/commons/core/classes/collections/CollectionImpl.cls",
+      "Warning: line 449 at 38-43: Method argument 'field' is shadowing field",
+    ],
+    [
       "force-app/commons/core/classes/collections/CollectionTest.cls",
       "Warning: line 911:8 to 913:18: Local variable is hiding class field 'opportunities', see force-app/commons/core/classes/collections/CollectionTest.cls: line 27:19 to 58:6",
     ],
     [
       "force-app/commons/core/classes/xml/XmlNode.cls",
       "Warning: line 283 at 12-54: Local variable is hiding class field 'document', see force-app/commons/core/classes/xml/XmlNode.cls: line 263 at 26-48",
+      "Warning: line 288 at 46-54: Method argument 'document' is shadowing field",
+      "Warning: line 44 at 48-52: Method argument 'mode' is shadowing field",
+      "Warning: line 50 at 46-50: Method argument 'mode' is shadowing field",
+    ],
+    [
+      "force-app/commons/logger/classes/Log.cls",
+      "Warning: line 109 at 50-60: Method argument 'parameters' is shadowing field",
+    ],
+    [
+      "force-app/commons/selectorLayer/classes/core/QueryBuilder.cls",
+      "Warning: line 124 at 49-55: Method argument 'fields' is shadowing field",
+      "Warning: line 131 at 47-57: Method argument 'fromObject' is shadowing field",
+      "Warning: line 135 at 42-52: Method argument 'fromObject' is shadowing field",
+      "Warning: line 148 at 42-49: Method argument 'groupBy' is shadowing field",
+      "Warning: line 160 at 42-49: Method argument 'orderBy' is shadowing field",
+      "Warning: line 80 at 49-55: Method argument 'fields' is shadowing field",
+      "Warning: line 87 at 43-49: Method argument 'fields' is shadowing field",
+      "Warning: line 92 at 46-52: Method argument 'fields' is shadowing field",
+      "Warning: line 97 at 43-49: Method argument 'fields' is shadowing field",
+    ],
+    [
+      "force-app/commons/selectorLayer/classes/core/QueryObject.cls",
+      "Warning: line 145 at 42-50: Method argument 'mockName' is shadowing field",
+      "Warning: line 231 at 40-48: Method argument 'useCache' is shadowing field",
+      "Warning: line 243 at 52-62: Method argument 'accessType' is shadowing field",
+      "Warning: line 593 at 40-48: Method argument 'bindings' is shadowing field",
     ],
     [
       "force-app/commons/selectorLayer/classes/selectors/ShareQuery.cls",
@@ -100,8 +133,20 @@ exports[`Check samples Sample: ApexTestKit 1`] = `
 {
   "logs": [
     [
+      "apex-test-kit/main/classes/ATKCore.cls",
+      "Warning: line 1608 at 40-46: Method argument 'values' is shadowing field",
+      "Warning: line 1876 at 36-37: Method argument 'v' is shadowing field",
+      "Warning: line 1881 at 41-42: Method argument 'v' is shadowing field",
+    ],
+    [
       "apex-test-kit/main/classes/ATKMock.cls",
       "Error: line 643 at 12-32: Incompatible types in assignment, from 'ATK.Method' to 'ATKMock.Method'",
+      "Warning: line 1232 at 36-40: Method argument 'type' is shadowing field",
+      "Warning: line 1260 at 36-40: Method argument 'type' is shadowing field",
+      "Warning: line 150 at 63-71: Method argument 'settings' is shadowing field",
+      "Warning: line 162 at 65-73: Method argument 'settings' is shadowing field",
+      "Warning: line 665 at 67-75: Method argument 'matchers' is shadowing field",
+      "Warning: line 981 at 118-125: Method argument 'context' is shadowing field",
     ],
   ],
   "status": 4,
@@ -145,8 +190,39 @@ exports[`Check samples Sample: Cumulus 1`] = `
 {
   "logs": [
     [
+      "Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_Objects.cls",
+      "Warning: line 104 at 40-47: Method argument 'objects' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_QueryFactory.cls",
+      "Warning: line 248 at 65-71: Method argument 'fields' is shadowing field",
+      "Warning: line 263 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 298 at 47-66: Method argument 'conditionExpression' is shadowing field",
+      "Warning: line 311 at 44-54: Method argument 'limitCount' is shadowing field",
+      "Warning: line 324 at 45-56: Method argument 'offsetCount' is shadowing field",
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_QueryFactory.cls: line 84 at 9-47",
+      "Warning: line 419 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 430 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 440 at 71-83: Method argument 'relationship' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectDomain.cls",
+      "Warning: line 160 at 48-63: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 170 at 55-70: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 185 at 54-69: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 209 at 59-74: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 241 at 58-73: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 803 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 63-73: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 822 at 40-47: Method argument 'records' is shadowing field",
+      "Warning: line 831 at 39-46: Method argument 'records' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_StringBuilder.cls",
+      "Warning: line 103 at 38-48: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 93 at 35-45: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 98 at 34-43: Method argument 'delimiter' is shadowing field",
     ],
     [
       "Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -154,9 +230,54 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 66 at 2-73: Local variable is hiding class field 'unitOfWork', see Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
     ],
     [
+      "Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBinding.cls",
+      "Warning: line 128 at 58-71: Method argument 'bindingObject' is shadowing field",
+      "Warning: line 144 at 70-81: Method argument 'bindingType' is shadowing field",
+      "Warning: line 157 at 68-86: Method argument 'implementationType' is shadowing field",
+      "Warning: line 171 at 63-76: Method argument 'interfaceType' is shadowing field",
+      "Warning: line 185 at 60-75: Method argument 'namespacePrefix' is shadowing field",
+      "Warning: line 215 at 67-78: Method argument 'sharingMode' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingModule.cls",
+      "Warning: line 48 at 57-65: Method argument 'bindings' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls",
       "Warning: line 185 at 2-54: Local variable is hiding class field 'modules', see Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls: line 62 at 9-47",
+      "Warning: line 200 at 85-92: Method argument 'modules' is shadowing field",
       "Warning: line 206 at 3-58: Local variable is hiding class field 'bindings', see Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls: line 61 at 11-39",
+      "Warning: line 227 at 86-94: Method argument 'bindings' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindings.cls",
+      "Warning: line 54 at 49-57: Method argument 'bindings' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-extensions/main/default/classes/criteria/fflib_Criteria.cls",
+      "Warning: line 167 at 54-61: Method argument 'formula' is shadowing a static field",
+      "Warning: line 253 at 63-86: Method argument 'evaluatedResultByNumber' is shadowing field",
+      "Warning: line 839 at 34-42: Method argument 'embraced' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 107 at 66-82: Method argument 'verificationMode' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-mocks/main/classes/fflib_MatcherDefinitions.cls",
+      "Warning: line 100 at 41-61: Method argument 'connectiveExpression' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-mocks/main/classes/fflib_MethodReturnValue.cls",
+      "Warning: line 68 at 37-43: Method argument 'answer' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-mocks/main/classes/fflib_VerificationMode.cls",
+      "Warning: line 52 at 50-69: Method argument 'customAssertMessage' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ACCT_CascadeDeleteLookups_TDTM.cls",
+      "Warning: line 233 at 117-142: Method argument 'relatedRecurringDonations' is shadowing field",
     ],
     [
       "Cumulus/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls",
@@ -164,8 +285,78 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 65:8 to 73:9: Local variable is hiding class field 'contactRecord', see Cumulus/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls: line 38 at 19-41",
     ],
     [
+      "Cumulus/force-app/main/default/classes/ADDR_GoogleGeoAPI_Validator.cls",
+      "Warning: line 182 at 74-82: Method argument 'settings' is shadowing field",
+      "Warning: line 191 at 44-52: Method argument 'endPoint' is shadowing field",
+      "Warning: line 425 at 56-66: Method argument 'subPremise' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ADDR_SmartyStreets_Validator.cls",
+      "Warning: line 88 at 97-105: Method argument 'settings' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ADDR_Validator_TEST.cls",
+      "Warning: line 866 at 65-74: Method argument 'hasAccess' is shadowing field",
+      "Warning: line 886 at 69-75: Method argument 'result' is shadowing field",
+      "Warning: line 891 at 60-69: Method argument 'hasAccess' is shadowing field",
+      "Warning: line 918 at 66-76: Method argument 'statusCode' is shadowing field",
+      "Warning: line 923 at 61-67: Method argument 'status' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ALLO_AllocationsDMLService.cls",
+      "Warning: line 134 at 85-103: Method argument 'allocationsWrapper' is shadowing field",
+      "Warning: line 145 at 111-128: Method argument 'processExclusions' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ALLO_AllocationsRecalculateService.cls",
+      "Warning: line 60 at 93-111: Method argument 'allocationsWrapper' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ALLO_AllocationsRetrievalService.cls",
+      "Warning: line 182 at 60-74: Method argument 'opportunityIds' is shadowing field",
+      "Warning: line 258 at 58-72: Method argument 'opportunityIds' is shadowing field",
+      "Warning: line 268 at 53-63: Method argument 'paymentIds' is shadowing field",
+      "Warning: line 278 at 54-65: Method argument 'campaignIds' is shadowing field",
+      "Warning: line 288 at 63-83: Method argument 'recurringDonationIds' is shadowing field",
+      "Warning: line 78 at 70-76: Method argument 'oppIds' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ALLO_AllocationsReviewService.cls",
+      "Warning: line 71 at 88-106: Method argument 'allocationsWrapper' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ALLO_AllocationsService.cls",
+      "Warning: line 153 at 74-99: Method argument 'disableAllocationTriggers' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ALLO_ManageAllocations_CTRL.cls",
+      "Warning: line 368 at 50-58: Method argument 'parentId' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls",
       "Warning: line 54:8 to 61:9: Local variable is hiding class field 'opportunity', see Cumulus/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls: line 43 at 11-35",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ALLO_UnitTestHelper_TEST.cls",
+      "Warning: line 722 at 82-100: Method argument 'allocationSettings' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/AN_AutoNumberService.cls",
+      "Warning: line 265 at 46-59: Method argument 'displayFormat' is shadowing field",
+      "Warning: line 272 at 43-56: Method argument 'displayFormat' is shadowing field",
+      "Warning: line 323 at 58-66: Method argument 'sObjType' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/AllocationParent.cls",
+      "Warning: line 152 at 55-65: Method argument 'objectType' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/AsyncApexJobId.cls",
+      "Warning: line 47 at 39-53: Method argument 'asyncApexJobId' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/BDI_ContactService.cls",
+      "Warning: line 1314 at 83-101: Method argument 'sObjToMatchDetails' is shadowing field",
     ],
     [
       "Cumulus/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls",
@@ -173,11 +364,58 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 365:8 to 369:20: Local variable is hiding class field 'account1', see Cumulus/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls: line 59 at 25-54",
     ],
     [
+      "Cumulus/force-app/main/default/classes/BDI_MappingServiceAdvanced.cls",
+      "Warning: line 249 at 43-60: Method argument 'diFieldMappingSet' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/BDI_MatchDonations.cls",
+      "Warning: line 511 at 16-24: Method argument 'setOppId' is shadowing field",
+      "Warning: line 512 at 16-24: Method argument 'setAccId' is shadowing field",
+      "Warning: line 513 at 16-24: Method argument 'setConId' is shadowing field",
+      "Warning: line 91 at 44-47: Method argument 'bdi' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/BDI_MatchDonations_TEST.cls",
+      "Warning: line 109 at 66-83: Method argument 'withNullContactId' is shadowing field",
+      "Warning: line 114 at 66-83: Method argument 'withNullAccountId' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/BDI_MigrationMappingUtility.cls",
+      "Warning: line 794 at 42-60: Method argument 'targetFieldAPIName' is shadowing field",
+      "Warning: line 798 at 41-51: Method argument 'recordName' is shadowing field",
+      "Warning: line 966 at 67-75: Method argument 'helpText' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls",
       "Warning: line 645 at 12-53: Local variable is hiding class field 'columns', see Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 631 at 28-49",
       "Warning: line 674 at 12-53: Local variable is hiding class field 'columns', see Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 631 at 28-49",
+      "Warning: line 843 at 48-54: Method argument 'record' is shadowing field",
       "Warning: line 844 at 12-33: Local variable is hiding class field 'donorName', see Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 830 at 28-45",
+      "Warning: line 860 at 55-61: Method argument 'record' is shadowing field",
       "Warning: line 864 at 16-56: Local variable is hiding class field 'errors', see Cumulus/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 835 at 28-48",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/CDL_CascadeDeleteLookups.cls",
+      "Warning: line 146 at 52-66: Method argument 'deletedRecords' is shadowing field",
+      "Warning: line 155 at 50-56: Method argument 'loader' is shadowing field",
+      "Warning: line 164 at 56-65: Method argument 'validator' is shadowing field",
+      "Warning: line 236 at 52-58: Method argument 'loader' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/CON_ContactMerge_CTRL.cls",
+      "Warning: line 931 at 63-76: Method argument 'searchResults' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/CON_DeleteContactOverride_CTRL.cls",
+      "Warning: line 174 at 53-66: Method argument 'contactRecord' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/CRLP_ApiExecuteRollups.cls",
+      "Warning: line 104 at 63-73: Method argument 'commitToDb' is shadowing field",
+      "Warning: line 57 at 89-99: Method argument 'rollupType' is shadowing field",
+      "Warning: line 67 at 50-58: Method argument 'parentId' is shadowing field",
+      "Warning: line 78 at 67-77: Method argument 'rollupDefs' is shadowing field",
+      "Warning: line 92 at 90-100: Method argument 'rollupData' is shadowing field",
     ],
     [
       "Cumulus/force-app/main/default/classes/CRLP_ApiService.cls",
@@ -185,12 +423,55 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 269 at 8-58: Local variable is hiding class field 'changedRollupTypes', see Cumulus/force-app/main/default/classes/CRLP_ApiService.cls: line 43 at 12-63",
     ],
     [
+      "Cumulus/force-app/main/default/classes/CRLP_ApiService_TEST.cls",
+      "Warning: line 556 at 52-63: Method argument 'returnValue' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/CRLP_Batch_Base.cls",
+      "Warning: line 128 at 52-59: Method argument 'jobType' is shadowing field",
+      "Warning: line 129 at 58-67: Method argument 'jobFilter' is shadowing field",
+      "Warning: line 130 at 21-30: Method argument 'recordIds' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/CRLP_Rollup.cls",
+      "Warning: line 182 at 39-47: Method argument 'currCode' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls",
       "Warning: line 222 at 12-37: Local variable is hiding class field 'label', see Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
       "Warning: line 258 at 12-37: Local variable is hiding class field 'label', see Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
     ],
     [
+      "Cumulus/force-app/main/default/classes/CRLP_RollupProcessor.cls",
+      "Warning: line 141 at 94-101: Method argument 'options' is shadowing field",
+      "Warning: line 150 at 87-97: Method argument 'rollupType' is shadowing field",
+      "Warning: line 199 at 62-82: Method argument 'hasLastParentDetails' is shadowing field",
+      "Warning: line 255 at 81-106: Method argument 'processedOppIdsByParentId' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/CRLP_RollupQueryBuilder.cls",
+      "Warning: line 56 at 90-100: Method argument 'rollupType' is shadowing field",
+      "Warning: line 67 at 64-80: Method argument 'summaryRecordIds' is shadowing field",
+      "Warning: line 72 at 63-78: Method argument 'detailRecordIds' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/CRLP_VRollupHandler.cls",
+      "Warning: line 104 at 82-91: Method argument 'jobFilter' is shadowing field",
+      "Warning: line 114 at 49-56: Method argument 'rollups' is shadowing field",
+      "Warning: line 130 at 39-47: Method argument 'currCode' is shadowing field",
+      "Warning: line 92 at 31-39: Method argument 'objectId' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/ContactMergeService.cls",
+      "Warning: line 93 at 71-77: Method argument 'losers' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/Donations.cls",
+      "Warning: line 71 at 55-64: Method argument 'donorType' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/ElevateBatchCapturer.cls",
+      "Warning: line 123 at 73-88: Method argument 'elevateBatchIds' is shadowing field",
       "Warning: line 124 at 12-84: Local variable is hiding class field 'partitionedElevateBatchIds', see Cumulus/force-app/main/default/classes/ElevateBatchCapturer.cls: line 95 at 16-62",
     ],
     [
@@ -198,21 +479,168 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 55:8 to 56:57: Local variable is hiding class field 'productMetadata', see Cumulus/force-app/main/default/classes/ElevateTokenizedGift.cls: line 43 at 11-47",
     ],
     [
+      "Cumulus/force-app/main/default/classes/ErrorRecord.cls",
+      "Warning: line 67 at 46-52: Method argument 'errors' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/GE_GiftEntryController.cls",
       "Warning: line 1256 at 8-64: Local variable is hiding class field 'batches', see Cumulus/force-app/main/default/classes/GE_GiftEntryController.cls: line 842 at 25-52",
       "Warning: line 979:8 to 984:9: Local variable is hiding class field 'templates', see Cumulus/force-app/main/default/classes/GE_GiftEntryController.cls: line 841 at 25-56",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/GE_PaymentServicesMock.cls",
+      "Warning: line 33 at 64-81: Method argument 'isElevateCustomer' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/GiftBatch.cls",
+      "Warning: line 243 at 42-54: Method argument 'asyncApexJob' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/GiftBatchForQueueable_TEST.cls",
+      "Warning: line 316 at 50-55: Method argument 'gifts' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/GiftBatchId.cls",
+      "Warning: line 46 at 43-60: Method argument 'dataImportBatchId' is shadowing field",
     ],
     [
       "Cumulus/force-app/main/default/classes/GiftBatchService.cls",
       "Warning: line 228:12 to 229:99: Local variable is hiding class field 'batch', see Cumulus/force-app/main/default/classes/GiftBatchService.cls: line 169 at 16-41",
     ],
     [
+      "Cumulus/force-app/main/default/classes/GiftBatchTotals.cls",
+      "Warning: line 94 at 62-73: Method argument 'totalAmount' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/GiftId.cls",
+      "Warning: line 46 at 38-50: Method argument 'dataImportId' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/GiftSelector_TEST.cls",
+      "Warning: line 132 at 72-95: Method argument 'isRecurringGiftsEnabled' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/HH_HouseholdNamingSettingValidator.cls",
+      "Warning: line 182 at 47-53: Method argument 'errors' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/InstallationNotifications_TEST.cls",
+      "Warning: line 156 at 76-91: Method argument 'withRedirectURL' is shadowing field",
+      "Warning: line 161 at 73-81: Method argument 'isActive' is shadowing field",
+      "Warning: line 166 at 73-85: Method argument 'withAudience' is shadowing field",
+      "Warning: line 171 at 76-84: Method argument 'audience' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/OPP_StageMappingCMT.cls",
+      "Warning: line 165 at 62-68: Method argument 'params' is shadowing field",
+      "Warning: line 183 at 60-66: Method argument 'params' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/PMT_PaymentCreator.cls",
+      "Warning: line 376 at 100-120: Method argument 'paymentCurrencyField' is shadowing a static field",
+      "Warning: line 376 at 135-151: Method argument 'oppCurrencyField' is shadowing a static field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/PMT_RefundService.cls",
+      "Warning: line 126 at 77-93: Method argument 'originalPayments' is shadowing field",
+      "Warning: line 131 at 60-78: Method argument 'originalPaymentIds' is shadowing field",
+      "Warning: line 135 at 74-87: Method argument 'refundRecords' is shadowing field",
+      "Warning: line 206 at 92-108: Method argument 'originalPayments' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/PS_CommitmentRequest.cls",
+      "Warning: line 507 at 49-59: Method argument 'merchantId' is shadowing field",
+      "Warning: line 517 at 48-57: Method argument 'gatewayId' is shadowing field",
+      "Warning: line 527 at 47-59: Method argument 'currencyCode' is shadowing field",
+      "Warning: line 624 at 56-65: Method argument 'schedules' is shadowing field",
+      "Warning: line 634 at 67-82: Method argument 'productMetadata' is shadowing field",
       "Warning: line 687 at 12-80: Local variable is hiding class field 'amount', see Cumulus/force-app/main/default/classes/PS_CommitmentRequest.cls: line 665 at 15-30",
     ],
     [
+      "Cumulus/force-app/main/default/classes/PS_IntegrationService.cls",
+      "Warning: line 145 at 55-89: Method argument 'configurationsToUpsertByServiceKey' is shadowing a static field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/PS_IntegrationServiceConfig_TEST.cls",
+      "Warning: line 245 at 77-89: Method argument 'withClientId' is shadowing field",
+      "Warning: line 250 at 78-91: Method argument 'withProductId' is shadowing field",
+      "Warning: line 255 at 86-107: Method argument 'withActiveFlagAsFalse' is shadowing field",
+      "Warning: line 260 at 85-105: Method argument 'withActiveFlagAsTrue' is shadowing field",
+      "Warning: line 332 at 53-62: Method argument 'isEnabled' is shadowing field",
+      "Warning: line 337 at 58-72: Method argument 'hasPermissions' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/PS_IntegrationService_TEST.cls",
+      "Warning: line 239 at 50-69: Method argument 'paymentConfigParams' is shadowing a static field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/PS_Request.cls",
+      "Warning: line 129 at 51-57: Method argument 'method' is shadowing field",
+      "Warning: line 139 at 52-60: Method argument 'endpoint' is shadowing field",
+      "Warning: line 149 at 47-59: Method argument 'commitmentId' is shadowing field",
+      "Warning: line 159 at 49-63: Method argument 'elevateBatchId' is shadowing field",
+      "Warning: line 164 at 51-67: Method argument 'elevatePaymentId' is shadowing field",
+      "Warning: line 182 at 43-50: Method argument 'timeout' is shadowing field",
+      "Warning: line 192 at 39-47: Method argument 'jsonBody' is shadowing field",
+      "Warning: line 227 at 68-76: Method argument 'endpoint' is shadowing field",
+      "Warning: line 246 at 50-58: Method argument 'endpoint' is shadowing field",
+      "Warning: line 246 at 67-79: Method argument 'commitmentId' is shadowing field",
+      "Warning: line 309 at 45-53: Method argument 'endpoint' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/PicklistOptionView.cls",
+      "Warning: line 45 at 47-52: Method argument 'value' is shadowing field",
+      "Warning: line 55 at 47-52: Method argument 'label' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/RD2_AppView.cls",
+      "Warning: line 61 at 56-62: Method argument 'record' is shadowing field",
+      "Warning: line 66 at 32-40: Method argument 'parentId' is shadowing field",
       "Warning: line 68 at 8-65: Local variable is hiding class field 'parentSobjectType', see Cumulus/force-app/main/default/classes/RD2_AppView.cls: line 39 at 24-49",
+      "Warning: line 78 at 72-78: Method argument 'record' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_ChangeLogSelector.cls",
+      "Warning: line 83 at 57-68: Method argument 'recordLimit' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_DataMigrationMapper.cls",
+      "Warning: line 132 at 67-69: Method argument 'rd' is shadowing field",
+      "Warning: line 168 at 76-78: Method argument 'rd' is shadowing field",
+      "Warning: line 184 at 76-78: Method argument 'rd' is shadowing field",
+      "Warning: line 235 at 59-61: Method argument 'rd' is shadowing field",
+      "Warning: line 262 at 60-62: Method argument 'rd' is shadowing field",
+      "Warning: line 287 at 68-70: Method argument 'rd' is shadowing field",
+      "Warning: line 305 at 56-58: Method argument 'rd' is shadowing field",
+      "Warning: line 334 at 61-63: Method argument 'rd' is shadowing field",
+      "Warning: line 352 at 73-75: Method argument 'rd' is shadowing field",
+      "Warning: line 92 at 78-92: Method argument 'allRelatedOpps' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_FieldChangeView.cls",
+      "Warning: line 46 at 44-55: Method argument 'displayType' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_NamingService.cls",
+      "Warning: line 247 at 68-77: Method argument 'donorById' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_OpportunityEvaluationService.cls",
+      "Warning: line 310 at 65-76: Method argument 'currentDate' is shadowing field",
+      "Warning: line 321 at 60-65: Method argument 'rdIds' is shadowing field",
+      "Warning: line 331 at 90-96: Method argument 'oldRds' is shadowing field",
+      "Warning: line 341 at 72-77: Method argument 'rdIds' is shadowing field",
+      "Warning: line 612 at 69-74: Method argument 'rdIds' is shadowing field",
+      "Warning: line 636 at 40-45: Method argument 'rdIds' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_OpportunityMatcher.cls",
+      "Warning: line 264 at 76-93: Method argument 'recordByCloseDate' is shadowing field",
+      "Warning: line 448 at 72-83: Method argument 'installment' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_RecurringDonation.cls",
+      "Warning: line 574 at 50-55: Method argument 'isNew' is shadowing field",
     ],
     [
       "Cumulus/force-app/main/default/classes/RD2_RecurringDonationsOpp_TEST.cls",
@@ -224,21 +652,148 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 543 at 8-55: Local variable is hiding class field 'today', see Cumulus/force-app/main/default/classes/RD2_RecurringDonationsOpp_TEST.cls: line 48 at 25-60",
     ],
     [
+      "Cumulus/force-app/main/default/classes/RD2_StatusMapper.cls",
+      "Warning: line 254 at 40-45: Method argument 'state' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_StatusMapper_TEST.cls",
+      "Warning: line 455 at 88-95: Method argument 'records' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/RD2_StatusMappingSettings_CTRL.cls",
+      "Warning: line 337 at 44-49: Method argument 'state' is shadowing field",
       "Warning: line 338 at 12-60: Local variable is hiding class field 'stateLabel', see Cumulus/force-app/main/default/classes/RD2_StatusMappingSettings_CTRL.cls: line 316 at 28-46",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_StatusMappingSettings_TEST.cls",
+      "Warning: line 339 at 61-73: Method argument 'deploymentId' is shadowing field",
+      "Warning: line 344 at 76-88: Method argument 'deployResult' is shadowing field",
+      "Warning: line 374 at 55-62: Method argument 'records' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_SustainerEvaluationService.cls",
+      "Warning: line 57 at 67-78: Method argument 'isBatchMode' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/RD2_VisualizeScheduleController.cls",
+      "Warning: line 553 at 44-51: Method argument 'records' is shadowing field",
+      "Warning: line 602 at 48-53: Method argument 'label' is shadowing field",
+      "Warning: line 615 at 52-61: Method argument 'fieldName' is shadowing field",
+      "Warning: line 635 at 56-68: Method argument 'isAccessible' is shadowing field",
+      "Warning: line 665 at 70-84: Method argument 'typeAttributes' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/STG_PanelADDRVerification_CTRL.cls",
+      "Warning: line 168 at 45-63: Method argument 'validatorSelection' is shadowing field",
     ],
     [
       "Cumulus/force-app/main/default/classes/SoftCreditsDTO.cls",
       "Warning: line 44:8 to 45:54: Local variable is hiding class field 'softCredits', see Cumulus/force-app/main/default/classes/SoftCreditsDTO.cls: line 37 at 11-36",
     ],
     [
+      "Cumulus/force-app/main/default/classes/USNonElevateCustomers_TEST.cls",
+      "Warning: line 110 at 73-90: Method argument 'isElevateCustomer' is shadowing field",
+      "Warning: line 157 at 68-86: Method argument 'withUSOrganization' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_AbstractChunkingLDV_BATCH.cls",
+      "Warning: line 105 at 35-42: Method argument 'ldvMode' is shadowing field",
+      "Warning: line 116 at 48-69: Method argument 'additionalWhereClause' is shadowing field",
+      "Warning: line 173 at 44-51: Method argument 'startId' is shadowing field",
+      "Warning: line 385 at 54-61: Method argument 'startId' is shadowing field",
+      "Warning: line 385 at 66-71: Method argument 'endId' is shadowing field",
+      "Warning: line 94 at 37-46: Method argument 'batchSize' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_AbstractChunkingLDV_MOCK.cls",
+      "Warning: line 129 at 41-54: Method argument 'testChunkSize' is shadowing field",
+      "Warning: line 137 at 45-62: Method argument 'testMaxNonLDVSize' is shadowing field",
+      "Warning: line 99 at 42-57: Method argument 'testWhereClause' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_AbstractRollup_BATCH.cls",
+      "Warning: line 481 at 25-38: Method argument 'parentObjName' is shadowing field",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/UTIL_BatchJobService.cls",
+      "Warning: line 352 at 41-48: Method argument 'batchId' is shadowing field",
       "Warning: line 357 at 12-30: Local variable is hiding class field 'summary', see Cumulus/force-app/main/default/classes/UTIL_BatchJobService.cls: line 316 at 15-34",
+      "Warning: line 411 at 49-66: Method argument 'jobItemsProcessed' is shadowing field",
+      "Warning: line 411 at 76-89: Method argument 'totalJobItems' is shadowing field",
+      "Warning: line 411 at 98-104: Method argument 'status' is shadowing field",
       "Warning: line 414 at 12-57: Local variable is hiding class field 'percentComplete', see Cumulus/force-app/main/default/classes/UTIL_BatchJobService.cls: line 313 at 15-40",
+      "Warning: line 455 at 44-50: Method argument 'status' is shadowing field",
+      "Warning: line 482 at 60-69: Method argument 'processed' is shadowing field",
+      "Warning: line 492 at 57-63: Method argument 'failed' is shadowing field",
+      "Warning: line 497 at 53-66: Method argument 'completedDate' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_BatchJobService_TEST.cls",
+      "Warning: line 363 at 51-56: Method argument 'jobId' is shadowing field",
+      "Warning: line 368 at 56-66: Method argument 'childJobId' is shadowing field",
+      "Warning: line 401 at 53-73: Method argument 'completedDaysBetween' is shadowing field",
+      "Warning: line 409 at 50-58: Method argument 'asyncJob' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_Finder.cls",
+      "Warning: line 134 at 44-52: Method argument 'criteria' is shadowing field",
+      "Warning: line 178 at 41-50: Method argument 'limitRows' is shadowing field",
+      "Warning: line 189 at 46-57: Method argument 'searchQuery' is shadowing field",
+      "Warning: line 362 at 59-70: Method argument 'searchQuery' is shadowing field",
+      "Warning: line 372 at 66-77: Method argument 'searchGroup' is shadowing field",
+      "Warning: line 382 at 69-77: Method argument 'sObjType' is shadowing field",
+      "Warning: line 392 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 401 at 58-64: Method argument 'fields' is shadowing field",
+      "Warning: line 426 at 62-69: Method argument 'orderBy' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_Finder_TEST.cls",
+      "Warning: line 744 at 58-62: Method argument 'soql' is shadowing field",
+      "Warning: line 749 at 59-63: Method argument 'sosl' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_FiscalYearInfo.cls",
+      "Warning: line 111 at 57-70: Method argument 'useFiscalYear' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_Http_TEST.cls",
+      "Warning: line 181 at 50-60: Method argument 'statusCode' is shadowing field",
+      "Warning: line 191 at 45-51: Method argument 'status' is shadowing field",
+      "Warning: line 201 at 43-47: Method argument 'body' is shadowing field",
+      "Warning: line 211 at 48-55: Method argument 'request' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_LightningComponentSupport.cls",
+      "Warning: line 173 at 39-46: Method argument 'variant' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_OrderBy.cls",
+      "Warning: line 292 at 68-82: Method argument 'referenceField' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/UTIL_Query.cls",
+      "Warning: line 119 at 41-48: Method argument 'orderBy' is shadowing field",
+      "Warning: line 143 at 40-49: Method argument 'limitRows' is shadowing field",
+      "Warning: line 171 at 38-44: Method argument 'entity' is shadowing field",
+      "Warning: line 193 at 41-53: Method argument 'whereClauses' is shadowing field",
+      "Warning: line 209 at 41-47: Method argument 'offset' is shadowing field",
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_Where.cls",
+      "Warning: line 495 at 68-82: Method argument 'referenceField' is shadowing field",
+      "Warning: line 522 at 45-50: Method argument 'value' is shadowing field",
+      "Warning: line 533 at 48-53: Method argument 'value' is shadowing field",
+      "Warning: line 544 at 44-49: Method argument 'value' is shadowing field",
+      "Warning: line 560 at 45-50: Method argument 'value' is shadowing field",
       "Warning: line 561 at 12-50: Local variable is hiding class field 'values', see Cumulus/force-app/main/default/classes/UTIL_Where.cls: line 459 at 16-35",
+      "Warning: line 588 at 44-49: Method argument 'value' is shadowing field",
+      "Warning: line 596 at 44-49: Method argument 'value' is shadowing field",
+      "Warning: line 682 at 40-45: Method argument 'value' is shadowing field",
+      "Warning: line 708 at 40-45: Method argument 'value' is shadowing field",
+    ],
+    [
+      "Cumulus/force-app/main/domain/HouseholdNamingUserControlledFields.cls",
+      "Warning: line 71 at 57-66: Method argument 'household' is shadowing field",
     ],
     [
       "Cumulus/force-app/main/instrumentation/classes/SfdoInstrumentationService.cls",
@@ -273,12 +828,34 @@ exports[`Check samples Sample: CustomMetadataLoader 1`] = `
 {
   "logs": [
     [
+      "custom_md_loader/classes/CustomMetadataUploadController.cls",
+      "Warning: line 148 at 73-85: Method argument 'selectedType' is shadowing field",
+      "Warning: line 202 at 46-58: Method argument 'selectedType' is shadowing field",
+    ],
+    [
+      "custom_md_loader/classes/MetadataApexApiLoader.cls",
+      "Warning: line 131 at 28-33: Method argument 'jobId' is shadowing field",
+      "Warning: line 138 at 54-66: Method argument 'deployStatus' is shadowing field",
+      "Warning: line 145 at 35-42: Method argument 'success' is shadowing field",
+      "Warning: line 156 at 77-91: Method argument 'mdDeployStatus' is shadowing field",
+    ],
+    [
       "custom_md_loader/classes/MetadataMapperCustom.cls",
       "Warning: line 48 at 8-55: Local variable is hiding class field 'srcFieldNames', see custom_md_loader/classes/MetadataMapperDefault.cls: line 17 at 10-37",
     ],
     [
       "custom_md_loader/classes/MetadataMapperSimple.cls",
       "Warning: line 41 at 6-53: Local variable is hiding class field 'srcFieldNames', see custom_md_loader/classes/MetadataMapperDefault.cls: line 17 at 10-37",
+    ],
+    [
+      "custom_md_loader/classes/MetadataMappingInfo.cls",
+      "Warning: line 50 at 58-78: Method argument 'csToMDT_fieldMapping' is shadowing field",
+      "Warning: line 58 at 42-59: Method argument 'customSettingName' is shadowing field",
+      "Warning: line 66 at 49-73: Method argument 'customMetadadataTypeName' is shadowing field",
+    ],
+    [
+      "custom_md_loader/classes/MetadataResponse.cls",
+      "Warning: line 27 at 35-44: Method argument 'isSuccess' is shadowing field",
     ],
     [
       "custom_md_loader/classes/MetadataWrapperApiLoader.cls",
@@ -293,16 +870,59 @@ exports[`Check samples Sample: EDA 1`] = `
 {
   "logs": [
     [
+      "force-app/main/default/classes/ACCT_IndividualAccounts_TDTM.cls",
+      "Warning: line 250 at 29-42: Method argument 'triggerAction' is shadowing field",
+      "Warning: line 98 at 29-42: Method argument 'triggerAction' is shadowing field",
+    ],
+    [
       "force-app/main/default/classes/AFFL_MultiRecordTypeMapper.cls",
+      "Warning: line 226 at 43-80: Method argument 'accountRecordTypeInfosByDeveloperName' is shadowing a static field",
       "Warning: line 361 at 8-71: Local variable is hiding class field 'validAccRecordTypesInMappings', see force-app/main/default/classes/AFFL_MultiRecordTypeMapper.cls: line 65 at 11-54",
+    ],
+    [
+      "force-app/main/default/classes/AffiliationTestSetupFactory_TEST.cls",
+      "Warning: line 443 at 52-73: Method argument 'accountRecordTypeName' is shadowing field",
     ],
     [
       "force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls",
       "Warning: line 62 at 8-83: Local variable is hiding class field 'connsToUpdate', see force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls: line 46 at 12-53",
     ],
     [
+      "force-app/main/default/classes/ChatterGroupLookupResultVMapper_TEST.cls",
+      "Warning: line 269 at 70-84: Method argument 'chatterGroupId' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/ContactRelationshipsModel.cls",
+      "Warning: line 81 at 46-55: Method argument 'contactId' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/ErrorSettingsVMapper_TEST.cls",
+      "Warning: line 752 at 54-60: Method argument 'userId' is shadowing field",
+      "Warning: line 781 at 70-84: Method argument 'chatterGroupId' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/RenameLeadConvertedAccounts_TDTM.cls",
+      "Warning: line 65 at 29-42: Method argument 'triggerAction' is shadowing field",
+    ],
+    [
       "force-app/main/releaseGating/classes/ReleaseGateAPIService.cls",
       "Warning: line 217 at 8-68: Local variable is hiding class field 'callableInstance', see force-app/main/releaseGating/classes/ReleaseGateAPIService.cls: line 52 at 12-38",
+    ],
+    [
+      "force-app/main/schema/classes/collaborationgroup/ChatterGroupService_TEST.cls",
+      "Warning: line 167 at 70-84: Method argument 'chatterGroupId' is shadowing field",
+    ],
+    [
+      "force-app/main/schema/classes/user/UserService_TEST.cls",
+      "Warning: line 165 at 54-60: Method argument 'userId' is shadowing field",
+    ],
+    [
+      "force-app/main/tdtm/classes/TDTM_Filter.cls",
+      "Warning: line 109 at 41-52: Method argument 'filterField' is shadowing field",
+      "Warning: line 285 at 68-77: Method argument 'fieldName' is shadowing field",
+      "Warning: line 315 at 74-83: Method argument 'fieldName' is shadowing field",
+      "Warning: line 331 at 35-44: Method argument 'fieldName' is shadowing field",
+      "Warning: line 504 at 70-77: Method argument 'newList' is shadowing field",
     ],
   ],
   "status": 0,
@@ -414,7 +1034,12 @@ exports[`Check samples Sample: Force.com-Helper-Classes 1`] = `
 
 exports[`Check samples Sample: Force.com-Toolkit-for-Facebook 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/FacebookAppSecretController.cls",
+      "Warning: line 15 at 33-39: Method argument 'secret' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -431,11 +1056,71 @@ exports[`Check samples Sample: Forceea-data-factory 1`] = `
   "logs": [
     [
       "dx/force-app/main/default/classes/FObject.cls",
+      "Warning: line 1001 at 81-90: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 1020 at 75-84: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 1406 at 85-94: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 1697 at 49-58: Method argument 'groupName' is shadowing field",
+      "Warning: line 1713 at 56-65: Method argument 'groupName' is shadowing field",
+      "Warning: line 1798 at 63-72: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 1944 at 41-60: Method argument 'standardPriceBookId' is shadowing a static field",
+      "Warning: line 2009 at 52-61: Method argument 'groupName' is shadowing field",
       "Warning: line 2079 at 8-81: Local variable is hiding class field 'variables', see dx/force-app/main/default/classes/FObject.cls: line 257 at 11-89",
       "Warning: line 2260 at 8-26: Local variable is hiding class field 'errors', see dx/force-app/main/default/classes/FObject.cls: line 191 at 12-51",
       "Warning: line 2294 at 8-26: Local variable is hiding class field 'errors', see dx/force-app/main/default/classes/FObject.cls: line 191 at 12-51",
+      "Warning: line 2389 at 47-56: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 2407 at 55-64: Method argument 'groupName' is shadowing field",
+      "Warning: line 2531 at 59-68: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 2547 at 59-68: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 2547 at 77-86: Method argument 'groupName' is shadowing field",
+      "Warning: line 2605 at 47-56: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 2627 at 47-56: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 2647 at 47-56: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 2669 at 47-56: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 2758 at 55-64: Method argument 'allOrNone' is shadowing a static field",
+      "Warning: line 2920 at 44-53: Method argument 'groupName' is shadowing field",
+      "Warning: line 3475 at 40-47: Method argument 'isAsync' is shadowing a static field",
+      "Warning: line 3943 at 48-56: Method argument 'language' is shadowing a static field",
+      "Warning: line 3951 at 48-56: Method argument 'locality' is shadowing a static field",
+      "Warning: line 4047 at 39-48: Method argument 'groupName' is shadowing field",
       "Warning: line 4192 at 8-59: Local variable is hiding class field 'permutationValues', see dx/force-app/main/default/classes/FObject.cls: line 227 at 11-75",
+      "Warning: line 4222 at 41-51: Method argument 'queryLimit' is shadowing field",
+      "Warning: line 4523 at 60-74: Method argument 'sObjectApiName' is shadowing field",
+      "Warning: line 4540 at 39-48: Method argument 'groupName' is shadowing field",
+      "Warning: line 4558 at 59-68: Method argument 'allOrNone' is shadowing a static field",
       "Warning: line 4583 at 8-50: Local variable is hiding class field 'fields', see dx/force-app/main/default/classes/FObject.cls: line 195 at 11-52",
+      "Warning: line 658 at 52-66: Method argument 'sObjectApiName' is shadowing field",
+      "Warning: line 663 at 49-55: Method argument 'fields' is shadowing field",
+    ],
+    [
+      "dx/force-app/main/default/classes/FObjectAsync.cls",
+      "Warning: line 393 at 48-55: Method argument 'numJobs' is shadowing field",
+      "Warning: line 492 at 54-73: Method argument 'partitionFieldValue' is shadowing field",
+    ],
+    [
+      "dx/force-app/main/default/classes/ForceeaDefinition.cls",
+      "Warning: line 748 at 36-48: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 785 at 33-40: Method argument 'isValid' is shadowing field",
+    ],
+    [
+      "dx/force-app/main/default/classes/ForceeaGenerator.cls",
+      "Warning: line 1290 at 73-85: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 176 at 43-55: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 181 at 43-55: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 186 at 41-53: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 2066 at 73-85: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 2226 at 73-85: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 528 at 55-67: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 616 at 44-56: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 665 at 42-54: Method argument 'fieldApiName' is shadowing field",
+      "Warning: line 710 at 15-35: Method argument 'lookupSObjectApiName' is shadowing field",
+      "Warning: line 733 at 15-35: Method argument 'lookupSObjectApiName' is shadowing field",
+    ],
+    [
+      "dx/force-app/main/default/classes/ForceeaSelector.cls",
+      "Warning: line 178 at 50-56: Method argument 'fields' is shadowing field",
+      "Warning: line 183 at 42-56: Method argument 'sObjectApiName' is shadowing field",
+      "Warning: line 188 at 44-54: Method argument 'queryLimit' is shadowing field",
+      "Warning: line 193 at 43-54: Method argument 'whereClause' is shadowing field",
     ],
     [
       "dx/force-app/main/default/classes/ForceeaService.cls",
@@ -450,6 +1135,21 @@ exports[`Check samples Sample: Forceea-data-factory 1`] = `
 exports[`Check samples Sample: FormulaShare-DX 1`] = `
 {
   "logs": [
+    [
+      "fs-core/main/default/classes/FormulaShareHelperService.cls",
+      "Warning: line 277 at 66-70: Method argument 'type' is shadowing field",
+    ],
+    [
+      "fs-core/main/default/classes/FormulaShareProcessedShareEventService.cls",
+      "Warning: line 355 at 99-107: Method argument 'batchLog' is shadowing a static field",
+    ],
+    [
+      "fs-core/main/default/classes/FormulaShareRule.cls",
+      "Warning: line 243 at 63-67: Method argument 'type' is shadowing field",
+      "Warning: line 265 at 55-59: Method argument 'type' is shadowing field",
+      "Warning: line 296 at 73-77: Method argument 'type' is shadowing field",
+      "Warning: line 326 at 61-65: Method argument 'type' is shadowing field",
+    ],
     [
       "fs-core/main/default/classes/FormulaShareRuleAncestor.cls",
       "Warning: line 53 at 16-102: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
@@ -481,12 +1181,60 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
       "Warning: line 90 at 12-105: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
     ],
     [
+      "fs-core/main/default/classes/FormulaShareSObjectsRetrievalBottomObj.cls",
+      "Warning: line 78 at 87-100: Method argument 'sharedRecords' is shadowing field",
+    ],
+    [
+      "fs-core/main/default/classes/FormulaShareSObjectsRetrievalService.cls",
+      "Warning: line 104 at 66-79: Method argument 'sharedRecords' is shadowing field",
+      "Warning: line 42 at 37-51: Method argument 'sharedObjIdSet' is shadowing field",
+      "Warning: line 47 at 41-54: Method argument 'sharedRecords' is shadowing field",
+    ],
+    [
+      "fs-core/main/default/classes/FormulaShareSObjectsRetrievalSibling.cls",
+      "Warning: line 71 at 83-96: Method argument 'sharedRecords' is shadowing field",
+    ],
+    [
       "fs-core/main/default/classes/FormulaShareService.cls",
+      "Warning: line 106 at 77-90: Method argument 'recordDetails' is shadowing field",
       "Warning: line 140 at 3-104: Local variable is hiding class field 'settings', see fs-core/main/default/classes/FormulaShareService.cls: line 48 at 8-44",
+      "Warning: line 662 at 108-136: Method argument 'contactIsControlledByAccount' is shadowing field",
+      "Warning: line 679 at 113-141: Method argument 'contactIsControlledByAccount' is shadowing field",
+    ],
+    [
+      "fs-core/main/libs/apex-common/classes/fflib_Objects.cls",
+      "Warning: line 104 at 40-47: Method argument 'objects' is shadowing field",
     ],
     [
       "fs-core/main/libs/apex-common/classes/fflib_QueryFactory.cls",
+      "Warning: line 248 at 65-71: Method argument 'fields' is shadowing field",
+      "Warning: line 263 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 298 at 47-66: Method argument 'conditionExpression' is shadowing field",
+      "Warning: line 311 at 44-54: Method argument 'limitCount' is shadowing field",
+      "Warning: line 324 at 45-56: Method argument 'offsetCount' is shadowing field",
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see fs-core/main/libs/apex-common/classes/fflib_QueryFactory.cls: line 84 at 9-47",
+      "Warning: line 419 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 430 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 440 at 71-83: Method argument 'relationship' is shadowing field",
+    ],
+    [
+      "fs-core/main/libs/apex-common/classes/fflib_SObjectDomain.cls",
+      "Warning: line 160 at 48-63: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 170 at 55-70: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 185 at 54-69: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 209 at 59-74: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 241 at 58-73: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 803 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 63-73: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 822 at 40-47: Method argument 'records' is shadowing field",
+      "Warning: line 831 at 39-46: Method argument 'records' is shadowing field",
+    ],
+    [
+      "fs-core/main/libs/apex-common/classes/fflib_StringBuilder.cls",
+      "Warning: line 103 at 38-48: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 93 at 35-45: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 98 at 34-43: Method argument 'delimiter' is shadowing field",
     ],
     [
       "fs-core/main/libs/apex-common/classes/test/classes/fflib_ApplicationTest.cls",
@@ -497,6 +1245,22 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
       "fs-core/main/libs/fflib-apex-mocks/classes/fflib_AnswerTest.cls",
       "Error: line 329 at 3-15: Unreachable block or statement",
     ],
+    [
+      "fs-core/main/libs/fflib-apex-mocks/classes/fflib_ApexMocks.cls",
+      "Warning: line 107 at 66-82: Method argument 'verificationMode' is shadowing field",
+    ],
+    [
+      "fs-core/main/libs/fflib-apex-mocks/classes/fflib_MatcherDefinitions.cls",
+      "Warning: line 100 at 41-61: Method argument 'connectiveExpression' is shadowing field",
+    ],
+    [
+      "fs-core/main/libs/fflib-apex-mocks/classes/fflib_MethodReturnValue.cls",
+      "Warning: line 68 at 37-43: Method argument 'answer' is shadowing field",
+    ],
+    [
+      "fs-core/main/libs/fflib-apex-mocks/classes/fflib_VerificationMode.cls",
+      "Warning: line 52 at 50-69: Method argument 'customAssertMessage' is shadowing field",
+    ],
   ],
   "status": 4,
 }
@@ -506,16 +1270,59 @@ exports[`Check samples Sample: HEDAP 1`] = `
 {
   "logs": [
     [
+      "force-app/main/default/classes/ACCT_IndividualAccounts_TDTM.cls",
+      "Warning: line 250 at 29-42: Method argument 'triggerAction' is shadowing field",
+      "Warning: line 98 at 29-42: Method argument 'triggerAction' is shadowing field",
+    ],
+    [
       "force-app/main/default/classes/AFFL_MultiRecordTypeMapper.cls",
+      "Warning: line 226 at 43-80: Method argument 'accountRecordTypeInfosByDeveloperName' is shadowing a static field",
       "Warning: line 361 at 8-71: Local variable is hiding class field 'validAccRecordTypesInMappings', see force-app/main/default/classes/AFFL_MultiRecordTypeMapper.cls: line 65 at 11-54",
+    ],
+    [
+      "force-app/main/default/classes/AffiliationTestSetupFactory_TEST.cls",
+      "Warning: line 443 at 52-73: Method argument 'accountRecordTypeName' is shadowing field",
     ],
     [
       "force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls",
       "Warning: line 62 at 8-83: Local variable is hiding class field 'connsToUpdate', see force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls: line 46 at 12-53",
     ],
     [
+      "force-app/main/default/classes/ChatterGroupLookupResultVMapper_TEST.cls",
+      "Warning: line 269 at 70-84: Method argument 'chatterGroupId' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/ContactRelationshipsModel.cls",
+      "Warning: line 81 at 46-55: Method argument 'contactId' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/ErrorSettingsVMapper_TEST.cls",
+      "Warning: line 752 at 54-60: Method argument 'userId' is shadowing field",
+      "Warning: line 781 at 70-84: Method argument 'chatterGroupId' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/RenameLeadConvertedAccounts_TDTM.cls",
+      "Warning: line 65 at 29-42: Method argument 'triggerAction' is shadowing field",
+    ],
+    [
       "force-app/main/releaseGating/classes/ReleaseGateAPIService.cls",
       "Warning: line 217 at 8-68: Local variable is hiding class field 'callableInstance', see force-app/main/releaseGating/classes/ReleaseGateAPIService.cls: line 52 at 12-38",
+    ],
+    [
+      "force-app/main/schema/classes/collaborationgroup/ChatterGroupService_TEST.cls",
+      "Warning: line 167 at 70-84: Method argument 'chatterGroupId' is shadowing field",
+    ],
+    [
+      "force-app/main/schema/classes/user/UserService_TEST.cls",
+      "Warning: line 165 at 54-60: Method argument 'userId' is shadowing field",
+    ],
+    [
+      "force-app/main/tdtm/classes/TDTM_Filter.cls",
+      "Warning: line 109 at 41-52: Method argument 'filterField' is shadowing field",
+      "Warning: line 285 at 68-77: Method argument 'fieldName' is shadowing field",
+      "Warning: line 315 at 74-83: Method argument 'fieldName' is shadowing field",
+      "Warning: line 331 at 35-44: Method argument 'fieldName' is shadowing field",
+      "Warning: line 504 at 70-77: Method argument 'newList' is shadowing field",
     ],
   ],
   "status": 0,
@@ -559,7 +1366,14 @@ exports[`Check samples Sample: Milestones-PM 1`] = `
     ],
     [
       "src/classes/Milestone1_XML_Export_Utility.cls",
+      "Warning: line 121 at 77-84: Method argument 'project' is shadowing field",
       "Warning: line 51 at 8-37: Local variable is hiding class field 'project', see src/classes/Milestone1_XML_Export_Utility.cls: line 31 at 12-42",
+    ],
+    [
+      "src/classes/Milestone1_XML_Import_Utility.cls",
+      "Warning: line 300 at 74-84: Method argument 'milestones' is shadowing field",
+      "Warning: line 315 at 70-80: Method argument 'milestones' is shadowing field",
+      "Warning: line 335 at 57-62: Method argument 'tasks' is shadowing field",
     ],
   ],
   "status": 4,
@@ -580,6 +1394,13 @@ exports[`Check samples Sample: MyTriggers 1`] = `
       "MyTriggers/framework/classes/MyTriggers.cls",
       "Warning: line 176 at 29-53: Only one visibility modifier from 'global', 'public' & 'private' should be used on methods",
       "Warning: line 176 at 29-53: Only one visibility modifier from 'global', 'public' & 'private' should be used on methods",
+      "Warning: line 50 at 49-56: Method argument 'records' is shadowing field",
+      "Warning: line 50 at 49-56: Method argument 'records' is shadowing field",
+    ],
+    [
+      "MyTriggers/framework/classes/MyTriggersTest.cls",
+      "Warning: line 106 at 47-58: Method argument 'tiggerEvent' is shadowing field",
+      "Warning: line 106 at 47-58: Method argument 'tiggerEvent' is shadowing field",
     ],
     [
       "MyTriggers/framework/objects/MyTriggerSetting__mdt/MyTriggerSetting__mdt.object-meta.xml",
@@ -594,8 +1415,39 @@ exports[`Check samples Sample: NPSP 1`] = `
 {
   "logs": [
     [
+      "NPSP/force-app/infrastructure/apex-common/main/classes/fflib_Objects.cls",
+      "Warning: line 104 at 40-47: Method argument 'objects' is shadowing field",
+    ],
+    [
       "NPSP/force-app/infrastructure/apex-common/main/classes/fflib_QueryFactory.cls",
+      "Warning: line 248 at 65-71: Method argument 'fields' is shadowing field",
+      "Warning: line 263 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 298 at 47-66: Method argument 'conditionExpression' is shadowing field",
+      "Warning: line 311 at 44-54: Method argument 'limitCount' is shadowing field",
+      "Warning: line 324 at 45-56: Method argument 'offsetCount' is shadowing field",
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_QueryFactory.cls: line 84 at 9-47",
+      "Warning: line 419 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 430 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 440 at 71-83: Method argument 'relationship' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectDomain.cls",
+      "Warning: line 160 at 48-63: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 170 at 55-70: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 185 at 54-69: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 209 at 59-74: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 241 at 58-73: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 803 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 63-73: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 822 at 40-47: Method argument 'records' is shadowing field",
+      "Warning: line 831 at 39-46: Method argument 'records' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-common/main/classes/fflib_StringBuilder.cls",
+      "Warning: line 103 at 38-48: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 93 at 35-45: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 98 at 34-43: Method argument 'delimiter' is shadowing field",
     ],
     [
       "NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -603,9 +1455,54 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 66 at 2-73: Local variable is hiding class field 'unitOfWork', see NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
     ],
     [
+      "NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBinding.cls",
+      "Warning: line 128 at 58-71: Method argument 'bindingObject' is shadowing field",
+      "Warning: line 144 at 70-81: Method argument 'bindingType' is shadowing field",
+      "Warning: line 157 at 68-86: Method argument 'implementationType' is shadowing field",
+      "Warning: line 171 at 63-76: Method argument 'interfaceType' is shadowing field",
+      "Warning: line 185 at 60-75: Method argument 'namespacePrefix' is shadowing field",
+      "Warning: line 215 at 67-78: Method argument 'sharingMode' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingModule.cls",
+      "Warning: line 48 at 57-65: Method argument 'bindings' is shadowing field",
+    ],
+    [
       "NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls",
       "Warning: line 185 at 2-54: Local variable is hiding class field 'modules', see NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls: line 62 at 9-47",
+      "Warning: line 200 at 85-92: Method argument 'modules' is shadowing field",
       "Warning: line 206 at 3-58: Local variable is hiding class field 'bindings', see NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls: line 61 at 11-39",
+      "Warning: line 227 at 86-94: Method argument 'bindings' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindings.cls",
+      "Warning: line 54 at 49-57: Method argument 'bindings' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-extensions/main/default/classes/criteria/fflib_Criteria.cls",
+      "Warning: line 167 at 54-61: Method argument 'formula' is shadowing a static field",
+      "Warning: line 253 at 63-86: Method argument 'evaluatedResultByNumber' is shadowing field",
+      "Warning: line 839 at 34-42: Method argument 'embraced' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 107 at 66-82: Method argument 'verificationMode' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-mocks/main/classes/fflib_MatcherDefinitions.cls",
+      "Warning: line 100 at 41-61: Method argument 'connectiveExpression' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-mocks/main/classes/fflib_MethodReturnValue.cls",
+      "Warning: line 68 at 37-43: Method argument 'answer' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-mocks/main/classes/fflib_VerificationMode.cls",
+      "Warning: line 52 at 50-69: Method argument 'customAssertMessage' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ACCT_CascadeDeleteLookups_TDTM.cls",
+      "Warning: line 233 at 117-142: Method argument 'relatedRecurringDonations' is shadowing field",
     ],
     [
       "NPSP/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls",
@@ -613,8 +1510,78 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 65:8 to 73:9: Local variable is hiding class field 'contactRecord', see NPSP/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls: line 38 at 19-41",
     ],
     [
+      "NPSP/force-app/main/default/classes/ADDR_GoogleGeoAPI_Validator.cls",
+      "Warning: line 182 at 74-82: Method argument 'settings' is shadowing field",
+      "Warning: line 191 at 44-52: Method argument 'endPoint' is shadowing field",
+      "Warning: line 425 at 56-66: Method argument 'subPremise' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ADDR_SmartyStreets_Validator.cls",
+      "Warning: line 88 at 97-105: Method argument 'settings' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ADDR_Validator_TEST.cls",
+      "Warning: line 866 at 65-74: Method argument 'hasAccess' is shadowing field",
+      "Warning: line 886 at 69-75: Method argument 'result' is shadowing field",
+      "Warning: line 891 at 60-69: Method argument 'hasAccess' is shadowing field",
+      "Warning: line 918 at 66-76: Method argument 'statusCode' is shadowing field",
+      "Warning: line 923 at 61-67: Method argument 'status' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ALLO_AllocationsDMLService.cls",
+      "Warning: line 134 at 85-103: Method argument 'allocationsWrapper' is shadowing field",
+      "Warning: line 145 at 111-128: Method argument 'processExclusions' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ALLO_AllocationsRecalculateService.cls",
+      "Warning: line 60 at 93-111: Method argument 'allocationsWrapper' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ALLO_AllocationsRetrievalService.cls",
+      "Warning: line 182 at 60-74: Method argument 'opportunityIds' is shadowing field",
+      "Warning: line 258 at 58-72: Method argument 'opportunityIds' is shadowing field",
+      "Warning: line 268 at 53-63: Method argument 'paymentIds' is shadowing field",
+      "Warning: line 278 at 54-65: Method argument 'campaignIds' is shadowing field",
+      "Warning: line 288 at 63-83: Method argument 'recurringDonationIds' is shadowing field",
+      "Warning: line 78 at 70-76: Method argument 'oppIds' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ALLO_AllocationsReviewService.cls",
+      "Warning: line 71 at 88-106: Method argument 'allocationsWrapper' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ALLO_AllocationsService.cls",
+      "Warning: line 153 at 74-99: Method argument 'disableAllocationTriggers' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ALLO_ManageAllocations_CTRL.cls",
+      "Warning: line 368 at 50-58: Method argument 'parentId' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls",
       "Warning: line 54:8 to 61:9: Local variable is hiding class field 'opportunity', see NPSP/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls: line 43 at 11-35",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ALLO_UnitTestHelper_TEST.cls",
+      "Warning: line 722 at 82-100: Method argument 'allocationSettings' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/AN_AutoNumberService.cls",
+      "Warning: line 265 at 46-59: Method argument 'displayFormat' is shadowing field",
+      "Warning: line 272 at 43-56: Method argument 'displayFormat' is shadowing field",
+      "Warning: line 323 at 58-66: Method argument 'sObjType' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/AllocationParent.cls",
+      "Warning: line 152 at 55-65: Method argument 'objectType' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/AsyncApexJobId.cls",
+      "Warning: line 47 at 39-53: Method argument 'asyncApexJobId' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/BDI_ContactService.cls",
+      "Warning: line 1314 at 83-101: Method argument 'sObjToMatchDetails' is shadowing field",
     ],
     [
       "NPSP/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls",
@@ -622,11 +1589,58 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 365:8 to 369:20: Local variable is hiding class field 'account1', see NPSP/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls: line 59 at 25-54",
     ],
     [
+      "NPSP/force-app/main/default/classes/BDI_MappingServiceAdvanced.cls",
+      "Warning: line 249 at 43-60: Method argument 'diFieldMappingSet' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/BDI_MatchDonations.cls",
+      "Warning: line 511 at 16-24: Method argument 'setOppId' is shadowing field",
+      "Warning: line 512 at 16-24: Method argument 'setAccId' is shadowing field",
+      "Warning: line 513 at 16-24: Method argument 'setConId' is shadowing field",
+      "Warning: line 91 at 44-47: Method argument 'bdi' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/BDI_MatchDonations_TEST.cls",
+      "Warning: line 109 at 66-83: Method argument 'withNullContactId' is shadowing field",
+      "Warning: line 114 at 66-83: Method argument 'withNullAccountId' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/BDI_MigrationMappingUtility.cls",
+      "Warning: line 794 at 42-60: Method argument 'targetFieldAPIName' is shadowing field",
+      "Warning: line 798 at 41-51: Method argument 'recordName' is shadowing field",
+      "Warning: line 966 at 67-75: Method argument 'helpText' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls",
       "Warning: line 645 at 12-53: Local variable is hiding class field 'columns', see NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 631 at 28-49",
       "Warning: line 674 at 12-53: Local variable is hiding class field 'columns', see NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 631 at 28-49",
+      "Warning: line 843 at 48-54: Method argument 'record' is shadowing field",
       "Warning: line 844 at 12-33: Local variable is hiding class field 'donorName', see NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 830 at 28-45",
+      "Warning: line 860 at 55-61: Method argument 'record' is shadowing field",
       "Warning: line 864 at 16-56: Local variable is hiding class field 'errors', see NPSP/force-app/main/default/classes/BGE_DataImportBatchEntry_CTRL.cls: line 835 at 28-48",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/CDL_CascadeDeleteLookups.cls",
+      "Warning: line 146 at 52-66: Method argument 'deletedRecords' is shadowing field",
+      "Warning: line 155 at 50-56: Method argument 'loader' is shadowing field",
+      "Warning: line 164 at 56-65: Method argument 'validator' is shadowing field",
+      "Warning: line 236 at 52-58: Method argument 'loader' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/CON_ContactMerge_CTRL.cls",
+      "Warning: line 931 at 63-76: Method argument 'searchResults' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/CON_DeleteContactOverride_CTRL.cls",
+      "Warning: line 174 at 53-66: Method argument 'contactRecord' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/CRLP_ApiExecuteRollups.cls",
+      "Warning: line 104 at 63-73: Method argument 'commitToDb' is shadowing field",
+      "Warning: line 57 at 89-99: Method argument 'rollupType' is shadowing field",
+      "Warning: line 67 at 50-58: Method argument 'parentId' is shadowing field",
+      "Warning: line 78 at 67-77: Method argument 'rollupDefs' is shadowing field",
+      "Warning: line 92 at 90-100: Method argument 'rollupData' is shadowing field",
     ],
     [
       "NPSP/force-app/main/default/classes/CRLP_ApiService.cls",
@@ -634,12 +1648,55 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 269 at 8-58: Local variable is hiding class field 'changedRollupTypes', see NPSP/force-app/main/default/classes/CRLP_ApiService.cls: line 43 at 12-63",
     ],
     [
+      "NPSP/force-app/main/default/classes/CRLP_ApiService_TEST.cls",
+      "Warning: line 556 at 52-63: Method argument 'returnValue' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/CRLP_Batch_Base.cls",
+      "Warning: line 128 at 52-59: Method argument 'jobType' is shadowing field",
+      "Warning: line 129 at 58-67: Method argument 'jobFilter' is shadowing field",
+      "Warning: line 130 at 21-30: Method argument 'recordIds' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/CRLP_Rollup.cls",
+      "Warning: line 182 at 39-47: Method argument 'currCode' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls",
       "Warning: line 222 at 12-37: Local variable is hiding class field 'label', see NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
       "Warning: line 258 at 12-37: Local variable is hiding class field 'label', see NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
     ],
     [
+      "NPSP/force-app/main/default/classes/CRLP_RollupProcessor.cls",
+      "Warning: line 141 at 94-101: Method argument 'options' is shadowing field",
+      "Warning: line 150 at 87-97: Method argument 'rollupType' is shadowing field",
+      "Warning: line 199 at 62-82: Method argument 'hasLastParentDetails' is shadowing field",
+      "Warning: line 255 at 81-106: Method argument 'processedOppIdsByParentId' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/CRLP_RollupQueryBuilder.cls",
+      "Warning: line 56 at 90-100: Method argument 'rollupType' is shadowing field",
+      "Warning: line 67 at 64-80: Method argument 'summaryRecordIds' is shadowing field",
+      "Warning: line 72 at 63-78: Method argument 'detailRecordIds' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/CRLP_VRollupHandler.cls",
+      "Warning: line 104 at 82-91: Method argument 'jobFilter' is shadowing field",
+      "Warning: line 114 at 49-56: Method argument 'rollups' is shadowing field",
+      "Warning: line 130 at 39-47: Method argument 'currCode' is shadowing field",
+      "Warning: line 92 at 31-39: Method argument 'objectId' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/ContactMergeService.cls",
+      "Warning: line 93 at 71-77: Method argument 'losers' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/Donations.cls",
+      "Warning: line 71 at 55-64: Method argument 'donorType' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/ElevateBatchCapturer.cls",
+      "Warning: line 123 at 73-88: Method argument 'elevateBatchIds' is shadowing field",
       "Warning: line 124 at 12-84: Local variable is hiding class field 'partitionedElevateBatchIds', see NPSP/force-app/main/default/classes/ElevateBatchCapturer.cls: line 95 at 16-62",
     ],
     [
@@ -647,21 +1704,168 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 55:8 to 56:57: Local variable is hiding class field 'productMetadata', see NPSP/force-app/main/default/classes/ElevateTokenizedGift.cls: line 43 at 11-47",
     ],
     [
+      "NPSP/force-app/main/default/classes/ErrorRecord.cls",
+      "Warning: line 67 at 46-52: Method argument 'errors' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/GE_GiftEntryController.cls",
       "Warning: line 1256 at 8-64: Local variable is hiding class field 'batches', see NPSP/force-app/main/default/classes/GE_GiftEntryController.cls: line 842 at 25-52",
       "Warning: line 979:8 to 984:9: Local variable is hiding class field 'templates', see NPSP/force-app/main/default/classes/GE_GiftEntryController.cls: line 841 at 25-56",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/GE_PaymentServicesMock.cls",
+      "Warning: line 33 at 64-81: Method argument 'isElevateCustomer' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/GiftBatch.cls",
+      "Warning: line 243 at 42-54: Method argument 'asyncApexJob' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/GiftBatchForQueueable_TEST.cls",
+      "Warning: line 316 at 50-55: Method argument 'gifts' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/GiftBatchId.cls",
+      "Warning: line 46 at 43-60: Method argument 'dataImportBatchId' is shadowing field",
     ],
     [
       "NPSP/force-app/main/default/classes/GiftBatchService.cls",
       "Warning: line 228:12 to 229:99: Local variable is hiding class field 'batch', see NPSP/force-app/main/default/classes/GiftBatchService.cls: line 169 at 16-41",
     ],
     [
+      "NPSP/force-app/main/default/classes/GiftBatchTotals.cls",
+      "Warning: line 94 at 62-73: Method argument 'totalAmount' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/GiftId.cls",
+      "Warning: line 46 at 38-50: Method argument 'dataImportId' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/GiftSelector_TEST.cls",
+      "Warning: line 132 at 72-95: Method argument 'isRecurringGiftsEnabled' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/HH_HouseholdNamingSettingValidator.cls",
+      "Warning: line 182 at 47-53: Method argument 'errors' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/InstallationNotifications_TEST.cls",
+      "Warning: line 156 at 76-91: Method argument 'withRedirectURL' is shadowing field",
+      "Warning: line 161 at 73-81: Method argument 'isActive' is shadowing field",
+      "Warning: line 166 at 73-85: Method argument 'withAudience' is shadowing field",
+      "Warning: line 171 at 76-84: Method argument 'audience' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/OPP_StageMappingCMT.cls",
+      "Warning: line 165 at 62-68: Method argument 'params' is shadowing field",
+      "Warning: line 183 at 60-66: Method argument 'params' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/PMT_PaymentCreator.cls",
+      "Warning: line 376 at 100-120: Method argument 'paymentCurrencyField' is shadowing a static field",
+      "Warning: line 376 at 135-151: Method argument 'oppCurrencyField' is shadowing a static field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/PMT_RefundService.cls",
+      "Warning: line 126 at 77-93: Method argument 'originalPayments' is shadowing field",
+      "Warning: line 131 at 60-78: Method argument 'originalPaymentIds' is shadowing field",
+      "Warning: line 135 at 74-87: Method argument 'refundRecords' is shadowing field",
+      "Warning: line 206 at 92-108: Method argument 'originalPayments' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/PS_CommitmentRequest.cls",
+      "Warning: line 507 at 49-59: Method argument 'merchantId' is shadowing field",
+      "Warning: line 517 at 48-57: Method argument 'gatewayId' is shadowing field",
+      "Warning: line 527 at 47-59: Method argument 'currencyCode' is shadowing field",
+      "Warning: line 624 at 56-65: Method argument 'schedules' is shadowing field",
+      "Warning: line 634 at 67-82: Method argument 'productMetadata' is shadowing field",
       "Warning: line 687 at 12-80: Local variable is hiding class field 'amount', see NPSP/force-app/main/default/classes/PS_CommitmentRequest.cls: line 665 at 15-30",
     ],
     [
+      "NPSP/force-app/main/default/classes/PS_IntegrationService.cls",
+      "Warning: line 145 at 55-89: Method argument 'configurationsToUpsertByServiceKey' is shadowing a static field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/PS_IntegrationServiceConfig_TEST.cls",
+      "Warning: line 245 at 77-89: Method argument 'withClientId' is shadowing field",
+      "Warning: line 250 at 78-91: Method argument 'withProductId' is shadowing field",
+      "Warning: line 255 at 86-107: Method argument 'withActiveFlagAsFalse' is shadowing field",
+      "Warning: line 260 at 85-105: Method argument 'withActiveFlagAsTrue' is shadowing field",
+      "Warning: line 332 at 53-62: Method argument 'isEnabled' is shadowing field",
+      "Warning: line 337 at 58-72: Method argument 'hasPermissions' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/PS_IntegrationService_TEST.cls",
+      "Warning: line 239 at 50-69: Method argument 'paymentConfigParams' is shadowing a static field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/PS_Request.cls",
+      "Warning: line 129 at 51-57: Method argument 'method' is shadowing field",
+      "Warning: line 139 at 52-60: Method argument 'endpoint' is shadowing field",
+      "Warning: line 149 at 47-59: Method argument 'commitmentId' is shadowing field",
+      "Warning: line 159 at 49-63: Method argument 'elevateBatchId' is shadowing field",
+      "Warning: line 164 at 51-67: Method argument 'elevatePaymentId' is shadowing field",
+      "Warning: line 182 at 43-50: Method argument 'timeout' is shadowing field",
+      "Warning: line 192 at 39-47: Method argument 'jsonBody' is shadowing field",
+      "Warning: line 227 at 68-76: Method argument 'endpoint' is shadowing field",
+      "Warning: line 246 at 50-58: Method argument 'endpoint' is shadowing field",
+      "Warning: line 246 at 67-79: Method argument 'commitmentId' is shadowing field",
+      "Warning: line 309 at 45-53: Method argument 'endpoint' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/PicklistOptionView.cls",
+      "Warning: line 45 at 47-52: Method argument 'value' is shadowing field",
+      "Warning: line 55 at 47-52: Method argument 'label' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/RD2_AppView.cls",
+      "Warning: line 61 at 56-62: Method argument 'record' is shadowing field",
+      "Warning: line 66 at 32-40: Method argument 'parentId' is shadowing field",
       "Warning: line 68 at 8-65: Local variable is hiding class field 'parentSobjectType', see NPSP/force-app/main/default/classes/RD2_AppView.cls: line 39 at 24-49",
+      "Warning: line 78 at 72-78: Method argument 'record' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_ChangeLogSelector.cls",
+      "Warning: line 83 at 57-68: Method argument 'recordLimit' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_DataMigrationMapper.cls",
+      "Warning: line 132 at 67-69: Method argument 'rd' is shadowing field",
+      "Warning: line 168 at 76-78: Method argument 'rd' is shadowing field",
+      "Warning: line 184 at 76-78: Method argument 'rd' is shadowing field",
+      "Warning: line 235 at 59-61: Method argument 'rd' is shadowing field",
+      "Warning: line 262 at 60-62: Method argument 'rd' is shadowing field",
+      "Warning: line 287 at 68-70: Method argument 'rd' is shadowing field",
+      "Warning: line 305 at 56-58: Method argument 'rd' is shadowing field",
+      "Warning: line 334 at 61-63: Method argument 'rd' is shadowing field",
+      "Warning: line 352 at 73-75: Method argument 'rd' is shadowing field",
+      "Warning: line 92 at 78-92: Method argument 'allRelatedOpps' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_FieldChangeView.cls",
+      "Warning: line 46 at 44-55: Method argument 'displayType' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_NamingService.cls",
+      "Warning: line 247 at 68-77: Method argument 'donorById' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_OpportunityEvaluationService.cls",
+      "Warning: line 310 at 65-76: Method argument 'currentDate' is shadowing field",
+      "Warning: line 321 at 60-65: Method argument 'rdIds' is shadowing field",
+      "Warning: line 331 at 90-96: Method argument 'oldRds' is shadowing field",
+      "Warning: line 341 at 72-77: Method argument 'rdIds' is shadowing field",
+      "Warning: line 612 at 69-74: Method argument 'rdIds' is shadowing field",
+      "Warning: line 636 at 40-45: Method argument 'rdIds' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_OpportunityMatcher.cls",
+      "Warning: line 264 at 76-93: Method argument 'recordByCloseDate' is shadowing field",
+      "Warning: line 448 at 72-83: Method argument 'installment' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_RecurringDonation.cls",
+      "Warning: line 574 at 50-55: Method argument 'isNew' is shadowing field",
     ],
     [
       "NPSP/force-app/main/default/classes/RD2_RecurringDonationsOpp_TEST.cls",
@@ -673,21 +1877,148 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 543 at 8-55: Local variable is hiding class field 'today', see NPSP/force-app/main/default/classes/RD2_RecurringDonationsOpp_TEST.cls: line 48 at 25-60",
     ],
     [
+      "NPSP/force-app/main/default/classes/RD2_StatusMapper.cls",
+      "Warning: line 254 at 40-45: Method argument 'state' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_StatusMapper_TEST.cls",
+      "Warning: line 455 at 88-95: Method argument 'records' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/RD2_StatusMappingSettings_CTRL.cls",
+      "Warning: line 337 at 44-49: Method argument 'state' is shadowing field",
       "Warning: line 338 at 12-60: Local variable is hiding class field 'stateLabel', see NPSP/force-app/main/default/classes/RD2_StatusMappingSettings_CTRL.cls: line 316 at 28-46",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_StatusMappingSettings_TEST.cls",
+      "Warning: line 339 at 61-73: Method argument 'deploymentId' is shadowing field",
+      "Warning: line 344 at 76-88: Method argument 'deployResult' is shadowing field",
+      "Warning: line 374 at 55-62: Method argument 'records' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_SustainerEvaluationService.cls",
+      "Warning: line 57 at 67-78: Method argument 'isBatchMode' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/RD2_VisualizeScheduleController.cls",
+      "Warning: line 553 at 44-51: Method argument 'records' is shadowing field",
+      "Warning: line 602 at 48-53: Method argument 'label' is shadowing field",
+      "Warning: line 615 at 52-61: Method argument 'fieldName' is shadowing field",
+      "Warning: line 635 at 56-68: Method argument 'isAccessible' is shadowing field",
+      "Warning: line 665 at 70-84: Method argument 'typeAttributes' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/STG_PanelADDRVerification_CTRL.cls",
+      "Warning: line 168 at 45-63: Method argument 'validatorSelection' is shadowing field",
     ],
     [
       "NPSP/force-app/main/default/classes/SoftCreditsDTO.cls",
       "Warning: line 44:8 to 45:54: Local variable is hiding class field 'softCredits', see NPSP/force-app/main/default/classes/SoftCreditsDTO.cls: line 37 at 11-36",
     ],
     [
+      "NPSP/force-app/main/default/classes/USNonElevateCustomers_TEST.cls",
+      "Warning: line 110 at 73-90: Method argument 'isElevateCustomer' is shadowing field",
+      "Warning: line 157 at 68-86: Method argument 'withUSOrganization' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_AbstractChunkingLDV_BATCH.cls",
+      "Warning: line 105 at 35-42: Method argument 'ldvMode' is shadowing field",
+      "Warning: line 116 at 48-69: Method argument 'additionalWhereClause' is shadowing field",
+      "Warning: line 173 at 44-51: Method argument 'startId' is shadowing field",
+      "Warning: line 385 at 54-61: Method argument 'startId' is shadowing field",
+      "Warning: line 385 at 66-71: Method argument 'endId' is shadowing field",
+      "Warning: line 94 at 37-46: Method argument 'batchSize' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_AbstractChunkingLDV_MOCK.cls",
+      "Warning: line 129 at 41-54: Method argument 'testChunkSize' is shadowing field",
+      "Warning: line 137 at 45-62: Method argument 'testMaxNonLDVSize' is shadowing field",
+      "Warning: line 99 at 42-57: Method argument 'testWhereClause' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_AbstractRollup_BATCH.cls",
+      "Warning: line 481 at 25-38: Method argument 'parentObjName' is shadowing field",
+    ],
+    [
       "NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls",
+      "Warning: line 352 at 41-48: Method argument 'batchId' is shadowing field",
       "Warning: line 357 at 12-30: Local variable is hiding class field 'summary', see NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls: line 316 at 15-34",
+      "Warning: line 411 at 49-66: Method argument 'jobItemsProcessed' is shadowing field",
+      "Warning: line 411 at 76-89: Method argument 'totalJobItems' is shadowing field",
+      "Warning: line 411 at 98-104: Method argument 'status' is shadowing field",
       "Warning: line 414 at 12-57: Local variable is hiding class field 'percentComplete', see NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls: line 313 at 15-40",
+      "Warning: line 455 at 44-50: Method argument 'status' is shadowing field",
+      "Warning: line 482 at 60-69: Method argument 'processed' is shadowing field",
+      "Warning: line 492 at 57-63: Method argument 'failed' is shadowing field",
+      "Warning: line 497 at 53-66: Method argument 'completedDate' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_BatchJobService_TEST.cls",
+      "Warning: line 363 at 51-56: Method argument 'jobId' is shadowing field",
+      "Warning: line 368 at 56-66: Method argument 'childJobId' is shadowing field",
+      "Warning: line 401 at 53-73: Method argument 'completedDaysBetween' is shadowing field",
+      "Warning: line 409 at 50-58: Method argument 'asyncJob' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_Finder.cls",
+      "Warning: line 134 at 44-52: Method argument 'criteria' is shadowing field",
+      "Warning: line 178 at 41-50: Method argument 'limitRows' is shadowing field",
+      "Warning: line 189 at 46-57: Method argument 'searchQuery' is shadowing field",
+      "Warning: line 362 at 59-70: Method argument 'searchQuery' is shadowing field",
+      "Warning: line 372 at 66-77: Method argument 'searchGroup' is shadowing field",
+      "Warning: line 382 at 69-77: Method argument 'sObjType' is shadowing field",
+      "Warning: line 392 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 401 at 58-64: Method argument 'fields' is shadowing field",
+      "Warning: line 426 at 62-69: Method argument 'orderBy' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_Finder_TEST.cls",
+      "Warning: line 744 at 58-62: Method argument 'soql' is shadowing field",
+      "Warning: line 749 at 59-63: Method argument 'sosl' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_FiscalYearInfo.cls",
+      "Warning: line 111 at 57-70: Method argument 'useFiscalYear' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_Http_TEST.cls",
+      "Warning: line 181 at 50-60: Method argument 'statusCode' is shadowing field",
+      "Warning: line 191 at 45-51: Method argument 'status' is shadowing field",
+      "Warning: line 201 at 43-47: Method argument 'body' is shadowing field",
+      "Warning: line 211 at 48-55: Method argument 'request' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_LightningComponentSupport.cls",
+      "Warning: line 173 at 39-46: Method argument 'variant' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_OrderBy.cls",
+      "Warning: line 292 at 68-82: Method argument 'referenceField' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_Query.cls",
+      "Warning: line 119 at 41-48: Method argument 'orderBy' is shadowing field",
+      "Warning: line 143 at 40-49: Method argument 'limitRows' is shadowing field",
+      "Warning: line 171 at 38-44: Method argument 'entity' is shadowing field",
+      "Warning: line 193 at 41-53: Method argument 'whereClauses' is shadowing field",
+      "Warning: line 209 at 41-47: Method argument 'offset' is shadowing field",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_Where.cls",
+      "Warning: line 495 at 68-82: Method argument 'referenceField' is shadowing field",
+      "Warning: line 522 at 45-50: Method argument 'value' is shadowing field",
+      "Warning: line 533 at 48-53: Method argument 'value' is shadowing field",
+      "Warning: line 544 at 44-49: Method argument 'value' is shadowing field",
+      "Warning: line 560 at 45-50: Method argument 'value' is shadowing field",
       "Warning: line 561 at 12-50: Local variable is hiding class field 'values', see NPSP/force-app/main/default/classes/UTIL_Where.cls: line 459 at 16-35",
+      "Warning: line 588 at 44-49: Method argument 'value' is shadowing field",
+      "Warning: line 596 at 44-49: Method argument 'value' is shadowing field",
+      "Warning: line 682 at 40-45: Method argument 'value' is shadowing field",
+      "Warning: line 708 at 40-45: Method argument 'value' is shadowing field",
+    ],
+    [
+      "NPSP/force-app/main/domain/HouseholdNamingUserControlledFields.cls",
+      "Warning: line 71 at 57-66: Method argument 'household' is shadowing field",
     ],
     [
       "NPSP/force-app/main/instrumentation/classes/SfdoInstrumentationService.cls",
@@ -748,6 +2079,10 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Error: line 85 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
     ],
     [
+      "nebula-logger/core/main/log-management/classes/LogBatchPurger.cls",
+      "Warning: line 160 at 54-70: Method argument 'chainedBatchSize' is shadowing field",
+    ],
+    [
       "nebula-logger/core/main/log-management/classes/LogEntryEventHandler.cls",
       "Missing: line 237 at 31-54: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
     ],
@@ -758,12 +2093,37 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Missing: line 62 at 50-75: Unknown field 'SetupOwner' on SObject 'Schema.LoggerSettings__c'",
     ],
     [
+      "nebula-logger/core/main/logger-engine/classes/LogEntryEventBuilder.cls",
+      "Warning: line 550 at 53-57: Method argument 'tags' is shadowing field",
+      "Warning: line 567 at 55-59: Method argument 'tags' is shadowing field",
+    ],
+    [
       "nebula-logger/core/main/logger-engine/classes/Logger.cls",
       "Warning: line 2682 at 12-62: Local variable is hiding class field 'userSettings', see nebula-logger/core/main/logger-engine/classes/Logger.cls: line 36 at 19-50",
     ],
     [
+      "nebula-logger/core/main/logger-engine/classes/LoggerSObjectHandler.cls",
+      "Warning: line 146 at 61-71: Method argument 'triggerNew' is shadowing field",
+      "Warning: line 149 at 64-77: Method argument 'triggerNewMap' is shadowing field",
+      "Warning: line 149 at 96-109: Method argument 'triggerOldMap' is shadowing field",
+      "Warning: line 152 at 64-77: Method argument 'triggerNewMap' is shadowing field",
+      "Warning: line 156 at 60-70: Method argument 'triggerNew' is shadowing field",
+      "Warning: line 159 at 63-76: Method argument 'triggerNewMap' is shadowing field",
+      "Warning: line 162 at 63-76: Method argument 'triggerNewMap' is shadowing field",
+      "Warning: line 162 at 95-108: Method argument 'triggerOldMap' is shadowing field",
+      "Warning: line 165 at 63-76: Method argument 'triggerNewMap' is shadowing field",
+      "Warning: line 168 at 65-78: Method argument 'triggerNewMap' is shadowing field",
+      "Warning: line 93 at 84-89: Method argument 'input' is shadowing field",
+    ],
+    [
       "nebula-logger/core/tests/configuration/classes/LoggerParameter_Tests.cls",
       "Missing: line 214 at 33-102: Unknown field or type 'Value__c' on 'System.SObject'",
+    ],
+    [
+      "nebula-logger/core/tests/configuration/utilities/LoggerMockDataCreator.cls",
+      "Warning: line 442 at 54-66: Method argument 'responseBody' is shadowing field",
+      "Warning: line 447 at 53-63: Method argument 'statusCode' is shadowing field",
+      "Warning: line 452 at 48-55: Method argument 'request' is shadowing field",
     ],
     [
       "nebula-logger/core/tests/log-management/classes/LogEntryEventHandler_Tests.cls",
@@ -773,6 +2133,15 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Missing: line 578 at 37-60: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
       "Missing: line 615 at 37-60: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
       "Missing: line 971 at 12-45: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
+    ],
+    [
+      "nebula-logger/core/tests/logger-engine/classes/LoggerSObjectHandler_Tests.cls",
+      "Warning: line 430 at 46-59: Method argument 'configuration' is shadowing field",
+      "Warning: line 430 at 86-91: Method argument 'input' is shadowing field",
+    ],
+    [
+      "nebula-logger/core/tests/logger-engine/classes/Logger_Tests.cls",
+      "Warning: line 7017 at 68-79: Method argument 'sobjectType' is shadowing field",
     ],
     [
       "nebula-logger/plugins/big-object-archiving/plugin/classes/LogEntryArchiveBuilder.cls",
@@ -790,6 +2159,8 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "nebula-logger/plugins/log-retention-rules/plugin/classes/LogRetentionFilter.cls",
       "Warning: line 106 at 12-127: Local variable is hiding class field 'conditionsLogic', see nebula-logger/plugins/log-retention-rules/plugin/classes/LogRetentionFilter.cls: line 47 at 16-39",
       "Warning: line 414 at 16-78: Local variable is hiding class field 'fieldDescribe', see nebula-logger/plugins/log-retention-rules/plugin/classes/LogRetentionFilter.cls: line 394 at 16-57",
+      "Warning: line 432 at 75-86: Method argument 'sobjectType' is shadowing field",
+      "Warning: line 432 at 95-104: Method argument 'fieldPath' is shadowing field",
     ],
     [
       "nebula-logger/recipes/classes/Account_Queueable_Logger_Example.cls",
@@ -812,6 +2183,10 @@ exports[`Check samples Sample: ObjectMerge 1`] = `
 {
   "logs": [
     [
+      "src/classes/ObjectMergeDuplicateManagerController.cls",
+      "Warning: line 147 at 45-52: Method argument 'records' is shadowing field",
+    ],
+    [
       "src/classes/ObjectMergeHandleUsers.cls",
       "Warning: line 158 at 8-62: Local variable is hiding class field 'userIdsToDeactivate', see src/classes/ObjectMergeHandleUsers.cls: line 35 at 12-40",
     ],
@@ -830,7 +2205,13 @@ exports[`Check samples Sample: Query.apex 1`] = `
   "logs": [
     [
       "src/classes/Query.cls",
+      "Warning: line 102 at 55-61: Method argument 'fields' is shadowing field",
+      "Warning: line 106 at 56-62: Method argument 'fields' is shadowing field",
+      "Warning: line 1466 at 61-67: Method argument 'fields' is shadowing field",
+      "Warning: line 1496 at 37-46: Method argument 'namespace' is shadowing field",
+      "Warning: line 216 at 32-38: Method argument 'fields' is shadowing field",
       "Warning: line 2206 at 8-25: Local variable is hiding class field 'count', see src/classes/Query.cls: line 1736 at 18-41",
+      "Warning: line 2558 at 52-67: Method argument 'conditionString' is shadowing field",
     ],
   ],
   "status": 0,
@@ -841,9 +2222,41 @@ exports[`Check samples Sample: R-apex 1`] = `
 {
   "logs": [
     [
+      "force-app/main/default/classes/Func.cls",
+      "Warning: line 131 at 42-46: Method argument 'args' is shadowing field",
+      "Warning: line 135 at 50-54: Method argument 'args' is shadowing field",
+      "Warning: line 187 at 36-40: Method argument 'args' is shadowing field",
+      "Warning: line 226 at 51-55: Method argument 'args' is shadowing field",
+      "Warning: line 233 at 48-52: Method argument 'args' is shadowing field",
+      "Warning: line 263 at 36-40: Method argument 'args' is shadowing field",
+    ],
+    [
       "force-app/main/default/classes/R.cls",
       "Warning: line 10373 at 12-90: Local variable is hiding class field 'length', see force-app/main/default/classes/Func.cls: line 109 at 12-32",
       "Warning: line 10481 at 12-44: Local variable is hiding class field 'length', see force-app/main/default/classes/Func.cls: line 109 at 12-32",
+      "Warning: line 1064 at 27-32: Method argument 'first' is shadowing a static field",
+      "Warning: line 1064 at 42-46: Method argument 'last' is shadowing a static field",
+      "Warning: line 1194 at 25-35: Method argument 'comparator' is shadowing a static field",
+      "Warning: line 1469 at 26-29: Method argument 'min' is shadowing a static field",
+      "Warning: line 1469 at 38-41: Method argument 'max' is shadowing a static field",
+      "Warning: line 1550 at 30-33: Method argument 'val' is shadowing field",
+      "Warning: line 1563 at 31-34: Method argument 'val' is shadowing field",
+      "Warning: line 1576 at 29-32: Method argument 'val' is shadowing field",
+      "Warning: line 1928 at 25-29: Method argument 'keys' is shadowing a static field",
+      "Warning: line 1942 at 25-29: Method argument 'keys' is shadowing a static field",
+      "Warning: line 1985 at 28-33: Method argument 'first' is shadowing a static field",
+      "Warning: line 2105 at 44-47: Method argument 'val' is shadowing field",
+      "Warning: line 2183 at 32-36: Method argument 'size' is shadowing a static field",
+      "Warning: line 2209 at 25-31: Method argument 'length' is shadowing a static field",
+      "Warning: line 2223 at 29-35: Method argument 'length' is shadowing a static field",
+      "Warning: line 2237 at 30-36: Method argument 'length' is shadowing a static field",
+      "Warning: line 231 at 34-39: Method argument 'first' is shadowing a static field",
+      "Warning: line 231 at 49-53: Method argument 'last' is shadowing a static field",
+      "Warning: line 5457 at 61-68: Method argument 'reverse' is shadowing a static field",
+      "Warning: line 5466 at 66-70: Method argument 'size' is shadowing a static field",
+      "Warning: line 5594 at 46-51: Method argument 'first' is shadowing a static field",
+      "Warning: line 5594 at 61-65: Method argument 'last' is shadowing a static field",
+      "Warning: line 5598 at 46-51: Method argument 'first' is shadowing a static field",
     ],
   ],
   "status": 0,
@@ -852,14 +2265,32 @@ exports[`Check samples Sample: R-apex 1`] = `
 
 exports[`Check samples Sample: SFDCRules 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/Rule.cls",
+      "Warning: line 14 at 35-51: Method argument 'expressionString' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: SObjectFabricator 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/sfab_ObjectDescriber.cls",
+      "Warning: line 216 at 79-92: Method argument 'fieldDescribe' is shadowing field",
+      "Warning: line 221 at 61-76: Method argument 'childObjectName' is shadowing field",
+      "Warning: line 272 at 81-99: Method argument 'schemaRelationship' is shadowing field",
+      "Warning: line 277 at 61-77: Method argument 'parentObjectName' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/sfab_ParentRelationshipNode.cls",
+      "Warning: line 18 at 46-55: Method argument 'fieldName' is shadowing field",
+      "Warning: line 22 at 46-55: Method argument 'fieldName' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -880,14 +2311,25 @@ exports[`Check samples Sample: Salesforce-Test-Factory 1`] = `
 
 exports[`Check samples Sample: SalesforceDurableStreamingDemo 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "classes/DurableGenericStreamingController.cls",
+      "Warning: line 13 at 58-65: Method argument 'channel' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: SimpleLightningComponents 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/RecordTypeMetadata.cls",
+      "Warning: line 60 at 42-49: Method argument 'apiName' is shadowing field",
+      "Warning: line 64 at 39-46: Method argument 'apiName' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -901,14 +2343,28 @@ exports[`Check samples Sample: SmartFactory-for-Force 1`] = `
 
 exports[`Check samples Sample: TestDataFactory 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/TestDataFactory.cls",
+      "Warning: line 568 at 69-80: Method argument 'sObjectType' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: TriggerX 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "TriggerX/src/classes/TriggerX.cls",
+      "Warning: line 18 at 50-57: Method argument 'records' is shadowing field",
+    ],
+    [
+      "TriggerX/src/classes/TriggerXTest.cls",
+      "Warning: line 99 at 48-54: Method argument 'eventX' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -924,7 +2380,24 @@ exports[`Check samples Sample: Volunteers-for-Salesforce 1`] = `
 {
   "logs": [
     [
+      "src/classes/InstallScript.cls",
+      "Warning: line 50 at 41-48: Method argument 'context' is shadowing field",
+    ],
+    [
+      "src/classes/QueryBuilder.cls",
+      "Warning: line 39 at 45-54: Method argument 'condition' is shadowing field",
+      "Warning: line 69 at 44-54: Method argument 'countQuery' is shadowing field",
+    ],
+    [
+      "src/classes/Telemetry.cls",
+      "Warning: line 73 at 41-49: Method argument 'criteria' is shadowing field",
+      "Warning: line 82 at 46-58: Method argument 'booleanValue' is shadowing field",
+    ],
+    [
       "src/classes/UTIL_JobProgress_CTRL.cls",
+      "Warning: line 230 at 104-110: Method argument 'status' is shadowing field",
+      "Warning: line 230 at 55-72: Method argument 'jobItemsProcessed' is shadowing field",
+      "Warning: line 230 at 82-95: Method argument 'totalJobItems' is shadowing field",
       "Warning: line 231 at 12-37: Local variable is hiding class field 'percentCompleted', see src/classes/UTIL_JobProgress_CTRL.cls: line 194 at 15-37",
     ],
     [
@@ -941,12 +2414,20 @@ exports[`Check samples Sample: Zippex 1`] = `
   "logs": [
     [
       "classes/Puff.cls",
+      "Warning: line 192 at 32-33: Method argument 's' is shadowing field",
+      "Warning: line 381 at 31-32: Method argument 's' is shadowing field",
+      "Warning: line 382 at 28-35: Method argument 'lencode' is shadowing field",
+      "Warning: line 383 at 28-36: Method argument 'distcode' is shadowing field",
+      "Warning: line 464 at 32-33: Method argument 's' is shadowing field",
+      "Warning: line 55 at 31-32: Method argument 's' is shadowing field",
+      "Warning: line 588 at 34-35: Method argument 's' is shadowing field",
       "Warning: line 594 at 8-49: Local variable is hiding class field 'lencnt', see classes/Puff.cls: line 460 at 12-54",
       "Warning: line 595 at 8-49: Local variable is hiding class field 'lensym', see classes/Puff.cls: line 460 at 12-87",
       "Warning: line 596 at 8-50: Local variable is hiding class field 'distcnt', see classes/Puff.cls: line 461 at 12-55",
       "Warning: line 597 at 8-50: Local variable is hiding class field 'distsym', see classes/Puff.cls: line 461 at 12-89",
       "Warning: line 598 at 8-39: Local variable is hiding class field 'lencode', see classes/Puff.cls: line 462 at 12-44",
       "Warning: line 599 at 8-40: Local variable is hiding class field 'distcode', see classes/Puff.cls: line 462 at 12-70",
+      "Warning: line 99 at 33-34: Method argument 's' is shadowing field",
     ],
   ],
   "status": 0,
@@ -957,8 +2438,48 @@ exports[`Check samples Sample: amoss 1`] = `
 {
   "logs": [
     [
+      "force-app/amoss_examples/default/classes/AmossExample_Order.cls",
+      "Warning: line 41 at 50-58: Method argument 'postcode' is shadowing field",
+      "Warning: line 46 at 52-64: Method argument 'deliveryDate' is shadowing field",
+    ],
+    [
       "force-app/amoss_main/default/classes/Amoss_Instance.cls",
+      "Warning: line 108 at 41-50: Method argument 'classType' is shadowing field",
+      "Warning: line 2902 at 66-79: Method argument 'amossInstance' is shadowing field",
+      "Warning: line 2935 at 87-102: Method argument 'returnMechanism' is shadowing field",
+      "Warning: line 3045 at 67-78: Method argument 'returnValue' is shadowing field",
+      "Warning: line 3074 at 80-96: Method argument 'exceptionToThrow' is shadowing field",
+      "Warning: line 3101 at 89-102: Method argument 'returnHandler' is shadowing field",
+      "Warning: line 3128 at 96-109: Method argument 'returnHandler' is shadowing field",
+      "Warning: line 3170 at 92-116: Method argument 'currentParameterVerifier' is shadowing field",
+      "Warning: line 332 at 49-62: Method argument 'allowsAnyCall' is shadowing field",
+      "Warning: line 349 at 57-76: Method argument 'defaultMethodReturn' is shadowing field",
+      "Warning: line 3570 at 73-78: Method argument 'value' is shadowing field",
+      "Warning: line 3629 at 74-79: Method argument 'value' is shadowing field",
+      "Warning: line 3687 at 72-77: Method argument 'value' is shadowing field",
+      "Warning: line 3747 at 70-75: Method argument 'value' is shadowing field",
+      "Warning: line 3815 at 84-89: Method argument 'value' is shadowing field",
+      "Warning: line 3902 at 73-78: Method argument 'value' is shadowing field",
+      "Warning: line 3952 at 76-81: Method argument 'value' is shadowing field",
+      "Warning: line 4032 at 85-90: Method argument 'value' is shadowing field",
+      "Warning: line 4118 at 69-83: Method argument 'expectedLength' is shadowing field",
+      "Warning: line 4308 at 71-86: Method argument 'elementPosition' is shadowing field",
+      "Warning: line 4608 at 75-82: Method argument 'message' is shadowing field",
+      "Warning: line 4642 at 73-81: Method argument 'expected' is shadowing field",
+      "Warning: line 4653 at 71-77: Method argument 'actual' is shadowing field",
       "Warning: line 4662 at 12-132: Local variable is hiding class field 'message', see force-app/amoss_main/default/classes/Amoss_Instance.cls: line 4601 at 16-31",
+      "Warning: line 5507 at 81-89: Method argument 'verifier' is shadowing field",
+      "Warning: line 5534 at 105-120: Method argument 'requestVerifier' is shadowing field",
+      "Warning: line 583 at 53-71: Method argument 'assertionMechanism' is shadowing field",
+      "Warning: line 627 at 44-50: Method argument 'method' is shadowing field",
+      "Warning: line 643 at 47-57: Method argument 'callNumber' is shadowing field",
+      "Warning: line 658 at 54-60: Method argument 'method' is shadowing field",
+      "Warning: line 676 at 41-56: Method argument 'parameterNumber' is shadowing field",
+      "Warning: line 694 at 40-53: Method argument 'parameterName' is shadowing field",
+      "Warning: line 756 at 52-58: Method argument 'method' is shadowing field",
+      "Warning: line 782 at 120-135: Method argument 'parameterValues' is shadowing field",
+      "Warning: line 782 at 62-76: Method argument 'parameterTypes' is shadowing field",
+      "Warning: line 782 at 91-105: Method argument 'parameterNames' is shadowing field",
     ],
   ],
   "status": 0,
@@ -981,7 +2502,32 @@ exports[`Check samples Sample: apex-domainbuilder 1`] = `
 
 exports[`Check samples Sample: apex-lambda 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "sfdx-source/apex-fp/main/classes/function/DebugSObject.cls",
+      "Warning: line 4 at 43-51: Method argument 'logLevel' is shadowing field",
+    ],
+    [
+      "sfdx-source/apex-fp/main/classes/function/MapToObject.cls",
+      "Warning: line 35 at 50-61: Method argument 'fieldValues' is shadowing field",
+      "Warning: line 52 at 63-76: Method argument 'fieldMappings' is shadowing field",
+      "Warning: line 60 at 50-63: Method argument 'fieldMappings' is shadowing field",
+    ],
+    [
+      "sfdx-source/apex-fp/main/classes/function/MapToSObject.cls",
+      "Warning: line 29 at 77-90: Method argument 'fieldMappings' is shadowing field",
+      "Warning: line 37 at 64-77: Method argument 'fieldMappings' is shadowing field",
+      "Warning: line 55 at 64-75: Method argument 'fieldValues' is shadowing field",
+    ],
+    [
+      "sfdx-source/apex-fp/main/classes/function/ModifySObject.cls",
+      "Warning: line 19 at 65-76: Method argument 'fieldValues' is shadowing field",
+    ],
+    [
+      "sfdx-source/apex-fp/main/classes/function/SObjectFunctions.cls",
+      "Warning: line 44 at 37-45: Method argument 'logLevel' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -998,6 +2544,14 @@ exports[`Check samples Sample: apex-query-builder 1`] = `
   "logs": [
     [
       "src/classes/QueryBuilder.cls",
+      "Warning: line 1123 at 58-63: Method argument 'scope' is shadowing field",
+      "Warning: line 1145 at 43-50: Method argument 'forView' is shadowing field",
+      "Warning: line 1189 at 48-60: Method argument 'forReference' is shadowing field",
+      "Warning: line 1233 at 50-64: Method argument 'updateTracking' is shadowing field",
+      "Warning: line 1274 at 50-64: Method argument 'updateViewstat' is shadowing field",
+      "Warning: line 1331 at 56-76: Method argument 'withSecurityEnforced' is shadowing field",
+      "Warning: line 1358 at 45-54: Method argument 'checkCrud' is shadowing field",
+      "Warning: line 1384 at 44-52: Method argument 'checkFls' is shadowing field",
       "Warning: line 1481 at 8-33: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
       "Warning: line 1547 at 8-33: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
       "Warning: line 1586 at 12-66: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
@@ -1006,7 +2560,26 @@ exports[`Check samples Sample: apex-query-builder 1`] = `
       "Warning: line 1684 at 8-48: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
       "Warning: line 1699 at 8-48: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
       "Warning: line 1721 at 8-64: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 1755 at 69-81: Method argument 'queryBuilder' is shadowing field",
+      "Warning: line 1781 at 58-72: Method argument 'conditionOrder' is shadowing field",
+      "Warning: line 1814 at 48-58: Method argument 'conditions' is shadowing field",
+      "Warning: line 184 at 39-50: Method argument 'fromSobject' is shadowing field",
+      "Warning: line 2287 at 48-58: Method argument 'objectType' is shadowing field",
+      "Warning: line 2341 at 44-56: Method argument 'sortingOrder' is shadowing field",
+      "Warning: line 2354 at 42-52: Method argument 'nullsOrder' is shadowing field",
+      "Warning: line 2507 at 58-69: Method argument 'queryString' is shadowing field",
+      "Warning: line 2512 at 63-79: Method argument 'queryCountString' is shadowing field",
+      "Warning: line 2517 at 58-69: Method argument 'countResult' is shadowing field",
+      "Warning: line 2522 at 63-75: Method argument 'toListResult' is shadowing field",
+      "Warning: line 2527 at 65-76: Method argument 'toMapResult' is shadowing field",
+      "Warning: line 2532 at 60-75: Method argument 'toSobjectResult' is shadowing field",
+      "Warning: line 2537 at 58-71: Method argument 'toSetIdResult' is shadowing field",
+      "Warning: line 2542 at 61-79: Method argument 'extractedIdsResult' is shadowing field",
+      "Warning: line 2547 at 68-89: Method argument 'extractedFieldsResult' is shadowing field",
+      "Warning: line 2653 at 97-117: Method argument 'describedSObjectType' is shadowing field",
       "Warning: line 780 at 8-46: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 887 at 41-51: Method argument 'queryLimit' is shadowing field",
+      "Warning: line 899 at 42-53: Method argument 'queryOffset' is shadowing field",
     ],
   ],
   "status": 0,
@@ -1016,6 +2589,24 @@ exports[`Check samples Sample: apex-query-builder 1`] = `
 exports[`Check samples Sample: apex-recipes 1`] = `
 {
   "logs": [
+    [
+      "force-app/main/default/classes/LDV Recipes/LDVRecipes.cls",
+      "Warning: line 76 at 61-69: Method argument 'offsetId' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/Shared Code/TriggerHandler.cls",
+      "Warning: line 419 at 35-38: Method argument 'max' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/Testing Recipes/StubExample.cls",
+      "Warning: line 14 at 35-43: Method argument 'greeting' is shadowing field",
+      "Warning: line 18 at 36-44: Method argument 'greeting' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/Testing Recipes/TestDouble.cls",
+      "Warning: line 188 at 39-50: Method argument 'returnValue' is shadowing field",
+      "Warning: line 194 at 38-54: Method argument 'exceptionMessage' is shadowing field",
+    ],
     [
       "force-app/tests/Shared Code/OrgShape_Tests.cls",
       "Warning: line 182 at 8-42: Local variable is hiding class field 'orgShape', see force-app/tests/Shared Code/OrgShape_Tests.cls: line 3 at 19-37",
@@ -1166,20 +2757,71 @@ exports[`Check samples Sample: apex-rollup 1`] = `
       "Warning: line 90 at 4-34: Local variable is hiding class field 'objIds', see extra-tests/classes/RollupQueryBuilderTests.cls: line 4 at 23-62",
     ],
     [
+      "rollup/core/classes/Rollup.cls",
+      "Warning: line 1600 at 53-67: Method argument 'rollupMetadata' is shadowing a static field",
+      "Warning: line 2743 at 22-36: Method argument 'rollupMetadata' is shadowing a static field",
+      "Warning: line 2835 at 16-30: Method argument 'rollupMetadata' is shadowing a static field",
+      "Warning: line 388 at 18-27: Method argument 'calcItems' is shadowing field",
+      "Warning: line 389 at 21-33: Method argument 'oldCalcItems' is shadowing field",
+    ],
+    [
+      "rollup/core/classes/RollupAsyncProcessor.cls",
+      "Warning: line 1029 at 144-155: Method argument 'lookupItems' is shadowing field",
+      "Warning: line 1164 at 18-29: Method argument 'lookupItems' is shadowing field",
+      "Warning: line 210 at 79-90: Method argument 'lookupItems' is shadowing field",
+      "Warning: line 435 at 30-49: Method argument 'fullRecalcProcessor' is shadowing field",
+    ],
+    [
       "rollup/core/classes/RollupCalcItemReplacer.cls",
       "Warning: line 236 at 4-76: Local variable is hiding class field 'parentQueryFields', see rollup/core/classes/RollupCalcItemReplacer.cls: line 12 at 16-64",
     ],
     [
+      "rollup/core/classes/RollupCalcItemSorter.cls",
+      "Warning: line 34 at 85-99: Method argument 'orderByOptions' is shadowing field",
+    ],
+    [
       "rollup/core/classes/RollupCalculator.cls",
+      "Warning: line 121 at 46-61: Method argument 'lookupRecordKey' is shadowing field",
+      "Warning: line 140 at 35-46: Method argument 'isCDCUpdate' is shadowing field",
+      "Warning: line 144 at 44-48: Method argument 'eval' is shadowing field",
+      "Warning: line 148 at 36-48: Method argument 'isFullRecalc' is shadowing field",
+      "Warning: line 336 at 64-66: Method argument 'op' is shadowing field",
+      "Warning: line 347 at 52-54: Method argument 'op' is shadowing field",
       "Warning: line 420 at 6-95: Local variable is hiding class field 'defaultVal', see rollup/core/classes/RollupCalculator.cls: line 8 at 18-36",
       "Warning: line 790 at 6-96: Local variable is hiding class field 'defaultVal', see rollup/core/classes/RollupCalculator.cls: line 8 at 18-36",
+    ],
+    [
+      "rollup/core/classes/RollupEvaluator.cls",
+      "Warning: line 313 at 89-100: Method argument 'whereClause' is shadowing field",
+      "Warning: line 331 at 117-128: Method argument 'whereClause' is shadowing field",
+      "Warning: line 688 at 77-88: Method argument 'sObjectType' is shadowing field",
+      "Warning: line 702 at 89-100: Method argument 'sObjectType' is shadowing field",
+    ],
+    [
+      "rollup/core/classes/RollupFullRecalcProcessor.cls",
+      "Warning: line 94 at 53-73: Method argument 'parentRecordsToClear' is shadowing field",
     ],
     [
       "rollup/core/classes/RollupLogger.cls",
       "Warning: line 115 at 6-47: Local variable is hiding class field 'plugin', see rollup/core/classes/RollupLogger.cls: line 6 at 23-64",
     ],
     [
+      "rollup/core/classes/RollupRelationshipFieldFinder.cls",
+      "Warning: line 175 at 44-51: Method argument 'records' is shadowing field",
+      "Warning: line 258 at 48-55: Method argument 'records' is shadowing field",
+      "Warning: line 265 at 65-72: Method argument 'records' is shadowing field",
+      "Warning: line 307 at 60-67: Method argument 'records' is shadowing field",
+      "Warning: line 388 at 46-53: Method argument 'records' is shadowing field",
+      "Warning: line 524 at 64-71: Method argument 'records' is shadowing field",
+      "Warning: line 577 at 57-64: Method argument 'records' is shadowing field",
+      "Warning: line 589 at 58-72: Method argument 'ultimateParent' is shadowing field",
+      "Warning: line 598 at 57-64: Method argument 'records' is shadowing field",
+    ],
+    [
       "rollup/core/classes/RollupSObjectUpdater.cls",
+      "Warning: line 107 at 48-59: Method argument 'dispatchers' is shadowing field",
+      "Warning: line 120 at 48-59: Method argument 'dispatchers' is shadowing field",
+      "Warning: line 31 at 50-63: Method argument 'rollupControl' is shadowing field",
       "Warning: line 84 at 4-59: Local variable is hiding class field 'dispatchers', see rollup/core/classes/RollupSObjectUpdater.cls: line 8 at 16-46",
     ],
     [
@@ -1232,21 +2874,101 @@ exports[`Check samples Sample: at4dx 1`] = `
 {
   "logs": [
     [
+      "at4dx/sfdx-source/core/main/classes/framework-domain-process-injection/DomainProcessAbstractAction.cls",
+      "Warning: line 37 at 70-90: Method argument 'isActionToRunInQueue' is shadowing field",
+      "Warning: line 44 at 100-119: Method argument 'nextQueueableAction' is shadowing field",
+      "Warning: line 51 at 67-84: Method argument 'isRecordsRequired' is shadowing field",
+      "Warning: line 63 at 65-72: Method argument 'records' is shadowing field",
+      "Warning: line 70 at 85-88: Method argument 'uow' is shadowing field",
+    ],
+    [
+      "at4dx/sfdx-source/core/main/classes/framework-platform-event-distributor/PlatformEventAbstractConsumer.cls",
+      "Warning: line 54 at 51-57: Method argument 'events' is shadowing field",
+      "Warning: line 72 at 41-48: Method argument 'context' is shadowing field",
+    ],
+    [
+      "at4dx/sfdx-source/core/main/classes/framework-selector-method-injection/AbstractSelectorMethodInjectable.cls",
+      "Warning: line 12 at 52-54: Method argument 'qf' is shadowing field",
+      "Warning: line 17 at 60-66: Method argument 'params' is shadowing field",
+    ],
+    [
       "at4dx/sfdx-source/core/test/classes/framework-application-factory/ApplicationSObjectSelectorTest.cls",
       "Warning: line 86 at 12-92: Local variable is hiding class field 'params', see at4dx/sfdx-source/core/main/classes/framework-selector-method-injection/AbstractSelectorMethodInjectable.cls: line 5 at 12-48",
+    ],
+    [
+      "at4dx/sfdx-source/core/test/classes/framework-domain-process-injection/DomainProcessInjectionTest.cls",
+      "Warning: line 368 at 73-80: Method argument 'records' is shadowing field",
+      "Warning: line 397 at 73-80: Method argument 'records' is shadowing field",
     ],
     [
       "at4dx/sfdx-source/core/test/classes/framework-selector-method-injection/AbstractSelectorMethodInjectableTest.cls",
       "Warning: line 73 at 12-55: Local variable is hiding class field 'params', see at4dx/sfdx-source/core/main/classes/framework-selector-method-injection/AbstractSelectorMethodInjectable.cls: line 5 at 12-48",
     ],
     [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_Objects.cls",
+      "Warning: line 109 at 40-47: Method argument 'objects' is shadowing field",
+    ],
+    [
       "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls",
+      "Warning: line 277 at 65-71: Method argument 'fields' is shadowing field",
+      "Warning: line 292 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 327 at 47-66: Method argument 'conditionExpression' is shadowing field",
+      "Warning: line 340 at 44-54: Method argument 'limitCount' is shadowing field",
+      "Warning: line 353 at 45-56: Method argument 'offsetCount' is shadowing field",
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
+      "Warning: line 448 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 459 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 469 at 71-83: Method argument 'relationship' is shadowing field",
+    ],
+    [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDomain.cls",
+      "Warning: line 160 at 48-63: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 170 at 55-70: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 185 at 54-69: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 209 at 59-74: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 241 at 58-73: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 803 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 63-73: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 822 at 40-47: Method argument 'records' is shadowing field",
+      "Warning: line 831 at 39-46: Method argument 'records' is shadowing field",
+    ],
+    [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_StringBuilder.cls",
+      "Warning: line 103 at 38-48: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 93 at 35-45: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 98 at 34-43: Method argument 'delimiter' is shadowing field",
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 107 at 66-82: Method argument 'verificationMode' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_MatcherDefinitions.cls",
+      "Warning: line 100 at 41-61: Method argument 'connectiveExpression' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_MethodReturnValue.cls",
+      "Warning: line 68 at 37-43: Method argument 'answer' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_VerificationMode.cls",
+      "Warning: line 52 at 50-69: Method argument 'customAssertMessage' is shadowing field",
+    ],
+    [
+      "force-di/force-di/main/classes/di_Binding.cls",
+      "Warning: line 172 at 38-51: Method argument 'developerName' is shadowing field",
+      "Warning: line 183 at 46-59: Method argument 'bindingObject' is shadowing field",
+    ],
+    [
+      "force-di/force-di/main/classes/di_Module.cls",
+      "Warning: line 120 at 31-42: Method argument 'bindingType' is shadowing field",
+      "Warning: line 174 at 37-39: Method argument 'to' is shadowing field",
     ],
   ],
   "status": 0,
@@ -1262,7 +2984,44 @@ exports[`Check samples Sample: automation-components 1`] = `
 
 exports[`Check samples Sample: box-salesforce-sdk 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/BoxApiConnection.cls",
+      "Warning: line 189 at 44-53: Method argument 'userAgent' is shadowing field",
+      "Warning: line 193 at 46-57: Method argument 'accessToken' is shadowing field",
+      "Warning: line 201 at 47-59: Method argument 'refreshToken' is shadowing field",
+      "Warning: line 209 at 43-51: Method argument 'tokenUrl' is shadowing field",
+      "Warning: line 217 at 42-49: Method argument 'baseUrl' is shadowing field",
+      "Warning: line 225 at 48-61: Method argument 'baseUploadUrl' is shadowing field",
+      "Warning: line 233 at 43-51: Method argument 'asUserId' is shadowing field",
+      "Warning: line 241 at 47-58: Method argument 'autoRefresh' is shadowing field",
+      "Warning: line 249 at 54-72: Method argument 'maxRequestAttempts' is shadowing field",
+      "Warning: line 257 at 43-50: Method argument 'timeout' is shadowing field",
+      "Warning: line 265 at 44-55: Method argument 'lastRefresh' is shadowing field",
+      "Warning: line 273 at 40-47: Method argument 'expires' is shadowing field",
+    ],
+    [
+      "src/classes/BoxApiRequest.cls",
+      "Warning: line 56 at 31-35: Method argument 'body' is shadowing field",
+      "Warning: line 60 at 31-35: Method argument 'body' is shadowing field",
+      "Warning: line 65 at 35-42: Method argument 'timeout' is shadowing field",
+    ],
+    [
+      "src/classes/BoxJsonObject.cls",
+      "Warning: line 158 at 33-43: Method argument 'jsonString' is shadowing field",
+    ],
+    [
+      "src/classes/BoxJwtEncryptionPreferences.cls",
+      "Warning: line 31 at 38-49: Method argument 'publicKeyId' is shadowing field",
+      "Warning: line 50 at 37-47: Method argument 'privateKey' is shadowing field",
+      "Warning: line 69 at 45-63: Method argument 'privateKeyPassword' is shadowing field",
+      "Warning: line 88 at 56-65: Method argument 'algorithm' is shadowing field",
+    ],
+    [
+      "src/classes/BoxResource.cls",
+      "Warning: line 105 at 35-37: Method argument 'id' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1271,8 +3030,50 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
 {
   "logs": [
     [
+      "dlrs/libs/fflib-apexmocks/classes/fflib_ApexMocks.cls",
+      "Warning: line 107 at 27-43: Method argument 'verificationMode' is shadowing field",
+    ],
+    [
+      "dlrs/libs/fflib-apexmocks/classes/fflib_MatcherDefinitions.cls",
+      "Warning: line 91 at 43-63: Method argument 'connectiveExpression' is shadowing field",
+    ],
+    [
+      "dlrs/libs/fflib-apexmocks/classes/fflib_MethodReturnValue.cls",
+      "Warning: line 65 at 38-44: Method argument 'answer' is shadowing field",
+    ],
+    [
+      "dlrs/libs/fflib-apexmocks/classes/fflib_VerificationMode.cls",
+      "Warning: line 56 at 51-70: Method argument 'customAssertMessage' is shadowing field",
+    ],
+    [
       "dlrs/libs/fflib-common/classes/fflib_QueryFactory.cls",
+      "Warning: line 271 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 286 at 67-73: Method argument 'fields' is shadowing field",
+      "Warning: line 334 at 48-67: Method argument 'conditionExpression' is shadowing field",
+      "Warning: line 347 at 45-55: Method argument 'limitCount' is shadowing field",
+      "Warning: line 360 at 46-57: Method argument 'offsetCount' is shadowing field",
       "Warning: line 446 at 4-75: Local variable is hiding class field 'relationship', see dlrs/libs/fflib-common/classes/fflib_QueryFactory.cls: line 87 at 10-48",
+      "Warning: line 464 at 61-73: Method argument 'relationship' is shadowing field",
+      "Warning: line 476 at 22-34: Method argument 'relationship' is shadowing field",
+      "Warning: line 489 at 22-34: Method argument 'relationship' is shadowing field",
+    ],
+    [
+      "dlrs/libs/fflib-common/classes/fflib_SObjectDomain.cls",
+      "Warning: line 838 at 39-46: Method argument 'records' is shadowing field",
+      "Warning: line 846 at 39-46: Method argument 'records' is shadowing field",
+      "Warning: line 846 at 65-75: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 855 at 42-49: Method argument 'records' is shadowing field",
+      "Warning: line 863 at 41-48: Method argument 'records' is shadowing field",
+    ],
+    [
+      "dlrs/libs/fflib-common/classes/fflib_StringBuilder.cls",
+      "Warning: line 87 at 37-47: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 91 at 36-45: Method argument 'delimiter' is shadowing field",
+      "Warning: line 95 at 40-50: Method argument 'itemPrefix' is shadowing field",
+    ],
+    [
+      "dlrs/main/classes/Utilities.cls",
+      "Warning: line 163 at 32-37: Method argument 'field' is shadowing field",
     ],
   ],
   "status": 0,
@@ -1281,7 +3082,15 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
 
 exports[`Check samples Sample: df12-apex-enterprise-patterns 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "df12/src/classes/SObjectDomain.cls",
+      "Warning: line 355 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 363 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 363 at 63-73: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 372 at 40-47: Method argument 'records' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1309,7 +3118,21 @@ exports[`Check samples Sample: einstein-ai 1`] = `
 
 exports[`Check samples Sample: esapi 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/SFDCAccessController.cls",
+      "Warning: line 208 at 43-48: Method argument 'smode' is shadowing field",
+      "Warning: line 765 at 52-57: Method argument 'omode' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/SFDCBaseValidationRule.cls",
+      "Warning: line 51 at 33-41: Method argument 'typeName' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/SFDCCreditCardValidationRule.cls",
+      "Warning: line 123 at 38-51: Method argument 'maxCardLength' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1337,13 +3160,60 @@ exports[`Check samples Sample: fflib-apex-common 1`] = `
 {
   "logs": [
     [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_Objects.cls",
+      "Warning: line 109 at 40-47: Method argument 'objects' is shadowing field",
+    ],
+    [
       "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls",
+      "Warning: line 277 at 65-71: Method argument 'fields' is shadowing field",
+      "Warning: line 292 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 327 at 47-66: Method argument 'conditionExpression' is shadowing field",
+      "Warning: line 340 at 44-54: Method argument 'limitCount' is shadowing field",
+      "Warning: line 353 at 45-56: Method argument 'offsetCount' is shadowing field",
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
+      "Warning: line 448 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 459 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 469 at 71-83: Method argument 'relationship' is shadowing field",
+    ],
+    [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDomain.cls",
+      "Warning: line 160 at 48-63: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 170 at 55-70: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 185 at 54-69: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 209 at 59-74: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 241 at 58-73: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 803 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 63-73: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 822 at 40-47: Method argument 'records' is shadowing field",
+      "Warning: line 831 at 39-46: Method argument 'records' is shadowing field",
+    ],
+    [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_StringBuilder.cls",
+      "Warning: line 103 at 38-48: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 93 at 35-45: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 98 at 34-43: Method argument 'delimiter' is shadowing field",
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 107 at 66-82: Method argument 'verificationMode' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_MatcherDefinitions.cls",
+      "Warning: line 100 at 41-61: Method argument 'connectiveExpression' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_MethodReturnValue.cls",
+      "Warning: line 68 at 37-43: Method argument 'answer' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_VerificationMode.cls",
+      "Warning: line 52 at 50-69: Method argument 'customAssertMessage' is shadowing field",
     ],
   ],
   "status": 0,
@@ -1354,13 +3224,60 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
 {
   "logs": [
     [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_Objects.cls",
+      "Warning: line 109 at 40-47: Method argument 'objects' is shadowing field",
+    ],
+    [
       "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls",
+      "Warning: line 277 at 65-71: Method argument 'fields' is shadowing field",
+      "Warning: line 292 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 327 at 47-66: Method argument 'conditionExpression' is shadowing field",
+      "Warning: line 340 at 44-54: Method argument 'limitCount' is shadowing field",
+      "Warning: line 353 at 45-56: Method argument 'offsetCount' is shadowing field",
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
+      "Warning: line 448 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 459 at 67-79: Method argument 'relationship' is shadowing field",
+      "Warning: line 469 at 71-83: Method argument 'relationship' is shadowing field",
+    ],
+    [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectDomain.cls",
+      "Warning: line 160 at 48-63: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 170 at 55-70: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 185 at 54-69: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 209 at 59-74: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 241 at 58-73: Method argument 'existingRecords' is shadowing field",
+      "Warning: line 803 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 812 at 63-73: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 822 at 40-47: Method argument 'records' is shadowing field",
+      "Warning: line 831 at 39-46: Method argument 'records' is shadowing field",
+    ],
+    [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_StringBuilder.cls",
+      "Warning: line 103 at 38-48: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 93 at 35-45: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 98 at 34-43: Method argument 'delimiter' is shadowing field",
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 107 at 66-82: Method argument 'verificationMode' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_MatcherDefinitions.cls",
+      "Warning: line 100 at 41-61: Method argument 'connectiveExpression' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_MethodReturnValue.cls",
+      "Warning: line 68 at 37-43: Method argument 'answer' is shadowing field",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_VerificationMode.cls",
+      "Warning: line 52 at 50-69: Method argument 'customAssertMessage' is shadowing field",
     ],
   ],
   "status": 0,
@@ -1369,35 +3286,103 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
 
 exports[`Check samples Sample: fflib-apex-mocks 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 107 at 66-82: Method argument 'verificationMode' is shadowing field",
+    ],
+    [
+      "sfdx-source/apex-mocks/main/classes/fflib_MatcherDefinitions.cls",
+      "Warning: line 100 at 41-61: Method argument 'connectiveExpression' is shadowing field",
+    ],
+    [
+      "sfdx-source/apex-mocks/main/classes/fflib_MethodReturnValue.cls",
+      "Warning: line 68 at 37-43: Method argument 'answer' is shadowing field",
+    ],
+    [
+      "sfdx-source/apex-mocks/main/classes/fflib_VerificationMode.cls",
+      "Warning: line 52 at 50-69: Method argument 'customAssertMessage' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: flowtoolbelt 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/CustomMetadata.cls",
+      "Warning: line 260 at 49-57: Method argument 'deployId' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: force-di 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-di/main/classes/di_Binding.cls",
+      "Warning: line 172 at 38-51: Method argument 'developerName' is shadowing field",
+      "Warning: line 183 at 46-59: Method argument 'bindingObject' is shadowing field",
+    ],
+    [
+      "force-di/main/classes/di_Module.cls",
+      "Warning: line 120 at 31-42: Method argument 'bindingType' is shadowing field",
+      "Warning: line 174 at 37-39: Method argument 'to' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/fflib_QueryFactory.cls",
+      "Warning: line 233 at 65-71: Method argument 'fields' is shadowing field",
+      "Warning: line 248 at 66-72: Method argument 'fields' is shadowing field",
+      "Warning: line 283 at 47-66: Method argument 'conditionExpression' is shadowing field",
+      "Warning: line 296 at 44-54: Method argument 'limitCount' is shadowing field",
+      "Warning: line 354 at 64-76: Method argument 'relationship' is shadowing field",
+    ],
+    [
+      "src/classes/fflib_SObjectDomain.cls",
+      "Warning: line 555 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 563 at 37-44: Method argument 'records' is shadowing field",
+      "Warning: line 563 at 63-73: Method argument 'oldRecords' is shadowing field",
+      "Warning: line 572 at 40-47: Method argument 'records' is shadowing field",
+    ],
+    [
+      "src/classes/fflib_StringBuilder.cls",
+      "Warning: line 103 at 38-48: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 93 at 35-45: Method argument 'itemPrefix' is shadowing field",
+      "Warning: line 98 at 34-43: Method argument 'delimiter' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: forcelog 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/ForceLog.cls",
+      "Warning: line 1012 at 67-71: Method argument 'logs' is shadowing field",
+      "Warning: line 288 at 53-59: Method argument 'fields' is shadowing field",
+      "Warning: line 304 at 39-43: Method argument 'name' is shadowing field",
+      "Warning: line 419 at 41-45: Method argument 'name' is shadowing field",
+      "Warning: line 440 at 41-45: Method argument 'name' is shadowing field",
+      "Warning: line 479 at 41-45: Method argument 'name' is shadowing field",
+      "Warning: line 510 at 42-46: Method argument 'name' is shadowing field",
+      "Warning: line 531 at 42-46: Method argument 'name' is shadowing field",
+      "Warning: line 581 at 42-46: Method argument 'name' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1432,7 +3417,13 @@ exports[`Check samples Sample: processBuilderBlocks 1`] = `
 
 exports[`Check samples Sample: promise 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/Promise.cls",
+      "Warning: line 77 at 37-49: Method argument 'errorHandler' is shadowing field",
+      "Warning: line 89 at 35-46: Method argument 'doneHandler' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1468,8 +3459,24 @@ exports[`Check samples Sample: rflib 1`] = `
 {
   "logs": [
     [
+      "rflib/main/default/classes/rflib_DefaultLogFinalizer.cls",
+      "Warning: line 38 at 39-45: Method argument 'logger' is shadowing field",
+    ],
+    [
+      "rflib/main/default/classes/rflib_DefaultLogTimer.cls",
+      "Warning: line 45 at 35-41: Method argument 'logger' is shadowing field",
+      "Warning: line 45 at 58-66: Method argument 'logLevel' is shadowing field",
+      "Warning: line 45 at 76-85: Method argument 'threshold' is shadowing field",
+      "Warning: line 45 at 94-101: Method argument 'message' is shadowing field",
+      "Warning: line 73 at 58-66: Method argument 'logLevel' is shadowing field",
+    ],
+    [
       "rflib/main/default/classes/rflib_GlobalSettings.cls",
       "Missing: line 70 at 75-165: Unknown field or type 'Value__c' on 'System.SObject'",
+    ],
+    [
+      "rflib/test/default/classes/rflib_ArchiveLogActionTest.cls",
+      "Warning: line 88 at 50-57: Method argument 'records' is shadowing field",
     ],
     [
       "rflib/test/default/classes/rflib_GlobalSettingsTest.cls",
@@ -1480,9 +3487,28 @@ exports[`Check samples Sample: rflib 1`] = `
       "Missing: line 77 at 48-138: Unknown field or type 'Value__c' on 'System.SObject'",
     ],
     [
+      "rflib/test/default/classes/rflib_HttpRequestTest.cls",
+      "Warning: line 143 at 54-58: Method argument 'body' is shadowing a static field",
+    ],
+    [
       "rflib/test/default/classes/rflib_LogArchiveControllerTest.cls",
       "Warning: line 90 at 8-150: Local variable is hiding class field 'result', see rflib/test/default/classes/rflib_LogArchiveControllerTest.cls: line 33:25 to 35:6",
       "Warning: line 99 at 8-126: Local variable is hiding class field 'result', see rflib/test/default/classes/rflib_LogArchiveControllerTest.cls: line 33:25 to 35:6",
+    ],
+    [
+      "rflib/test/default/classes/rflib_MockLogFinalizer.cls",
+      "Warning: line 37 at 39-45: Method argument 'logger' is shadowing field",
+    ],
+    [
+      "rflib/test/default/classes/rflib_MockLogTimer.cls",
+      "Warning: line 40 at 35-41: Method argument 'logger' is shadowing field",
+      "Warning: line 40 at 58-66: Method argument 'logLevel' is shadowing field",
+      "Warning: line 40 at 76-85: Method argument 'threshold' is shadowing field",
+      "Warning: line 40 at 94-101: Method argument 'message' is shadowing field",
+    ],
+    [
+      "rflib/test/default/classes/rflib_MockLogger.cls",
+      "Warning: line 76 at 39-51: Method argument 'platformInfo' is shadowing field",
     ],
     [
       "sfdx-project.json",
@@ -1525,7 +3551,19 @@ exports[`Check samples Sample: selector 1`] = `
 
 exports[`Check samples Sample: sendgrid-apex 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/SendGrid.cls",
+      "Warning: line 102 at 32-36: Method argument 'html' is shadowing field",
+      "Warning: line 92 at 35-42: Method argument 'subject' is shadowing field",
+      "Warning: line 97 at 32-36: Method argument 'text' is shadowing field",
+    ],
+    [
+      "src/classes/Smtpapi.cls",
+      "Warning: line 115 at 74-81: Method argument 'filters' is shadowing field",
+      "Warning: line 49 at 31-33: Method argument 'to' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1546,7 +3584,13 @@ exports[`Check samples Sample: sfdc-convert-attachments-to-chatter-files 1`] = `
 
 exports[`Check samples Sample: sfdc-oauth-playground 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "OAuth/src/classes/OAuth.cls",
+      "Warning: line 98 at 45-50: Method argument 'token' is shadowing field",
+      "Warning: line 98 at 59-67: Method argument 'verifier' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1560,14 +3604,25 @@ exports[`Check samples Sample: sfdc-related-files-lightning 1`] = `
 
 exports[`Check samples Sample: sfdc-trigger-framework 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/TriggerHandler.cls",
+      "Warning: line 224 at 31-34: Method argument 'max' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: sfdx-mass-action-scheduler 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/MA_ReportSourceBatchable.cls",
+      "Warning: line 61 at 128-142: Method argument 'reportDescribe' is shadowing field",
+      "Warning: line 72 at 117-131: Method argument 'reportDescribe' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1581,14 +3636,30 @@ exports[`Check samples Sample: sfdx-simple 1`] = `
 
 exports[`Check samples Sample: sirono-common 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/Comparators.cls",
+      "Warning: line 104 at 57-67: Method argument 'nullsFirst' is shadowing field",
+      "Warning: line 62 at 60-73: Method argument 'caseSensitive' is shadowing field",
+      "Warning: line 83 at 56-65: Method argument 'ascending' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: sobject-work-queue 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/SObjectWork.cls",
+      "Warning: line 76 at 27-29: Method argument 'id' is shadowing field",
+    ],
+    [
+      "force-app/main/default/classes/SObjectWorkTestHelper.cls",
+      "Warning: line 81 at 42-51: Method argument 'recordIds' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1607,7 +3678,16 @@ exports[`Check samples Sample: soql-secure 1`] = `
 
 exports[`Check samples Sample: survey-force 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/SFMessage.cls",
+      "Warning: line 10 at 31-38: Method argument 'message' is shadowing field",
+      "Warning: line 10 at 47-55: Method argument 'severity' is shadowing field",
+      "Warning: line 10 at 65-74: Method argument 'isMessage' is shadowing field",
+      "Warning: line 6 at 31-38: Method argument 'message' is shadowing field",
+      "Warning: line 6 at 47-55: Method argument 'severity' is shadowing field",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1616,11 +3696,26 @@ exports[`Check samples Sample: twilio-salesforce 1`] = `
 {
   "logs": [
     [
+      "src/classes/TwilioCapability.cls",
+      "Warning: line 68 at 43-49: Method argument 'appSid' is shadowing field",
+      "Warning: line 81 at 43-49: Method argument 'appSid' is shadowing field",
+    ],
+    [
+      "src/classes/TwilioClient.cls",
+      "Warning: line 103 at 38-48: Method argument 'numRetries' is shadowing field",
+      "Warning: line 114 at 42-51: Method argument 'authToken' is shadowing field",
+      "Warning: line 126 at 43-53: Method argument 'accountSid' is shadowing field",
+      "Warning: line 663 at 35-43: Method argument 'endpoint' is shadowing field",
+    ],
+    [
       "src/classes/TwilioQueue.cls",
       "Error: line 26 at 8-20: Unreachable block or statement",
     ],
     [
       "src/classes/TwilioResource.cls",
+      "Warning: line 107 at 34-40: Method argument 'loaded' is shadowing field",
+      "Warning: line 281 at 49-55: Method argument 'params' is shadowing field",
+      "Warning: line 285 at 61-67: Method argument 'params' is shadowing field",
       "Warning: line 290 at 3-52: Local variable is hiding class field 'properties', see src/classes/TwilioResource.cls: line 132 at 10-41",
     ],
     [
@@ -1628,6 +3723,15 @@ exports[`Check samples Sample: twilio-salesforce 1`] = `
       "Warning: line 66 at 8-27: Local variable is hiding class field 'message', see src/classes/TwilioRestException.cls: line 28 at 25-40",
       "Warning: line 67 at 8-30: Local variable is hiding class field 'moreInfo', see src/classes/TwilioRestException.cls: line 31 at 25-41",
       "Warning: line 68 at 8-32: Local variable is hiding class field 'errorCode', see src/classes/TwilioRestException.cls: line 25 at 25-43",
+    ],
+    [
+      "src/classes/TwilioRestResponse.cls",
+      "Warning: line 118 at 35-45: Method argument 'httpStatus' is shadowing field",
+      "Warning: line 136 at 27-30: Method argument 'url' is shadowing field",
+      "Warning: line 154 at 35-46: Method argument 'queryString' is shadowing field",
+      "Warning: line 172 at 30-35: Method argument 'error' is shadowing field",
+      "Warning: line 199 at 35-46: Method argument 'contentType' is shadowing field",
+      "Warning: line 99 at 36-48: Method argument 'responseText' is shadowing field",
     ],
   ],
   "status": 4,
@@ -1644,6 +3748,16 @@ exports[`Check samples Sample: user-access-visualization 1`] = `
 exports[`Check samples Sample: visualforce-table-grid 1`] = `
 {
   "logs": [
+    [
+      "src/classes/RowManager.cls",
+      "Warning: line 166 at 36-45: Method argument 'soqlQuery' is shadowing field",
+    ],
+    [
+      "src/classes/SoqlQuery.cls",
+      "Warning: line 114 at 33-46: Method argument 'sortFieldName' is shadowing field",
+      "Warning: line 114 at 56-70: Method argument 'sortDescending' is shadowing field",
+      "Warning: line 74 at 38-48: Method argument 'fieldNames' is shadowing field",
+    ],
     [
       "src/classes/TableGridController.cls",
       "Warning: line 324 at 5-31: Local variable is hiding class field 'settings', see src/classes/TableGridController.cls: line 78 at 12-39",
