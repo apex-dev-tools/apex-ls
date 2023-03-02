@@ -615,6 +615,7 @@ object MethodMap {
         matchedMethod.visibility == PRIVATE_MODIFIER && method.visibility == PRIVATE_MODIFIER
 
       lazy val hasNonPrivateSameVisibilityModifier = !areBothPrivate && matchedMethod.visibility == method.visibility
+      lazy val hasNonPrivateModifierInSameFile = areInSameApexFile(method, matchedMethod) && !areBothPrivate
 
       if (areInSameApexClass(matchedMethod, method)) {
         matchedMethod match {
@@ -683,8 +684,7 @@ object MethodMap {
       } else if (
         !method.isOverride &&
           matchedMethod.isAbstract &&
-          //weirdness for private methods that don't need override
-          ((areInSameApexFile(method, matchedMethod) && !areBothPrivate) || hasNonPrivateSameVisibilityModifier)
+          (hasNonPrivateModifierInSameFile || hasNonPrivateSameVisibilityModifier)
       ) {
         setMethodError(
           method,
