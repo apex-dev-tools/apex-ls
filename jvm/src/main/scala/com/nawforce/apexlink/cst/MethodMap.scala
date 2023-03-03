@@ -314,6 +314,24 @@ object MethodMap {
           )
         })
       })
+
+    //Add errors for any static methods that shadow instance methods
+    staticLocals.flatMap(st=> {
+      val key = (st.name, st.parameters.length)
+      val methods =  workingMap.getOrElse(key, Nil)
+      methods.find(f => f.nameAndParameterTypes.toLowerCase == st.nameAndParameterTypes.toLowerCase).map((st, _))
+    }).foreach(methodAndStaticMethod=>{
+      setMethodError(
+        methodAndStaticMethod._1,
+        s"static method '${methodAndStaticMethod._1.name}' is a duplicate of an existing instance method",
+        errors
+      )
+      setMethodError(
+        methodAndStaticMethod._2,
+        s"method '${methodAndStaticMethod._2.name}' is a duplicate of an existing static method",
+        errors
+      )
+    })
     // Add errors for any static methods with protected modifier
     staticLocals.filter(s=>s.modifiers.contains(PROTECTED_MODIFIER)).foreach(m=>{
       setMethodError(
