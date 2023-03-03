@@ -186,6 +186,8 @@ trait Org {
     * input files must be Apex classes for this to find results. The results include all tests that
     * directly reference one of the input classes and tests that reference any supertype or
     * interface of an input class.
+    *
+    * Class namespaces are included.
     */
   def getTestClassNames(paths: Array[String]): Array[String]
 
@@ -194,6 +196,8 @@ trait Org {
     * This provides a summary of available test classes, the path and location within the file. It
     * does not provide test methods. Use a follow-up call to getTestMethodItems to retrieve method
     * locations for a set of paths. Pass an empty array to retrieve all.
+    *
+    * Class namespaces are NOT included.
     */
   def getTestClassItems(paths: Array[String]): Array[ClassTestItem]
 
@@ -201,6 +205,8 @@ trait Org {
     *
     * Similar to getTestClassNames, however it additionally provides the test class path and
     * location.
+    *
+    * Class namespaces are NOT included.
     */
   def getTestClassItemsChanged(paths: Array[String]): Array[ClassTestItem]
 
@@ -208,6 +214,8 @@ trait Org {
     *
     * This provides a summary of available test methods, class name and the path and location within
     * the file. Pass an empty array to retrieve all.
+    *
+    * Class namespaces are NOT included.
     */
   def getTestMethodItems(paths: Array[String]): Array[MethodTestItem]
 
