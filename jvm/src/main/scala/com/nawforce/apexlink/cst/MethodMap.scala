@@ -316,11 +316,8 @@ object MethodMap {
       })
 
     //Add errors for any static methods that shadow instance methods
-    staticLocals.flatMap(st=> {
-      val key = (st.name, st.parameters.length)
-      val methods =  workingMap.getOrElse(key, Nil)
-      methods.find(f => f.nameAndParameterTypes.toLowerCase == st.nameAndParameterTypes.toLowerCase).map((st, _))
-    }).foreach(methodAndStaticMethod=>{
+    staticLocals.flatMap(st=> instanceLocals.find(f => f.nameAndParameterTypes.toLowerCase == st.nameAndParameterTypes.toLowerCase).map((st, _)))
+      .foreach(methodAndStaticMethod=>{
       setMethodError(
         methodAndStaticMethod._1,
         s"static method '${methodAndStaticMethod._1.name}' is a duplicate of an existing instance method",
