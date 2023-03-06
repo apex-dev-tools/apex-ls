@@ -302,7 +302,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
       Map(
         "Dummy.cls" -> "public class Dummy {String a; void getInstance(String a) {}}"
       ),
-      "Warning: line 1 at 54-55: Method argument 'a' is shadowing field\n"
+      ""
     )
   }
 
