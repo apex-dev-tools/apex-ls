@@ -23,7 +23,7 @@ import com.nawforce.apexlink.types.platform.{GenericPlatformMethod, PlatformMeth
 import com.nawforce.apexlink.types.synthetic.CustomMethodDeclaration
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics._
-import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, AURA_ENABLED_ANNOTATION, Modifier, PRIVATE_MODIFIER, PROTECTED_MODIFIER}
+import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, AURA_ENABLED_ANNOTATION, Modifier, PRIVATE_MODIFIER, PROTECTED_MODIFIER }
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
 import com.nawforce.pkgforce.path.{Location, PathLocation}
@@ -630,6 +630,12 @@ object MethodMap {
       lazy val reallyPrivateMethod =
         matchedMethod.visibility == PRIVATE_MODIFIER && !areInSameApexFile(method, matchedMethod)
 
+      lazy val areBothPrivate=
+        matchedMethod.visibility == PRIVATE_MODIFIER && method.visibility == PRIVATE_MODIFIER
+
+      lazy val hasNonPrivateSameVisibilityModifier = !areBothPrivate && matchedMethod.visibility == method.visibility
+      lazy val hasNonPrivateModifierInSameFile = areInSameApexFile(method, matchedMethod) && !areBothPrivate
+
       if (areInSameApexClass(matchedMethod, method)) {
         matchedMethod match {
           case matchedMethod: ApexMethodLike =>
@@ -694,6 +700,16 @@ object MethodMap {
             s"Method '${method.name}' can not override a private method",
             errors
           )
+      } else if (
+        !method.isOverride &&
+          matchedMethod.isAbstract &&
+          (hasNonPrivateModifierInSameFile || hasNonPrivateSameVisibilityModifier)
+      ) {
+        setMethodError(
+          method,
+          s"Method '${method.name}' must use the 'override' keyword when implementing an abstract method",
+          errors
+        )
       }
     } else if (method.isOverride && isComplete) {
       setMethodError(

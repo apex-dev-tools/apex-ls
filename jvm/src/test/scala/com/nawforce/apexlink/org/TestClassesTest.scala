@@ -5,13 +5,20 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
+import com.nawforce.apexlink.rpc.{ClassTestItem, MethodTestItem, TargetLocation}
 import com.nawforce.apexlink.types.apex.SummaryDeclaration
 import com.nawforce.pkgforce.names.{Name, TypeName}
-import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestClassesTest extends AnyFunSuite with TestHelper {
+
+  private def pathString(root: PathLike, basename: String): String =
+    root.join(basename).toString
+
+  private def getFullPaths(root: PathLike, paths: Array[String]): Array[String] =
+    paths.map(p => pathString(root, p))
 
   private def getTestClassNames(root: PathLike, paths: Array[String]): Set[String] = {
     withOrg(org => {
@@ -71,8 +78,8 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
 
         val org2 = createHappyOrg(root)
         val pkg2 = org2.packagesByNamespace(Some(Name("pkg")))
-        files.foreach(
-          file => assertIsSummaryDeclaration(pkg2, file._1.replace(".cls", ""), Some(Name("pkg")))
+        files.foreach(file =>
+          assertIsSummaryDeclaration(pkg2, file._1.replace(".cls", ""), Some(Name("pkg")))
         )
 
         verify(root.join("pkg"), Some("pkg"))
@@ -490,4 +497,225 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  // getTestClassItems
+
+  test("Should get single test class item") {
+    run(
+      Map(
+        "Dummy.cls"     -> "public class Dummy {}",
+        "DummyTest.cls" -> "@isTest public class DummyTest { {Dummy a;}}"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(
+          _.getTestClassItems(getFullPaths(root, Array("Dummy.cls", "DummyTest.cls")))
+        ).toSet ==
+          Set(
+            ClassTestItem(
+              "DummyTest",
+              TargetLocation(pathString(root, "DummyTest.cls"), Location(1, 21, 1, 30))
+            )
+          )
+      )
+    }
+  }
+
+  test("Should get multiple test class items") {
+    run(
+      Map(
+        "Dummy.cls"      -> "public class Dummy {}",
+        "DummyTest.cls"  -> "@isTest public class DummyTest { {Dummy a;}}",
+        "DummyTest2.cls" -> "@isTest public class DummyTest2 { {Dummy a;}}",
+        "DummyTest3.cls" -> "@isTest public class DummyTest3 { {Dummy a;}}",
+        "DummyTest4.cls" -> "@isTest public class DummyTest4 { {Dummy a;}}"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(
+          _.getTestClassItems(
+            getFullPaths(
+              root,
+              Array("Dummy.cls", "DummyTest.cls", "DummyTest2.cls", "DummyTest4.cls")
+            )
+          )
+        ).toSet ==
+          Set(
+            ClassTestItem(
+              "DummyTest",
+              TargetLocation(pathString(root, "DummyTest.cls"), Location(1, 21, 1, 30))
+            ),
+            ClassTestItem(
+              "DummyTest2",
+              TargetLocation(pathString(root, "DummyTest2.cls"), Location(1, 21, 1, 31))
+            ),
+            ClassTestItem(
+              "DummyTest4",
+              TargetLocation(pathString(root, "DummyTest4.cls"), Location(1, 21, 1, 31))
+            )
+          )
+      )
+    }
+  }
+
+  test("Should get all test class items") {
+    run(
+      Map(
+        "Dummy.cls"      -> "public class Dummy {}",
+        "DummyTest.cls"  -> "@isTest public class DummyTest { {Dummy a;}}",
+        "DummyTest2.cls" -> "@isTest public class DummyTest2 { {Dummy a;}}",
+        "DummyTest3.cls" -> "@isTest public class DummyTest3 { {Dummy a;}}",
+        "DummyTest4.cls" -> "@isTest public class DummyTest4 { {Dummy a;}}"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(_.getTestClassItems(Array())).toSet ==
+          Set(
+            ClassTestItem(
+              "DummyTest",
+              TargetLocation(pathString(root, "DummyTest.cls"), Location(1, 21, 1, 30))
+            ),
+            ClassTestItem(
+              "DummyTest2",
+              TargetLocation(pathString(root, "DummyTest2.cls"), Location(1, 21, 1, 31))
+            ),
+            ClassTestItem(
+              "DummyTest3",
+              TargetLocation(pathString(root, "DummyTest3.cls"), Location(1, 21, 1, 31))
+            ),
+            ClassTestItem(
+              "DummyTest4",
+              TargetLocation(pathString(root, "DummyTest4.cls"), Location(1, 21, 1, 31))
+            )
+          )
+      )
+    }
+  }
+
+  // getTestClassItemsChanged
+
+  test("should get referenced class items") {
+    run(
+      Map(
+        "Dummy.cls"      -> "public class Dummy {}",
+        "DummyTest.cls"  -> "@isTest public class DummyTest { {Dummy a;}}",
+        "DummyTest2.cls" -> "@isTest public class DummyTest2 { }",
+        "DummyTest3.cls" -> "@isTest public class DummyTest3 { {Dummy a;}}",
+        "DummyTest4.cls" -> "@isTest public class DummyTest4 { }"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(
+          _.getTestClassItemsChanged(getFullPaths(root, Array("Dummy.cls", "DummyTest2.cls")))
+        ).toSet ==
+          Set(
+            ClassTestItem(
+              "DummyTest",
+              TargetLocation(pathString(root, "DummyTest.cls"), Location(1, 21, 1, 30))
+            ),
+            ClassTestItem(
+              "DummyTest2",
+              TargetLocation(pathString(root, "DummyTest2.cls"), Location(1, 21, 1, 31))
+            ),
+            ClassTestItem(
+              "DummyTest3",
+              TargetLocation(pathString(root, "DummyTest3.cls"), Location(1, 21, 1, 31))
+            )
+          )
+      )
+    }
+  }
+
+  // getTestMethodItems
+
+  test("No method items") {
+    run(
+      Map(
+        "Dummy.cls"     -> "public class Dummy {}",
+        "DummyTest.cls" -> "@isTest public class DummyTest { }"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(
+          _.getTestMethodItems(getFullPaths(root, Array("Dummy.cls", "DummyTest.cls")))
+        ).isEmpty
+      )
+    }
+  }
+
+  test("Should get isTest method items") {
+    run(
+      Map(
+        "Dummy.cls"     -> "public class Dummy {}",
+        "DummyTest.cls" -> "@isTest public class DummyTest { @isTest static void dummy() {} }"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(
+          _.getTestMethodItems(getFullPaths(root, Array("Dummy.cls", "DummyTest.cls")))
+        ).toSet ==
+          Set(
+            MethodTestItem(
+              "dummy",
+              "DummyTest",
+              TargetLocation(pathString(root, "DummyTest.cls"), Location(1, 53, 1, 58))
+            )
+          )
+      )
+    }
+  }
+
+  test("Should get testMethod method items") {
+    run(
+      Map(
+        "Dummy.cls"     -> "public class Dummy {}",
+        "DummyTest.cls" -> "@isTest public class DummyTest { static testMethod void dummy() {} }"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(
+          _.getTestMethodItems(getFullPaths(root, Array("Dummy.cls", "DummyTest.cls")))
+        ).toSet ==
+          Set(
+            MethodTestItem(
+              "dummy",
+              "DummyTest",
+              TargetLocation(pathString(root, "DummyTest.cls"), Location(1, 56, 1, 61))
+            )
+          )
+      )
+    }
+  }
+
+  test("Should get all test method items") {
+    run(
+      Map(
+        "Dummy.cls"     -> "public class Dummy {}",
+        "DummyTest.cls" -> "@isTest public class DummyTest { }",
+        "DummyTest2.cls" -> "@isTest public class DummyTest2 { @isTest static void dummy() {} @isTest static void dummy2() {} }",
+        "DummyTest3.cls" -> "@isTest public class DummyTest3 { @isTest static void dummy() {} }",
+        "DummyTest4.cls" -> "@isTest public class DummyTest4 { }"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(_.getTestMethodItems(Array())).toSet ==
+          Set(
+            MethodTestItem(
+              "dummy",
+              "DummyTest2",
+              TargetLocation(pathString(root, "DummyTest2.cls"), Location(1, 54, 1, 59))
+            ),
+            MethodTestItem(
+              "dummy2",
+              "DummyTest2",
+              TargetLocation(pathString(root, "DummyTest2.cls"), Location(1, 85, 1, 91))
+            ),
+            MethodTestItem(
+              "dummy",
+              "DummyTest3",
+              TargetLocation(pathString(root, "DummyTest3.cls"), Location(1, 54, 1, 59))
+            )
+          )
+      )
+    }
+  }
 }

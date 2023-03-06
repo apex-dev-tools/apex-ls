@@ -297,6 +297,16 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Instance method shadowing a static method") {
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy { void getInstance() {}  static void getInstance(){}}"
+      ),
+      "Error: line 1 at 26-37: method 'getInstance' is a duplicate of an existing static method\n" +
+        "Error: line 1 at 56-67: static method 'getInstance' is a duplicate of an existing instance method\n"
+    )
+  }
+
   test("Instance method parameter shadowing instance field") {
     testMethods(
       Map(
