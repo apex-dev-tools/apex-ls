@@ -719,20 +719,15 @@ object MethodMap {
   }
 
   private def checkShadowedFields(method: MethodDeclaration, td: TypeDeclaration, errors: mutable.Buffer[Issue]): Unit = {
-    val fieldsByName:mutable.Map[Name, FieldDeclaration] = mutable.Map(td.fields.map(f => (f.name, f)): _*)
+    val fieldsByName: mutable.Map[Name, FieldDeclaration] = mutable.Map(td.fields.map(f => (f.name, f)): _*)
 
-    val staticContext = Option.when(method.isStatic)(true)
     method.parameters
       .flatMap(param => {
-        val matches = fieldsByName.get(param.name)
-        val shadowed = staticContext match {
-          case Some(isStatic) => matches.find(f => f.isStatic == isStatic)
-          case None => matches
-        }
+        val shadowed = fieldsByName.get(param.name).find(f=>f.isStatic)
         shadowed.map((param, _))
       })
       .foreach(paramAndField => {
-        val msg = if (paramAndField._2.isStatic) s"Method argument '${paramAndField._1.name}' is shadowing a static field" else s"Method argument '${paramAndField._1.name}' is shadowing field"
+        val msg = s"Method argument '${paramAndField._1.name}' is shadowing a static field"
         paramAndField._1 match {
           case fp:FormalParameter =>  errors.append(
             new Issue(fp.id.location.path, Diagnostic(WARNING_CATEGORY, fp.id.location.location, msg))
