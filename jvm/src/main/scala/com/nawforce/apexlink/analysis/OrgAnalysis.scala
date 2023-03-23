@@ -5,7 +5,7 @@ package com.nawforce.apexlink.analysis
 
 import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, NoAnalysis, ServerOps}
 import com.nawforce.apexlink.org.OPM.OrgImpl
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.documents.{ApexNature, MetadataDocument}
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.platform.Path
@@ -80,11 +80,10 @@ class OrgAnalysis(org: OrgImpl) {
   }
 
   private def toIssue(providerId: String, issue: APIIssue): Issue = {
-    // Convert from JVM only APIIssue back to Scala compatible Issue
     new Issue(
       Path(issue.filePath()),
       new Diagnostic(
-        DiagnosticCategory(issue.rule().name()),
+        if (issue.isError) ERROR_CATEGORY else WARNING_CATEGORY,
         new Location(
           issue.fileLocation().startLineNumber(),
           issue.fileLocation().startCharOffset(),
