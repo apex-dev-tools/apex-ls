@@ -36,7 +36,7 @@ class OrgQueue(path: String) {
   private val dispatcher = new APIRequestDispatcher()
   new Thread(dispatcher).start()
 
-  class APIRequestDispatcher() extends Runnable {
+  private class APIRequestDispatcher() extends Runnable {
 
     override def run(): Unit = {
       while (true) {
@@ -327,6 +327,31 @@ object GetImplementation {
   }
 }
 
+case class GetReferences(
+  promise: Promise[Array[TargetLocation]],
+  path: String,
+  line: Int,
+  offset: Int
+) extends APIRequest {
+  override def process(queue: OrgQueue): Unit = {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    promise.success(orgImpl.getReferences(path, line, offset))
+  }
+}
+
+object GetReferences {
+  def apply(
+    queue: OrgQueue,
+    path: String,
+    line: Int,
+    offset: Int
+  ): Future[Array[TargetLocation]] = {
+    val promise = Promise[Array[TargetLocation]]()
+    queue.add(new GetReferences(promise, path, line, offset))
+    promise.future
+  }
+}
+
 case class GetDependencyBombs(promise: Promise[Array[BombScore]], count: Int) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
@@ -589,6 +614,15 @@ class OrgAPIImpl extends OrgAPI {
     content: Option[String]
   ): Future[Array[LocationLink]] = {
     GetImplementation(OrgQueue.instance(), path, line, offset, content)
+  }
+
+  override def getReferences(
+    path: String,
+    line: Int,
+    offset: Int,
+    content: Option[String]
+  ): Future[Array[TargetLocation]] = {
+    GetReferences(OrgQueue.instance(), path, line, offset)
   }
 
   override def getDependencyBombs(count: Int): Future[Array[BombScore]] = {
