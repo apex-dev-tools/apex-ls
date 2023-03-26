@@ -619,8 +619,7 @@ class OrgAPIImpl extends OrgAPI {
   override def getReferences(
     path: String,
     line: Int,
-    offset: Int,
-    content: Option[String]
+    offset: Int
   ): Future[Array[TargetLocation]] = {
     GetReferences(OrgQueue.instance(), path, line, offset)
   }
