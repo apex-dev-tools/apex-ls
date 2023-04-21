@@ -254,25 +254,6 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  /*
-  test("Lookup SObjectField (via id field)") {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" ->
-          "public class Dummy { {SObjectField a = Opportunity.AccountId.Name;} }"
-      )
-    ) { root: PathLike =>
-      val org = createOrg(root)
-      assert(org.issues.isEmpty)
-      assert(
-        unmanagedClass("Dummy").get.blocks.head.dependencies().toSet == Set(
-          unmanagedSObject("Opportunity").get,
-          unmanagedSObject("Account").get
-        )
-      )
-    }
-  }*/
-
   test("Lookup SObjectField (passed to method)") {
     FileSystemHelper.run(
       Map(
