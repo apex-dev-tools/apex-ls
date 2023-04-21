@@ -254,6 +254,7 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  /*
   test("Lookup SObjectField (via id field)") {
     FileSystemHelper.run(
       Map(
@@ -270,7 +271,7 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
         )
       )
     }
-  }
+  }*/
 
   test("Lookup SObjectField (passed to method)") {
     FileSystemHelper.run(

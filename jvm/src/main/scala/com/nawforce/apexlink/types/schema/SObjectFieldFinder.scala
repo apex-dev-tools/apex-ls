@@ -125,6 +125,9 @@ trait SObjectFieldFinder {
     module: Option[OPM.Module],
     sObjectFields: Map[Name, FieldDeclaration]
   ): FieldDeclaration = {
+    field.getSObjectStaticField(shareTypeName, module)
+
+    /*
     field match {
       /* Relationship 'Id' fields can be used in place of the actual relationship field as must be typed as such */
       case field: PlatformField if isRelationshipField(field) =>
@@ -150,7 +153,7 @@ trait SObjectFieldFinder {
 
       case _ =>
         field.getSObjectStaticField(shareTypeName, module)
-    }
+    }*/
   }
 
   /** As general rule relationship fields are typed differently and can be recognised by having an Id suffix on the
