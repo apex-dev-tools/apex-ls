@@ -26,10 +26,8 @@ import com.nawforce.apexlink.types.synthetic.{
   CustomFieldDeclaration,
   LocatableCustomFieldDeclaration
 }
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
-import com.nawforce.pkgforce.path.Location
 import com.nawforce.pkgforce.stream._
 
 import scala.collection.immutable.ArraySeq
@@ -84,7 +82,9 @@ class SObjectDeployer(module: OPM.Module) {
       }
 
       derivedFields.addAll(derived)
-      val fields = nonDerived.flatMap(createCustomField)
+      val fields = nonDerived
+        .filter(f => module.isGulped || isCustomField(f))
+        .flatMap(createCustomField)
 
       val sobjects =
         if (encodedName.ext.nonEmpty)
@@ -105,6 +105,10 @@ class SObjectDeployer(module: OPM.Module) {
     addDerivedFieldsToObjects(derivedFields, createdSObjects)
 
     createdSObjects.values.toArray
+  }
+
+  private def isCustomField(field: CustomFieldEvent): Boolean = {
+    field.name.toString.endsWith("__c")
   }
 
   private def createCustomField(field: CustomFieldEvent): Array[FieldDeclaration] = {
@@ -686,7 +690,7 @@ object SObjectDeployer {
   }
 
   /** Standard fields for platform events. */
-  val standardPlatformEventFields: ArraySeq[FieldDeclaration] = {
+  private val standardPlatformEventFields: ArraySeq[FieldDeclaration] = {
     ArraySeq(
       CustomFieldDeclaration(Names.ReplayId, TypeNames.String, None),
       CustomFieldDeclaration(XNames.CreatedBy, TypeNames.User, None),
@@ -696,7 +700,7 @@ object SObjectDeployer {
   }
 
   /** Standard fields for custom metadata. */
-  val standardCustomMetadataFields: ArraySeq[FieldDeclaration] = {
+  private val standardCustomMetadataFields: ArraySeq[FieldDeclaration] = {
     ArraySeq(
       CustomFieldDeclaration(Names.DeveloperName, TypeNames.String, None),
       CustomFieldDeclaration(Names.IsProtected, TypeNames.Boolean, None),
@@ -710,20 +714,7 @@ object SObjectDeployer {
 
   /** Standard fields for a \_\_Share SObject. */
   def shareFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
-    shareFields ++ ArraySeq(
-      CustomFieldDeclaration(
-        Names.SObjectType,
-        TypeNames.sObjectType$(typeName),
-        None,
-        asStatic = true
-      ),
-      CustomFieldDeclaration(
-        Names.Fields,
-        TypeNames.sObjectFields$(typeName),
-        None,
-        asStatic = true
-      )
-    )
+    shareFields ++ commonFieldsFor(typeName)
   }
 
   private val shareFields: ArraySeq[FieldDeclaration] =
@@ -739,7 +730,11 @@ object SObjectDeployer {
     )
 
   def feedFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
-    feedFields ++ ArraySeq(
+    feedFields ++ commonFieldsFor(typeName)
+  }
+
+  private def commonFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
+    ArraySeq(
       CustomFieldDeclaration(
         Names.SObjectType,
         TypeNames.sObjectType$(typeName),
@@ -811,11 +806,11 @@ object SObjectDeployer {
       CustomFieldDeclaration(XNames.ParentId, TypeNames.IdType, None)
     )
 
-  val derivedFieldTypes: Set[Name] =
+  private val derivedFieldTypes: Set[Name] =
     Set(Name("Summary"))
 
   /** Convert a field type string to the platform type used for it in Apex. */
-  def platformTypeOfFieldType(field: CustomFieldEvent): TypeDeclaration = {
+  private def platformTypeOfFieldType(field: CustomFieldEvent): TypeDeclaration = {
     field.rawType.value match {
       case "MasterDetail"        => PlatformTypes.idType
       case "Lookup"              => PlatformTypes.idType

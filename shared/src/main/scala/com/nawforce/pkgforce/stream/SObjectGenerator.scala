@@ -256,13 +256,9 @@ object SObjectGenerator {
     path: PathLike
   ): Iterator[PackageEvent] = {
     catchXMLExceptions(path) {
-      val name = Name(elem.getSingleChildAsString("fullName").trim)
-
-      // We only need custom fields
-      if (!name.toString.endsWith("__c"))
-        return Iterator()
-
+      val name    = Name(elem.getSingleChildAsString("fullName").trim)
       val rawType = elem.getSingleChildAsString("type").trim
+
       if (!fieldTypes.contains(rawType)) {
         return IssuesEvent.iterator(
           ArraySeq(
