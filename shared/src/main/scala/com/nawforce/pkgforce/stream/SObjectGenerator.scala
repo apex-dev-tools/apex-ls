@@ -255,12 +255,14 @@ object SObjectGenerator {
     elem: XMLElementLike,
     path: PathLike
   ): Iterator[PackageEvent] = {
-    catchXMLExceptions(path) {
-      val name    = Name(elem.getSingleChildAsString("fullName").trim)
+    var isCustom = false
+    val events = catchXMLExceptions(path) {
+      val name = Name(elem.getSingleChildAsString("fullName").trim)
+      isCustom = name.toString.endsWith("__c")
       val rawType = elem.getSingleChildAsString("type").trim
 
       if (!fieldTypes.contains(rawType)) {
-        return IssuesEvent.iterator(
+        IssuesEvent.iterator(
           ArraySeq(
             Issue(
               path,
@@ -272,31 +274,40 @@ object SObjectGenerator {
             )
           )
         )
-      }
+      } else {
 
-      // Create additional fields & lookup relationships for special fields
-      val target = rawType match {
-        case "Lookup" | "MasterDetail" | "MetadataRelationship" =>
-          Some(
-            (
-              Name(elem.getSingleChildAsString("referenceTo").trim),
-              Name(elem.getSingleChildAsString("relationshipName").trim)
+        // Create additional fields & lookup relationships for special fields
+        val target = rawType match {
+          case "Lookup" | "MasterDetail" | "MetadataRelationship" =>
+            Some(
+              (
+                Name(elem.getSingleChildAsString("referenceTo").trim),
+                Name(elem.getSingleChildAsString("relationshipName").trim)
+              )
             )
-          )
-        case _ => None
-      }
+          case _ => None
+        }
 
-      // Child relationship field references
-      val related = rawType match {
-        case "Summary" =>
-          elem
-            .getOptionalSingleChildAsString("summarizedField")
-            .map(fieldStr => DotName(fieldStr.trim))
-            .map(field => (field.firstName, field.lastName))
-        case _ => None
-      }
+        // Child relationship field references
+        val related = rawType match {
+          case "Summary" =>
+            elem
+              .getOptionalSingleChildAsString("summarizedField")
+              .map(fieldStr => DotName(fieldStr.trim))
+              .map(field => (field.firstName, field.lastName))
+          case _ => None
+        }
 
-      Iterator(CustomFieldEvent(sourceInfo, name, Name(rawType), target, related))
+        Iterator(CustomFieldEvent(sourceInfo, name, Name(rawType), target, related))
+      }
+    }.toSeq
+
+    val hasErrors = events.collect { case e: IssuesEvent => e }.nonEmpty
+    if (hasErrors && !isCustom) {
+      // Standard fields can be 'configured' without full details, we can ignore these
+      Iterator.empty
+    } else {
+      events.iterator
     }
   }
 
