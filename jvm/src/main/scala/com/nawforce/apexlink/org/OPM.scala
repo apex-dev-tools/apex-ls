@@ -35,7 +35,7 @@ import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType
 import com.nawforce.apexparser.ApexParser
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
-import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, TEST_METHOD_MODIFIER}
+import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.pkgforce.pkgs.TriHierarchy
@@ -43,7 +43,6 @@ import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, ProjectConfig, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.spi.AnalysisProvider
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
@@ -112,9 +111,10 @@ object OPM extends TriHierarchy {
       def createModule(
         pkg: PackageImpl,
         dependencies: ArraySeq[Module],
+        isGulped: Boolean,
         index: DocumentIndex
       ): Module = {
-        new Module(pkg, dependencies, index)
+        new Module(pkg, dependencies, isGulped, index)
       }
 
       OrgInfo.current.withValue(this) {
@@ -126,7 +126,6 @@ object OPM extends TriHierarchy {
             acc :+ new PackageImpl(
               this,
               pkgLayer.namespace,
-              pkgLayer.isGulped,
               acc,
               workspace,
               ArraySeq.unsafeWrapArray(pkgLayer.layers.toArray),
@@ -137,17 +136,7 @@ object OPM extends TriHierarchy {
         // If no unmanaged, create it
         val unmanaged =
           if (declared.isEmpty || declared.lastOption.exists(_.namespace.nonEmpty))
-            Seq(
-              new PackageImpl(
-                this,
-                None,
-                isGulped = false,
-                declared,
-                workspace,
-                ArraySeq.empty,
-                createModule
-              )
-            )
+            Seq(new PackageImpl(this, None, declared, workspace, ArraySeq.empty, createModule))
           else
             Seq.empty
         ArraySeq.unsafeWrapArray((declared ++ unmanaged).toArray)
@@ -447,11 +436,10 @@ object OPM extends TriHierarchy {
   class PackageImpl(
     override val org: OrgImpl,
     override val namespace: Option[Name],
-    override val isGulped: Boolean,
     override val basePackages: ArraySeq[PackageImpl],
     workspace: Workspace,
     layers: ArraySeq[ModuleLayer],
-    mdlFactory: (PackageImpl, ArraySeq[Module], DocumentIndex) => Module
+    mdlFactory: (PackageImpl, ArraySeq[Module], Boolean, DocumentIndex) => Module
   ) extends TriPackage
       with PackageAPI
       with DefinitionProvider
@@ -462,7 +450,7 @@ object OPM extends TriHierarchy {
     val modules: ArraySeq[Module] =
       layers
         .foldLeft(ArraySeq[Module]())((acc, layer) => {
-          acc :+ mdlFactory(this, acc, workspace.indexes(layer))
+          acc :+ mdlFactory(this, acc, layer.isGulped, workspace.indexes(layer))
         })
 
     /** Is this or any base package of this a ghost package. */
@@ -480,11 +468,15 @@ object OPM extends TriHierarchy {
     def packageContext: PackageContext = {
       def toNSString(ns: Option[Name]): String = ns.map(_.value).getOrElse("")
       val ghostedPackages = basePackages
-        .filterNot(_.isGulped)
         .groupBy(_.isGhosted)
         .map(kv => (kv._1, kv._2.map(pkg => toNSString(pkg.namespace)).sorted.toArray))
       val additionalNamespaces =
-        basePackages.filter(_.isGulped).map(pkg => toNSString(pkg.namespace)).toArray
+        basePackages
+          .flatMap(_.modules)
+          .filter(_.isGulped)
+          .map(pkg => toNSString(pkg.namespace))
+          .toSet
+          .toArray
       PackageContext(
         namespace.map(_.value),
         ghostedPackages.getOrElse(true, Array.empty),
@@ -564,6 +556,7 @@ object OPM extends TriHierarchy {
   class Module(
     override val pkg: PackageImpl,
     override val dependents: ArraySeq[Module],
+    override val isGulped: Boolean,
     val index: DocumentIndex
   ) extends TriModule
       with ModuleRefresh
@@ -572,8 +565,6 @@ object OPM extends TriHierarchy {
       with ModuleCompletions {
 
     def namespaces: Set[Name] = pkg.namespaces
-
-    val isGulped: Boolean = pkg.isGulped
 
     private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
     private val schemaManager   = SchemaSObjectType(this)

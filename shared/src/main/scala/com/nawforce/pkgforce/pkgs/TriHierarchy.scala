@@ -18,7 +18,9 @@ abstract class TriHierarchy {
   trait TriOrg {
     self: TOrg =>
 
-    /** Packages in org in deploy order, the last entry is the unmanaged package identified by namespace = None */
+    /** Packages in org in deploy order, the last entry is the unmanaged package identified by
+      * namespace = None
+      */
     val packages: ArraySeq[TPackage]
 
     /** Packages in org by namespace */
@@ -37,9 +39,6 @@ abstract class TriHierarchy {
 
     /** Namespace for the package, None=unmanaged */
     val namespace: Option[Name]
-
-    /** Was this package loaded from gulped metadata */
-    val isGulped: Boolean
 
     /** The packages this package depends on */
     val basePackages: ArraySeq[TPackage]
@@ -92,6 +91,9 @@ abstract class TriHierarchy {
 
     /** The module (& owning package namespace) */
     lazy val namespace: Option[Name] = pkg.namespace
+
+    /** Was this module loaded from gulped metadata */
+    val isGulped: Boolean
 
     /** The package the parent package depends on in reverse deploy order */
     lazy val basePackages: ArraySeq[TPackage] = pkg.basePackages.reverse

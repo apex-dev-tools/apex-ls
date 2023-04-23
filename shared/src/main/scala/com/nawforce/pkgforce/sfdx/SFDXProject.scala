@@ -110,8 +110,8 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   val unpackagedMetadata: Seq[PackageDirectory] =
     plugins.getOrElse("unpackagedMetadata", ujson.Arr()) match {
       case value: ujson.Arr =>
-        value.value.toSeq.map(
-          value => PackageDirectory.fromUnpackagedMetadata(projectPath, config, value)
+        value.value.toSeq.map(value =>
+          PackageDirectory.fromUnpackagedMetadata(projectPath, config, value)
         )
       case value =>
         config
@@ -132,12 +132,11 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
               case _ =>
                 config
                   .lineAndOffsetOf(value)
-                  .map(
-                    lineAndOffset =>
-                      throw SFDXProjectError(
-                        lineAndOffset,
-                        "'additionalNamespaces' entries should all be strings"
-                      )
+                  .map(lineAndOffset =>
+                    throw SFDXProjectError(
+                      lineAndOffset,
+                      "'additionalNamespaces' entries should all be strings"
+                    )
                   )
                 None
             }
@@ -150,12 +149,11 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
         if (dups.nonEmpty) {
           config
             .lineAndOffsetOf(value)
-            .map(
-              lineAndOffset =>
-                throw SFDXProjectError(
-                  lineAndOffset,
-                  s"namespace '${dups.head._1.getOrElse("unmanaged")}' is duplicated in additionalNamespaces'"
-                )
+            .map(lineAndOffset =>
+              throw SFDXProjectError(
+                lineAndOffset,
+                s"namespace '${dups.head._1.getOrElse("unmanaged")}' is duplicated in additionalNamespaces'"
+              )
             )
         }
         namespaces.toArray
@@ -207,7 +205,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
           .getOrElse(None)
         None
       case Right(path) if ns != namespace =>
-        Some(NamespaceLayer(ns, isGulped = true, Seq(ModuleLayer(projectPath, path, Seq()))))
+        Some(NamespaceLayer(ns, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
       case Right(_) => None
     }
   })
@@ -255,11 +253,11 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
 
     val gulpLocalModule =
       if (additionalNamespaces.contains(namespace))
-        Seq(ModuleLayer(projectPath, gulpPath(namespace).mkString("/"), Seq()))
+        Seq(ModuleLayer(projectPath, gulpPath(namespace).mkString("/"), isGulped = true, Seq()))
       else
         Seq()
 
-    val localPackage = NamespaceLayer(namespace, isGulped = false, gulpLocalModule ++ localModules)
+    val localPackage = NamespaceLayer(namespace, gulpLocalModule ++ localModules)
 
     if (!validatePackagePathsLocal(localPackage.layers, logger))
       return Seq.empty
@@ -312,18 +310,17 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     val escaping = modules.flatMap(module => {
       if (!module.path.toString.startsWith(enclosingPath)) Some(module.path) else None
     })
-    escaping.foreach(
-      path =>
-        logger.log(
-          Issue(
-            projectFile,
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location.empty,
-              s"Package directory '$path' is not within the project directory '$projectPath'"
-            )
+    escaping.foreach(path =>
+      logger.log(
+        Issue(
+          projectFile,
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location.empty,
+            s"Package directory '$path' is not within the project directory '$projectPath'"
           )
         )
+      )
     )
     escaping.isEmpty
   }
@@ -346,13 +343,19 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
         )
         Seq.empty
       case (true, false) =>
-        Seq(NamespaceLayer(dependent.namespace, isGulped = false, Nil))
+        Seq(NamespaceLayer(dependent.namespace, Nil))
       case (true, true) =>
         Seq(
           NamespaceLayer(
             dependent.namespace,
-            isGulped = false,
-            Seq(ModuleLayer(projectPath.join(dependent.relativePath.get), ".", Seq.empty))
+            Seq(
+              ModuleLayer(
+                projectPath.join(dependent.relativePath.get),
+                ".",
+                isGulped = false,
+                Seq.empty
+              )
+            )
           )
         )
       case (false, true) =>
@@ -370,12 +373,17 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   ): (Map[String, VersionedPackageLayer], List[ModuleLayer]) = {
 
     // Check dependencies are well formed
-    val dependencies = packageDirectory.dependencies.flatMap(
-      dependency => validateDependency(layers._1, dependency, logger)
+    val dependencies = packageDirectory.dependencies.flatMap(dependency =>
+      validateDependency(layers._1, dependency, logger)
     )
     val newLayer = VersionedPackageLayer(
       packageDirectory.version,
-      ModuleLayer(projectPath, packageDirectory.relativePath, dependencies.map(_.packageLayer))
+      ModuleLayer(
+        projectPath,
+        packageDirectory.relativePath,
+        isGulped = false,
+        dependencies.map(_.packageLayer)
+      )
     )
 
     // For 2GP, named packages need a version as well

@@ -38,9 +38,10 @@ object IPM extends TriHierarchy {
       def createModule(
         pkg: Package,
         index: DocumentIndex,
+        isGulped: Boolean,
         dependencies: ArraySeq[Module]
       ): Module = {
-        new MetadataModule(pkg, dependencies, index, loadingPool)
+        new MetadataModule(pkg, dependencies, isGulped, index, loadingPool)
       }
 
       val logger = new CatchingLogger
@@ -64,7 +65,6 @@ object IPM extends TriHierarchy {
           acc :+ new MetadataPackage(
             this,
             pkgLayer.namespace,
-            pkgLayer.isGulped,
             if (acc.isEmpty) ArraySeq(platform.head) else acc,
             workspace,
             ArraySeq.unsafeWrapArray(pkgLayer.layers.toArray),
@@ -82,7 +82,6 @@ object IPM extends TriHierarchy {
             new MetadataPackage(
               this,
               None,
-              isGulped = false,
               declared,
               workspace,
               ArraySeq.empty,
@@ -198,24 +197,24 @@ object IPM extends TriHierarchy {
   class MetadataPackage(
     override val org: Index,
     override val namespace: Option[Name],
-    override val isGulped: Boolean,
     override val basePackages: ArraySeq[Package],
     workspace: Workspace,
     layers: ArraySeq[ModuleLayer],
-    mdlFactory: (Package, DocumentIndex, ArraySeq[Module]) => Module,
+    mdlFactory: (Package, DocumentIndex, Boolean, ArraySeq[Module]) => Module,
     logger: IssueLogger
   ) extends Package {
 
     val modules: ArraySeq[Module] =
       layers
         .foldLeft(ArraySeq[Module]())((acc, layer) => {
-          acc :+ mdlFactory(this, workspace.indexes(layer), acc)
+          acc :+ mdlFactory(this, workspace.indexes(layer), layer.isGulped, acc)
         })
   }
 
   class MetadataModule(
     override val pkg: Package,
     override val dependents: ArraySeq[Module],
+    override val isGulped: Boolean,
     val index: DocumentIndex,
     loadingPool: ExecutorService
   ) extends Module {
@@ -423,8 +422,6 @@ object IPM extends TriHierarchy {
 
     override val namespace: Option[Name] = Some(_namespace)
 
-    override val isGulped: Boolean = false
-
     val modules: ArraySeq[Module] = ArraySeq(PlatformModule(_namespace, this))
   }
 
@@ -439,6 +436,8 @@ object IPM extends TriHierarchy {
       namespace.contains(Names.System) || namespace.contains(Names.Schema)
 
     override val dependents: ArraySeq[Module] = ArraySeq.empty
+
+    override val isGulped: Boolean = false
 
     override def findExactTypeId(
       name: String,

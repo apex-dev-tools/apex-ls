@@ -31,11 +31,10 @@ sealed trait Layer
   * for 'ghosted' packages where only knowledge of a namespace is provided. In a 1GP package each
   * layer will depend on its predecessor, with 2GP the layer dependencies are declared.
   */
-case class NamespaceLayer(namespace: Option[Name], isGulped: Boolean, layers: Seq[ModuleLayer])
-    extends Layer {
+case class NamespaceLayer(namespace: Option[Name], layers: Seq[ModuleLayer]) extends Layer {
   def indexes(logger: IssuesManager): Map[ModuleLayer, DocumentIndex] =
     layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
-      acc + (layer -> layer.index(logger, namespace, isGulped))
+      acc + (layer -> layer.index(logger, namespace))
     )
 }
 
@@ -46,6 +45,7 @@ case class NamespaceLayer(namespace: Option[Name], isGulped: Boolean, layers: Se
 case class ModuleLayer(
   projectPath: PathLike,
   relativePath: String,
+  isGulped: Boolean,
   dependencies: Seq[ModuleLayer]
 ) {
 
@@ -55,7 +55,7 @@ case class ModuleLayer(
     path.toString.substring(root.toString.length)
   }
 
-  def index(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean): DocumentIndex = {
+  def index(logger: IssuesManager, namespace: Option[Name]): DocumentIndex = {
     DocumentIndex(logger, namespace, isGulped, projectPath, path)
   }
 }

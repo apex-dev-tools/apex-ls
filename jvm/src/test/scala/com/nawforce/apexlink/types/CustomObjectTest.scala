@@ -1120,4 +1120,52 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
       assert(org.issues.isEmpty)
     }
   }
+
+  test("Standard field is ignored") {
+    FileSystemHelper.run(
+      Map(
+        "objects/Foo__c.object" -> customObject("Foo__c", Seq(("Foo", Some("Text"), None))),
+        "Dummy.cls"             -> "public class Dummy { {Foo__c a; a.Foo=null;} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(getMessages(root.join("objects", "Foo__c.object")).isEmpty)
+      assert(
+        getMessages(root.join("Dummy.cls"))
+          .startsWith("Missing: line 1 at 32-37: Unknown field 'Foo' on SObject 'Schema.Foo__c'\n")
+      )
+    }
+  }
+
+  test("Standard field without a type is ignored") {
+    FileSystemHelper.run(
+      Map(
+        "objects/Foo__c.object" -> customObject("Foo__c", Seq(("Foo", None, None))),
+        "Dummy.cls"             -> "public class Dummy { {Foo__c a; a.Foo=null;} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(getMessages(root.join("objects", "Foo__c.object")).isEmpty)
+      assert(
+        getMessages(root.join("Dummy.cls"))
+          .startsWith("Missing: line 1 at 32-37: Unknown field 'Foo' on SObject 'Schema.Foo__c'\n")
+      )
+    }
+  }
+
+  test("Standard field in gulp metadata is added") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"foo\"}], \"plugins\": {\"additionalNamespaces\": [\"unmanaged\"]} }",
+        ".apexlink/gulp/unmanaged/objects/Foo__c.object" -> customObject(
+          "Foo__c",
+          Seq(("Foo", Some("Text"), None))
+        ),
+        "foo/Dummy.cls" -> "public class Dummy { {Foo__c a; a.Foo=null;} }"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
 }

@@ -544,17 +544,50 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Standard field without a type") {
+  test("Standard field is ignored") {
     FileSystemHelper.run(
       Map(
-        "objects/Account/Account.object" -> customObject(
-          "Account",
-          Seq(("AccountNumber", None, None))
-        )
+        "objects/Account.object" -> customObject("Account", Seq(("Foo", Some("Text"), None))),
+        "Dummy.cls"              -> "public class Dummy { {Account a; a.Foo=null;} }"
       )
     ) { root: PathLike =>
-      val org = createOrg(root)
-      assert(org.issues.isEmpty)
+      createOrg(root)
+      assert(getMessages(root.join("objects", "Account.object")).isEmpty)
+      assert(
+        getMessages(root.join("Dummy.cls"))
+          .startsWith("Missing: line 1 at 33-38: Unknown field 'Foo' on SObject 'Schema.Account'\n")
+      )
+    }
+  }
+
+  test("Standard field without a type is ignored") {
+    FileSystemHelper.run(
+      Map(
+        "objects/Account.object" -> customObject("Account", Seq(("Foo", None, None))),
+        "Dummy.cls"              -> "public class Dummy { {Account a; a.Foo=null;} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(getMessages(root.join("objects", "Account.object")).isEmpty)
+      assert(
+        getMessages(root.join("Dummy.cls"))
+          .startsWith("Missing: line 1 at 33-38: Unknown field 'Foo' on SObject 'Schema.Account'\n")
+      )
+    }
+  }
+
+  test("Standard field in gulp metadata is added") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"foo\"}], \"plugins\": {\"additionalNamespaces\": [\"unmanaged\"]} }",
+        ".apexlink/gulp/unmanaged/objects/Account.object" -> customObject(
+          "Account",
+          Seq(("Foo", Some("Text"), None))
+        ),
+        "foo/Dummy.cls" -> "public class Dummy { {Account a; a.Foo=null;} }"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
     }
   }
 
