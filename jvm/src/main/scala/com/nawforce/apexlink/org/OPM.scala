@@ -419,7 +419,7 @@ object OPM extends TriHierarchy {
           .flatMap(pkg => pkg.getTypeOfPathInternal(Path.safeApply(path)))
           .headOption
 
-      val collector = new TransitiveCollector(this, true, true)
+      val collector = new TransitiveCollector(this, isSamePackage = !packages.exists(_.isGulped), true)
 
       paths
         .flatMap { path =>
