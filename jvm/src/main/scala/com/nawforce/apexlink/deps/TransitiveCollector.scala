@@ -43,7 +43,8 @@ class TransitiveCollector(org: Org, isSamePackage: Boolean, apexOnly: Boolean) {
     var current = 0
     while (current < deps.size) {
       pkgs.foreach(pkg => {
-        pkg.getDependencies(deps(current), outerInheritanceOnly = false, apexOnly)
+        Option(pkg.getDependencies(deps(current), outerInheritanceOnly = false, apexOnly))
+          .getOrElse(Array.empty[TypeIdentifier])
           .filterNot(depsSeen.contains)
           .foreach(t => {
             if (!isSamePackage || t.namespace.getOrElse(Names.Empty) == pkgNamespace) {
