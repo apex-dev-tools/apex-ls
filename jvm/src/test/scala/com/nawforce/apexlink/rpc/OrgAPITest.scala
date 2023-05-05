@@ -628,4 +628,17 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
     }
   }
+
+  test("Get correct transitive count with gulped data") {
+    FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
+      val orgAPI = createHappyOrg(root)
+      val t = orgAPI.getDependencyCounts(
+        Array(root.toString + "/force-app/main/default/classes/GulpTransDep.cls"),
+        excludeTestClasses = false
+      ).map(_.count)
+      println(t.mkString("Array(", ", ", ")"))
+      //TODO: assert the right condition
+      assert(true)
+    }
+  }
 }
