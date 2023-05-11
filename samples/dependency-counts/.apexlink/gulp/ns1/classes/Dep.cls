@@ -1,4 +1,5 @@
-public class Dep {
-    public Dep() {
+global class Dep {
+    Dep2 dep;
+    global Dep() {
     }
 }

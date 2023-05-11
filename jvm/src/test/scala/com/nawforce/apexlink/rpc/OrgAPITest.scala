@@ -15,6 +15,7 @@
 package com.nawforce.apexlink.rpc
 
 import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.org.OPM.PackageImpl
 import com.nawforce.apexlink.{ParserHelper, TestHelper}
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
@@ -632,13 +633,12 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
   test("Get correct transitive count with gulped data") {
     FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
       val orgAPI = createHappyOrg(root)
-      val t = orgAPI.getDependencyCounts(
+      val transitiveCount = orgAPI.getDependencyCounts(
         Array(root.toString + "/force-app/main/default/classes/GulpTransDep.cls"),
         excludeTestClasses = false
       ).map(_.count)
-      println(t.mkString("Array(", ", ", ")"))
-      //TODO: assert the right condition
-      assert(true)
+      assert(orgAPI.packages.collect({case impl:PackageImpl => impl}).exists(_.isGulped))
+      assert(transitiveCount.head == 4)
     }
   }
 }
