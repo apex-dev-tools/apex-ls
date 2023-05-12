@@ -16,6 +16,7 @@ package com.nawforce.apexlink.deps
 
 import com.nawforce.apexlink.api.Org
 import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.OPM.TPackage
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration}
 import com.nawforce.apexlink.types.core.{DependencyHolder, TypeDeclaration}
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -37,19 +38,14 @@ case class NodeData(
 )
 
 /** Downstream dependency walker. Collects information on the dependencies of a type. */
-class DownWalker(org: Org, apexOnly: Boolean) {
-
-  private val transitiveCollector      = new TransitiveCollector(org, samePackage = true, apexOnly)
+class DownWalker(org: Org, apexOnly: Boolean, isSamePackage:Boolean = true) {
+  private val hasGulpedPackages = org.getPackages().collect({ case p: TPackage => p }).map(_.isGulped).exists(b => b)
+  private val transitiveCollector = new TransitiveCollector(org, !hasGulpedPackages, apexOnly)
   private val maxDependencyCountParser = new MaxDependencyCountParser(org)
 
   /* Collect information on dependencies of the passed identifiers. The walk depth can be limited but the result will
    * always include the root node(s) information as the first 'n' elements of the returned Array.
-   */
-  def walk(
-    identifiers: Array[TypeIdentifier],
-    depth: Int,
-    ignoring: Array[TypeIdentifier]
-  ): Array[NodeData] = {
+   */ def walk(identifiers: Array[TypeIdentifier], depth: Int, ignoring: Array[TypeIdentifier]): Array[NodeData] = {
     val collectedNodes = new ArrayBuffer[NodeData]()
     val collectedIds   = new mutable.HashMap[TypeIdentifier, Int]()
 
