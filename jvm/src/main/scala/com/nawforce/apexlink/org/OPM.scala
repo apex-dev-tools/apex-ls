@@ -35,7 +35,7 @@ import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType
 import com.nawforce.apexparser.ApexParser
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
-import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, TEST_METHOD_MODIFIER}
+import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.pkgforce.pkgs.TriHierarchy
@@ -43,12 +43,12 @@ import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, ProjectConfig, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.spi.AnalysisProvider
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
 import java.util
 import java.util.concurrent.locks.ReentrantLock
+import scala.annotation.unused
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -419,7 +419,8 @@ object OPM extends TriHierarchy {
           .flatMap(pkg => pkg.getTypeOfPathInternal(Path.safeApply(path)))
           .headOption
 
-      val collector = new TransitiveCollector(this, isSamePackage = !packages.exists(_.isGulped), true)
+      val collector =
+        new TransitiveCollector(this, isSamePackage = !packages.exists(_.isGulped), true)
 
       paths
         .flatMap { path =>
@@ -577,6 +578,17 @@ object OPM extends TriHierarchy {
 
     private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
     private val schemaManager   = SchemaSObjectType(this)
+
+    @unused
+    private val indexer = new Indexer(index.path) {
+      override def onFilesChanged(paths: Array[String]): Unit = {
+        if (paths.length == 1)
+          pkg.refresh(paths.head, highPriority = true)
+        else {
+          paths.foreach(path => pkg.refresh(path, highPriority = false))
+        }
+      }
+    }
 
     def freeze(): Unit = {
       // FUTURE: Have return types, currently can't be done because class loading code needs access to in-flight types
