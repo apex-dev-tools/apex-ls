@@ -189,6 +189,10 @@ object OPM extends TriHierarchy {
       flusher.queue(request)
     }
 
+    def queueMetadataRefresh(request: Iterable[RefreshRequest]): Unit = {
+      flusher.queueAll(request)
+    }
+
     def getPackageForPath(path: String): Package = {
       refreshLock.synchronized {
         packages.find(_.isPackagePath(path)).orNull
@@ -582,11 +586,9 @@ object OPM extends TriHierarchy {
     @unused
     private val indexer = new Indexer(index.path) {
       override def onFilesChanged(paths: Array[String]): Unit = {
-        if (paths.length == 1)
-          pkg.refresh(paths.head, highPriority = true)
-        else {
-          paths.foreach(path => pkg.refresh(path, highPriority = false))
-        }
+        val docPaths = paths.flatMap(path => MetadataDocument(Path(path)).map(_.path))
+        LoggerOps.debug(s"Indexer changed ${paths.length} files: ${docPaths.mkString(", ")}")
+        pkg.refreshAll(docPaths)
       }
     }
 

@@ -10,6 +10,7 @@ import com.nawforce.pkgforce.path.PathLike
 import io.methvin.better.files.RecursiveFileMonitor
 
 import java.nio.file.{Paths, WatchEvent}
+import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{
   Callable,
   Executors,
@@ -47,47 +48,58 @@ abstract class Indexer(rootPath: PathLike) extends Callable[Unit] {
     s
   }
 
+  // Acquire within callbacks to protect state
+  private val callbackLock = new ReentrantLock(true)
+
   private var root: Option[DirectoryIndex] = {
-    LoggerOps.debugTime(s"Indexer scanned $root") {
-      DirectoryIndex(rootPath, new ArrayBuffer[String]())
+    if (config.rescanTriggerTimeMs > 0 && config.quietPeriodForRescanMs > 0) {
+      LoggerOps.debugTime(s"Indexer scanned $rootPath") {
+        val index = DirectoryIndex(rootPath, new ArrayBuffer[String]())
+        index.foreach(_ => startMonitor(this))
+        index
+      }
+    } else {
+      LoggerOps.debug(s"Indexer for $rootPath not started due to config")
+      None
     }
   }
-
-  startMonitor(this)
 
   /* Override to detect file changes */
   def onFilesChanged(path: Array[String]): Unit
 
   private def startMonitor(callable: Callable[Unit]): Unit = {
-    if (config.rescanTriggerTimeMs > 0 && config.quietPeriodForRescan > 0) {
-      new RecursiveFileMonitor(Paths.get(root.toString)) {
-        override def onEvent(
-          eventType: WatchEvent.Kind[java.nio.file.Path],
-          file: files.File,
-          count: Int
-        ): Unit = {
+    new RecursiveFileMonitor(Paths.get(rootPath.toString)) {
+      override def onEvent(
+        eventType: WatchEvent.Kind[java.nio.file.Path],
+        file: files.File,
+        count: Int
+      ): Unit = {
+        callbackLock.synchronized {
           val now = System.currentTimeMillis()
           if (rescanFuture.nonEmpty || now - lastEventTick < config.rescanTriggerTimeMs) {
             rescanFuture.foreach(_.cancel(false))
             rescanFuture = Some(
-              scheduler.schedule[Unit](callable, config.quietPeriodForRescan, TimeUnit.MILLISECONDS)
+              scheduler
+                .schedule[Unit](callable, config.quietPeriodForRescanMs, TimeUnit.MILLISECONDS)
             )
           } else {
-            lastEventTick = now
             onFilesChanged(Array(file.path.toString))
           }
+          lastEventTick = now
         }
-      }.start()
-    } else {
-      LoggerOps.debug(s"Indexer for ${root.toString} not started due to config")
-    }
+      }
+    }.start()
+    LoggerOps.debug(s"Indexer monitor for $rootPath started")
   }
 
   override def call(): Unit = {
-    LoggerOps.debugTime(s"Indexer re-scanned $root") {
-      val changed = new mutable.ArrayBuffer[String]()
-      root = root.flatMap(_.refresh(changed))
-      onFilesChanged(changed.toArray)
+    callbackLock.synchronized {
+      rescanFuture = None
+      LoggerOps.debugTime(s"Indexer re-scanned $rootPath") {
+        val changed = new mutable.ArrayBuffer[String]()
+        root = root.flatMap(_.refresh(changed))
+        onFilesChanged(changed.toArray)
+      }
     }
   }
 

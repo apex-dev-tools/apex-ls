@@ -264,6 +264,12 @@ trait PackageAPI extends Package {
     }
   }
 
+  private[nawforce] def refreshAll(paths: Array[PathLike]): Unit = {
+    OrgInfo.current.withValue(org) {
+      org.queueMetadataRefresh(paths.map(path => RefreshRequest(this, path, false)))
+    }
+  }
+
   /* Replace a path, returns the TypeId of the type that was updated and a Set of TypeIds for the dependency
    * holders of that type. */
   def refreshInternal(path: PathLike): Seq[(TypeId, Set[TypeId])] = {
