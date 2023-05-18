@@ -15,7 +15,7 @@ package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.org.OPM
-import com.nawforce.pkgforce.names.{Name, Names}
+import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -447,14 +447,18 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         val pkg = org.unmanaged
         assert(org.issues.isEmpty)
 
-        refresh(pkg, root.join("CustomLabels.labels"), """<?xml version="1.0" encoding="UTF-8"?>
+        refresh(
+          pkg,
+          root.join("CustomLabels.labels"),
+          """<?xml version="1.0" encoding="UTF-8"?>
             |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
             |    <labels>
             |        <fullName>TestLabel2</fullName>
             |        <protected>false</protected>
             |    </labels>
             |</CustomLabels>
-            |""".stripMargin)
+            |""".stripMargin
+        )
         assert(org.flush())
         val labels = pkg.orderedModules.head.labels
         assert(labels.fields.length == 1)
@@ -482,14 +486,18 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         val pkg = org.unmanaged
         assert(org.issues.isEmpty)
 
-        refresh(pkg, root.join("Alt.labels"), """<?xml version="1.0" encoding="UTF-8"?>
+        refresh(
+          pkg,
+          root.join("Alt.labels"),
+          """<?xml version="1.0" encoding="UTF-8"?>
             |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
             |    <labels>
             |        <fullName>TestLabel2</fullName>
             |        <protected>false</protected>
             |    </labels>
             |</CustomLabels>
-            |""".stripMargin)
+            |""".stripMargin
+        )
         org.flush()
         val labels = pkg.orderedModules.head.labels
         assert(labels.fields.length == 2)
@@ -537,7 +545,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
       FileSystemHelper.run(
         Map(
           "CustomLabels.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
-          "Dummy.cls"           -> "public class Dummy { {String a = Label.TestLabel;}}"
+          "Dummy.cls" -> "public class Dummy { {String a = Label.TestLabel;}}"
         )
       ) { root: PathLike =>
         val org = createOrg(root)
@@ -546,14 +554,18 @@ class RefreshTest extends AnyFunSuite with TestHelper {
           getMessages() == "/Dummy.cls: Missing: line 1 at 33-48: Unknown field or type 'TestLabel' on 'System.Label'\n"
         )
 
-        refresh(pkg, root.join("CustomLabels.labels"), """<?xml version="1.0" encoding="UTF-8"?>
+        refresh(
+          pkg,
+          root.join("CustomLabels.labels"),
+          """<?xml version="1.0" encoding="UTF-8"?>
             |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
             |    <labels>
             |        <fullName>TestLabel</fullName>
             |        <protected>false</protected>
             |    </labels>
             |</CustomLabels>
-            |""".stripMargin)
+            |""".stripMargin
+        )
         assert(org.flush())
         assert(org.issues.isEmpty)
       }
@@ -837,6 +849,33 @@ class RefreshTest extends AnyFunSuite with TestHelper {
           highPriority = true
         )
         assert(org.issues.isEmpty)
+      }
+    }
+  }
+
+  test("Refresh class meta leaves class valid") {
+    withManualFlush {
+      FileSystemHelper.run(Map("Foo.cls" -> "public class Foo {}")) { root: PathLike =>
+        val org = createHappyOrg(root)
+
+        refresh(org.unmanaged, root.join("Foo.cls-meta.xml"), "", highPriority = true)
+
+        assert(unmanagedClass("Foo").nonEmpty)
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
+  test("Refresh trigger meta leaves trigger valid") {
+    withManualFlush {
+      FileSystemHelper.run(Map("Foo.trigger" -> "trigger Foo on Account (before insert) {}")) {
+        root: PathLike =>
+          val org = createHappyOrg(root)
+
+          refresh(org.unmanaged, root.join("Foo.trigger-meta.xml"), "", highPriority = true)
+
+          assert(unmanagedType(TypeName(Name("__sfdc_trigger/Foo"))).nonEmpty)
+          assert(org.issues.isEmpty)
       }
     }
   }
