@@ -54,7 +54,14 @@ abstract class Indexer(rootPath: PathLike) extends Callable[Unit] {
     if (config.rescanTriggerTimeMs > 0 && config.quietPeriodForRescanMs > 0) {
       LoggerOps.debugTime(s"Indexer scanned $rootPath") {
         val index = DirectoryTree(rootPath, new ArrayBuffer[String]())
-        index.foreach(_ => startMonitor(this))
+        index.foreach(_ =>
+          new IndexerMonitor(
+            rootPath,
+            (file: String) => {
+              onFileChange(file)
+            }
+          ).start()
+        )
         index
       }
     } else {
@@ -64,42 +71,50 @@ abstract class Indexer(rootPath: PathLike) extends Callable[Unit] {
   }
 
   /* Override to detect file changes */
-  def onFilesChanged(path: Array[String]): Unit
+  def onFilesChanged(path: Array[String], rescan: Boolean): Unit
 
-  private def startMonitor(callable: Callable[Unit]): Unit = {
-    new RecursiveFileMonitor(Paths.get(rootPath.toString)) {
-      override def onEvent(
-        eventType: WatchEvent.Kind[java.nio.file.Path],
-        file: files.File,
-        count: Int
-      ): Unit = {
-        callbackLock.synchronized {
-          val now = System.currentTimeMillis()
-          if (rescanFuture.nonEmpty || now - lastEventTick < config.rescanTriggerTimeMs) {
-            rescanFuture.foreach(_.cancel(false))
-            rescanFuture = Some(
-              scheduler
-                .schedule[Unit](callable, config.quietPeriodForRescanMs, TimeUnit.MILLISECONDS)
-            )
-          } else {
-            onFilesChanged(Array(file.path.toString))
-          }
-          lastEventTick = now
-        }
-      }
-    }.start()
-    LoggerOps.debug(s"Indexer monitor for $rootPath started")
+  def injectFileChange(file: String): Unit = {
+    onFileChange(file)
   }
 
-  override def call(): Unit = {
+  private def onFileChange(file: String): Unit = {
     callbackLock.synchronized {
-      rescanFuture = None
-      LoggerOps.debugTime(s"Indexer re-scanned $rootPath") {
-        val changed = new mutable.ArrayBuffer[String]()
-        root = root.flatMap(_.refresh(changed))
-        onFilesChanged(changed.toArray)
+      val now = System.currentTimeMillis()
+      if (rescanFuture.nonEmpty || now - lastEventTick < config.rescanTriggerTimeMs) {
+        rescanFuture.foreach(_.cancel(false))
+        rescanFuture = Some(
+          scheduler
+            .schedule[Unit](this, config.quietPeriodForRescanMs, TimeUnit.MILLISECONDS)
+        )
+      } else {
+        onFilesChanged(Array(file), rescan = false)
       }
+      lastEventTick = now
     }
   }
 
+  def call(): Unit = {
+    rescanFuture = None
+    refresh()
+  }
+
+  private def refresh(): Unit = {
+    LoggerOps.debugTime(s"Indexer re-scanned $rootPath") {
+      val changed = new mutable.ArrayBuffer[String]()
+      root = root.flatMap(_.refresh(changed))
+      onFilesChanged(changed.toArray, rescan = true)
+    }
+  }
+
+  private class IndexerMonitor(rootPath: PathLike, onFileChanged: String => Unit)
+      extends RecursiveFileMonitor(Paths.get(rootPath.toString), None) {
+
+    override def onEvent(
+      eventType: WatchEvent.Kind[java.nio.file.Path],
+      file: files.File,
+      count: Int
+    ): Unit = {
+      onFileChanged(file.path.toString)
+    }
+  }
 }

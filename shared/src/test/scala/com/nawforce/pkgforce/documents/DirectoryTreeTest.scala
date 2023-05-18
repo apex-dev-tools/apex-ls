@@ -21,7 +21,7 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("Empty dir creates single node tree") {
-    FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
+    FileSystemHelper.runTempDir(Map[String, String]()) { root: PathLike =>
       val changed = mutable.ArrayBuffer[String]()
       val tree    = DirectoryTree(Path(root), changed)
       assert(tree.nonEmpty)
