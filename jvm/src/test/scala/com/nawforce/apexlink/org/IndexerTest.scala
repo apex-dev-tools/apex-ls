@@ -18,101 +18,72 @@ import scala.concurrent.ExecutionContext.Implicits.global
  */
 class IndexerTest extends AnyFunSuite with TestHelper {
 
+  def run[T](files: Map[String, String])(verify: PathLike => T): T = {
+    FileSystemHelper.runTempDir(files) { root =>
+      val oldConfig = ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 200))
+      try {
+        verify(root)
+      } finally {
+        ServerOps.setIndexerConfiguration(oldConfig)
+      }
+    }
+  }
+
   test("Root directory deletion is safe") {
-    FileSystemHelper.runTempDir(Map[String, String]()) { root: PathLike =>
-      ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 200))
-      new Indexer(root) {
+    run(Map[String, String]()) { root: PathLike =>
+      val indexer = new Indexer(root) {
         override def onFilesChanged(path: Array[String], rescan: Boolean): Unit = {}
       }
 
       Thread.sleep(300)
       root.delete()
       Thread.sleep(300)
+      indexer.stop();
     }
   }
 
   test("Injected changes are reported individually") {
-    FileSystemHelper.runTempDir(Map[String, String]("a.txt" -> "", "b.txt" -> "")) {
-      root: PathLike =>
-        val changed = mutable.ArrayBuffer[String]()
-        var rescans = 0
+    run(Map[String, String]("a.txt" -> "", "b.txt" -> "")) { root: PathLike =>
+      val changed = mutable.ArrayBuffer[String]()
+      var rescans = 0
 
-        ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 200))
-        val monitor = new Indexer(root) {
-          override def onFilesChanged(path: Array[String], rescan: Boolean): Unit = {
-            if (rescan)
-              rescans += 1
-            path.foreach(changed.append)
-          }
-        }
-
-        val aFile = root.join("a.txt").toString
-        val bFile = root.join("b.txt").toString
-
-        monitor.injectFileChange(aFile)
-        assert(rescans == 0)
-        assert(changed.toSet == Set(aFile))
-        Thread.sleep(100)
-
-        monitor.injectFileChange(bFile)
-        assert(rescans == 0)
-        assert(changed.toSet == Set(aFile, bFile))
-        Thread.sleep(100)
-
-        monitor.injectFileChange(aFile)
-        assert(rescans == 0)
-        assert(changed.toSet == Set(aFile, bFile))
-        Thread.sleep(100)
-    }
-  }
-
-  test("Injected changes cause rescan if close together") {
-    FileSystemHelper.runTempDir(
-      Map[String, String]("a.txt" -> "", "b.txt" -> "", "dir1/c.txt" -> "", "dir1/dir2/d.txt" -> "")
-    ) { root: PathLike =>
-      val changed           = mutable.ArrayBuffer[String]()
-      @volatile var rescans = 0
-
-      ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 100))
-      val monitor = new Indexer(root) {
-        override def onFilesChanged(path: Array[String], rescan: Boolean): Unit = {
+      val indexer = new Indexer(root) {
+        override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
-          path.foreach(changed.append)
+          paths.foreach(changed.append)
         }
       }
 
       val aFile = root.join("a.txt").toString
       val bFile = root.join("b.txt").toString
-      val cFile = root.join("dir1/c.txt").toString
 
-      monitor.injectFileChange(aFile)
+      indexer.injectFileChange(aFile)
       assert(rescans == 0)
       assert(changed.toSet == Set(aFile))
+      Thread.sleep(100)
 
-      monitor.injectFileChange(bFile)
+      indexer.injectFileChange(bFile)
       assert(rescans == 0)
-      assert(changed.toSet == Set(aFile))
+      assert(changed.toSet == Set(aFile, bFile))
+      Thread.sleep(100)
 
-      monitor.injectFileChange(cFile)
+      indexer.injectFileChange(aFile)
       assert(rescans == 0)
-      assert(changed.toSet == Set(aFile))
+      assert(changed.toSet == Set(aFile, bFile))
 
-      Thread.sleep(200)
-      assert(rescans == 1)
-      assert(changed.toSet == Set(aFile)) // Just a as rescan won't find any changes for b & c
+      indexer.stop();
     }
   }
 
-  test("Indexer can revert to file by file reporting after scanning") {
-    FileSystemHelper.runTempDir(
+  test("Injected changes cause rescan if close together") {
+    run(
       Map[String, String]("a.txt" -> "", "b.txt" -> "", "dir1/c.txt" -> "", "dir1/dir2/d.txt" -> "")
     ) { root: PathLike =>
-      val changed           = mutable.ArrayBuffer[String]()
-      @volatile var rescans = 0
+      val changed = mutable.ArrayBuffer[String]()
+      var rescans = 0
 
-      ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 100))
-      val monitor = new Indexer(root) {
+      val indexer = new Indexer(root) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
@@ -124,31 +95,71 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       val bFile = root.join("b.txt").toString
       val cFile = root.join("dir1/c.txt").toString
 
-      monitor.injectFileChange(aFile)
+      indexer.injectFileChange(aFile)
       assert(rescans == 0)
       assert(changed.toSet == Set(aFile))
 
-      monitor.injectFileChange(bFile)
+      indexer.injectFileChange(bFile)
+      assert(rescans == 0)
+      assert(changed.toSet == Set(aFile))
+
+      indexer.injectFileChange(cFile)
+      assert(rescans == 0)
+      assert(changed.toSet == Set(aFile))
+
+      Thread.sleep(250)
+      assert(rescans == 1)
+      assert(changed.toSet == Set(aFile)) // Just a as rescan won't find any changes for b & c
+
+      indexer.stop()
+    }
+  }
+
+  test("Indexer can revert to file by file reporting after scanning") {
+    run(
+      Map[String, String]("a.txt" -> "", "b.txt" -> "", "dir1/c.txt" -> "", "dir1/dir2/d.txt" -> "")
+    ) { root: PathLike =>
+      val changed = mutable.ArrayBuffer[String]()
+      var rescans = 0
+
+      val indexer = new Indexer(root) {
+        override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
+          if (rescan)
+            rescans += 1
+          paths.foreach(changed.append)
+        }
+      }
+
+      val aFile = root.join("a.txt").toString
+      val bFile = root.join("b.txt").toString
+      val cFile = root.join("dir1/c.txt").toString
+
+      indexer.injectFileChange(aFile)
+      assert(rescans == 0)
+      assert(changed.toSet == Set(aFile))
+
+      indexer.injectFileChange(bFile)
       assert(rescans == 0)
       assert(changed.toSet == Set(aFile))
 
       // Inject after scan timeout
-      Thread.sleep(200)
-      monitor.injectFileChange(cFile)
+      Thread.sleep(250)
+      indexer.injectFileChange(cFile)
       assert(rescans == 1)
       assert(changed.toSet == Set(aFile, cFile))
+
+      indexer.stop()
     }
   }
 
   test("Indexer can do back to back scanning") {
-    FileSystemHelper.runTempDir(
+    run(
       Map[String, String]("a.txt" -> "", "b.txt" -> "", "dir1/c.txt" -> "", "dir1/dir2/d.txt" -> "")
     ) { root: PathLike =>
-      val changed           = mutable.ArrayBuffer[String]()
-      @volatile var rescans = 0
+      val changed = mutable.ArrayBuffer[String]()
+      var rescans = 0
 
-      ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 100))
-      val monitor = new Indexer(root) {
+      val indexer = new Indexer(root) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
@@ -160,19 +171,20 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       val bFile = root.join("b.txt").toString
 
       // 1st Scan
-      monitor.injectFileChange(aFile)
-      monitor.injectFileChange(bFile)
-      Thread.sleep(200)
+      indexer.injectFileChange(aFile)
+      indexer.injectFileChange(bFile)
+      Thread.sleep(250)
       assert(rescans == 1)
       assert(changed.toSet == Set(aFile))
 
       // 2nd Scan
-      monitor.injectFileChange(bFile)
-      monitor.injectFileChange(aFile)
-      Thread.sleep(200)
+      indexer.injectFileChange(bFile)
+      indexer.injectFileChange(aFile)
+      Thread.sleep(250)
       assert(rescans == 2)
       assert(changed.toSet == Set(aFile, bFile))
+
+      indexer.stop()
     }
   }
-
 }

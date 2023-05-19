@@ -585,7 +585,7 @@ object OPM extends TriHierarchy {
 
     @unused
     private val indexer = new Indexer(index.path) {
-      override def onFilesChanged(paths: Array[String]): Unit = {
+      override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
         val docPaths = paths.flatMap(path => MetadataDocument(Path(path)).map(_.path))
         LoggerOps.debug(s"Indexer changed ${paths.length} files: ${docPaths.mkString(", ")}")
         pkg.refreshAll(docPaths)

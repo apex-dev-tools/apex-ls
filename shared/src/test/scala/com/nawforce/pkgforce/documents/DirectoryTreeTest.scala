@@ -98,8 +98,11 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       val tree = DirectoryTree(Path(root), mutable.ArrayBuffer[String]())
       assert(tree.nonEmpty)
 
-      val bFilePath = root.join("b.txt")
-      bFilePath.write("")
+      // We need a new mod time here but can't sleep in ScalaJS so do busy wait
+      val bFilePath   = root.join("b.txt")
+      val origModTime = bFilePath.lastModified().get
+      while (bFilePath.lastModified().get == origModTime)
+        bFilePath.write("")
 
       val changed = mutable.ArrayBuffer[String]()
       val newTree = tree.get.refresh(changed)
@@ -167,8 +170,11 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       val tree = DirectoryTree(Path(root), mutable.ArrayBuffer[String]())
       assert(tree.nonEmpty)
 
-      val cFilePath = root.join("dir1/c.txt")
-      cFilePath.write("")
+      // We need a new mod time here but can't sleep in ScalaJS so do busy wait
+      val cFilePath   = root.join("dir1/c.txt")
+      val origModTime = cFilePath.lastModified().get
+      while (cFilePath.lastModified().get == origModTime)
+        cFilePath.write("")
 
       val changed = mutable.ArrayBuffer[String]()
       val newTree = tree.get.refresh(changed)

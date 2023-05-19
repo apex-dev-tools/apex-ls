@@ -9,6 +9,7 @@ import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents.DirectoryTree
 import com.nawforce.pkgforce.path.PathLike
 import io.methvin.better.files.RecursiveFileMonitor
+import io.methvin.watcher.hashing.FileHasher
 
 import java.nio.file.{Paths, WatchEvent}
 import java.util.concurrent.locks.ReentrantLock
@@ -40,6 +41,9 @@ abstract class Indexer(rootPath: PathLike) extends Callable[Unit] {
   // Next re-scan callback, cancel future to remove callback
   private var rescanFuture: Option[ScheduledFuture[Unit]] = None
 
+  // Current monitor thread
+  private var monitor: Option[IndexerMonitor] = None
+
   // Thread pool for scheduled callbacks, we only ever need 1
   private lazy val scheduler: ScheduledExecutorService = {
     val s = Executors.newScheduledThreadPool(1).asInstanceOf[ScheduledThreadPoolExecutor]
@@ -54,14 +58,17 @@ abstract class Indexer(rootPath: PathLike) extends Callable[Unit] {
     if (config.rescanTriggerTimeMs > 0 && config.quietPeriodForRescanMs > 0) {
       LoggerOps.debugTime(s"Indexer scanned $rootPath") {
         val index = DirectoryTree(rootPath, new ArrayBuffer[String]())
-        index.foreach(_ =>
-          new IndexerMonitor(
-            rootPath,
-            (file: String) => {
-              onFileChange(file)
-            }
-          ).start()
-        )
+        index.foreach(_ => {
+          monitor = Some(
+            new IndexerMonitor(
+              rootPath,
+              (file: String) => {
+                onFileChange(file)
+              }
+            )
+          )
+          monitor.get.start()
+        })
         index
       }
     } else {
@@ -75,6 +82,12 @@ abstract class Indexer(rootPath: PathLike) extends Callable[Unit] {
 
   def injectFileChange(file: String): Unit = {
     onFileChange(file)
+  }
+
+  def stop(): Unit = {
+    rescanFuture.foreach(f => f.cancel(false))
+    scheduler.shutdown()
+    monitor.foreach(_.stop())
   }
 
   private def onFileChange(file: String): Unit = {
@@ -107,7 +120,10 @@ abstract class Indexer(rootPath: PathLike) extends Callable[Unit] {
   }
 
   private class IndexerMonitor(rootPath: PathLike, onFileChanged: String => Unit)
-      extends RecursiveFileMonitor(Paths.get(rootPath.toString), None) {
+      extends RecursiveFileMonitor(
+        Paths.get(rootPath.toString),
+        Some(FileHasher.LAST_MODIFIED_TIME)
+      ) {
 
     override def onEvent(
       eventType: WatchEvent.Kind[java.nio.file.Path],
