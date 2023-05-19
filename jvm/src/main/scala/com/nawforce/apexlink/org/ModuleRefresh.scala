@@ -31,6 +31,7 @@ import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.stream._
 import com.nawforce.runtime.parsers.SourceData
+import com.nawforce.runtime.platform.Path
 
 import scala.collection.immutable.ArraySeq
 
@@ -149,9 +150,14 @@ trait ModuleRefresh {
     source: Option[SourceData]
   ): Option[Seq[DependentType]] = {
     doc match {
-      case _: ApexClassMetaDocument   => None
       case _: ApexTriggerMetaDocument => None
-      case _                          => Some(createSupportedTypes(doc, source))
+      case _: ApexClassMetaDocument   =>
+        // As class diagnostics may be cached we need to revalidate the class when the meta changes
+        // Ideally this would be handled automatically by the cache but it's not yet smart enough
+        val sourcePath = Path(doc.path.toString.replaceAll(".cls-meta.xml$", ".cls"))
+        val source     = resolveSource(sourcePath)
+        Some(createSupportedTypes(MetadataDocument.apply(sourcePath).get, source))
+      case _ => Some(createSupportedTypes(doc, source))
     }
   }
 
