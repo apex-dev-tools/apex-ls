@@ -24,6 +24,8 @@ import scala.scalajs.js.JSConverters._
 
 object FileSystemHelper {
 
+  private var directoryId = 0
+
   // Abstract virtual filesystem for testing
   def run[T](files: Map[String, String], setupCache: Boolean = false)(verify: PathLike => T): T = {
 
@@ -70,11 +72,23 @@ object FileSystemHelper {
     missingMetaFiles.map(path => (path, "")).toMap ++ files
   }
 
+  def createTmpDir(): Path = {
+    val dirName = s"apexlinktest${directoryId}"
+    directoryId += 1
+    val tempDir = Path(OS.tmpdir()).join(dirName)
+    if (tempDir.exists)
+      createTmpDir()
+    else {
+      tempDir.parent.createDirectory(dirName)
+      tempDir
+    }
+  }
+
   // Temp directory based model
   def runTempDir[T](files: Map[String, String], setupCache: Boolean = false)(
     verify: PathLike => T
   ): T = {
-    val tempDir = Path(OS.tmpdir()).join("apexlinktest")
+    val tempDir = createTmpDir()
     files.foreach(kv => {
       val path = tempDir.join(kv._1)
       makeDir(path.parent)
@@ -92,6 +106,7 @@ object FileSystemHelper {
         val path = tempDir.join(kv._1)
         path.delete()
       })
+      tempDir.delete()
     }
   }
 }

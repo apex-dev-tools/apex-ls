@@ -20,9 +20,9 @@ import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier}
 import scala.collection.mutable
 
 /** Transitive dependency helper */
-class TransitiveCollector(org: Org, samePackage: Boolean, apexOnly: Boolean) {
+class TransitiveCollector(org: Org, isSamePackage: Boolean, apexOnly: Boolean) {
   private val packagesByNamespace =
-    org.getPackages().map(pkg => (Name(pkg.getNamespaces(false).head), pkg)).toMap
+    org.getPackages().map(pkg => (Name(pkg.getNamespaces(!isSamePackage).head), pkg)).toMap
 
   def count(id: TypeIdentifier, ignoring: Array[TypeIdentifier]): Int = {
     transitives(id, ignoring).length
@@ -33,7 +33,7 @@ class TransitiveCollector(org: Org, samePackage: Boolean, apexOnly: Boolean) {
     ignoring: Array[TypeIdentifier] = Array()
   ): Array[TypeIdentifier] = {
     val pkgNamespace = id.namespace.getOrElse(Names.Empty)
-    val pkg          = packagesByNamespace.get(pkgNamespace)
+    val pkgs = if(isSamePackage) packagesByNamespace.get(pkgNamespace).toArray else packagesByNamespace.values.toArray
 
     val depsSeen = mutable.Set[TypeIdentifier]()
     depsSeen.add(id)
@@ -42,18 +42,17 @@ class TransitiveCollector(org: Org, samePackage: Boolean, apexOnly: Boolean) {
     deps.append(id)
     var current = 0
     while (current < deps.size) {
-      pkg
-        .flatMap(pkg => {
-          Option(pkg.getDependencies(deps(current), outerInheritanceOnly = false, apexOnly))
-        })
-        .getOrElse(Array[TypeIdentifier]())
-        .filterNot(depsSeen.contains)
-        .foreach(t => {
-          if (!samePackage || t.namespace.getOrElse(Names.Empty) == pkgNamespace) {
-            deps.append(t)
-            depsSeen.add(t)
-          }
-        })
+      pkgs.foreach(pkg => {
+        Option(pkg.getDependencies(deps(current), outerInheritanceOnly = false, apexOnly))
+          .getOrElse(Array.empty[TypeIdentifier])
+          .filterNot(depsSeen.contains)
+          .foreach(t => {
+            if (!isSamePackage || t.namespace.getOrElse(Names.Empty) == pkgNamespace) {
+              deps.append(t)
+              depsSeen.add(t)
+            }
+          })
+      })
       current += 1
     }
     deps.remove(0)
