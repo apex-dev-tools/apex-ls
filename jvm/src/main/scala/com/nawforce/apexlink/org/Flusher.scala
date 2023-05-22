@@ -41,6 +41,10 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
     }
   }
 
+  def queueAll(request: Iterable[RefreshRequest]): Unit = {
+    refreshQueue.enqueueAll(request)
+  }
+
   def refreshAndFlush(): Boolean = {
     OrgInfo.current.withValue(org) {
       org.refreshLock.synchronized {
