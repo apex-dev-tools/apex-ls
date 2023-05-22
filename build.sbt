@@ -60,7 +60,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
       "io.github.apex-dev-tools" % "vf-parser"                      % "1.1.0",
       "io.github.apex-dev-tools" % "sobject-types"                  % "57.0.3",
       "io.github.apex-dev-tools" % "standard-types"                 % "57.0.2",
-      "io.methvin"               %% "directory-watcher-better-files" % "0.18.0",
+      "io.methvin"              %% "directory-watcher-better-files" % "0.18.0",
       "com.github.nawforce"      % "uber-apex-jorje"                % "1.0.0" % Test,
       "com.google.jimfs"         % "jimfs"                          % "1.1"   % Test
     ),
