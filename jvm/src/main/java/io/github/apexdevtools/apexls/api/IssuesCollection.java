@@ -48,8 +48,8 @@ public interface IssuesCollection {
   Issue[] issuesForFileLocation(String path, IssueLocation location);
 
   /**
-   * Array of current Issues for multiple metadata files. If paths is null then this will return issues for
-   * all metadata files which have them. When includeWarnings is true, issues of any category will be returned
+   * Array of current Issues for multiple metadata files. If paths is empty or null then this will return issues
+   * for all metadata files which have them. When includeWarnings is true, issues of any category will be returned
    * otherwise only errors will be returned. The argument maxErrorsPerFile limits the number of Issues returned
    * to the first 'n' on each file, if it is <1 all Issues will be returned for each metadata file. Resets the
    * updated issues tracking when called for all files processed.
