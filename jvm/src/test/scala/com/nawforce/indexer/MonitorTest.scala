@@ -21,19 +21,12 @@ class MonitorTest extends AnyFunSuite with TestHelper {
     Thread.sleep(300)
   }
 
-  @tailrec
-  private def waitNonEmpty(value: mutable.ArrayBuffer[String], naps: Int = 30): Unit = {
-    if (naps > 0 && value.isEmpty) {
-      nap()
-      waitNonEmpty(value, naps - 1)
-    }
-  }
-
   private def run[T](files: Map[String, String])(verify: (Monitor, PathLike) => T): T = {
     FileSystemHelper.runTempDir(files) { root =>
       val oldConfig = ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 300))
       val monitor   = new Monitor(root)
       try {
+        nap()  // Give monitor time to setup before making changes
         verify(monitor, root)
       } finally {
         monitor.stop()
@@ -53,14 +46,11 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       val changed = mutable.ArrayBuffer[String]()
       monitor.monitor(
         root,
-        path => {
-          println(s"MonitorTest callback for $path")
-          changed.append(path)
-        }
+        path => changed.append(path)
       )
       root.join("test.txt").write("")
 
-      waitNonEmpty(changed)
+      nap()
       assert(changed.toSet == Set(root.join("test.txt").toString))
     }
   }
@@ -79,7 +69,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       subdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      waitNonEmpty(changed)
+      nap()
       assert(changed.toSet == Set(subdir.join("test.txt").toString))
     }
   }
@@ -99,7 +89,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       subdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      waitNonEmpty(changed)
+      nap()
       assert(changed.toSet == Set(subdir.join("test.txt").toString))
     }
   }
@@ -119,7 +109,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       childdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      waitNonEmpty(changed)
+      nap()
       assert(changed.toSet == Set(childdir.join("test.txt").toString))
     }
   }

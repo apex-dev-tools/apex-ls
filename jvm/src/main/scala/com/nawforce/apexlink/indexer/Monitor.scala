@@ -35,17 +35,11 @@ class Monitor(workspace: PathLike) {
           file: files.File,
           count: Int
         ): Unit = {
-          println(s"onEvent(file=${file.path.toString}, isDirectory: ${file.isDirectory})")
           if (!file.isDirectory) {
             val path = file.path.toAbsolutePath.toString
-            println(s"onEvent(absPath=$path, callback paths=${callbacks.keys.mkString(",")})")
             callbacks
               .find(entry => path.startsWith(entry._1))
-              .foreach(entry => {
-                println("Invoking a callback")
-                entry._2(path)
-                println("Callback done")
-              })
+              .foreach(entry => entry._2(path))
           }
         }
       })
