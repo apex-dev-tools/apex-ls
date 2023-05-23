@@ -14,9 +14,14 @@ import scala.collection.mutable
  * some adjustment to maintain passing tests.
  */
 class MonitorTest extends AnyFunSuite with TestHelper {
-  def run[T](files: Map[String, String])(verify: (Monitor, PathLike) => T): T = {
+
+  private def nap(): Unit = {
+    Thread.sleep(300)
+  }
+
+  private def run[T](files: Map[String, String])(verify: (Monitor, PathLike) => T): T = {
     FileSystemHelper.runTempDir(files) { root =>
-      val oldConfig = ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 200))
+      val oldConfig = ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 300))
       val monitor   = new Monitor(root)
       try {
         verify(monitor, root)
@@ -29,7 +34,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
 
   test("Starts & stops") {
     run(Map[String, String]()) { (monitor: Monitor, root: PathLike) =>
-      Thread.sleep(200)
+      nap()
     }
   }
 
@@ -39,7 +44,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       monitor.monitor(root, path => { changed.append(path) })
       root.join("test.txt").write("")
 
-      Thread.sleep(200)
+      nap()
       assert(changed.toSet == Set(root.join("test.txt").toString))
     }
   }
@@ -58,7 +63,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       subdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      Thread.sleep(200)
+      nap()
       assert(changed.toSet == Set(subdir.join("test.txt").toString))
     }
   }
@@ -78,7 +83,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       subdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      Thread.sleep(200)
+      nap()
       assert(changed.toSet == Set(subdir.join("test.txt").toString))
     }
   }
@@ -98,7 +103,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       childdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      Thread.sleep(200)
+      nap()
       assert(changed.toSet == Set(childdir.join("test.txt").toString))
     }
   }

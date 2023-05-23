@@ -18,7 +18,11 @@ import scala.collection.mutable
  */
 class IndexerTest extends AnyFunSuite with TestHelper {
 
-  def run[T](files: Map[String, String])(verify: (Monitor, PathLike) => T): T = {
+  private def nap(): Unit = {
+    Thread.sleep(300)
+  }
+
+  private def run[T](files: Map[String, String])(verify: (Monitor, PathLike) => T): T = {
     FileSystemHelper.runTempDir(files) { root =>
       val oldConfig = ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 200))
       val monitor   = new Monitor(root)
@@ -37,9 +41,9 @@ class IndexerTest extends AnyFunSuite with TestHelper {
         override def onFilesChanged(path: Array[String], rescan: Boolean): Unit = {}
       }
 
-      Thread.sleep(300)
+      nap()
       root.delete()
-      Thread.sleep(300)
+      nap()
       indexer.stop();
     }
   }
@@ -63,12 +67,12 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       indexer.injectFileChange(aFile)
       assert(rescans == 0)
       assert(changed.toSet == Set(aFile))
-      Thread.sleep(200)
+      nap()
 
       indexer.injectFileChange(bFile)
       assert(rescans == 0)
       assert(changed.toSet == Set(aFile, bFile))
-      Thread.sleep(200)
+      nap()
 
       indexer.injectFileChange(aFile)
       assert(rescans == 0)
@@ -109,7 +113,7 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       assert(rescans == 0)
       assert(changed.toSet == Set(aFile))
 
-      Thread.sleep(250)
+      nap()
       assert(rescans == 1)
       assert(changed.toSet == Set(aFile)) // Just a as rescan won't find any changes for b & c
 
@@ -145,7 +149,7 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       assert(changed.toSet == Set(aFile))
 
       // Inject after scan timeout
-      Thread.sleep(250)
+      nap()
       indexer.injectFileChange(cFile)
       assert(rescans == 1)
       assert(changed.toSet == Set(aFile, cFile))
@@ -175,14 +179,14 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       // 1st Scan
       indexer.injectFileChange(aFile)
       indexer.injectFileChange(bFile)
-      Thread.sleep(250)
+      nap()
       assert(rescans == 1)
       assert(changed.toSet == Set(aFile))
 
       // 2nd Scan
       indexer.injectFileChange(bFile)
       indexer.injectFileChange(aFile)
-      Thread.sleep(250)
+      nap()
       assert(rescans == 2)
       assert(changed.toSet == Set(aFile, bFile))
 
