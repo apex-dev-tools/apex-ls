@@ -35,18 +35,16 @@ class Monitor(workspace: PathLike) {
           file: files.File,
           count: Int
         ): Unit = {
-          LoggerOps.debug(s"onEvent(file=${file.path.toString}, isDirectory: ${file.isDirectory})")
+          println(s"onEvent(file=${file.path.toString}, isDirectory: ${file.isDirectory})")
           if (!file.isDirectory) {
             val path = file.path.toAbsolutePath.toString
-            LoggerOps.debug(
-              s"onEvent(absPath=$path, callback paths=${callbacks.keys.mkString(",")})"
-            )
+            println(s"onEvent(absPath=$path, callback paths=${callbacks.keys.mkString(",")})")
             callbacks
               .find(entry => path.startsWith(entry._1))
               .foreach(entry => {
-                LoggerOps.debug("Invoking a callback")
+                println("Invoking a callback")
                 entry._2(path)
-                LoggerOps.debug("Callback done")
+                println("Callback done")
               })
           }
         }

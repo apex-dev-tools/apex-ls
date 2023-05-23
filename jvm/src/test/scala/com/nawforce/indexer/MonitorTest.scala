@@ -54,7 +54,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       monitor.monitor(
         root,
         path => {
-          LoggerOps.debug(s"MonitorTest callback for $path")
+          println(s"MonitorTest callback for $path")
           changed.append(path)
         }
       )
