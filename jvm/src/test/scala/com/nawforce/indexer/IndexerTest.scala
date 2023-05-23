@@ -18,20 +18,22 @@ import scala.collection.mutable
  */
 class IndexerTest extends AnyFunSuite with TestHelper {
 
-  def run[T](files: Map[String, String])(verify: PathLike => T): T = {
+  def run[T](files: Map[String, String])(verify: (Monitor, PathLike) => T): T = {
     FileSystemHelper.runTempDir(files) { root =>
       val oldConfig = ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 200))
+      val monitor   = new Monitor(root)
       try {
-        verify(root)
+        verify(monitor, root)
       } finally {
+        monitor.stop()
         ServerOps.setIndexerConfiguration(oldConfig)
       }
     }
   }
 
   test("Root directory deletion is safe") {
-    run(Map[String, String]()) { root: PathLike =>
-      val indexer = new Indexer(root, new Monitor(root)) {
+    run(Map[String, String]()) { (monitor: Monitor, root: PathLike) =>
+      val indexer = new Indexer(root, monitor) {
         override def onFilesChanged(path: Array[String], rescan: Boolean): Unit = {}
       }
 
@@ -43,11 +45,11 @@ class IndexerTest extends AnyFunSuite with TestHelper {
   }
 
   test("Injected changes are reported individually") {
-    run(Map[String, String]("a.txt" -> "", "b.txt" -> "")) { root: PathLike =>
+    run(Map[String, String]("a.txt" -> "", "b.txt" -> "")) { (monitor: Monitor, root: PathLike) =>
       val changed = mutable.ArrayBuffer[String]()
       var rescans = 0
 
-      val indexer = new Indexer(root, new Monitor(root)) {
+      val indexer = new Indexer(root, monitor) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
@@ -61,12 +63,12 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       indexer.injectFileChange(aFile)
       assert(rescans == 0)
       assert(changed.toSet == Set(aFile))
-      Thread.sleep(100)
+      Thread.sleep(200)
 
       indexer.injectFileChange(bFile)
       assert(rescans == 0)
       assert(changed.toSet == Set(aFile, bFile))
-      Thread.sleep(100)
+      Thread.sleep(200)
 
       indexer.injectFileChange(aFile)
       assert(rescans == 0)
@@ -79,11 +81,11 @@ class IndexerTest extends AnyFunSuite with TestHelper {
   test("Injected changes cause rescan if close together") {
     run(
       Map[String, String]("a.txt" -> "", "b.txt" -> "", "dir1/c.txt" -> "", "dir1/dir2/d.txt" -> "")
-    ) { root: PathLike =>
+    ) { (monitor: Monitor, root: PathLike) =>
       val changed = mutable.ArrayBuffer[String]()
       var rescans = 0
 
-      val indexer = new Indexer(root, new Monitor(root)) {
+      val indexer = new Indexer(root, monitor) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
@@ -118,11 +120,11 @@ class IndexerTest extends AnyFunSuite with TestHelper {
   test("Indexer can revert to file by file reporting after scanning") {
     run(
       Map[String, String]("a.txt" -> "", "b.txt" -> "", "dir1/c.txt" -> "", "dir1/dir2/d.txt" -> "")
-    ) { root: PathLike =>
+    ) { (monitor: Monitor, root: PathLike) =>
       val changed = mutable.ArrayBuffer[String]()
       var rescans = 0
 
-      val indexer = new Indexer(root, new Monitor(root)) {
+      val indexer = new Indexer(root, monitor) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
@@ -155,11 +157,11 @@ class IndexerTest extends AnyFunSuite with TestHelper {
   test("Indexer can do back to back scanning") {
     run(
       Map[String, String]("a.txt" -> "", "b.txt" -> "", "dir1/c.txt" -> "", "dir1/dir2/d.txt" -> "")
-    ) { root: PathLike =>
+    ) { (monitor: Monitor, root: PathLike) =>
       val changed = mutable.ArrayBuffer[String]()
       var rescans = 0
 
-      val indexer = new Indexer(root, new Monitor(root)) {
+      val indexer = new Indexer(root, monitor) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1

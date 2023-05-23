@@ -29,7 +29,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
 
   test("Starts & stops") {
     run(Map[String, String]()) { (monitor: Monitor, root: PathLike) =>
-      Thread.sleep(100)
+      Thread.sleep(200)
     }
   }
 
@@ -39,7 +39,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       monitor.monitor(root, path => { changed.append(path) })
       root.join("test.txt").write("")
 
-      Thread.sleep(100)
+      Thread.sleep(200)
       assert(changed.toSet == Set(root.join("test.txt").toString))
     }
   }
@@ -58,7 +58,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       subdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      Thread.sleep(100)
+      Thread.sleep(200)
       assert(changed.toSet == Set(subdir.join("test.txt").toString))
     }
   }
@@ -78,7 +78,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       subdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      Thread.sleep(100)
+      Thread.sleep(200)
       assert(changed.toSet == Set(subdir.join("test.txt").toString))
     }
   }
@@ -98,7 +98,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       childdir.join("test.txt").write("")
       root.join("bad.txt").write("")
 
-      Thread.sleep(100)
+      Thread.sleep(200)
       assert(changed.toSet == Set(childdir.join("test.txt").toString))
     }
   }
