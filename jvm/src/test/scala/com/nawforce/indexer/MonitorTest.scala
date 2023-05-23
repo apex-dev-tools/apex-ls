@@ -3,12 +3,10 @@ package com.nawforce.indexer
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api.{IndexerConfiguration, ServerOps}
 import com.nawforce.apexlink.indexer.Monitor
-import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.annotation.tailrec
 import scala.collection.mutable
 
 /*
@@ -26,7 +24,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
       val oldConfig = ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 300))
       val monitor   = new Monitor(root)
       try {
-        nap()  // Give monitor time to setup before making changes
+        nap() // Give monitor time to setup before making changes
         verify(monitor, root)
       } finally {
         monitor.stop()
@@ -44,10 +42,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
   test("Allows monitoring of workspace") {
     run(Map[String, String]()) { (monitor: Monitor, root: PathLike) =>
       val changed = mutable.ArrayBuffer[String]()
-      monitor.monitor(
-        root,
-        path => changed.append(path)
-      )
+      monitor.monitor(root, path => changed.append(path))
       root.join("test.txt").write("")
 
       nap()

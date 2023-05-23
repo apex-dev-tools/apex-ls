@@ -6,7 +6,6 @@ package com.nawforce.apexlink.indexer
 
 import better.files
 import com.nawforce.apexlink.api.ServerOps
-import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.Path
 import io.methvin.better.files.RecursiveFileMonitor
