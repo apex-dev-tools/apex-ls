@@ -6,6 +6,7 @@ package com.nawforce.apexlink.indexer
 
 import better.files
 import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.Path
 import io.methvin.better.files.RecursiveFileMonitor
@@ -34,11 +35,19 @@ class Monitor(workspace: PathLike) {
           file: files.File,
           count: Int
         ): Unit = {
+          LoggerOps.debug(s"onEvent(file=${file.path.toString}, isDirectory: ${file.isDirectory})")
           if (!file.isDirectory) {
             val path = file.path.toAbsolutePath.toString
+            LoggerOps.debug(
+              s"onEvent(absPath=$path, callback paths=${callbacks.keys.mkString(",")})"
+            )
             callbacks
               .find(entry => path.startsWith(entry._1))
-              .foreach(entry => entry._2(path))
+              .foreach(entry => {
+                LoggerOps.debug("Invoking a callback")
+                entry._2(path)
+                LoggerOps.debug("Callback done")
+              })
           }
         }
       })

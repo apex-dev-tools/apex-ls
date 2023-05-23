@@ -3,10 +3,12 @@ package com.nawforce.indexer
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api.{IndexerConfiguration, ServerOps}
 import com.nawforce.apexlink.indexer.Monitor
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 /*
@@ -19,6 +21,7 @@ class MonitorTest extends AnyFunSuite with TestHelper {
     Thread.sleep(300)
   }
 
+  @tailrec
   private def waitNonEmpty(value: mutable.ArrayBuffer[String], naps: Int = 30): Unit = {
     if (naps > 0 && value.isEmpty) {
       nap()
@@ -48,7 +51,13 @@ class MonitorTest extends AnyFunSuite with TestHelper {
   test("Allows monitoring of workspace") {
     run(Map[String, String]()) { (monitor: Monitor, root: PathLike) =>
       val changed = mutable.ArrayBuffer[String]()
-      monitor.monitor(root, path => { changed.append(path) })
+      monitor.monitor(
+        root,
+        path => {
+          LoggerOps.debug(s"MonitorTest callback for $path")
+          changed.append(path)
+        }
+      )
       root.join("test.txt").write("")
 
       waitNonEmpty(changed)
