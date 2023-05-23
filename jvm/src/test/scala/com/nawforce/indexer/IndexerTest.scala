@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2023 Certinia Inc. All rights reserved.
  */
-package com.nawforce.apexlink.org
+package com.nawforce.indexer
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api.{IndexerConfiguration, ServerOps}
+import com.nawforce.apexlink.indexer.{Indexer, Monitor}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /*
  * NOTE: The handling here depends on timing, I have used Thread.sleep() to control this but it may need some
@@ -31,7 +31,7 @@ class IndexerTest extends AnyFunSuite with TestHelper {
 
   test("Root directory deletion is safe") {
     run(Map[String, String]()) { root: PathLike =>
-      val indexer = new Indexer(root) {
+      val indexer = new Indexer(root, new Monitor(root)) {
         override def onFilesChanged(path: Array[String], rescan: Boolean): Unit = {}
       }
 
@@ -47,7 +47,7 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       val changed = mutable.ArrayBuffer[String]()
       var rescans = 0
 
-      val indexer = new Indexer(root) {
+      val indexer = new Indexer(root, new Monitor(root)) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
@@ -83,7 +83,7 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       val changed = mutable.ArrayBuffer[String]()
       var rescans = 0
 
-      val indexer = new Indexer(root) {
+      val indexer = new Indexer(root, new Monitor(root)) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
@@ -122,7 +122,7 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       val changed = mutable.ArrayBuffer[String]()
       var rescans = 0
 
-      val indexer = new Indexer(root) {
+      val indexer = new Indexer(root, new Monitor(root)) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1
@@ -159,7 +159,7 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       val changed = mutable.ArrayBuffer[String]()
       var rescans = 0
 
-      val indexer = new Indexer(root) {
+      val indexer = new Indexer(root, new Monitor(root)) {
         override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
           if (rescan)
             rescans += 1

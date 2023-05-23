@@ -14,16 +14,14 @@ class DirectoryTree private (val path: PathLike) {
   private var fileModTimes   = Array[(String, Long)]()
   private var subDirectories = Array[DirectoryTree]()
 
-  /* Create a refreshed version of this node, may return None is node directory has been deleted */
-  def refresh(changed: mutable.ArrayBuffer[String]): Option[DirectoryTree] = {
+  /* Create a refreshed version of this node, return unchanged if the directory does not exist */
+  def refresh(changed: mutable.ArrayBuffer[String]): DirectoryTree = {
     if (path.isDirectory) {
       val (files, directories) = path.splitDirectoryEntries()
       refreshSubdirectories(directories, changed)
       refreshFiles(files, changed)
-      Some(this)
-    } else {
-      None
     }
+    this
   }
 
   def directories: Array[DirectoryTree] = subDirectories
@@ -43,7 +41,7 @@ class DirectoryTree private (val path: PathLike) {
     // Regenerate sub directory list
     val existing = subDirectories.map(d => (d.path, d)).toMap
     subDirectories = directoryPaths
-      .flatMap(dir => {
+      .map(dir => {
         existing.get(dir) match {
           case None            => DirectoryTree(dir, changed)
           case Some(directory) => directory.refresh(changed)
@@ -85,8 +83,10 @@ class DirectoryTree private (val path: PathLike) {
 }
 
 object DirectoryTree {
-  def apply(path: PathLike, changed: mutable.ArrayBuffer[String]): Option[DirectoryTree] = {
+  def apply(path: PathLike, changed: mutable.ArrayBuffer[String]): DirectoryTree = {
     val dir = new DirectoryTree(path)
-    dir.refresh(changed)
+    if (path.isDirectory)
+      dir.refresh(changed)
+    dir
   }
 }
