@@ -23,7 +23,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
             |private String myPrivateField;
             |public class MyInner{};
             |private interface MyPrivateInner{};
-            |}""".stripMargin
+            |}""".stripMargin.replaceAll("\r\n", "\n")
       val offset      = content.split('\n').head.length - 1
       val completions = org.getCompletionItemsInternal(path, line = 1, offset, content)
       assert(completions.exists(_.kind == "Keyword"))
@@ -73,7 +73,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
             |private String myPrivateField;
             |public class MyInner{};
             |private interface MyPrivateInner{};
-            |}""".stripMargin
+            |}""".stripMargin.replaceAll("\r\n", "\n")
       val offset      = content.split('\n').head.length - 1
       val completions = org.getCompletionItemsInternal(path, line = 1, offset, content)
       assert(completions.exists(_.kind == "Keyword"))
@@ -334,7 +334,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "",
-        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){} private Foo(Integer i){}}"
+        "Foo.cls" -> "public class Foo { public Foo(String s){} public Foo(){} private Foo(Integer i){}}"
       )
     ) { root: PathLike =>
       val org     = createOrg(root)
@@ -356,7 +356,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "",
-        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){} @TestVisible private Foo(Integer i){}}"
+        "Foo.cls" -> "public class Foo { public Foo(String s){} public Foo(){} @TestVisible private Foo(Integer i){}}"
       )
     ) { root: PathLike =>
       val org     = createOrg(root)
@@ -379,7 +379,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "",
-        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){} protected Foo(Integer i){}}"
+        "Foo.cls" -> "public class Foo { public Foo(String s){} public Foo(){} protected Foo(Integer i){}}"
       )
     ) { root: PathLike =>
       val org     = createOrg(root)
@@ -403,7 +403,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "",
-        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){} private Foo(Integer i){}}"
+        "Foo.cls" -> "public class Foo { public Foo(String s){} public Foo(){} private Foo(Integer i){}}"
       )
     ) { root: PathLike =>
       val org     = createOrg(root)

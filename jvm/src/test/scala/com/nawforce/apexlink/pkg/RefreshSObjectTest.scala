@@ -15,6 +15,7 @@ package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.org.OPM
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -205,7 +206,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         refresh(pkg, root.join("objects", "Foo__c.object"), customObject("Foo", Seq()))
         assert(org.flush())
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__c'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__c'" + "\n"
         )
       }
     }
@@ -222,7 +223,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createOrg(root)
         val pkg = org.unmanaged
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__c'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__c'" + "\n"
         )
 
         refresh(
@@ -312,7 +313,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
         assert(
-          getMessages() == "/ext/objects/Foo__c.object: Error: line 1: SObject appears to be extending an unknown SObject, 'Foo__c'\n"
+          getMessages() == path"/ext/objects/Foo__c.object: Error: line 1: SObject appears to be extending an unknown SObject, 'Foo__c'" + "\n"
         )
       }
     }
@@ -337,7 +338,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
         assert(
-          getMessages() == "/ext/objects/Foo__c/fields/Baz__c.field-meta.xml: Error: line 1: SObject appears to be extending an unknown SObject, 'Foo__c'\n"
+          getMessages() == path"/ext/objects/Foo__c/fields/Baz__c.field-meta.xml: Error: line 1: SObject appears to be extending an unknown SObject, 'Foo__c'" + "\n"
         )
       }
     }
@@ -408,7 +409,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            "/objects/Foo__c.object: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'\n"
+            path"/objects/Foo__c.object: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
         )
       }
     }
@@ -434,7 +435,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            "/objects/Foo__c/Foo__c.object-meta.xml: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'\n"
+            path"/objects/Foo__c/Foo__c.object-meta.xml: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
         )
       }
     }
@@ -475,7 +476,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         assert(org.flush())
         assert(
           getMessages() ==
-            "/objects/Foo__c/fields/SummaryDate__c.field-meta.xml: Error: line 1: Related field 'Bar__c.Date__c' required by Schema.Foo__c is not defined\n"
+            path"/objects/Foo__c/fields/SummaryDate__c.field-meta.xml: Error: line 1: Related field 'Bar__c.Date__c' required by Schema.Foo__c is not defined" + "\n"
         )
       }
     }
@@ -581,7 +582,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         refresh(pkg, root.join("objects", "Foo__mdt.object"), customObject("Foo", Seq()))
         assert(org.flush())
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 48-54: Unknown field 'Bar__c' on SObject 'Schema.Foo__mdt'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 48-54: Unknown field 'Bar__c' on SObject 'Schema.Foo__mdt'" + "\n"
         )
       }
     }
@@ -598,7 +599,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createOrg(root)
         val pkg = org.unmanaged
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 48-54: Unknown field 'Bar__c' on SObject 'Schema.Foo__mdt'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 48-54: Unknown field 'Bar__c' on SObject 'Schema.Foo__mdt'" + "\n"
         )
 
         refresh(
@@ -751,7 +752,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         refresh(pkg, root.join("objects", "Foo__e.object"), customObject("Foo", Seq()))
         assert(org.flush())
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__e'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__e'" + "\n"
         )
       }
     }
@@ -768,7 +769,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createOrg(root)
         val pkg = org.unmanaged
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__e'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__e'" + "\n"
         )
 
         refresh(
@@ -921,7 +922,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         refresh(pkg, root.join("objects", "Foo__b.object"), customObject("Foo", Seq()))
         assert(org.flush())
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__b'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__b'" + "\n"
         )
       }
     }
@@ -938,7 +939,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createOrg(root)
         val pkg = org.unmanaged
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__b'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 44-50: Unknown field 'Bar__c' on SObject 'Schema.Foo__b'" + "\n"
         )
 
         refresh(

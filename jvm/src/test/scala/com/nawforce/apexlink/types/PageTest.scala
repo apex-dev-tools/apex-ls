@@ -14,6 +14,7 @@
 package com.nawforce.apexlink.types
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -132,7 +133,7 @@ class PageTest extends AnyFunSuite with TestHelper {
       val testPageTypeId =
         org.unmanaged.getTypeOfPathInternal(root.join("Test.page")).get.asTypeIdentifier
       assert(testPageTypeId.toString == "Page.Test")
-      assert(org.unmanaged.getPathsOfType(testPageTypeId).sameElements(Array("/Test.page")))
+      assert(org.unmanaged.getPathsOfType(testPageTypeId).sameElements(Array(path"/Test.page")))
 
       val pageTypeId = TypeIdentifier(None, TypeName(Name("Page")))
       val controllerTypeId =
@@ -173,7 +174,7 @@ class PageTest extends AnyFunSuite with TestHelper {
       val testPageTypeId =
         org.unmanaged.getTypeOfPathInternal(root.join("Test.page")).get.asTypeIdentifier
       assert(testPageTypeId.toString == "Page.Test")
-      assert(org.unmanaged.getPathsOfType(testPageTypeId).sameElements(Array("/Test.page")))
+      assert(org.unmanaged.getPathsOfType(testPageTypeId).sameElements(Array(path"/Test.page")))
 
       val pageTypeId = TypeIdentifier(None, TypeName(Name("Page")))
       val controllerTypeId =

@@ -633,11 +633,13 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
   test("Get correct transitive count with gulped data") {
     FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
       val orgAPI = createHappyOrg(root)
-      val transitiveCount = orgAPI.getDependencyCounts(
-        Array(root.toString + "/force-app/main/default/classes/GulpTransDep.cls"),
-        excludeTestClasses = false
-      ).map(_.count)
-      assert(orgAPI.packages.collect({case impl:PackageImpl => impl}).exists(_.isGulped))
+      val transitiveCount = orgAPI
+        .getDependencyCountsInternal(
+          Array(root.join("/force-app/main/default/classes/GulpTransDep.cls")),
+          excludeTestClasses = false
+        )
+        .map(_.count)
+      assert(orgAPI.packages.collect({ case impl: PackageImpl => impl }).exists(_.isGulped))
       assert(transitiveCount.head == 4)
     }
   }

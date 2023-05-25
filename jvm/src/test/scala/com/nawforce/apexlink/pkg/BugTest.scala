@@ -14,6 +14,7 @@
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -107,7 +108,7 @@ class BugTest extends AnyFunSuite with TestHelper {
   test("Static method of super class of outer") {
     FileSystemHelper.run(
       Map(
-        "Dummy.cls"      -> "public class Dummy extends SuperClass {class Inner {public void func(){ func(); } }}",
+        "Dummy.cls" -> "public class Dummy extends SuperClass {class Inner {public void func(){ func(); } }}",
         "SuperClass.cls" -> "public virtual class SuperClass {public static void func() {}}"
       )
     ) { root: PathLike =>
@@ -332,7 +333,7 @@ class BugTest extends AnyFunSuite with TestHelper {
       root: PathLike =>
         createOrg(root)
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 37-38: No type declaration found for 'Bar'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 37-38: No type declaration found for 'Bar'" + "\n"
         )
     }
   }
