@@ -28,4 +28,6 @@ jobs:
       run: sbt build
 
     - name: Test
-      run: JAVA_TOOL_OPTIONS=-Dfile.encoding=UTf-8 sbt test
+      run: sbt test
+      env:
+        JAVA_TOOL_OPTIONS: '-Dfile.encoding=UTF-8'
