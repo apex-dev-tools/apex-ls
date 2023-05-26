@@ -2,29 +2,48 @@ package com.nawforce.pkgforce
 
 import com.nawforce.runtime.platform.Environment
 
+import java.nio.file.Paths
+
 object PathInterpolator {
 
   implicit class PathInterpolator(val sc: StringContext) extends AnyVal {
-    def path(args: Any*): String = {
-      val strings: Iterator[String]  = sc.parts.iterator
-      val expressions: Iterator[Any] = args.iterator
 
-      val sb = new StringBuilder(transform(strings.next().trim()))
-      while (strings.hasNext) {
-        sb.append(expressions.next().toString)
-        sb.append(transform(strings.next()))
-      }
-      sb.toString()
+    /* String interpolator for handling UNIX style -> C:\ Windows style path conversions */
+    def path(args: Any*): String = {
+      transformPaths("C:\\", sc.parts.iterator, args.iterator)
     }
+
+    /* String interpolator for handling UNIX style -> current drive Windows style path conversions */
+    def cpath(args: Any*): String = {
+      transformPaths(
+        Paths.get("").toAbsolutePath.getRoot.toString,
+        sc.parts.iterator,
+        args.iterator
+      )
+    }
+
   }
 
-  private def transform(path: String): String = {
+  def transformPaths(
+    drive: String,
+    strings: Iterator[String],
+    expressions: Iterator[Any]
+  ): String = {
+    val sb = new StringBuilder(transform(drive, strings.next().trim()))
+    while (strings.hasNext) {
+      sb.append(expressions.next().toString)
+      sb.append(transform(drive, strings.next()))
+    }
+    sb.toString()
+  }
+
+  private def transform(drive: String, path: String): String = {
     if (Environment.isWindows) {
       val paths = "/[^\\s']*".r
       paths.replaceAllIn(
         path,
         m => {
-          "C:\\" + m.group(0).replace("/", "\\\\")
+          drive + m.group(0).replace("/", "\\\\")
         }
       )
     } else {

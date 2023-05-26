@@ -51,7 +51,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/bar/Foo.cls: Error: line 1: Duplicate for type 'Foo' found in '/pkg/bar/Foo.cls', ignoring this file, see also /pkg/foo/Foo.cls"
+        cpath"/pkg/bar/Foo.cls: Error: line 1: Duplicate for type 'Foo' found in '/pkg/bar/Foo.cls', ignoring this file, see also /pkg/foo/Foo.cls"
     )
   }
 
@@ -63,7 +63,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but meta file is missing for '/pkg/foo/Foo.cls'"
+        cpath"/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but meta file is missing for '/pkg/foo/Foo.cls'"
     )
   }
 
@@ -75,7 +75,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/foo/Foo.cls-meta.xml: Error: line 1: Type 'Foo' is not defined, but expected due to '/pkg/foo/Foo.cls-meta.xml', ignoring this file"
+        cpath"/pkg/foo/Foo.cls-meta.xml: Error: line 1: Type 'Foo' is not defined, but expected due to '/pkg/foo/Foo.cls-meta.xml', ignoring this file"
     )
   }
 
@@ -100,7 +100,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but its meta file is in a different directory see /pkg/bar/Foo.cls-meta.xml"
+        cpath"/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but its meta file is in a different directory see /pkg/bar/Foo.cls-meta.xml"
     )
   }
 
@@ -119,7 +119,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but multiple meta files found at /pkg/foo/Foo.cls-meta.xml, /pkg/bar/Foo.cls-meta.xml"
+        cpath"/pkg/foo/Foo.cls: Error: line 1: Type 'Foo' is defined, but multiple meta files found at /pkg/foo/Foo.cls-meta.xml, /pkg/bar/Foo.cls-meta.xml"
     )
   }
 
@@ -146,7 +146,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     val fooTrigger = "__sfdc_trigger/Foo"
     assert(
       issues.head.toString ==
-        path"/pkg/bar/Foo.trigger: Error: line 1: Duplicate for type '$fooTrigger' found in '/pkg/bar/Foo.trigger', ignoring this file, see also /pkg/foo/Foo.trigger"
+        cpath"/pkg/bar/Foo.trigger: Error: line 1: Duplicate for type '$fooTrigger' found in '/pkg/bar/Foo.trigger', ignoring this file, see also /pkg/foo/Foo.trigger"
     )
   }
 
@@ -158,7 +158,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/foo/Foo.trigger: Error: line 1: Type '${"__sfdc_trigger/Foo"}' is defined, but meta file is missing for '/pkg/foo/Foo.trigger'"
+        cpath"/pkg/foo/Foo.trigger: Error: line 1: Type '${"__sfdc_trigger/Foo"}' is defined, but meta file is missing for '/pkg/foo/Foo.trigger'"
     )
   }
 
@@ -170,7 +170,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/foo/Foo.trigger-meta.xml: Error: line 1: Type '${"__sfdc_trigger/Foo"}' is not defined, but expected due to '/pkg/foo/Foo.trigger-meta.xml', ignoring this file"
+        cpath"/pkg/foo/Foo.trigger-meta.xml: Error: line 1: Type '${"__sfdc_trigger/Foo"}' is not defined, but expected due to '/pkg/foo/Foo.trigger-meta.xml', ignoring this file"
     )
   }
 
@@ -195,7 +195,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/foo/Foo.trigger: Error: line 1: Type '${"__sfdc_trigger/Foo"}' is defined, but its meta file is in a different directory see /pkg/bar/Foo.trigger-meta.xml"
+        cpath"/pkg/foo/Foo.trigger: Error: line 1: Type '${"__sfdc_trigger/Foo"}' is defined, but its meta file is in a different directory see /pkg/bar/Foo.trigger-meta.xml"
     )
   }
 
@@ -214,7 +214,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/pkg/foo/Foo.trigger: Error: line 1: Type '${"__sfdc_trigger/Foo"}' is defined, but multiple meta files found at /pkg/foo/Foo.trigger-meta.xml, /pkg/bar/Foo.trigger-meta.xml"
+        cpath"/pkg/foo/Foo.trigger: Error: line 1: Type '${"__sfdc_trigger/Foo"}' is defined, but multiple meta files found at /pkg/foo/Foo.trigger-meta.xml, /pkg/bar/Foo.trigger-meta.xml"
     )
   }
 
@@ -240,11 +240,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/objects/Foo__c/Foo__c.object-meta.xml: Error: line 1: Type 'Schema.Foo__c' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__c/Foo__c.object-meta.xml"
+        cpath"/dir1/objects/Foo__c/Foo__c.object-meta.xml: Error: line 1: Type 'Schema.Foo__c' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__c/Foo__c.object-meta.xml"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/objects/Foo__c/Foo__c.object-meta.xml: Error: line 1: Type 'Schema.Foo__c' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__c/Foo__c.object-meta.xml"
+        cpath"/dir2/objects/Foo__c/Foo__c.object-meta.xml: Error: line 1: Type 'Schema.Foo__c' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__c/Foo__c.object-meta.xml"
     )
   }
 
@@ -273,11 +273,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/objects/Foo__c/fields/MyField__c.field-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.Fields.MyField__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/fields/MyField__c.field-meta.xml"
+        cpath"/dir1/objects/Foo__c/fields/MyField__c.field-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.Fields.MyField__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/fields/MyField__c.field-meta.xml"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/objects/Foo__c/fields/MyField__c.field-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.Fields.MyField__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/fields/MyField__c.field-meta.xml"
+        cpath"/dir2/objects/Foo__c/fields/MyField__c.field-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.Fields.MyField__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/fields/MyField__c.field-meta.xml"
     )
   }
 
@@ -306,11 +306,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.FieldSets.MyFieldSet__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml"
+        cpath"/dir1/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.FieldSets.MyFieldSet__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.FieldSets.MyFieldSet__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml"
+        cpath"/dir2/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.FieldSets.MyFieldSet__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/fieldSets/MyFieldSet__c.fieldSet-meta.xml"
     )
 
   }
@@ -331,8 +331,8 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     validator.validate(
       SObjectNature,
       List(
-        Path(path"/dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"),
-        Path(path"/dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml")
+        Path(cpath"/dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"),
+        Path(cpath"/dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml")
       )
     )
 
@@ -340,11 +340,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.RowCause.MySharingReason__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"
+        cpath"/dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.RowCause.MySharingReason__c' is defined, but duplicate metadata found at /dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.RowCause.MySharingReason__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"
+        cpath"/dir2/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml: Error: line 1: Type 'Schema.SObjectType.Foo__c.RowCause.MySharingReason__c' is defined, but duplicate metadata found at /dir1/objects/Foo__c/sharingReasons/MySharingReason__c.sharingReason-meta.xml"
     )
 
   }
@@ -371,11 +371,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/objects/Foo__e/Foo__e.object-meta.xml: Error: line 1: Type 'Schema.Foo__e' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__e/Foo__e.object-meta.xml"
+        cpath"/dir1/objects/Foo__e/Foo__e.object-meta.xml: Error: line 1: Type 'Schema.Foo__e' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__e/Foo__e.object-meta.xml"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/objects/Foo__e/Foo__e.object-meta.xml: Error: line 1: Type 'Schema.Foo__e' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__e/Foo__e.object-meta.xml"
+        cpath"/dir2/objects/Foo__e/Foo__e.object-meta.xml: Error: line 1: Type 'Schema.Foo__e' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__e/Foo__e.object-meta.xml"
     )
   }
 
@@ -390,7 +390,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/objects/Foo__e/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__e' are defined, but the required object-meta.xml file is missing"
+        cpath"/objects/Foo__e/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__e' are defined, but the required object-meta.xml file is missing"
     )
   }
 
@@ -416,11 +416,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/objects/Foo__mdt/Foo__mdt.object-meta.xml: Error: line 1: Type 'Schema.Foo__mdt' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__mdt/Foo__mdt.object-meta.xml"
+        cpath"/dir1/objects/Foo__mdt/Foo__mdt.object-meta.xml: Error: line 1: Type 'Schema.Foo__mdt' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__mdt/Foo__mdt.object-meta.xml"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/objects/Foo__mdt/Foo__mdt.object-meta.xml: Error: line 1: Type 'Schema.Foo__mdt' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__mdt/Foo__mdt.object-meta.xml"
+        cpath"/dir2/objects/Foo__mdt/Foo__mdt.object-meta.xml: Error: line 1: Type 'Schema.Foo__mdt' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__mdt/Foo__mdt.object-meta.xml"
     )
   }
 
@@ -435,7 +435,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/objects/Foo__mdt/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__mdt' are defined, but the required object-meta.xml file is missing"
+        cpath"/objects/Foo__mdt/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__mdt' are defined, but the required object-meta.xml file is missing"
     )
   }
 
@@ -461,11 +461,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/objects/Foo__b/Foo__b.object-meta.xml: Error: line 1: Type 'Schema.Foo__b' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__b/Foo__b.object-meta.xml"
+        cpath"/dir1/objects/Foo__b/Foo__b.object-meta.xml: Error: line 1: Type 'Schema.Foo__b' is defined, but duplicate object-meta.xml files found at /dir2/objects/Foo__b/Foo__b.object-meta.xml"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/objects/Foo__b/Foo__b.object-meta.xml: Error: line 1: Type 'Schema.Foo__b' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__b/Foo__b.object-meta.xml"
+        cpath"/dir2/objects/Foo__b/Foo__b.object-meta.xml: Error: line 1: Type 'Schema.Foo__b' is defined, but duplicate object-meta.xml files found at /dir1/objects/Foo__b/Foo__b.object-meta.xml"
     )
   }
 
@@ -480,7 +480,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 1)
     assert(
       issues.head.toString ==
-        path"/objects/Foo__b/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__b' are defined, but the required object-meta.xml file is missing"
+        cpath"/objects/Foo__b/fields/MyField__c.field-meta.xml: Error: line 1: Components of type 'Schema.Foo__b' are defined, but the required object-meta.xml file is missing"
     )
   }
 
@@ -495,11 +495,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/Foo.component: Error: line 1: Duplicate for type 'Component.Foo', see also /dir2/Foo.component"
+        cpath"/dir1/Foo.component: Error: line 1: Duplicate for type 'Component.Foo', see also /dir2/Foo.component"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/Foo.component: Error: line 1: Duplicate for type 'Component.Foo', see also /dir1/Foo.component"
+        cpath"/dir2/Foo.component: Error: line 1: Duplicate for type 'Component.Foo', see also /dir1/Foo.component"
     )
   }
 
@@ -511,11 +511,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/Foo.page: Error: line 1: Duplicate for type 'Page.Foo', see also /dir2/Foo.page"
+        cpath"/dir1/Foo.page: Error: line 1: Duplicate for type 'Page.Foo', see also /dir2/Foo.page"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/Foo.page: Error: line 1: Duplicate for type 'Page.Foo', see also /dir1/Foo.page"
+        cpath"/dir2/Foo.page: Error: line 1: Duplicate for type 'Page.Foo', see also /dir1/Foo.page"
     )
   }
 
@@ -527,11 +527,11 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.length == 2)
     assert(
       issues.head.toString ==
-        path"/dir1/Foo.flow: Error: line 1: Duplicate for type 'Flow.Interview.Foo', see also /dir2/Foo.flow"
+        cpath"/dir1/Foo.flow: Error: line 1: Duplicate for type 'Flow.Interview.Foo', see also /dir2/Foo.flow"
     )
     assert(
       issues(1).toString ==
-        path"/dir2/Foo.flow: Error: line 1: Duplicate for type 'Flow.Interview.Foo', see also /dir1/Foo.flow"
+        cpath"/dir2/Foo.flow: Error: line 1: Duplicate for type 'Flow.Interview.Foo', see also /dir1/Foo.flow"
     )
   }
 
