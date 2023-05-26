@@ -1,10 +1,13 @@
 package com.nawforce.pkgforce
 
-import com.nawforce.runtime.platform.Environment
+import com.nawforce.runtime.platform.{Environment, Path}
 
 import java.nio.file.Paths
 
 object PathInterpolator {
+
+  private val currentDrive =
+    if (Environment.isWindows) Path("").toString.substring(0, 1) + ":\\" else ""
 
   implicit class PathInterpolator(val sc: StringContext) extends AnyVal {
 
@@ -15,11 +18,7 @@ object PathInterpolator {
 
     /* String interpolator for handling UNIX style -> current drive Windows style path conversions */
     def cpath(args: Any*): String = {
-      transformPaths(
-        Paths.get("").toAbsolutePath.getRoot.toString,
-        sc.parts.iterator,
-        args.iterator
-      )
+      transformPaths(currentDrive, sc.parts.iterator, args.iterator)
     }
 
   }
