@@ -15,6 +15,7 @@ package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.org.OPM
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -534,7 +535,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         )
         assert(org.flush())
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 33-48: Unknown field or type 'TestLabel' on 'System.Label'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 33-48: Unknown field or type 'TestLabel' on 'System.Label'" + "\n"
         )
       }
     }
@@ -551,7 +552,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         val org = createOrg(root)
         val pkg = org.unmanaged
         assert(
-          getMessages() == "/Dummy.cls: Missing: line 1 at 33-48: Unknown field or type 'TestLabel' on 'System.Label'\n"
+          getMessages() == path"/Dummy.cls: Missing: line 1 at 33-48: Unknown field or type 'TestLabel' on 'System.Label'" + "\n"
         )
 
         refresh(

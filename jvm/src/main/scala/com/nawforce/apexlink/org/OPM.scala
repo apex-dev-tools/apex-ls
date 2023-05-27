@@ -403,11 +403,20 @@ object OPM extends TriHierarchy {
       paths: Array[String],
       excludeTestClasses: Boolean
     ): Array[DependencyCount] = {
+      getDependencyCountsInternal(paths.map(Path.safeApply), excludeTestClasses)
+    }
 
-      def getTypeAndSummaryOfPath(path: String): Option[(TypeIdentifier, TypeSummary)] =
+    def getDependencyCountsInternal(
+      paths: Array[PathLike],
+      excludeTestClasses: Boolean
+    ): Array[DependencyCount] = {
+
+      def getTypeAndSummaryOfPath(path: PathLike): Option[(TypeIdentifier, TypeSummary)] =
         packages.view
           .flatMap(pkg =>
-            Option(pkg.getTypeOfPath(path))
+            pkg
+              .getTypeOfPathInternal(path)
+              .map(_.asTypeIdentifier)
               .flatMap(typeId =>
                 Option(pkg.getSummaryOfType(typeId))
                   .flatMap(summary => Option(typeId, summary))
@@ -422,9 +431,9 @@ object OPM extends TriHierarchy {
         transitiveDependencies.count(t => t != typeId)
       }
 
-      def getTypeIdOfPath(path: String): Option[TypeId] =
+      def getTypeIdOfPath(path: PathLike): Option[TypeId] =
         packages.view
-          .flatMap(pkg => pkg.getTypeOfPathInternal(Path.safeApply(path)))
+          .flatMap(pkg => pkg.getTypeOfPathInternal(path))
           .headOption
 
       val collector =
@@ -442,7 +451,7 @@ object OPM extends TriHierarchy {
             }
             .map { case (typeId, transitiveDependencies) =>
               DependencyCount(
-                path,
+                path.toString,
                 countTransitiveDependencies(typeId, transitiveDependencies),
                 getTypeIdOfPath(path)
                   .map(id => new MaxDependencyCountParser(this).count(id))

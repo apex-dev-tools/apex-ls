@@ -14,6 +14,7 @@
 package com.nawforce.apexlink.types
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -41,7 +42,7 @@ class LabelTest extends AnyFunSuite with TestHelper {
       val typeId =
         org.unmanaged.getTypeOfPathInternal(root.join("CustomLabels.labels")).get.asTypeIdentifier
       assert(typeId.toString == "System.Label")
-      assert(org.unmanaged.getPathsOfType(typeId).sameElements(Array("/CustomLabels.labels")))
+      assert(org.unmanaged.getPathsOfType(typeId).sameElements(Array(path"/CustomLabels.labels")))
       assert(
         org.unmanaged
           .getDependencies(typeId, outerInheritanceOnly = false, apexOnly = false)
@@ -54,7 +55,7 @@ class LabelTest extends AnyFunSuite with TestHelper {
   test("Dual labels file") {
     FileSystemHelper.run(
       Map(
-        "CustomLabels.labels"  -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
+        "CustomLabels.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>",
         "CustomLabels2.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
       )
     ) { root: PathLike =>
@@ -71,7 +72,7 @@ class LabelTest extends AnyFunSuite with TestHelper {
         org.unmanaged
           .getPathsOfType(typeId1)
           .sorted
-          .sameElements(Array("/CustomLabels.labels", "/CustomLabels2.labels"))
+          .sameElements(Array(path"/CustomLabels.labels", path"/CustomLabels2.labels"))
       )
       assert(
         org.unmanaged
@@ -106,7 +107,9 @@ class LabelTest extends AnyFunSuite with TestHelper {
       val labelsTypeId =
         org.unmanaged.getTypeOfPathInternal(root.join("CustomLabels.labels")).get.asTypeIdentifier
       assert(labelsTypeId.toString == "System.Label")
-      assert(org.unmanaged.getPathsOfType(labelsTypeId).sameElements(Array("/CustomLabels.labels")))
+      assert(
+        org.unmanaged.getPathsOfType(labelsTypeId).sameElements(Array(path"/CustomLabels.labels"))
+      )
       assert(
         org.unmanaged
           .getDependencies(labelsTypeId, outerInheritanceOnly = false, apexOnly = false)
@@ -235,7 +238,9 @@ class LabelTest extends AnyFunSuite with TestHelper {
       val labels1TypeId =
         pkg1.getTypeOfPathInternal(root.join("pkg1/CustomLabels.labels")).get.asTypeIdentifier
       assert(labels1TypeId.toString == "System.Label [pkg1]")
-      assert(pkg1.getPathsOfType(labels1TypeId).sameElements(Array("/pkg1/CustomLabels.labels")))
+      assert(
+        pkg1.getPathsOfType(labels1TypeId).sameElements(Array(path"/pkg1/CustomLabels.labels"))
+      )
       assert(
         pkg1.getDependencies(labels1TypeId, outerInheritanceOnly = false, apexOnly = false).isEmpty
       )
@@ -302,7 +307,9 @@ class LabelTest extends AnyFunSuite with TestHelper {
         .get
         .asTypeIdentifier
       assert(labels1TypeId.toString == "System.Label [pkg1]")
-      assert(pkg1.getPathsOfType(labels1TypeId).sameElements(Array("/pkg1/CustomLabels.labels")))
+      assert(
+        pkg1.getPathsOfType(labels1TypeId).sameElements(Array(path"/pkg1/CustomLabels.labels"))
+      )
       assert(pkg2.getTypeOfPathInternal(root.join("CustomLabels.labels")).isEmpty)
 
       val dummyTypeId =
@@ -360,7 +367,7 @@ class LabelTest extends AnyFunSuite with TestHelper {
       assert(
         org.unmanaged
           .getPathsOfType(labelsTypeId)
-          .sameElements(Array("/pkg1/CustomLabels.labels"))
+          .sameElements(Array(path"/pkg1/CustomLabels.labels"))
       )
 
       val dummyTypeId =
