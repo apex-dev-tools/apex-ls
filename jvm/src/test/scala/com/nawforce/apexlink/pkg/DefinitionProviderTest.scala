@@ -15,6 +15,7 @@ package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
 import com.nawforce.apexlink.{LocationLinkString, TestHelper}
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -457,7 +458,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
           .getDefinition(root.join("Dummy.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _))
           sameElements
-            Array(LocationLinkString("super('s')", "/Foo.cls", "Foo(String s){}", "Foo"))
+            Array(LocationLinkString("super('s')", path"/Foo.cls", "Foo(String s){}", "Foo"))
       )
     }
   }
@@ -474,7 +475,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
           .getDefinition(root.join("Dummy.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _))
           sameElements
-            Array(LocationLinkString("this('s')", "/Dummy.cls", "Dummy(String s){}", "Dummy"))
+            Array(LocationLinkString("this('s')", path"/Dummy.cls", "Dummy(String s){}", "Dummy"))
       )
     }
   }
@@ -494,7 +495,7 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
           .getDefinition(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _))
           sameElements
-            Array(LocationLinkString("super()", "/Dummy.cls", "InnerClass", "InnerClass"))
+            Array(LocationLinkString("super()", path"/Dummy.cls", "InnerClass", "InnerClass"))
       )
     }
   }

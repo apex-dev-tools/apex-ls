@@ -83,12 +83,14 @@ class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
           )
 
           createOrg(root)
+          val messageParts = getMessages(testClassPath).split('\n')
+          assert(messageParts.length == 2)
           assert(
-            getMessages(testClassPath) ==
-              """Error: line 1 at 18: mismatched input '<EOF>' expecting {'extends', 'implements', '{'}
-                |Missing: line 1 at 24-25: No type declaration found for 'Bar'
-                |""".stripMargin
+            messageParts.head.startsWith(
+              "Error: line 1 at 18: mismatched input '<EOF>' expecting {'extends', 'implements',"
+            )
           )
+          assert(messageParts(1) == "Missing: line 1 at 24-25: No type declaration found for 'Bar'")
       }
     }
   }

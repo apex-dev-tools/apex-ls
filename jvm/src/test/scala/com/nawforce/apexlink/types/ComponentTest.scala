@@ -16,6 +16,7 @@ package com.nawforce.apexlink.types
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -25,7 +26,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
 
   test("Missing root element") {
     FileSystemHelper.run(Map("Test.component" -> "")) { root: PathLike =>
-      val org = createOrg(root)
+      createOrg(root)
       assert(
         getMessages(root.join("Test.component")) ==
           "Syntax: line 1: mismatched input '<EOF>' expecting {COMMENT, PI_START, '<', '<script', WS_NL}\n"
@@ -35,7 +36,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
 
   test("Bad root element") {
     FileSystemHelper.run(Map("Test.component" -> "<foo/>")) { root: PathLike =>
-      val org = createOrg(root)
+      createOrg(root)
       assert(
         getMessages(root.join("Test.component")) ==
           "Error: line 1 at 0-11: Root element must be 'apex:component'\n"
@@ -58,7 +59,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
   test("Missing component") {
     FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy { {Component.Test;} }")) {
       root: PathLike =>
-        val org = createOrg(root)
+        createOrg(root)
         assert(
           getMessages(root.join("Dummy.cls")) ==
             "Missing: line 1 at 22-36: Unknown field or type 'Test' on 'Component'\n"
@@ -231,7 +232,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
   test("Missing controller") {
     FileSystemHelper.run(Map("Test.component" -> "<apex:component controller='Dummy'/>")) {
       root: PathLike =>
-        val org = createOrg(root)
+        createOrg(root)
         assert(
           getMessages(root.join("Test.component")) ==
             "Missing: line 1 at 16-34: No type declaration found for 'Dummy'\n"
@@ -252,7 +253,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
         org.unmanaged.getTypeOfPathInternal(root.join("Test.component")).get.asTypeIdentifier
       assert(testComponentTypeId.toString == "Component.Test")
       assert(
-        org.unmanaged.getPathsOfType(testComponentTypeId).sameElements(Array("/Test.component"))
+        org.unmanaged.getPathsOfType(testComponentTypeId).sameElements(Array(path"/Test.component"))
       )
 
       val componentTypeId = TypeIdentifier(None, TypeName(Name("Component")))

@@ -16,6 +16,7 @@ package com.nawforce.apexlink.pkg
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.rpc.BombScore
 import com.nawforce.apexlink.types.apex.SummaryDeclaration
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
@@ -135,10 +136,10 @@ class PackageAPITest extends AnyFunSuite with TestHelper {
       assert(pkg.getPathsOfType(null).isEmpty)
 
       assert(dummyType.toString == "Dummy")
-      assert(pkg.getPathsOfType(dummyType).sameElements(Array("/classes/Dummy.cls")))
+      assert(pkg.getPathsOfType(dummyType).sameElements(Array(path"/classes/Dummy.cls")))
 
       assert(fooType.toString == "__sfdc_trigger/Foo")
-      assert(pkg.getPathsOfType(fooType).sameElements(Array("/triggers/Foo.trigger")))
+      assert(pkg.getPathsOfType(fooType).sameElements(Array(path"/triggers/Foo.trigger")))
     }
   }
 
@@ -172,10 +173,10 @@ class PackageAPITest extends AnyFunSuite with TestHelper {
       assert(pkg.getPathsOfType(null).isEmpty)
 
       assert(dummyType.toString == "Dummy (test)")
-      assert(pkg.getPathsOfType(dummyType).sameElements(Array("/pkg/classes/Dummy.cls")))
+      assert(pkg.getPathsOfType(dummyType).sameElements(Array(path"/pkg/classes/Dummy.cls")))
 
       assert(fooType.toString == "__sfdc_trigger/test/Foo [test]")
-      assert(pkg.getPathsOfType(fooType).sameElements(Array("/pkg/triggers/Foo.trigger")))
+      assert(pkg.getPathsOfType(fooType).sameElements(Array(path"/pkg/triggers/Foo.trigger")))
     }
   }
 
@@ -1142,7 +1143,7 @@ class PackageAPITest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> """{"namespace": "test", "packageDirectories": [{"path": "pkg"}] }""".stripMargin,
-        "pkg/Dummy.cls"     -> "public class Dummy {}"
+        "pkg/Dummy.cls" -> "public class Dummy {}"
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)
@@ -1155,9 +1156,9 @@ class PackageAPITest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> """{"namespace": "test", "packageDirectories": [{"path": "pkg"}] }""".stripMargin,
-        "pkg/Dummy1.cls"    -> "public class Dummy1 { {Object a = new Dummy2(); Object b = new Dummy3();} }",
-        "pkg/Dummy2.cls"    -> "public class Dummy2 { {Object a = new Dummy3(); }}",
-        "pkg/Dummy3.cls"    -> "public class Dummy3 {}"
+        "pkg/Dummy1.cls" -> "public class Dummy1 { {Object a = new Dummy2(); Object b = new Dummy3();} }",
+        "pkg/Dummy2.cls" -> "public class Dummy2 { {Object a = new Dummy3(); }}",
+        "pkg/Dummy3.cls" -> "public class Dummy3 {}"
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)
@@ -1174,10 +1175,10 @@ class PackageAPITest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> """{"namespace": "test", "packageDirectories": [{"path": "pkg"}] }""".stripMargin,
-        "pkg/Dummy1.cls"    -> "public class Dummy1 { {Object a = new Dummy2(); Object b = new Dummy3();} }",
-        "pkg/Dummy2.cls"    -> "public class Dummy2 { {Object a = new Dummy3(); Object b = new Dummy1(); Object c = new Dummy4();}}",
-        "pkg/Dummy3.cls"    -> "public class Dummy3 {}",
-        "pkg/Dummy4.cls"    -> "public class Dummy4 {}"
+        "pkg/Dummy1.cls" -> "public class Dummy1 { {Object a = new Dummy2(); Object b = new Dummy3();} }",
+        "pkg/Dummy2.cls" -> "public class Dummy2 { {Object a = new Dummy3(); Object b = new Dummy1(); Object c = new Dummy4();}}",
+        "pkg/Dummy3.cls" -> "public class Dummy3 {}",
+        "pkg/Dummy4.cls" -> "public class Dummy4 {}"
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)
@@ -1203,10 +1204,10 @@ class PackageAPITest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> """{"namespace": "test", "packageDirectories": [{"path": "pkg"}] }""".stripMargin,
-        "pkg/Dummy1.cls"    -> "public class Dummy1 { {Object a = new Dummy2(); Object b = new Dummy3();} }",
-        "pkg/Dummy2.cls"    -> "public class Dummy2 { {Object a = new Dummy3(); Object b = new Dummy1(); Object c = new Dummy4();}}",
-        "pkg/Dummy3.cls"    -> "public class Dummy3 {}",
-        "pkg/Dummy4.cls"    -> "public class Dummy4 {}"
+        "pkg/Dummy1.cls" -> "public class Dummy1 { {Object a = new Dummy2(); Object b = new Dummy3();} }",
+        "pkg/Dummy2.cls" -> "public class Dummy2 { {Object a = new Dummy3(); Object b = new Dummy1(); Object c = new Dummy4();}}",
+        "pkg/Dummy3.cls" -> "public class Dummy3 {}",
+        "pkg/Dummy4.cls" -> "public class Dummy4 {}"
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)

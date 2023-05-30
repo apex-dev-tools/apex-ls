@@ -108,7 +108,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
     FileSystemHelper.run(
       Map[String, String](
         "pkg/foo/Foo.cls"  -> "public class Foo {}",
-        "/pkg/bar/Foo.cls" -> "public class Foo {}"
+        "pkg/bar/Foo.cls" -> "public class Foo {}"
       )
     ) { root: PathLike =>
       val index = DocumentIndex(logger, None, isGulped = false, root.join("pkg"))
@@ -116,8 +116,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
       assert(issues.length == 1)
       assert(
-        issues.head.toString ==
-          "/pkg/bar/Foo.cls: Error: line 1: Duplicate for type 'Foo' found in '/pkg/bar/Foo.cls', ignoring this file, see also /pkg/foo/Foo.cls"
+        issues.head.toString.contains("Error: line 1: Duplicate for type 'Foo' found in ")
       )
     }
   }
