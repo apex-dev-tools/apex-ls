@@ -19,6 +19,7 @@ import com.nawforce.apexlink.cst.CompilationUnit
 import com.nawforce.apexlink.deps.{DownWalker, MaxDependencyCountParser, TransitiveCollector}
 import com.nawforce.apexlink.finding.TypeFinder
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
+import com.nawforce.apexlink.indexer.{Indexer, Monitor}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.plugins.PluginsManager
 import com.nawforce.apexlink.rpc._
@@ -75,6 +76,9 @@ object OPM extends TriHierarchy {
 
     // The workspace loaded into this Org
     val workspace: Workspace = initWorkspace.getOrElse(new Workspace(issueManager, Seq()))
+
+    // Indexer monitor launcher that manages workspace watching
+    val monitorLauncher: Monitor = new Monitor(path)
 
     /** Manager for post validation plugins */
     private[nawforce] val pluginsManager = new PluginsManager
@@ -593,11 +597,13 @@ object OPM extends TriHierarchy {
     private val schemaManager   = SchemaSObjectType(this)
 
     @unused
-    private val indexer = new Indexer(index.path) {
+    private val indexer = new Indexer(index.path, pkg.org.monitorLauncher) {
       override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
         val docPaths = paths.flatMap(path => MetadataDocument(Path(path)).map(_.path))
-        LoggerOps.debug(s"Indexer changed ${paths.length} files: ${docPaths.mkString(", ")}")
-        pkg.refreshAll(docPaths)
+        if (docPaths.nonEmpty) {
+          LoggerOps.debug(s"Indexer changed ${docPaths.length} files: ${docPaths.mkString(", ")}")
+          pkg.refreshAll(docPaths)
+        }
       }
     }
 

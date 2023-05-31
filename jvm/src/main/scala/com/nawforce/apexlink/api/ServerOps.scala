@@ -46,7 +46,9 @@ case object LoadAndRefreshAnalysis extends AnalysisMode {
   * a re-scan is queued. The re-scan is performed after quietPeriodForRescanMs has elapsed without
   * any further file events. Both must be non-zero for the indexer to be active.
   */
-case class IndexerConfiguration(rescanTriggerTimeMs: Long, quietPeriodForRescanMs: Long)
+case class IndexerConfiguration(rescanTriggerTimeMs: Long, quietPeriodForRescanMs: Long) {
+  val enabled: Boolean = rescanTriggerTimeMs > 0 && quietPeriodForRescanMs > 0
+}
 
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
