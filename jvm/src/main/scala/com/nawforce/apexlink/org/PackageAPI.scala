@@ -273,7 +273,7 @@ trait PackageAPI extends Package {
 
   /* Replace a path, returns the TypeId of the type that was updated and a Set of TypeIds for the dependency
    * holders of that type. */
-  def refreshInternal(path: PathLike): Seq[(TypeId, Set[TypeId])] = {
+  private def refreshInternal(path: PathLike): Seq[(TypeId, Set[TypeId])] = {
 
     def refreshLabels(labels: LabelDeclaration): Seq[(TypeId, Set[TypeId])] = {
       labels.module.refreshInternal(labels)
@@ -348,8 +348,7 @@ trait PackageAPI extends Package {
     // Then batched invalidation
     // FUTURE: We could remove the handled requests from the missing but don't know if a type was added
     // since a missing was last validated, so for now we need to revalidate them all just in case.
-    val withMissing = org.issues.getMissing.flatMap(findTypeIdOfPath)
-    reValidate(references.toSet ++ withMissing)
+    reValidate(references.toSet ++ findMissing())
 
     // Close any open plugins
     org.pluginsManager.closePlugins()
@@ -388,9 +387,25 @@ trait PackageAPI extends Package {
     tds.foreach(_.validate())
   }
 
-  private def findTypeIdOfPath(path: PathLike): Option[TypeId] = {
-    org.packagesByNamespace.values
-      .flatMap(p => p.getTypeOfPathInternal(path))
-      .headOption
+  private def findMissing(): Seq[TypeId] = {
+    val modules = org.packages.reverse.flatMap(_.orderedModules)
+    org.issues.getMissing.flatMap(path => {
+      MetadataDocument(path) match {
+        case Some(pageDoc: PageDocument) =>
+          // For pages we need to return the 'Page' declaration as they are not types but fields
+          modules
+            .find(module => module.pages.fields.exists(page => page.name == pageDoc.name))
+            .map(module => TypeId(module, module.pages.typeName))
+
+        case Some(mdDoc: MetadataDocument) =>
+          // For everything else, just do a type lookup
+          val typeName = mdDoc.typeName(namespace)
+          modules.view
+            .flatMap(module => module.moduleType(typeName).map(td => TypeId(module, td.typeName)))
+            .headOption
+
+        case _ => None
+      }
+    })
   }
 }

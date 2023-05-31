@@ -697,6 +697,65 @@ class RefreshTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Page controller added later") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "TestPage.page" -> "<apex:page standardController=\"Account\" extensions=\"TestController\"/>"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(
+          getMessages() == path"/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
+        )
+
+        refresh(pkg, root.join("TestController.cls"), "public class TestController {}")
+        refresh(pkg, root.join("TestController.cls-meta.xml"), "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
+  test("Page controller added/removed/added") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "TestPage.page" -> "<apex:page standardController=\"Account\" extensions=\"TestController\"/>"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(
+          getMessages() == path"/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
+        )
+
+        val controller     = root.join("TestController.cls")
+        val controllerMeta = root.join("TestController.cls-meta.xml")
+
+        refresh(pkg, controller, "public class TestController {}")
+        refresh(pkg, controllerMeta, "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+
+        controller.delete()
+        controllerMeta.delete()
+        pkg.refresh(controller, highPriority = false)
+        pkg.refresh(controllerMeta, highPriority = false)
+        assert(org.flush())
+        assert(
+          getMessages() == path"/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
+        )
+
+        refresh(pkg, controller, "public class TestController {}")
+        refresh(pkg, controllerMeta, "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
   test("Valid component upsert") {
     withManualFlush {
       FileSystemHelper.run(Map("Test.component" -> "<apex:component/>")) { root: PathLike =>
