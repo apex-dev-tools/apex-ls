@@ -26,6 +26,7 @@ import com.nawforce.apexlink.types.synthetic.{
   CustomMethodDeclaration,
   CustomParameterDeclaration
 }
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, MISSING_CATEGORY}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
@@ -153,10 +154,15 @@ final case class SObjectDeclaration(
                 module.types.put(field.typeName, ghostedSObject)
                 module.schemaSObjectType.add(ghostedSObject.typeName.name, hasFieldSets = true)
               } else {
-                // This is what we don't want to see ;-)
-                OrgInfo.logError(
-                  field.location,
-                  s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
+                OrgInfo.log(
+                  new Issue(
+                    field.location.path,
+                    Diagnostic(
+                      MISSING_CATEGORY,
+                      field.location.location,
+                      s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
+                    )
+                  )
                 )
               }
             case _ => ()
