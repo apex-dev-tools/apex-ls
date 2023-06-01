@@ -348,7 +348,7 @@ trait PackageAPI extends Package {
     // Then batched invalidation
     // FUTURE: We could remove the handled requests from the missing but don't know if a type was added
     // since a missing was last validated, so for now we need to revalidate them all just in case.
-    reValidate(references.toSet ++ findMissing())
+    reValidate(references.toSet ++ typesWithMissingDiagnostics)
 
     // Close any open plugins
     org.pluginsManager.closePlugins()
@@ -387,25 +387,25 @@ trait PackageAPI extends Package {
     tds.foreach(_.validate())
   }
 
-  private def findMissing(): Seq[TypeId] = {
+  private def typesWithMissingDiagnostics: Seq[TypeId] = {
     val modules = org.packages.reverse.flatMap(_.orderedModules)
     org.issues.getMissing.flatMap(path => {
-      MetadataDocument(path) match {
-        case Some(pageDoc: PageDocument) =>
-          // For pages we need to return the 'Page' declaration as they are not types but fields
-          modules
-            .find(module => module.pages.fields.exists(page => page.name == pageDoc.name))
-            .map(module => TypeId(module, module.pages.typeName))
+      modules
+        .find(_.isVisibleFile(path))
+        .flatMap(module => {
+          MetadataDocument(path) match {
+            case Some(_: PageDocument) =>
+              // For any pages we need to return the 'Page' declaration as pages are not types but fields
+              Some(TypeId(module, module.pages.typeName))
+            case Some(mdDoc: MetadataDocument) =>
+              // For everything else, just do a type lookup
+              module
+                .moduleType(mdDoc.typeName(module.namespace))
+                .map(td => TypeId(module, td.typeName))
 
-        case Some(mdDoc: MetadataDocument) =>
-          // For everything else, just do a type lookup
-          val typeName = mdDoc.typeName(namespace)
-          modules.view
-            .flatMap(module => module.moduleType(typeName).map(td => TypeId(module, td.typeName)))
-            .headOption
-
-        case _ => None
-      }
+            case _ => None
+          }
+        })
     })
   }
 }
