@@ -273,7 +273,7 @@ trait PackageAPI extends Package {
 
   /* Replace a path, returns the TypeId of the type that was updated and a Set of TypeIds for the dependency
    * holders of that type. */
-  def refreshInternal(path: PathLike): Seq[(TypeId, Set[TypeId])] = {
+  private def refreshInternal(path: PathLike): Seq[(TypeId, Set[TypeId])] = {
 
     def refreshLabels(labels: LabelDeclaration): Seq[(TypeId, Set[TypeId])] = {
       labels.module.refreshInternal(labels)
@@ -348,8 +348,7 @@ trait PackageAPI extends Package {
     // Then batched invalidation
     // FUTURE: We could remove the handled requests from the missing but don't know if a type was added
     // since a missing was last validated, so for now we need to revalidate them all just in case.
-    val withMissing = org.issues.getMissing.flatMap(findTypeIdOfPath)
-    reValidate(references.toSet ++ withMissing)
+    reValidate(references.toSet ++ typesWithMissingDiagnostics)
 
     // Close any open plugins
     org.pluginsManager.closePlugins()
@@ -388,9 +387,25 @@ trait PackageAPI extends Package {
     tds.foreach(_.validate())
   }
 
-  private def findTypeIdOfPath(path: PathLike): Option[TypeId] = {
-    org.packagesByNamespace.values
-      .flatMap(p => p.getTypeOfPathInternal(path))
-      .headOption
+  private def typesWithMissingDiagnostics: Seq[TypeId] = {
+    val modules = org.packages.reverse.flatMap(_.orderedModules)
+    org.issues.getMissing.flatMap(path => {
+      modules
+        .find(_.isVisibleFile(path))
+        .flatMap(module => {
+          MetadataDocument(path) match {
+            case Some(_: PageDocument) =>
+              // For any pages we need to return the 'Page' declaration as pages are not types but fields
+              Some(TypeId(module, module.pages.typeName))
+            case Some(mdDoc: MetadataDocument) =>
+              // For everything else, just do a type lookup
+              module
+                .moduleType(mdDoc.typeName(module.namespace))
+                .map(td => TypeId(module, td.typeName))
+
+            case _ => None
+          }
+        })
+    })
   }
 }
