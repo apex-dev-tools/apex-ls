@@ -219,6 +219,27 @@ class RefreshTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Extends field access") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map("Dummy.cls" -> "public class Dummy extends Foo { {Integer a = b;} }")
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(
+          getMessages(
+            root.join("Dummy.cls")
+          ) == "Missing: line 1 at 13-18: No type declaration found for 'Foo'\n"
+        )
+
+        refresh(pkg, root.join("Foo.cls-meta.xml"), "")
+        refresh(pkg, root.join("Foo.cls"), "public virtual class Foo {public Integer b;}")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
   test("Valid trigger refresh") {
     withManualFlush {
       FileSystemHelper.run(Map("pkg/Foo.trigger" -> "trigger Foo on Account (before insert) {}")) {
