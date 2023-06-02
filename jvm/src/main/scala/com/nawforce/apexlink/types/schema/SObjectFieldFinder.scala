@@ -46,12 +46,11 @@ trait SObjectFieldFinder {
       incomingObjects.flatMap(sobject => {
         sobject.fields
           .collect { case field: CustomField => field }
-          .filter(
-            field =>
-              field.relationshipName.nonEmpty &&
-                field.typeName == typeName &&
-                field.name.value
-                  .endsWith("__r")
+          .filter(field =>
+            field.relationshipName.nonEmpty &&
+              field.typeName == typeName &&
+              field.name.value
+                .endsWith("__r")
           )
           .map(field => (sobject.asInstanceOf[TypeDeclaration], field))
       })
@@ -78,32 +77,30 @@ trait SObjectFieldFinder {
   }
 
   def findSObjectField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
-    findFieldSObject(name, staticContext, this.fieldsByName.toMap)
+    findFieldSObject(name, staticContext, findField(name))
       .orElse {
-        Option(relationshipFields).flatMap(
-          fields => findFieldSObject(name, staticContext, fields.toMap)
-        )
+        Option(relationshipFields).flatMap(fields => {
+          findFieldSObject(name, staticContext, fields.get(name))
+        })
       }
   }
 
   private def findFieldSObject(
     name: Name,
     staticContext: Option[Boolean],
-    sObjectFields: Map[Name, FieldDeclaration]
+    sObjectField: Option[FieldDeclaration]
   ): Option[FieldDeclaration] = {
-    val fieldOption = sObjectFields.get(name)
-
     // Handle the synthetic static SObjectField or abort
-    if (fieldOption.isEmpty) {
+    if (sObjectField.isEmpty) {
       if (name == Names.SObjectField && staticContext.contains(true))
         Some(CustomFieldDeclaration(Names.SObjectField, TypeNames.sObjectFields$(typeName), None))
       else
         None
     } else {
-      val field = fieldOption.get
+      val field = sObjectField.get
       if (staticContext.contains(field.isStatic)) {
         // Found a matching field
-        fieldOption
+        sObjectField
       } else if (staticContext.contains(true)) {
         // Create an SObjectField version of this field
         val shareTypeName = if (typeName.isShare) Some(typeName) else None

@@ -424,25 +424,18 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
   }
 
   override def findField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
-    val matches = fieldsByName.get(name)
+    val matches = findField(name)
     staticContext match {
       case Some(x) => matches.find(f => f.isStatic == x)
       case None    => matches
     }
   }
 
-  protected lazy val fieldsByName: mutable.Map[Name, FieldDeclaration] = {
-    val fieldsByName = mutable.Map(fields.map(f => (f.name, f)): _*)
-    superClassDeclaration.foreach(td =>
-      td.fieldsByName
-        .foreach(f => fieldsByName.getOrElseUpdate(f._1, f._2))
-    )
-    outerTypeDeclaration.foreach(td =>
-      td.fields
-        .filter(_.isStatic)
-        .foreach(f => fieldsByName.getOrElseUpdate(f.name, f))
-    )
-    fieldsByName
+  protected def findField(name: Name): Option[FieldDeclaration] = {
+    fields
+      .find(_.name == name)
+      .orElse(superClassDeclaration.flatMap(_.findField(name)))
+      .orElse(outerTypeDeclaration.flatMap(_.findField(name).filter(_.isStatic)))
   }
 
   private lazy val methodMap: MethodMap =
