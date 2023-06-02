@@ -430,7 +430,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
               )
             )
           } else {
-            context.logError(location, s"$err")
+            context.logMissing(location, s"$err")
           }
         }
         ExprContext.empty

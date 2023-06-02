@@ -1442,8 +1442,8 @@ exports[`Check samples Sample: promiseV3 1`] = `
   "logs": [
     [
       "force-app/main/default/classes/Chain.cls",
-      "Error: line 12 at 14-45: No matching method found for 'getAsyncApexJobResult' on 'System.FinalizerContext' taking no arguments",
-      "Error: line 23 at 54-88: No matching method found for 'getAsyncApexJobException' on 'System.FinalizerContext' taking no arguments",
+      "Missing: line 12 at 14-45: No matching method found for 'getAsyncApexJobResult' on 'System.FinalizerContext' taking no arguments",
+      "Missing: line 23 at 54-88: No matching method found for 'getAsyncApexJobException' on 'System.FinalizerContext' taking no arguments",
     ],
   ],
   "status": 4,

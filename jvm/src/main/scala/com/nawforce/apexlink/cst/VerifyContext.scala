@@ -102,6 +102,11 @@ trait VerifyContext {
       OrgInfo.logError(location, msg)
   }
 
+  def logMissing(location: PathLocation, msg: String): Unit = {
+    if (!suppressIssues)
+      OrgInfo.logMissing(location, msg)
+  }
+
   def log(issue: Issue): Unit = {
     if (!suppressIssues)
       OrgInfo.log(issue)

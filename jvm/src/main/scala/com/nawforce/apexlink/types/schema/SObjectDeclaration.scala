@@ -154,15 +154,9 @@ final case class SObjectDeclaration(
                 module.types.put(field.typeName, ghostedSObject)
                 module.schemaSObjectType.add(ghostedSObject.typeName.name, hasFieldSets = true)
               } else {
-                OrgInfo.log(
-                  new Issue(
-                    field.location.path,
-                    Diagnostic(
-                      MISSING_CATEGORY,
-                      field.location.location,
-                      s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
-                    )
-                  )
+                OrgInfo.logMissing(
+                  field.location,
+                  s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
                 )
               }
             case _ => ()
