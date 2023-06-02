@@ -14,13 +14,12 @@
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.org.OPM.OrgImpl
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, MISSING_CATEGORY}
 import com.nawforce.pkgforce.path.PathLocation
 
 import scala.util.DynamicVariable
 
-/**
-  * Access to the 'current' org, this should be deprecated now we have the OPM hierarchy.
+/** Access to the 'current' org, this should be deprecated now we have the OPM hierarchy.
   */
 object OrgInfo {
 
@@ -37,4 +36,10 @@ object OrgInfo {
   private[nawforce] def logError(pathLocation: PathLocation, message: String): Unit = {
     log(new Issue(pathLocation.path, Diagnostic(ERROR_CATEGORY, pathLocation.location, message)))
   }
+
+  /** Log a missing error against the in-scope org */
+  private[nawforce] def logMissing(pathLocation: PathLocation, message: String): Unit = {
+    log(new Issue(pathLocation.path, Diagnostic(MISSING_CATEGORY, pathLocation.location, message)))
+  }
+
 }

@@ -233,8 +233,8 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
   test("General error is cached") {
     FileSystemHelper.run(
       Map(
-        "pkg1/Foo.cls" -> "public class Foo {{bar();}}",
-        "pkg2/Foo.cls" -> "public class Foo {{bar();}}"
+        "pkg1/Foo.cls" -> "public class Foo {{String a=1;}}",
+        "pkg2/Foo.cls" -> "public class Foo {{String a=1;}}"
       )
     ) { root: PathLike =>
       // Setup as cached
@@ -243,7 +243,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg, "Foo")
       assert(
         getMessages(org) ==
-          path"/pkg1/Foo.cls: Error: line 1 at 19-24: No matching method found for 'bar' on 'Foo' taking no arguments" + "\n"
+          path"/pkg1/Foo.cls: Error: line 1 at 26-29: Incompatible types in assignment, from 'System.Integer' to 'System.String'" + "\n"
       )
       org.flush()
 
@@ -252,7 +252,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsSummaryDeclaration(pkg2, "Foo")
       assert(
         getMessages(org2) ==
-          path"/pkg2/Foo.cls: Error: line 1 at 19-24: No matching method found for 'bar' on 'Foo' taking no arguments" + "\n"
+          path"/pkg2/Foo.cls: Error: line 1 at 26-29: Incompatible types in assignment, from 'System.Integer' to 'System.String'" + "\n"
       )
     }
   }

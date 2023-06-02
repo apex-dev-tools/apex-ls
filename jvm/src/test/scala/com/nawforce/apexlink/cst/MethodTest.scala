@@ -34,7 +34,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Method call static->instance") {
     typeDeclaration("public class Dummy {void f1(){} static void f2() {f1();} }")
     assert(
-      dummyIssues == "Error: line 1 at 50-54: No matching method found for 'f1' on 'Dummy' taking no arguments, are you trying to call the instance method 'void f1()' from a static context?\n"
+      dummyIssues == "Missing: line 1 at 50-54: No matching method found for 'f1' on 'Dummy' taking no arguments, are you trying to call the instance method 'void f1()' from a static context?\n"
     )
   }
 
@@ -46,14 +46,14 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Method call wrong arguments") {
     typeDeclaration("public class Dummy {static void f1(String a){} void f2() {f1();} }")
     assert(
-      dummyIssues == "Error: line 1 at 58-62: No matching method found for 'f1' on 'Dummy' taking no arguments, did you mean to call 'static void f1(System.String a)'?\n"
+      dummyIssues == "Missing: line 1 at 58-62: No matching method found for 'f1' on 'Dummy' taking no arguments, did you mean to call 'static void f1(System.String a)'?\n"
     )
   }
 
   test("Method call with ambiguous target") {
     typeDeclaration("public class Dummy { {EventBus.publish(null); } }")
     assert(
-      dummyIssues == "Error: line 1 at 22-44: Ambiguous method call for 'publish' on 'System.EventBus' taking arguments 'null', wrong argument types for calling 'public static System.List<Database.SaveResult> publish(System.List<System.SObject> sobjects)'\n"
+      dummyIssues == "Missing: line 1 at 22-44: Ambiguous method call for 'publish' on 'System.EventBus' taking arguments 'null', wrong argument types for calling 'public static System.List<Database.SaveResult> publish(System.List<System.SObject> sobjects)'\n"
     )
   }
 
@@ -205,7 +205,9 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support parameter type of System.Set<System.String>\n"
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 13-18: AuraEnabled methods do not support parameter type of System.Set<System.String>\n"
       )
     }
   }
@@ -218,7 +220,9 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support parameter type of System.List<System.Set<System.String>>\n"
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 13-18: AuraEnabled methods do not support parameter type of System.List<System.Set<System.String>>\n"
       )
     }
   }
@@ -231,7 +235,9 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support return type of System.Set<System.Id>\n"
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 13-18: AuraEnabled methods do not support return type of System.Set<System.Id>\n"
       )
     }
   }
@@ -244,7 +250,9 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 13-18: AuraEnabled methods do not support return type of System.Map<System.String, System.Set<System.Id>>\n"
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 13-18: AuraEnabled methods do not support return type of System.Map<System.String, System.Set<System.Id>>\n"
       )
     }
   }
@@ -257,7 +265,9 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 44-55: protected method 'getInstance' cannot be static\n"
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 44-55: protected method 'getInstance' cannot be static\n"
       )
     }
   }
@@ -317,7 +327,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("private abstract method implementation") {
     FileSystemHelper.run(
       Map(
-        "Base.cls" -> "public abstract class Base { abstract void fn(); }",
+        "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
         "Extend.cls" -> "public class Extend extends Base { void fn() {}}"
       )
     ) { root: PathLike =>
@@ -328,7 +338,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("public method implementing a private abstract method") {
     FileSystemHelper.run(
       Map(
-        "Base.cls" -> "public abstract class Base { abstract void fn(); }",
+        "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
         "Extend.cls" -> "public class Extend extends Base { public void fn() {}}"
       )
     ) { root: PathLike =>
@@ -339,13 +349,15 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("public abstract method implementation with no override keyword") {
     FileSystemHelper.run(
       Map(
-        "Base.cls" -> "public abstract class Base { public abstract void fn(); }",
+        "Base.cls"   -> "public abstract class Base { public abstract void fn(); }",
         "Extend.cls" -> "public class Extend extends Base { public void fn() {}}"
       )
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Extend.cls")) == "Error: line 1 at 47-49: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+        getMessages(
+          root.join("Extend.cls")
+        ) == "Error: line 1 at 47-49: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
       )
     }
   }
@@ -353,13 +365,15 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("protected abstract method implementation with no override keyword") {
     FileSystemHelper.run(
       Map(
-        "Base.cls" -> "public abstract class Base { protected abstract void fn(); }",
+        "Base.cls"   -> "public abstract class Base { protected abstract void fn(); }",
         "Extend.cls" -> "public class Extend extends Base { protected void fn() {}}"
       )
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Extend.cls")) == "Error: line 1 at 50-52: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+        getMessages(
+          root.join("Extend.cls")
+        ) == "Error: line 1 at 50-52: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
       )
     }
   }
@@ -374,7 +388,9 @@ class MethodTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("private inner abstract method implementation with no override keyword on public implementation") {
+  test(
+    "private inner abstract method implementation with no override keyword on public implementation"
+  ) {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { public void fn(){} }}"
@@ -382,7 +398,9 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("Dummy.cls")) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
       )
     }
   }
@@ -394,7 +412,11 @@ class MethodTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       createOrg(root)
-      assert(getMessages(root.join("Dummy.cls")) == "Error: line 1 at 97-99: Method 'fn' must use the 'override' keyword when implementing an abstract method\n")
+      assert(
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 97-99: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+      )
     }
   }
 
