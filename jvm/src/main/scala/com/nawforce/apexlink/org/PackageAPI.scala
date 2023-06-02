@@ -400,7 +400,7 @@ trait PackageAPI extends Package {
             case Some(mdDoc: MetadataDocument) =>
               // For everything else, just do a type lookup
               module
-                .moduleType(mdDoc.typeName(module.namespace))
+                .moduleType(mdDoc.controllingTypeName(module.namespace))
                 .map(td => TypeId(module, td.typeName))
 
             case _ => None

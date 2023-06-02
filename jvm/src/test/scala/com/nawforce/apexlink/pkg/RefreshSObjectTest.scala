@@ -409,7 +409,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            path"/objects/Foo__c.object: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
+            path"/objects/Foo__c.object: Missing: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
         )
       }
     }
@@ -435,8 +435,34 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            path"/objects/Foo__c/Foo__c.object-meta.xml: Error: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
+            path"/objects/Foo__c/Foo__c.object-meta.xml: Missing: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
         )
+      }
+    }
+  }
+
+  test("SFDX lookup missing") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "objects/Foo__c/Foo__c.object-meta.xml" -> customObject(
+            "Foo",
+            Seq(("Lookup__c", Some("Lookup"), Some("Bar__c")))
+          )
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        assert(
+          getMessages() ==
+            path"/objects/Foo__c/Foo__c.object-meta.xml: Missing: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
+        )
+
+        val basePath = root.join("objects", "Bar__c", "Bar__c.object-meta.xml")
+        basePath.parent.parent.createDirectory("Bar__c")
+        basePath.write(customObject("Bar", Seq()))
+        org.unmanaged.refresh(basePath, highPriority = false)
+        assert(org.flush())
+        assert(org.issues.isEmpty)
       }
     }
   }
