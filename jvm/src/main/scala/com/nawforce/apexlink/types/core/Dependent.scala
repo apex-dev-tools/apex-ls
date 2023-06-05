@@ -37,15 +37,25 @@ trait Dependent extends IdentityEquality {
   private var dependencyHolders: SkinnyWeakSet[DependencyHolder] = _
 
   // Has any holders
-  def hasHolders: Boolean =
-    Option(dependencyHolders).exists(_.nonEmpty)
+  def hasHolders: Boolean = {
+    if (dependencyHolders == null)
+      return false
+    dependencyHolders.toIterator.exists(holder => !isThis(holder))
+  }
 
   // Has a holder from non-test code
   def hasNonTestHolders: Boolean = {
     if (dependencyHolders == null)
       return false
+    dependencyHolders.toIterator.exists(holder => !isThis(holder) && !holder.inTest)
+  }
 
-    dependencyHolders.toIterator.exists(holder => !holder.inTest)
+  // If a holder is a Dependent, it may be self reference we want to ignore
+  private def isThis(holder: DependencyHolder): Boolean = {
+    holder match {
+      case holder: Dependent => holder eq this
+      case _                 => false
+    }
   }
 
   // The set of current holders
@@ -69,7 +79,9 @@ trait DependencyHolder {
   /** Is the holder within test code */
   def inTest: Boolean = false
 
-  /** Get Dependents being held, default to empty for holders who do not use this, override as needed */
+  /** Get Dependents being held, default to empty for holders who do not use this, override as
+    * needed
+    */
   def dependencies(): Iterable[Dependent] = Iterable.empty
 
   /** Inform each dependent this is holding a dependency to them */

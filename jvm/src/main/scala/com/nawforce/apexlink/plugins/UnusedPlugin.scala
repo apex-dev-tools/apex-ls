@@ -89,21 +89,31 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
   private implicit class DeclarationOps(td: FullDeclaration) {
 
     def unusedIssues: ArraySeq[Issue] = {
-      // Block at class level
-      if (td.modifiers.exists(excludedClassModifiers.contains) || td.isPageController)
-        return Issue.emptyArray
 
       // Hack: Unused calculation requires a methodMap as it establishes shadow relationships
       td.methodMap
 
+      // Ignore page controllers, although we parse VF we don't establish use relationships yet
+      if (td.isPageController)
+        return ArraySeq.empty
+
+      // Ignore if suppressed
+      if (td.modifiers.exists(suppressModifiers.contains))
+        return ArraySeq.empty
+
+      // Get body declaration issues, we exclude initializers as they atr really part of the type
       val issues =
         td.nestedTypes.flatMap(ad => ad.unusedIssues) ++
           td.unusedFields ++
           td.unusedMethods
 
-      if (
-        !td.hasNonTestHolders && issues.length == td.nestedTypes.length + td.localFields.length + td.localMethods.length
-      ) {
+      // Bail early if we found nothing of interest, hopefully the common case
+      val childCount = td.nestedTypes.length + td.localFields.length + td.localMethods.length
+      if (issues.isEmpty && childCount > 0)
+        return issues
+
+      // Check if need to promote the used to the type level to reduce noise in output
+      if (canPromoteUnusedToType(issues.length)) {
         val nature = td match {
           case _: ClassDeclaration     => "class"
           case _: InterfaceDeclaration => "interface"
@@ -129,6 +139,25 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
       } else {
         issues
       }
+    }
+
+    private def canPromoteUnusedToType(issueCount: Int): Boolean = {
+      // If the type has holders itself then we need to report on each body declaration
+      val hasHolders = if (td.inTest) td.hasHolders else td.hasNonTestHolders
+      if (hasHolders)
+        return false
+
+      // Don't promote for global as these are implicitly used
+      if (td.visibility == GLOBAL_MODIFIER)
+        return false
+
+      // Exclude reporting on empty outers, that is a bit harsh
+      val childCount = td.nestedTypes.length + td.localFields.length + td.localMethods.length
+      if (td.outerTypeName.isEmpty && childCount == 0)
+        return false
+
+      // Finally if we got issues for each child say yes
+      childCount == issueCount
     }
 
     def unusedFields: ArraySeq[Issue] = {
@@ -161,7 +190,7 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
             Diagnostic(
               UNUSED_CATEGORY,
               method.idLocation,
-              s"Unused method '${method.signature}'$suffix"
+              s"Unused ${method.visibility.name} method '${method.signature}'$suffix"
             )
           )
         })
@@ -200,13 +229,10 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
 object UnusedPlugin {
   val onlyTestCodeReferenceText =
     "only referenced by test code, remove or make private @TestVisible"
-  val excludedClassModifiers: Set[Modifier] =
-    Set(
-      TEST_VISIBLE_ANNOTATION,
-      GLOBAL_MODIFIER,
-      SUPPRESS_WARNINGS_ANNOTATION_PMD,
-      SUPPRESS_WARNINGS_ANNOTATION_UNUSED
-    )
+
+  val suppressModifiers: Set[Modifier] =
+    Set(SUPPRESS_WARNINGS_ANNOTATION_PMD, SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
+
   val excludedMethodModifiers: Set[Modifier] =
     Set(
       TEST_VISIBLE_ANNOTATION,

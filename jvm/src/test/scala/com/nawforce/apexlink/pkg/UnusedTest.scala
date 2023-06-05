@@ -40,7 +40,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls"))
-          == "Unused: line 1 at 32-35: Unused method 'void foo()'\n"
+          == "Unused: line 1 at 32-35: Unused public method 'void foo()'\n"
       )
     }
   }
@@ -49,6 +49,81 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "global class Dummy {global void foo() {}}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused public method in global class") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "global class Dummy {public void foo() {}}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 32-35: Unused public method 'void foo()'\n"
+      )
+    }
+  }
+
+  test("Unused public method in page controller") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls"     -> "global class Dummy {public void foo() {}}",
+        "TestPage.page" -> "<apex:page standardController=\"Account\" extensions=\"Dummy\"/>"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused method in 'Unused' suppressed class") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@SuppressWarnings('Unused') public class Dummy {public void foo() {}}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused method in 'PMD' suppressed class") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@SuppressWarnings('PMD') public class Dummy {public void foo() {}}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused method with 'Unused' suppress") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {@SuppressWarnings('Unused') public void foo() {}}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused method with 'PMD' suppress") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {@SuppressWarnings('PMD') public void foo() {}}",
         "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
@@ -69,6 +144,33 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Used prod method") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {public void foo() {}}",
+        "Foo.cls"   -> "public class Foo{ {new Dummy().foo();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Used prod method from test") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {public void foo() {}}",
+        "Foo.cls"   -> "@isTest public class Foo{ {new Dummy().foo();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 13-18: Unused class 'Dummy', only referenced by test code, remove or make private @TestVisible\n"
+      )
+    }
+  }
+
   test("Nested unused method") {
     FileSystemHelper.run(
       Map(
@@ -79,7 +181,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls")) ==
-          "Unused: line 1 at 52-55: Unused method 'void foo()'\n"
+          "Unused: line 1 at 52-55: Unused public method 'void foo()'\n"
       )
     }
   }
@@ -100,7 +202,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy {public class Inner {public @AuraEnabled void foo() {}} }",
-        "Foo.cls"   -> "public class Foo{ {Type t1 = Dummy.class; Type t2 = Dummy.Inner.class;} }"
+        "Foo.cls" -> "public class Foo{ {Type t1 = Dummy.class; Type t2 = Dummy.Inner.class;} }"
       )
     ) { root: PathLike =>
       val org = createOrgWithUnused(root)
@@ -116,7 +218,10 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       val org = createOrgWithUnused(root)
-      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 32-35: Unused public method 'void foo()'\n"
+      )
     }
   }
 
@@ -214,7 +319,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy {Object a; void foo(){foo(); a = null;}}",
-        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+        "Foo.cls"   -> "public class Foo{ {new Dummy().foo();} }"
       )
     ) { root: PathLike =>
       val org = createOrgWithUnused(root)
@@ -234,6 +339,20 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused empty class") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused empty test class") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "@isTest public class Dummy {}")) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
   test("Unused class") {
     FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {Object a; void func() {}}")) {
       root: PathLike =>
@@ -242,6 +361,77 @@ class UnusedTest extends AnyFunSuite with TestHelper {
           orgIssuesFor(org, root.join("Dummy.cls")) ==
             "Unused: line 1 at 13-18: Unused class 'Dummy'\n"
         )
+    }
+  }
+
+  test("Non-empty class used from prod code") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {void func() {}}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 25-29: Unused private method 'void func()'\n"
+      )
+    }
+  }
+
+  test("Non-empty class used from test code") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {void func() {}}",
+        "Foo.cls"   -> "@isTest public class Foo{ @isTest void func() {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 13-18: Unused class 'Dummy', only referenced by test code, remove or make private @TestVisible\n"
+      )
+    }
+  }
+
+  test("Nested empty unused class") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {public class Inner {} }",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 33-38: Unused class 'Dummy.Inner'\n"
+      )
+    }
+  }
+
+  test("Nested empty unused test class") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@isTest public class Dummy {public class Inner {} }",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 41-46: Unused class 'Dummy.Inner'\n"
+      )
+    }
+  }
+
+  test("Nested empty test class used from test code") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@isTest public class Dummy {{Inner i; i.toString();} public class Inner {} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
     }
   }
 
@@ -276,7 +466,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy {public Dummy(Object a) {this(a, null);} public Dummy(Object a, Object b) {a = b;} }",
-        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+        "Foo.cls" -> "public class Foo{ {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
       val org = createOrgWithUnused(root)
@@ -288,7 +478,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy extends Foo {public Dummy(Object a) {super(a, null);}  }",
-        "Foo.cls"   -> "virtual public class Foo{ {Type t = Dummy.class;} public Foo(Object a, Object b) {a = b;} }"
+        "Foo.cls" -> "virtual public class Foo{ {Type t = Dummy.class;} public Foo(Object a, Object b) {a = b;} }"
       )
     ) { root: PathLike =>
       val org = createOrgWithUnused(root)
@@ -361,7 +551,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         assertIsFullDeclaration(pkg, "Dummy")
         assert(
           orgIssuesFor(org, root.join("Dummy.cls")) ==
-            "Unused: line 1 at 32-35: Unused method 'void foo()'\n"
+            "Unused: line 1 at 32-35: Unused public method 'void foo()'\n"
         )
         org.flush()
 
@@ -371,7 +561,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         OrgInfo.current.withValue(org2) {
           assert(
             orgIssuesFor(org2, root.join("Dummy.cls")) ==
-              "Unused: line 1 at 32-35: Unused method 'void foo()'\n"
+              "Unused: line 1 at 32-35: Unused public method 'void foo()'\n"
           )
         }
       }
@@ -421,7 +611,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         createOrgWithUnused(root)
         assert(
           getMessages(root.join("Dummy.cls")) ==
-            "Unused: line 1 at 13-18: Unused class 'Dummy'\nUnused: line 1 at 29-30: Unused local variable 'a'\n"
+            "Unused: line 1 at 29-30: Unused local variable 'a'\n"
         )
     }
   }
@@ -430,10 +620,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy { {Object a; a=null;} }")) {
       root: PathLike =>
         createOrgWithUnused(root)
-        assert(
-          getMessages(root.join("Dummy.cls")) ==
-            "Unused: line 1 at 13-18: Unused class 'Dummy'\n"
-        )
+        assert(getMessages(root.join("Dummy.cls")).isEmpty)
     }
   }
 
@@ -474,7 +661,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
   test("Queueable via abstract") {
     FileSystemHelper.run(
       Map(
-        "Base.cls"  -> "public abstract class Base implements Queueable { {Type t = Dummy.class;} }",
+        "Base.cls" -> "public abstract class Base implements Queueable { {Type t = Dummy.class;} }",
         "Dummy.cls" -> "public class Dummy extends Base {public void execute(QueueableContext context) {} }"
       )
     ) { root: PathLike =>
@@ -496,7 +683,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls"))
-          == s"Unused: line 1 at 39-42: Unused method 'void foo()', $onlyTestCodeReferenceText\n"
+          == s"Unused: line 1 at 39-42: Unused public method 'void foo()', $onlyTestCodeReferenceText\n"
       )
     }
   }
@@ -554,18 +741,6 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         orgIssuesFor(org, root.join("Dummy.cls"))
           == "Unused: line 1 at 33-36: Unused class 'Dummy.foo'\n"
       )
-    }
-  }
-
-  test("Unused inner class suppress by @TestVisible") {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" -> "public class Dummy {@TestVisible public class foo {}}",
-        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.class;} }"
-      )
-    ) { root: PathLike =>
-      val org = createOrgWithUnused(root)
-      assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
     }
   }
 
@@ -666,7 +841,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy {static Object a; class Foo { { System.debug(':a');} } }",
-        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.Foo.class;} }"
+        "Bar.cls" -> "public class Bar{ {Type t = Dummy.Foo.class;} }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
@@ -678,7 +853,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy { {Object a; System.debug([Select Id from Account where Id=:a]); } }",
-        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.class;} }"
+        "Bar.cls" -> "public class Bar{ {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
@@ -702,7 +877,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy {Object a; { System.debug([Select Id from Account where Id=:a]);} }",
-        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.class;} }"
+        "Bar.cls" -> "public class Bar{ {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
@@ -714,7 +889,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy {static Object a; { System.debug([Select Id from Account where Id=:a]);} }",
-        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.class;} }"
+        "Bar.cls" -> "public class Bar{ {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
@@ -726,7 +901,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy {static Object a; class Foo { { System.debug([Select Id from Account where Id=:a]);} } }",
-        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.Foo.class;} }"
+        "Bar.cls" -> "public class Bar{ {Type t = Dummy.Foo.class;} }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
