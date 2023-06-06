@@ -151,14 +151,8 @@ trait ModuleRefresh {
   ): Option[Seq[DependentType]] = {
     doc match {
       case _: ApexTriggerMetaDocument => None
-      case _: ApexClassMetaDocument   =>
-        // As class diagnostics may be cached we need to revalidate the class when the meta changes
-        // Ideally this would be handled automatically by the cache but it's not yet smart enough
-        val sourcePath =
-          doc.path.parent.join(doc.path.basename.replaceAll(".cls-meta.xml$", ".cls"))
-        val source = resolveSource(sourcePath)
-        Some(createSupportedTypes(MetadataDocument.apply(sourcePath).get, source))
-      case _ => Some(createSupportedTypes(doc, source))
+      case _: ApexClassMetaDocument   => None
+      case _                          => Some(createSupportedTypes(doc, source))
     }
   }
 

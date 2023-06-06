@@ -16,7 +16,6 @@ package com.nawforce.pkgforce.documents
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, IssuesManager}
 import com.nawforce.pkgforce.names.{EncodedName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.runtime.platform.Path
 
 /** Basic validation of metadata files from just examining the file name. */
 class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean) {

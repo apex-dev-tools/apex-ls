@@ -14,13 +14,7 @@
 
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.api.{
-  ANTLRParser,
-  AvailableParser,
-  OutlineParserMultithreaded,
-  OutlineParserSingleThreaded,
-  ServerOps
-}
+import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.opcst.OutlineParserFullDeclaration
@@ -28,7 +22,7 @@ import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryApex, TriggerDe
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SObjectFieldFinder}
+import com.nawforce.apexlink.types.schema.SObjectDeclaration
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
@@ -39,10 +33,12 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.parallel.CollectionConverters._
 import scala.collection.{BufferedIterator, mutable}
 import scala.jdk.CollectionConverters._
+import scala.util.hashing.MurmurHash3
 
-/** 'Deploy' a module from a stream of PackageEvents. Deploying here really means constructing a set of TypeDeclarations
-  * and validating them against each other. This process mutates the passed types Map for compatibility with dependency
-  * analysis code. The class handling code here is performance sensitive so this may also aid with efficiency.
+/** 'Deploy' a module from a stream of PackageEvents. Deploying here really means constructing a set
+  * of TypeDeclarations and validating them against each other. This process mutates the passed
+  * types Map for compatibility with dependency analysis code. The class handling code here is
+  * performance sensitive so this may also aid with efficiency.
   *
   * FUTURE: Remove Module dependency.
   */
@@ -125,8 +121,8 @@ class StreamDeployer(
       .foreach(sobject => sobject.collectRelationshipFields(sobject.getTypeDependencyHolders.toSet))
   }
 
-  /** Consume Apex class events, this is a bit more involved as we try and load first via cache and then fallback
-    * to reading the source and parsing.
+  /** Consume Apex class events, this is a bit more involved as we try and load first via cache and
+    * then fallback to reading the source and parsing.
     */
   private def consumeClasses(events: BufferedIterator[PackageEvent]): Unit = {
     val docs = bufferEvents[ApexEvent](events).map(e => ApexClassDocument(e.path))
@@ -155,20 +151,19 @@ class StreamDeployer(
   private def parseAndValidateClasses(docs: ArraySeq[ClassDocument]): Unit = {
     LoggerOps.debugTime(s"Parsed ${docs.length} classes", docs.nonEmpty) {
       val decls = docs
-        .flatMap(
-          doc =>
-            doc.path.readSourceData() match {
-              case Left(_) => None
-              case Right(data) =>
-                LoggerOps.debugTime(s"Parsed ${doc.path}") {
-                  FullDeclaration
-                    .create(module, doc, data, forceConstruct = false)
-                    .map(td => {
-                      types.put(td.typeName, td)
-                      td
-                    })
-                }
-            }
+        .flatMap(doc =>
+          doc.path.readSourceData() match {
+            case Left(_) => None
+            case Right(data) =>
+              LoggerOps.debugTime(s"Parsed ${doc.path}") {
+                FullDeclaration
+                  .create(module, doc, data, forceConstruct = false)
+                  .map(td => {
+                    types.put(td.typeName, td)
+                    td
+                  })
+              }
+          }
         )
 
       // Validate the classes, this must be last due to mutual dependence
@@ -183,7 +178,8 @@ class StreamDeployer(
     }
   }
 
-  /** Validate summary classes & log diagnostics, those with any invalid dependents are discarded. */
+  /** Validate summary classes & log diagnostics, those with any invalid dependents are discarded.
+    */
   private def validateSummaryClasses(summaryClasses: Iterator[SummaryApex]): Unit = {
 
     val classes       = summaryClasses.toArray
@@ -194,8 +190,8 @@ class StreamDeployer(
 
     // Collect rejected in a set, we have to multi-pass to make sure all are found
     while (hasRejections) {
-      val rejects = classes.filterNot(
-        cls => rejected.contains(cls) || cls.declaration.hasValidDependencies(typeCache)
+      val rejects = classes.filterNot(cls =>
+        rejected.contains(cls) || cls.declaration.hasValidDependencies(typeCache)
       )
 
       // Tidy up rejected so they can't be found
@@ -226,8 +222,8 @@ class StreamDeployer(
       })
   }
 
-  /** Load classes from the code cache as types returning TypeNames of those available. Benchmarking has shown
-    * running this in parallel helps performance quite a bit with SSDs.
+  /** Load classes from the code cache as types returning TypeNames of those available. Benchmarking
+    * has shown running this in parallel helps performance quite a bit with SSDs.
     */
   private def loadClassesFromCache(classes: ArraySeq[ApexClassDocument]): Iterator[SummaryApex] = {
     module.pkg.org.parsedCache
@@ -237,16 +233,12 @@ class StreamDeployer(
         val localAccum = new ConcurrentHashMap[TypeName, SummaryApex]()
 
         classes.par.foreach(doc => {
-          doc.path
-            .readBytes()
-            .toOption
-            .map(data => {
-              val value = parsedCache.get(pkgContext, doc.name.value, data)
-              val ad    = value.map(v => SummaryApex(doc.path, module, v))
-              if (ad.nonEmpty && !ad.get.diagnostics.exists(_.category == MISSING_CATEGORY)) {
-                localAccum.put(ad.get.declaration.typeName, ad.get)
-              }
-            })
+          val (contents, metaContentsHash) = classContents(doc)
+          val value = parsedCache.get(pkgContext, doc.name.value, contents, metaContentsHash)
+          val ad    = value.map(v => SummaryApex(doc.path, module, v))
+          if (ad.nonEmpty && !ad.get.diagnostics.exists(_.category == MISSING_CATEGORY)) {
+            localAccum.put(ad.get.declaration.typeName, ad.get)
+          }
         })
 
         localAccum.entrySet.forEach(kv => {
@@ -256,6 +248,14 @@ class StreamDeployer(
         localAccum.values().iterator().asScala
       })
       .getOrElse(Iterator())
+  }
+
+  private def classContents(doc: ApexClassDocument): (Array[Byte], Int) = {
+    val metaFile = doc.path.parent.join(s"${doc.name.toString}.cls-meta.xml")
+    (
+      doc.path.readBytes().getOrElse(Array.empty),
+      metaFile.readBytes().toOption.map(MurmurHash3.arrayHash).getOrElse(0)
+    )
   }
 
   private def loadClassesWithOutlineParser(
@@ -293,8 +293,8 @@ class StreamDeployer(
     ArraySeq.from(failedDocuments.asScala.toSeq)
   }
 
-  /** Consume trigger events, these could be cached but they don't consume much time to for we load from disk and
-    * parse each time.
+  /** Consume trigger events, these could be cached but they don't consume much time to for we load
+    * from disk and parse each time.
     */
   private def consumeTriggers(events: BufferedIterator[PackageEvent]): Unit = {
     val docs = bufferEvents[TriggerEvent](events).map(e => ApexTriggerDocument(e.path))

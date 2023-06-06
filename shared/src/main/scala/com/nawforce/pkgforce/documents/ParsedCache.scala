@@ -33,8 +33,8 @@ final case class CacheKey(version: Int, packageContext: PackageContext, sourceKe
     that match {
       case other: CacheKey =>
         other.version == version &&
-          other.packageContext == packageContext &&
-          other.sourceKey == sourceKey
+        other.packageContext == packageContext &&
+        other.sourceKey == sourceKey
       case _ => false
     }
   }
@@ -47,9 +47,12 @@ object CacheKey {
     version: Int,
     packageContext: PackageContext,
     name: String,
-    contents: Array[Byte]
+    contents: Array[Byte],
+    metaContentHash: Int
   ): CacheKey = {
-    val keyHash = MurmurHash3.arrayHash(contents, MurmurHash3.stringHash(name))
+    val keyHash = MurmurHash3.arrayHash(
+      Array(MurmurHash3.arrayHash(contents), metaContentHash, MurmurHash3.stringHash(name))
+    )
     CacheKey(version, packageContext, keyHash)
   }
 }
@@ -65,9 +68,9 @@ final case class PackageContext(
     that match {
       case other: PackageContext =>
         other.namespace == namespace &&
-          other.ghostedPackages.sameElements(ghostedPackages) &&
-          other.analysedPackages.sameElements(analysedPackages) &&
-          other.additionalNamespaces.sameElements(additionalNamespaces)
+        other.ghostedPackages.sameElements(ghostedPackages) &&
+        other.analysedPackages.sameElements(analysedPackages) &&
+        other.additionalNamespaces.sameElements(additionalNamespaces)
       case _ => false
     }
   }
@@ -92,9 +95,10 @@ final class ParsedCache(val path: PathLike, version: Int) {
     packageContext: PackageContext,
     name: String,
     contents: Array[Byte],
+    metaContentHash: Int,
     value: Array[Byte]
   ): Unit = {
-    val cacheKey  = CacheKey(version, packageContext, name, contents)
+    val cacheKey  = CacheKey(version, packageContext, name, contents, metaContentHash)
     val hashParts = cacheKey.hashParts
     path.createDirectory(hashParts.head) match {
       case Left(_) => ()
@@ -108,9 +112,10 @@ final class ParsedCache(val path: PathLike, version: Int) {
   def get(
     packageContext: PackageContext,
     name: String,
-    contents: Array[Byte]
+    contents: Array[Byte],
+    metaContentsHash: Int
   ): Option[Array[Byte]] = {
-    val cacheKey  = CacheKey(version, packageContext, name, contents)
+    val cacheKey  = CacheKey(version, packageContext, name, contents, metaContentsHash)
     val hashParts = cacheKey.hashParts
     val outer     = path.join(hashParts.head)
     if (outer.isDirectory) {
@@ -171,8 +176,8 @@ final class ParsedCache(val path: PathLike, version: Int) {
 }
 
 object ParsedCache {
-  val TEST_FILE: String   = "test_file"
-  val EXPIRE_WINDOW: Long = 7 * 24 * 60 * 60 * 1000
+  private val TEST_FILE: String   = "test_file"
+  private val EXPIRE_WINDOW: Long = 7 * 24 * 60 * 60 * 1000
 
   def create(version: Int): Either[String, ParsedCache] = {
     val cacheDirOpt = Environment.cacheDir
