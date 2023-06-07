@@ -52,7 +52,12 @@ abstract class FullDeclaration(
     with ApexClassDeclaration
     with ApexFullDeclaration {
 
-  lazy val sourceHash: Int = source.hash
+  val sourceHash: Int = source.hash
+  private val contentHash: Int =
+    ParsedCache.classMetaHash(
+      source.path.parent.join(s"${typeName.name.toString}.cls-meta.xml"),
+      sourceHash
+    )
 
   override def paths: ArraySeq[PathLike] = ArraySeq(source.path)
 
@@ -106,7 +111,7 @@ abstract class FullDeclaration(
   override def flush(pc: ParsedCache, context: PackageContext): Unit = {
     if (!flushedToCache) {
       val diagnostics = module.pkg.org.issueManager.getDiagnostics(location.path).toArray
-      pc.upsert(context, name.value, source.asUTF8, writeBinary(ApexSummary(summary, diagnostics)))
+      pc.upsert(context, name.value, contentHash, writeBinary(ApexSummary(summary, diagnostics)))
       flushedToCache = true
     }
   }

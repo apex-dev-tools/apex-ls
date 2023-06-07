@@ -33,8 +33,8 @@ final case class CacheKey(version: Int, packageContext: PackageContext, sourceKe
     that match {
       case other: CacheKey =>
         other.version == version &&
-          other.packageContext == packageContext &&
-          other.sourceKey == sourceKey
+        other.packageContext == packageContext &&
+        other.sourceKey == sourceKey
       case _ => false
     }
   }
@@ -47,9 +47,9 @@ object CacheKey {
     version: Int,
     packageContext: PackageContext,
     name: String,
-    contents: Array[Byte]
+    contentHash: Int
   ): CacheKey = {
-    val keyHash = MurmurHash3.arrayHash(contents, MurmurHash3.stringHash(name))
+    val keyHash = MurmurHash3.stringHash(name, contentHash)
     CacheKey(version, packageContext, keyHash)
   }
 }
@@ -65,9 +65,9 @@ final case class PackageContext(
     that match {
       case other: PackageContext =>
         other.namespace == namespace &&
-          other.ghostedPackages.sameElements(ghostedPackages) &&
-          other.analysedPackages.sameElements(analysedPackages) &&
-          other.additionalNamespaces.sameElements(additionalNamespaces)
+        other.ghostedPackages.sameElements(ghostedPackages) &&
+        other.analysedPackages.sameElements(analysedPackages) &&
+        other.additionalNamespaces.sameElements(additionalNamespaces)
       case _ => false
     }
   }
@@ -91,10 +91,10 @@ final class ParsedCache(val path: PathLike, version: Int) {
   def upsert(
     packageContext: PackageContext,
     name: String,
-    contents: Array[Byte],
+    contentHash: Int,
     value: Array[Byte]
   ): Unit = {
-    val cacheKey  = CacheKey(version, packageContext, name, contents)
+    val cacheKey  = CacheKey(version, packageContext, name, contentHash)
     val hashParts = cacheKey.hashParts
     path.createDirectory(hashParts.head) match {
       case Left(_) => ()
@@ -105,12 +105,8 @@ final class ParsedCache(val path: PathLike, version: Int) {
   }
 
   /** Recover a value from a key */
-  def get(
-    packageContext: PackageContext,
-    name: String,
-    contents: Array[Byte]
-  ): Option[Array[Byte]] = {
-    val cacheKey  = CacheKey(version, packageContext, name, contents)
+  def get(packageContext: PackageContext, name: String, contentHash: Int): Option[Array[Byte]] = {
+    val cacheKey  = CacheKey(version, packageContext, name, contentHash)
     val hashParts = cacheKey.hashParts
     val outer     = path.join(hashParts.head)
     if (outer.isDirectory) {
@@ -171,8 +167,8 @@ final class ParsedCache(val path: PathLike, version: Int) {
 }
 
 object ParsedCache {
-  val TEST_FILE: String   = "test_file"
-  val EXPIRE_WINDOW: Long = 7 * 24 * 60 * 60 * 1000
+  private val TEST_FILE: String   = "test_file"
+  private val EXPIRE_WINDOW: Long = 7 * 24 * 60 * 60 * 1000
 
   def create(version: Int): Either[String, ParsedCache] = {
     val cacheDirOpt = Environment.cacheDir
@@ -206,5 +202,14 @@ object ParsedCache {
 
   def clear(): Unit = {
     create(0).map(_.clear())
+  }
+
+  /* Construct a combined source & meta file from the source content hash. If the meta file does not
+   * exist this returns the provided source hash. */
+  def classMetaHash(metaFile: PathLike, sourceContentHash: Int): Int = {
+    val metaFileContent = metaFile.readBytes().toOption
+    metaFileContent
+      .map(bytes => MurmurHash3.bytesHash(bytes, sourceContentHash))
+      .getOrElse(sourceContentHash)
   }
 }
