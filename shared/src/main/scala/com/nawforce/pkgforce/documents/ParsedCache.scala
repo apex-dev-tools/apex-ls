@@ -47,12 +47,9 @@ object CacheKey {
     version: Int,
     packageContext: PackageContext,
     name: String,
-    contents: Array[Byte],
-    metaContentHash: Int
+    contentHash: Int
   ): CacheKey = {
-    val keyHash = MurmurHash3.arrayHash(
-      Array(MurmurHash3.arrayHash(contents), metaContentHash, MurmurHash3.stringHash(name))
-    )
+    val keyHash = MurmurHash3.stringHash(name, contentHash)
     CacheKey(version, packageContext, keyHash)
   }
 }
@@ -94,11 +91,10 @@ final class ParsedCache(val path: PathLike, version: Int) {
   def upsert(
     packageContext: PackageContext,
     name: String,
-    contents: Array[Byte],
-    metaContentHash: Int,
+    contentHash: Int,
     value: Array[Byte]
   ): Unit = {
-    val cacheKey  = CacheKey(version, packageContext, name, contents, metaContentHash)
+    val cacheKey  = CacheKey(version, packageContext, name, contentHash)
     val hashParts = cacheKey.hashParts
     path.createDirectory(hashParts.head) match {
       case Left(_) => ()
@@ -109,13 +105,8 @@ final class ParsedCache(val path: PathLike, version: Int) {
   }
 
   /** Recover a value from a key */
-  def get(
-    packageContext: PackageContext,
-    name: String,
-    contents: Array[Byte],
-    metaContentsHash: Int
-  ): Option[Array[Byte]] = {
-    val cacheKey  = CacheKey(version, packageContext, name, contents, metaContentsHash)
+  def get(packageContext: PackageContext, name: String, contentHash: Int): Option[Array[Byte]] = {
+    val cacheKey  = CacheKey(version, packageContext, name, contentHash)
     val hashParts = cacheKey.hashParts
     val outer     = path.join(hashParts.head)
     if (outer.isDirectory) {
@@ -211,5 +202,14 @@ object ParsedCache {
 
   def clear(): Unit = {
     create(0).map(_.clear())
+  }
+
+  /* Construct a combined source & meta file from the source content hash. If the meta file does not
+   * exist this returns the provided source hash. */
+  def classMetaHash(metaFile: PathLike, sourceContentHash: Int): Int = {
+    val metaFileContent = metaFile.readBytes().toOption
+    metaFileContent
+      .map(bytes => MurmurHash3.bytesHash(bytes, sourceContentHash))
+      .getOrElse(sourceContentHash)
   }
 }

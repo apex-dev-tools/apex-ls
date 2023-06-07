@@ -233,8 +233,7 @@ class StreamDeployer(
         val localAccum = new ConcurrentHashMap[TypeName, SummaryApex]()
 
         classes.par.foreach(doc => {
-          val (contents, metaContentsHash) = classContents(doc)
-          val value = parsedCache.get(pkgContext, doc.name.value, contents, metaContentsHash)
+          val value = parsedCache.get(pkgContext, doc.name.value, contentHash(doc))
           val ad    = value.map(v => SummaryApex(doc.path, module, v))
           if (ad.nonEmpty && !ad.get.diagnostics.exists(_.category == MISSING_CATEGORY)) {
             localAccum.put(ad.get.declaration.typeName, ad.get)
@@ -250,11 +249,10 @@ class StreamDeployer(
       .getOrElse(Iterator())
   }
 
-  private def classContents(doc: ApexClassDocument): (Array[Byte], Int) = {
-    val metaFile = doc.path.parent.join(s"${doc.name.toString}.cls-meta.xml")
-    (
-      doc.path.readBytes().getOrElse(Array.empty),
-      metaFile.readBytes().toOption.map(MurmurHash3.arrayHash).getOrElse(0)
+  private def contentHash(doc: ApexClassDocument): Int = {
+    ParsedCache.classMetaHash(
+      doc.path.parent.join(s"${doc.name.toString}.cls-meta.xml"),
+      MurmurHash3.bytesHash(doc.path.readBytes().getOrElse(Array.empty))
     )
   }
 
