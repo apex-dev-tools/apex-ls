@@ -34,7 +34,6 @@ import upickle.default.writeBinary
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.util.hashing.MurmurHash3
 
 /* Apex type declaration, a wrapper around the Apex parser output. This is the base for classes, interfaces & enums*/
 abstract class FullDeclaration(
@@ -53,14 +52,12 @@ abstract class FullDeclaration(
     with ApexClassDeclaration
     with ApexFullDeclaration {
 
-  lazy val sourceHash: Int = source.hash
-  private val metaContentHash: Int =
-    source.path.parent
-      .join(s"${typeName.name.toString}.cls-meta.xml")
-      .readBytes()
-      .toOption
-      .map(MurmurHash3.arrayHash)
-      .getOrElse(0)
+  val sourceHash: Int = source.hash
+  private val contentHash: Int =
+    ParsedCache.classMetaHash(
+      source.path.parent.join(s"${typeName.name.toString}.cls-meta.xml"),
+      sourceHash
+    )
 
   override def paths: ArraySeq[PathLike] = ArraySeq(source.path)
 
@@ -114,13 +111,7 @@ abstract class FullDeclaration(
   override def flush(pc: ParsedCache, context: PackageContext): Unit = {
     if (!flushedToCache) {
       val diagnostics = module.pkg.org.issueManager.getDiagnostics(location.path).toArray
-      pc.upsert(
-        context,
-        name.value,
-        source.asUTF8,
-        metaContentHash,
-        writeBinary(ApexSummary(summary, diagnostics))
-      )
+      pc.upsert(context, name.value, contentHash, writeBinary(ApexSummary(summary, diagnostics)))
       flushedToCache = true
     }
   }

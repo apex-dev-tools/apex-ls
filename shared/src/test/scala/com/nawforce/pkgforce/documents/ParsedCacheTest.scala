@@ -59,19 +59,19 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
 
   test("empty key insert/recover") {
     val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    cache.upsert(emptyPackageContext, "", Array(), 0, "Hello".getBytes())
-    assert(cache.get(emptyPackageContext, "", Array(), 0).get.sameElements("Hello".getBytes()))
-    assert(cache.get(emptyPackageContext, "Foo", Array(), 0).isEmpty)
-    assert(cache.get(emptyPackageContext, "", "Foo".getBytes, 0).isEmpty)
+    cache.upsert(emptyPackageContext, "", 0, "Hello".getBytes())
+    assert(cache.get(emptyPackageContext, "", 0).get.sameElements("Hello".getBytes()))
+    assert(cache.get(emptyPackageContext, "Foo", 0).isEmpty)
+    assert(cache.get(emptyPackageContext, "", 1).isEmpty)
   }
 
   test("key insert/recover on name") {
     val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    cache.upsert(emptyPackageContext, "Foo", Array(), 0, "Hello".getBytes())
-    assert(cache.get(emptyPackageContext, "", Array(), 0).isEmpty)
+    cache.upsert(emptyPackageContext, "Foo", 0, "Hello".getBytes())
+    assert(cache.get(emptyPackageContext, "", 0).isEmpty)
     assert(
       cache
-        .get(emptyPackageContext, "Foo", Array(), 0)
+        .get(emptyPackageContext, "Foo", 0)
         .get
         .sameElements("Hello".getBytes())
     )
@@ -79,23 +79,11 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
 
   test("key insert/recover on content") {
     val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    cache.upsert(emptyPackageContext, "", "Foo".getBytes(), 0, "Hello".getBytes())
-    assert(cache.get(emptyPackageContext, "", Array(), 0).isEmpty)
+    cache.upsert(emptyPackageContext, "", 1, "Hello".getBytes())
+    assert(cache.get(emptyPackageContext, "", 0).isEmpty)
     assert(
       cache
-        .get(emptyPackageContext, "", "Foo".getBytes(), 0)
-        .get
-        .sameElements("Hello".getBytes())
-    )
-  }
-
-  test("key insert/recover on meta content") {
-    val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    cache.upsert(emptyPackageContext, "", Array(), 99, "Hello".getBytes())
-    assert(cache.get(emptyPackageContext, "", Array(), 0).isEmpty)
-    assert(
-      cache
-        .get(emptyPackageContext, "", Array(), 99)
+        .get(emptyPackageContext, "", 1)
         .get
         .sameElements("Hello".getBytes())
     )
@@ -103,17 +91,17 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
 
   test("overwrite entry") {
     val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    cache.upsert(emptyPackageContext, "Foo", Array(), 0, "Hello".getBytes())
+    cache.upsert(emptyPackageContext, "Foo", 0, "Hello".getBytes())
     assert(
       cache
-        .get(emptyPackageContext, "Foo", Array(), 0)
+        .get(emptyPackageContext, "Foo", 0)
         .get
         .sameElements("Hello".getBytes())
     )
-    cache.upsert(emptyPackageContext, "Foo", Array(), 0, "Goodbye".getBytes())
+    cache.upsert(emptyPackageContext, "Foo", 0, "Goodbye".getBytes())
     assert(
       cache
-        .get(emptyPackageContext, "Foo", Array(), 0)
+        .get(emptyPackageContext, "Foo", 0)
         .get
         .sameElements("Goodbye".getBytes())
     )
@@ -121,15 +109,15 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
 
   test("key insert/recover wrong packageContext") {
     val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    cache.upsert(emptyPackageContext, "Foo", Array(), 0, "Hello".getBytes())
+    cache.upsert(emptyPackageContext, "Foo", 0, "Hello".getBytes())
     assert(
       cache
-        .get(PackageContext(Some(""), Array(), Array(), Array()), "Foo", Array(), 0)
+        .get(PackageContext(Some(""), Array(), Array(), Array()), "Foo", 0)
         .isEmpty
     )
     assert(
       cache
-        .get(PackageContext(Some("Foo"), Array(), Array(), Array()), "Foo", Array(), 0)
+        .get(PackageContext(Some("Foo"), Array(), Array(), Array()), "Foo", 0)
         .isEmpty
     )
   }
@@ -137,9 +125,9 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
   test("key insert/recover with namespaced packageContext") {
     val packageContext = PackageContext(Some("test"), Array(), Array(), Array())
     val cache          = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    cache.upsert(packageContext, "Foo", Array(), 0, "Hello".getBytes())
-    assert(cache.get(packageContext, "", Array(), 0).isEmpty)
-    assert(cache.get(packageContext, "Foo", Array(), 0).get.sameElements("Hello".getBytes()))
+    cache.upsert(packageContext, "Foo", 0, "Hello".getBytes())
+    assert(cache.get(packageContext, "", 0).isEmpty)
+    assert(cache.get(packageContext, "Foo", 0).get.sameElements("Hello".getBytes()))
   }
 
   test("key insert/recover with bad packageContext") {
@@ -151,14 +139,13 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
         Array()
       )
     val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    cache.upsert(packageContext, "Foo", Array(), 0, "Hello".getBytes())
-    assert(cache.get(packageContext, "Foo", Array(), 0).get.sameElements("Hello".getBytes()))
+    cache.upsert(packageContext, "Foo", 0, "Hello".getBytes())
+    assert(cache.get(packageContext, "Foo", 0).get.sameElements("Hello".getBytes()))
     assert(
       cache
         .get(
           PackageContext(Some("test"), Array("ghosted1"), Array("analysed1", "analysed2"), Array()),
           "Foo",
-          Array(),
           0
         )
         .isEmpty
@@ -173,7 +160,6 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
             Array()
           ),
           "Foo",
-          Array(),
           0
         )
         .isEmpty
@@ -183,7 +169,6 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
         .get(
           PackageContext(Some("test"), Array("ghosted2", "ghosted1"), Array("analysed2"), Array()),
           "Foo",
-          Array(),
           0
         )
         .isEmpty
@@ -198,14 +183,13 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
             Array()
           ),
           "Foo",
-          Array(),
           0
         )
         .isEmpty
     )
     assert(
       cache
-        .get(PackageContext(Some("test"), Array(), Array(), Array()), "Foo", Array(), 0)
+        .get(PackageContext(Some("test"), Array(), Array(), Array()), "Foo", 0)
         .isEmpty
     )
   }

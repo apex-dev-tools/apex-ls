@@ -29,7 +29,7 @@ case class Source(
   startLine: Option[Int] = None,
   startColumn: Option[Int] = None
 ) {
-  lazy val hash: Int = code.hash
+  val hash: Int = code.hash
 
   def extractSource(context: ParserRuleContext): Source = {
     val subdata = code.subdata(context.start.getStartIndex, context.stop.getStopIndex + 1)
@@ -54,7 +54,8 @@ case class Source(
     code.asUTF8
   }
 
-  /** Find a location for a rule, adapts based on source offsets to give absolute position in file */
+  /** Find a location for a rule, adapts based on source offsets to give absolute position in file
+    */
   def getLocation(context: ParserRuleContext): PathLocation = {
     PathLocation(
       path,
