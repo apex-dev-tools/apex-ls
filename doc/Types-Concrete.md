@@ -78,3 +78,5 @@ For example, if Apex code references a Label there will be Dependent<->Dependenc
 The dependency relationship enable a form of invalidation handling to ensure that we are always reporting the correct diagnostics during IDE editing. Briefly, when metadata is changed (including Apex code) we automatically re-validate any metadata that could be impacted by following the type level dependency holder relationships.
 
 For example, lets say the Labels available were changed, to re-validate our Apex code we find all classes that may be impacted via the type level dependency holder relationships on DependentType. The re-validation of these Apex classes will cause them to report diagnostics for any Labels they depend on that are no longer available.
+
+The representation of relationships between Apex and Pages/Components is similar to Labels, i.e. Apex classes have a type level dependency on the 'Pages' and 'Component' types for the purposes of invalidation. In all three cases this can cause more revalidation than is required since we don't currently have the ability just to revalidate the specific labels, pages or components that are needed. 

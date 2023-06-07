@@ -91,8 +91,6 @@ object Component {
       Some(new VFContainer(module, event))
     )
   }
-
-  val emptyComponents: Array[Component] = Array()
 }
 
 /** Component namespace handler */
@@ -101,7 +99,11 @@ final case class ComponentDeclaration(
   module: OPM.Module,
   components: Seq[TypeDeclaration],
   nestedComponents: Seq[NestedComponents]
-) extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.Component)
+) extends BasicTypeDeclaration(
+      ArraySeq.unsafeWrapArray(components.flatMap(component => component.paths).distinct.toArray),
+      module,
+      TypeNames.Component
+    )
     with DependentType {
 
   val sourceHash: Int = MurmurHash3.unorderedHash(sources.map(_.hash), 0)
@@ -223,7 +225,7 @@ final class GhostedComponents(module: OPM.Module, ghostedPackage: OPM.PackageImp
 }
 
 object ComponentDeclaration {
-  val standardTypes = Seq(PlatformTypes.apexComponent, PlatformTypes.chatterComponent)
+  private val standardTypes = Seq(PlatformTypes.apexComponent, PlatformTypes.chatterComponent)
 
   def apply(module: OPM.Module): ComponentDeclaration = {
     new ComponentDeclaration(ArraySeq(), module, standardTypes, collectBaseComponents(module))

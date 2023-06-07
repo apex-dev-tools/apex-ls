@@ -397,6 +397,9 @@ trait PackageAPI extends Package {
             case Some(_: PageDocument) =>
               // For any pages we need to return the 'Page' declaration as pages are not types but fields
               Some(TypeId(module, module.pages.typeName))
+            case Some(_: ComponentDocument) =>
+              // Components are types, but they are nested which complicates things so return the 'Component' declaration
+              Some(TypeId(module, module.components.typeName))
             case Some(mdDoc: MetadataDocument) =>
               // For everything else, just do a type lookup
               module

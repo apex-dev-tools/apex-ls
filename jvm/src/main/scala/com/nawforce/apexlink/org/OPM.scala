@@ -661,7 +661,8 @@ object OPM extends TriHierarchy {
         .map(td => TypeIdentifier(namespace, td.typeName))
     }
 
-    /* Search for a specific outer or inner type */
+    /* Search for a specific type, this has to be recursive to cope with double nesting of platform types,
+     * e.g. Component.<namespace>.<ComponentName> */
     def moduleType(typeName: TypeName): Option[TypeDeclaration] = {
       types
         .get(typeName)
