@@ -27,8 +27,15 @@ abstract class PathLike {
   def parent: PathLike
 
   // Test if this path is the parent of another
-  def isParentOf(other: PathLike): Boolean =
-    other.toString.startsWith(toString) && other.toString != toString
+  def isParentOf(other: PathLike): Boolean = {
+    val otherParent = other.parent
+    if (other.isRoot)
+      false
+    else if (otherParent == this)
+      true
+    else
+      isParentOf(otherParent)
+  }
 
   // Is anything present at path
   def exists: Boolean
