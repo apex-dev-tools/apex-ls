@@ -126,6 +126,38 @@ class RefreshTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Refresh indirect missing") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "pkg/A.cls" -> "public interface A {void func(Foo aFoo);}",
+          "pkg/B.cls" -> "public virtual class B {void func(Foo aFoo) {}}",
+          "pkg/C.cls" -> "public class C extends B implements A {}"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(
+          getMessages(root.join("pkg").join("A.cls"))
+            == "Missing: line 1 at 34-38: No type declaration found for 'Foo'\n"
+        )
+        assert(
+          getMessages(root.join("pkg").join("B.cls"))
+            == "Missing: line 1 at 38-42: No type declaration found for 'Foo'\n"
+        )
+        assert(
+          getMessages(root.join("pkg").join("C.cls"))
+            == "Missing: line 1 at 13-14: Method 'void func(Foo)' from interface 'A' must be implemented\n"
+        )
+
+        refresh(pkg, root.join("pkg/Foo.cls"), "public class Foo {}")
+        refresh(pkg, root.join("pkg/Foo.cls-meta.xml"), "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
   test("Dependencies created") {
     withManualFlush {
       FileSystemHelper.run(
