@@ -22,6 +22,8 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped
 
   def validate(nature: MetadataNature, documents: List[PathLike]): Unit = {
     // Clear any previous issues, this is start of a re-validation
+    // WARNING: This is pretty bad for the refresh logic as it forces a revalidation
+    // of types that have not changed, we need a better design for this.
     documents.foreach(logger.pop)
 
     // Not all of these will be validated, using a full list to get missing case warning

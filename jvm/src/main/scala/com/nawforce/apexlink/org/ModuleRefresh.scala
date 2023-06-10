@@ -31,7 +31,6 @@ import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.stream._
 import com.nawforce.runtime.parsers.SourceData
-import com.nawforce.runtime.platform.Path
 
 import scala.collection.immutable.ArraySeq
 
@@ -150,9 +149,13 @@ trait ModuleRefresh {
     source: Option[SourceData]
   ): Option[Seq[DependentType]] = {
     doc match {
-      case _: ApexTriggerMetaDocument => None
-      case _: ApexClassMetaDocument   => None
-      case _                          => Some(createSupportedTypes(doc, source))
+      case _: ApexTriggerMetaDocument | _: ApexClassMetaDocument =>
+        // Hack: we don't need to revalidate here but MetadataValidator wipes out all
+        // diagnostics so if we don't validate we can save to cache without important diagnostics,
+        // especially the Missing ones which will break invalidation handling.
+        getDependentType(doc.controllingTypeName(namespace)).foreach(_.validate())
+        None
+      case _ => Some(createSupportedTypes(doc, source))
     }
   }
 
