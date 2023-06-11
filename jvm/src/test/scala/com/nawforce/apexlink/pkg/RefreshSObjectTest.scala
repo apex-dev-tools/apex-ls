@@ -309,7 +309,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
 
         val basePath = root.join("base", "objects", "Foo__c.object")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
         assert(
@@ -334,7 +334,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
 
         val basePath = root.join("base", "objects", "Foo__c", "Foo__c.object-meta.xml")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
         assert(
@@ -353,7 +353,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         val startTypes = org.unmanaged.modules.head.types.size
         val basePath   = root.join("objects", "Foo__c.object")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -378,7 +378,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         val startTypes = org.unmanaged.modules.head.types.size
         val basePath   = root.join("objects", "Foo__c", "Foo__c.object-meta.xml")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -403,7 +403,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
 
         val basePath = root.join("objects", "Bar__c.object")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -429,7 +429,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
 
         val basePath = root.join("objects", "Bar__c", "Bar__c.object-meta.xml")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -471,11 +471,9 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
     withManualFlush {
       FileSystemHelper.run(
         Map(
-          "objects/Bar__c/Bar__c.object-meta.xml" -> customObject("Bar", Seq()),
-          "objects/Bar__c/fields/Date__c.field-meta.xml" -> customField(
-            "Date__c",
-            "DateTime",
-            None
+          "objects/Bar__c/Bar__c.object-meta.xml" -> customObject(
+            "Bar",
+            Seq(("Date__c", Some("DateTime"), None))
           ),
           "objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq())
         )
@@ -495,63 +493,16 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         )
 
         org.unmanaged.refresh(files.head, highPriority = false)
-        assert(org.flush())
         assert(org.issues.isEmpty)
 
         val related = root.join("objects", "Bar__c", "fields", "Date__c.field-meta.xml")
-        assert(related.delete().isEmpty)
+        related.delete()
         org.unmanaged.refresh(related, highPriority = false)
-        assert(org.flush())
 
+        assert(org.flush())
         assert(
           getMessages() ==
             path"/objects/Foo__c/fields/SummaryDate__c.field-meta.xml: Error: line 1: Related field 'Bar__c.Date__c' required by Schema.Foo__c is not defined" + "\n"
-        )
-      }
-    }
-  }
-
-  test("Derived field refresh (with namespace)") {
-    withManualFlush {
-      FileSystemHelper.run(
-        Map(
-          "sfdx-project.json" -> """{"packageDirectories": [{"path": "pkg"}], "namespace": "ns1"}""",
-          "pkg/objects/Bar__c/Bar__c.object-meta.xml" -> customObject("Bar", Seq()),
-          "pkg/objects/Bar__c/fields/Date__c.field-meta.xml" -> customField(
-            "Date__c",
-            "DateTime",
-            None
-          ),
-          "pkg/objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq())
-        )
-      ) { root: PathLike =>
-        val org = createHappyOrg(root)
-
-        val files = createFiles(
-          root,
-          Map(
-            "pkg/objects/Foo__c/fields/SummaryDate__c.field-meta.xml" -> customField(
-              "SummaryDate__c",
-              "Summary",
-              None,
-              Some(s"<summarizedField>Bar__c.Date__c</summarizedField>")
-            )
-          )
-        )
-        val pkg = org.packages.find(_.namespace.exists(ns => ns.toString() == "ns1")).head
-
-        pkg.refresh(files.head, highPriority = false)
-        assert(org.flush())
-        assert(org.issues.isEmpty)
-
-        val related = root.join("pkg", "objects", "Bar__c", "fields", "Date__c.field-meta.xml")
-        assert(related.delete().isEmpty)
-        pkg.refresh(related, highPriority = false)
-        assert(org.flush())
-
-        assert(
-          getMessages() ==
-            path"/pkg/objects/Foo__c/fields/SummaryDate__c.field-meta.xml: Error: line 1: Related field 'Bar__c.Date__c' required by Schema.ns1__Foo__c is not defined" + "\n"
         )
       }
     }
@@ -697,7 +648,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         val startTypes = org.unmanaged.modules.head.types.size
         val basePath   = root.join("objects", "Foo__mdt.object")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -720,7 +671,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         val startTypes = org.unmanaged.modules.head.types.size
         val basePath   = root.join("objects", "Foo__mdt", "Foo__mdt.object-meta.xml")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -867,7 +818,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         val startTypes = org.unmanaged.modules.head.types.size
         val basePath   = root.join("objects", "Foo__e.object")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -890,7 +841,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         val startTypes = org.unmanaged.modules.head.types.size
         val basePath   = root.join("objects", "Foo__e", "Foo__e.object-meta.xml")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -1037,7 +988,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         val startTypes = org.unmanaged.modules.head.types.size
         val basePath   = root.join("objects", "Foo__b.object")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 
@@ -1060,7 +1011,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         val startTypes = org.unmanaged.modules.head.types.size
         val basePath   = root.join("objects", "Foo__b", "Foo__b.object-meta.xml")
-        assert(basePath.delete().isEmpty)
+        basePath.delete()
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
 

@@ -50,8 +50,8 @@ final case class CustomFieldEvent(
   sourceInfo: SourceInfo,
   name: Name,
   rawType: Name,
-  referenceTo: Option[(Name, Name)], // For lookups like fields (referenceTo, relationshipName)
-  relatedField: Option[(Name, Name)] // For summary fields (sobject, field)
+  referenceTo: Option[(Name, Name)],
+  relatedField: Option[(Name, Name)]
 ) extends PackageEvent
 final case class FieldsetEvent(sourceInfo: SourceInfo, name: Name)      extends PackageEvent
 final case class SharingReasonEvent(sourceInfo: SourceInfo, name: Name) extends PackageEvent
