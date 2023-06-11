@@ -26,10 +26,8 @@ import com.nawforce.apexlink.types.synthetic.{
   CustomFieldDeclaration,
   LocatableCustomFieldDeclaration
 }
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
-import com.nawforce.pkgforce.path.Location
 import com.nawforce.pkgforce.stream._
 
 import scala.collection.immutable.ArraySeq
@@ -172,11 +170,11 @@ class SObjectDeployer(module: OPM.Module) {
   private def createDerivedField(
     objectName: TypeName,
     field: CustomFieldEvent,
-    relatedField: Option[FieldDeclaration],
+    relatedField: Option[(TypeDeclaration, FieldDeclaration)],
     ghostRelated: Boolean
   ): FieldDeclaration = {
     val location         = field.sourceInfo.location
-    val relatedFieldType = relatedField.map(_.typeName)
+    val relatedFieldType = relatedField.map(_._2.typeName)
 
     if (relatedField.isEmpty && field.relatedField.nonEmpty && !ghostRelated) {
       val (relObj, relField) = field.relatedField.get
@@ -190,7 +188,9 @@ class SObjectDeployer(module: OPM.Module) {
       location,
       defaultNamespace(field.name),
       relatedFieldType.getOrElse(SObjectDeployer.platformTypeOfFieldType(field).typeName),
-      None
+      idTarget = None,
+      relationshipName = None,
+      derivedFrom = relatedField.map(_._1.typeName).toList
     )
   }
 
@@ -198,17 +198,19 @@ class SObjectDeployer(module: OPM.Module) {
     field: (Name, Name),
     createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration],
     derivedFields: ArrayBuffer[(TypeName, CustomFieldEvent)]
-  ): Option[FieldDeclaration] = {
-    val objName = schemaTypeNameOf(field._1)
-    val relObj  = createdSObjects.get(objName)
+  ): Option[(TypeDeclaration, FieldDeclaration)] = {
+    val objectTypeName = schemaTypeNameOf(field._1)
+    val relObj = createdSObjects.get(objectTypeName).orElse(module.moduleType(objectTypeName))
 
     relObj
-      .flatMap(_.findField(defaultNamespace(field._2), Some(false)))
+      .flatMap(
+        _.findField(defaultNamespace(field._2), Some(false)).map(field => (relObj.get, field))
+      )
       .orElse(
         // rare case of chained related fields
         derivedFields
           .find { case (obj, f) =>
-            obj == objName && f.name == field._2
+            obj == objectTypeName && f.name == field._2
           }
           .flatMap(rf =>
             rf._2.relatedField.flatMap(findRelatedField(_, createdSObjects, derivedFields))
@@ -686,7 +688,7 @@ object SObjectDeployer {
   }
 
   /** Standard fields for platform events. */
-  val standardPlatformEventFields: ArraySeq[FieldDeclaration] = {
+  private val standardPlatformEventFields: ArraySeq[FieldDeclaration] = {
     ArraySeq(
       CustomFieldDeclaration(Names.ReplayId, TypeNames.String, None),
       CustomFieldDeclaration(XNames.CreatedBy, TypeNames.User, None),
@@ -696,7 +698,7 @@ object SObjectDeployer {
   }
 
   /** Standard fields for custom metadata. */
-  val standardCustomMetadataFields: ArraySeq[FieldDeclaration] = {
+  private val standardCustomMetadataFields: ArraySeq[FieldDeclaration] = {
     ArraySeq(
       CustomFieldDeclaration(Names.DeveloperName, TypeNames.String, None),
       CustomFieldDeclaration(Names.IsProtected, TypeNames.Boolean, None),
@@ -811,11 +813,11 @@ object SObjectDeployer {
       CustomFieldDeclaration(XNames.ParentId, TypeNames.IdType, None)
     )
 
-  val derivedFieldTypes: Set[Name] =
+  private val derivedFieldTypes: Set[Name] =
     Set(Name("Summary"))
 
   /** Convert a field type string to the platform type used for it in Apex. */
-  def platformTypeOfFieldType(field: CustomFieldEvent): TypeDeclaration = {
+  private def platformTypeOfFieldType(field: CustomFieldEvent): TypeDeclaration = {
     field.rawType.value match {
       case "MasterDetail"        => PlatformTypes.idType
       case "Lookup"              => PlatformTypes.idType
