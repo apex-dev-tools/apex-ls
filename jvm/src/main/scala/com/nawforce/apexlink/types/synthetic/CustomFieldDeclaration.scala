@@ -22,8 +22,11 @@ import com.nawforce.pkgforce.path.{Locatable, PathLocation}
 
 import scala.collection.immutable.ArraySeq
 
-abstract class CustomField(asStatic: Boolean, val relationshipName: Option[String] = None)
-    extends FieldDeclaration {
+abstract class CustomField(
+  asStatic: Boolean,
+  val relationshipName: Option[String] = None,
+  val derivedFrom: List[TypeName] = Nil
+) extends FieldDeclaration {
   override val modifiers: ArraySeq[Modifier] = CustomField.getModifiers(asStatic)
   override val readAccess: Modifier          = PUBLIC_MODIFIER
   override val writeAccess: Modifier         = PUBLIC_MODIFIER
@@ -66,6 +69,7 @@ final case class LocatableCustomFieldDeclaration(
   typeName: TypeName,
   idTarget: Option[TypeName],
   asStatic: Boolean = false,
-  override val relationshipName: Option[String] = None
-) extends CustomField(asStatic, relationshipName)
+  override val relationshipName: Option[String] = None,
+  override val derivedFrom: List[TypeName] = Nil
+) extends CustomField(asStatic, relationshipName, derivedFrom)
     with Locatable {}
