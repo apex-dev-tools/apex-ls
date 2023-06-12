@@ -14,12 +14,17 @@ class DirectoryTree private (val path: PathLike) {
   private var fileModTimes   = Array[(String, Long)]()
   private var subDirectories = Array[DirectoryTree]()
 
-  /* Create a refreshed version of this node, return unchanged if the directory does not exist */
+  /* Create a refreshed version of this node reporting any changed files.  */
   def refresh(changed: mutable.ArrayBuffer[String]): DirectoryTree = {
     if (path.isDirectory) {
       val (files, directories) = path.splitDirectoryEntries()
       refreshSubdirectories(directories, changed)
       refreshFiles(files, changed)
+    } else {
+      // If the directory was removed report everything changed
+      collectFiles(changed)
+      fileModTimes = Array()
+      subDirectories = Array()
     }
     this
   }

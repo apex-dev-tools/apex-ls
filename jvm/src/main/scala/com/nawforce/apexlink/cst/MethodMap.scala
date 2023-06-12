@@ -17,13 +17,22 @@ import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexMethodLike}
-import com.nawforce.apexlink.types.core.MethodDeclaration.{emptyMethodDeclarations, emptyMethodDeclarationsSet}
+import com.nawforce.apexlink.types.core.MethodDeclaration.{
+  emptyMethodDeclarations,
+  emptyMethodDeclarationsSet
+}
 import com.nawforce.apexlink.types.core.{MethodDeclaration, ParameterDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.{GenericPlatformMethod, PlatformMethod}
 import com.nawforce.apexlink.types.synthetic.CustomMethodDeclaration
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics._
-import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, AURA_ENABLED_ANNOTATION, Modifier, PRIVATE_MODIFIER, PROTECTED_MODIFIER }
+import com.nawforce.pkgforce.modifiers.{
+  ABSTRACT_MODIFIER,
+  AURA_ENABLED_ANNOTATION,
+  Modifier,
+  PRIVATE_MODIFIER,
+  PROTECTED_MODIFIER
+}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
 import com.nawforce.pkgforce.path.{Location, PathLocation}
@@ -315,28 +324,31 @@ object MethodMap {
         })
       })
 
-    //Add errors for any static methods that shadow instance methods
-    staticLocals.flatMap(st=> instanceLocals.find(f => f.nameAndParameterTypes.toLowerCase == st.nameAndParameterTypes.toLowerCase).map((st, _)))
-      .foreach(methodAndStaticMethod=>{
-      setMethodError(
-        methodAndStaticMethod._1,
-        s"static method '${methodAndStaticMethod._1.name}' is a duplicate of an existing instance method",
-        errors
+    // Add errors for any static methods that shadow instance methods
+    staticLocals
+      .flatMap(st =>
+        instanceLocals
+          .find(f => f.nameAndParameterTypes.toLowerCase == st.nameAndParameterTypes.toLowerCase)
+          .map((st, _))
       )
-      setMethodError(
-        methodAndStaticMethod._2,
-        s"method '${methodAndStaticMethod._2.name}' is a duplicate of an existing static method",
-        errors
-      )
-    })
+      .foreach(methodAndStaticMethod => {
+        setMethodError(
+          methodAndStaticMethod._1,
+          s"static method '${methodAndStaticMethod._1.name}' is a duplicate of an existing instance method",
+          errors
+        )
+        setMethodError(
+          methodAndStaticMethod._2,
+          s"method '${methodAndStaticMethod._2.name}' is a duplicate of an existing static method",
+          errors
+        )
+      })
     // Add errors for any static methods with protected modifier
-    staticLocals.filter(s=>s.modifiers.contains(PROTECTED_MODIFIER)).foreach(m=>{
-      setMethodError(
-        m,
-        s"protected method '${m.name}' cannot be static",
-        errors
-      )
-    })
+    staticLocals
+      .filter(s => s.modifiers.contains(PROTECTED_MODIFIER))
+      .foreach(m => {
+        setMethodError(m, s"protected method '${m.name}' cannot be static", errors)
+      })
     staticLocals
       .filterNot(ignorableStatics.contains)
       .foreach(method => applyStaticMethod(workingMap, method))
@@ -366,7 +378,7 @@ object MethodMap {
     // Validate all required methods are implemented
     checkCompleteness(td, location, errors, workingMap)
 
-    //Valida auraEnabled methods to disallow Sets
+    // Valida auraEnabled methods to disallow Sets
     checkAuraEnabledMethods(location, errors, workingMap)
 
     // Finally, construct the actual MethodMap
@@ -375,9 +387,11 @@ object MethodMap {
     new MethodMap(Some(td.typeName), ad, toMap(workingMap), testVisiblePrivateSet, errors.toList)
   }
 
-  private def checkAuraEnabledMethods(location: Option[PathLocation],
-                                      errors: mutable.Buffer[Issue],
-                                      workingMap: WorkingMap): Unit = {
+  private def checkAuraEnabledMethods(
+    location: Option[PathLocation],
+    errors: mutable.Buffer[Issue],
+    workingMap: WorkingMap
+  ): Unit = {
 
     def hasDisallowedTypes(typeName: TypeName): Boolean = {
       DISALLOWED_TYPES_FOR_AURAENABLED.exists(disAllowed => {
@@ -385,32 +399,39 @@ object MethodMap {
       }) || typeName.params.exists(hasDisallowedTypes)
     }
 
-    val auraEnabledMethods = workingMap.values.flatten.collect { case m: ApexMethodDeclaration if m.modifiers.contains(AURA_ENABLED_ANNOTATION) => m }
+    val auraEnabledMethods = workingMap.values.flatten.collect {
+      case m: ApexMethodDeclaration if m.modifiers.contains(AURA_ENABLED_ANNOTATION) => m
+    }
 
-    auraEnabledMethods.filter(_.parameters.map(_.typeName).exists(hasDisallowedTypes)).foreach(m =>
-      errors.append(
-        new Issue(
-          location.get.path,
-          Diagnostic(
-            ERROR_CATEGORY,
-            location.get.location,
-            s"AuraEnabled methods do not support parameter type of ${m.parameters.map(_.typeName).filter(hasDisallowedTypes).mkString(", ")}"
-          )
-        )
-      ))
-
-    auraEnabledMethods.filter(m => hasDisallowedTypes(m.typeName)).foreach(m => {
-      errors.append(
-        new Issue(
-          location.get.path,
-          Diagnostic(
-            ERROR_CATEGORY,
-            location.get.location,
-            s"AuraEnabled methods do not support return type of ${m.typeName.toString}"
+    auraEnabledMethods
+      .filter(_.parameters.map(_.typeName).exists(hasDisallowedTypes))
+      .foreach(m =>
+        errors.append(
+          new Issue(
+            location.get.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              location.get.location,
+              s"AuraEnabled methods do not support parameter type of ${m.parameters.map(_.typeName).filter(hasDisallowedTypes).mkString(", ")}"
+            )
           )
         )
       )
-    })
+
+    auraEnabledMethods
+      .filter(m => hasDisallowedTypes(m.typeName))
+      .foreach(m => {
+        errors.append(
+          new Issue(
+            location.get.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              location.get.location,
+              s"AuraEnabled methods do not support return type of ${m.typeName.toString}"
+            )
+          )
+        )
+      })
   }
 
   private def checkCompleteness(
@@ -433,7 +454,7 @@ object MethodMap {
               new Issue(
                 location.get.path,
                 Diagnostic(
-                  ERROR_CATEGORY,
+                  MISSING_CATEGORY,
                   location.get.location,
                   s"Non-abstract class must implement method '${method.signature}' from type '${method.thisTypeId}'"
                 )
@@ -563,7 +584,7 @@ object MethodMap {
                 new Issue(
                   l.path,
                   Diagnostic(
-                    ERROR_CATEGORY,
+                    MISSING_CATEGORY,
                     l.location,
                     s"Method '${method.signature}' from interface '${interface.typeName}' must be implemented"
                   )
@@ -626,11 +647,13 @@ object MethodMap {
       lazy val reallyPrivateMethod =
         matchedMethod.visibility == PRIVATE_MODIFIER && !areInSameApexFile(method, matchedMethod)
 
-      lazy val areBothPrivate=
+      lazy val areBothPrivate =
         matchedMethod.visibility == PRIVATE_MODIFIER && method.visibility == PRIVATE_MODIFIER
 
-      lazy val hasNonPrivateSameVisibilityModifier = !areBothPrivate && matchedMethod.visibility == method.visibility
-      lazy val hasNonPrivateModifierInSameFile = areInSameApexFile(method, matchedMethod) && !areBothPrivate
+      lazy val hasNonPrivateSameVisibilityModifier =
+        !areBothPrivate && matchedMethod.visibility == method.visibility
+      lazy val hasNonPrivateModifierInSameFile =
+        areInSameApexFile(method, matchedMethod) && !areBothPrivate
 
       if (areInSameApexClass(matchedMethod, method)) {
         matchedMethod match {
@@ -698,8 +721,8 @@ object MethodMap {
           )
       } else if (
         !method.isOverride &&
-          matchedMethod.isAbstract &&
-          (hasNonPrivateModifierInSameFile || hasNonPrivateSameVisibilityModifier)
+        matchedMethod.isAbstract &&
+        (hasNonPrivateModifierInSameFile || hasNonPrivateSameVisibilityModifier)
       ) {
         setMethodError(
           method,

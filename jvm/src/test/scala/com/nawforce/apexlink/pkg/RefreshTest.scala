@@ -126,6 +126,38 @@ class RefreshTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Refresh indirect missing") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "pkg/A.cls" -> "public interface A {void func(Foo aFoo);}",
+          "pkg/B.cls" -> "public virtual class B {void func(Foo aFoo) {}}",
+          "pkg/C.cls" -> "public class C extends B implements A {}"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(
+          getMessages(root.join("pkg").join("A.cls"))
+            == "Missing: line 1 at 34-38: No type declaration found for 'Foo'\n"
+        )
+        assert(
+          getMessages(root.join("pkg").join("B.cls"))
+            == "Missing: line 1 at 38-42: No type declaration found for 'Foo'\n"
+        )
+        assert(
+          getMessages(root.join("pkg").join("C.cls"))
+            == "Missing: line 1 at 13-14: Method 'void func(Foo)' from interface 'A' must be implemented\n"
+        )
+
+        refresh(pkg, root.join("pkg/Foo.cls"), "public class Foo {}")
+        refresh(pkg, root.join("pkg/Foo.cls-meta.xml"), "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
   test("Dependencies created") {
     withManualFlush {
       FileSystemHelper.run(
@@ -739,21 +771,25 @@ class RefreshTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Page controller added/removed/added") {
+  test("Page controller added/removed/added (no namespace)") {
     withManualFlush {
       FileSystemHelper.run(
         Map(
-          "TestPage.page" -> "<apex:page standardController=\"Account\" extensions=\"TestController\"/>"
+          "sfdx-project.json" ->
+            """{
+              |"packageDirectories": [{"path": "pkg"}]
+              |}""".stripMargin,
+          "pkg/TestPage.page" -> "<apex:page standardController=\"Account\" extensions=\"TestController\"/>"
         )
       ) { root: PathLike =>
         val org = createOrg(root)
         val pkg = org.unmanaged
         assert(
-          getMessages() == path"/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
+          getMessages() == path"/pkg/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
         )
 
-        val controller     = root.join("TestController.cls")
-        val controllerMeta = root.join("TestController.cls-meta.xml")
+        val controller     = root.join("pkg/TestController.cls")
+        val controllerMeta = root.join("pkg/TestController.cls-meta.xml")
 
         refresh(pkg, controller, "public class TestController {}")
         refresh(pkg, controllerMeta, "")
@@ -766,7 +802,50 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         pkg.refresh(controllerMeta, highPriority = false)
         assert(org.flush())
         assert(
-          getMessages() == path"/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
+          getMessages() == path"/pkg/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
+        )
+
+        refresh(pkg, controller, "public class TestController {}")
+        refresh(pkg, controllerMeta, "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
+  test("Page controller added/removed/added (with namespace)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" ->
+            """{
+              |"namespace": "ns1",
+              |"packageDirectories": [{"path": "pkg"}]
+              |}""".stripMargin,
+          "pkg/TestPage.page" -> "<apex:page standardController=\"Account\" extensions=\"TestController\"/>"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.packages.find(_.namespace.contains(Name("ns1"))).head
+        assert(
+          getMessages() == path"/pkg/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
+        )
+
+        val controller     = root.join("pkg/TestController.cls")
+        val controllerMeta = root.join("pkg/TestController.cls-meta.xml")
+
+        refresh(pkg, controller, "public class TestController {}")
+        refresh(pkg, controllerMeta, "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+
+        controller.delete()
+        controllerMeta.delete()
+        pkg.refresh(controller, highPriority = false)
+        pkg.refresh(controllerMeta, highPriority = false)
+        assert(org.flush())
+        assert(
+          getMessages() == path"/pkg/TestPage.page: Missing: line 1 at 40-67: No type declaration found for 'TestController'" + "\n"
         )
 
         refresh(pkg, controller, "public class TestController {}")
@@ -832,6 +911,91 @@ class RefreshTest extends AnyFunSuite with TestHelper {
           pkg.orderedModules.head.components.nestedTypes.map(_.name).toSet ==
             Set(Name("Test"), Name("Test2"), Names.c, Names.Apex, Names.Chatter)
         )
+      }
+    }
+  }
+
+  test("Component controller added/removed/added (no namespace)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" ->
+            """{
+              |"packageDirectories": [{"path": "pkg"}]
+              |}""".stripMargin,
+          "pkg/TestComponent.component" -> "<apex:component controller=\"TestController\"/>"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(
+          getMessages() == path"/pkg/TestComponent.component: Missing: line 1 at 16-43: No type declaration found for 'TestController'" + "\n"
+        )
+
+        val controller     = root.join("pkg/TestController.cls")
+        val controllerMeta = root.join("pkg/TestController.cls-meta.xml")
+
+        refresh(pkg, controller, "public class TestController {}")
+        refresh(pkg, controllerMeta, "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+
+        controller.delete()
+        controllerMeta.delete()
+        pkg.refresh(controller, highPriority = false)
+        pkg.refresh(controllerMeta, highPriority = false)
+        assert(org.flush())
+        assert(
+          getMessages() == path"/pkg/TestComponent.component: Missing: line 1 at 16-43: No type declaration found for 'TestController'" + "\n"
+        )
+
+        refresh(pkg, controller, "public class TestController {}")
+        refresh(pkg, controllerMeta, "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
+  test("Component controller added/removed/added (with namespace)") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" ->
+            """{
+              |"namespace": "ns1",
+              |"packageDirectories": [{"path": "pkg"}]
+              |}""".stripMargin,
+          "pkg/TestComponent.component" -> "<apex:component controller=\"TestController\"/>"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.packages.find(_.namespace.contains(Name("ns1"))).head
+        assert(
+          getMessages() == path"/pkg/TestComponent.component: Missing: line 1 at 16-43: No type declaration found for 'TestController'" + "\n"
+        )
+
+        val controller     = root.join("pkg/TestController.cls")
+        val controllerMeta = root.join("pkg/TestController.cls-meta.xml")
+
+        refresh(pkg, controller, "public class TestController {}")
+        refresh(pkg, controllerMeta, "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+
+        controller.delete()
+        controllerMeta.delete()
+        pkg.refresh(controller, highPriority = false)
+        pkg.refresh(controllerMeta, highPriority = false)
+        assert(org.flush())
+        assert(
+          getMessages() == path"/pkg/TestComponent.component: Missing: line 1 at 16-43: No type declaration found for 'TestController'" + "\n"
+        )
+
+        refresh(pkg, controller, "public class TestController {}")
+        refresh(pkg, controllerMeta, "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
       }
     }
   }
