@@ -41,17 +41,20 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
   private def reportUnused(td: FullDeclaration): Seq[DependentType] = {
     if (td.outerTypeName.isEmpty) {
       // Only update if we don't have errors, to reduce noise
-      val existingIssues = td.module.pkg.org.issues.issuesForFileInternal(td.paths.head)
+      val existingIssues = td.paths.flatMap(td.module.pkg.org.issues.issuesForFileInternal)
       val hasErrors =
         existingIssues.exists(issue => DiagnosticCategory.isErrorType(issue.diagnostic.category))
       if (hasErrors) {
         td.module.pkg.org.issues.replaceUnusedIssues(td.paths.head, Seq())
       } else {
+        // This is a bit messy, we need to preserve unused locals are they are pre-computed
+        // via onBlockValidate. They need to be handled that way for local suppression to work.
         val localUnused =
           existingIssues.filter(_.diagnostic.message.startsWith("Unused local variable"))
         td.module.pkg.org.issues.replaceUnusedIssues(td.paths.head, td.unusedIssues ++ localUnused)
       }
 
+      // Return all our dependents so they are re-validated for unused as well
       val dependents = mutable.Set[Dependent]()
       td.collectDependencies(dependents)
       dependents
@@ -70,16 +73,18 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
     context: BlockVerifyContext
   ): Unit = {
     context.declaredVars
-      .filter(v => !context.referencedVars.contains(v._1) && v._2.definition.nonEmpty)
-      .foreach(v => {
-        val definition = v._2.definition.get
+      .filter(localVar =>
+        !context.referencedVars.contains(localVar._1) && localVar._2.definition.nonEmpty
+      )
+      .foreach(localVar => {
+        val definition = localVar._2.definition.get
         context.log(
           new Issue(
             definition.location.path,
             Diagnostic(
               UNUSED_CATEGORY,
               definition.location.location,
-              s"Unused local variable '${v._1}'"
+              s"Unused local variable '${localVar._1}'"
             )
           )
         )
@@ -101,7 +106,7 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
       if (td.modifiers.exists(suppressModifiers.contains))
         return ArraySeq.empty
 
-      // Get body declaration issues, we exclude initializers as they atr really part of the type
+      // Get body declaration issues, we exclude initializers as they are really part of the type
       val issues =
         td.nestedTypes.flatMap(ad => ad.unusedIssues) ++
           td.unusedFields ++
@@ -110,17 +115,10 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
       // Bail early if we found nothing of interest, hopefully the common case
       val childCount = td.nestedTypes.length + td.localFields.length + td.localMethods.length
       if (issues.isEmpty && childCount > 0)
-        return issues
+        return ArraySeq.empty
 
       // Check if need to promote the used to the type level to reduce noise in output
       if (canPromoteUnusedToType(issues.length)) {
-        val nature = td match {
-          case _: ClassDeclaration     => "class"
-          case _: InterfaceDeclaration => "interface"
-          case _: EnumDeclaration      => "enum"
-          case _                       => "type"
-        }
-
         val suffix =
           if (
             td.hasHolders || (issues.nonEmpty && issues.forall(
@@ -133,7 +131,11 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
         ArraySeq(
           new Issue(
             td.location.path,
-            Diagnostic(UNUSED_CATEGORY, td.idLocation, s"Unused $nature '${td.typeName}'$suffix")
+            Diagnostic(
+              UNUSED_CATEGORY,
+              td.idLocation,
+              s"Unused ${td.nature.value} '${td.typeName}'$suffix"
+            )
           )
         )
       } else {
@@ -151,7 +153,7 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
       if (td.visibility == GLOBAL_MODIFIER)
         return false
 
-      // Exclude reporting on empty outers, that is a bit harsh
+      // Exclude reporting on empty outers, that is just a bit harsh
       val childCount = td.nestedTypes.length + td.localFields.length + td.localMethods.length
       if (td.outerTypeName.isEmpty && childCount == 0)
         return false
