@@ -226,4 +226,48 @@ class PathTest extends AnyFunSuite {
     }
   }
 
+  test("findParentOf") {
+    FileSystemHelper.run(
+      Map[String, String]("Bar.txt" -> "", "dir1/Foo.txt" -> "", "dir2/dir3/Qux.txt" -> "")
+    ) { root: PathLike =>
+      assert(root.findParentOf(Set()).isEmpty)
+      assert(root.findParentOf(Set(root)).isEmpty)
+
+      assert(root.join("Bar.txt").findParentOf(Set()).isEmpty)
+      assert(root.join("Bar.txt").findParentOf(Set(root)).contains(root))
+      assert(root.join("Bar.txt").findParentOf(Set(root.join("dir1"))).isEmpty)
+      assert(root.join("Bar.txt").findParentOf(Set(root.join("dir2/dir3"))).isEmpty)
+      assert(root.join("Bar.txt").findParentOf(Set(root, root.join("dir1"))).contains(root))
+
+      assert(root.join("dir1/Foo.txt").findParentOf(Set()).isEmpty)
+      assert(root.join("dir1/Foo.txt").findParentOf(Set(root)).contains(root))
+      assert(
+        root.join("dir1/Foo.txt").findParentOf(Set(root.join("dir1"))).contains(root.join("dir1"))
+      )
+      assert(
+        root
+          .join("dir1/Foo.txt")
+          .findParentOf(Set(root, root.join("dir1")))
+          .contains(root.join("dir1"))
+      )
+      assert(root.join("dir1/Foo.txt").findParentOf(Set(root.join("dir2"))).isEmpty)
+      assert(root.join("dir1/Foo.txt").findParentOf(Set(root, root.join("dir2"))).contains(root))
+
+      assert(root.join("dir2/dir3/Qnx.txt").findParentOf(Set()).isEmpty)
+      assert(root.join("dir2/dir3/Qnx.txt").findParentOf(Set(root)).contains(root))
+      assert(
+        root
+          .join("dir2/dir3/Qnx.txt")
+          .findParentOf(Set(root.join("dir2")))
+          .contains(root.join("dir2"))
+      )
+      assert(
+        root
+          .join("dir2/dir3/Qnx.txt")
+          .findParentOf(Set(root, root.join("dir2/dir3")))
+          .contains(root.join("dir2/dir3"))
+      )
+    }
+  }
+
 }

@@ -22,8 +22,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
  workspace but support quick filtering by subdirectories. */
 class Monitor(workspace: PathLike) {
 
-  private val workspacePath = workspace.asInstanceOf[Path]
-  private val callbacks     = mutable.Map[String, String => Unit]()
+  private val workspacePath               = workspace.asInstanceOf[Path]
+  private val callbacks                   = mutable.Map[PathLike, String => Unit]()
+  private var callbackKeys: Set[PathLike] = Set.empty
 
   // Workspace wide recursive monitor, dispatches via callbacks on case-sensitive match of absolute path
   private val workspaceMonitor = {
@@ -35,10 +36,12 @@ class Monitor(workspace: PathLike) {
           count: Int
         ): Unit = {
           if (!file.isDirectory) {
-            val path = file.path.toAbsolutePath.toString
-            callbacks
-              .find(entry => path.startsWith(entry._1))
-              .foreach(entry => entry._2(path))
+            val path = new Path(file.path)
+            path
+              .findParentOf(callbackKeys)
+              .foreach(key => {
+                callbacks(key)(path.toString)
+              })
           }
         }
       })
@@ -64,7 +67,8 @@ class Monitor(workspace: PathLike) {
         )
       })
 
-    callbacks.put(path.asInstanceOf[Path].native.toAbsolutePath.toString, onFileChanged)
+    callbacks.put(path, onFileChanged)
+    callbackKeys = callbacks.keySet.toSet
   }
 
   /* Terminate the monitoring, mostly useful for testing */

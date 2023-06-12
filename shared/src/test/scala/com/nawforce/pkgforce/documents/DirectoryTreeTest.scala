@@ -192,4 +192,30 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       assert(newTree.directories(0).fileModificationTimes.keys.isEmpty)
     }
   }
+
+  test("Refresh creates change list for subdir deleted") {
+    FileSystemHelper.runTempDir(
+      Map[String, String]("a.txt" -> "", "b.txt" -> "", "dir1/c.txt" -> "", "dir1/dir2/d.txt" -> "")
+    ) { root: PathLike =>
+      val tree = DirectoryTree(Path(root), mutable.ArrayBuffer[String]())
+
+      val dir1Path = root.join("dir1")
+      val cPath    = dir1Path.join("c.txt")
+      val dir2Path = dir1Path.join("dir2")
+      val dPath    = dir2Path.join("d.txt")
+
+      assert(dPath.delete().isEmpty)
+      assert(dir2Path.delete().isEmpty)
+      assert(cPath.delete().isEmpty)
+      assert(dir1Path.delete().isEmpty)
+
+      val changed = mutable.ArrayBuffer[String]()
+      val newTree = tree.refresh(changed)
+
+      assert(changed.toSet == Set(cPath.toString, dPath.toString))
+      assert(newTree.fileModificationTimes.size == 2)
+      assert(newTree.directories.isEmpty)
+    }
+  }
+
 }
