@@ -163,7 +163,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
     pkg flatMap { _ =>
       orgAPI.getIssues(includeWarnings = true, maxIssuesPerFile = 0) map { issuesResult =>
-        assert(issuesResult.issues.length == 4)
+        assert(issuesResult.issues.length == 3)
         assert(issuesResult.issues.count(_.path.toString.contains("SingleError")) == 1)
         assert(issuesResult.issues.count(_.path.toString.contains("DoubleError")) == 2)
       }

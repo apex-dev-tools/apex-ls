@@ -41,17 +41,20 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
   private def reportUnused(td: FullDeclaration): Seq[DependentType] = {
     if (td.outerTypeName.isEmpty) {
       // Only update if we don't have errors, to reduce noise
-      val existingIssues = td.module.pkg.org.issues.issuesForFileInternal(td.paths.head)
+      val existingIssues = td.paths.flatMap(td.module.pkg.org.issues.issuesForFileInternal)
       val hasErrors =
         existingIssues.exists(issue => DiagnosticCategory.isErrorType(issue.diagnostic.category))
       if (hasErrors) {
         td.module.pkg.org.issues.replaceUnusedIssues(td.paths.head, Seq())
       } else {
+        // This is a bit messy, we need to preserve unused locals are they are pre-computed
+        // via onBlockValidate. They need to be handled that way for local suppression to work.
         val localUnused =
           existingIssues.filter(_.diagnostic.message.startsWith("Unused local variable"))
         td.module.pkg.org.issues.replaceUnusedIssues(td.paths.head, td.unusedIssues ++ localUnused)
       }
 
+      // Return all our dependents so they are re-validated for unused as well
       val dependents = mutable.Set[Dependent]()
       td.collectDependencies(dependents)
       dependents
@@ -70,16 +73,18 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
     context: BlockVerifyContext
   ): Unit = {
     context.declaredVars
-      .filter(v => !context.referencedVars.contains(v._1) && v._2.definition.nonEmpty)
-      .foreach(v => {
-        val definition = v._2.definition.get
+      .filter(localVar =>
+        !context.referencedVars.contains(localVar._1) && localVar._2.definition.nonEmpty
+      )
+      .foreach(localVar => {
+        val definition = localVar._2.definition.get
         context.log(
           new Issue(
             definition.location.path,
             Diagnostic(
               UNUSED_CATEGORY,
               definition.location.location,
-              s"Unused local variable '${v._1}'"
+              s"Unused local variable '${localVar._1}'"
             )
           )
         )
@@ -89,28 +94,31 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
   private implicit class DeclarationOps(td: FullDeclaration) {
 
     def unusedIssues: ArraySeq[Issue] = {
-      // Block at class level
-      if (td.modifiers.exists(excludedClassModifiers.contains) || td.isPageController)
-        return Issue.emptyArray
 
       // Hack: Unused calculation requires a methodMap as it establishes shadow relationships
       td.methodMap
 
+      // Ignore page controllers, although we parse VF we don't establish use relationships yet
+      if (td.isPageController)
+        return ArraySeq.empty
+
+      // Ignore if suppressed
+      if (td.modifiers.exists(suppressModifiers.contains))
+        return ArraySeq.empty
+
+      // Get body declaration issues, we exclude initializers as they are really part of the type
       val issues =
         td.nestedTypes.flatMap(ad => ad.unusedIssues) ++
           td.unusedFields ++
           td.unusedMethods
 
-      if (
-        !td.hasNonTestHolders && issues.length == td.nestedTypes.length + td.localFields.length + td.localMethods.length
-      ) {
-        val nature = td match {
-          case _: ClassDeclaration     => "class"
-          case _: InterfaceDeclaration => "interface"
-          case _: EnumDeclaration      => "enum"
-          case _                       => "type"
-        }
+      // Bail early if we found nothing of interest, hopefully the common case
+      val childCount = td.nestedTypes.length + td.localFields.length + td.localMethods.length
+      if (issues.isEmpty && childCount > 0)
+        return ArraySeq.empty
 
+      // Check if need to promote the used to the type level to reduce noise in output
+      if (canPromoteUnusedToType(issues.length)) {
         val suffix =
           if (
             td.hasHolders || (issues.nonEmpty && issues.forall(
@@ -123,12 +131,35 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
         ArraySeq(
           new Issue(
             td.location.path,
-            Diagnostic(UNUSED_CATEGORY, td.idLocation, s"Unused $nature '${td.typeName}'$suffix")
+            Diagnostic(
+              UNUSED_CATEGORY,
+              td.idLocation,
+              s"Unused ${td.nature.value} '${td.typeName}'$suffix"
+            )
           )
         )
       } else {
         issues
       }
+    }
+
+    private def canPromoteUnusedToType(issueCount: Int): Boolean = {
+      // If the type has holders itself then we need to report on each body declaration
+      val hasHolders = if (td.inTest) td.hasHolders else td.hasNonTestHolders
+      if (hasHolders)
+        return false
+
+      // Don't promote for global as these are implicitly used
+      if (td.visibility == GLOBAL_MODIFIER)
+        return false
+
+      // Exclude reporting on empty outers, that is just a bit harsh
+      val childCount = td.nestedTypes.length + td.localFields.length + td.localMethods.length
+      if (td.outerTypeName.isEmpty && childCount == 0)
+        return false
+
+      // Finally if we got issues for each child say yes
+      childCount == issueCount
     }
 
     def unusedFields: ArraySeq[Issue] = {
@@ -161,7 +192,7 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
             Diagnostic(
               UNUSED_CATEGORY,
               method.idLocation,
-              s"Unused method '${method.signature}'$suffix"
+              s"Unused ${method.visibility.name} method '${method.signature}'$suffix"
             )
           )
         })
@@ -200,13 +231,10 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
 object UnusedPlugin {
   val onlyTestCodeReferenceText =
     "only referenced by test code, remove or make private @TestVisible"
-  val excludedClassModifiers: Set[Modifier] =
-    Set(
-      TEST_VISIBLE_ANNOTATION,
-      GLOBAL_MODIFIER,
-      SUPPRESS_WARNINGS_ANNOTATION_PMD,
-      SUPPRESS_WARNINGS_ANNOTATION_UNUSED
-    )
+
+  val suppressModifiers: Set[Modifier] =
+    Set(SUPPRESS_WARNINGS_ANNOTATION_PMD, SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
+
   val excludedMethodModifiers: Set[Modifier] =
     Set(
       TEST_VISIBLE_ANNOTATION,
