@@ -41,11 +41,10 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
         org.unmanaged
           .getReferences(path, line = 1, offset = dummy._2)
           .map(TargetLocationString(root, _))
-          sameElements
-            Array(
-              TargetLocationString(root.join("Dummy.cls").toString, "func()"),
-              TargetLocationString(root.join("Bar.cls").toString, "new Dummy().func()")
-            )
+          .toSet == Set(
+          TargetLocationString(root.join("Dummy.cls").toString, "func()"),
+          TargetLocationString(root.join("Bar.cls").toString, "new Dummy().func()")
+        )
       )
     }
   }
@@ -65,11 +64,10 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
         org.unmanaged
           .getReferences(path, line = 1, offset = dummy._2)
           .map(TargetLocationString(root, _))
-          sameElements
-            Array(
-              TargetLocationString(root.join("Dummy.cls").toString, "Foo.func()"),
-              TargetLocationString(root.join("Bar.cls").toString, "Foo.func()")
-            )
+          .toSet == Set(
+          TargetLocationString(root.join("Dummy.cls").toString, "Foo.func()"),
+          TargetLocationString(root.join("Bar.cls").toString, "Foo.func()")
+        )
       )
     }
   }
@@ -89,8 +87,7 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
         org.unmanaged
           .getReferences(path, line = 1, offset = dummy._2)
           .map(TargetLocationString(root, _))
-          sameElements
-            Array(TargetLocationString(root.join("Bar.cls").toString, "new Foo().func()"))
+          .toSet == Set(TargetLocationString(root.join("Bar.cls").toString, "new Foo().func()"))
       )
     }
   }
@@ -111,10 +108,9 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
         org.unmanaged
           .getReferences(path, line = 1, offset = dummy._2)
           .map(TargetLocationString(root, _))
-          sameElements
-            Array(
-              TargetLocationString(root.join("Foo.cls").toString, "new Dummy.InnerDummy().func()")
-            )
+          .toSet == Set(
+          TargetLocationString(root.join("Foo.cls").toString, "new Dummy.InnerDummy().func()")
+        )
       )
     }
   }
@@ -140,11 +136,10 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
         org.unmanaged
           .getReferences(path, line = 1, offset = B._2)
           .map(TargetLocationString(root, _))
-          sameElements
-            Array(
-              TargetLocationString(root.join("UsedC.cls").toString, "c.fn()"),
-              TargetLocationString(root.join("UsedB.cls").toString, "new B().fn()")
-            )
+          .toSet == Set(
+          TargetLocationString(root.join("UsedC.cls").toString, "c.fn()"),
+          TargetLocationString(root.join("UsedB.cls").toString, "new B().fn()")
+        )
       )
     }
   }
@@ -167,16 +162,15 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
         org.unmanaged
           .getReferences(path, line = 1, offset = common._2)
           .map(TargetLocationString(root, _))
-          sameElements
-            Array(
-              TargetLocationString(root.join("UsedB.cls").toString, "new B().fn()"),
-              TargetLocationString(root.join("UsedC.cls").toString, "c.fn()")
-            )
+          .toSet == Set(
+          TargetLocationString(root.join("UsedB.cls").toString, "new B().fn()"),
+          TargetLocationString(root.join("UsedC.cls").toString, "c.fn()")
+        )
       )
     }
   }
 
-  /*
+  /* TODO: Why is this disabled?
   test("Indirect usage from cache") {
     val usedB =
       withCursor(
@@ -251,11 +245,10 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
           org4.unmanaged
             .getReferences(path, line = 1, offset = usedB._2)
             .map(TargetLocationString(root, _))
-            sameElements
-              Array(
-                TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
-                TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()")
-              )
+            .toSet == Set(
+            TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
+            TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()")
+          )
         )
       }
     }

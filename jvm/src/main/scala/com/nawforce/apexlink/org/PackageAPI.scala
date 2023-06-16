@@ -379,12 +379,42 @@ trait PackageAPI extends Package {
       }
     )
 
-    // Everything else needs re-validation
-    tds.foreach(td => {
+    // Abstract super classes can hide method problems because they are not required to report diagnostics
+    // and so are not identified as part of the missing set that needs re-evaluation. To work around this
+    // we collect them and the path leading to for re-evaluation
+    val collectedTypes = mutable.Set[TypeDeclaration]()
+    tds.foreach(td =>
+      collectToAbstractSuperclasses(td, mutable.Set[TypeDeclaration](), collectedTypes)
+    )
+    collectedTypes.addAll(tds)
+
+    // Revalidate the expanded set of types
+    collectedTypes.foreach(td => {
       td.paths.foreach(path => org.issues.pop(path))
       td.preReValidate()
     })
-    tds.foreach(_.validate())
+    collectedTypes.foreach(_.validate())
+  }
+
+  /* Collect all classes in a super class hierarchy that have an abstract ancestor */
+  private def collectToAbstractSuperclasses(
+    td: TypeDeclaration,
+    visited: mutable.Set[TypeDeclaration],   // Where have we been already
+    collected: mutable.Set[TypeDeclaration], // Output set
+    path: List[TypeDeclaration] = Nil        // Nodes visited but not yet added to collected
+  ): Unit = {
+    val toHere = td :: path
+    if (td.isAbstract || collected.contains(td)) {
+      // If abstract or we know this node leads to an abstract add the path
+      collected.addAll(toHere)
+    }
+    if (!visited.contains(td)) {
+      visited.add(td)
+      // Keep walking trying to find an abstract
+      td.superClassDeclaration.foreach(superClass =>
+        collectToAbstractSuperclasses(superClass, visited, collected, toHere)
+      )
+    }
   }
 
   private def typesWithMissingDiagnostics: Seq[TypeId] = {
