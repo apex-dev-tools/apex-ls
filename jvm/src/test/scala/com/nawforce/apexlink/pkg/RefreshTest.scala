@@ -272,6 +272,39 @@ class RefreshTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Abstract superclass missing handling") {
+    withManualFlush {
+      FileSystemHelper.run(
+        // This replicates a failure case where the method map on C would be cached
+        // and not refreshed when A is added, this should now be identified when D
+        // is refreshed due it having a 'Missing' diagnostic
+        Map(
+          "I.cls" -> "public interface I {void func();}",
+          "B.cls" -> "public abstract class B extends A implements I {}",
+          "C.cls" -> "public abstract class C extends B {}",
+          "D.cls" -> "public class D extends C implements I {}"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        val pkg = org.unmanaged
+        assert(
+          getMessages(
+            root.join("B.cls")
+          ) == "Missing: line 1 at 22-23: No type declaration found for 'A'\n"
+        )
+
+        refresh(
+          pkg,
+          root.join("A.cls"),
+          "public abstract class A implements I {public void func() {}}"
+        )
+        refresh(pkg, root.join("A.cls-meta.xml"), "")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+      }
+    }
+  }
+
   test("Valid trigger refresh") {
     withManualFlush {
       FileSystemHelper.run(Map("pkg/Foo.trigger" -> "trigger Foo on Account (before insert) {}")) {
