@@ -112,7 +112,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     typeDeclarations(
       Map(
         "Dummy.cls" ->
-          "public class Dummy implements API { public interface API {void run(List<SObject> arg);} void run(List<Account> arg) {} }"
+          "public class Dummy implements API { public interface API {void run(List<SObject> arg);} public void run(List<Account> arg) {} }"
       )
     )
     assert(dummyIssues.isEmpty)
@@ -122,7 +122,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     typeDeclarations(
       Map(
         "Dummy.cls" ->
-          "public class Dummy implements API { public interface API {void run(Id arg);} void run(String arg) {} }"
+          "public class Dummy implements API { public interface API {void run(Id arg);} public void run(String arg) {} }"
       )
     )
     assert(dummyIssues.isEmpty)
@@ -132,7 +132,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     typeDeclarations(
       Map(
         "Dummy.cls" ->
-          "public class Dummy implements API { public interface API {void run(String arg);} void run(Id arg) {} }"
+          "public class Dummy implements API { public interface API {void run(String arg);} public void run(Id arg) {} }"
       )
     )
     assert(dummyIssues.isEmpty)

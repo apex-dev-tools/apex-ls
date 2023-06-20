@@ -131,7 +131,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
       FileSystemHelper.run(
         Map(
           "pkg/A.cls" -> "public interface A {void func(Foo aFoo);}",
-          "pkg/B.cls" -> "public virtual class B {void func(Foo aFoo) {}}",
+          "pkg/B.cls" -> "public virtual class B {public void func(Foo aFoo) {}}",
           "pkg/C.cls" -> "public class C extends B implements A {}"
         )
       ) { root: PathLike =>
@@ -143,7 +143,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         )
         assert(
           getMessages(root.join("pkg").join("B.cls"))
-            == "Missing: line 1 at 38-42: No type declaration found for 'Foo'\n"
+            == "Missing: line 1 at 45-49: No type declaration found for 'Foo'\n"
         )
         assert(
           getMessages(root.join("pkg").join("C.cls"))

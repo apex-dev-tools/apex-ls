@@ -88,11 +88,11 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
   def isSynthetic: Boolean = false
 
   // Populated by type MethodMap construction
-  var _shadows: SkinnyWeakSet[MethodDeclaration]    = new SkinnyWeakSet()
-  var _shadowedBy: SkinnyWeakSet[MethodDeclaration] = new SkinnyWeakSet()
+  private var _shadows: SkinnyWeakSet[MethodDeclaration]    = new SkinnyWeakSet()
+  private var _shadowedBy: SkinnyWeakSet[MethodDeclaration] = new SkinnyWeakSet()
 
-  def shadows: Set[MethodDeclaration]    = _shadows.toSet
-  def shadowedBy: Set[MethodDeclaration] = _shadowedBy.toSet
+  def shadows: Set[MethodDeclaration]            = _shadows.toSet
+  private def shadowedBy: Set[MethodDeclaration] = _shadowedBy.toSet
 
   def resetShadows(): Unit = {
     _shadows = new SkinnyWeakSet()
@@ -279,7 +279,7 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     )
   }
 
-  lazy val staticMethods: ArraySeq[MethodDeclaration] = {
+  private lazy val staticMethods: ArraySeq[MethodDeclaration] = {
     localMethods.filter(_.isStatic) ++
       (superClassDeclaration match {
         case Some(td: ApexClassDeclaration) =>
@@ -289,24 +289,17 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       })
   }
 
-  lazy val outerStaticMethods: ArraySeq[MethodDeclaration] = {
-    outerTypeName.flatMap(ot => TypeResolver(ot, this).toOption) match {
-      case Some(td: ApexClassDeclaration) => td.staticMethods
-      case _                              => MethodDeclaration.emptyMethodDeclarations
-    }
-  }
-
   lazy val isPageController: Boolean = {
     getTypeDependencyHolders.toIterable.exists(tid =>
       tid.typeName == TypeNames.Page || tid.typeName == TypeNames.Component
     )
   }
 
-  lazy val hasExternalMembers: Boolean = {
+  private lazy val hasExternalMembers: Boolean = {
     localMethods.exists(_.isExternallyVisible) || localFields.exists(_.isExternallyVisible)
   }
 
-  lazy val isAsync: Boolean = {
+  private lazy val isAsync: Boolean = {
     !isAbstract && Seq(
       TypeName(Seq(Names.Batchable, Names.Database)),
       TypeName(Seq(Names.Schedulable, Names.System)),
@@ -333,15 +326,16 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   }
 
   protected def resetMethodMapIfInvalid(): Unit = {
-    if (_methodMap.exists(_.deepHash != deepHash)) {
-      _methodMap = None
-    }
+    // We used to only clear the method map if its cached deep hash did not match the
+    // deep hash of the declaration. The deep hash however is not catching non-structural
+    // changes such as method parameter types becoming available so I have disabled
+    // but left this in use in case we want to pursue this optimisation again later
+    _methodMap = None
   }
 
   protected def resetConstructorMapIfInvalid(): Unit = {
-    if (_constructorMap.exists(_.deepHash != deepHash)) {
-      _constructorMap = None
-    }
+    // See comment in resetMethodMapIfInvalid()
+    _constructorMap = None
   }
 
   private var _methodMap: Option[MethodMap]           = None
@@ -349,7 +343,7 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
 
   private def createMethodMap: MethodMap = {
     val errorLocation = Some(idPathLocation)
-    val methods = superClassDeclaration match {
+    superClassDeclaration match {
       case Some(at: ApexClassDeclaration) =>
         MethodMap(this, errorLocation, at.methodMap, localMethods, interfaceDeclarations)
       case Some(td: TypeDeclaration) =>
@@ -357,14 +351,11 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       case _ =>
         MethodMap(this, errorLocation, MethodMap.empty(), localMethods, interfaceDeclarations)
     }
-
-    methods.errors.foreach(OrgInfo.log)
-    methods
   }
 
   private def createConstructorMap: ConstructorMap = {
     val errorLocation = Some(idPathLocation)
-    val ctors = superClassDeclaration match {
+    superClassDeclaration match {
       case Some(at: ApexClassDeclaration) =>
         ConstructorMap(this, errorLocation, localConstructors, at.constructorMap)
       case Some(td: TypeDeclaration) =>
@@ -372,8 +363,6 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       case _ =>
         ConstructorMap(this, errorLocation, localConstructors, ConstructorMap.empty)
     }
-    ctors.errors.foreach(OrgInfo.log)
-    ctors
   }
 
   override def methods: ArraySeq[MethodDeclaration] = {
@@ -420,8 +409,4 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       BigDecimal(score.toString).setScale(2, BigDecimal.RoundingMode.HALF_UP).doubleValue
     (uses, usedBy, roundScore)
   }
-}
-
-object ApexClassDeclaration {
-  val testModifiers: Seq[Modifier] = Seq(TEST_METHOD_MODIFIER, ISTEST_ANNOTATION)
 }
