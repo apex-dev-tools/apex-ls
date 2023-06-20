@@ -583,10 +583,7 @@ object MethodMap {
                 )
               )
             }
-            matched match {
-              case am: ApexMethodLike => am.addShadow(method)
-              case _                  => ()
-            }
+            matched.addShadow(method)
           case Some(_) => ()
           case None =>
             val module = from.moduleDeclaration.get
