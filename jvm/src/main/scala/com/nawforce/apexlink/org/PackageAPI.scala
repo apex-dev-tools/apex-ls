@@ -331,8 +331,7 @@ trait PackageAPI extends Package {
     removed.foreach(references.remove)
 
     // Then additions or modifications
-    val toUpsert = splitRequests
-      .getOrElse(false, Seq())
+    val toUpsert = splitRequests.getOrElse(false, Seq())
     toUpsert.foreach(r => {
       LoggerOps.debug(s"Refreshing ${r._1}")
       try {

@@ -16,6 +16,7 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
+import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.MethodDeclaration.{
   emptyMethodDeclarations,
@@ -29,9 +30,11 @@ import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.modifiers.{
   ABSTRACT_MODIFIER,
   AURA_ENABLED_ANNOTATION,
+  GLOBAL_MODIFIER,
   Modifier,
   PRIVATE_MODIFIER,
-  PROTECTED_MODIFIER
+  PROTECTED_MODIFIER,
+  PUBLIC_MODIFIER
 }
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
@@ -529,11 +532,13 @@ object MethodMap {
     interfaces: ArraySeq[TypeDeclaration],
     errors: mutable.Buffer[Issue]
   ): Unit = {
-    interfaces.foreach({
-      case i: TypeDeclaration if i.nature == INTERFACE_NATURE =>
-        checkInterface(from, location, isAbstract, workingMap, i, errors)
-      case _ => ()
-    })
+    // We have to filter on nature here just in case, ideally we could block this via
+    // a declaration type but not with current declaration model.
+    interfaces
+      .filter(_.nature == INTERFACE_NATURE)
+      .foreach(interface =>
+        checkInterface(from, location, isAbstract, workingMap, interface, errors)
+      )
   }
 
   private def checkInterface(
@@ -544,6 +549,7 @@ object MethodMap {
     interface: TypeDeclaration,
     errors: mutable.Buffer[Issue]
   ): Unit = {
+    // TODO: Do we need this, should be checked on the interface itself
     if (interface.isInstanceOf[ApexClassDeclaration] && interface.nature == INTERFACE_NATURE)
       checkInterfaces(
         from,
@@ -563,40 +569,44 @@ object MethodMap {
         val methods = workingMap.getOrElse(key, Nil)
         val matched = methods.find(mapMethod => isInterfaceMethod(from, method, mapMethod))
 
-        if (matched.isEmpty) {
-          val module = from.moduleDeclaration.get
-          lazy val hasGhostedMethods =
-            methods.exists(method =>
-              module.isGhostedType(method.typeName) ||
-                methods
-                  .exists(method => method.parameters.map(_.typeName).exists(module.isGhostedType))
-            )
-
-          if (isAbstract) {
-            workingMap.put(
-              key,
-              method :: methods
-                .filterNot(_.hasSameSignature(method, allowPlatformGenericEquivalence = true))
-            )
-          } else if (!module.isGulped && !hasGhostedMethods) {
-            location.foreach(l =>
+        matched match {
+          case Some(matched: ApexMethodLike) =>
+            if (!isPublicOrGlobal(matched)) {
               errors.append(
                 new Issue(
-                  l.path,
+                  matched.location.path,
                   Diagnostic(
                     MISSING_CATEGORY,
-                    l.location,
-                    s"Method '${method.signature}' from interface '${interface.typeName}' must be implemented"
+                    matched.idLocation,
+                    s"Method '${matched.signature}' from interface '${interface.typeName}' must be public or global"
                   )
                 )
               )
-            )
-          }
-        } else {
-          matched.get match {
-            case am: ApexMethodLike => am.addShadow(method)
-            case _                  => ()
-          }
+            }
+            matched.addShadow(method)
+          case Some(_) => ()
+          case None =>
+            val module = from.moduleDeclaration.get
+            if (isAbstract) {
+              workingMap.put(
+                key,
+                method :: methods
+                  .filterNot(_.hasSameSignature(method, allowPlatformGenericEquivalence = true))
+              )
+            } else if (!module.isGulped && !hasGhostedMethods(module, methods)) {
+              location.foreach(l =>
+                errors.append(
+                  new Issue(
+                    l.path,
+                    Diagnostic(
+                      MISSING_CATEGORY,
+                      l.location,
+                      s"Method '${method.signature}' from interface '${interface.typeName}' must be implemented"
+                    )
+                  )
+                )
+              )
+            }
         }
       })
   }
@@ -871,4 +881,17 @@ object MethodMap {
     !method.isStatic &&
     method.parameters.length == 1 && method.parameters.head.typeName == TypeNames.BatchableContext
   }
+
+  private def isPublicOrGlobal(method: MethodDeclaration): Boolean = {
+    method.visibility == PUBLIC_MODIFIER || method.visibility == GLOBAL_MODIFIER
+  }
+
+  private def hasGhostedMethods(module: OPM.Module, methods: List[MethodDeclaration]): Boolean = {
+    methods.exists(method =>
+      module.isGhostedType(method.typeName) ||
+        methods
+          .exists(method => method.parameters.map(_.typeName).exists(module.isGhostedType))
+    )
+  }
+
 }
