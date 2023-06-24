@@ -6,6 +6,8 @@ import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.{Environment, Path}
 
+import java.nio.charset.StandardCharsets
+
 object FileSystemHelper {
 
   // Abstract virtual filesystem for testing
@@ -39,7 +41,7 @@ object FileSystemHelper {
       val path = rootDir.resolve(newPath)
 
       Files.createDirectories(path.getParent)
-      Files.write(path, kv._2.getBytes())
+      Files.write(path, kv._2.getBytes(StandardCharsets.UTF_8))
     })
 
     ParsedCache.clear()
@@ -88,7 +90,7 @@ object FileSystemHelper {
     files.foreach(kv => {
       val path = tempDir.resolve(kv._1)
       Files.createDirectories(path.getParent)
-      Files.write(path, kv._2.getBytes())
+      Files.write(path, kv._2.getBytes(StandardCharsets.UTF_8))
     })
 
     // Make sure cache is empty if we are going to use it
