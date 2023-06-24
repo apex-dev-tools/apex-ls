@@ -80,7 +80,11 @@ final case class PageDeclaration(
   sources: ArraySeq[SourceInfo],
   override val module: OPM.Module,
   pages: ArraySeq[Page]
-) extends BasicTypeDeclaration(pages.map(p => p.location.path).distinct, module, TypeNames.Page)
+) extends BasicTypeDeclaration(
+      pages.map(page => page.location.path).distinct,
+      module,
+      TypeNames.Page
+    )
     with DependentType
     with Dependent {
 
@@ -104,7 +108,10 @@ final case class PageDeclaration(
   }
 
   override def validate(): Unit = {
-    pages.foreach(_.validate())
+    // We may create multiple Pages for each .page file to handle namespaces
+    // We only want to validate one of them to avoid duplicate diagnostics
+    val uniquePages = pages.map(page => (page.location.path, page)).toMap.values
+    uniquePages.foreach(_.validate())
     propagateOuterDependencies(new TypeCache())
   }
 

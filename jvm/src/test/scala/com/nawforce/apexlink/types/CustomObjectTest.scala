@@ -15,6 +15,7 @@
 package com.nawforce.apexlink.types
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -633,7 +634,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(root.join("/Dummy.cls")) ==
+        getMessages(root.join("Dummy.cls")) ==
           "Missing: line 1 at 48-80: Unknown field or type 'Baz__c' on 'Schema.SObjectType.Foo__c.Fields'\n"
       )
       assert(
@@ -863,8 +864,8 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
       createOrg(root)
       assert(
         getMessages() ==
-          "/Dummy.cls: Missing: line 4 at 17-26: Unknown field 'OwnerId' on SObject 'Schema.Foo__c'\n" +
-          "/Dummy.cls: Missing: line 5 at 17-24: Unknown field 'Owner' on SObject 'Schema.Foo__c'\n"
+          path"/Dummy.cls: Missing: line 4 at 17-26: Unknown field 'OwnerId' on SObject 'Schema.Foo__c'" + "\n" +
+          path"/Dummy.cls: Missing: line 5 at 17-24: Unknown field 'Owner' on SObject 'Schema.Foo__c'" + "\n"
       )
     }
   }

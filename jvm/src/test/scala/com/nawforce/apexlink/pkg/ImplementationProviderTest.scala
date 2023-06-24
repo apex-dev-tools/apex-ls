@@ -6,6 +6,7 @@ package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
 import com.nawforce.apexlink.{LocationLinkString, TestHelper}
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -15,8 +16,8 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
   test("Method implementations") {
     val contentAndCursorPos = withCursor(s"public interface Foo { void goTo${CURSOR}Method(); }")
     val source = Map(
-      "Foo.cls"           -> contentAndCursorPos._1,
-      "Dummy.cls"         -> "public class Dummy implements Foo {public void goToMethod(){}}",
+      "Foo.cls"   -> contentAndCursorPos._1,
+      "Dummy.cls" -> "public class Dummy implements Foo {public void goToMethod(){}}",
       "FooController.cls" -> "public class FooController implements Foo{ public void goToMethod(){}}"
     )
     FileSystemHelper.run(source) { root: PathLike =>
@@ -26,10 +27,10 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
           .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
           Array(
-            LocationLinkString("goToMethod", "/Dummy.cls", "void goToMethod(){}", "goToMethod"),
+            LocationLinkString("goToMethod", path"/Dummy.cls", "void goToMethod(){}", "goToMethod"),
             LocationLinkString(
               "goToMethod",
-              "/FooController.cls",
+              path"/FooController.cls",
               "void goToMethod(){}",
               "goToMethod"
             )
@@ -58,8 +59,8 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
           .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _))
           sameElements Array(
-            LocationLinkString("concrete", "/Dummy.cls", "void concrete(){}", "concrete"),
-            LocationLinkString("concrete", "/Bar.cls", "void concrete(){}", "concrete")
+            LocationLinkString("concrete", path"/Dummy.cls", "void concrete(){}", "concrete"),
+            LocationLinkString("concrete", path"/Bar.cls", "void concrete(){}", "concrete")
           )
       )
     }
@@ -85,9 +86,9 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
           .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
           Array(
-            LocationLinkString("Foo", "/Bar.cls", bar, "Bar"),
-            LocationLinkString("Foo", "/DummyTwo.cls", dummyTwo, "DummyTwo"),
-            LocationLinkString("Foo", "/Dummy.cls", dummy, "Dummy")
+            LocationLinkString("Foo", path"/Bar.cls", bar, "Bar"),
+            LocationLinkString("Foo", path"/DummyTwo.cls", dummyTwo, "DummyTwo"),
+            LocationLinkString("Foo", path"/Dummy.cls", dummy, "Dummy")
           )
       )
     }
@@ -113,8 +114,8 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
           .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
           .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
           Array(
-            LocationLinkString("Foo", "/DummyTwo.cls", dummyTwo, "DummyTwo"),
-            LocationLinkString("Foo", "/Dummy.cls", dummy, "Dummy")
+            LocationLinkString("Foo", path"/DummyTwo.cls", dummyTwo, "DummyTwo"),
+            LocationLinkString("Foo", path"/Dummy.cls", dummy, "Dummy")
           )
       )
     }
@@ -140,7 +141,7 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
             Array(
               LocationLinkString(
                 "Foo",
-                "/Dummy.cls",
+                path"/Dummy.cls",
                 "class InnerClass implements Foo { public void goToMethod(){}}",
                 "InnerClass"
               )
@@ -170,7 +171,7 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
               Array(
                 LocationLinkString(
                   "Bar",
-                  "/Dummy.cls",
+                  path"/Dummy.cls",
                   "class InnerClass implements Foo.Bar {}",
                   "InnerClass"
                 )

@@ -16,13 +16,14 @@ package com.nawforce.pkgforce.documents
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, IssuesManager}
 import com.nawforce.pkgforce.names.{EncodedName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.runtime.platform.Path
 
 /** Basic validation of metadata files from just examining the file name. */
 class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean) {
 
   def validate(nature: MetadataNature, documents: List[PathLike]): Unit = {
     // Clear any previous issues, this is start of a re-validation
+    // WARNING: This is pretty bad for the refresh logic as it forces a revalidation
+    // of types that have not changed, we need a better design for this.
     documents.foreach(logger.pop)
 
     // Not all of these will be validated, using a full list to get missing case warning

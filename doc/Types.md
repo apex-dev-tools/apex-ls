@@ -2,7 +2,7 @@
 
 The representation of types is central to the processing model we use. In short, we model all metadata of interest in the form of type declarations and these declarations mirror how that metadata appears to Apex code. For examples, labels are exposed for analysis via a type declaration for System.Label and SObject are exposed via Schema.* type declarations.
 
-Historically these type declarations have been implemented entirely within apex-link but with the advent of the outline parser and our wish to share this approach more widely we are re-building the type declaration model within this library so that it can be exposed from type index structure (see IPM) which is significantly quicker to construct than the apex-link representations. Over time, we expect to deprecate the apex-link model in favour of this approach.
+Historically these type declarations have been implemented entirely within apex-ls but with the advent of the outline parser and our wish to share this approach more widely we are re-building the type declaration model within this library so that it can be exposed from type index structure (see IPM) which is significantly quicker to construct than the apex-ls representations. Over time, we expect to deprecate the apex-ls model in favour of this approach.
 
 ## Outline parser
 

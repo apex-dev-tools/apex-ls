@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved
+ */
 package com.nawforce.apexlink.opcst
 
 import com.financialforce.oparser.OutlineParser

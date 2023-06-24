@@ -19,6 +19,7 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryDeclaration}
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
@@ -215,7 +216,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assert(
         getMessages(
           org
-        ) == "/pkg1/Foo.cls: Missing: line 1 at 13-16: No type declaration found for 'Bar'\n"
+        ) == path"/pkg1/Foo.cls: Missing: line 1 at 13-16: No type declaration found for 'Bar'" + "\n"
       )
 
       val org2 = createOrg(root.join("pkg2"))
@@ -224,7 +225,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assert(
         getMessages(
           org2
-        ) == "/pkg2/Foo.cls: Missing: line 1 at 13-16: No type declaration found for 'Bar'\n"
+        ) == path"/pkg2/Foo.cls: Missing: line 1 at 13-16: No type declaration found for 'Bar'" + "\n"
       )
     }
   }
@@ -232,8 +233,8 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
   test("General error is cached") {
     FileSystemHelper.run(
       Map(
-        "pkg1/Foo.cls" -> "public class Foo {{bar();}}",
-        "pkg2/Foo.cls" -> "public class Foo {{bar();}}"
+        "pkg1/Foo.cls" -> "public class Foo {{String a=1;}}",
+        "pkg2/Foo.cls" -> "public class Foo {{String a=1;}}"
       )
     ) { root: PathLike =>
       // Setup as cached
@@ -242,7 +243,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg, "Foo")
       assert(
         getMessages(org) ==
-          "/pkg1/Foo.cls: Error: line 1 at 19-24: No matching method found for 'bar' on 'Foo' taking no arguments\n"
+          path"/pkg1/Foo.cls: Error: line 1 at 26-29: Incompatible types in assignment, from 'System.Integer' to 'System.String'" + "\n"
       )
       org.flush()
 
@@ -251,7 +252,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsSummaryDeclaration(pkg2, "Foo")
       assert(
         getMessages(org2) ==
-          "/pkg2/Foo.cls: Error: line 1 at 19-24: No matching method found for 'bar' on 'Foo' taking no arguments\n"
+          path"/pkg2/Foo.cls: Error: line 1 at 26-29: Incompatible types in assignment, from 'System.Integer' to 'System.String'" + "\n"
       )
     }
   }
@@ -303,7 +304,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg3, "Dummy")
       assert(
         getMessages(org3) ==
-          "/Dummy.cls: Missing: line 1 at 33-55: Unknown field or type 'TestLabel' on 'System.Label'\n"
+          path"/Dummy.cls: Missing: line 1 at 33-55: Unknown field or type 'TestLabel' on 'System.Label'" + "\n"
       )
     }
   }
@@ -421,7 +422,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg3, "Dummy")
       assert(
         getMessages(org3) ==
-          "/Dummy.cls: Missing: line 1 at 33-56: Unknown field or type 'TestLabel2' on 'System.Label'\n"
+          path"/Dummy.cls: Missing: line 1 at 33-56: Unknown field or type 'TestLabel2' on 'System.Label'" + "\n"
       )
     }
   }
@@ -459,7 +460,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg3, "Dummy")
       assert(
         getMessages(org3) ==
-          "/Dummy.cls: Missing: line 1 at 45-64: No type declaration found for 'Flow.Interview.Test'\n"
+          path"/Dummy.cls: Missing: line 1 at 45-64: No type declaration found for 'Flow.Interview.Test'" + "\n"
       )
     }
   }
@@ -507,7 +508,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg32, "Dummy", Some(Name("pkg2")))
       assert(
         getMessages(org3) ==
-          "/pkg2/Dummy.cls: Missing: line 1 at 45-69: No type declaration found for 'Flow.Interview.pkg1.Test'\n"
+          path"/pkg2/Dummy.cls: Missing: line 1 at 45-69: No type declaration found for 'Flow.Interview.pkg1.Test'" + "\n"
       )
     }
   }
@@ -545,7 +546,7 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg3, "Dummy")
       assert(
         getMessages(org3) ==
-          "/Dummy.cls: Missing: line 1 at 40-53: Unknown field or type 'TestPage' on 'Page'\n"
+          path"/Dummy.cls: Missing: line 1 at 40-53: Unknown field or type 'TestPage' on 'Page'" + "\n"
       )
     }
   }
@@ -629,8 +630,8 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg3, "Dummy")
       assert(
         getMessages(org3) ==
-          "/Dummy.cls: Missing: line 1 at 37-61: No type declaration found for 'Component.Test'\n" +
-          "/Dummy.cls: Missing: line 1 at 45-59: No type declaration found for 'Component.Test'\n"
+          path"/Dummy.cls: Missing: line 1 at 37-61: No type declaration found for 'Component.Test'" + "\n" +
+          path"/Dummy.cls: Missing: line 1 at 45-59: No type declaration found for 'Component.Test'" + "\n"
       )
     }
   }
@@ -678,8 +679,8 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
       assertIsFullDeclaration(pkg32, "Dummy", Some(Name("pkg2")))
       assert(
         getMessages(org3) ==
-          "/pkg2/Dummy.cls: Missing: line 1 at 42-71: No type declaration found for 'Component.pkg1.Test'\n" +
-          "/pkg2/Dummy.cls: Missing: line 1 at 50-69: No type declaration found for 'Component.pkg1.Test'\n"
+          path"/pkg2/Dummy.cls: Missing: line 1 at 42-71: No type declaration found for 'Component.pkg1.Test'" + "\n" +
+          path"/pkg2/Dummy.cls: Missing: line 1 at 50-69: No type declaration found for 'Component.pkg1.Test'" + "\n"
       )
     }
   }

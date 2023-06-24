@@ -19,6 +19,7 @@ import com.nawforce.apexlink.cst.CompilationUnit
 import com.nawforce.apexlink.deps.{DownWalker, MaxDependencyCountParser, TransitiveCollector}
 import com.nawforce.apexlink.finding.TypeFinder
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
+import com.nawforce.apexlink.indexer.{Indexer, Monitor}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.plugins.PluginsManager
 import com.nawforce.apexlink.rpc._
@@ -48,6 +49,7 @@ import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets
 import java.util
 import java.util.concurrent.locks.ReentrantLock
+import scala.annotation.unused
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -74,6 +76,9 @@ object OPM extends TriHierarchy {
 
     // The workspace loaded into this Org
     val workspace: Workspace = initWorkspace.getOrElse(new Workspace(issueManager, Seq()))
+
+    // Indexer monitor launcher that manages workspace watching
+    val monitorLauncher: Monitor = new Monitor(path)
 
     /** Manager for post validation plugins */
     private[nawforce] val pluginsManager = new PluginsManager
@@ -176,6 +181,10 @@ object OPM extends TriHierarchy {
     /** Queue a metadata refresh request */
     def queueMetadataRefresh(request: RefreshRequest): Unit = {
       flusher.queue(request)
+    }
+
+    def queueMetadataRefresh(request: Iterable[RefreshRequest]): Unit = {
+      flusher.queueAll(request)
     }
 
     def getPackageForPath(path: String): Package = {
@@ -384,11 +393,20 @@ object OPM extends TriHierarchy {
       paths: Array[String],
       excludeTestClasses: Boolean
     ): Array[DependencyCount] = {
+      getDependencyCountsInternal(paths.map(Path.safeApply), excludeTestClasses)
+    }
 
-      def getTypeAndSummaryOfPath(path: String): Option[(TypeIdentifier, TypeSummary)] =
+    def getDependencyCountsInternal(
+      paths: Array[PathLike],
+      excludeTestClasses: Boolean
+    ): Array[DependencyCount] = {
+
+      def getTypeAndSummaryOfPath(path: PathLike): Option[(TypeIdentifier, TypeSummary)] =
         packages.view
           .flatMap(pkg =>
-            Option(pkg.getTypeOfPath(path))
+            pkg
+              .getTypeOfPathInternal(path)
+              .map(_.asTypeIdentifier)
               .flatMap(typeId =>
                 Option(pkg.getSummaryOfType(typeId))
                   .flatMap(summary => Option(typeId, summary))
@@ -403,12 +421,13 @@ object OPM extends TriHierarchy {
         transitiveDependencies.count(t => t != typeId)
       }
 
-      def getTypeIdOfPath(path: String): Option[TypeId] =
+      def getTypeIdOfPath(path: PathLike): Option[TypeId] =
         packages.view
-          .flatMap(pkg => pkg.getTypeOfPathInternal(Path.safeApply(path)))
+          .flatMap(pkg => pkg.getTypeOfPathInternal(path))
           .headOption
 
-      val collector = new TransitiveCollector(this, true, true)
+      val collector =
+        new TransitiveCollector(this, isSamePackage = !packages.exists(_.isGulped), true)
 
       paths
         .flatMap { path =>
@@ -422,7 +441,7 @@ object OPM extends TriHierarchy {
             }
             .map { case (typeId, transitiveDependencies) =>
               DependencyCount(
-                path,
+                path.toString,
                 countTransitiveDependencies(typeId, transitiveDependencies),
                 getTypeIdOfPath(path)
                   .map(id => new MaxDependencyCountParser(this).count(id))
@@ -569,6 +588,17 @@ object OPM extends TriHierarchy {
     private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
     private val schemaManager   = SchemaSObjectType(this)
 
+    @unused
+    private val indexer = new Indexer(index.path, pkg.org.monitorLauncher) {
+      override def onFilesChanged(paths: Array[String], rescan: Boolean): Unit = {
+        val docPaths = paths.flatMap(path => MetadataDocument(Path(path)).map(_.path))
+        if (docPaths.nonEmpty) {
+          LoggerOps.debug(s"Indexer changed ${docPaths.length} files: ${docPaths.mkString(", ")}")
+          pkg.refreshAll(docPaths)
+        }
+      }
+    }
+
     def freeze(): Unit = {
       // FUTURE: Have return types, currently can't be done because class loading code needs access to in-flight types
       upsertMetadata(AnyDeclaration(this))
@@ -623,7 +653,8 @@ object OPM extends TriHierarchy {
         .map(td => TypeIdentifier(namespace, td.typeName))
     }
 
-    /* Search for a specific outer or inner type */
+    /* Search for a specific type, this has to be recursive to cope with double nesting of platform types,
+     * e.g. Component.<namespace>.<ComponentName> */
     def moduleType(typeName: TypeName): Option[TypeDeclaration] = {
       types
         .get(typeName)

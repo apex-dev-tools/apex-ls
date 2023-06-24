@@ -55,10 +55,9 @@ trait ModuleRefresh {
       val doc = MetadataDocument(path).getOrElse(
         throw new IllegalArgumentException(s"Metadata type is not supported for '$path'")
       )
-      val sourceOpt = resolveSource(path)
-      val typeId    = TypeId(this, doc.typeName(namespace))
 
       // Update internal document tracking
+      val sourceOpt = resolveSource(path)
       if (sourceOpt.isEmpty) {
         pkg.org.issueManager.pop(doc.path)
         if (!index.remove(doc)) {
@@ -71,27 +70,31 @@ trait ModuleRefresh {
       }
 
       // Create type & forward holders to limit need for invalidation chaining
-      val newTypes = createTypes(doc, sourceOpt)
-      if (newTypes.nonEmpty) {
-        newTypes.map(newType => {
-          val existingType = getDependentType(newType.typeName)
-          val holders = existingType
-            .map(_.getTypeDependencyHolders)
-            .getOrElse(DependentType.emptyTypeDependencyHolders)
-          newType.updateTypeDependencyHolders(holders)
+      createTypes(doc, sourceOpt) match {
+        case None => Seq() // doc can't create a type (i.e. meta files)
+        case Some(newTypes) =>
+          val typeId = TypeId(this, doc.typeName(namespace))
+          if (newTypes.nonEmpty) {
+            newTypes.map(newType => {
+              val existingType = getDependentType(newType.typeName)
+              val holders = existingType
+                .map(_.getTypeDependencyHolders)
+                .getOrElse(DependentType.emptyTypeDependencyHolders)
+              newType.updateTypeDependencyHolders(holders)
 
-          // Update and validate
-          replaceType(newType.typeName, Some(newType))
-          newType.validate()
-          (typeId, holders.toSet)
-        })
-      } else {
-        val existingType = getDependentType(typeId.typeName)
-        val holders = existingType
-          .map(_.getTypeDependencyHolders)
-          .getOrElse(DependentType.emptyTypeDependencyHolders)
-        removeTypes(doc)
-        Seq((typeId, holders.toSet))
+              // Update and validate
+              replaceType(newType.typeName, Some(newType))
+              newType.validate()
+              (typeId, holders.toSet)
+            })
+          } else {
+            val existingType = getDependentType(typeId.typeName)
+            val holders = existingType
+              .map(_.getTypeDependencyHolders)
+              .getOrElse(DependentType.emptyTypeDependencyHolders)
+            removeTypes(doc)
+            Seq((typeId, holders.toSet))
+          }
       }
     }
   }
@@ -141,15 +144,31 @@ trait ModuleRefresh {
     LabelDeclaration(this).merge(stream)
   }
 
-  private def createTypes(doc: MetadataDocument, source: Option[SourceData]): Seq[DependentType] = {
+  private def createTypes(
+    doc: MetadataDocument,
+    source: Option[SourceData]
+  ): Option[Seq[DependentType]] = {
+    doc match {
+      case _: ApexTriggerMetaDocument | _: ApexClassMetaDocument =>
+        // Hack: we don't need to revalidate here but MetadataValidator wipes out all
+        // diagnostics so if we don't validate we can save to cache without important diagnostics,
+        // especially the Missing ones which will break invalidation handling.
+        getDependentType(doc.controllingTypeName(namespace)).foreach(_.validate())
+        None
+      case _ => Some(createSupportedTypes(doc, source))
+    }
+  }
+
+  private def createSupportedTypes(
+    doc: MetadataDocument,
+    source: Option[SourceData]
+  ): Seq[DependentType] = {
     doc match {
       case doc: ApexClassDocument =>
         source.flatMap(s => FullDeclaration.create(this, doc, s, forceConstruct = true)).toSeq
-      case _: ApexClassMetaDocument => Seq()
 
       case _: ApexTriggerDocument =>
         source.flatMap(s => TriggerDeclaration.create(this, doc.path, s)).toSeq
-      case _: ApexTriggerMetaDocument => Seq()
 
       case _: SObjectLike | _: SObjectFieldDocument | _: SObjectFieldSetDocument |
           _: SObjectSharingReasonDocument =>

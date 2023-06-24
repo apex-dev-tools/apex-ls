@@ -424,25 +424,29 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
   }
 
   override def findField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
-    val matches = fieldsByName.get(name)
+    val matches = findField(name)
     staticContext match {
       case Some(x) => matches.find(f => f.isStatic == x)
       case None    => matches
     }
   }
 
-  protected lazy val fieldsByName: mutable.Map[Name, FieldDeclaration] = {
-    val fieldsByName = mutable.Map(fields.map(f => (f.name, f)): _*)
-    superClassDeclaration.foreach(td =>
-      td.fieldsByName
-        .foreach(f => fieldsByName.getOrElseUpdate(f._1, f._2))
-    )
-    outerTypeDeclaration.foreach(td =>
-      td.fields
-        .filter(_.isStatic)
-        .foreach(f => fieldsByName.getOrElseUpdate(f.name, f))
-    )
-    fieldsByName
+  /* Find a field just from its name. We need to be careful here about recursion between types, e.g. an outer class
+   * having a super class which is an inner of the outer class. To handle this we just exclude declarations from
+   * being searched a second time. */
+  protected def findField(
+    name: Name,
+    exclude: mutable.HashSet[TypeDeclaration] = new mutable.HashSet()
+  ): Option[FieldDeclaration] = {
+    exclude.add(this)
+    fields
+      .find(_.name == name)
+      .orElse(superClassDeclaration.filterNot(exclude.contains).flatMap(_.findField(name, exclude)))
+      .orElse(
+        outerTypeDeclaration
+          .filterNot(exclude.contains)
+          .flatMap(_.findField(name, exclude).filter(_.isStatic))
+      )
   }
 
   private lazy val methodMap: MethodMap =

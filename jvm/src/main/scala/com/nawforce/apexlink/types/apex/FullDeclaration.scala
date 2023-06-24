@@ -52,7 +52,12 @@ abstract class FullDeclaration(
     with ApexClassDeclaration
     with ApexFullDeclaration {
 
-  lazy val sourceHash: Int = source.hash
+  val sourceHash: Int = source.hash
+  private val contentHash: Int =
+    ParsedCache.classMetaHash(
+      source.path.parent.join(s"${typeName.name.toString}.cls-meta.xml"),
+      sourceHash
+    )
 
   override def paths: ArraySeq[PathLike] = ArraySeq(source.path)
 
@@ -106,7 +111,7 @@ abstract class FullDeclaration(
   override def flush(pc: ParsedCache, context: PackageContext): Unit = {
     if (!flushedToCache) {
       val diagnostics = module.pkg.org.issueManager.getDiagnostics(location.path).toArray
-      pc.upsert(context, name.value, source.asUTF8, writeBinary(ApexSummary(summary, diagnostics)))
+      pc.upsert(context, name.value, contentHash, writeBinary(ApexSummary(summary, diagnostics)))
       flushedToCache = true
     }
   }
@@ -128,9 +133,9 @@ abstract class FullDeclaration(
 
   override def preReValidate(): Unit = {
     // Method maps, constructor maps & relative type contexts may be invalidated by changes to super classes/interfaces
+    typeContext.reset()
     resetMethodMapIfInvalid()
     resetConstructorMapIfInvalid()
-    typeContext.reset()
     bodyDeclarations.collect({ case p: PreReValidatable => p.preReValidate() })
     nestedTypes.foreach(_.preReValidate())
   }
@@ -228,10 +233,10 @@ abstract class FullDeclaration(
     // Log dependencies logged against this context
     setDepends(context.dependencies)
 
-    // Force creating of method map in case it is not already done.
-    // Depending on the order of validation, the methodMap may have been created already
-    // so this is just making sure it is so that we can rely on the side-effects
-    methodMap
+    // Force creating of method/constructor maps in case it is not already done.
+    // Either way we need to pass on any diagnostics found
+    methodMap.errors.foreach(OrgInfo.log)
+    constructorMap.errors.foreach(OrgInfo.log)
   }
 
   override def gatherDependencies(

@@ -102,6 +102,11 @@ trait VerifyContext {
       OrgInfo.logError(location, msg)
   }
 
+  def logMissing(location: PathLocation, msg: String): Unit = {
+    if (!suppressIssues)
+      OrgInfo.logMissing(location, msg)
+  }
+
   def log(issue: Issue): Unit = {
     if (!suppressIssues)
       OrgInfo.log(issue)
@@ -225,9 +230,7 @@ final class TypeVerifyContext(
     typeCache.getOrElseUpdate((typeName, from), TypeResolver(typeName, from, Some(module)))
 
   override def suppressIssues: Boolean =
-    typeDeclaration.modifiers.contains(SUPPRESS_WARNINGS_ANNOTATION_PMD) || parent().exists(
-      _.suppressIssues
-    )
+    typeDeclaration.modifiers.contains(SUPPRESS_WARNINGS_ANNOTATION_PMD) || super.suppressIssues
 
   def saveResult(cst: CST, altLocation: Location)(op: => ExprContext): ExprContext = {
     super.saveResult(cst, altLocation, None)(op)
@@ -261,9 +264,8 @@ final class BodyDeclarationVerifyContext(
   override def typePlugin: Plugin = parentContext.typePlugin
 
   override def suppressIssues: Boolean =
-    classBodyDeclaration.modifiers.contains(SUPPRESS_WARNINGS_ANNOTATION_PMD) || parent().exists(
-      _.suppressIssues
-    )
+    classBodyDeclaration.modifiers.contains(SUPPRESS_WARNINGS_ANNOTATION_PMD) ||
+      super.suppressIssues
 
   def isFieldFinalInitialisationContext(field: ApexFieldDeclaration): Boolean = {
     // Determine if legal to initialise a final field from this context

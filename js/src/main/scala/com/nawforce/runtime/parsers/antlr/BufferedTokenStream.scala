@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021 FinancialForce.com, inc. All rights reserved
+ */
 package com.nawforce.runtime.parsers.antlr
 
 import scala.scalajs.js

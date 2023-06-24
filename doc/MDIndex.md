@@ -2,7 +2,7 @@
 
 Work on an alternative to apex.db is being exposed via [MDIndex](https://github.com/financialforcedev/ff-apex-ls/blob/master/pkgforce/jvm/src/main/java/com/nawforce/pkgforce/api/MDIndex.java) which is based on ApexIndex from Jorje. Currently, you can construct an index using the outline parser over very large metadata projects in a few seconds. [MDIndexTest](https://github.com/financialforcedev/ff-apex-ls/blob/master/pkgforce/jvm/src/test/scala/com/nawforce/runtime/api/MDIndexTest.scala) provides some examples of how to use.
 
-The naming as ‘MDIndex’ is deliberate as we expect to include other types of metadata relevant to Apex semantic analysis later on. Once MDIndex has matured we intend to make use of it directly within apex-link as it will allow significant simplification of some of our ‘type finding’ logic. To reach that point we need to show compatibility with ApexIndex using Jorge.
+The naming as ‘MDIndex’ is deliberate as we expect to include other types of metadata relevant to Apex semantic analysis later on. Once MDIndex has matured we intend to make use of it directly within apex-ls as it will allow significant simplification of some of our ‘type finding’ logic. To reach that point we need to show compatibility with ApexIndex using Jorge.
 
 ## IPM
 
@@ -12,4 +12,4 @@ Ordering is used with packages within the index and modules within the packages 
 
 ## TriHierarchy
 
-IPM is an implementation of the generic TriHierarchy abstract class. The TriHierarchy is just used as means to maintain consistency with how apex-link implements a similar model. This is important to allowing apex-link and this implementation to share utility code when dealing with workspaces. We expect we will be able to remove TriHierarchy at some point to simplify the model.
+IPM is an implementation of the generic TriHierarchy abstract class. The TriHierarchy is just used as means to maintain consistency with how apex-ls implements a similar model. This is important to allowing apex-link and this implementation to share utility code when dealing with workspaces. We expect we will be able to remove TriHierarchy at some point to simplify the model.

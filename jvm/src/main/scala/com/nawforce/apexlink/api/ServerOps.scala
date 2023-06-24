@@ -42,19 +42,24 @@ case object LoadAndRefreshAnalysis extends AnalysisMode {
   override def toString: String = "LoadAndRefreshAnalysis"
 }
 
+/** Indexer configuration settings, if file events are observed at an interval < rescanTriggerTimeMs
+  * a re-scan is queued. The re-scan is performed after quietPeriodForRescanMs has elapsed without
+  * any further file events. Both must be non-zero for the indexer to be active.
+  */
+case class IndexerConfiguration(rescanTriggerTimeMs: Long, quietPeriodForRescanMs: Long) {
+  val enabled: Boolean = rescanTriggerTimeMs > 0 && quietPeriodForRescanMs > 0
+}
+
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
-  private var lazyBlocks: Boolean            = true
+  private val lazyBlocks: Boolean            = true
   private var autoFlush: Boolean             = true
   private var externalAnalysis: AnalysisMode = RefreshAnalysis
   private var currentParser: AvailableParser = ANTLRParser
+  private var indexerConfiguration           = IndexerConfiguration(0, 0)
 
   def isLazyBlocksEnabled: Boolean = {
     lazyBlocks
-  }
-
-  def setLazyBlocks(enable: Boolean): Unit = {
-    lazyBlocks = enable
   }
 
   def isAutoFlushEnabled: Boolean = {
@@ -103,5 +108,15 @@ object ServerOps {
     val previousParser = currentParser
     currentParser = newParser
     previousParser
+  }
+
+  def getIndexerConfiguration: IndexerConfiguration = {
+    indexerConfiguration
+  }
+
+  def setIndexerConfiguration(config: IndexerConfiguration): IndexerConfiguration = {
+    val old = indexerConfiguration
+    indexerConfiguration = config
+    old
   }
 }

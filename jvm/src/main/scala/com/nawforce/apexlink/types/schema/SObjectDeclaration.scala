@@ -124,53 +124,64 @@ final case class SObjectDeclaration(
 
   override def validate(withRelationshipCollection: Boolean): Unit = {
     // Check field types, can be ignored for Feed, Share & History synthetic SObjects
-    if (!isSynthetic) {
+    if (isSynthetic) return
 
-      // Check lookup like fields refer to valid SObjects
-      fields
-        .collect { case field: CustomField => field }
-        .filter(_.relationshipName.nonEmpty)
-        .foreach(field => {
-          TypeResolver(field.typeName, module) match {
-            case Right(td: SObjectDeclaration) if !td.moduleDeclaration.contains(module) =>
-              // Create a module specific version for related lists to live on
-              val deployer = new SObjectDeployer(module)
-              val replacement = deployer.extendExistingSObject(
-                Some(td),
-                Array(),
-                td.typeName,
-                td.sobjectNature,
-                ArraySeq(),
-                ArraySeq(),
-                ArraySeq()
-              )
-              module.types.put(replacement.typeName, replacement)
-              module.schemaSObjectType.add(replacement.typeName.name, hasFieldSets = true)
-            case Left(_) =>
-              if (module.isGhostedType(field.typeName)) {
-                // Create ghost SObject for later validations
-                val ghostedSObject = GhostSObjectDeclaration(module, field.typeName)
-                module.types.put(field.typeName, ghostedSObject)
-                module.schemaSObjectType.add(ghostedSObject.typeName.name, hasFieldSets = true)
-              } else {
-                // This is what we don't want to see ;-)
-                OrgInfo.logError(
-                  field.location,
-                  s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
-                )
-              }
-            case _ => ()
-          }
-        })
-
-      // Update dependencies from field types
-      fields.map(_.typeName).toSet.filterNot(_ == typeName).foreach(updateDependencies)
-      propagateDependencies()
-      propagateOuterDependencies(new TypeCache())
+    // Lookup like and summary field need specific validations
+    fields.foreach {
+      case field: CustomField if field.relationshipName.nonEmpty =>
+        validateLookupLike(field)
+      case field: CustomField if field.derivedFrom.nonEmpty =>
+        validateSummary(field)
+      case _ => ()
     }
+
+    // Update dependencies from field types
+    fields.map(_.typeName).toSet.filterNot(_ == typeName).foreach(updateDependencies)
+    propagateDependencies()
+    propagateOuterDependencies(new TypeCache())
 
     if (withRelationshipCollection)
       collectRelationshipFields(getTypeDependencyHolders.toSet)
+  }
+
+  private def validateLookupLike(field: CustomField): Unit = {
+    TypeResolver(field.typeName, module) match {
+      case Right(td: SObjectDeclaration) if !td.moduleDeclaration.contains(module) =>
+        // Create a module specific version for related lists to live on
+        val deployer = new SObjectDeployer(module)
+        val replacement = deployer.extendExistingSObject(
+          Some(td),
+          Array(),
+          td.typeName,
+          td.sobjectNature,
+          ArraySeq(),
+          ArraySeq(),
+          ArraySeq()
+        )
+        module.types.put(replacement.typeName, replacement)
+        module.schemaSObjectType.add(replacement.typeName.name, hasFieldSets = true)
+      case Left(_) =>
+        if (module.isGhostedType(field.typeName)) {
+          // Create ghost SObject for later validations
+          val ghostedSObject = GhostSObjectDeclaration(module, field.typeName)
+          module.types.put(field.typeName, ghostedSObject)
+          module.schemaSObjectType.add(ghostedSObject.typeName.name, hasFieldSets = true)
+        } else {
+          OrgInfo.logMissing(
+            field.location,
+            s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
+          )
+        }
+      case _ => ()
+    }
+
+    if (field.typeName != typeName)
+      updateDependencies(field.typeName)
+  }
+
+  private def validateSummary(field: CustomField): Unit = {
+    // Depend on the SObjects the field is derived from
+    field.derivedFrom.foreach(updateDependencies)
   }
 
   private def updateDependencies(typeName: TypeName): Unit = {

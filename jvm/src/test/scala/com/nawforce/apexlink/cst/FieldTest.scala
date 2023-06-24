@@ -81,4 +81,22 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues == "Error: line 1 at 38-49: protected field 'foo' cannot be static\n")
   }
 
+  test("Potentially recursive field lookup") {
+    // The search order for 'a' here is Inner -> (Outer)Dummy -> (Superclass)Inner -> (Outer)Dummy
+    // Unless we step in to stop the recursion by avoiding a repeat search of Inner
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          """public class Dummy extends Inner {
+        |  public virtual class Inner {
+        |     { Integer b=a; }
+        |  }
+        |}""".stripMargin
+      )
+    )
+    assert(
+      dummyIssues == "Missing: line 3 at 17-18: No variable or type found for 'a' on 'Dummy.Inner'\n"
+    )
+  }
+
 }

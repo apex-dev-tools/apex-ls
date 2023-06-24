@@ -264,9 +264,16 @@ trait PackageAPI extends Package {
     }
   }
 
+  private[nawforce] def refreshAll(paths: Array[PathLike]): Unit = {
+    OrgInfo.current.withValue(org) {
+      val highPriority = paths.length == 1
+      org.queueMetadataRefresh(paths.map(path => RefreshRequest(this, path, highPriority)))
+    }
+  }
+
   /* Replace a path, returns the TypeId of the type that was updated and a Set of TypeIds for the dependency
    * holders of that type. */
-  def refreshInternal(path: PathLike): Seq[(TypeId, Set[TypeId])] = {
+  private def refreshInternal(path: PathLike): Seq[(TypeId, Set[TypeId])] = {
 
     def refreshLabels(labels: LabelDeclaration): Seq[(TypeId, Set[TypeId])] = {
       labels.module.refreshInternal(labels)
@@ -324,8 +331,7 @@ trait PackageAPI extends Package {
     removed.foreach(references.remove)
 
     // Then additions or modifications
-    val toUpsert = splitRequests
-      .getOrElse(false, Seq())
+    val toUpsert = splitRequests.getOrElse(false, Seq())
     toUpsert.foreach(r => {
       LoggerOps.debug(s"Refreshing ${r._1}")
       try {
@@ -341,8 +347,7 @@ trait PackageAPI extends Package {
     // Then batched invalidation
     // FUTURE: We could remove the handled requests from the missing but don't know if a type was added
     // since a missing was last validated, so for now we need to revalidate them all just in case.
-    val withMissing = org.issues.getMissing.flatMap(findTypeIdOfPath)
-    reValidate(references.toSet ++ withMissing)
+    reValidate(references.toSet ++ typesWithMissingDiagnostics)
 
     // Close any open plugins
     org.pluginsManager.closePlugins()
@@ -373,17 +378,66 @@ trait PackageAPI extends Package {
       }
     )
 
-    // Everything else needs re-validation
-    tds.foreach(td => {
+    // Abstract super classes can hide method problems because they are not required to report diagnostics
+    // and so are not identified as part of the missing set that needs re-evaluation. To work around this
+    // we collect them and the path leading to for re-evaluation
+    val collectedTypes = mutable.Set[TypeDeclaration]()
+    tds.foreach(td =>
+      collectToAbstractSuperclasses(td, mutable.Set[TypeDeclaration](), collectedTypes)
+    )
+    collectedTypes.addAll(tds)
+
+    // Revalidate the expanded set of types
+    collectedTypes.foreach(td => {
       td.paths.foreach(path => org.issues.pop(path))
       td.preReValidate()
     })
-    tds.foreach(_.validate())
+    collectedTypes.foreach(_.validate())
   }
 
-  private def findTypeIdOfPath(path: PathLike): Option[TypeId] = {
-    org.packagesByNamespace.values
-      .flatMap(p => p.getTypeOfPathInternal(path))
-      .headOption
+  /* Collect all classes in a super class hierarchy that have an abstract ancestor */
+  private def collectToAbstractSuperclasses(
+    td: TypeDeclaration,
+    visited: mutable.Set[TypeDeclaration],   // Where have we been already
+    collected: mutable.Set[TypeDeclaration], // Output set
+    path: List[TypeDeclaration] = Nil        // Nodes visited but not yet added to collected
+  ): Unit = {
+    val toHere = td :: path
+    if (td.isAbstract || collected.contains(td)) {
+      // If abstract or we know this node leads to an abstract add the path
+      collected.addAll(toHere)
+    }
+    if (!visited.contains(td)) {
+      visited.add(td)
+      // Keep walking trying to find an abstract
+      td.superClassDeclaration.foreach(superClass =>
+        collectToAbstractSuperclasses(superClass, visited, collected, toHere)
+      )
+    }
+  }
+
+  private def typesWithMissingDiagnostics: Seq[TypeId] = {
+    val modules = org.packages.reverse.flatMap(_.orderedModules)
+    org.issues.getMissing.flatMap(path => {
+      modules
+        .find(_.isVisibleFile(path))
+        .flatMap(module => {
+          MetadataDocument(path) match {
+            case Some(_: PageDocument) =>
+              // For any pages we need to return the 'Page' declaration as pages are not types but fields
+              Some(TypeId(module, module.pages.typeName))
+            case Some(_: ComponentDocument) =>
+              // Components are types, but they are nested which complicates things so return the 'Component' declaration
+              Some(TypeId(module, module.components.typeName))
+            case Some(mdDoc: MetadataDocument) =>
+              // For everything else, just do a type lookup
+              module
+                .moduleType(mdDoc.controllingTypeName(module.namespace))
+                .map(td => TypeId(module, td.typeName))
+
+            case _ => None
+          }
+        })
+    })
   }
 }

@@ -14,6 +14,7 @@
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.diagnostics.{Issue, SYNTAX_CATEGORY}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
@@ -41,7 +42,7 @@ class IssueManagerTest extends AnyFunSuite with TestHelper {
       FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy")) { root: PathLike =>
         val org = createOrg(root)
 
-        assert(org.issues.hasUpdatedIssues sameElements Array("/Dummy.cls"))
+        assert(org.issues.hasUpdatedIssues sameElements Array(path"/Dummy.cls"))
         org.issues.ignoreUpdatedIssuesInternal(root.join("Dummy.cls"))
         assert(org.issues.hasUpdatedIssues.isEmpty)
 
@@ -109,12 +110,12 @@ class IssueManagerTest extends AnyFunSuite with TestHelper {
 
         assert(org.issues.hasUpdatedIssues.isEmpty)
 
-        val path = root.join("/Dummy.cls")
+        val path = root.join("Dummy.cls")
         path.write("public class Dummy")
         org.unmanaged.refresh(path, highPriority = false)
         org.flush()
 
-        assert(org.issues.hasUpdatedIssues sameElements Array("/Dummy.cls"))
+        assert(org.issues.hasUpdatedIssues sameElements Array(path"/Dummy.cls"))
 
         val expectedIssues = Array(
           Issue(
@@ -191,7 +192,7 @@ class IssueManagerTest extends AnyFunSuite with TestHelper {
       ) { root: PathLike =>
         val org = createOrg(root)
 
-        assert(org.issues.hasUpdatedIssues sameElements Array("/Dummy.cls"))
+        assert(org.issues.hasUpdatedIssues sameElements Array(path"/Dummy.cls"))
 
         assert(org.issues.issuesForFileInternal(root.join("Dummy.cls")).length == 2)
         assert(

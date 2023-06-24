@@ -176,11 +176,11 @@ class SObjectDeployer(module: OPM.Module) {
   private def createDerivedField(
     objectName: TypeName,
     field: CustomFieldEvent,
-    relatedField: Option[FieldDeclaration],
+    relatedField: Option[(TypeDeclaration, FieldDeclaration)],
     ghostRelated: Boolean
   ): FieldDeclaration = {
     val location         = field.sourceInfo.location
-    val relatedFieldType = relatedField.map(_.typeName)
+    val relatedFieldType = relatedField.map(_._2.typeName)
 
     if (relatedField.isEmpty && field.relatedField.nonEmpty && !ghostRelated) {
       val (relObj, relField) = field.relatedField.get
@@ -194,7 +194,9 @@ class SObjectDeployer(module: OPM.Module) {
       location,
       defaultNamespace(field.name),
       relatedFieldType.getOrElse(SObjectDeployer.platformTypeOfFieldType(field).typeName),
-      None
+      idTarget = None,
+      relationshipName = None,
+      derivedFrom = relatedField.map(_._1.typeName).toList
     )
   }
 
@@ -202,17 +204,19 @@ class SObjectDeployer(module: OPM.Module) {
     field: (Name, Name),
     createdSObjects: mutable.Map[TypeName, SObjectLikeDeclaration],
     derivedFields: ArrayBuffer[(TypeName, CustomFieldEvent)]
-  ): Option[FieldDeclaration] = {
-    val objName = schemaTypeNameOf(field._1)
-    val relObj  = createdSObjects.get(objName)
+  ): Option[(TypeDeclaration, FieldDeclaration)] = {
+    val objectTypeName = schemaTypeNameOf(field._1)
+    val relObj = createdSObjects.get(objectTypeName).orElse(module.moduleType(objectTypeName))
 
     relObj
-      .flatMap(_.findField(defaultNamespace(field._2), Some(false)))
+      .flatMap(
+        _.findField(defaultNamespace(field._2), Some(false)).map(field => (relObj.get, field))
+      )
       .orElse(
         // rare case of chained related fields
         derivedFields
           .find { case (obj, f) =>
-            obj == objName && f.name == field._2
+            obj == objectTypeName && f.name == field._2
           }
           .flatMap(rf =>
             rf._2.relatedField.flatMap(findRelatedField(_, createdSObjects, derivedFields))
