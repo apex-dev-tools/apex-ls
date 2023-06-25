@@ -42,7 +42,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     name := "apex-ls",
     scalacOptions += "-deprecation",
     libraryDependencies ++= Seq(
-      "io.github.apex-dev-tools" %%% "outline-parser"                         % "1.2.0",
+      "io.github.apex-dev-tools" %%% "outline-parser"                         % "1.2.1",
       "com.github.nawforce"      %%% "scala-json-rpc"                         % "1.1.0",
       "com.github.nawforce"      %%% "scala-json-rpc-upickle-json-serializer" % "1.1.0",
       "com.lihaoyi"              %%% "upickle"                                % "1.2.0",
