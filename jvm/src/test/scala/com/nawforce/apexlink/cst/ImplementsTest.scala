@@ -22,14 +22,24 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
   test("No implementation of interface method") {
     typeDeclarations(
       Map(
-        "Dummy.cls" -> "global class Dummy implements A {}",
+        "Dummy.cls" -> "public class Dummy implements A {}",
         "A.cls"     -> "public interface A {void func();}"
       )
     )
     assert(
       dummyIssues ==
-        "Missing: line 1 at 13-18: Method 'void func()' from interface 'A' must be implemented\n"
+        "Missing: line 1 at 13-18: Non-abstract class must implement method 'void func()' from interface 'A'\n"
     )
+  }
+
+  test("No implementation of interface method on abstract class") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" -> "public abstract class Dummy implements A {}",
+        "A.cls"     -> "public interface A {void func();}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
   }
 
   test("Global implementation of interface method") {
