@@ -639,7 +639,6 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
           excludeTestClasses = false
         )
         .map(_.count)
-      assert(orgAPI.packages.collect({ case impl: PackageImpl => impl }).exists(_.isGulped))
       assert(transitiveCount.head == 4)
     }
   }
