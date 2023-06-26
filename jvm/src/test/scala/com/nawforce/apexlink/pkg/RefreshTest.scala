@@ -147,7 +147,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         )
         assert(
           getMessages(root.join("pkg").join("C.cls"))
-            == "Missing: line 1 at 13-14: Method 'void func(Foo)' from interface 'A' must be implemented\n"
+            == "Missing: line 1 at 13-14: Non-abstract class must implement method 'void func(Foo)' from interface 'A'\n"
         )
 
         refresh(pkg, root.join("pkg/Foo.cls"), "public class Foo {}")

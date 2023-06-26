@@ -108,7 +108,7 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
 
 object FieldDeclaration {
   val emptyFieldDeclarations: ArraySeq[FieldDeclaration] = ArraySeq()
-  val externalFieldModifiers: Set[Modifier] =
+  private val externalFieldModifiers: Set[Modifier] =
     Set(GLOBAL_MODIFIER, INVOCABLE_VARIABLE_ANNOTATION)
 }
 
@@ -183,7 +183,7 @@ trait Parameters {
     * some platform generics are considered equivalent regardless of the type parameters used. Yeah,
     * its a mess of a language.
     */
-  protected def areSameGenericTypes(param: TypeName, other: TypeName): Boolean = {
+  private def areSameGenericTypes(param: TypeName, other: TypeName): Boolean = {
     param.equalsIgnoreParamTypes(other) &&
     ( // Ignore generic type params on these
       (param.outer.contains(TypeNames.System) && param.name == XNames.Iterable) ||
@@ -322,7 +322,7 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
 object MethodDeclaration {
   val emptyMethodDeclarations: ArraySeq[MethodDeclaration] = ArraySeq()
   val emptyMethodDeclarationsSet: Set[MethodDeclaration]   = Set()
-  val externalMethodModifiers: Set[Modifier] =
+  private val externalMethodModifiers: Set[Modifier] =
     Set(
       GLOBAL_MODIFIER,
       WEBSERVICE_MODIFIER,
@@ -405,9 +405,9 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
   lazy val isVirtual: Boolean  = modifiers.contains(VIRTUAL_MODIFIER)
   lazy val isExtensible: Boolean =
     nature == INTERFACE_NATURE || (nature == CLASS_NATURE && (isAbstract || isVirtual))
-  lazy val isFieldConstructed: Boolean   = isSObject || isApexPagesComponent
-  lazy val isSObject: Boolean            = superClass.contains(TypeNames.SObject)
-  lazy val isApexPagesComponent: Boolean = superClass.contains(TypeNames.ApexPagesComponent)
+  lazy val isFieldConstructed: Boolean           = isSObject || isApexPagesComponent
+  lazy val isSObject: Boolean                    = superClass.contains(TypeNames.SObject)
+  private lazy val isApexPagesComponent: Boolean = superClass.contains(TypeNames.ApexPagesComponent)
 
   def outerTypeDeclaration: Option[TypeDeclaration] =
     outerTypeName.flatMap(typeName => TypeResolver(typeName, this).toOption)
@@ -569,11 +569,29 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
       interfaces.flatMap(_.superTypes())
   }
 
+  /* Collect all interfaces implemented */
+  def collectInterfaces(
+    found: mutable.Set[TypeDeclaration],
+    visited: mutable.Set[TypeDeclaration] = mutable.Set()
+  ): Unit = {
+    superClassDeclaration
+      .filterNot(visited.contains)
+      .foreach(td => {
+        visited.add(td)
+        td.collectInterfaces(found, visited)
+      })
+    interfaceDeclarations
+      .filterNot(visited.contains)
+      .foreach(td => {
+        visited.add(td)
+        if (td.nature == INTERFACE_NATURE) found.add(td)
+        td.collectInterfaces(found, visited)
+      })
+  }
+
 }
 
 object TypeDeclaration {
-  val emptyTypeDeclarations: ArraySeq[TypeDeclaration]   = ArraySeq()
-  val emptyTypeDeclarationsArray: Array[TypeDeclaration] = Array()
-  val externalTypeModifiers: Set[Modifier] =
-    Set(GLOBAL_MODIFIER, REST_RESOURCE_ANNOTATION)
+  val emptyTypeDeclarations: ArraySeq[TypeDeclaration] = ArraySeq()
+  private val externalTypeModifiers: Set[Modifier] = Set(GLOBAL_MODIFIER, REST_RESOURCE_ANNOTATION)
 }

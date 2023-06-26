@@ -193,7 +193,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "AFoo.cls"  -> "public abstract class AFoo implements Foo { public void m1(){} }",
         "Dummy.cls" -> "public class Dummy extends AFoo {  }"
       ),
-      "Missing: line 1 at 13-18: Non-abstract class must implement method 'void m2()' from type 'Foo'\n"
+      "Missing: line 1 at 13-18: Non-abstract class must implement method 'void m2()' from interface 'Foo'\n"
     )
   }
 
@@ -213,7 +213,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public interface Foo { void fn(SObject ac); }",
         "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Account ac){} }"
       ),
-      "Missing: line 1 at 13-18: Method 'void fn(System.SObject)' from interface 'Foo' must be implemented\n"
+      "Missing: line 1 at 13-18: Non-abstract class must implement method 'void fn(System.SObject)' from interface 'Foo'\n"
     )
   }
 
@@ -243,7 +243,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public interface Foo { void fn(Account ac); }",
         "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Opportunity ac){} }"
       ),
-      "Missing: line 1 at 13-18: Method 'void fn(Schema.Account)' from interface 'Foo' must be implemented\n"
+      "Missing: line 1 at 13-18: Non-abstract class must implement method 'void fn(Schema.Account)' from interface 'Foo'\n"
     )
   }
 
@@ -283,7 +283,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public interface Foo { void fn(Long ac); }",
         "Dummy.cls" -> "public class Dummy implements Foo { public void fn(Integer ac){} }"
       ),
-      "Missing: line 1 at 13-18: Method 'void fn(System.Long)' from interface 'Foo' must be implemented\n"
+      "Missing: line 1 at 13-18: Non-abstract class must implement method 'void fn(System.Long)' from interface 'Foo'\n"
     )
   }
 

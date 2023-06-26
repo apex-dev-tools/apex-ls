@@ -361,7 +361,7 @@ object MethodMap {
       case _: TypeDeclaration       => None
     }
 
-    // Validate any interface use in classes
+    // Validate any interface used in classes
     ad.filter(_.nature == CLASS_NATURE)
       .foreach(ad => {
         workingMap.put(
@@ -375,11 +375,9 @@ object MethodMap {
             )
           )
         )
-        checkInterfaces(ad, location, td.isAbstract, workingMap, interfaces, errors)
+        if (!ad.isAbstract)
+          checkInterfaces(ad, location, td.isAbstract, workingMap, errors)
       })
-
-    // Validate all required methods are implemented
-    checkCompleteness(td, location, errors, workingMap)
 
     // Valida auraEnabled methods to disallow Sets
     checkAuraEnabledMethods(location, errors, workingMap)
@@ -435,37 +433,6 @@ object MethodMap {
           )
         )
       })
-  }
-
-  private def checkCompleteness(
-    td: TypeDeclaration,
-    location: Option[PathLocation],
-    errors: mutable.Buffer[Issue],
-    workingMap: WorkingMap
-  ): Unit = {
-    td match {
-      // Only check Apex defined non-abstract classes
-      case td: ApexClassDeclaration if td.nature == CLASS_NATURE && !td.isAbstract =>
-        workingMap.values.flatten
-          .collect { case m: ApexMethodDeclaration => m }
-          .filterNot(m => m.hasBlock || m.thisTypeId == td.typeId)
-          // We exclude gulped here because it's often missing method declarations, direct use of a gulp interface
-          // will be checked, this just leaves a hole when coming via abstract classes
-          .filterNot(m => m.thisTypeId.module.isGulped)
-          .foreach(method => {
-            errors.append(
-              new Issue(
-                location.get.path,
-                Diagnostic(
-                  MISSING_CATEGORY,
-                  location.get.location,
-                  s"Non-abstract class must implement method '${method.signature}' from type '${method.thisTypeId}'"
-                )
-              )
-            )
-          })
-      case _ => ()
-    }
   }
 
   private def isApexLocalMethod(td: TypeDeclaration, method: MethodDeclaration): Boolean = {
@@ -529,13 +496,11 @@ object MethodMap {
     location: Option[PathLocation],
     isAbstract: Boolean,
     workingMap: WorkingMap,
-    interfaces: ArraySeq[TypeDeclaration],
     errors: mutable.Buffer[Issue]
   ): Unit = {
-    // We have to filter on nature here just in case, ideally we could block this via
-    // a declaration type but not with current declaration model.
-    interfaces
-      .filter(_.nature == INTERFACE_NATURE)
+    val allInterfaces = mutable.Set[TypeDeclaration]()
+    from.collectInterfaces(allInterfaces)
+    allInterfaces
       .foreach(interface =>
         checkInterface(from, location, isAbstract, workingMap, interface, errors)
       )
@@ -549,17 +514,6 @@ object MethodMap {
     interface: TypeDeclaration,
     errors: mutable.Buffer[Issue]
   ): Unit = {
-    // TODO: Do we need this, should be checked on the interface itself
-    if (interface.isInstanceOf[ApexClassDeclaration] && interface.nature == INTERFACE_NATURE)
-      checkInterfaces(
-        from,
-        location,
-        isAbstract,
-        workingMap,
-        interface.interfaceDeclarations,
-        errors
-      )
-
     interface.methods
       .filterNot(m =>
         m.isStatic || specialOverrideMethodSignatures.contains(m.signature.toLowerCase())
@@ -601,7 +555,7 @@ object MethodMap {
                     Diagnostic(
                       MISSING_CATEGORY,
                       l.location,
-                      s"Method '${method.signature}' from interface '${interface.typeName}' must be implemented"
+                      s"Non-abstract class must implement method '${method.signature}' from interface '${interface.typeName}'"
                     )
                   )
                 )
