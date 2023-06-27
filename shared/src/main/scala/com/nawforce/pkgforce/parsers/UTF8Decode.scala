@@ -13,8 +13,6 @@
  */
 package com.nawforce.pkgforce.parsers
 
-import java.nio.charset.StandardCharsets
-
 object UTF8Decode {
 
   def isASCII(buffer: Array[Byte], offset: Int, length: Int): Boolean = {
