@@ -18,7 +18,13 @@ import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.Referenceable
-import com.nawforce.apexlink.types.apex.{ApexBlockLike, ApexConstructorLike, ApexFieldLike, ApexMethodLike, ThisType}
+import com.nawforce.apexlink.types.apex.{
+  ApexBlockLike,
+  ApexConstructorLike,
+  ApexFieldLike,
+  ApexMethodLike,
+  ThisType
+}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
@@ -210,7 +216,7 @@ final case class ApexInitializerBlock(_modifiers: ModifierResults, block: Block,
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     val blockContext = new OuterBlockVerifyContext(context, isStatic)
     block.verify(blockContext)
-    context.typePlugin.onBlockValidated(block, isStatic, blockContext)
+    context.typePlugin.foreach(_.onBlockValidated(block, isStatic, blockContext))
 
     setDepends(context.dependencies)
   }
@@ -348,8 +354,7 @@ final case class ApexFieldDeclaration(
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     val staticContext = if (isStatic) Some(true) else None
 
-
-    if(isStatic && modifiers.contains(PROTECTED_MODIFIER)) {
+    if (isStatic && modifiers.contains(PROTECTED_MODIFIER)) {
       context.log(
         Issue(
           location.path,
@@ -418,7 +423,7 @@ final case class ApexConstructorDeclaration(
       )
     )
     block.verify(blockContext)
-    context.typePlugin.onBlockValidated(block, isStatic = false, blockContext)
+    context.typePlugin.foreach(_.onBlockValidated(block, isStatic = false, blockContext))
 
     setDepends(context.dependencies)
   }

@@ -80,7 +80,7 @@ final case class ClassDeclaration(
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     verifyCommon(context)
-    super.verify(new TypeVerifyContext(Some(context), this, None))
+    super.verify(new TypeVerifyContext(Some(context), this, None, enablePlugins = true))
   }
 
   private def verifyCommon(context: VerifyContext): Unit = {
@@ -210,7 +210,7 @@ final case class InterfaceDeclaration(
   override val nature: Nature = INTERFACE_NATURE
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
-    super.verify(new TypeVerifyContext(Some(context), this, None))
+    super.verify(new TypeVerifyContext(Some(context), this, None, enablePlugins = true))
   }
 }
 
@@ -307,7 +307,7 @@ final case class EnumDeclaration(
   override val nature: Nature = ENUM_NATURE
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
-    super.verify(new TypeVerifyContext(Some(context), this, None))
+    super.verify(new TypeVerifyContext(Some(context), this, None, enablePlugins = true))
   }
 
   override lazy val localMethods: ArraySeq[ApexMethodDeclaration] = {

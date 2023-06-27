@@ -304,7 +304,7 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
     if (name != implMethod.name || parameters.length != implMethod.parameters.length)
       return false
 
-    val context    = new TypeVerifyContext(None, from, None)
+    val context    = new TypeVerifyContext(None, from, None, enablePlugins = false)
     val paramTypes = implMethod.parameters.map(_.typeName)
     parameters
       .zip(paramTypes)

@@ -62,7 +62,7 @@ final case class LazyBlock(
     val blockContext = new InnerBlockVerifyContext(context)
     statements().foreach(_.verify(blockContext))
     verifyControlPath(blockContext, BlockControlPattern())
-    context.typePlugin.onBlockValidated(this, context.isStatic, blockContext)
+    context.typePlugin.foreach(_.onBlockValidated(this, context.isStatic, blockContext))
   }
 
   def statements(): Seq[Statement] = {
@@ -163,7 +163,9 @@ final case class IfStatement(expression: Expression, statements: Seq[Statement])
       }
       stmt.verify(stmtContext)
       if (isBlock)
-        context.typePlugin.onBlockValidated(stmt.asInstanceOf[Block], context.isStatic, stmtContext)
+        context.typePlugin.foreach(
+          _.onBlockValidated(stmt.asInstanceOf[Block], context.isStatic, stmtContext)
+        )
     })
 
     verifyControlPath(stmtRootContext, BranchControlPattern(Some(expr), 2))
@@ -427,7 +429,7 @@ final case class CatchClause(
         exceptionType
       )
       block.verify(blockContext)
-      context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
+      context.typePlugin.foreach(_.onBlockValidated(block, context.isStatic, blockContext))
     })
   }
 }

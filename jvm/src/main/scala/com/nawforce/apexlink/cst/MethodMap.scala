@@ -807,7 +807,7 @@ object MethodMap {
     else {
       from match {
         case ad: ApexDeclaration =>
-          val context = new TypeVerifyContext(None, ad, None)
+          val context = new TypeVerifyContext(None, ad, None, enablePlugins = false)
           isAssignable(toType, fromType, strictConversions = false, context)
         case _ =>
           false

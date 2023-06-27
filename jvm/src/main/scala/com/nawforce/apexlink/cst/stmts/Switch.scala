@@ -199,7 +199,7 @@ final case class WhenControl(whenValue: WhenValue, block: Block) extends CST {
     val blockContext = new InnerBlockVerifyContext(context).setControlRoot(context)
     whenValue.verify(blockContext)
     block.verify(blockContext)
-    context.typePlugin.onBlockValidated(block, context.isStatic, blockContext)
+    context.typePlugin.foreach(_.onBlockValidated(block, context.isStatic, blockContext))
   }
 }
 
