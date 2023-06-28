@@ -139,7 +139,7 @@ final case class GetterPropertyBlock(modifiers: ModifierResults, block: Option[B
       val blockContext = new OuterBlockVerifyContext(context, isStatic, propertyType.typeName)
       block.verify(blockContext)
       blockContext.logControlFlowIssues()
-      context.typePlugin.onBlockValidated(block, isStatic, blockContext)
+      context.typePlugin.foreach(_.onBlockValidated(block, isStatic, blockContext))
     })
   }
 }
@@ -163,7 +163,7 @@ final case class SetterPropertyBlock(
         propertyType
       )
       block.verify(blockContext)
-      context.typePlugin.onBlockValidated(block, isStatic, blockContext)
+      context.typePlugin.foreach(_.onBlockValidated(block, isStatic, blockContext))
     })
   }
 }

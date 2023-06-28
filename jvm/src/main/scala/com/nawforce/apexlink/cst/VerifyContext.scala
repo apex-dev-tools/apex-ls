@@ -57,7 +57,7 @@ trait VerifyContext {
   def getTypeAndAddDependency(typeName: TypeName, from: TypeDeclaration): TypeResponse
 
   /** Get Plugin instance for this type */
-  def typePlugin: Plugin
+  def typePlugin: Option[Plugin]
 
   /** Test if result saving is enabled */
   def isSaving: Boolean
@@ -209,14 +209,18 @@ class ValidateResultHolder(resultMap: Option[mutable.Map[Location, ValidationRes
 final class TypeVerifyContext(
   parentContext: Option[VerifyContext],
   typeDeclaration: ApexDeclaration,
-  resultMap: Option[mutable.Map[Location, ValidationResult]]
+  resultMap: Option[mutable.Map[Location, ValidationResult]],
+  enablePlugins: Boolean
 ) extends ValidateResultHolder(resultMap)
     with HolderVerifyContext
     with VerifyContext {
 
   private val typeCache = mutable.Map[(TypeName, TypeDeclaration), TypeResponse]()
 
-  private val plugin = typeDeclaration.module.pkg.org.pluginsManager.createPlugin(typeDeclaration)
+  private val plugin =
+    if (enablePlugins)
+      Some(typeDeclaration.module.pkg.org.pluginsManager.createPlugin(typeDeclaration))
+    else None
 
   override def parent(): Option[VerifyContext] = parentContext
 
@@ -239,7 +243,7 @@ final class TypeVerifyContext(
   def getTypeAndAddDependency(typeName: TypeName, from: TypeDeclaration): TypeResponse =
     super.getTypeAndAddDependency(typeName, from, module)
 
-  def typePlugin: Plugin = plugin
+  def typePlugin: Option[Plugin] = plugin
 }
 
 final class BodyDeclarationVerifyContext(
@@ -261,7 +265,7 @@ final class BodyDeclarationVerifyContext(
   override def getTypeFor(typeName: TypeName, from: TypeDeclaration): TypeResponse =
     parentContext.getTypeFor(typeName, from)
 
-  override def typePlugin: Plugin = parentContext.typePlugin
+  override def typePlugin: Option[Plugin] = parentContext.typePlugin
 
   override def suppressIssues: Boolean =
     classBodyDeclaration.modifiers.contains(SUPPRESS_WARNINGS_ANNOTATION_PMD) ||
@@ -322,7 +326,7 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
   override def getTypeAndAddDependency(typeName: TypeName, from: TypeDeclaration): TypeResponse =
     parentContext.getTypeAndAddDependency(typeName, from)
 
-  override def typePlugin: Plugin = parentContext.typePlugin
+  override def typePlugin: Option[Plugin] = parentContext.typePlugin
 
   def declaredVars: Map[Name, VarTypeAndDefinition] = vars.toMap
 
@@ -436,7 +440,7 @@ final class ExpressionVerifyContext(parentContext: BlockVerifyContext) extends V
   override def getTypeAndAddDependency(typeName: TypeName, from: TypeDeclaration): TypeResponse =
     parentContext.getTypeAndAddDependency(typeName, from)
 
-  override def typePlugin: Plugin = parentContext.typePlugin
+  override def typePlugin: Option[Plugin] = parentContext.typePlugin
 
   override def isSaving: Boolean = parentContext.isSaving
 

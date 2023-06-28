@@ -67,7 +67,7 @@ final case class ConstructorMap(
         if (ConstructorMap.isCtorAccessible(ctor, context.thisType, context.superType)) {
           Right(ctor)
         } else {
-          //Check the rest of assignable for accessible ctors, if not return the original error
+          // Check the rest of assignable for accessible ctors, if not return the original error
           findPotentialMatch(matches.filterNot(_ == ctor), params, context) match {
             case Right(ctor) => Right(ctor)
             case _           => Left(s"Constructor is not visible: $getCtorString")
@@ -95,14 +95,12 @@ final case class ConstructorMap(
     else {
       Some(
         assignable
-          .find(
-            ctor =>
-              assignable.forall(
-                c =>
-                  c == ctor || ctor
-                    .hasMoreSpecificParams(c.parameters, params, context)
-                    .contains(true)
-              )
+          .find(ctor =>
+            assignable.forall(c =>
+              c == ctor || ctor
+                .hasMoreSpecificParams(c.parameters, params, context)
+                .contains(true)
+            )
           )
           .map(Right(_))
           .getOrElse(Left("Ambiguous constructor call"))
@@ -158,8 +156,8 @@ object ConstructorMap {
       val key                      = ctor.parameters.length
       val ctorsWithSameParamLength = workingMap.getOrElse(key, Nil)
       val platformGenericDupes =
-        ctorsWithSameParamLength.find(
-          x => x.hasSameParameters(ctor, allowPlatformGenericEquivalence = true)
+        ctorsWithSameParamLength.find(x =>
+          x.hasSameParameters(ctor, allowPlatformGenericEquivalence = true)
         )
       if (platformGenericDupes.nonEmpty)
         setConstructorDuplicateError(ctor, platformGenericDupes.head, errors)
@@ -220,7 +218,7 @@ object ConstructorMap {
             superClassMap
               .findConstructorByParams(
                 ArraySeq.empty,
-                new TypeVerifyContext(None, ad, None)
+                new TypeVerifyContext(None, ad, None, enablePlugins = false)
               ) match {
               case Left(error) =>
                 val msg =
