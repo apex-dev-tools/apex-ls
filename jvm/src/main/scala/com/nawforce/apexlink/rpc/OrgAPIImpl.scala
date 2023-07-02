@@ -540,6 +540,19 @@ class OrgAPIImpl extends OrgAPI {
     OpenRequest(OrgQueue.instance())
   }
 
+  override def open(directory: String, options: OpenOptions): Future[OpenResult] = {
+    options.loggingLevel.foreach(LoggerOps.setLoggingLevel)
+    options.parser.foreach(ServerOps.setCurrentParser)
+    options.externalAnalysisMode.foreach(ServerOps.setExternalAnalysisMode)
+    options.cacheDirectory.foreach(path => {
+      Environment.setCacheDirOverride(Some(Some(Path(path))))
+      ServerOps.setAutoFlush(path.nonEmpty)
+    })
+    options.indexerConfiguration.foreach(ServerOps.setIndexerConfiguration)
+    OrgQueue.open(directory)
+    OpenRequest(OrgQueue.instance())
+  }
+
   override def getIssues(
     includeWarnings: Boolean,
     maxIssuesPerFile: Int
