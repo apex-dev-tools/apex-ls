@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.rpc
 
+import com.nawforce.apexlink.api.IndexerConfiguration
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
@@ -175,6 +176,19 @@ object TestMethodItemsResult {
   implicit val rwLocation: RW[Location]             = macroRW
 }
 
+case class OpenOptions(
+  parser: Option[String],
+  loggingLevel: Option[String],
+  externalAnalysisMode: Option[String],
+  cacheDirectory: Option[String],
+  indexerConfiguration: Option[IndexerConfiguration]
+)
+
+object OpenOptions {
+  implicit val rw: RW[OpenOptions]                              = macroRW
+  implicit val rwIndexerConfiguration: RW[IndexerConfiguration] = macroRW
+}
+
 trait OrgAPI {
   @api.JSONRPCMethod(name = "version")
   def version(): Future[String]
@@ -193,6 +207,9 @@ trait OrgAPI {
 
   @api.JSONRPCMethod(name = "open")
   def open(directory: String): Future[OpenResult]
+
+  @api.JSONRPCMethod(name = "openWithOptions")
+  def open(directory: String, options: OpenOptions): Future[OpenResult]
 
   @api.JSONRPCMethod(name = "getIssues")
   def getIssues(includeWarnings: Boolean, maxIssuesPerFile: Int): Future[GetIssuesResult]
@@ -250,11 +267,7 @@ trait OrgAPI {
   ): Future[Array[LocationLink]]
 
   @api.JSONRPCMethod(name = "getReferences")
-  def getReferences(
-    path: String,
-    line: Int,
-    offset: Int
-  ): Future[Array[TargetLocation]]
+  def getReferences(path: String, line: Int, offset: Int): Future[Array[TargetLocation]]
 
   @api.JSONRPCMethod(name = "getDependencyBombs")
   def getDependencyBombs(count: Int): Future[Array[BombScore]]

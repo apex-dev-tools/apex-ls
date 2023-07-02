@@ -45,6 +45,8 @@ object LoggerOps {
   private var loggingLevel: Integer = NO_LOGGING
   private var logger: Logger        = new DefaultLogger(System.err)
 
+  def getLoggingLevel: Integer = this.loggingLevel
+
   /** Set debug logging level, one of NO_LOGGING, INFO_LOGGING, DEBUG_LOGGING or TRACE_LOGGING */
   def setLoggingLevel(level: Integer): Integer = {
     val current = loggingLevel

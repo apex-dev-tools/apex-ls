@@ -54,7 +54,7 @@ final case class SourceData(
 
   def asInsensitiveStream: CaseInsensitiveInputStream = {
     new CaseInsensitiveInputStream(
-      CharStreams.fromStream(new ByteArrayInputStream(source, offset, length))
+      CharStreams.fromStream(new ByteArrayInputStream(source, offset, length), StandardCharsets.UTF_8)
     )
   }
 

@@ -92,7 +92,7 @@ final case class TriggerDeclaration(
           .logError(objectNameId.location, s"Duplicate trigger case for '${triggerCase.name}'")
       )
 
-      val context = new TypeVerifyContext(None, this, None)
+      val context = new TypeVerifyContext(None, this, None, enablePlugins = true)
       val tdOpt   = context.getTypeAndAddDependency(objectTypeName, this)
 
       tdOpt match {
@@ -111,7 +111,9 @@ final case class TriggerDeclaration(
               val triggerContext = new OuterBlockVerifyContext(context, isStaticContext = false)
               triggerContext.addVar(Names.Trigger, None, isReadOnly = true, tc)
               block.verify(triggerContext)
-              context.typePlugin.onBlockValidated(block, isStatic = false, triggerContext)
+              context.typePlugin.foreach(
+                _.onBlockValidated(block, isStatic = false, triggerContext)
+              )
             } finally {
               module.removeMetadata(tc)
             }
@@ -180,7 +182,7 @@ final case class TriggerDeclaration(
 
   override def getValidationMap(line: Int, offset: Int): Map[Location, ValidationResult] = {
     val resultMap   = mutable.Map[Location, ValidationResult]()
-    val typeContext = new TypeVerifyContext(None, this, Some(resultMap))
+    val typeContext = new TypeVerifyContext(None, this, Some(resultMap), enablePlugins = false)
     val context     = new OuterBlockVerifyContext(typeContext, isStaticContext = false)
     context.disableIssueReporting() {
       block.foreach(block => {
