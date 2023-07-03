@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.api.{Org, ServerOps}
+import com.nawforce.apexlink.api.{IndexerConfiguration, Org, ServerOps}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -548,7 +548,9 @@ class OrgAPIImpl extends OrgAPI {
       Environment.setCacheDirOverride(Some(Some(Path(path))))
       ServerOps.setAutoFlush(path.nonEmpty)
     })
-    options.indexerConfiguration.foreach(ServerOps.setIndexerConfiguration)
+    options.indexerConfiguration.foreach(values =>
+      ServerOps.setIndexerConfiguration(IndexerConfiguration(values._1, values._2))
+    )
     OrgQueue.open(directory)
     OpenRequest(OrgQueue.instance())
   }
