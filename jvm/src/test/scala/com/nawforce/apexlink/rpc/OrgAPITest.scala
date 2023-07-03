@@ -163,7 +163,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
   test("Open with default options") {
     val workspace = samplesDir.join("mdapi-test")
     val orgAPI    = OrgAPI()
-    val options   = OpenOptions(None, None, None, None, None)
+    val options   = OpenOptions.default()
     for {
       result <- orgAPI.open(workspace.toString, options)
     } yield {
@@ -186,13 +186,13 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     val workspace = samplesDir.join("mdapi-test")
     val orgAPI    = OrgAPI()
     val cacheDir  = Path("testCacheDir")
-    val options = OpenOptions(
-      Some("OutlineSingle"),
-      Some("DEBUG"),
-      Some("NoAnalysis"),
-      Some(cacheDir.toString),
-      Some(IndexerConfiguration(1, 2))
-    )
+    val options = OpenOptions
+      .default()
+      .withParser("OutlineSingle")
+      .withLoggingLevel("DEBUG")
+      .withExternalAnalysisMode("NoAnalysis")
+      .withCacheDirectory(cacheDir.toString)
+      .withIndexerConfiguration(1, 2)
     val oldLogger = LoggerOps.setLogger(new TestNullLogger())
     for {
       result <- orgAPI.open(workspace.toString, options)

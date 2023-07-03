@@ -14,7 +14,6 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.api.IndexerConfiguration
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
@@ -176,17 +175,44 @@ object TestMethodItemsResult {
   implicit val rwLocation: RW[Location]             = macroRW
 }
 
-case class OpenOptions(
-  parser: Option[String],
-  loggingLevel: Option[String],
-  externalAnalysisMode: Option[String],
-  cacheDirectory: Option[String],
-  indexerConfiguration: Option[IndexerConfiguration]
-)
+case class OpenOptions private (
+  parser: Option[String] = None,
+  loggingLevel: Option[String] = None,
+  externalAnalysisMode: Option[String] = None,
+  cacheDirectory: Option[String] = None,
+  indexerConfiguration: Option[(Long, Long)] = None
+) {
+  def withParser(name: String): OpenOptions = {
+    copy(parser = Some(name))
+  }
+
+  def withLoggingLevel(level: String): OpenOptions = {
+    copy(loggingLevel = Some(level))
+  }
+
+  def withExternalAnalysisMode(mode: String): OpenOptions = {
+    copy(externalAnalysisMode = Some(mode))
+  }
+
+  def withCacheDirectory(path: String): OpenOptions = {
+    copy(cacheDirectory = Some(path))
+  }
+
+  def withIndexerConfiguration(
+    rescanTriggerTimeMs: Long,
+    quietPeriodForRescanMs: Long
+  ): OpenOptions = {
+    copy(indexerConfiguration = Some((rescanTriggerTimeMs, quietPeriodForRescanMs)))
+  }
+
+}
 
 object OpenOptions {
-  implicit val rw: RW[OpenOptions]                              = macroRW
-  implicit val rwIndexerConfiguration: RW[IndexerConfiguration] = macroRW
+  implicit val rw: RW[OpenOptions] = macroRW
+
+  def default(): OpenOptions = {
+    new OpenOptions(None, None, None, None, None)
+  }
 }
 
 trait OrgAPI {
