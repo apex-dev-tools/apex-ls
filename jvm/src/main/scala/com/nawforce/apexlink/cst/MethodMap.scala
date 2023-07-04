@@ -470,9 +470,9 @@ object MethodMap {
   }
 
   private def mergeInterface(workingMap: WorkingMap, interface: TypeDeclaration): Unit = {
-    if (interface.isInstanceOf[ApexClassDeclaration] && interface.nature == INTERFACE_NATURE)
-      mergeInterfaces(workingMap, interface.interfaceDeclarations)
 
+    // We merge top-down here to make sure shadows is always set up in correct direction, doing it bottom
+    // up can result in an inverted shadowing relationship when both interfaces contains the same method
     interface.methods
       .filterNot(_.isStatic)
       .foreach(method => {
@@ -489,6 +489,9 @@ object MethodMap {
           }
         }
       })
+
+    if (interface.isInstanceOf[ApexClassDeclaration] && interface.nature == INTERFACE_NATURE)
+      mergeInterfaces(workingMap, interface.interfaceDeclarations)
   }
 
   private def checkInterfaces(

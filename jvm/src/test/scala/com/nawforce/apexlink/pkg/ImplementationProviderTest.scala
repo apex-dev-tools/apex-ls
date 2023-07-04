@@ -13,6 +13,54 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class ImplementationProviderTest extends AnyFunSuite with TestHelper {
 
+  test("Interface implementations") {
+    val fooContentAndCursorPos = withCursor(s"public interface Foo { void goTo${CURSOR}Method(); }")
+    val barContentAndCursorPos =
+      withCursor(s"public interface Bar extends Foo {void g${CURSOR}oToMethod();}")
+    val source = Map(
+      "Foo.cls" -> fooContentAndCursorPos._1,
+      "Bar.cls" -> barContentAndCursorPos._1,
+      "Baz.cls" -> "public interface Baz extends Bar {}"
+    )
+    FileSystemHelper.run(source) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getImplementation(
+            root.join("Foo.cls"),
+            line = 1,
+            offset = fooContentAndCursorPos._2,
+            None
+          )
+          .map(LocationLinkString(root, fooContentAndCursorPos._1, _)) sameElements
+          Array(
+            LocationLinkString("goToMethod", path"/Bar.cls", "void goToMethod();", "goToMethod")
+          )
+      )
+      assert(
+        org.unmanaged
+          .getImplementation(
+            root.join("Bar.cls"),
+            line = 1,
+            offset = barContentAndCursorPos._2,
+            None
+          )
+          .map(LocationLinkString(root, barContentAndCursorPos._1, _)) sameElements
+          Array(
+            LocationLinkString("goToMethod", path"/Foo.cls", "void goToMethod();", "goToMethod")
+          )
+      )
+
+      // We look in both directions here but shadows should be correct
+      val fooMethod =
+        unmanagedClass("Foo").get.localMethods.find(_.name.toString == "goToMethod").get
+      val barMethod =
+        unmanagedClass("Bar").get.localMethods.find(_.name.toString == "goToMethod").get
+      assert(fooMethod.shadows.isEmpty)
+      assert(barMethod.shadows.contains(fooMethod))
+    }
+  }
+
   test("Method implementations") {
     val contentAndCursorPos = withCursor(s"public interface Foo { void goTo${CURSOR}Method(); }")
     val source = Map(
