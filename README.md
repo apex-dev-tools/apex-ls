@@ -77,6 +77,7 @@ Available build commands:
   * **WARNING:** This can override the remote releases, clear your `~/.ivy2/local` directory to revert.
 * `sbt test` - Execute full test run.
 * `sbt clean` - Removes most build files and artifacts.
+* `sbt scalafmtAll` - Reformat code files using scalafmt
 
 ### Testing
 
