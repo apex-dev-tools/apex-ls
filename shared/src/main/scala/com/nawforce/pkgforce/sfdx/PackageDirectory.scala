@@ -74,12 +74,11 @@ object PackageDirectory {
       case _ =>
         config
           .lineAndOffsetOf(value)
-          .map(
-            lineAndOffset =>
-              throw SFDXProjectError(
-                lineAndOffset,
-                "'unpackagedMetadata' entries should all be strings"
-              )
+          .map(lineAndOffset =>
+            throw SFDXProjectError(
+              lineAndOffset,
+              "'unpackagedMetadata' entries should all be strings"
+            )
           )
         None
     }

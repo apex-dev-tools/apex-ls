@@ -107,7 +107,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
   test("duplicate classes error") {
     FileSystemHelper.run(
       Map[String, String](
-        "pkg/foo/Foo.cls"  -> "public class Foo {}",
+        "pkg/foo/Foo.cls" -> "public class Foo {}",
         "pkg/bar/Foo.cls" -> "public class Foo {}"
       )
     ) { root: PathLike =>
@@ -115,9 +115,7 @@ class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
       assert(index.get(ApexNature).size == 1)
       val issues = logger.issuesForFiles(null, includeWarnings = false, 10)
       assert(issues.length == 1)
-      assert(
-        issues.head.toString.contains("Error: line 1: Duplicate for type 'Foo' found in ")
-      )
+      assert(issues.head.toString.contains("Error: line 1: Duplicate for type 'Foo' found in "))
     }
   }
 

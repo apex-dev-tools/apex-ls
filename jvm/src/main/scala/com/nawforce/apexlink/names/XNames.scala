@@ -18,10 +18,11 @@ import com.nawforce.pkgforce.names._
 
 /** Name handling support.
   *
-  * The two most visible types of name (Name & TypeName) are included in the api package. Additional support is
-  * included here for caching of Name objects to reduce GC pressure, simple dot formatted names and the encoded
-  * names we see used with SObjects that have suffixes such as `__c` and optional namespaces prefixes. There is
-  * also some support here for legal & reserved identifier validation.
+  * The two most visible types of name (Name & TypeName) are included in the api package. Additional
+  * support is included here for caching of Name objects to reduce GC pressure, simple dot formatted
+  * names and the encoded names we see used with SObjects that have suffixes such as `__c` and
+  * optional namespaces prefixes. There is also some support here for legal & reserved identifier
+  * validation.
   */
 object XNames {
 

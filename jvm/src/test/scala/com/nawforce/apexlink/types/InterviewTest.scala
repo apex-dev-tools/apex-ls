@@ -70,7 +70,7 @@ class InterviewTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Test.flow-meta.xml" -> "",
-        "Dummy.cls"          -> "public class Dummy { {Flow.Interview i = new Flow.Interview.Test(new Map<String, Object>());} }"
+        "Dummy.cls" -> "public class Dummy { {Flow.Interview i = new Flow.Interview.Test(new Map<String, Object>());} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -87,7 +87,7 @@ class InterviewTest extends AnyFunSuite with TestHelper {
             |"packageDirectories": [{"path": "pkg"}]
             |}""".stripMargin,
         "pkg/Test.flow-meta.xml" -> "",
-        "pkg/Dummy.cls"          -> "public class Dummy { {Flow.Interview i = new Flow.Interview.pkg.Test(new Map<String, Object>());} }"
+        "pkg/Dummy.cls" -> "public class Dummy { {Flow.Interview i = new Flow.Interview.pkg.Test(new Map<String, Object>());} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -99,7 +99,7 @@ class InterviewTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Test.flow-meta.xml" -> "",
-        "Dummy.cls"          -> "public class Dummy { {Flow.Interview i = new Flow.Interview.Test(new Map<String, Object>());} }"
+        "Dummy.cls" -> "public class Dummy { {Flow.Interview i = new Flow.Interview.Test(new Map<String, Object>());} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -134,7 +134,7 @@ class InterviewTest extends AnyFunSuite with TestHelper {
             |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
             |}""".stripMargin,
         "pkg1/Test.flow-meta.xml" -> "",
-        "pkg2/Dummy.cls"          -> "public class Dummy { {Flow.Interview i = new Flow.Interview.pkg1.Test(new Map<String, Object>());} }"
+        "pkg2/Dummy.cls" -> "public class Dummy { {Flow.Interview i = new Flow.Interview.pkg1.Test(new Map<String, Object>());} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -186,7 +186,7 @@ class InterviewTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Test.flow-meta.xml" -> "",
-        "Dummy.cls"          -> "public class Dummy { {new Flow.Interview.Test(new Map<String, Object>()).start();} }"
+        "Dummy.cls" -> "public class Dummy { {new Flow.Interview.Test(new Map<String, Object>()).start();} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)

@@ -46,8 +46,8 @@ trait ControlFlowContext {
     getPaths
       .filter(_.unreachable)
       .flatMap(_.location)
-      .foreach(
-        pl => log(Issue(pl.path, ERROR_CATEGORY, pl.location, s"Unreachable block or statement"))
+      .foreach(pl =>
+        log(Issue(pl.path, ERROR_CATEGORY, pl.location, s"Unreachable block or statement"))
       )
   }
 }

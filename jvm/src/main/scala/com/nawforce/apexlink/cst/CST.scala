@@ -28,9 +28,9 @@ case class CSTParsingContext(path: PathLike, lineAdjust: Int = 0, columnAdjust: 
 
 /** Base for all CST nodes, provides some basic location handling.
   *
-  * This is mutable for historic reasons, you must call withContext() on all CST nodes for them to pick up the
-  * location information from the parser. It also supports lines & column adjustments for when we re-parse blocks,
-  * see LazyBlock for details.
+  * This is mutable for historic reasons, you must call withContext() on all CST nodes for them to
+  * pick up the location information from the parser. It also supports lines & column adjustments
+  * for when we re-parse blocks, see LazyBlock for details.
   */
 class CST extends Positionable {
 

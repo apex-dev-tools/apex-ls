@@ -110,8 +110,8 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   val unpackagedMetadata: Seq[PackageDirectory] =
     plugins.getOrElse("unpackagedMetadata", ujson.Arr()) match {
       case value: ujson.Arr =>
-        value.value.toSeq.map(
-          value => PackageDirectory.fromUnpackagedMetadata(projectPath, config, value)
+        value.value.toSeq.map(value =>
+          PackageDirectory.fromUnpackagedMetadata(projectPath, config, value)
         )
       case value =>
         config
@@ -132,12 +132,11 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
               case _ =>
                 config
                   .lineAndOffsetOf(value)
-                  .map(
-                    lineAndOffset =>
-                      throw SFDXProjectError(
-                        lineAndOffset,
-                        "'additionalNamespaces' entries should all be strings"
-                      )
+                  .map(lineAndOffset =>
+                    throw SFDXProjectError(
+                      lineAndOffset,
+                      "'additionalNamespaces' entries should all be strings"
+                    )
                   )
                 None
             }
@@ -150,12 +149,11 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
         if (dups.nonEmpty) {
           config
             .lineAndOffsetOf(value)
-            .map(
-              lineAndOffset =>
-                throw SFDXProjectError(
-                  lineAndOffset,
-                  s"namespace '${dups.head._1.getOrElse("unmanaged")}' is duplicated in additionalNamespaces'"
-                )
+            .map(lineAndOffset =>
+              throw SFDXProjectError(
+                lineAndOffset,
+                s"namespace '${dups.head._1.getOrElse("unmanaged")}' is duplicated in additionalNamespaces'"
+              )
             )
         }
         namespaces.toArray
@@ -312,18 +310,17 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     val escaping = modules.flatMap(module => {
       if (!module.path.toString.startsWith(enclosingPath)) Some(module.path) else None
     })
-    escaping.foreach(
-      path =>
-        logger.log(
-          Issue(
-            projectFile,
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location.empty,
-              s"Package directory '$path' is not within the project directory '$projectPath'"
-            )
+    escaping.foreach(path =>
+      logger.log(
+        Issue(
+          projectFile,
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location.empty,
+            s"Package directory '$path' is not within the project directory '$projectPath'"
           )
         )
+      )
     )
     escaping.isEmpty
   }
@@ -370,8 +367,8 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   ): (Map[String, VersionedPackageLayer], List[ModuleLayer]) = {
 
     // Check dependencies are well formed
-    val dependencies = packageDirectory.dependencies.flatMap(
-      dependency => validateDependency(layers._1, dependency, logger)
+    val dependencies = packageDirectory.dependencies.flatMap(dependency =>
+      validateDependency(layers._1, dependency, logger)
     )
     val newLayer = VersionedPackageLayer(
       packageDirectory.version,

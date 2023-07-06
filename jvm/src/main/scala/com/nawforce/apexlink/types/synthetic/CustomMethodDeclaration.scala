@@ -23,9 +23,10 @@ import com.nawforce.pkgforce.path.{Location, PathLocation, UnsafeLocatable}
 
 import scala.collection.immutable.ArraySeq
 
-/** Custom methods are used to inject synthetic methods into types so they fulfil some contract. They extend from
-  * ApexVisibleMethodLike so they can be referenced within Apex code and be included in type summary information
-  * but otherwise have little in common with the usual ApexMethodLike handling.
+/** Custom methods are used to inject synthetic methods into types so they fulfil some contract.
+  * They extend from ApexVisibleMethodLike so they can be referenced within Apex code and be
+  * included in type summary information but otherwise have little in common with the usual
+  * ApexMethodLike handling.
   */
 final case class CustomMethodDeclaration(
   nameLocation: Location,
@@ -68,8 +69,8 @@ final case class CustomConstructorDeclaration(
   parameters: ArraySeq[ParameterDeclaration]
 ) extends ApexVisibleConstructorLike
     with UnsafeLocatable {
-  val nameLocation: Location                 = pathNameLocation.map(_.location).getOrElse(Location.empty)
-  override val location: PathLocation        = pathNameLocation.orNull
+  val nameLocation: Location          = pathNameLocation.map(_.location).getOrElse(Location.empty)
+  override val location: PathLocation = pathNameLocation.orNull
   override val modifiers: ArraySeq[Modifier] = CustomMethodDeclaration.standardModifiers
 
   def summary: ConstructorSummary = {

@@ -39,6 +39,6 @@ trait ApexParserVisitor[Result] extends js.Object {
   val visitMethodDeclaration: js.UndefOr[js.Function1[MethodDeclarationContext, Result]] =
     js.undefined
   val visitInterfaceMethodDeclaration
-    : js.UndefOr[js.Function1[InterfaceMethodDeclarationContext, Result]]        = js.undefined
+    : js.UndefOr[js.Function1[InterfaceMethodDeclarationContext, Result]] = js.undefined
   val visitEnumConstants: js.UndefOr[js.Function1[EnumConstantsContext, Result]] = js.undefined
 }

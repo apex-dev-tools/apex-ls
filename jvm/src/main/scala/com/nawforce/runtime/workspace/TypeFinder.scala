@@ -8,12 +8,10 @@ import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRe
 
 object TypeFinder {
 
-  /**
-    * Will try and find the type in this order
-    * 1) Check if the type is a scalar type
-    * 2) Check if the type is from the local declaration including nested types and super types
-    * 3) Find the type from the baseModule and will push down the search all the way down to platform types
-    * Returns None if it cant resolve the type
+  /** Will try and find the type in this order 1) Check if the type is a scalar type 2) Check if the
+    * type is from the local declaration including nested types and super types 3) Find the type
+    * from the baseModule and will push down the search all the way down to platform types Returns
+    * None if it cant resolve the type
     */
   def get(
     baseModule: IPM.Module,
@@ -40,7 +38,7 @@ object TypeFinder {
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
 
-    //Pre resolve relative type arguments
+    // Pre resolve relative type arguments
     val resolvedTypeNames = typeNames.map(segment => {
       val args = segment.typeArguments
       val newArgs = args.flatMap {
@@ -63,7 +61,7 @@ object TypeFinder {
   }
 
   private def findScalarType(typeNames: Array[TypeNameSegment]): Option[IModuleTypeDeclaration] = {
-    //TODO: We should implement this to gain some perf improvement but not needed to function properly as we
+    // TODO: We should implement this to gain some perf improvement but not needed to function properly as we
     // will push the search down to System package through findExactTypeId anyway
     None
   }
@@ -73,7 +71,7 @@ object TypeFinder {
     typeNames: Array[TypeNameSegment],
     from: IModuleTypeDeclaration
   ): Option[IModuleTypeDeclaration] = {
-    //Shortcut self reference
+    // Shortcut self reference
     if (typeNames.nonEmpty && !isCompound(typeNames) && from.id == typeNames.head.id)
       return Some(from)
     // Remove self reference but avoid false positive match against an inner
@@ -152,7 +150,7 @@ object TypeFinder {
           getType(baseModule, superTypeTypeNames, from)
         })
 
-        //TODO: check namespaces?
+        // TODO: check namespaces?
         if (superType.nonEmpty && !isTypeFromInner(superType.get, from))
           return superType.flatMap(st => findLocalTypeFor(baseModule, typeNames, st))
         None

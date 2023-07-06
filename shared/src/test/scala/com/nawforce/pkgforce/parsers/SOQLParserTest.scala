@@ -234,13 +234,12 @@ object SOQLParser {
     val result = parser.parseSOQL()
     if (result.issues.nonEmpty) {
       Left(
-        result.issues.toIndexedSeq.map(
-          issue =>
-            ParserIssue(
-              issue.diagnostic.location.startLine,
-              issue.diagnostic.location.startPosition,
-              issue.diagnostic.message
-            )
+        result.issues.toIndexedSeq.map(issue =>
+          ParserIssue(
+            issue.diagnostic.location.startLine,
+            issue.diagnostic.location.startPosition,
+            issue.diagnostic.message
+          )
         )
       )
     } else {

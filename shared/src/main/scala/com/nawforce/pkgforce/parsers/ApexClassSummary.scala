@@ -83,16 +83,15 @@ trait ApexNode extends IdLocatable {
     if (!modifiers.contains(GLOBAL_MODIFIER)) {
       children
         .filter(_.modifiers.intersect(Seq(GLOBAL_MODIFIER, WEBSERVICE_MODIFIER)).nonEmpty)
-        .map(
-          child =>
-            new Issue(
-              location.path,
-              Diagnostic(
-                ERROR_CATEGORY,
-                child.idLocation,
-                "Enclosing class must be declared global to use global or webservice modifiers"
-              )
+        .map(child =>
+          new Issue(
+            location.path,
+            Diagnostic(
+              ERROR_CATEGORY,
+              child.idLocation,
+              "Enclosing class must be declared global to use global or webservice modifiers"
             )
+          )
         )
     } else {
       Seq.empty

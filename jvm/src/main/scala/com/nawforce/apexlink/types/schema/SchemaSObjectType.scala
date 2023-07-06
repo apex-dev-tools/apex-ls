@@ -34,16 +34,18 @@ import com.nawforce.pkgforce.path.PathLike
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
-/** Schema.SObjectType implementation. By its nature this is a container for information about SObjects so it is also
-  * used to initialise supporting types needed for SObjects. Salesforce have hacked their Apex parser to have explicit
-  * knowledge of expressions involving SObjects but I could not bring myself to do something so ungodly. Instead, we
-  * use generics and pass the SObject TypeName as a type arguments. There is no automatic way to create these types
-  * so either it is done as a side effect of loading SObject metadata or on-demand.
+/** Schema.SObjectType implementation. By its nature this is a container for information about
+  * SObjects so it is also used to initialise supporting types needed for SObjects. Salesforce have
+  * hacked their Apex parser to have explicit knowledge of expressions involving SObjects but I
+  * could not bring myself to do something so ungodly. Instead, we use generics and pass the SObject
+  * TypeName as a type arguments. There is no automatic way to create these types so either it is
+  * done as a side effect of loading SObject metadata or on-demand.
   *
-  * The way generics are used here can be a bit confusing as there are few hard dependencies between the classes.
-  * What generally happens is that during expression evaluation, a field type name will be given as one of the generic
-  * types with the type argument set to a specific SObject, that type name will then be resolved to one of the handlers
-  * below that has been created specifically for dealing with that aspect of the SObject reflective access.
+  * The way generics are used here can be a bit confusing as there are few hard dependencies between
+  * the classes. What generally happens is that during expression evaluation, a field type name will
+  * be given as one of the generic types with the type argument set to a specific SObject, that type
+  * name will then be resolved to one of the handlers below that has been created specifically for
+  * dealing with that aspect of the SObject reflective access.
   */
 final case class SchemaSObjectType(module: OPM.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.SObjectType)
@@ -55,8 +57,8 @@ final case class SchemaSObjectType(module: OPM.Module)
   /* Create SObjectFields$<SObject>, to support assignability checks with SObjectField */
   module.upsertMetadata(SObjectFields(TypeNames.SObject, module))
 
-  /** Callback for loading of Platform Type that may be SObjects so we can hoist correct describe structure around
-    * them.
+  /** Callback for loading of Platform Type that may be SObjects so we can hoist correct describe
+    * structure around them.
     */
   override def loaded(td: PlatformTypeDeclaration): Unit = {
     if (td.isSObject) {
@@ -64,7 +66,9 @@ final case class SchemaSObjectType(module: OPM.Module)
     }
   }
 
-  /** Add an SObject, this will create supporting types needed for reflective access to this SObject. */
+  /** Add an SObject, this will create supporting types needed for reflective access to this
+    * SObject.
+    */
   def add(sobjectName: Name, hasFieldSets: Boolean): FieldDeclaration = {
 
     // Handlers for Schema.SObjectType.<name>.Fields, Schema.<name>.Fields & Schema.<name>.SObjectType
@@ -147,8 +151,8 @@ final case class SchemaSObjectType(module: OPM.Module)
   }
 }
 
-/** Handler for Internal.SObjectType$<SObject> that provides reflective access for custom objects via expressions
-  * starting with <name>.SObjectType.
+/** Handler for Internal.SObjectType$<SObject> that provides reflective access for custom objects
+  * via expressions starting with <name>.SObjectType.
   */
 final case class SObjectTypeImpl(
   sobjectName: Name,
@@ -196,8 +200,8 @@ final case class SObjectTypeImpl(
   }
 }
 
-/** Handler for Internal.SObjectTypeFields$<SObject> that provides fields access for custom objects via expressions
-  * of the form Schema.SObjectType.<name>.Fields.
+/** Handler for Internal.SObjectTypeFields$<SObject> that provides fields access for custom objects
+  * via expressions of the form Schema.SObjectType.<name>.Fields.
   */
 final case class SObjectTypeFields(sobjectName: Name, module: OPM.Module)
     extends BasicTypeDeclaration(
@@ -213,9 +217,8 @@ final case class SObjectTypeFields(sobjectName: Name, module: OPM.Module)
     TypeResolver(TypeName(sobjectName), module).toOption match {
       case Some(sobject: TypeDeclaration) =>
         sobject.fields
-          .map(
-            field =>
-              (field.name, CustomFieldDeclaration(field.name, TypeNames.DescribeFieldResult, None))
+          .map(field =>
+            (field.name, CustomFieldDeclaration(field.name, TypeNames.DescribeFieldResult, None))
           )
           .toMap
       case _ => Map()
@@ -267,8 +270,8 @@ final case class SObjectTypeFields(sobjectName: Name, module: OPM.Module)
       .toMap
 }
 
-/** Handler for Internal.SObjectFields$<SObject> that provides fields access for custom objects via expressions
-  * of the form Schema.<name>.Fields.
+/** Handler for Internal.SObjectFields$<SObject> that provides fields access for custom objects via
+  * expressions of the form Schema.<name>.Fields.
   */
 final case class SObjectFields(baseType: TypeName, module: OPM.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.sObjectFields$(baseType)) {
@@ -326,7 +329,9 @@ final case class SObjectFields(baseType: TypeName, module: OPM.Module)
   }
 }
 
-/** Handler for Internal.SObjectTypeFieldSets$<SObject> that provides fieldSet access for custom objects */
+/** Handler for Internal.SObjectTypeFieldSets$<SObject> that provides fieldSet access for custom
+  * objects
+  */
 final case class SObjectTypeFieldSets(sobjectName: Name, module: OPM.Module)
     extends BasicTypeDeclaration(
       PathLike.emptyPaths,
@@ -373,8 +378,8 @@ final case class SObjectTypeFieldSets(sobjectName: Name, module: OPM.Module)
   }
 }
 
-/** Handler for Internal.SObjectFieldRowClause$<SObject> that joins the standard sharing reasons with any sharing
-  * reasons that are declared on the the SObject.
+/** Handler for Internal.SObjectFieldRowClause$<SObject> that joins the standard sharing reasons
+  * with any sharing reasons that are declared on the the SObject.
   */
 final case class SObjectFieldRowCause(sobjectName: Name, module: OPM.Module)
     extends BasicTypeDeclaration(

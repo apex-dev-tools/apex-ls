@@ -51,14 +51,13 @@ trait Referenceable extends PreReValidatable {
     hash() != cache._1
   }
 
-  /**
-    * This represents a high level view of all the types that hold a reference to this object.
-    * Returns the types that needs can be revalidated to build up  the more specific reference locations.
+  /** This represents a high level view of all the types that hold a reference to this object.
+    * Returns the types that needs can be revalidated to build up the more specific reference
+    * locations.
     */
   def getReferenceHolderTypeIds: Set[TypeId]
 
-  /**
-    * Returns the detailed reference locations
+  /** Returns the detailed reference locations
     */
   protected def collectReferences(): Set[TargetLocation]
 
@@ -78,7 +77,7 @@ trait ReferenceProvider extends SourceOps {
     val sourceTd = loadTypeFromModule(path) match {
       case Some(sm: SummaryDeclaration) =>
         reValidate(Set(sm.typeId) ++ sm.getTypeDependencyHolders.toSet)
-        //Reload the source after summary type has been validated so we can get the full type
+        // Reload the source after summary type has been validated so we can get the full type
         loadTypeFromModule(path).getOrElse(return emptyTargetLocations)
       case Some(td) => td
       case None     => return emptyTargetLocations
@@ -100,7 +99,7 @@ trait ReferenceProvider extends SourceOps {
       })
       .flatMap({
         case ref: Referenceable =>
-          //ReValidate any references so that ReferenceLocations can be built up
+          // ReValidate any references so that ReferenceLocations can be built up
           if (ref.doesNeedReValidation())
             reValidate(ref.getReferenceHolderTypeIds)
           Some(ref.findReferences().toArray)

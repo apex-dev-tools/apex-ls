@@ -31,7 +31,8 @@ class PageParser(val source: Source) {
     parse(parser => parser.vfUnit())
   }
 
-  /** Find a location for a rule, adapts based on source offsets to give absolute position in file */
+  /** Find a location for a rule, adapts based on source offsets to give absolute position in file
+    */
   def getPathLocation(context: ParserRuleContext): PathLocation = {
     source.getLocation(context)
   }

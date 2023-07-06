@@ -118,7 +118,7 @@ class PlatformTypeDeclaration(
 
   override lazy val methods: ArraySeq[MethodDeclaration] = {
     nature match {
-      case ENUM_NATURE => ArraySeq.empty //TODO
+      case ENUM_NATURE => ArraySeq.empty // TODO
       case _           => getMethods
     }
   }
@@ -134,8 +134,8 @@ class PlatformTypeDeclaration(
     s"$ns${typeInfo.typeName.toString}"
   }
 
-  //We have to convert typeInfo into a TypeName so we can take advantage of the custom handling of toString
-  //This is so types like Internal.Object$ can be displayed as Object instead
+  // We have to convert typeInfo into a TypeName so we can take advantage of the custom handling of toString
+  // This is so types like Internal.Object$ can be displayed as Object instead
   override def toString: String = {
     val args =
       if (typeNameSegment.typeArguments.nonEmpty)
@@ -312,9 +312,9 @@ object PlatformTypeDeclaration {
   final val emptyAnnotations: Array[Annotation]                      = Array.empty
   final val emptyInitializers: ArraySeq[Initializer]                 = ArraySeq.empty
   final val emptyProperties: ArraySeq[PropertyDeclaration]           = ArraySeq.empty
-  final val priorityNamespaces: Seq[Name]                            = Seq(Names.System, Names.Schema, Names.Database)
-  final val javaLangObject: String                                   = "java.lang.Object".intern()
-  final val javaLangEnum: String                                     = "java.lang.Enum".intern()
+  final val priorityNamespaces: Seq[Name] = Seq(Names.System, Names.Schema, Names.Database)
+  final val javaLangObject: String        = "java.lang.Object".intern()
+  final val javaLangEnum: String          = "java.lang.Enum".intern()
 
   /* Java package prefix for platform types */
   private val platformPackage = "com.nawforce.runforce"
@@ -325,7 +325,7 @@ object PlatformTypeDeclaration {
   private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
 
   /* Get a Path that leads to platform classes */
-  //Using the system namespace to guarantee standard-types.jar wil be loaded
+  // Using the system namespace to guarantee standard-types.jar wil be loaded
   lazy val platformPackagePath: java.nio.file.Path = getPathFromPackage(
     s"$platformPackage.System"
   ).getParent
@@ -347,7 +347,7 @@ object PlatformTypeDeclaration {
   }
 
   def get(module: IPM.Module, typeRef: UnresolvedTypeRef): Option[PlatformTypeDeclaration] = {
-    //Exit early for void
+    // Exit early for void
     if (typeRef.fullName.equalsIgnoreCase(Names.Void.value))
       return None
 
@@ -431,14 +431,13 @@ object PlatformTypeDeclaration {
         dotName, {
           val matched = classNameMap.get(dotName)
           assert(matched.size < 2, s"Found multiple platform type matches for $dotName")
-          matched.map(
-            name =>
-              new PlatformTypeDeclaration(
-                module,
-                classOf[PlatformTypeDeclaration].getClassLoader
-                  .loadClass(platformPackage + "." + name),
-                None
-              )
+          matched.map(name =>
+            new PlatformTypeDeclaration(
+              module,
+              classOf[PlatformTypeDeclaration].getClassLoader
+                .loadClass(platformPackage + "." + name),
+              None
+            )
           )
         }
       )

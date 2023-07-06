@@ -23,29 +23,25 @@ object OutlineParserModifierOps {
   ): ArraySeq[(Modifier, LogEntryContext, String)] = {
 
     val modifiers = {
-      annotations.flatMap(
-        opA =>
-          ModifierOps("@" + opA.name.replace(" ", "").toLowerCase, opA.parameters.getOrElse(""))
-            .map(
-              m =>
-                (
-                  m,
-                  OPLogEntryContext(path, extendLocation(location, startLineOffset = -2)),
-                  "Annotation"
-                )
+      annotations.flatMap(opA =>
+        ModifierOps("@" + opA.name.replace(" ", "").toLowerCase, opA.parameters.getOrElse(""))
+          .map(m =>
+            (
+              m,
+              OPLogEntryContext(path, extendLocation(location, startLineOffset = -2)),
+              "Annotation"
             )
+          )
       ) ++
-        src.flatMap(
-          opM =>
-            ModifierOps(opM.text.replace(" ", "").toLowerCase, "")
-              .map(
-                m =>
-                  (
-                    m,
-                    OPLogEntryContext(path, extendLocation(location, startLineOffset = -1)),
-                    "Annotation"
-                  )
+        src.flatMap(opM =>
+          ModifierOps(opM.text.replace(" ", "").toLowerCase, "")
+            .map(m =>
+              (
+                m,
+                OPLogEntryContext(path, extendLocation(location, startLineOffset = -1)),
+                "Annotation"
               )
+            )
         )
     }
 
