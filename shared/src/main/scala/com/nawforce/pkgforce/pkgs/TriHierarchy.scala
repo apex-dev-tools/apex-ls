@@ -18,7 +18,9 @@ abstract class TriHierarchy {
   trait TriOrg {
     self: TOrg =>
 
-    /** Packages in org in deploy order, the last entry is the unmanaged package identified by namespace = None */
+    /** Packages in org in deploy order, the last entry is the unmanaged package identified by
+      * namespace = None
+      */
     val packages: ArraySeq[TPackage]
 
     /** Packages in org by namespace */

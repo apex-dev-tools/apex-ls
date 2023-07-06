@@ -25,11 +25,9 @@ object CompilerService {
     compile(compilationUnit, parserEngineType)
   }
 
-  /**
-    * Configure a CompilationInput with the default configurations:
-    * EmptySymbolProvider, doesn't provide any symbols that are not part of source.
-    * NoopAccessEvaluator, doesn't provide any validation.
-    * NoopQueryValidators, no validation of queries.
+  /** Configure a CompilationInput with the default configurations: EmptySymbolProvider, doesn't
+    * provide any symbols that are not part of source. NoopAccessEvaluator, doesn't provide any
+    * validation. NoopQueryValidators, no validation of queries.
     */
   private def createCompilationInput(
     sourceFiles: List[SourceFile],

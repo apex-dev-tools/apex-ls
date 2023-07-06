@@ -61,8 +61,8 @@ final case class GhostLabel(name: Name) extends LabelField {
   override def location: PathLocation = null
 }
 
-/** System.Label implementation. Provides access to labels in the package as well as labels that are accessible in
-  * base packages via the Label.namespace.name format.
+/** System.Label implementation. Provides access to labels in the package as well as labels that are
+  * accessible in base packages via the Label.namespace.name format.
   */
 final class LabelDeclaration(
   override val module: OPM.Module,
@@ -100,8 +100,8 @@ final class LabelDeclaration(
     }
 
     val outerTypeId = TypeId(module, typeName)
-    val newLabels = labels ++ labelEvents.map(
-      le => Label(outerTypeId, le.location, stripNamespacePrefix(le.name), le.isProtected)
+    val newLabels = labels ++ labelEvents.map(le =>
+      Label(outerTypeId, le.location, stripNamespacePrefix(le.name), le.isProtected)
     )
     val sourceInfo = (sources ++ labelFileEvents.map(_.sourceInfo)).distinct
     new LabelDeclaration(module, sourceInfo, newLabels, nestedLabels)
@@ -122,12 +122,11 @@ final class LabelDeclaration(
   def unused(): ArraySeq[Issue] = {
     labels
       .filterNot(_.hasHolders)
-      .map(
-        label =>
-          new Issue(
-            label.location.path,
-            Diagnostic(UNUSED_CATEGORY, label.location.location, s"Label '$typeName.${label.name}'")
-          )
+      .map(label =>
+        new Issue(
+          label.location.path,
+          Diagnostic(UNUSED_CATEGORY, label.location.location, s"Label '$typeName.${label.name}'")
+        )
       )
   }
 }
@@ -139,9 +138,9 @@ trait NestedLabels extends TypeDeclaration {
   def addTypeDependencyHolder(typeId: TypeId): Unit
 }
 
-/** System.Label.ns implementation for exposing labels from dependent packages. Only public labels are visible through
-  * this. As the exposed labels are owned elsewhere (by the passed LabelDeclaration) there is no need to set a
-  * controller here.
+/** System.Label.ns implementation for exposing labels from dependent packages. Only public labels
+  * are visible through this. As the exposed labels are owned elsewhere (by the passed
+  * LabelDeclaration) there is no need to set a controller here.
   */
 private final class PackageLabels(module: OPM.Module, labelDeclaration: LabelDeclaration)
     extends InnerBasicTypeDeclaration(
@@ -165,7 +164,9 @@ private final class PackageLabels(module: OPM.Module, labelDeclaration: LabelDec
   }
 }
 
-/** System.Label.ns implementation for ghosted packages. This simulates the existence of any label you ask for. */
+/** System.Label.ns implementation for ghosted packages. This simulates the existence of any label
+  * you ask for.
+  */
 final class GhostedLabels(module: OPM.Module, ghostedNamespace: Name)
     extends InnerBasicTypeDeclaration(
       PathLike.emptyPaths,

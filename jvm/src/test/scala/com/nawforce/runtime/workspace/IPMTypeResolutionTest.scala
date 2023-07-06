@@ -174,7 +174,7 @@ class IPMTypeResolutionTest extends AnyFunSuite {
     val sources =
       Map(
         "Location.cls" -> "public class Location {}",
-        "Dummy.cls"    -> "public class Dummy { Location l; System.Location sl; Schema.Location scl; }"
+        "Dummy.cls" -> "public class Dummy { Location l; System.Location sl; Schema.Location scl; }"
       )
     FileSystemHelper.run(sources) { root: PathLike =>
       val index = new IPM.Index(root)

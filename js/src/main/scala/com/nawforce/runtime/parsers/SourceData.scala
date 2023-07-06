@@ -41,8 +41,8 @@ final case class SourceData(
       new SourceData(source, offset + startChar, stopBeforeChar - startChar, Some(hash), isASCII)
     } else {
       val startOffset = UTF8Decode.getCharOffsetFrom(source, offset, startChar)
-      val endOffset   = UTF8Decode.getCharOffsetFrom(source, startOffset, stopBeforeChar - startChar)
-      val subLength   = endOffset - startOffset
+      val endOffset = UTF8Decode.getCharOffsetFrom(source, startOffset, stopBeforeChar - startChar)
+      val subLength = endOffset - startOffset
       new SourceData(source, startOffset, subLength, Some(hash), isASCII)
     }
   }

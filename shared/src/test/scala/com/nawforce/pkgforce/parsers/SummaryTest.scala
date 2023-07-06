@@ -182,8 +182,8 @@ class SummaryTest extends AnyFunSuite {
   }
 
   test("Class with two fields declarators summary") {
-    val path   = Path("Dummy.cls")
-    val cp     = CodeParser(path, SourceData("public class Dummy { private Static Integer Foo, bar; }"))
+    val path = Path("Dummy.cls")
+    val cp = CodeParser(path, SourceData("public class Dummy { private Static Integer Foo, bar; }"))
     val result = cp.parseClass()
     assert(result.issues.isEmpty)
     val root = ApexNode(cp, result.value).get
@@ -225,8 +225,8 @@ class SummaryTest extends AnyFunSuite {
   }
 
   test("Interface with method summary") {
-    val path   = Path("Dummy.cls")
-    val cp     = CodeParser(path, SourceData("public interface Dummy { void Foo(final String bar); }"))
+    val path = Path("Dummy.cls")
+    val cp = CodeParser(path, SourceData("public interface Dummy { void Foo(final String bar); }"))
     val result = cp.parseClass()
     assert(result.issues.isEmpty)
     val root = ApexNode(cp, result.value).get

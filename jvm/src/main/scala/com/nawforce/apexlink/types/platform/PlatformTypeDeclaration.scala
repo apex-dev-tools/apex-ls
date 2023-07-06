@@ -43,8 +43,8 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   override def paths: ArraySeq[PathLike]                  = PathLike.emptyPaths
   override lazy val moduleDeclaration: Option[OPM.Module] = None
 
-  override lazy val name: Name                      = typeName.name
-  override lazy val typeName: TypeName              = PlatformTypeDeclaration.typeNameFromClass(cls, cls)
+  override lazy val name: Name         = typeName.name
+  override lazy val typeName: TypeName = PlatformTypeDeclaration.typeNameFromClass(cls, cls)
   override lazy val outerTypeName: Option[TypeName] = outer.map(_.typeName)
   override lazy val nature: Nature = {
     (cls.isEnum, cls.isInterface) match {
@@ -269,7 +269,7 @@ object PlatformTypeDeclaration {
   private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
 
   /* Get a Path that leads to platform classes */
-  //Using the system namespace to guarantee standard-types.jar wil be loaded
+  // Using the system namespace to guarantee standard-types.jar wil be loaded
   lazy val platformPackagePath: java.nio.file.Path = getPathFromPackage(
     s"$platformPackage.System"
   ).getParent
@@ -318,13 +318,12 @@ object PlatformTypeDeclaration {
       name, {
         val matched = classNameMap.get(name)
         assert(matched.size < 2, s"Found multiple platform type matches for $name")
-        matched.map(
-          name =>
-            new PlatformTypeDeclaration(
-              classOf[PlatformTypeDeclaration].getClassLoader
-                .loadClass(platformPackage + "." + name),
-              None
-            )
+        matched.map(name =>
+          new PlatformTypeDeclaration(
+            classOf[PlatformTypeDeclaration].getClassLoader
+              .loadClass(platformPackage + "." + name),
+            None
+          )
         )
       }
     )
@@ -400,7 +399,7 @@ object PlatformTypeDeclaration {
     val contextCls = contextClsNative.asInstanceOf[java.lang.Class[_]]
 
     paramType match {
-      case cls: Class[_]                         => PlatformTypeDeclaration.typeNameFromClass(cls, contextCls)
+      case cls: Class[_] => PlatformTypeDeclaration.typeNameFromClass(cls, contextCls)
       case tv: java.lang.reflect.TypeVariable[_] => TypeName(Name(tv.getName))
       case pt: java.lang.reflect.ParameterizedType =>
         val cname = pt.getRawType.getTypeName

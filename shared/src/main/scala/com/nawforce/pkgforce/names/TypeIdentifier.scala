@@ -17,8 +17,9 @@ import upickle.default.{macroRW, ReadWriter => RW}
 
 /** Identifier for a specific type within an Org.
   *
-  * The provided namespace is used to locate a package which qualifies the meaning of the type name. This is useful
-  * when the type name may not contain a namespace or it may be visible across package such as with global classes.
+  * The provided namespace is used to locate a package which qualifies the meaning of the type name.
+  * This is useful when the type name may not contain a namespace or it may be visible across
+  * package such as with global classes.
   */
 final case class TypeIdentifier(namespace: Option[Name], typeName: TypeName) {
 
@@ -37,7 +38,9 @@ final case class TypeIdentifier(namespace: Option[Name], typeName: TypeName) {
 object TypeIdentifier {
   implicit val rw: RW[TypeIdentifier] = macroRW
 
-  /** Helper for construction from Java, namespace may be null to indicate unmanaged package reference */
+  /** Helper for construction from Java, namespace may be null to indicate unmanaged package
+    * reference
+    */
   def fromJava(namespace: Name, typeName: TypeName): TypeIdentifier = {
     new TypeIdentifier(Option(namespace), typeName)
   }

@@ -306,13 +306,12 @@ object VFParserTest {
     val result = parser.parsePage()
     if (result.issues.nonEmpty) {
       Left(
-        result.issues.map(
-          issue =>
-            ParserIssue(
-              issue.diagnostic.location.startLine,
-              issue.diagnostic.location.startPosition,
-              issue.diagnostic.message
-            )
+        result.issues.map(issue =>
+          ParserIssue(
+            issue.diagnostic.location.startLine,
+            issue.diagnostic.location.startPosition,
+            issue.diagnostic.message
+          )
         )
       )
     } else {

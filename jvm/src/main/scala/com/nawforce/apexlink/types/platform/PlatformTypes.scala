@@ -128,6 +128,6 @@ object PlatformTypes {
   private val typeAliasMap: Map[TypeName, TypeName] = Map(
     TypeNames.Object                 -> TypeNames.InternalObject,
     TypeNames.ApexPagesPageReference -> TypeNames.PageReference,
-    TypeNames.Iterator               -> TypeName(XNames.Iterator, Seq(TypeNames.Any), Some(TypeNames.System))
+    TypeNames.Iterator -> TypeName(XNames.Iterator, Seq(TypeNames.Any), Some(TypeNames.System))
   ) ++ ambiguousAliasMap
 }

@@ -13,8 +13,8 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
   test("Constructor with args") {
     typeDeclarations(
       Map(
-        "Foo.cls"   -> "public class Foo {}",
-        "Bar.cls"   -> "public class Bar { public Bar(String s){} }",
+        "Foo.cls" -> "public class Foo {}",
+        "Bar.cls" -> "public class Bar { public Bar(String s){} }",
         "Dummy.cls" -> "public class Dummy {Dummy() {this(new Foo(), new Bar('s'));} Dummy(Foo f, Bar b){} }"
       )
     )
@@ -70,7 +70,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     assert(
       dummyIssues ==
         "Error: line 1 at 46-51: Constructor is a duplicate of an earlier constructor at line 1 at 27-32\n" +
-          "Error: line 1 at 65-70: Constructor is a duplicate of an earlier constructor at line 1 at 27-32\n"
+        "Error: line 1 at 65-70: Constructor is a duplicate of an earlier constructor at line 1 at 27-32\n"
     )
   }
 
@@ -141,7 +141,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
   test("Ambiguous private calls") {
     typeDeclarations(
       Map(
-        "Foo.cls"   -> "public class Foo {private Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
+        "Foo.cls" -> "public class Foo {private Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
         "Dummy.cls" -> "public class Dummy { Dummy(){new Foo('abc'); }}"
       )
     )
@@ -153,7 +153,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
   test("Ambiguous private calls with loose assignable") {
     typeDeclarations(
       Map(
-        "Foo.cls"   -> "public class Foo {public Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
+        "Foo.cls" -> "public class Foo {public Foo(Id i){} private Foo(String s){} private Foo(Object b){}}",
         "Dummy.cls" -> "public class Dummy { Dummy(){new Foo('abc'); }}"
       )
     )
@@ -237,7 +237,7 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
   test("Private TestVisible default super constructor") {
     typeDeclarations(
       Map(
-        "Foo.cls"   -> "@isTest virtual public class Foo { @TestVisible private Foo() {} public Foo(String arg) {}}",
+        "Foo.cls" -> "@isTest virtual public class Foo { @TestVisible private Foo() {} public Foo(String arg) {}}",
         "Dummy.cls" -> "@isTest public class Dummy extends Foo {}"
       )
     )

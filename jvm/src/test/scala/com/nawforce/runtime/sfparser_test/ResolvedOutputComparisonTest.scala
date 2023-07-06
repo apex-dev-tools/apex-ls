@@ -88,10 +88,9 @@ object ResolvedOutputComparisonTest {
       println("Directory")
       val s = Files.walk(absolutePath)
       s.filter(file => !Files.isDirectory(file))
-        .filter(
-          file =>
-            file.getFileName.toString.toLowerCase
-              .endsWith("cls") || file.getFileName.toString.toLowerCase.endsWith("-meta.xml")
+        .filter(file =>
+          file.getFileName.toString.toLowerCase
+            .endsWith("cls") || file.getFileName.toString.toLowerCase.endsWith("-meta.xml")
         )
         .toArray
         .map(_.asInstanceOf[Path])
@@ -106,7 +105,7 @@ object ResolvedOutputComparisonTest {
 
 class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
 
-  def getWarnings = Array.empty[String] //TODO
+  def getWarnings = Array.empty[String] // TODO
 
   def compare(secondDecl: IModuleTypeDeclaration): Unit = {
 
@@ -137,11 +136,10 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       val check = first.forall(f => {
         val matches = second.find(s => s.id == f.id)
         assert(matches.nonEmpty)
-        matches.exists(
-          s =>
-            compareAnnotations(f.annotations, s.annotations) &&
-              compareModifiers(f.modifiers, s.modifiers) &&
-              compareParamList(f.formalParameters, s.formalParameters)
+        matches.exists(s =>
+          compareAnnotations(f.annotations, s.annotations) &&
+            compareModifiers(f.modifiers, s.modifiers) &&
+            compareParamList(f.formalParameters, s.formalParameters)
         )
       })
       (
@@ -263,8 +261,8 @@ class ResolvedComparator(rules: RuleSets, firstDecl: IModuleTypeDeclaration) {
       first.map(_.annotations) zip second.map(_.annotations)
     val ids = first.map(_.name) zip second.map(_.name)
 
-    typeRefs.forall(tr => compareTypeRef(tr._1, tr._2)) && modifiers.forall(
-      m => compareModifiers(m._1, m._2)
+    typeRefs.forall(tr => compareTypeRef(tr._1, tr._2)) && modifiers.forall(m =>
+      compareModifiers(m._1, m._2)
     ) && annotations.forall(a => compareAnnotations(a._1, a._2)) && ids.forall(f => f._1 == f._2)
   }
 
@@ -356,7 +354,7 @@ class TypeRefNamesAreEqual() extends TypeRefRule {
 }
 
 class TypeRefNamesAreEqualForPlatformTypes() extends TypeRefNamesAreEqual {
-  //We have to use toString for platform as fullName will give the internal name
+  // We have to use toString for platform as fullName will give the internal name
   override def processSecond(second: TypeRef): String = {
     second match {
       case decl: PlatformTypeDeclaration => decl.toString

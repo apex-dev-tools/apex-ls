@@ -42,8 +42,8 @@ final case class SourceData(
       new SourceData(source, offset + startChar, stopBeforeChar - startChar, Some(hash), isASCII)
     } else {
       val startOffset = UTF8Decode.getCharOffsetFrom(source, offset, startChar)
-      val endOffset   = UTF8Decode.getCharOffsetFrom(source, startOffset, stopBeforeChar - startChar)
-      val subLength   = endOffset - startOffset
+      val endOffset = UTF8Decode.getCharOffsetFrom(source, startOffset, stopBeforeChar - startChar)
+      val subLength = endOffset - startOffset
       new SourceData(source, startOffset, subLength, Some(hash), isASCII)
     }
   }
@@ -54,7 +54,8 @@ final case class SourceData(
 
   def asInsensitiveStream: CaseInsensitiveInputStream = {
     new CaseInsensitiveInputStream(
-      CharStreams.fromStream(new ByteArrayInputStream(source, offset, length), StandardCharsets.UTF_8)
+      CharStreams
+        .fromStream(new ByteArrayInputStream(source, offset, length), StandardCharsets.UTF_8)
     )
   }
 

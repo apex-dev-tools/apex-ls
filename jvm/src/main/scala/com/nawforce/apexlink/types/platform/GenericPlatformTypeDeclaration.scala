@@ -161,14 +161,13 @@ object GenericPlatformTypeDeclaration {
    */
   def get(typeName: TypeName, from: Option[TypeDeclaration]): TypeResponse = {
     // Make sure params are resolvable first
-    val params = typeName.params.map(
-      pt =>
-        (
-          pt,
-          // Without a 'from' we can only search for platform types, but this is still needed for handling platform types
-          if (from.nonEmpty) TypeResolver(pt, from.get)
-          else PlatformTypes.get(pt, None)
-        )
+    val params = typeName.params.map(pt =>
+      (
+        pt,
+        // Without a 'from' we can only search for platform types, but this is still needed for handling platform types
+        if (from.nonEmpty) TypeResolver(pt, from.get)
+        else PlatformTypes.get(pt, None)
+      )
     )
     val module       = from.flatMap(_.moduleDeclaration)
     val failedParams = params.find(_._2.isLeft).filterNot(p => module.exists(_.isGhostedType(p._1)))
@@ -179,12 +178,11 @@ object GenericPlatformTypeDeclaration {
     // And then create off base type
     val genericDecl = PlatformTypeDeclaration.getDeclaration(typeName.asDotName)
     if (genericDecl.nonEmpty) {
-      val absoluteParamTypes = params.map(
-        p =>
-          p._2 match {
-            case Left(error: TypeError)            => error.typeName
-            case Right(paramType: TypeDeclaration) => paramType.typeName
-          }
+      val absoluteParamTypes = params.map(p =>
+        p._2 match {
+          case Left(error: TypeError)            => error.typeName
+          case Right(paramType: TypeDeclaration) => paramType.typeName
+        }
       )
       Right(
         new GenericPlatformTypeDeclaration(typeName.withParams(absoluteParamTypes), genericDecl.get)

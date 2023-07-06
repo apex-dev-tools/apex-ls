@@ -94,21 +94,20 @@ object VFEvent {
       })
 
     val content = PageParser.toScala(element.content())
-    content.foreach(
-      c =>
-        PageParser
-          .toScala(c.chardata())
-          .foreach(charData => {
-            val text = PageParser.getText(charData)
-            expressionMatcher.reset(text)
-            while (expressionMatcher.find())
-              exprs.addOne(
-                LocationAnd(
-                  source.getLocation(charData).location,
-                  text.substring(expressionMatcher.start() + 2, expressionMatcher.end() - 1)
-                )
+    content.foreach(c =>
+      PageParser
+        .toScala(c.chardata())
+        .foreach(charData => {
+          val text = PageParser.getText(charData)
+          expressionMatcher.reset(text)
+          while (expressionMatcher.find())
+            exprs.addOne(
+              LocationAnd(
+                source.getLocation(charData).location,
+                text.substring(expressionMatcher.start() + 2, expressionMatcher.end() - 1)
               )
-          })
+            )
+        })
     )
 
     content

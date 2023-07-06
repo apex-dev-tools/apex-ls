@@ -84,7 +84,7 @@ trait CompletionProvider {
     // Run C3 to get our keywords & rule matches
     val tokenAndIndex =
       findTokenAndIndex(parserAndCU._1, line, adjustedOffset, offset != adjustedOffset)
-    val core       = new CodeCompletionCore(parserAndCU._1, preferredRules.asJava, ignoredTokens.asJava)
+    val core = new CodeCompletionCore(parserAndCU._1, preferredRules.asJava, ignoredTokens.asJava)
     val candidates = core.collectCandidates(tokenAndIndex._2, parserAndCU._2, MAX_STATES)
 
     // Generate a list of possible keyword matches
@@ -102,13 +102,12 @@ trait CompletionProvider {
       if (keywords.exists(_.label == "?.") && searchTerm.nonEmpty) {
         validationResult
           .filter(_.result.declaration.nonEmpty)
-          .map(
-            validationResult =>
-              getAllCompletionItems(
-                validationResult.result.declaration.get,
-                validationResult.result.isStatic,
-                searchTerm.get.residualExpr
-              )
+          .map(validationResult =>
+            getAllCompletionItems(
+              validationResult.result.declaration.get,
+              validationResult.result.isStatic,
+              searchTerm.get.residualExpr
+            )
           )
           .getOrElse(emptyCompletions)
       } else {
@@ -118,68 +117,65 @@ trait CompletionProvider {
     /* Now for rule matches. These are not distinct cases, they might combine to give the correct result. */
     var haveTypes = false
     val rules = candidates.rules.asScala
-      .collect(
-        rule =>
-          rule._1.toInt match {
-            /* TypeRefs appear in lots of places, e.g. inside Primaries but we just handle once for simplicity. */
-            case ApexParser.RULE_typeRef =>
-              if (haveTypes) Array[CompletionItemLink]()
-              else {
-                haveTypes = true
-                module.map(_.matchTypeName(terminatedContent._3, offset)).getOrElse(Array())
-              }
+      .collect(rule =>
+        rule._1.toInt match {
+          /* TypeRefs appear in lots of places, e.g. inside Primaries but we just handle once for simplicity. */
+          case ApexParser.RULE_typeRef =>
+            if (haveTypes) Array[CompletionItemLink]()
+            else {
+              haveTypes = true
+              module.map(_.matchTypeName(terminatedContent._3, offset)).getOrElse(Array())
+            }
 
-            /* Primary will appear at the start of an expression (recursively) but this just handles the first primary as
-             * dotCompletions covers over cases. At the point it is being handled it is indistinguishable from a MethodCall
-             * so we handle both cases. */
-            case ApexParser.RULE_primary =>
-              /* Also handles start of methodCall */
-              searchTerm
-                .map(searchTerm => {
-                  // Local vars can only be on initial primary
-                  if (searchTerm.prefixExpr.isEmpty) {
-                    localVars.keys
-                      .filter(
-                        _.value.take(1).toLowerCase == searchTerm.residualExpr.take(1).toLowerCase
+          /* Primary will appear at the start of an expression (recursively) but this just handles the first primary as
+           * dotCompletions covers over cases. At the point it is being handled it is indistinguishable from a MethodCall
+           * so we handle both cases. */
+          case ApexParser.RULE_primary =>
+            /* Also handles start of methodCall */
+            searchTerm
+              .map(searchTerm => {
+                // Local vars can only be on initial primary
+                if (searchTerm.prefixExpr.isEmpty) {
+                  localVars.keys
+                    .filter(
+                      _.value.take(1).toLowerCase == searchTerm.residualExpr.take(1).toLowerCase
+                    )
+                    .map(name =>
+                      CompletionItemLink(
+                        name.value,
+                        "Variable",
+                        localVars(name).declaration.typeName.toString()
                       )
-                      .map(
-                        name =>
-                          CompletionItemLink(
-                            name.value,
-                            "Variable",
-                            localVars(name).declaration.typeName.toString()
-                          )
-                      )
-                      .toArray ++
-                      classDetails._2
-                        .map(
-                          td =>
-                            getAllCompletionItems(
-                              td,
-                              None,
-                              searchTerm.residualExpr,
-                              hasPrivateAccess = true
-                            )
+                    )
+                    .toArray ++
+                    classDetails._2
+                      .map(td =>
+                        getAllCompletionItems(
+                          td,
+                          None,
+                          searchTerm.residualExpr,
+                          hasPrivateAccess = true
                         )
-                        .getOrElse(Array()) ++
-                      (if (haveTypes) Array[CompletionItemLink]()
-                       else {
-                         haveTypes = true
-                         module
-                           .map(_.matchTypeName(terminatedContent._3, offset))
-                           .getOrElse(Array())
-                       })
-                  } else {
-                    emptyCompletions
-                  }
-                })
-                .getOrElse(emptyCompletions)
-            case ApexParser.RULE_creator =>
-              module
-                .map(m => m.matchTdsForModule(terminatedContent._3, offset))
-                .map(_.flatMap(td => getAllCreatorCompletionItems(td, classDetails._2)))
-                .getOrElse(emptyCompletions)
-          }
+                      )
+                      .getOrElse(Array()) ++
+                    (if (haveTypes) Array[CompletionItemLink]()
+                     else {
+                       haveTypes = true
+                       module
+                         .map(_.matchTypeName(terminatedContent._3, offset))
+                         .getOrElse(Array())
+                     })
+                } else {
+                  emptyCompletions
+                }
+              })
+              .getOrElse(emptyCompletions)
+          case ApexParser.RULE_creator =>
+            module
+              .map(m => m.matchTdsForModule(terminatedContent._3, offset))
+              .map(_.flatMap(td => getAllCreatorCompletionItems(td, classDetails._2)))
+              .getOrElse(emptyCompletions)
+        }
       )
       .flatten
       .toArray
@@ -320,12 +316,11 @@ trait CompletionProvider {
         .map(superClass => {
           superClass.constructors
             .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
-            .map(
-              ctor =>
-                (
-                  "super(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")",
-                  ctor.toString
-                )
+            .map(ctor =>
+              (
+                "super(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")",
+                ctor.toString
+              )
             )
             .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
             .toArray
@@ -334,9 +329,8 @@ trait CompletionProvider {
 
       val thisCtors = td.constructors
         .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
-        .map(
-          ctor =>
-            ("this(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")", ctor.toString)
+        .map(ctor =>
+          ("this(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")", ctor.toString)
         )
         .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
 

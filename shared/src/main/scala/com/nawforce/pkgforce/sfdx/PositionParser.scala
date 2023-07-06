@@ -41,8 +41,8 @@ class PositionParser extends AstTransformer[Value] {
     new AstArrVisitor[ArrayBuffer](xs => indexPosition(ujson.Arr(xs), index))
 
   def visitObject(length: Int, index: Int) =
-    new AstObjVisitor[mutable.LinkedHashMap[String, Value]](
-      xs => indexPosition(ujson.Obj(xs), index)
+    new AstObjVisitor[mutable.LinkedHashMap[String, Value]](xs =>
+      indexPosition(ujson.Obj(xs), index)
     )
 
   def visitNull(index: Int): Value = indexPosition(ujson.Null, index)

@@ -45,7 +45,7 @@ trait ImplementationProvider extends SourceOps {
     def getTransitiveDependents(td: DependentType): ArrayBuffer[TypeDeclaration] = {
       td.getTypeDependencyHolders.toIterable.foldLeft(ArrayBuffer[TypeDeclaration]())((acc, id) => {
         TypeResolver(id.typeName, id.module).toOption match {
-          //if the used by declaration is extensible, find the other classes that use it and add it to the acc
+          // if the used by declaration is extensible, find the other classes that use it and add it to the acc
           case Some(ExtensibleClassesAndInterface(clsOrInterface)) =>
             acc.appendAll(
               getTransitiveDependents(clsOrInterface)
@@ -62,7 +62,7 @@ trait ImplementationProvider extends SourceOps {
     def getSearchContext(td: TypeDeclaration): Option[Dependent with Locatable] = {
       td match {
         case ExtensibleClassesAndInterface(td) =>
-          //Only find method or class declaration to search implementations for
+          // Only find method or class declaration to search implementations for
           td.methods
             .collect { case m: ApexMethodLike => m }
             .find(_.location.location.contains(line, offset))
@@ -97,14 +97,13 @@ trait ImplementationProvider extends SourceOps {
         method
           .collectMethods()
           .filterNot(_ eq method)
-          .map(
-            m =>
-              LocationLink(
-                searchLocation,
-                m.location.path.toString,
-                m.location.location,
-                m.idLocation
-              )
+          .map(m =>
+            LocationLink(
+              searchLocation,
+              m.location.path.toString,
+              m.location.location,
+              m.idLocation
+            )
           )
           .toArray
       case Some(td: ApexDeclaration) =>
@@ -112,14 +111,13 @@ trait ImplementationProvider extends SourceOps {
           .collect { case fd: ApexDeclaration => fd }
           .filter(_.nature == CLASS_NATURE)
           .filter(_.superTypes().contains(td.typeName))
-          .map(
-            fd =>
-              LocationLink(
-                searchLocation,
-                fd.location.path.toString,
-                fd.location.location,
-                fd.idLocation
-              )
+          .map(fd =>
+            LocationLink(
+              searchLocation,
+              fd.location.path.toString,
+              fd.location.location,
+              fd.idLocation
+            )
           )
           .distinct
           .toArray

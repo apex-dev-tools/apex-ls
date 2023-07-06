@@ -193,7 +193,7 @@ class TypeFindingTest extends AnyFunSuite with TestHelper {
   test("Inner type reference resolves") {
     FileSystemHelper.run(
       Map(
-        "pkg1/Dummy.cls"  -> "public class Dummy { public class Target {} {Target.TargetInner.func();} }",
+        "pkg1/Dummy.cls" -> "public class Dummy { public class Target {} {Target.TargetInner.func();} }",
         "pkg2/Target.cls" -> "public class Target { public class TargetInner {} public static void func() {}}"
       )
     ) { root: PathLike =>

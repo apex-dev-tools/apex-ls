@@ -13,8 +13,7 @@
  */
 package com.nawforce.pkgforce.names
 
-/**
-  * A qualified name with notional 'dot' separators
+/** A qualified name with notional 'dot' separators
   */
 final case class DotName(names: Seq[Name]) {
 

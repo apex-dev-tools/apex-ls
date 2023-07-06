@@ -44,9 +44,8 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
       ApexModifiers.classModifiers(parser, modifierContext.modifiers, isOuter, ctx.id())
     val extendsType = CodeParser
       .toScala(ctx.typeRef())
-      .map(
-        typeRef =>
-          ExtendsType(Name(CodeParser.getText(typeRef)), parser.getPathLocation(typeRef).location)
+      .map(typeRef =>
+        ExtendsType(Name(CodeParser.getText(typeRef)), parser.getPathLocation(typeRef).location)
       )
 
     typeWrap(classModifiers.methodOwnerNature) {
@@ -265,7 +264,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
           ArraySeq(),
           modifiers.modifiers,
           s"${appendSpace(modifiers.modifiers.mkString(" "))}$fieldType ${CodeParser
-            .getText(vd.id())}",
+              .getText(vd.id())}",
           s"$fieldType ${modifiers.modifiers.mkString(" ")}",
           modifiers.issues
         )
@@ -281,7 +280,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
           ArraySeq(),
           modifiers.modifiers,
           s"${appendSpace(modifiers.modifiers.mkString(" "))}$fieldType ${CodeParser
-            .getText(vd.id())}",
+              .getText(vd.id())}",
           s"$fieldType ${modifiers.modifiers.mkString(" ")}",
           modifiers.issues
         )
@@ -312,7 +311,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
         ArraySeq(),
         modifiers.modifiers,
         s"${appendSpace(modifiers.modifiers.mkString(" "))}$fieldType ${CodeParser
-          .getText(ctx.id())}",
+            .getText(ctx.id())}",
         s"$fieldType ${modifiers.modifiers.mkString(" ")}",
         modifiers.issues
       )

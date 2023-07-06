@@ -74,8 +74,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   }
 
   private def toSourceFiles: List[SourceFile] = {
-    source.map {
-      case (path, contents) => SourceFile.builder().setKnownName(path).setBody(contents).build()
+    source.map { case (path, contents) =>
+      SourceFile.builder().setKnownName(path).setBody(contents).build()
     }.toList
   }
 
@@ -97,7 +97,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     enclosing: IMutableModuleTypeDeclaration
   ): Option[TypeDeclaration] = {
     def getMembers[T](root: Compilation): T = {
-      //This is seems very hacky but its the easiest way to expose innerTypes and initializer blocks and unresolved methods
+      // This is seems very hacky but its the easiest way to expose innerTypes and initializer blocks and unresolved methods
       FieldUtils
         .readDeclaredField(root, "members", true)
         .asInstanceOf[T]
@@ -107,7 +107,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     val userInterface = classOf[UserInterface]
     val userEnum      = classOf[UserEnum]
     val typeInfo      = root.getDefiningType
-    //TODO: figure out td location? Check if we can use root.bodyLoc
+    // TODO: figure out td location? Check if we can use root.bodyLoc
     root.getClass match {
       case `userClass` =>
         val ctd = constructClassTypeDeclaration(
@@ -177,8 +177,8 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     etd.setId(toId(typeInfo.getCodeUnitDetails.getName, typeInfo.getCodeUnitDetails.getLoc))
     etd.setModifiers(modifiersAndAnnotations._1.toArray)
     etd.setAnnotations(modifiersAndAnnotations._2.toArray)
-    constants.foreach(
-      id => etd.appendField(FieldDeclaration(Array(), Array(Modifier("static")), etd, id))
+    constants.foreach(id =>
+      etd.appendField(FieldDeclaration(Array(), Array(Modifier("static")), etd, id))
     )
     etd
   }
@@ -304,7 +304,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
     members.getMethods.asScala
       .map(_.getMethodInfo)
       .filter(x => x.getGenerated.isUserDefined && !x.isConstructor)
-      //The parser returns abstract and access modifiers for each method so we remove them for interface declarations
+      // The parser returns abstract and access modifiers for each method so we remove them for interface declarations
       .map(m => toMethodDeclaration(m, noModifiers = true))
   }
 
@@ -338,7 +338,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
       toTypeRef(from.getType),
       toId(from.getName, from.getLoc)
     )
-    //TODO: figure out block location?
+    // TODO: figure out block location?
     fd
   }
 
@@ -355,7 +355,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
       toId(from.getCanonicalName, from.getLoc),
       toFormalParameterList(from.getParameters)
     )
-    //TODO: figure out block location?
+    // TODO: figure out block location?
   }
 
   private def toConstructorDeclaration(from: MethodInfo): ConstructorDeclaration = {
@@ -366,7 +366,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
       toQName(from.getName, from.getLoc),
       toFormalParameterList(from.getParameters)
     )
-    //TODO: figure out block location?
+    // TODO: figure out block location?
   }
 
   private def toQName(name: String, loc: apex.jorje.data.Location): QualifiedName = {
@@ -409,7 +409,7 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   }
 
   private def toAnnotation(from: apex.jorje.semantic.ast.modifier.Annotation): Annotation = {
-    //TODO: add parameters
+    // TODO: add parameters
     Annotation(from.getType.getApexName, None)
   }
 
@@ -426,16 +426,15 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
   }
 
   private def toTypeRef(from: TypeInfo): UnresolvedTypeRef = {
-    //Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
+    // Apex name includes the fully qualified name with typeArguments. We dont need typeArguments for the name
     val segments = new mutable.ArrayBuffer[TypeNameSegment]()
     from.getApexName
       .replaceAll("<.*>", "")
       .split("\\.")
-      .foreach(
-        n =>
-          segments.append(
-            toTypeNameFromTypeInfo(from.getTypeArguments, n, from.getCodeUnitDetails.getLoc)
-          )
+      .foreach(n =>
+        segments.append(
+          toTypeNameFromTypeInfo(from.getTypeArguments, n, from.getCodeUnitDetails.getLoc)
+        )
       )
     base.UnresolvedTypeRef(segments.toArray, 0)
   }
@@ -445,23 +444,22 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
       case Some(typ) =>
         val segments   = new mutable.ArrayBuffer[TypeNameSegment]()
         var subscripts = 0
-        //Things to note here,
+        // Things to note here,
         // if its a return type that has '[]' then parser will resolve '[]' to a list
         // but if its a in a typeArgument then it will resolve as ArrayTypeRef
         if (typ.isInstanceOf[ArrayTypeRef]) {
-          //TODO: Resolve array subscripts properly
-          //Temporary work around for comparison work as something like String[][] resolves
+          // TODO: Resolve array subscripts properly
+          // Temporary work around for comparison work as something like String[][] resolves
           // into deep nested typeRef with string type arguments
-          typ.getNames.forEach(
-            x =>
-              segments
-                .append(new TypeNameSegment(toId(x.getValue, x.getLoc), TypeRef.emptyArraySeq))
+          typ.getNames.forEach(x =>
+            segments
+              .append(new TypeNameSegment(toId(x.getValue, x.getLoc), TypeRef.emptyArraySeq))
           )
           for (_ <- 0 to typ.toString.split("\\[").length - 2) {
             subscripts += 1
           }
         } else {
-          //We add the type arguments to the last type and not for each name
+          // We add the type arguments to the last type and not for each name
           val typArguments = typ.getTypeArguments.asScala
           val typeArguments =
             if (typArguments.nonEmpty)
@@ -470,14 +468,13 @@ class SFParser(module: IPM.Module, source: Map[String, String]) {
               TypeRef.emptyArraySeq
 
           val last = typ.getNames.get(typ.getNames.size() - 1)
-          typ.getNames.forEach(
-            t =>
-              segments.append(
-                if (t eq last)
-                  new TypeNameSegment(toId(t.getValue, t.getLoc), typeArguments)
-                else
-                  new TypeNameSegment(toId(t.getValue, t.getLoc), TypeRef.emptyArraySeq)
-              )
+          typ.getNames.forEach(t =>
+            segments.append(
+              if (t eq last)
+                new TypeNameSegment(toId(t.getValue, t.getLoc), typeArguments)
+              else
+                new TypeNameSegment(toId(t.getValue, t.getLoc), TypeRef.emptyArraySeq)
+            )
           )
         }
 

@@ -21,8 +21,8 @@ import scala.reflect.ClassTag
 
 package object org {
 
-  /** Read the maximum events that are all from an accepting set into an Array. IssueEvents are silently consumed
-    * and logged against the active org.
+  /** Read the maximum events that are all from an accepting set into an Array. IssueEvents are
+    * silently consumed and logged against the active org.
     */
   def bufferEvents(
     accept: Set[Class[_]],
@@ -44,8 +44,8 @@ package object org {
     ArraySeq.unsafeWrapArray(buffer.toArray)
   }
 
-  /** Read the maximum events that are all of the given type into an Array. IssueEvents are silently consumed
-    * and logged against the active org.
+  /** Read the maximum events that are all of the given type into an Array. IssueEvents are silently
+    * consumed and logged against the active org.
     */
   def bufferEvents[T: ClassTag](events: BufferedIterator[PackageEvent]): ArraySeq[T] = {
     val buffer   = mutable.ArrayBuffer[T]()

@@ -33,7 +33,9 @@ class TransitiveCollector(org: Org, isSamePackage: Boolean, apexOnly: Boolean) {
     ignoring: Array[TypeIdentifier] = Array()
   ): Array[TypeIdentifier] = {
     val pkgNamespace = id.namespace.getOrElse(Names.Empty)
-    val pkgs = if(isSamePackage) packagesByNamespace.get(pkgNamespace).toArray else packagesByNamespace.values.toArray
+    val pkgs =
+      if (isSamePackage) packagesByNamespace.get(pkgNamespace).toArray
+      else packagesByNamespace.values.toArray
 
     val depsSeen = mutable.Set[TypeIdentifier]()
     depsSeen.add(id)
