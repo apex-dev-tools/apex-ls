@@ -26,6 +26,9 @@ jobs:
         cache: 'npm'
         cache-dependency-path: js/npm/package-lock.json
 
+    - name: FormatCheck
+      run: sbt scalafmtCheck   # Does not check test files currently
+
     - name: Build
       run: sbt build
 
