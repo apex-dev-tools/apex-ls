@@ -576,21 +576,6 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Standard field in gulp metadata is added") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{ \"packageDirectories\": [{\"path\": \"foo\"}], \"plugins\": {\"additionalNamespaces\": [\"unmanaged\"]} }",
-        ".apexlink/gulp/unmanaged/objects/Account.object" -> customObject(
-          "Account",
-          Seq(("Foo", Some("Text"), None))
-        ),
-        "foo/Dummy.cls" -> "public class Dummy { {Account a; a.Foo=null;} }"
-      )
-    ) { root: PathLike =>
-      createHappyOrg(root)
-    }
-  }
-
   test("Custom field without a type") {
     FileSystemHelper.run(
       Map(

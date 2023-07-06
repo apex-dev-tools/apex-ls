@@ -23,14 +23,14 @@ import com.nawforce.pkgforce.names.TypeName
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
-/** Various forms of TypeDeclaration searches. There are broadly three types of searches used, a local typename can
-  * be resolved  given a starting declaration to search from. Absolute type names can be resolved against module types,
-  * either in a passed module or a dependent module of that. And absolute types names may also match against platform
-  * defined types.
+/** Various forms of TypeDeclaration searches. There are broadly three types of searches used, a
+  * local typename can be resolved given a starting declaration to search from. Absolute type names
+  * can be resolved against module types, either in a passed module or a dependent module of that.
+  * And absolute types names may also match against platform defined types.
   *
-  * Platform types also support a form of relative type name resolution via allowing the 'System' and 'Schema'
-  * namespaces to be dropped, this is a different mechanism than is used for local searching for type declarations so
-  * we can mostly ignore it.
+  * Platform types also support a form of relative type name resolution via allowing the 'System'
+  * and 'Schema' namespaces to be dropped, this is a different mechanism than is used for local
+  * searching for type declarations so we can mostly ignore it.
   */
 object TypeResolver {
   type TypeResponse = Either[TypeError, TypeDeclaration]
@@ -43,15 +43,17 @@ object TypeResolver {
     }
   }
 
-  /** Search for TypeDeclaration from local or absolute typename from perspective of the module of 'from', if
-    * it has one.
+  /** Search for TypeDeclaration from local or absolute typename from perspective of the module of
+    * 'from', if it has one.
     */
   def apply(typeName: TypeName, from: TypeDeclaration): TypeResponse = {
     TypeResolver(typeName, from, from.moduleDeclaration)
   }
 
-  /** Search for TypeDeclaration in Local local to 'from', Module, Dependent Module or Platform Type . */
+  /** Search for TypeDeclaration in Local local to 'from', Module, Dependent Module or Platform Type
+    */
   def apply(typeName: TypeName, from: TypeDeclaration, module: Option[OPM.Module]): TypeResponse = {
+
     // Allow override of platform types in modules to support Schema.SObjectType handling.  This is a hack caused by
     // assuming platform types always live outside the module system and then deciding to inject some within it. It
     // might be fixable by assigning them to the correct module on construction/injection.
@@ -64,12 +66,11 @@ object TypeResolver {
     // Search module if we have one, otherwise short-cut to platform types
     sobjectIntercept(module) {
       from.moduleDeclaration
-        .map(
-          module =>
-            module.getTypeFor(typeName, from) match {
-              case Some(td) => Right(td)
-              case None     => Left(MissingType(typeName))
-            }
+        .map(module =>
+          module.getTypeFor(typeName, from) match {
+            case Some(td) => Right(td)
+            case None     => Left(MissingType(typeName))
+          }
         )
         .getOrElse {
           platformType(typeName, from)
@@ -91,8 +92,9 @@ object TypeResolver {
     }
   }
 
-  /** Hook to upgrade a SObject defined as a platform type into an SObject for the module. This allows us to support
-    * dependencies on Standard SObjects but also allows for module specific versions to be managed.
+  /** Hook to upgrade a SObject defined as a platform type into an SObject for the module. This
+    * allows us to support dependencies on Standard SObjects but also allows for module specific
+    * versions to be managed.
     */
   private def sobjectIntercept(module: Option[OPM.Module])(op: => TypeResponse): TypeResponse = {
     val result = op

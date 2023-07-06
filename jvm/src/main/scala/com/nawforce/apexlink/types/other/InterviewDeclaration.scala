@@ -85,8 +85,8 @@ object Interview {
   }
 }
 
-/** Flow.Interview implementation. Provides access to interviews in the package as well as interviews that are
-  * accessible in base packages via the Flow.Interview.namespace.name format.
+/** Flow.Interview implementation. Provides access to interviews in the package as well as
+  * interviews that are accessible in base packages via the Flow.Interview.namespace.name format.
   */
 final class InterviewDeclaration(
   sources: ArraySeq[SourceInfo],
@@ -115,8 +115,8 @@ final class InterviewDeclaration(
     PlatformTypes.interviewType.findMethod(name, params, staticContext, verifyContext)
   }
 
-  /** Flow.Interview is an abstract class so cannot create an instance of it.
-    * Only the subclasses can which is handled in Interview.
+  /** Flow.Interview is an abstract class so cannot create an instance of it. Only the subclasses
+    * can which is handled in Interview.
     */
   override def findConstructor(
     params: ArraySeq[TypeName],
@@ -160,8 +160,8 @@ final class InterviewDeclaration(
     val sourceInfo    = events.map(_.sourceInfo).distinct
     val interviewDeclaration =
       new InterviewDeclaration(sourceInfo, module, newInterviews, nestedInterviews)
-    interviewDeclaration.namespaceDeclaration.foreach(
-      td => interviewDeclaration.namespaceDeclaration = Some(td.merge(events))
+    interviewDeclaration.namespaceDeclaration.foreach(td =>
+      interviewDeclaration.namespaceDeclaration = Some(td.merge(events))
     )
     interviewDeclaration
   }
@@ -192,7 +192,9 @@ final class PackageInterviews(module: OPM.Module, interviewDeclaration: Intervie
   override val nestedTypes: ArraySeq[TypeDeclaration] = interviewDeclaration.nestedTypes
 }
 
-/** Flow.Interview.ns implementation for ghosted packages. This simulates the existence of any flow you ask for. */
+/** Flow.Interview.ns implementation for ghosted packages. This simulates the existence of any flow
+  * you ask for.
+  */
 final class GhostedInterviews(module: OPM.Module, ghostedPackage: OPM.PackageImpl)
     extends InnerBasicTypeDeclaration(
       PathLike.emptyPaths,
@@ -217,10 +219,15 @@ object InterviewDeclaration {
 
   private def collectBaseInterviews(module: OPM.Module): Seq[NestedInterviews] = {
     module.basePackages
-      .map(basePkg => {
-        basePkg.orderedModules.headOption
-          .map(m => new PackageInterviews(module, m.interviews))
-          .getOrElse(new GhostedInterviews(module, basePkg))
+      .flatMap(basePkg => {
+        if (basePkg.orderedModules.isEmpty) {
+          Some(new GhostedInterviews(module, basePkg))
+        } else if (basePkg.namespace.nonEmpty) {
+          Some(new PackageInterviews(module, basePkg.orderedModules.head.interviews))
+        } else {
+          // "unmanaged" gulp pkg is ignored
+          None
+        }
       })
   }
 }

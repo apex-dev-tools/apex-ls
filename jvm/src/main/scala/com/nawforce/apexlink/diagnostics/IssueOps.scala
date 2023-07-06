@@ -88,7 +88,7 @@ object IssueOps {
       )
     )
 
-  def extendingUnknownSObject(location: PathLocation, name: Name): Issue = {
+  def extendingUnknownSObject(location: PathLocation, name: String): Issue = {
     Issue(
       location.path,
       Diagnostic(

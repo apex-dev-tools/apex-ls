@@ -233,10 +233,15 @@ object ComponentDeclaration {
 
   private def collectBaseComponents(module: OPM.Module): Seq[NestedComponents] = {
     module.basePackages
-      .map(basePkg => {
-        basePkg.orderedModules.headOption
-          .map(m => new PackageComponents(module, m.components))
-          .getOrElse(new GhostedComponents(module, basePkg))
+      .flatMap(basePkg => {
+        if (basePkg.orderedModules.isEmpty) {
+          Some(new GhostedComponents(module, basePkg))
+        } else if (basePkg.namespace.nonEmpty) {
+          Some(new PackageComponents(module, basePkg.orderedModules.head.components))
+        } else {
+          // "unmanaged" gulp pkg is ignored
+          None
+        }
       })
   }
 }

@@ -83,11 +83,11 @@ class SObjectDeployer(module: OPM.Module) {
 
       derivedFields.addAll(derived)
       val fields = nonDerived
-        .filter(f => module.isGulped || isCustomField(f))
+        .filter(f => module.isGulpedPlatform || isCustomField(f))
         .flatMap(createCustomField)
 
       val sobjects =
-        if (encodedName.ext.nonEmpty)
+        if (encodedName.ext.nonEmpty || module.isGulpedPlatform)
           createCustomObject(
             sources,
             sObjectEvent,
@@ -287,7 +287,7 @@ class SObjectDeployer(module: OPM.Module) {
             sources
               .find(_.location.path == path)
               .foreach(source => {
-                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, event.name))
+                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, typeName.toString()))
               })
           })
           Array.empty

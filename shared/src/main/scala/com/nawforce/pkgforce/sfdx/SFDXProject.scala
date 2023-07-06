@@ -196,19 +196,29 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   }
 
-  private val gulpPackages = additionalNamespaces.flatMap(ns => {
-    createGulpPath(ns) match {
-      case Left(err) =>
-        config
-          .lineAndOffsetOf(plugins.get("additionalNamespaces"))
-          .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, err))
-          .getOrElse(None)
-        None
-      case Right(path) if ns != namespace =>
-        Some(NamespaceLayer(ns, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
-      case Right(_) => None
-    }
-  })
+  private val gulpPackages = {
+    val platformPackage =
+      createGulpPath(Some(Name("$platform")))
+        .map(path =>
+          Array(NamespaceLayer(None, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
+        )
+        .getOrElse(Array())
+    val additionalPackages =
+      additionalNamespaces.flatMap(ns => {
+        createGulpPath(ns) match {
+          case Left(err) =>
+            config
+              .lineAndOffsetOf(plugins.get("additionalNamespaces"))
+              .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, err))
+              .getOrElse(None)
+            None
+          case Right(path) if ns != namespace =>
+            Some(NamespaceLayer(ns, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
+          case Right(_) => None
+        }
+      })
+    platformPackage ++ additionalPackages
+  }
 
   private val extendedPackageDirectories = packageDirectories ++ unpackagedMetadata
 
@@ -264,7 +274,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
 
     val layers = externalPackages ++ gulpPackages :+ localPackage
 
-    if (layers.map(_.namespace).toSet.size != layers.size) {
+    if (layers.map(_.namespace).toSet.size + 1 != layers.size) {
       logger.log(
         Issue(
           projectFile,

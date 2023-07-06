@@ -48,7 +48,6 @@ case class ModuleLayer(
   isGulped: Boolean,
   dependencies: Seq[ModuleLayer]
 ) {
-
   val path: PathLike = projectPath.join(relativePath)
 
   def pathRelativeTo(root: PathLike): String = {
