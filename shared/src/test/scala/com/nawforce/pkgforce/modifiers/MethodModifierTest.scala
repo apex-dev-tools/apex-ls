@@ -41,8 +41,8 @@ class MethodModifierTest extends AnyFunSuite {
   def legalInterfaceMethodAccess(use: ArraySeq[Modifier], expected: ArraySeq[Modifier]): Boolean = {
     val modifiers = use.map(_.name).mkString(" ")
     val path      = Path("Dummy.cls")
-    val cp        = CodeParser(path, SourceData(s"public interface Dummy {$modifiers String func();}"))
-    val result    = cp.parseClass()
+    val cp     = CodeParser(path, SourceData(s"public interface Dummy {$modifiers String func();}"))
+    val result = cp.parseClass()
     if (result.issues.nonEmpty) {
       false
     } else {
@@ -60,8 +60,8 @@ class MethodModifierTest extends AnyFunSuite {
   def illegalInterfaceMethodAccess(use: Array[Modifier]): ArraySeq[Issue] = {
     val modifiers = use.map(_.name).mkString(" ")
     val path      = Path("Dummy.cls")
-    val cp        = CodeParser(path, SourceData(s"public interface Dummy {$modifiers String func();}"))
-    val result    = cp.parseClass()
+    val cp     = CodeParser(path, SourceData(s"public interface Dummy {$modifiers String func();}"))
+    val result = cp.parseClass()
     if (result.issues.nonEmpty) {
       ArraySeq()
     } else {

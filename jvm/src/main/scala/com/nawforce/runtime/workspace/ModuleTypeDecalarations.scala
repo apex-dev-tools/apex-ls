@@ -90,7 +90,7 @@ sealed class TypeDeclaration(
   override def annotations: Array[Annotation] = _annotations
 
   override def innerTypes: ArraySeq[TypeDeclaration] = ArraySeq.unsafeWrapArray(_innerTypes.toArray)
-  override def initializers: ArraySeq[Initializer]   = ArraySeq.unsafeWrapArray(_initializers.toArray)
+  override def initializers: ArraySeq[Initializer] = ArraySeq.unsafeWrapArray(_initializers.toArray)
   override def constructors: ArraySeq[ConstructorDeclaration] =
     ArraySeq.unsafeWrapArray(_constructors.toArray)
   override def methods: ArraySeq[MethodDeclaration] = ArraySeq.unsafeWrapArray(_methods.toArray)
@@ -335,12 +335,12 @@ object Compare {
 
     if (!(first.annotations sameElements second.annotations)) {
       throw new Exception(s"Different annotation ${first.annotations
-        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
+          .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
     if (!(first.modifiers sameElements second.modifiers)) {
       throw new Exception(s"Different modifiers ${first.modifiers
-        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
+          .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {
@@ -400,12 +400,12 @@ object Compare {
 
     if (!(first.annotations sameElements second.annotations)) {
       throw new Exception(s"Different annotation ${first.annotations
-        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
+          .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
     if (!(first.modifiers sameElements second.modifiers)) {
       throw new Exception(s"Different modifiers ${first.modifiers
-        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
+          .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {
@@ -427,12 +427,12 @@ object Compare {
 
     if (!(first.annotations sameElements second.annotations)) {
       throw new Exception(s"Different annotation ${first.annotations
-        .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
+          .mkString("Array(", ", ", ")")} != ${second.annotations.mkString("Array(", ", ", ")")}")
     }
 
     if (!(first.modifiers sameElements second.modifiers)) {
       throw new Exception(s"Different modifiers ${first.modifiers
-        .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
+          .mkString("Array(", ", ", ")")} != ${second.modifiers.mkString("Array(", ", ", ")")}")
     }
 
     if (first.id != second.id) {

@@ -25,9 +25,8 @@ import upickle.default.{macroRW, ReadWriter => RW}
 
 import scala.collection.immutable.ArraySeq
 
-/**
-  * Summary types are used both by the disk cache and to provide a quick & cheap way to examine what is available
-  * in a type.
+/** Summary types are used both by the disk cache and to provide a quick & cheap way to examine what
+  * is available in a type.
   */
 /** Summary of an Apex class with diagnostic information */
 case class ApexSummary(typeSummary: TypeSummary, diagnostics: Array[Diagnostic])

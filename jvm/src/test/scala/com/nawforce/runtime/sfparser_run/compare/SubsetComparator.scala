@@ -112,7 +112,7 @@ class SubsetComparator(
       })
     }
 
-    //Start comparing
+    // Start comparing
     checkAndThrowIfDiff("Different Annotations", first.annotations, second.annotations)
     checkAndThrowIfDiff("Different modifiers", first.modifiers, second.modifiers)
 
@@ -270,7 +270,7 @@ class SubsetComparator(
       fUnresolvedType.typeNameSegments.filterNot(f => fResolver.get.canBeResolved(f.id))
     val sTypeNamesRemovedResolvedTypes =
       sUnresolvedType.typeNameSegments.filterNot(s => sResolver.get.canBeResolved(s.id))
-    //if fTypeNamesRemovedResolvedTypes and sTypeNamesRemovedResolvedTypes are empty then all the types could be resolved
+    // if fTypeNamesRemovedResolvedTypes and sTypeNamesRemovedResolvedTypes are empty then all the types could be resolved
     var checks =
       (fTypeNamesRemovedResolvedTypes sameElements sTypeNamesRemovedResolvedTypes) && fUnresolvedType.arraySubscripts == sUnresolvedType.arraySubscripts
     if (sTypeNamesRemovedResolvedTypes.isEmpty && fTypeNamesRemovedResolvedTypes.nonEmpty) {
@@ -293,7 +293,7 @@ class SubsetComparator(
         fUnresolvedType.typeNameSegments.map(_.id) sameElements sUnresolvedType.typeNameSegments
           .map(_.id)
       ) {
-        //Type arguments for type names must have failed
+        // Type arguments for type names must have failed
         checks = checkTypeArguments(fUnresolvedType, sUnresolvedType)
       } else {
         checks = compareListAdnArraySubscriptIfAny(first, second)
@@ -312,12 +312,12 @@ class SubsetComparator(
   }
 
   private def compareListAdnArraySubscriptIfAny(first: TypeRef, second: TypeRef): Boolean = {
-    //Check if type is array subscript and the other has matching number of List type
+    // Check if type is array subscript and the other has matching number of List type
     first match {
       case td: IModuleTypeDeclaration => return td.toString == second.toString
       case _                          =>
     }
-    //TODO we need to compare typerefs again make sure the other are matching
+    // TODO we need to compare typerefs again make sure the other are matching
     val fUnresolvedType = first.asInstanceOf[UnresolvedTypeRef]
     val sUnresolvedType = second.asInstanceOf[UnresolvedTypeRef]
 
@@ -357,7 +357,7 @@ class SubsetComparator(
     val (_, firstDiff, secondDiff) = getDiffIfThereIsAny(first, second)
     var check                      = firstDiff.isEmpty && secondDiff.isEmpty
     if (!check) {
-      //They are not exactly equal so we fall back to check the subset
+      // They are not exactly equal so we fall back to check the subset
       val nonTypRefSubsetTypes =
         firstDiff.filterNot(f => findAndCheckTypeRefSubSet(f, secondDiff))
       check = nonTypRefSubsetTypes.isEmpty
@@ -399,10 +399,9 @@ class SubsetComparator(
     second: ArraySeq[MethodDeclaration]
   ) = {
     val numberOfParams = first.formalParameters.length
-    val possibleMethods = second.filter(
-      s =>
-        s.formalParameters.length ==
-          numberOfParams
+    val possibleMethods = second.filter(s =>
+      s.formalParameters.length ==
+        numberOfParams
     )
     possibleMethods.nonEmpty && possibleMethods.exists(secondMethod => {
       val typeRefIdCheck = compareTypeRef(first.typeRef, secondMethod.typeRef)

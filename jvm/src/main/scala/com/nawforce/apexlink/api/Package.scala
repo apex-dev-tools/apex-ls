@@ -18,25 +18,28 @@ import com.nawforce.pkgforce.names.{TypeIdentifier, TypeName}
 
 /** A virtual Package constructed from metadata.
   *
-  * Packages must be created in the context of a specific [[Org]]. Each Package manages a set of Types which are
-  * created from the metadata of the package. Once constructed you can use the package APIs to introspect dependency
-  * relationships between Types, obtain summary information about Types and replace or delete Types.
+  * Packages must be created in the context of a specific [[Org]]. Each Package manages a set of
+  * Types which are created from the metadata of the package. Once constructed you can use the
+  * package APIs to introspect dependency relationships between Types, obtain summary information
+  * about Types and replace or delete Types.
   *
-  * A key concept to understand in this API is that a Type may be created from multiple metadata files, e.g. the
-  * System.Labels Type is always present but can be constructed from several labels files. The API methods expose
-  * Types via the TypeIdentifiers which you don't need to understand to use the API as long as you keep in mind
-  * the 1:M mapping between Types and Paths.
+  * A key concept to understand in this API is that a Type may be created from multiple metadata
+  * files, e.g. the System.Labels Type is always present but can be constructed from several labels
+  * files. The API methods expose Types via the TypeIdentifiers which you don't need to understand
+  * to use the API as long as you keep in mind the 1:M mapping between Types and Paths.
   *
-  * The term dependency can be rather ambiguous, we use it here to mean a 'using' relationship. So if class A calls a
-  * method on class B, we say A has a dependency that is B. The reverse relationship is a 'dependency holder', so B has
-  * a dependency holder that is A. Transitives of dependencies or dependency holder relationships are not exposed by
-  * these APIs but can be easily obtained by recursive iteration.
+  * The term dependency can be rather ambiguous, we use it here to mean a 'using' relationship. So
+  * if class A calls a method on class B, we say A has a dependency that is B. The reverse
+  * relationship is a 'dependency holder', so B has a dependency holder that is A. Transitives of
+  * dependencies or dependency holder relationships are not exposed by these APIs but can be easily
+  * obtained by recursive iteration.
   *
-  * A Summary provides a way of looking at the structure of Types. In summary form only the most important details
-  * are provided but it is essentially free to access since it is the same format used in the disk cache.
+  * A Summary provides a way of looking at the structure of Types. In summary form only the most
+  * important details are provided but it is essentially free to access since it is the same format
+  * used in the disk cache.
   *
-  * Packages only handle metadata that is important to Apex class analysis, other forms of metadata that might
-  * appear in the package directory are ignored.
+  * Packages only handle metadata that is important to Apex class analysis, other forms of metadata
+  * that might appear in the package directory are ignored.
   */
 trait Package {
 
@@ -46,8 +49,8 @@ trait Package {
     */
   def getNamespaces(withDependents: Boolean): Array[String]
 
-  /** Get a list of type identifiers available in from this package. This is not all available type identifiers, but
-    * just those that will make most sense to list in an IDE for selection.
+  /** Get a list of type identifiers available in from this package. This is not all available type
+    * identifiers, but just those that will make most sense to list in an IDE for selection.
     *
     * Returns an array which may be empty.
     */
@@ -61,13 +64,15 @@ trait Package {
 
   /** Test if a metadata file path is part of this package.
     *
-    * Return null if this either not a recognised metadata file type or it is not part of this package.
+    * Return null if this either not a recognised metadata file type or it is not part of this
+    * package.
     */
   def isPackagePath(path: String): Boolean
 
   /** Get a Type from the path of a metadata file.
     *
-    * Returns a null if the path does not identify metadata that creates a Type within the current package.
+    * Returns a null if the path does not identify metadata that creates a Type within the current
+    * package.
     */
   def getTypeOfPath(path: String): TypeIdentifier
 
@@ -91,8 +96,9 @@ trait Package {
 
   /** Returns set of Types that are depended on by the passed Type
     *
-    * If outerInheritanceOnly is true only extending and implementing dependencies are reported for the outer Type
-    * of Apex defined types. If apexOnly is true then only Apex defined types are returned.
+    * If outerInheritanceOnly is true only extending and implementing dependencies are reported for
+    * the outer Type of Apex defined types. If apexOnly is true then only Apex defined types are
+    * returned.
     */
   def getDependencies(
     typeId: TypeIdentifier,
@@ -102,26 +108,28 @@ trait Package {
 
   /** Returns set of Types that depend on the passed Type.
     *
-    * The returned array may be stale in that it can contain Types which used to hold a dependency but not longer do.
-    * If apexOnly is true then only Apex defined types are returned.
+    * The returned array may be stale in that it can contain Types which used to hold a dependency
+    * but not longer do. If apexOnly is true then only Apex defined types are returned.
     */
   def getDependencyHolders(typeId: TypeIdentifier, apexOnly: Boolean): Array[TypeIdentifier]
 
-  /** Returns true if the type identified by typeId depends in the type identified by dependencyTypeId.
+  /** Returns true if the type identified by typeId depends in the type identified by
+    * dependencyTypeId.
     *
-    * This will return true where the type depends on an inner class of dependencyTypeId. All dependencies of typeId
-    * are considered including those of any inner class.
+    * This will return true where the type depends on an inner class of dependencyTypeId. All
+    * dependencies of typeId are considered including those of any inner class.
     */
   def hasDependency(typeId: TypeIdentifier, dependencyTypeId: TypeIdentifier): Boolean
 
   /** Refresh a type in the package.
     *
-    * This registers that the metadata in a file may need updating. The refresh is queued until the Org metadata is
-    * next flushed so that changes are made in batches for efficiency. Refreshing causes dependent metadata to be
-    * re-validated so issues may be reported against other metadata types after the flush has completed.
+    * This registers that the metadata in a file may need updating. The refresh is queued until the
+    * Org metadata is next flushed so that changes are made in batches for efficiency. Refreshing
+    * causes dependent metadata to be re-validated so issues may be reported against other metadata
+    * types after the flush has completed.
     *
-    * If there is no file at the given path then any previous contribution to the package metadata from this file
-    * will be removed so you call this after file deletion.
+    * If there is no file at the given path then any previous contribution to the package metadata
+    * from this file will be removed so you call this after file deletion.
     */
   def refresh(path: String, highPriority: Boolean): Unit
 }

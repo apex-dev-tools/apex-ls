@@ -36,8 +36,8 @@ object IdentifierLimiter {
     (('0' to '9') ++ ('a' to 'z') ++ ('A' to 'Z') ++ Seq('_', '.')).toSet
 }
 
-/** A limiter that accepts identifiers with matched parentheses for method calls. Inside parentheses it allows any
-  * character to allow for complex expressions used as method arguments.
+/** A limiter that accepts identifiers with matched parentheses for method calls. Inside parentheses
+  * it allows any character to allow for complex expressions used as method arguments.
   */
 class IdentifierAndMethodLimiter extends IdentifierLimiter {
   private var bracketDepth = 0
@@ -60,10 +60,11 @@ case class ExclusiveDotTerm(prefixExpr: String, location: Location, residualExpr
 object TextOps {
   implicit class TestOpsUtils(text: String) {
 
-    /** Extract a dot delimited term constructed from only the characters allowed by the limiter searching in both
-      * directions from the line and offset position provided. The term is split into two strings, the first contains
-      * dot-delimited segments prior to the one containing the offset (if present). The second contains any residual
-      * text, which may be empty if the term ends with a dot.
+    /** Extract a dot delimited term constructed from only the characters allowed by the limiter
+      * searching in both directions from the line and offset position provided. The term is split
+      * into two strings, the first contains dot-delimited segments prior to the one containing the
+      * offset (if present). The second contains any residual text, which may be empty if the term
+      * ends with a dot.
       */
     def extractDotTermExclusive(
       limiterFactory: () => Limiter,
@@ -110,9 +111,9 @@ object TextOps {
         })
     }
 
-    /** Extract a dot delimited term constructed from only the characters allowed the limiter at the line and offset provided.
-      * If inclusive is set the term encompasses the offset, if not the term includes all segments upto the preceding
-      * dot.
+    /** Extract a dot delimited term constructed from only the characters allowed the limiter at the
+      * line and offset provided. If inclusive is set the term encompasses the offset, if not the
+      * term includes all segments upto the preceding dot.
       */
     def extractDotTermInclusive(
       limiterFactory: () => Limiter,

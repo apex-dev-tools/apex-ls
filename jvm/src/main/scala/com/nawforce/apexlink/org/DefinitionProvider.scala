@@ -83,4 +83,3 @@ trait DefinitionProvider extends SourceOps {
     })
   }
 }
-

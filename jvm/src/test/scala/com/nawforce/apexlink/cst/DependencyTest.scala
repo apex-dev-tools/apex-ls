@@ -392,8 +392,8 @@ class DependencyTest extends AnyFunSuite with TestHelper {
         )
       )
     assert(!hasIssues)
-    withOrg(
-      _ => assert(tds.head.nestedTypes.head.fields.head.dependencies().toSet == tds.tail.toSet)
+    withOrg(_ =>
+      assert(tds.head.nestedTypes.head.fields.head.dependencies().toSet == tds.tail.toSet)
     )
   }
 
@@ -405,8 +405,8 @@ class DependencyTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(!hasIssues)
-    withOrg(
-      _ => assert(tds.head.nestedTypes.head.fields.head.dependencies().toSet == tds.tail.toSet)
+    withOrg(_ =>
+      assert(tds.head.nestedTypes.head.fields.head.dependencies().toSet == tds.tail.toSet)
     )
   }
 
@@ -487,7 +487,7 @@ class DependencyTest extends AnyFunSuite with TestHelper {
     val tds = typeDeclarations(
       Map(
         "Dummy.cls" -> "public class Dummy { class Inner {void func() { Object a = new List<A>(); } } }",
-        "A.cls"     -> "public class A {}"
+        "A.cls" -> "public class A {}"
       )
     )
     assert(!hasIssues)
@@ -585,7 +585,7 @@ class DependencyTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Test.flow-meta.xml" -> "",
-        "Dummy.cls"          -> "public class Dummy { {Flow.Interview i = new Flow.Interview.Test(new Map<String, Object>());} }"
+        "Dummy.cls" -> "public class Dummy { {Flow.Interview i = new Flow.Interview.Test(new Map<String, Object>());} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -610,7 +610,7 @@ class DependencyTest extends AnyFunSuite with TestHelper {
             |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
             |}""".stripMargin,
         "pkg1/Test.flow-meta.xml" -> "",
-        "pkg2/Dummy.cls"          -> "public class Dummy { {Flow.Interview i = new Flow.Interview.pkg1.Test(new Map<String, Object>());} }"
+        "pkg2/Dummy.cls" -> "public class Dummy { {Flow.Interview i = new Flow.Interview.pkg1.Test(new Map<String, Object>());} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -706,7 +706,7 @@ class DependencyTest extends AnyFunSuite with TestHelper {
             |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
             |}""".stripMargin,
         "pkg1/Test.component" -> "<apex:component/>",
-        "pkg2/Dummy.cls"      -> "public class Dummy { {Component.pkg1.Test c = new Component.pkg1.Test();} }"
+        "pkg2/Dummy.cls" -> "public class Dummy { {Component.pkg1.Test c = new Component.pkg1.Test();} }"
       )
     ) { root: PathLike =>
       createOrg(root)

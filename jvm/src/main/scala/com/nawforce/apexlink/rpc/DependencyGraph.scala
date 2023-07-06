@@ -16,7 +16,9 @@ package com.nawforce.apexlink.rpc
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import io.github.shogowada.scala.jsonrpc.serializers.JSONRPCPickler.{macroRW, ReadWriter => RW}
 
-/** Dependency information for a given, typically this will be depth limited to avoid massive graphs. */
+/** Dependency information for a given, typically this will be depth limited to avoid massive
+  * graphs.
+  */
 case class DependencyGraph(nodeData: Array[DependencyNode], linkData: Array[DependencyLink])
 
 object DependencyGraph {
@@ -36,7 +38,7 @@ case class DependencyNode(
   transitiveCount: Int, // Sum of all dependant types
   maxDependencyCount: Option[
     Int
-  ],                                   // MaxDependencyCount value in the file or the the value from SFDXProject else None
+  ], // MaxDependencyCount value in the file or the the value from SFDXProject else None
   isEntryPoint: Boolean,               // Type is available for external use
   extending: Array[TypeIdentifier],    // Types that this type extends
   implementing: Array[TypeIdentifier], // Types that this type implements

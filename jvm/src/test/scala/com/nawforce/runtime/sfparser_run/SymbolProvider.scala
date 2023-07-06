@@ -138,10 +138,8 @@ object SymbolProvider {
 
   private class SFModuleWithDb(dbPath: Path) extends ApexLanguageServerModule {
 
-    /**
-      * This is exact copy of ApexLanguageServerModule
-      * where the only difference is we provide our own ApexIndexProvider
-      * so that we can make use of the DB that gets passed in.
+    /** This is exact copy of ApexLanguageServerModule where the only difference is we provide our
+      * own ApexIndexProvider so that we can make use of the DB that gets passed in.
       */
     override def configure(): Unit = {
 
@@ -185,7 +183,7 @@ object SymbolProvider {
           .implement(classOf[TypeInfoConverter], classOf[TypeInfoConverter])
           .build(classOf[ConverterFactory])
       )
-      //Inject our own provider
+      // Inject our own provider
       this.bind(classOf[ApexIndex]).toProvider(new IndexProvider(dbPath)).in(classOf[Singleton])
 
       this

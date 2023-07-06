@@ -19,9 +19,10 @@ import com.nawforce.apexlink.types.core.DependentType
 import java.lang.reflect.Constructor
 import scala.collection.mutable
 
-/** Manage the lifecycle of plugins. Uses a create/close model to allow block analysis close in time to normal
-  * validation to limit GC costs while also supporting type level analysis after all types have been validated.
-  * Plugins may dynamically add additional types for analysis as part of the close handling.
+/** Manage the lifecycle of plugins. Uses a create/close model to allow block analysis close in time
+  * to normal validation to limit GC costs while also supporting type level analysis after all types
+  * have been validated. Plugins may dynamically add additional types for analysis as part of the
+  * close handling.
   */
 class PluginsManager {
   private val availablePlugins = activePlugins()

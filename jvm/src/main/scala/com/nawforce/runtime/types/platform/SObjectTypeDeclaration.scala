@@ -27,7 +27,7 @@ class SObjectTypeDeclaration(override val module: IPM.Module, md: MetadataDocume
 
   override def enclosing: Option[IModuleTypeDeclaration] = None
 
-  override val paths: Array[String] = emptyPaths //TODO: potentially use md.path
+  override val paths: Array[String] = emptyPaths // TODO: potentially use md.path
 
   override val location: Location = Location.default
 

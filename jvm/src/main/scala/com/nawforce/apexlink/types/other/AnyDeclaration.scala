@@ -19,8 +19,8 @@ import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core.BasicTypeDeclaration
 import com.nawforce.pkgforce.path.PathLike
 
-/** An any type declaration, there are deliberately very few uses of this, hopefully at some point it
-  * can be removed.
+/** An any type declaration, there are deliberately very few uses of this, hopefully at some point
+  * it can be removed.
   */
 final case class AnyDeclaration(module: OPM.Module)
     extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.Any)

@@ -47,7 +47,7 @@ object TypeNames extends InternCache[TypeName] {
   lazy val Location: TypeName = TypeName(Names.Location, Nil, Some(TypeNames.System)).intern
   lazy val Address: TypeName  = TypeName(Names.Address, Nil, Some(TypeNames.System)).intern
   lazy val List: TypeName     = TypeName(Names.ListName, Nil, Some(TypeNames.System)).intern
-  lazy val Set$: TypeName     = TypeName(Names.SetName, Nil, Some(TypeNames.System)).intern
+  lazy val Set$ : TypeName    = TypeName(Names.SetName, Nil, Some(TypeNames.System)).intern
   lazy val Iterator: TypeName = TypeName(XNames.Iterator, Nil, Some(TypeNames.System)).intern
 
   lazy val Exception: TypeName = TypeName(Names.Exception, Nil, Some(TypeNames.System)).intern
@@ -241,7 +241,7 @@ object TypeNames extends InternCache[TypeName] {
     def isShare: Boolean = {
       typeName.outer.contains(TypeNames.Schema) &&
       (typeName.name.toString.endsWith("__Share") ||
-      standardShareNames.contains(typeName.name.toString))
+        standardShareNames.contains(typeName.name.toString))
     }
 
     def outerName: Name = typeName.outer.map(_.outerName).getOrElse(typeName.name)

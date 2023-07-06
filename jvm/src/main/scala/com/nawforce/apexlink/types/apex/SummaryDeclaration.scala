@@ -155,10 +155,9 @@ object DependentValidation {
             td.methodMap.findMethod(name, dependent.parameterTypes)
 
           case td: TypeDeclaration =>
-            td.methods.find(
-              m =>
-                m.name == name &&
-                  m.parameters.map(_.typeName) == dependent.parameterTypes
+            td.methods.find(m =>
+              m.name == name &&
+                m.parameters.map(_.typeName) == dependent.parameterTypes
             )
         }
     })
@@ -224,12 +223,14 @@ trait SummaryDependencyHandler extends DependencyHolder {
   def areTypeDependenciesValid(typeCache: TypeCache): Boolean =
     DependentValidation.areTypeDependenciesValid(dependents, module, typeCache)
 
-  /** Get all the dependents, this list is only valid if areTypeDependenciesValid returns true, see also
-    * [[populateDependencies]].
+  /** Get all the dependents, this list is only valid if areTypeDependenciesValid returns true, see
+    * also [[populateDependencies]].
     */
   override lazy val dependencies: Seq[Dependent] = populateDependencies(new TypeCache())
 
-  /** Manually populate the dependencies. Using this is optional but can improve performance due to type caching. */
+  /** Manually populate the dependencies. Using this is optional but can improve performance due to
+    * type caching.
+    */
   def populateDependencies(typeCache: TypeCache): Seq[Dependent] = {
     if (_dependents.isEmpty) {
       _dependents = Some(

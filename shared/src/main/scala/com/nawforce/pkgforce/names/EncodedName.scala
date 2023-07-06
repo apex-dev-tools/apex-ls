@@ -13,17 +13,19 @@
  */
 package com.nawforce.pkgforce.names
 
-/** A name with optional namespace prefixing & optional type suffix such as foo__field__c. Only a small set of
-  * suffixes are supported. It's not clear what the full list used by Salesforce is. This class is safe to use on
-  * non-encoded names which don't contain \_\_, although you can not default the namespace on them.
+/** A name with optional namespace prefixing & optional type suffix such as foo__field__c. Only a
+  * small set of suffixes are supported. It's not clear what the full list used by Salesforce is.
+  * This class is safe to use on non-encoded names which don't contain \_\_, although you can not
+  * default the namespace on them.
   *
-  * Where all of namespace, name and suffix are provided the code will assert on a bad suffix. Where we only have two
-  * parts of the name then if the last parts is not a valid suffix the handling will assume the first part is a
-  * namespace and the second the name, as in Page.pkg1\_\_TestPage.
+  * Where all of namespace, name and suffix are provided the code will assert on a bad suffix. Where
+  * we only have two parts of the name then if the last parts is not a valid suffix the handling
+  * will assume the first part is a namespace and the second the name, as in Page.pkg1\_\_TestPage.
   *
-  * The code deals with a few exception cases where splitting on \_\_ would gives either a wrong name or ext part.
-  * For subfields the subfield name is combined with the extension. For supporting SObjects such as MyObject\_\_Feed
-  * the 'Feed' is considered an extension in the same way that 'c' would be.
+  * The code deals with a few exception cases where splitting on \_\_ would gives either a wrong
+  * name or ext part. For subfields the subfield name is combined with the extension. For supporting
+  * SObjects such as MyObject\_\_Feed the 'Feed' is considered an extension in the same way that 'c'
+  * would be.
   */
 final case class EncodedName(name: Name, ext: Option[Name], namespace: Option[Name]) {
 

@@ -40,7 +40,7 @@ private[opcst] object TypeReference {
   private class OutlineParserTypeReference(typeReference: Option[OPTypeRef])
       extends CSTTypeReference {
     override def arraySubscriptsCount(): Int = {
-      //TODO: is this actually right behaviour?
+      // TODO: is this actually right behaviour?
       typeReference match {
         case Some(utr: UnresolvedTypeRef) => utr.arraySubscripts
         case _                            => 0
@@ -48,7 +48,7 @@ private[opcst] object TypeReference {
     }
 
     override def typeNames(): ArraySeq[CSTTypeName] = {
-      //TODO: is this actually right behaviour?
+      // TODO: is this actually right behaviour?
       typeReference match {
         case Some(utr: UnresolvedTypeRef) =>
           ArraySeq.from(utr.typeNameSegments.map(new OutlineParserTypeName(_)))

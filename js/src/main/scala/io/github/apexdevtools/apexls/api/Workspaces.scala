@@ -41,7 +41,7 @@ object Workspaces {
   private val workspaces = new mutable.HashMap[String, Workspace]()
 
   @JSExport
-  def get(wsPath: String, ignoreIssues:Boolean = false): Workspace = {
+  def get(wsPath: String, ignoreIssues: Boolean = false): Workspace = {
 
     val ws = workspaces.get(wsPath)
     if (ws.nonEmpty)

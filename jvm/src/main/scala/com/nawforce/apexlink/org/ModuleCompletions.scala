@@ -76,9 +76,8 @@ trait ModuleCompletions {
         if (partCount == 1) {
           // Match on first character of only part against any class name
           module.types
-            .filter(
-              kv =>
-                parts.head.isEmpty || kv._1.name.value.take(1).equalsIgnoreCase(parts.head.take(1))
+            .filter(kv =>
+              parts.head.isEmpty || kv._1.name.value.take(1).equalsIgnoreCase(parts.head.take(1))
             )
             .collect { case (_, td: ApexClassDeclaration) => td }
             .toArray
@@ -90,9 +89,8 @@ trait ModuleCompletions {
             .collect { case td: ApexClassDeclaration => td }
             .map(td => {
               val innerName = if (parts.length == 2) parts(1) else ""
-              td.nestedTypes.filter(
-                itd =>
-                  innerName.isEmpty || itd.name.value.take(1).equalsIgnoreCase(innerName.take(1))
+              td.nestedTypes.filter(itd =>
+                innerName.isEmpty || itd.name.value.take(1).equalsIgnoreCase(innerName.take(1))
               )
             })
             .getOrElse(ArraySeq.empty)

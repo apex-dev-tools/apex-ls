@@ -21,8 +21,8 @@ import scala.collection.compat.immutable.ArraySeq
 
 /** Results from modifier analysis.
   *
-  * Modifiers are examined before the CST is constructed to make things a bit simpler. The results of the analysis
-  * are returned via this type. Interning is supported to reduce memory use.
+  * Modifiers are examined before the CST is constructed to make things a bit simpler. The results
+  * of the analysis are returned via this type. Interning is supported to reduce memory use.
   */
 final case class ModifierResults(modifiers: ArraySeq[Modifier], issues: ArraySeq[Issue]) {
 

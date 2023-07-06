@@ -17,9 +17,9 @@ object ReferencingCollector {
       (testClass.typeName.toString, explain.map(_.typeName.toString).toArray)
   }
 
-  /** Given some Types, find all referencing Apex tests. To find all relevant tests the input should include related
-    *  types such as superclasses, interfaces and nested types with the primary flag set to false. Test classes included
-    *  in the input will be contained in the results.
+  /** Given some Types, find all referencing Apex tests. To find all relevant tests the input should
+    * include related types such as superclasses, interfaces and nested types with the primary flag
+    * set to false. Test classes included in the input will be contained in the results.
     */
   def testReferences(sourceTds: Set[NodeInfo]): Set[TestInfo] = {
     val results = mutable.Map[String, TestInfo]()
@@ -65,10 +65,11 @@ object ReferencingCollector {
     true
   }
 
-  /** Determine if the holder has some form of extends relationship with the dependent. We include in this checking
-    * outer classes and super classes for extension because the holder information can pick up these kinds of
-    * relationships as well. NOTE: If we make improvements that more cleanly differentiate between direct and
-    * transitives dependencies then the scope of this can probably be reduced.
+  /** Determine if the holder has some form of extends relationship with the dependent. We include
+    * in this checking outer classes and super classes for extension because the holder information
+    * can pick up these kinds of relationships as well. NOTE: If we make improvements that more
+    * cleanly differentiate between direct and transitives dependencies then the scope of this can
+    * probably be reduced.
     */
   private def doesExtend(holder: ApexDeclaration, dependent: ApexDeclaration): Boolean = {
     // Direct superclass
@@ -83,10 +84,11 @@ object ReferencingCollector {
       .exists(outer => doesExtend(outer, dependent))
   }
 
-  /** Visit references to the passed type declarations. The visit function is called on all unique declarations
-    * discovered, the current path being passed as a list where the head is the current node and last is the origin.
-    * Spidering continues while the function returns true. If you return false the current path is not expanded
-    * further, but it may be revisited on other unexplored branches.
+  /** Visit references to the passed type declarations. The visit function is called on all unique
+    * declarations discovered, the current path being passed as a list where the head is the current
+    * node and last is the origin. Spidering continues while the function returns true. If you
+    * return false the current path is not expanded further, but it may be revisited on other
+    * unexplored branches.
     */
   def visitApexReferences(
     sourceTds: Set[NodeInfo],
@@ -107,17 +109,16 @@ object ReferencingCollector {
     }
   }
 
-  /** Get Apex holders for an ApexDeclaration. This avoids using the 'Type' dependencies so that it can be used
-    * on inner classes.
+  /** Get Apex holders for an ApexDeclaration. This avoids using the 'Type' dependencies so that it
+    * can be used on inner classes.
     */
   private def getDependencyHolders(td: ApexDeclaration): Set[ApexDeclaration] = {
     td.getDependencyHolders
       .flatMap(_.thisTypeIdOpt)
-      .flatMap(
-        typeId =>
-          typeId.module
-            .findPackageType(typeId.typeName, None)
-            .collect { case td: ApexDeclaration => td }
+      .flatMap(typeId =>
+        typeId.module
+          .findPackageType(typeId.typeName, None)
+          .collect { case td: ApexDeclaration => td }
       )
   }
 }

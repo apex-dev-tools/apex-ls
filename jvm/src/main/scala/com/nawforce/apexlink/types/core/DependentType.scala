@@ -25,13 +25,15 @@ import com.nawforce.apexlink.types.schema.SObjectDeclaration
 
 import scala.collection.mutable
 
-/** Add-in for supporting type level dependency analysis. This builds on the fine grained dependency handling found
-  * in Dependency & DependencyHolder. Type level analysis is more useful for the API as it more directly maps
-  * to file updates that drive invalidation handling.
+/** Add-in for supporting type level dependency analysis. This builds on the fine grained dependency
+  * handling found in Dependency & DependencyHolder. Type level analysis is more useful for the API
+  * as it more directly maps to file updates that drive invalidation handling.
   */
 trait DependentType extends TypeDeclaration {
 
-  /** The owning package, this is needed to disambiguate but restricts where DependentType can be used currently. */
+  /** The owning package, this is needed to disambiguate but restricts where DependentType can be
+    * used currently.
+    */
   val module: OPM.Module
 
   /** TypeId for this type */
@@ -55,9 +57,10 @@ trait DependentType extends TypeDeclaration {
 
   /** Collect set of TypeIds that this declaration is dependent on.
     *
-    * You can filter to include only Apex dependencies and only outer classes of those. If outerTypesOnly is false
-    * then a dependency on an inner class will add both the TypeId for the inner class and it's outer class to
-    * make determining if a class is a dependency easier for callers.
+    * You can filter to include only Apex dependencies and only outer classes of those. If
+    * outerTypesOnly is false then a dependency on an inner class will add both the TypeId for the
+    * inner class and it's outer class to make determining if a class is a dependency easier for
+    * callers.
     */
   def gatherDependencies(
     dependents: mutable.Set[TypeId],
@@ -80,9 +83,8 @@ trait DependentType extends TypeDeclaration {
   def propagateOuterDependencies(typeCache: TypeCache): Unit = {
     val dependsOn = mutable.Set[TypeId]()
     gatherDependencies(dependsOn, apexOnly = false, outerTypesOnly = true, typeCache)
-    dependsOn.foreach(
-      dependentTypeName =>
-        getOutermostDeclaration(dependentTypeName).map(_.addTypeDependencyHolder(this.typeId))
+    dependsOn.foreach(dependentTypeName =>
+      getOutermostDeclaration(dependentTypeName).map(_.addTypeDependencyHolder(this.typeId))
     )
   }
 
