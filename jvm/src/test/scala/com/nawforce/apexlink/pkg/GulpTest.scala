@@ -1,3 +1,16 @@
+/*
+ Copyright (c) 2023 Kevin Jones, All rights reserved.
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. The name of the author may not be used to endorse or promote products
+    derived from this software without specific prior written permission.
+ */
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper
@@ -55,7 +68,7 @@ class GulpTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Extend standard object with $platform field") {
+  test("Extend standard object with standard field") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" ->
@@ -71,7 +84,7 @@ class GulpTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Extend standard object with managed field") {
+  test("Extend standard object with custom field") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" ->
@@ -88,7 +101,7 @@ class GulpTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Extend standard object twice with managed fields") {
+  test("Extend standard object twice with custom fields") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" ->
@@ -107,16 +120,15 @@ class GulpTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  // TODO: unmanaged in additionalNamespaces should always be last
-  test("Extends custom object") {
+  test("Extends $platform custom object with custom field") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" ->
           """{
             |  "packageDirectories": [{"path": "foo"}],
-            |  "plugins": {"additionalNamespaces": ["unmanaged", "ns"]}
+            |  "plugins": {"additionalNamespaces": ["ns"]}
             |}""".stripMargin,
-        ".apexlink/gulp/unmanaged/objects/Foo__c.object" -> customObject("Foo__c", Seq()),
+        ".apexlink/gulp/$platform/objects/Foo__c.object" -> customObject("Foo__c", Seq()),
         ".apexlink/gulp/ns/objects/Foo__c/fields/MyField__c.field-meta.xml" -> customField(
           "MyField__c",
           "Text",
@@ -125,14 +137,21 @@ class GulpTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       createOrg(root)
-      // Fails because a managed field can not extend an unmanaged custom object
+      // Should fail as there are no platform custom objects
       assert(
-        getMessages() == path"/.apexlink/gulp/ns/objects/Foo__c/fields/MyField__c.field-meta.xml: Error: line 1: SObject appears to be extending an unknown SObject, 'Schema.ns__Foo__c'" + "\n"
+        getMessages(
+          root.join(".apexlink/gulp/$platform/objects/Foo__c.object")
+        ) == "Error: line 1: Custom Object for 'Schema.Foo__c' can not be created in $platform module\n"
+      )
+      assert(
+        getMessages(
+          root.join(".apexlink/gulp/ns/objects/Foo__c/fields/MyField__c.field-meta.xml")
+        ) == "Error: line 1: SObject appears to be extending an unknown SObject, 'Schema.ns__Foo__c'\n"
       )
     }
   }
 
-  test("Managed field added to managed custom object") {
+  test("Extend managed custom object with managed field") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" ->
@@ -153,14 +172,14 @@ class GulpTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Managed field added to managed custom object extended twice") {
+  test("Extend managed custom object twice with managed fields") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" ->
           """{
-            |  "packageDirectories": [{"path": "foo"}],
-            |  "plugins": {"additionalNamespaces": ["ns1", "ns2", "ns3"]}
-            |}""".stripMargin,
+          |  "packageDirectories": [{"path": "foo"}],
+          |  "plugins": {"additionalNamespaces": ["ns1", "ns2", "ns3"]}
+          |}""".stripMargin,
         ".apexlink/gulp/ns1/objects/Foo__c.object" -> customObject("Foo__c", Seq()),
         ".apexlink/gulp/ns2/objects/ns1__Foo__c/fields/Bar__c.field-meta.xml" -> customField(
           "Bar__c",
@@ -179,6 +198,51 @@ class GulpTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Platform class") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+          |  "packageDirectories": [{"path": "foo"}],
+          |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+          |}""".stripMargin,
+        ".apexlink/gulp/$platform/classes/Foo.cls" -> "global class Foo {public void func(){}}",
+        ".apexlink/gulp/$platform/classes/Bar.cls" -> "public class Bar {public void func(){}}",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Foo a; a.func();}
+            |  {Bar b; b.func();}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Platform class from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+          |  "packageDirectories": [{"path": "foo"}],
+          |  "namespace": "ns",
+          |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+          |}""".stripMargin,
+        ".apexlink/gulp/$platform/classes/Foo.cls" -> "global class Foo {public void func(){}}",
+        ".apexlink/gulp/$platform/classes/Bar.cls" -> "public class Bar {public void func(){}}",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Foo a; a.func();}
+            |  {Bar b; b.func();}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
   test("Unmanaged class") {
     FileSystemHelper.run(
       Map(
@@ -187,8 +251,14 @@ class GulpTest extends AnyFunSuite with TestHelper {
             |  "packageDirectories": [{"path": "foo"}],
             |  "plugins": {"additionalNamespaces": ["unmanaged"]}
             |}""".stripMargin,
-        ".apexlink/gulp/unmanaged/classes/Foo.cls" -> "public class Foo {public void func(){}}",
-        "foo/Dummy.cls"                            -> "public class Dummy { {Foo a; a.func();} }"
+        ".apexlink/gulp/unmanaged/classes/Foo.cls" -> "global class Foo {public void func(){}}",
+        ".apexlink/gulp/unmanaged/classes/Bar.cls" -> "public class Bar {public void func(){}}",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Foo a; a.func();}
+            |  {Bar b; b.func();}
+            |}
+            |""".stripMargin
       )
     ) { root: PathLike =>
       createHappyOrg(root)
@@ -204,15 +274,17 @@ class GulpTest extends AnyFunSuite with TestHelper {
             |  "namespace": "ns",
             |  "plugins": {"additionalNamespaces": ["unmanaged"]}
             |}""".stripMargin,
-        ".apexlink/gulp/unmanaged/classes/Foo.cls" -> "public class Foo {public void func(){}}",
-        "foo/Dummy.cls"                            -> "public class Dummy { {Foo a; a.func();} }"
+        ".apexlink/gulp/unmanaged/classes/Foo.cls" -> "global class Foo {public void func(){}}",
+        ".apexlink/gulp/unmanaged/classes/Bar.cls" -> "public class Bar {public void func(){}}",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Foo a; a.func();}
+            |  {Bar b; b.func();}
+            |}
+            |""".stripMargin
       )
     ) { root: PathLike =>
-      createOrg(root)
-      // Fails because a managed class can not reference an unmanaged class
-      assert(
-        getMessages() == path"/foo/Dummy.cls: Missing: line 1 at 26-27: No type declaration found for 'Foo'" + "\n"
-      )
+      createHappyOrg(root)
     }
   }
 
@@ -221,7 +293,33 @@ class GulpTest extends AnyFunSuite with TestHelper {
       Map(
         "sfdx-project.json" ->
           """{
+          |  "packageDirectories": [{"path": "foo"}],
+          |  "plugins": {"additionalNamespaces": ["ns1"]}
+          |}""".stripMargin,
+        ".apexlink/gulp/ns1/classes/Foo.cls" -> "global class Foo {public void func(){}}",
+        ".apexlink/gulp/ns1/classes/Bar.cls" -> "public class Bar {public void func(){}}",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+          |  {ns1.Foo a; a.func();}
+          |  {ns1.Bar b; b.func();}
+          |}
+          |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages() == path"/foo/Dummy.cls: Missing: line 3 at 11-12: No type declaration found for 'ns1.Bar'" + "\n"
+      )
+    }
+  }
+
+  test("Managed class from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
             |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns",
             |  "plugins": {"additionalNamespaces": ["ns1"]}
             |}""".stripMargin,
         ".apexlink/gulp/ns1/classes/Foo.cls" -> "global class Foo {public void func(){}}",
@@ -238,6 +336,605 @@ class GulpTest extends AnyFunSuite with TestHelper {
       assert(
         getMessages() == path"/foo/Dummy.cls: Missing: line 3 at 11-12: No type declaration found for 'ns1.Bar'" + "\n"
       )
+    }
+  }
+
+  test("Platform labels") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}]
+            |}""".stripMargin,
+        ".apexlink/gulp/$platform/custom.labels-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+            |    <labels>
+            |        <fullName>TestLabel</fullName>
+            |        <language>en_US</language>
+            |        <protected>false</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |</CustomLabels>
+            |""".stripMargin,
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {String a = Label.TestLabel;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Platform labels from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns1"
+            |}""".stripMargin,
+        ".apexlink/gulp/$platform/custom.labels-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+            |    <labels>
+            |        <fullName>TestLabel</fullName>
+            |        <language>en_US</language>
+            |        <protected>false</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |</CustomLabels>
+            |""".stripMargin,
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {String a = Label.TestLabel;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Unmanaged labels") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/unmanaged/custom.labels-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+            |    <labels>
+            |        <fullName>TestLabel</fullName>
+            |        <language>en_US</language>
+            |        <protected>false</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |    <labels>
+            |        <fullName>TestLabel2</fullName>
+            |        <language>en_US</language>
+            |        <protected>true</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |</CustomLabels>
+            |""".stripMargin,
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {String a = Label.TestLabel;}
+            |  {String b = Label.TestLabel2;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Unmanaged labels from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns1",
+            |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/unmanaged/custom.labels-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+            |    <labels>
+            |        <fullName>TestLabel</fullName>
+            |        <language>en_US</language>
+            |        <protected>false</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |    <labels>
+            |        <fullName>TestLabel2</fullName>
+            |        <language>en_US</language>
+            |        <protected>true</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |</CustomLabels>
+            |""".stripMargin,
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {String a = Label.TestLabel;}
+            |  {String b = Label.TestLabel2;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Managed labels") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "plugins": {"additionalNamespaces": ["ns1"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/ns1/custom.labels-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+            |    <labels>
+            |        <fullName>TestLabel</fullName>
+            |        <language>en_US</language>
+            |        <protected>false</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |    <labels>
+            |        <fullName>TestLabel2</fullName>
+            |        <language>en_US</language>
+            |        <protected>true</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |</CustomLabels>
+            |""".stripMargin,
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {String a = Label.TestLabel;}
+            |  {String b = Label.TestLabel2;}
+            |  {String c = Label.ns1.TestLabel;}
+            |  {String d = Label.ns1.TestLabel2;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages() ==
+          path"/foo/Dummy.cls: Missing: line 2 at 14-29: Unknown field or type 'TestLabel' on 'System.Label'" + "\n" +
+          path"/foo/Dummy.cls: Missing: line 3 at 14-30: Unknown field or type 'TestLabel2' on 'System.Label'" + "\n" +
+          path"/foo/Dummy.cls: Missing: line 5 at 14-34: Unknown field or type 'TestLabel2' on 'System.Label.ns1'" + "\n"
+      )
+    }
+  }
+
+  test("Managed labels from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns",
+            |  "plugins": {"additionalNamespaces": ["ns1"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/ns1/custom.labels-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+            |    <labels>
+            |        <fullName>TestLabel</fullName>
+            |        <language>en_US</language>
+            |        <protected>false</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |    <labels>
+            |        <fullName>TestLabel2</fullName>
+            |        <language>en_US</language>
+            |        <protected>true</protected>
+            |        <shortDescription>TestLabel Description</shortDescription>
+            |        <value>TestLabel Value</value>
+            |    </labels>
+            |</CustomLabels>
+            |""".stripMargin,
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {String a = Label.TestLabel;}
+            |  {String b = Label.TestLabel2;}
+            |  {String c = Label.ns1.TestLabel;}
+            |  {String d = Label.ns1.TestLabel2;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages() ==
+          path"/foo/Dummy.cls: Missing: line 2 at 14-29: Unknown field or type 'TestLabel' on 'System.Label'" + "\n" +
+          path"/foo/Dummy.cls: Missing: line 3 at 14-30: Unknown field or type 'TestLabel2' on 'System.Label'" + "\n" +
+          path"/foo/Dummy.cls: Missing: line 5 at 14-34: Unknown field or type 'TestLabel2' on 'System.Label.ns1'" + "\n"
+      )
+    }
+  }
+
+  test("Platform Flow") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}]
+            |}""".stripMargin,
+        ".apexlink/gulp/$platform/custom.flow-meta.xml" -> "",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Flow.Interview i = new Flow.Interview.custom(new Map<String, Object>());}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Platform Flow from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns"
+            |
+            |}""".stripMargin,
+        ".apexlink/gulp/$platform/custom.flow-meta.xml" -> "",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Flow.Interview i = new Flow.Interview.custom(new Map<String, Object>());}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Unmanaged Flow") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/unmanaged/custom.flow-meta.xml" -> "",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Flow.Interview i = new Flow.Interview.custom(new Map<String, Object>());}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Unmanaged Flow from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns",
+            |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/unmanaged/custom.flow-meta.xml" -> "",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Flow.Interview i = new Flow.Interview.custom(new Map<String, Object>());}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Managed Flow") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "plugins": {"additionalNamespaces": ["ns1"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/ns1/custom.flow-meta.xml" -> "",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Flow.Interview i = new Flow.Interview.ns1.custom(new Map<String, Object>());}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Managed Flow from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns",
+            |  "plugins": {"additionalNamespaces": ["ns1"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/ns1/custom.flow-meta.xml" -> "",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Flow.Interview i = new Flow.Interview.ns1.custom(new Map<String, Object>());}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Platform Component") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}]
+            |}""".stripMargin,
+        ".apexlink/gulp/$platform/custom.component" -> "<apex:component/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Component.custom c = new Component.custom();}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Platform Component from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns"
+            |}""".stripMargin,
+        ".apexlink/gulp/$platform/custom.component" -> "<apex:component/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Component.custom c = new Component.custom();}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Unmanaged Component") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/unmanaged/custom.component" -> "<apex:component/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Component.custom c = new Component.custom();}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Unmanaged Component from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns",
+            |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/unmanaged/custom.component" -> "<apex:component/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Component.custom c = new Component.custom();}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Managed Component") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "plugins": {"additionalNamespaces": ["ns1"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/ns1/custom.component" -> "<apex:component/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Component.ns1.custom c = new Component.ns1.custom();}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Managed Component from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns",
+            |  "plugins": {"additionalNamespaces": ["ns1"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/ns1/custom.component" -> "<apex:component/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {Component.ns1.custom c = new Component.ns1.custom();}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Platform Page") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}]
+            |}""".stripMargin,
+        ".apexlink/gulp/$platform/custom.page" -> "<apex:page/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {PageReference p = Page.custom;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Platform Page from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns"
+            |}""".stripMargin,
+        ".apexlink/gulp/$platform/custom.page" -> "<apex:page/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {PageReference p = Page.custom;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Unmanaged Page") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/unmanaged/custom.page" -> "<apex:page/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {PageReference p = Page.custom;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Unmanaged Page from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns",
+            |  "plugins": {"additionalNamespaces": ["unmanaged"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/unmanaged/custom.page" -> "<apex:page/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {PageReference p = Page.custom;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Managed Page") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "plugins": {"additionalNamespaces": ["ns1"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/ns1/custom.page" -> "<apex:page/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {PageReference p = Page.ns1__custom;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Managed Page from namespace") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "foo"}],
+            |  "namespace": "ns",
+            |  "plugins": {"additionalNamespaces": ["ns1"]}
+            |}""".stripMargin,
+        ".apexlink/gulp/ns1/custom.page" -> "<apex:page/>",
+        "foo/Dummy.cls" ->
+          """public class Dummy {
+            |  {PageReference p = Page.ns1__custom;}
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
     }
   }
 

@@ -83,11 +83,11 @@ class SObjectDeployer(module: OPM.Module) {
 
       derivedFields.addAll(derived)
       val fields = nonDerived
-        .filter(f => module.isGulpedPlatform || isCustomField(f))
+        .filter(f => module.isPlatformExtension || isCustomField(f))
         .flatMap(createCustomField)
 
       val sobjects =
-        if (encodedName.ext.nonEmpty || module.isGulpedPlatform)
+        if (encodedName.ext.nonEmpty || module.isPlatformExtension) {
           createCustomObject(
             sources,
             sObjectEvent,
@@ -97,7 +97,7 @@ class SObjectDeployer(module: OPM.Module) {
             fieldSets,
             sharingReasons
           )
-        else
+        } else
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
       sobjects.foreach(sobject => createdSObjects.put(sobject.typeName, sobject))
     }
@@ -308,6 +308,17 @@ class SObjectDeployer(module: OPM.Module) {
     sharingReasons: ArraySeq[Name],
     sharingModel: Option[SharingModel]
   ): Array[SObjectDeclaration] = {
+
+    if (module.isPlatformExtension && EncodedName(typeName.name).ext.nonEmpty) {
+      sources.headOption.foreach(source => {
+        OrgInfo.logError(
+          source.location,
+          s"${nature.nature} for '$typeName' can not be created in $$platform module"
+        )
+      })
+      return Array()
+    }
+
     val syntheticSObjects =
       if (nature == CustomObjectNature) {
         // FUTURE: Check fields & when these should be available

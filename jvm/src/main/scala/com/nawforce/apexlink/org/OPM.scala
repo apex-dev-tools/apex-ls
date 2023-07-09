@@ -585,8 +585,7 @@ object OPM extends TriHierarchy {
 
     def namespaces: Set[Name] = pkg.namespaces
 
-    // The platform module in gulped metadata has a unique (and illegal) namespace
-    def isGulpedPlatform: Boolean = isGulped && index.path.toString.endsWith("$platform")
+    val isPlatformExtension: Boolean = isGulped && index.path.toString.endsWith("$platform")
 
     private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
     private val schemaManager   = SchemaSObjectType(this)

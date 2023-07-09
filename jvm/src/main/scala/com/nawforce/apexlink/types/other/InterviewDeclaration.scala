@@ -89,10 +89,10 @@ object Interview {
   * interviews that are accessible in base packages via the Flow.Interview.namespace.name format.
   */
 final class InterviewDeclaration(
-  sources: ArraySeq[SourceInfo],
   override val module: OPM.Module,
-  interviews: Seq[TypeDeclaration],
-  nestedInterviews: Seq[NestedInterviews]
+  val sources: ArraySeq[SourceInfo],
+  val interviews: Seq[Interview],
+  val nestedInterviews: Seq[NestedInterviews]
 ) extends BasicTypeDeclaration(PathLike.emptyPaths, module, TypeNames.Interview)
     with DependentType {
 
@@ -159,7 +159,7 @@ final class InterviewDeclaration(
     val newInterviews = interviews ++ events.map(fe => Interview(module, fe))
     val sourceInfo    = events.map(_.sourceInfo).distinct
     val interviewDeclaration =
-      new InterviewDeclaration(sourceInfo, module, newInterviews, nestedInterviews)
+      new InterviewDeclaration(module, sourceInfo, newInterviews, nestedInterviews)
     interviewDeclaration.namespaceDeclaration.foreach(td =>
       interviewDeclaration.namespaceDeclaration = Some(td.merge(events))
     )
@@ -214,20 +214,40 @@ final class GhostedInterviews(module: OPM.Module, ghostedPackage: OPM.PackageImp
 
 object InterviewDeclaration {
   def apply(module: OPM.Module): InterviewDeclaration = {
-    new InterviewDeclaration(ArraySeq(), module, Seq.empty, collectBaseInterviews(module))
+    module.baseModules.headOption
+      .map(_.interviews)
+      .map(base => {
+        val newInterviews =
+          new InterviewDeclaration(module, base.sources, base.interviews, base.nestedInterviews)
+        base.addTypeDependencyHolder(newInterviews.typeId)
+        newInterviews
+      })
+      .getOrElse {
+        val (sources, interviews) = collectUnnamespacedInterviews(module)
+        new InterviewDeclaration(module, sources, interviews, collectBaseInterviews(module))
+      }
   }
 
   private def collectBaseInterviews(module: OPM.Module): Seq[NestedInterviews] = {
     module.basePackages
       .flatMap(basePkg => {
-        if (basePkg.orderedModules.isEmpty) {
+        if (basePkg.isPlatformExtension) {
+          None
+        } else if (basePkg.orderedModules.isEmpty) {
           Some(new GhostedInterviews(module, basePkg))
         } else if (basePkg.namespace.nonEmpty) {
           Some(new PackageInterviews(module, basePkg.orderedModules.head.interviews))
         } else {
-          // "unmanaged" gulp pkg is ignored
           None
         }
       })
   }
+
+  private def collectUnnamespacedInterviews(
+    module: OPM.Module
+  ): (ArraySeq[SourceInfo], ArraySeq[Interview]) = {
+    val declarations = module.transitiveModules.filter(_.namespace.isEmpty).map(_.interviews)
+    (declarations.flatMap(_.sources).distinct, declarations.flatMap(_.interviews))
+  }
+
 }

@@ -17,6 +17,7 @@ import com.nawforce.pkgforce.diagnostics.IssuesManager
 import com.nawforce.pkgforce.documents.DocumentIndex
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.platform.Path
 
 /** Project metadata is modeled as an ordered sequence of namespace layers which contain an ordered
   * sequence of module layers. The layers should be ordered by deploy order, this means external
@@ -32,6 +33,11 @@ sealed trait Layer
   * layer will depend on its predecessor, with 2GP the layer dependencies are declared.
   */
 case class NamespaceLayer(namespace: Option[Name], layers: Seq[ModuleLayer]) extends Layer {
+
+  def isGulpedPlatform: Boolean =
+    namespace.isEmpty && layers.size == 1 &&
+      layers.head.path.toString.endsWith(Path.separator + "$platform")
+
   def indexes(logger: IssuesManager): Map[ModuleLayer, DocumentIndex] =
     layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
       acc + (layer -> layer.index(logger, namespace))

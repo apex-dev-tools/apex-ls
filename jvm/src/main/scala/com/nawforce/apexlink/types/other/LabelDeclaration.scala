@@ -199,7 +199,10 @@ object LabelDeclaration {
         base.addTypeDependencyHolder(newLabel.typeId)
         newLabel
       })
-      .getOrElse(new LabelDeclaration(module, ArraySeq(), ArraySeq(), createPackageLabels(module)))
+      .getOrElse {
+        val (sources, labels) = collectUnnamespacedLabels(module)
+        new LabelDeclaration(module, sources, labels, createPackageLabels(module))
+      }
   }
 
   // Create labels declarations for each base package
@@ -207,16 +210,24 @@ object LabelDeclaration {
     ArraySeq.unsafeWrapArray(
       module.basePackages
         .flatMap(basePkg => {
-          if (basePkg.orderedModules.isEmpty) {
+          if (basePkg.isPlatformExtension) {
+            None
+          } else if (basePkg.orderedModules.isEmpty) {
             Some(new GhostedLabels(module, basePkg.namespace.get))
           } else if (basePkg.namespace.nonEmpty) {
             Some(new PackageLabels(module, basePkg.orderedModules.head.labels))
           } else {
-            // "unmanaged" gulp pkg is ignored
             None
           }
         })
         .toArray
     )
+  }
+
+  private def collectUnnamespacedLabels(
+    module: OPM.Module
+  ): (ArraySeq[SourceInfo], ArraySeq[Label]) = {
+    val declarations = module.transitiveModules.filter(_.namespace.isEmpty).map(_.labels)
+    (declarations.flatMap(_.sources).distinct, declarations.flatMap(_.labels))
   }
 }

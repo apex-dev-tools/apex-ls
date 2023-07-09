@@ -218,6 +218,7 @@ object IPM extends TriHierarchy {
     val index: DocumentIndex,
     loadingPool: ExecutorService
   ) extends Module {
+    val isPlatformExtension: Boolean = false
 
     private final val lowerNames = mutable.TreeSet[String]()
     private final val types      = mutable.Map[Name, IModuleTypeDeclaration]()
@@ -427,6 +428,8 @@ object IPM extends TriHierarchy {
 
   /* Module for platform types. Only exact searching is supported on platform types. */
   class PlatformModule(override val pkg: PlatformPackage) extends Module {
+
+    val isPlatformExtension: Boolean = false
 
     private final val types = mutable.Map[Name, Option[IModuleTypeDeclaration]]()
     /* We use a Weak Map here as the type arguments may be refreshed so that new UnresolvedTypeRefs are used */

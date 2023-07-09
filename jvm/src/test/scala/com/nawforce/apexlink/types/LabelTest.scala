@@ -486,7 +486,9 @@ class LabelTest extends AnyFunSuite with TestHelper {
           .sameElements(Array(label1Type))
       )
       assert(
-        pkg1.getDependencyHolders(label1Type, apexOnly = false).sameElements(Array(label2Type))
+        pkg1
+          .getDependencyHolders(label1Type, apexOnly = false)
+          .sameElements(Array(TypeIdentifier(None, TypeName.Label), label2Type))
       )
     }
   }
@@ -568,7 +570,9 @@ class LabelTest extends AnyFunSuite with TestHelper {
           .sameElements(Array(label1Type))
       )
       assert(
-        pkg1.getDependencyHolders(label1Type, apexOnly = false).sameElements(Array(label2Type))
+        pkg1
+          .getDependencyHolders(label1Type, apexOnly = false)
+          .sameElements(Array(TypeIdentifier(None, TypeName.Label), label2Type))
       )
     }
   }
@@ -650,7 +654,9 @@ class LabelTest extends AnyFunSuite with TestHelper {
           .sameElements(Array(label1Type))
       )
       assert(
-        pkg1.getDependencyHolders(label1Type, apexOnly = false).sameElements(Array(label2Type))
+        pkg1
+          .getDependencyHolders(label1Type, apexOnly = false)
+          .sameElements(Array(TypeIdentifier(None, TypeName.Label), label2Type))
       )
     }
   }

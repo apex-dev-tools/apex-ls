@@ -52,6 +52,9 @@ abstract class TriHierarchy {
     /** Is this a ghost package, aka it has no modules. */
     lazy val isGhosted: Boolean = modules.isEmpty
 
+    /** Is this module being used to extend platform types */
+    lazy val isPlatformExtension: Boolean = modules.length == 1 && modules.head.isPlatformExtension
+
     /* Find first module in search order (may not be in this package) */
     def firstModule: Option[TModule] = {
       orderedModules.headOption
@@ -95,6 +98,9 @@ abstract class TriHierarchy {
     /** Was this module loaded from gulped metadata */
     val isGulped: Boolean
 
+    /** Is this module being used to extend platform types */
+    val isPlatformExtension: Boolean
+
     /** The package the parent package depends on in reverse deploy order */
     lazy val basePackages: ArraySeq[TPackage] = pkg.basePackages.reverse
 
@@ -105,10 +111,11 @@ abstract class TriHierarchy {
     def isVisibleFile(path: PathLike): Boolean
 
     /* Transitive Modules (dependent modules for this modules & its dependents) */
-    def transitiveModules: Set[TModule] = {
-      namespace
-        .map(_ => dependents.toSet ++ dependents.flatMap(_.transitiveModules))
-        .getOrElse(baseModules.toSet)
+    def transitiveModules: ArraySeq[TModule] = {
+      baseModules ++ basePackages.headOption
+        .flatMap(_.firstModule)
+        .map(m => Set(m) ++ m.transitiveModules)
+        .getOrElse(Set())
     }
 
     /* Find next module in search order */

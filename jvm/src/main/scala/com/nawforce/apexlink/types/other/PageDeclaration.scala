@@ -77,8 +77,8 @@ object Page {
   * are accessible in base packages via the `namespace__name` format.
   */
 final case class PageDeclaration(
-  sources: ArraySeq[SourceInfo],
   override val module: OPM.Module,
+  sources: ArraySeq[SourceInfo],
   pages: ArraySeq[Page]
 ) extends BasicTypeDeclaration(
       pages.map(page => page.location.path).distinct,
@@ -104,7 +104,7 @@ final case class PageDeclaration(
   def merge(pageEvents: ArraySeq[PageEvent]): PageDeclaration = {
     val newPages   = pages ++ pageEvents.flatMap(pe => Page(module, pe))
     val sourceInfo = pageEvents.map(_.sourceInfo).distinct
-    new PageDeclaration(sourceInfo, module, newPages)
+    new PageDeclaration(module, sourceInfo, newPages)
   }
 
   override def validate(): Unit = {
@@ -131,18 +131,29 @@ final case class PageDeclaration(
 
 object PageDeclaration {
   def apply(module: OPM.Module): PageDeclaration = {
-    new PageDeclaration(ArraySeq(), module, collectBasePages(module))
+    module.baseModules.headOption
+      .map(_.pages)
+      .map(base => {
+        val newPages = new PageDeclaration(module, base.sources, base.pages)
+        base.addTypeDependencyHolder(newPages.typeId)
+        newPages
+      })
+      .getOrElse {
+        val (sources, pages) = collectPages(module)
+        new PageDeclaration(module, sources, pages)
+      }
   }
 
-  private def collectBasePages(module: OPM.Module): ArraySeq[Page] = {
-    module.nextModule
-      .map(next => {
-        if (next.namespace != module.namespace) {
-          next.pages.pages.filter(page => page.name.value.contains("__"))
-        } else {
-          next.pages.pages
-        }
+  private def collectPages(module: OPM.Module): (ArraySeq[SourceInfo], ArraySeq[Page]) = {
+    (
+      module.transitiveModules.flatMap(_.pages.sources),
+      module.transitiveModules.flatMap(m => {
+        if (m.namespace.isEmpty)
+          m.pages.pages
+        else
+          m.pages.pages.filter(page => page.name.value.contains("__"))
       })
-      .getOrElse(ArraySeq())
+    )
   }
+
 }

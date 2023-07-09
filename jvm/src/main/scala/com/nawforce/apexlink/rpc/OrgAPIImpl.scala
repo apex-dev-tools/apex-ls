@@ -60,7 +60,8 @@ class OrgQueue(path: String) {
 case class OpenRequest(promise: Promise[OpenResult]) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
     promise.success(try {
-      val namespaces = queue.org.getPackages().flatMap(_.getNamespaces(false))
+      // Use tail here to skip over $platform package
+      val namespaces = queue.org.getPackages().tail.flatMap(_.getNamespaces(false))
       OpenResult(None, namespaces)
     } catch {
       case ex: IllegalArgumentException => OpenResult(Some(APIError(ex.getMessage)), Array())

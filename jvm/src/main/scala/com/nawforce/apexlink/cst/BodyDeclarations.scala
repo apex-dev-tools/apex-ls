@@ -51,9 +51,6 @@ abstract class ClassBodyDeclaration(modifierResults: ModifierResults)
   override lazy val signature: String       = null
   override val description: String          = null
 
-  lazy val isGlobal: Boolean =
-    modifiers.contains(GLOBAL_MODIFIER) || modifiers.contains(WEBSERVICE_MODIFIER)
-
   protected var depends: Option[SkinnySet[Dependent]] = None
 
   override def dependencies(): Iterable[Dependent] = {
@@ -495,7 +492,7 @@ object FormalParameter {
 }
 
 object FormalParameterList {
-  val noParams: ArraySeq[FormalParameter] = ArraySeq()
+  private val noParams: ArraySeq[FormalParameter] = ArraySeq()
 
   def construct(
     parser: CodeParser,

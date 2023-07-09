@@ -196,29 +196,20 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   }
 
-  private val gulpPackages = {
-    val platformPackage =
-      createGulpPath(Some(Name("$platform")))
-        .map(path =>
-          Array(NamespaceLayer(None, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
-        )
-        .getOrElse(Array())
-    val additionalPackages =
-      additionalNamespaces.flatMap(ns => {
-        createGulpPath(ns) match {
-          case Left(err) =>
-            config
-              .lineAndOffsetOf(plugins.get("additionalNamespaces"))
-              .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, err))
-              .getOrElse(None)
-            None
-          case Right(path) if ns != namespace =>
-            Some(NamespaceLayer(ns, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
-          case Right(_) => None
-        }
-      })
-    platformPackage ++ additionalPackages
-  }
+  private val gulpPackages =
+    additionalNamespaces.flatMap(ns => {
+      createGulpPath(ns) match {
+        case Left(err) =>
+          config
+            .lineAndOffsetOf(plugins.get("additionalNamespaces"))
+            .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, err))
+            .getOrElse(None)
+          None
+        case Right(path) if ns != namespace =>
+          Some(NamespaceLayer(ns, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
+        case Right(_) => None
+      }
+    })
 
   private val extendedPackageDirectories = packageDirectories ++ unpackagedMetadata
 
@@ -229,6 +220,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     val glob = MetadataDocument.extensionsGlob
     (extendedPackageDirectories.map(packageDirectory => packageDirectory.relativePath) ++
       externalPackages.flatMap(_.layers.map(layer => layer.pathRelativeTo(projectPath))) ++
+      createGulpPath(Some(Name("$platform"))).toSeq ++
       additionalNamespaces.map(gulpPath).map(pathParts => pathParts.mkString("/")))
       .map(prefix => s"$prefix/**/*.$glob")
   }
@@ -272,9 +264,16 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     if (!validatePackagePathsLocal(localPackage.layers, logger))
       return Seq.empty
 
-    val layers = externalPackages ++ gulpPackages :+ localPackage
+    val platformPackage =
+      createGulpPath(Some(Name("$platform")))
+        .map(path =>
+          Array(NamespaceLayer(None, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
+        )
+        .getOrElse(Array())
 
-    if (layers.map(_.namespace).toSet.size + 1 != layers.size) {
+    val layers         = externalPackages ++ platformPackage ++ gulpPackages :+ localPackage
+    val declaredLayers = layers.filterNot(_.isGulpedPlatform)
+    if (declaredLayers.map(_.namespace).toSet.size != declaredLayers.size) {
       logger.log(
         Issue(
           projectFile,

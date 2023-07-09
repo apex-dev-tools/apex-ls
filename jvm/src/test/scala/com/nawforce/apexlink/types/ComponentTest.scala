@@ -166,7 +166,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
       assert(
         pkg1
           .getDependencyHolders(componentType1, apexOnly = false)
-          .sameElements(Array(componentType2))
+          .sameElements(Array(TypeIdentifier(None, TypeName.Component), componentType2))
       )
 
       val dummyType =

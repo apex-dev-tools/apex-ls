@@ -396,8 +396,12 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
 
   def isComplete: Boolean
 
-  lazy val isExternallyVisible: Boolean =
-    modifiers.exists(TypeDeclaration.externalTypeModifiers.contains)
+  lazy val isExternallyVisible: Boolean = {
+    modifiers.exists(TypeDeclaration.externalTypeModifiers.contains) ||
+    // Allows public in unmanaged gulp modules to be visible for org dependent package support
+    (modifiers.contains(PUBLIC_MODIFIER) &&
+      moduleDeclaration.exists(m => m.isGulped && m.namespace.isEmpty))
+  }
   lazy val visibility: Modifier =
     // We can have more than one visibility modifier, search in priority order
     ApexModifiers.visibilityModifiers.find(modifiers.contains).getOrElse(PRIVATE_MODIFIER)

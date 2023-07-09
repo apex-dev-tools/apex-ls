@@ -152,7 +152,7 @@ class InterviewTest extends AnyFunSuite with TestHelper {
       assert(
         pkg1
           .getDependencyHolders(interviewType1, apexOnly = false)
-          .sameElements(Array(interviewType2))
+          .sameElements(Array(TypeIdentifier(None, TypeNames.Interview), interviewType2))
       )
 
       val dummyType =

@@ -95,8 +95,8 @@ object Component {
 
 /** Component namespace handler */
 final case class ComponentDeclaration(
+  override val module: OPM.Module,
   sources: ArraySeq[SourceInfo],
-  module: OPM.Module,
   components: Seq[TypeDeclaration],
   nestedComponents: Seq[NestedComponents]
 ) extends BasicTypeDeclaration(
@@ -167,11 +167,11 @@ final case class ComponentDeclaration(
   }
 
   def merge(events: ArraySeq[ComponentEvent]): ComponentDeclaration = {
-    val components = ComponentDeclaration.standardTypes ++
+    val newComponents = components ++ ComponentDeclaration.standardTypes ++
       events.map(ce => Component(module, ce))
     val sourceInfo = events.map(_.sourceInfo).distinct
     val componentDeclaration =
-      new ComponentDeclaration(sourceInfo, module, components, nestedComponents)
+      new ComponentDeclaration(module, sourceInfo, newComponents, nestedComponents)
     componentDeclaration.namespaceDeclaration.foreach(td =>
       componentDeclaration.namespaceDeclaration = Some(td.merge(events))
     )
@@ -228,20 +228,48 @@ object ComponentDeclaration {
   private val standardTypes = Seq(PlatformTypes.apexComponent, PlatformTypes.chatterComponent)
 
   def apply(module: OPM.Module): ComponentDeclaration = {
-    new ComponentDeclaration(ArraySeq(), module, standardTypes, collectBaseComponents(module))
+    module.baseModules.headOption
+      .map(_.components)
+      .map(base => {
+        val newComponents =
+          new ComponentDeclaration(module, base.sources, base.components, base.nestedComponents)
+        base.addTypeDependencyHolder(newComponents.typeId)
+        newComponents
+      })
+      .getOrElse {
+        val (sources, components) = collectUnnamespacedComponents(module)
+        new ComponentDeclaration(
+          module,
+          sources,
+          standardTypes ++ components,
+          collectPackageComponents(module)
+        )
+      }
   }
 
-  private def collectBaseComponents(module: OPM.Module): Seq[NestedComponents] = {
+  private def collectPackageComponents(module: OPM.Module): Seq[NestedComponents] = {
     module.basePackages
       .flatMap(basePkg => {
-        if (basePkg.orderedModules.isEmpty) {
+        if (basePkg.isPlatformExtension) {
+          None
+        } else if (basePkg.orderedModules.isEmpty) {
           Some(new GhostedComponents(module, basePkg))
         } else if (basePkg.namespace.nonEmpty) {
           Some(new PackageComponents(module, basePkg.orderedModules.head.components))
         } else {
-          // "unmanaged" gulp pkg is ignored
           None
         }
       })
   }
+
+  private def collectUnnamespacedComponents(
+    module: OPM.Module
+  ): (ArraySeq[SourceInfo], ArraySeq[Component]) = {
+    val declarations = module.transitiveModules.filter(_.namespace.isEmpty).map(_.components)
+    (
+      declarations.flatMap(_.sources).distinct,
+      declarations.flatMap(_.components).collect { case c: Component => c }
+    )
+  }
+
 }
