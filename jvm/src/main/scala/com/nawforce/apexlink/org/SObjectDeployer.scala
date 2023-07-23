@@ -82,10 +82,12 @@ class SObjectDeployer(module: OPM.Module) {
       }
 
       derivedFields.addAll(derived)
-      val fields = nonDerived.flatMap(createCustomField)
+      val fields = nonDerived
+        .filter(f => module.isPlatformExtension || isCustomField(f))
+        .flatMap(createCustomField)
 
       val sobjects =
-        if (encodedName.ext.nonEmpty)
+        if (encodedName.ext.nonEmpty || module.isPlatformExtension) {
           createCustomObject(
             sources,
             sObjectEvent,
@@ -95,7 +97,7 @@ class SObjectDeployer(module: OPM.Module) {
             fieldSets,
             sharingReasons
           )
-        else
+        } else
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
       sobjects.foreach(sobject => createdSObjects.put(sobject.typeName, sobject))
     }
@@ -103,6 +105,10 @@ class SObjectDeployer(module: OPM.Module) {
     addDerivedFieldsToObjects(derivedFields, createdSObjects)
 
     createdSObjects.values.toArray
+  }
+
+  private def isCustomField(field: CustomFieldEvent): Boolean = {
+    field.name.toString.endsWith("__c")
   }
 
   private def createCustomField(field: CustomFieldEvent): Array[FieldDeclaration] = {
@@ -281,7 +287,7 @@ class SObjectDeployer(module: OPM.Module) {
             sources
               .find(_.location.path == path)
               .foreach(source => {
-                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, event.name))
+                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, typeName.toString()))
               })
           })
           Array.empty
@@ -302,8 +308,20 @@ class SObjectDeployer(module: OPM.Module) {
     sharingReasons: ArraySeq[Name],
     sharingModel: Option[SharingModel]
   ): Array[SObjectDeclaration] = {
+
+    if (module.isPlatformExtension && EncodedName(typeName.name).ext.nonEmpty) {
+      sources.headOption.foreach(source => {
+        OrgInfo.logError(
+          source.location,
+          s"${nature.nature} for '$typeName' can not be created in $$platform module"
+        )
+      })
+      return Array()
+    }
+
+    // We need to check __c here as we are allowing Standard object construction via $platform
     val syntheticSObjects =
-      if (nature == CustomObjectNature) {
+      if (nature == CustomObjectNature && typeName.name.toString.endsWith("__c")) {
         // FUTURE: Check fields & when these should be available
         Array(
           createShare(sources, typeName, sharingReasons),
@@ -712,20 +730,7 @@ object SObjectDeployer {
 
   /** Standard fields for a \_\_Share SObject. */
   def shareFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
-    shareFields ++ ArraySeq(
-      CustomFieldDeclaration(
-        Names.SObjectType,
-        TypeNames.sObjectType$(typeName),
-        None,
-        asStatic = true
-      ),
-      CustomFieldDeclaration(
-        Names.Fields,
-        TypeNames.sObjectFields$(typeName),
-        None,
-        asStatic = true
-      )
-    )
+    shareFields ++ commonFieldsFor(typeName)
   }
 
   private val shareFields: ArraySeq[FieldDeclaration] =
@@ -741,7 +746,11 @@ object SObjectDeployer {
     )
 
   def feedFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
-    feedFields ++ ArraySeq(
+    feedFields ++ commonFieldsFor(typeName)
+  }
+
+  private def commonFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
+    ArraySeq(
       CustomFieldDeclaration(
         Names.SObjectType,
         TypeNames.sObjectType$(typeName),

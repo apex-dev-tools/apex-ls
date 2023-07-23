@@ -91,6 +91,9 @@ final case class SObjectDeclaration(
     with DependencyHolder
     with Dependent {
 
+  if (typeName.name.toString == "MyWorkOrder")
+    println()
+
   override def location: PathLocation                = sources.headOption.map(_.location).orNull
   override val inTest: Boolean                       = false
   override val moduleDeclaration: Option[OPM.Module] = Some(module)
@@ -158,6 +161,7 @@ final case class SObjectDeclaration(
           ArraySeq(),
           ArraySeq()
         )
+        replacement.propagateOuterDependencies(new TypeCache())
         module.types.put(replacement.typeName, replacement)
         module.schemaSObjectType.add(replacement.typeName.name, hasFieldSets = true)
       case Left(_) =>

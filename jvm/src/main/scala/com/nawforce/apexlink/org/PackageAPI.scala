@@ -368,7 +368,7 @@ trait PackageAPI extends Package {
       typeId.module.moduleType(typeId.typeName) match {
         case Some(sobject: SObjectDeclaration) =>
           // TODO: Over general, reload only needed when a base SObject is changed
-          sobject.paths.find(typeId.module.isVisibleFile).map(path => refreshInternal(path))
+          //sobject.paths.find(typeId.module.isVisibleFile).map(path => refreshInternal(path))
           None
         case Some(summary: SummaryDeclaration) =>
           // Replace direct use summary types, no need to revalidate these

@@ -467,6 +467,36 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Cross-layer lookup refresh") {
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
+          "base/objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq()),
+          "ext/objects/Bar__c/Bar__c.object-meta.xml"  -> customObject("Bar", Seq()),
+          "ext/objects/Bar__c/fields/Baz__c.field-meta.xml" -> customField(
+            "Baz__c",
+            "Lookup",
+            Some("Foo__c")
+          )
+        )
+      ) { root: PathLike =>
+        val org = createHappyOrg(root)
+
+        val fooPath       = root.join("base", "objects", "Foo__c")
+        val fooFieldsPath = fooPath.createDirectory("fields").toOption.get
+        val newField      = fooFieldsPath.join("Extra__c.field-meta.xml")
+        assert(newField.write(customField("Extra", "Text", None)).isEmpty)
+        org.unmanaged.refresh(newField, highPriority = false)
+        assert(org.flush())
+        assert(getMessages().isEmpty)
+
+        assert(unmanagedSObject("Foo__c").get.fields.exists(_.name.toString == "Extra__c"))
+      }
+    }
+  }
+
   test("Derived field refresh") {
     withManualFlush {
       FileSystemHelper.run(
