@@ -91,9 +91,6 @@ final case class SObjectDeclaration(
     with DependencyHolder
     with Dependent {
 
-  if (typeName.name.toString == "MyWorkOrder")
-    println()
-
   override def location: PathLocation                = sources.headOption.map(_.location).orNull
   override val inTest: Boolean                       = false
   override val moduleDeclaration: Option[OPM.Module] = Some(module)

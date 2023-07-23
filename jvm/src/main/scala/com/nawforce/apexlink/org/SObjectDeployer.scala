@@ -82,12 +82,10 @@ class SObjectDeployer(module: OPM.Module) {
       }
 
       derivedFields.addAll(derived)
-      val fields = nonDerived
-        .filter(f => module.isPlatformExtension || isCustomField(f))
-        .flatMap(createCustomField)
+      val fields = nonDerived.flatMap(createCustomField)
 
       val sobjects =
-        if (encodedName.ext.nonEmpty || module.isPlatformExtension) {
+        if (encodedName.ext.nonEmpty)
           createCustomObject(
             sources,
             sObjectEvent,
@@ -97,7 +95,7 @@ class SObjectDeployer(module: OPM.Module) {
             fieldSets,
             sharingReasons
           )
-        } else
+        else
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
       sobjects.foreach(sobject => createdSObjects.put(sobject.typeName, sobject))
     }
@@ -105,10 +103,6 @@ class SObjectDeployer(module: OPM.Module) {
     addDerivedFieldsToObjects(derivedFields, createdSObjects)
 
     createdSObjects.values.toArray
-  }
-
-  private def isCustomField(field: CustomFieldEvent): Boolean = {
-    field.name.toString.endsWith("__c")
   }
 
   private def createCustomField(field: CustomFieldEvent): Array[FieldDeclaration] = {
