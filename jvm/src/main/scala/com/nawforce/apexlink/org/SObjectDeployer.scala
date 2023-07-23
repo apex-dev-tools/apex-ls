@@ -319,8 +319,9 @@ class SObjectDeployer(module: OPM.Module) {
       return Array()
     }
 
+    // We need to check __c here as we are allowing Standard object construction via $platform
     val syntheticSObjects =
-      if (nature == CustomObjectNature) {
+      if (nature == CustomObjectNature && typeName.name.toString.endsWith("__c")) {
         // FUTURE: Check fields & when these should be available
         Array(
           createShare(sources, typeName, sharingReasons),
