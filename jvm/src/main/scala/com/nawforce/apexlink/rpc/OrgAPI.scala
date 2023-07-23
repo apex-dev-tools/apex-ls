@@ -175,6 +175,46 @@ object TestMethodItemsResult {
   implicit val rwLocation: RW[Location]             = macroRW
 }
 
+case class OpenOptions private (
+  parser: Option[String] = None,
+  loggingLevel: Option[String] = None,
+  externalAnalysisMode: Option[String] = None,
+  cacheDirectory: Option[String] = None,
+  indexerConfiguration: Option[(Long, Long)] = None
+) {
+  def withParser(name: String): OpenOptions = {
+    copy(parser = Some(name))
+  }
+
+  def withLoggingLevel(level: String): OpenOptions = {
+    copy(loggingLevel = Some(level))
+  }
+
+  def withExternalAnalysisMode(mode: String): OpenOptions = {
+    copy(externalAnalysisMode = Some(mode))
+  }
+
+  def withCacheDirectory(path: String): OpenOptions = {
+    copy(cacheDirectory = Some(path))
+  }
+
+  def withIndexerConfiguration(
+    rescanTriggerTimeMs: Long,
+    quietPeriodForRescanMs: Long
+  ): OpenOptions = {
+    copy(indexerConfiguration = Some((rescanTriggerTimeMs, quietPeriodForRescanMs)))
+  }
+
+}
+
+object OpenOptions {
+  implicit val rw: RW[OpenOptions] = macroRW
+
+  def default(): OpenOptions = {
+    new OpenOptions(None, None, None, None, None)
+  }
+}
+
 trait OrgAPI {
   @api.JSONRPCMethod(name = "version")
   def version(): Future[String]
@@ -193,6 +233,9 @@ trait OrgAPI {
 
   @api.JSONRPCMethod(name = "open")
   def open(directory: String): Future[OpenResult]
+
+  @api.JSONRPCMethod(name = "openWithOptions")
+  def open(directory: String, options: OpenOptions): Future[OpenResult]
 
   @api.JSONRPCMethod(name = "getIssues")
   def getIssues(includeWarnings: Boolean, maxIssuesPerFile: Int): Future[GetIssuesResult]

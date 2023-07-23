@@ -14,10 +14,11 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.org.OPM.PackageImpl
 import com.nawforce.apexlink.{ParserHelper, TestHelper}
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
+import com.nawforce.pkgforce.diagnostics.LoggerOps.{DEBUG_LOGGING, NO_LOGGING}
+import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
@@ -36,6 +37,12 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     }
     assert(dir.isDirectory, s"Failed to locate samples from ${Path(".").toString}")
     dir
+  }
+
+  def deleteDir(path: PathLike): Unit = {
+    path.splitDirectoryEntries()._1.foreach(file => file.delete())
+    path.splitDirectoryEntries()._2.foreach(dir => deleteDir(dir))
+    path.delete()
   }
 
   override def beforeEach(): Unit = {
@@ -78,7 +85,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     }
   }
 
-  test("Add package not bad directory") {
+  test("Open bad directory") {
     val orgAPI = OrgAPI()
     for {
       result <- orgAPI.open("/silly")
@@ -95,7 +102,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     }
   }
 
-  test("Add package MDAPI directory") {
+  test("Open MDAPI directory") {
     val workspace = samplesDir.join("mdapi-test")
     val orgAPI    = OrgAPI()
     for {
@@ -107,7 +114,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     }
   }
 
-  test("Add package sfdx directory (relative)") {
+  test("Open sfdx directory (relative)") {
     val orgAPI = OrgAPI()
     for {
       result <- orgAPI.open(samplesDir.join("sfdx-test").toString())
@@ -118,7 +125,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     }
   }
 
-  test("Add package sfdx directory (absolute)") {
+  test("Open sfdx directory (absolute)") {
     val workspace = samplesDir.join("sfdx-test")
     val orgAPI    = OrgAPI()
     for {
@@ -130,7 +137,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     }
   }
 
-  test("Add package sfdx directory with ns (relative)") {
+  test("Open sfdx directory with ns (relative)") {
     val orgAPI = OrgAPI()
     for {
       result <- orgAPI.open(samplesDir.join("sfdx-ns-test").toString())
@@ -141,7 +148,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     }
   }
 
-  test("Add package sfdx directory with ns (absolute)") {
+  test("Open sfdx directory with ns (absolute)") {
     val workspace = samplesDir.join("sfdx-ns-test")
     val orgAPI    = OrgAPI()
     for {
@@ -150,6 +157,61 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     } yield {
       assert(result.error.isEmpty && result.namespaces.sameElements(Array("sfdx_test", "")))
       assert(!issues.issues.exists(_.diagnostic.category == ERROR_CATEGORY))
+    }
+  }
+
+  test("Open with default options") {
+    val workspace = samplesDir.join("mdapi-test")
+    val orgAPI    = OrgAPI()
+    val options   = OpenOptions.default()
+    for {
+      result <- orgAPI.open(workspace.toString, options)
+    } yield {
+      assert(result.error.isEmpty)
+      assert(LoggerOps.getLoggingLevel == NO_LOGGING)
+      assert(ServerOps.getCurrentParser == ANTLRParser)
+      assert(ServerOps.externalAnalysisMode == RefreshAnalysis)
+      assert(ServerOps.isAutoFlushEnabled)
+      assert(Environment.getCacheDirOverride.isEmpty)
+    }
+  }
+
+  final class TestNullLogger extends Logger {
+    override def info(message: String): Unit  = {}
+    override def debug(message: String): Unit = {}
+    override def trace(message: String): Unit = {}
+  }
+
+  test("Open with changed options") {
+    val workspace = samplesDir.join("mdapi-test")
+    val orgAPI    = OrgAPI()
+    val cacheDir  = Path("testCacheDir")
+    val options = OpenOptions
+      .default()
+      .withParser("OutlineSingle")
+      .withLoggingLevel("DEBUG")
+      .withExternalAnalysisMode("NoAnalysis")
+      .withCacheDirectory(cacheDir.toString)
+      .withIndexerConfiguration(1, 2)
+    val oldLogger = LoggerOps.setLogger(new TestNullLogger())
+    for {
+      result <- orgAPI.open(workspace.toString, options)
+    } yield {
+      assert(result.error.isEmpty)
+      assert(LoggerOps.getLoggingLevel == DEBUG_LOGGING)
+      assert(ServerOps.getCurrentParser == OutlineParserSingleThreaded)
+      assert(ServerOps.externalAnalysisMode == NoAnalysis)
+      assert(ServerOps.isAutoFlushEnabled)
+      assert(ServerOps.getIndexerConfiguration == IndexerConfiguration(1, 2))
+      assert(Environment.getCacheDirOverride.contains(Some(cacheDir)))
+
+      LoggerOps.setLoggingLevel(NO_LOGGING)
+      LoggerOps.setLogger(oldLogger)
+      ServerOps.setCurrentParser(ANTLRParser)
+      ServerOps.setIndexerConfiguration(IndexerConfiguration(0, 0))
+      Environment.setCacheDirOverride(None)
+      deleteDir(cacheDir)
+      assert(true)
     }
   }
 

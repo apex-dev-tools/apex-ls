@@ -47,6 +47,10 @@ object Environment {
     cacheDirOverride = value
   }
 
+  def getCacheDirOverride: Option[Option[PathLike]] = {
+    cacheDirOverride
+  }
+
   def isWindows: Boolean = {
     System.getProperty("os.name").contains("Windows")
   }

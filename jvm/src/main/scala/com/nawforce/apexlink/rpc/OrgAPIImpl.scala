@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.api.{Org, ServerOps}
+import com.nawforce.apexlink.api.{IndexerConfiguration, Org, ServerOps}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -536,6 +536,21 @@ class OrgAPIImpl extends OrgAPI {
   }
 
   override def open(directory: String): Future[OpenResult] = {
+    OrgQueue.open(directory)
+    OpenRequest(OrgQueue.instance())
+  }
+
+  override def open(directory: String, options: OpenOptions): Future[OpenResult] = {
+    options.loggingLevel.foreach(LoggerOps.setLoggingLevel)
+    options.parser.foreach(ServerOps.setCurrentParser)
+    options.externalAnalysisMode.foreach(ServerOps.setExternalAnalysisMode)
+    options.cacheDirectory.foreach(path => {
+      Environment.setCacheDirOverride(Some(Some(Path(path))))
+      ServerOps.setAutoFlush(path.nonEmpty)
+    })
+    options.indexerConfiguration.foreach(values =>
+      ServerOps.setIndexerConfiguration(IndexerConfiguration(values._1, values._2))
+    )
     OrgQueue.open(directory)
     OpenRequest(OrgQueue.instance())
   }
