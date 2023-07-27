@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
 package com.nawforce.runtime.sfparser_test
 import com.financialforce.types._
 import com.financialforce.types.base.{Annotation, Modifier, TypeRef}
