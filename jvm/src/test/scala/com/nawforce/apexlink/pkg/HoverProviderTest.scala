@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2023 Certinia Inc. All rights reserved
+ */
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
