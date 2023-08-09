@@ -412,14 +412,12 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
 
   override def toString: String = {
     val modifierNames = modifiers.map(m => m.name)
-    val toString      = modifierNames.mkString(" ") + " " + nature.value + " " + name
+    var toString      = modifierNames.mkString(" ") + " " + nature.value + " " + name
+    if (!superClass.contains(TypeNames.InternalObject)) {
+      toString = toString + " extends " + superClass.get.name
+    }
     if (interfaces.nonEmpty) {
-      return toString + " implements " + interfaces.map(i => i.name).mkString(", ")
-    } else if (
-      // Seems like all classes extend a default 'Object$' class
-      superClassDeclaration.isDefined && superClassDeclaration.get.name.value != "Object$"
-    ) {
-      return toString + " extends " + superClass.get.name.value
+      toString = toString + " implements " + interfaces.map(i => i.name).mkString(", ")
     }
     toString
   }
