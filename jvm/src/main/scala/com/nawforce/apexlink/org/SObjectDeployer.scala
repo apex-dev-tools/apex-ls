@@ -281,7 +281,7 @@ class SObjectDeployer(module: OPM.Module) {
             sources
               .find(_.location.path == path)
               .foreach(source => {
-                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, typeName.toString()))
+                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, typeName.name))
               })
           })
           Array.empty
@@ -303,19 +303,8 @@ class SObjectDeployer(module: OPM.Module) {
     sharingModel: Option[SharingModel]
   ): Array[SObjectDeclaration] = {
 
-    if (module.isPlatformExtension && EncodedName(typeName.name).ext.nonEmpty) {
-      sources.headOption.foreach(source => {
-        OrgInfo.logError(
-          source.location,
-          s"${nature.nature} for '$typeName' can not be created in $$platform module"
-        )
-      })
-      return Array()
-    }
-
-    // We need to check __c here as we are allowing Standard object construction via $platform
     val syntheticSObjects =
-      if (nature == CustomObjectNature && typeName.name.toString.endsWith("__c")) {
+      if (nature == CustomObjectNature) {
         // FUTURE: Check fields & when these should be available
         Array(
           createShare(sources, typeName, sharingReasons),
