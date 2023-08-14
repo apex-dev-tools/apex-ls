@@ -409,4 +409,16 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       BigDecimal(score.toString).setScale(2, BigDecimal.RoundingMode.HALF_UP).doubleValue
     (uses, usedBy, roundScore)
   }
+
+  override def toString: String = {
+    val modifierNames = modifiers.map(m => m.name)
+    var toString      = modifierNames.mkString(" ") + " " + nature.value + " " + name
+    if (!superClass.contains(TypeNames.InternalObject)) {
+      toString = toString + " extends " + superClass.get.name
+    }
+    if (interfaces.nonEmpty) {
+      toString = toString + " implements " + interfaces.map(i => i.name).mkString(", ")
+    }
+    toString
+  }
 }
