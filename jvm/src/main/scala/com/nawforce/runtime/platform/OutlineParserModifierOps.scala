@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2023 FinancialForce.com, inc. All rights reserved.
+ */
 package com.nawforce.runtime.platform
 
 import com.financialforce.types.base.{

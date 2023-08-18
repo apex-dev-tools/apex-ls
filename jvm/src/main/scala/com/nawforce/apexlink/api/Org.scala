@@ -20,6 +20,7 @@ import com.nawforce.apexlink.rpc.{
   ClassTestItem,
   CompletionItemLink,
   DependencyGraph,
+  HoverItem,
   LocationLink,
   MethodTestItem,
   TargetLocation
@@ -146,6 +147,19 @@ trait Org {
     */
   def getImplementation(path: String, line: Int, offset: Int, content: String): Array[LocationLink]
 
+  /** Retrieve the header for methods, classes and constructors given the position of the hovered
+    * code.
+    *
+    * This will attempt to locate the type definition of a type name at the provided line & offset
+    * in the path. The returned hover item contains the header of the type declaration for a method,
+    * constructor or class, as well as the position for the hover popover. If no type declaration
+    * can be found for the hovered content or it is an unsupported type, an empty HoverItem is
+    * returned. If content is null, path will be used to load the source code. It is not necessary
+    * for the file being searched from to be free of errors, but errors may impact the ability to
+    * locate inner classes within that file.
+    */
+  def getHover(path: String, line: Int, offset: Int, content: String): HoverItem
+
   /** Locate the references given the location and offset.
     *
     * This will attempt to find a body declaration (methods, fields or classes) at the given line &
@@ -218,7 +232,6 @@ trait Org {
     * Class namespaces are NOT included.
     */
   def getTestMethodItems(paths: Array[String]): Array[MethodTestItem]
-
 }
 
 object Org {

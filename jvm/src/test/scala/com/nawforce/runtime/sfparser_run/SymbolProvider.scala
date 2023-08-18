@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
 package com.nawforce.runtime.sfparser_run
 
 import apex.jorje.lsp.ApexLanguageServerLauncher

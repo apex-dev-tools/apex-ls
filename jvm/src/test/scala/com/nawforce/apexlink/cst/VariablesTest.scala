@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
+ */
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper

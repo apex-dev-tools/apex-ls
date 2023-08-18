@@ -543,13 +543,6 @@ exports[`Check samples Sample: Interactions-for-Student-Recruitment 1`] = `
 }
 `;
 
-exports[`Check samples Sample: Lightweight-Trigger-Framework 1`] = `
-{
-  "logs": [],
-  "status": 0,
-}
-`;
-
 exports[`Check samples Sample: Milestones-PM 1`] = `
 {
   "logs": [
