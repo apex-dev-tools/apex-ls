@@ -42,7 +42,7 @@ final case class GhostSObjectDeclaration(module: OPM.Module, _typeName: TypeName
     TypeResolver(superClass.get, this).toOption
   }
 
-  override def validate(withRelationshipCollection: Boolean): Unit = {
+  override def validate(): Unit = {
     // Not required
   }
 

@@ -330,8 +330,7 @@ class SObjectDeployer(module: OPM.Module) {
         nature,
         fieldSets,
         ArraySeq(),
-        collectFields(typeName, nature, fields, hasOwner),
-        _isComplete = true
+        collectFields(typeName, nature, fields, hasOwner)
       )
   }
 
@@ -347,9 +346,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       sharingReasons,
-      shareFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      shareFieldsFor(typeName)
     )
   }
 
@@ -361,9 +358,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       ArraySeq(),
-      feedFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      feedFieldsFor(typeName)
     )
   }
 
@@ -375,9 +370,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       ArraySeq(),
-      historyFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      historyFieldsFor(typeName)
     )
   }
 
@@ -518,7 +511,7 @@ class SObjectDeployer(module: OPM.Module) {
       combinedFieldsets,
       combinedSharingReasons,
       combinedFields,
-      base.nonEmpty && base.get.isComplete
+      base.nonEmpty
     )
 
     // If we are extending over a module boundary then link via dependencies for refresh handling

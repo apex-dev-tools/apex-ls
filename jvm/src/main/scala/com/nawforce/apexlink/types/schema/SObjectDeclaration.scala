@@ -21,6 +21,7 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.{OPM, OrgInfo, SObjectDeployer}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.platform.PlatformTypes
+import com.nawforce.apexlink.types.schema.SObjectDeclaration.syntheticExtension
 import com.nawforce.apexlink.types.synthetic.{
   CustomField,
   CustomMethodDeclaration,
@@ -28,7 +29,7 @@ import com.nawforce.apexlink.types.synthetic.{
 }
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, Nature}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation, UnsafeLocatable}
 import com.nawforce.pkgforce.stream.{HierarchyCustomSetting, ListCustomSetting, SObjectEvent}
@@ -82,9 +83,8 @@ final case class SObjectDeclaration(
   sobjectNature: SObjectNature,
   fieldSets: ArraySeq[Name],
   sharingReasons: ArraySeq[Name],
-  baseFields: ArraySeq[FieldDeclaration],
-  _isComplete: Boolean,
-  isSynthetic: Boolean = false
+  fields: ArraySeq[FieldDeclaration],
+  isClone: Boolean = false
 ) extends SObjectLikeDeclaration
     with SObjectMethods
     with UnsafeLocatable
@@ -94,7 +94,8 @@ final case class SObjectDeclaration(
   override def location: PathLocation                = sources.headOption.map(_.location).orNull
   override val inTest: Boolean                       = false
   override val moduleDeclaration: Option[OPM.Module] = Some(module)
-  override lazy val isComplete: Boolean              = _isComplete
+  override val isComplete: Boolean                   = true
+  def isSynthetic: Boolean = EncodedName(typeName.name).ext.exists(syntheticExtension.contains)
 
   override val paths: ArraySeq[PathLike] =
     ArraySeq.unsafeWrapArray(sources.map(source => source.location.path))
@@ -119,17 +120,13 @@ final case class SObjectDeclaration(
     TypeResolver(superClass.get, this).toOption
 
   override def validate(): Unit = {
-    validate(withRelationshipCollection = true)
-  }
-
-  override def validate(withRelationshipCollection: Boolean): Unit = {
     // Check field types, can be ignored for Feed, Share & History synthetic SObjects
     if (isSynthetic) return
 
     // Lookup like and summary field need specific validations
     fields.foreach {
       case field: CustomField if field.relationshipName.nonEmpty =>
-        validateLookupLike(field)
+        validateLookupLike(field, this.sources)
       case field: CustomField if field.derivedFrom.nonEmpty =>
         validateSummary(field)
       case _ => ()
@@ -139,19 +136,25 @@ final case class SObjectDeclaration(
     fields.map(_.typeName).toSet.filterNot(_ == typeName).foreach(updateDependencies)
     propagateDependencies()
     propagateOuterDependencies(new TypeCache())
-
-    if (withRelationshipCollection)
-      collectRelationshipFields(getTypeDependencyHolders.toSet)
   }
 
-  private def validateLookupLike(field: CustomField): Unit = {
-    TypeResolver(field.typeName, module) match {
-      case Right(td: SObjectDeclaration) if !td.moduleDeclaration.contains(module) =>
-        // Create a module specific version for related lists to live on
+  private def validateLookupLike(field: CustomField, sources: Array[SourceInfo]): Unit = {
+    val target = TypeResolver(field.typeName, module) match {
+      case Right(td: SObjectDeclaration) if td.isClone =>
+        module.nextModule.flatMap(next => TypeResolver(field.typeName, next).toOption)
+      case Right(td: SObjectDeclaration) => Some(td)
+      case _                             => None
+    }
+
+    target match {
+      case Some(td: SObjectDeclaration) if !td.moduleDeclaration.contains(module) =>
+        // Create a module specific version for related lists to live on. We pass through the declaring objects sources
+        // here so that we have a target file for refreshing within the current module, see SObject handling in
+        // PackageAPI.reValidate() for why this is important.
         val deployer = new SObjectDeployer(module)
         val replacement = deployer.extendExistingSObject(
           Some(td),
-          Array(),
+          sources,
           td.typeName,
           td.sobjectNature,
           ArraySeq(),
@@ -161,7 +164,7 @@ final case class SObjectDeclaration(
         replacement.propagateOuterDependencies(new TypeCache())
         module.types.put(replacement.typeName, replacement)
         module.schemaSObjectType.add(replacement.typeName.name, hasFieldSets = true)
-      case Left(_) =>
+      case None =>
         if (module.isGhostedType(field.typeName)) {
           // Create ghost SObject for later validations
           val ghostedSObject = GhostSObjectDeclaration(module, field.typeName)
@@ -205,8 +208,6 @@ final case class SObjectDeclaration(
   ): Unit = {
     DependentType.dependentsToTypeIds(module, depends, apexOnly, outerTypesOnly, dependsOn)
   }
-
-  override val fields: ArraySeq[FieldDeclaration] = baseFields
 
   override def findField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
     findSObjectField(name, staticContext)
@@ -294,6 +295,8 @@ final case class SObjectDeclaration(
 
 object SObjectDeclaration {
   val globalModifiers: ArraySeq[Modifier] = ArraySeq(GLOBAL_MODIFIER)
+
+  val syntheticExtension: Set[Name] = Set(Name("Share"), Name("Feed"), Name("History"))
 
   lazy val sObjectMethodMap: Map[(Name, Int), MethodDeclaration] =
     PlatformTypes.sObjectType.methods.map(m => ((m.name, m.parameters.length), m)).toMap

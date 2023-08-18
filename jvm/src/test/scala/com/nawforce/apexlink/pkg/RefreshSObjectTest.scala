@@ -389,7 +389,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("MDAPI lookup dependency delete") {
+  test("MDAPI lookup removed target") {
     withManualFlush {
       FileSystemHelper.run(
         Map(
@@ -401,6 +401,8 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         )
       ) { root: PathLike =>
         val org = createHappyOrg(root)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Lookup__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Lookup__r"), Some(false)).nonEmpty)
 
         val basePath = root.join("objects", "Bar__c.object")
         assert(basePath.delete().isEmpty)
@@ -411,22 +413,29 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
           getMessages() ==
             path"/objects/Foo__c.object: Missing: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
         )
+
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Lookup__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Bar__c").isEmpty)
       }
     }
   }
 
-  test("SFDX lookup dependency delete") {
+  test("SFDX lookup removed target") {
     withManualFlush {
       FileSystemHelper.run(
         Map(
           "objects/Bar__c/Bar__c.object-meta.xml" -> customObject("Bar", Seq()),
-          "objects/Foo__c/Foo__c.object-meta.xml" -> customObject(
-            "Foo",
-            Seq(("Lookup__c", Some("Lookup"), Some("Bar__c")))
+          "objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq()),
+          "objects/Foo__c/fields/Lookup__c.field-meta.xml" -> customField(
+            "Lookup__c",
+            "Lookup",
+            Some("Bar__c")
           )
         )
       ) { root: PathLike =>
         val org = createHappyOrg(root)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Lookup__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Lookup__r"), Some(false)).nonEmpty)
 
         val basePath = root.join("objects", "Bar__c", "Bar__c.object-meta.xml")
         assert(basePath.delete().isEmpty)
@@ -435,13 +444,45 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            path"/objects/Foo__c/Foo__c.object-meta.xml: Missing: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
+            path"/objects/Foo__c/fields/Lookup__c.field-meta.xml: Missing: line 1: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
         )
+
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Lookup__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Bar__c").isEmpty)
       }
     }
   }
 
-  test("SFDX lookup missing") {
+  test("SFDX lookup removed field") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "objects/Bar__c/Bar__c.object-meta.xml" -> customObject("Bar", Seq()),
+          "objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq()),
+          "objects/Foo__c/fields/Lookup__c.field-meta.xml" -> customField(
+            "Lookup__c",
+            "Lookup",
+            Some("Bar__c")
+          )
+        )
+      ) { root: PathLike =>
+        val org = createHappyOrg(root)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Lookup__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Lookup__r"), Some(false)).nonEmpty)
+
+        val basePath = root.join("objects", "Foo__c", "fields", "Lookup__c.field-meta.xml")
+        assert(basePath.delete().isEmpty)
+        org.unmanaged.refresh(basePath, highPriority = false)
+        assert(org.flush())
+
+        assert(getMessages().isEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Lookup__c"), Some(false)).isEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Lookup__r"), Some(false)).isEmpty)
+      }
+    }
+  }
+
+  test("SFDX lookup missing & added") {
     withManualFlush {
       FileSystemHelper.run(
         Map(
@@ -463,11 +504,13 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
         assert(org.issues.isEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Lookup__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Lookup__r"), Some(false)).nonEmpty)
       }
     }
   }
 
-  test("Cross-layer lookup refresh") {
+  test("SFDX Cross module lookup refresh") {
 
     withManualFlush {
       FileSystemHelper.run(
@@ -483,16 +526,122 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         )
       ) { root: PathLike =>
         val org = createHappyOrg(root)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Baz__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Baz__r"), Some(false)).nonEmpty)
 
         val fooPath       = root.join("base", "objects", "Foo__c")
         val fooFieldsPath = fooPath.createDirectory("fields").toOption.get
         val newField      = fooFieldsPath.join("Extra__c.field-meta.xml")
-        assert(newField.write(customField("Extra", "Text", None)).isEmpty)
+        assert(newField.write(customField("Extra__c", "Text", None)).isEmpty)
+        org.unmanaged.refresh(newField, highPriority = false)
+        assert(org.flush())
+        assert(getMessages().isEmpty)
+
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Extra__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Baz__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Baz__r"), Some(false)).nonEmpty)
+      }
+    }
+  }
+
+  test("SFDX Cross module lookup removed field") {
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
+          "base/objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq()),
+          "ext/objects/Bar__c/Bar__c.object-meta.xml"  -> customObject("Bar", Seq()),
+          "ext/objects/Bar__c/fields/Baz__c.field-meta.xml" -> customField(
+            "Baz__c",
+            "Lookup",
+            Some("Foo__c")
+          )
+        )
+      ) { root: PathLike =>
+        val org = createHappyOrg(root)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Baz__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Baz__r"), Some(false)).nonEmpty)
+
+        val basePath = root.join("ext", "objects", "Bar__c", "fields", "Baz__c.field-meta.xml")
+        assert(basePath.delete().isEmpty)
+        org.unmanaged.refresh(basePath, highPriority = false)
+        assert(org.flush())
+
+        assert(getMessages().isEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Baz__c"), Some(false)).isEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Baz__r"), Some(false)).isEmpty)
+      }
+    }
+  }
+
+  test("SFDX Cross module lookup missing & added") {
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
+          "base/objects/.forceignore"                 -> "",
+          "ext/objects/Bar__c/Bar__c.object-meta.xml" -> customObject("Bar", Seq()),
+          "ext/objects/Bar__c/fields/Baz__c.field-meta.xml" -> customField(
+            "Baz__c",
+            "Lookup",
+            Some("Foo__c")
+          )
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        assert(
+          getMessages() ==
+            path"/ext/objects/Bar__c/fields/Baz__c.field-meta.xml: Missing: line 1: Lookup object Schema.Foo__c does not exist for field 'Baz__r'" + "\n"
+        )
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Baz__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Foo__c").isEmpty)
+
+        val basePath = root.join("base", "objects", "Foo__c", "Foo__c.object-meta.xml")
+        assert(basePath.parent.parent.createDirectory("Foo__c").isRight)
+        assert(basePath.write(customObject("Foo__c", Seq())).isEmpty)
+        org.unmanaged.refresh(basePath, highPriority = false)
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Baz__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Baz__r"), Some(false)).nonEmpty)
+      }
+    }
+  }
+
+  test("SFDX Cross module lookup addition and refresh") {
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
+          "base/objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq()),
+          "ext/objects/Bar__c/Bar__c.object-meta.xml"  -> customObject("Bar", Seq())
+        )
+      ) { root: PathLike =>
+        val org = createHappyOrg(root)
+
+        val barPath       = root.join("ext", "objects", "Bar__c")
+        val barFieldsPath = barPath.createDirectory("fields").toOption.get
+        val lookupField   = barFieldsPath.join("Baz__c.field-meta.xml")
+        assert(lookupField.write(customField("Baz__c", "Lookup", Some("Foo__c"))).isEmpty)
+        org.unmanaged.refresh(lookupField, highPriority = false)
+        assert(org.flush())
+        assert(getMessages().isEmpty)
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Baz__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Baz__r"), Some(false)).nonEmpty)
+
+        val fooPath       = root.join("base", "objects", "Foo__c")
+        val fooFieldsPath = fooPath.createDirectory("fields").toOption.get
+        val newField      = fooFieldsPath.join("Extra__c.field-meta.xml")
+        assert(newField.write(customField("Extra__c", "Text", None)).isEmpty)
         org.unmanaged.refresh(newField, highPriority = false)
         assert(org.flush())
         assert(getMessages().isEmpty)
 
         assert(unmanagedSObject("Foo__c").get.fields.exists(_.name.toString == "Extra__c"))
+        assert(unmanagedSObject("Bar__c").get.findField(Name("Baz__c"), Some(false)).nonEmpty)
+        assert(unmanagedSObject("Foo__c").get.findField(Name("Baz__r"), Some(false)).nonEmpty)
       }
     }
   }

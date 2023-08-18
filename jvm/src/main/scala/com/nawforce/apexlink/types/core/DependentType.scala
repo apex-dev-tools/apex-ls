@@ -25,9 +25,15 @@ import com.nawforce.apexlink.types.schema.SObjectDeclaration
 
 import scala.collection.mutable
 
-/** Add-in for supporting type level dependency analysis. This builds on the fine grained dependency
+/** Base for supporting type level dependency analysis. This builds on the fine grained dependency
   * handling found in Dependency & DependencyHolder. Type level analysis is more useful for the API
   * as it more directly maps to file updates that drive invalidation handling.
+  *
+  * The holders of dependencies on this type are stored to allow them to be queried as needed.
+  *
+  * This supports both side of type level dependencies. As as a type with dependencies you must
+  * implement the gatherDependents methods which enables the calling of propagateOuterDependencies
+  * to inform dependents of the dependency.
   */
 trait DependentType extends TypeDeclaration {
 
@@ -50,9 +56,23 @@ trait DependentType extends TypeDeclaration {
     Option(typeDependencyHolders).getOrElse(DependentType.emptyTypeDependencyHolders)
   }
 
-  /** Set type dependency holders, useful when carrying forward during upsert */
-  def updateTypeDependencyHolders(holders: SkinnySet[TypeId]): Unit = {
+  /** Set type dependency holders, useful when carrying forward dependencies when a type if being
+    * replaced.
+    */
+  def setTypeDependencyHolders(holders: SkinnySet[TypeId]): Unit = {
     typeDependencyHolders = holders
+  }
+
+  /** Add a single type dependency holders for this type.
+    */
+  def addTypeDependencyHolder(typeId: TypeId): Unit = {
+    if (typeId != this.typeId) {
+      if (
+        typeDependencyHolders == null || typeDependencyHolders == DependentType.emptyTypeDependencyHolders
+      )
+        typeDependencyHolders = new SkinnySet()
+      typeDependencyHolders.add(typeId)
+    }
   }
 
   /** Collect set of TypeIds that this declaration is dependent on.
@@ -69,17 +89,9 @@ trait DependentType extends TypeDeclaration {
     typeCache: TypeCache
   ): Unit
 
-  def addTypeDependencyHolder(typeId: TypeId): Unit = {
-    if (typeId != this.typeId) {
-      if (
-        typeDependencyHolders == null || typeDependencyHolders == DependentType.emptyTypeDependencyHolders
-      )
-        typeDependencyHolders = new SkinnySet()
-      typeDependencyHolders.add(typeId)
-    }
-  }
-
-  // Update holders on outer dependencies
+  /** Helper to update other types that you hold a dependency on them. Typically this need to be
+    * called after first creating a new type.
+    */
   def propagateOuterDependencies(typeCache: TypeCache): Unit = {
     val dependsOn = mutable.Set[TypeId]()
     gatherDependencies(dependsOn, apexOnly = false, outerTypesOnly = true, typeCache)
