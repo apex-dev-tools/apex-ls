@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ "**" ]
+    branches: ["**"]
   workflow_dispatch:
 
 jobs:
@@ -12,41 +12,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: 8
-        cache: 'sbt'
+      - uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: 8
+          cache: "sbt"
 
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 16
-        cache: 'npm'
-        cache-dependency-path: js/npm/package-lock.json
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: "npm"
+          cache-dependency-path: js/npm/package-lock.json
 
-    - name: FormatCheck
-      run: sbt scalafmtCheck   # Does not check test files currently
+      - name: FormatCheck
+        run: sbt scalafmtCheck # Does not check test files currently
 
-    - name: Build
-      run: sbt build
+      - name: Build
+        run: sbt build
 
-    - name: Test
-      run: sbt test
+      - name: Test
+        run: sbt test
 
-    - name: Checkout samples repo
-      uses: actions/checkout@v3
-      with:
-        submodules: recursive
-        repository: apex-dev-tools/apex-samples
-        path: apex-samples
-        ref: v1.0.0
+      - name: Checkout samples repo
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          repository: apex-dev-tools/apex-samples
+          path: apex-samples
+          ref: v1.0.2
 
-    - name: Set samples env
-      run: echo "SAMPLES=$GITHUB_WORKSPACE/apex-samples" >> "$GITHUB_ENV"
+      - name: Set samples env
+        run: echo "SAMPLES=$GITHUB_WORKSPACE/apex-samples" >> "$GITHUB_ENV"
 
-    - name: System Test
-      shell: 'script -q -e -c "bash {0}"' # Color support
-      run: npm run test-samples
-      working-directory: js/npm
+      - name: System Test
+        shell: 'script -q -e -c "bash {0}"' # Color support
+        run: npm run test-samples
+        working-directory: js/npm
