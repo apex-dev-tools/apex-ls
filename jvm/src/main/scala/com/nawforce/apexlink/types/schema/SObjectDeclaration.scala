@@ -84,7 +84,8 @@ final case class SObjectDeclaration(
   fieldSets: ArraySeq[Name],
   sharingReasons: ArraySeq[Name],
   fields: ArraySeq[FieldDeclaration],
-  isClone: Boolean = false
+  isComplete: Boolean = true,
+  crossModuleBase: Option[SObjectDeclaration] = None
 ) extends SObjectLikeDeclaration
     with SObjectMethods
     with UnsafeLocatable
@@ -94,7 +95,6 @@ final case class SObjectDeclaration(
   override def location: PathLocation                = sources.headOption.map(_.location).orNull
   override val inTest: Boolean                       = false
   override val moduleDeclaration: Option[OPM.Module] = Some(module)
-  override val isComplete: Boolean                   = true
   def isSynthetic: Boolean = EncodedName(typeName.name).ext.exists(syntheticExtension.contains)
 
   override val paths: ArraySeq[PathLike] =
@@ -138,32 +138,33 @@ final case class SObjectDeclaration(
     propagateOuterDependencies(new TypeCache())
   }
 
-  private def validateLookupLike(field: CustomField, sources: Array[SourceInfo]): Unit = {
-    val target = TypeResolver(field.typeName, module) match {
-      case Right(td: SObjectDeclaration) if td.isClone =>
-        module.nextModule.flatMap(next => TypeResolver(field.typeName, next).toOption)
-      case Right(td: SObjectDeclaration) => Some(td)
-      case _                             => None
-    }
+  /** Custom validation steps for lookup fields. */
+  private def validateLookupLike(field: CustomField, additionalSources: Array[SourceInfo]): Unit = {
 
-    target match {
-      case Some(td: SObjectDeclaration) if !td.moduleDeclaration.contains(module) =>
-        // Create a module specific version for related lists to live on. We pass through the declaring objects sources
-        // here so that we have a target file for refreshing within the current module, see SObject handling in
-        // PackageAPI.reValidate() for why this is important.
-        val deployer = new SObjectDeployer(module)
-        val replacement = deployer.extendExistingSObject(
-          Some(td),
-          sources,
-          td.typeName,
-          td.sobjectNature,
-          ArraySeq(),
-          ArraySeq(),
-          ArraySeq()
-        )
-        replacement.propagateOuterDependencies(new TypeCache())
-        module.types.put(replacement.typeName, replacement)
-        module.schemaSObjectType.add(replacement.typeName.name, hasFieldSets = true)
+    // We might need to create a module specific version of the field typeName for related list support. However
+    // we might also be validating because that target has been replaced at source, in which case any current
+    // module specific version needs to be replaced by a fresh copy.
+    //
+    // To complicate a little more we pass some additional sources to the clone so that it is guaranteed to
+    // have some files from this module. If it didn't the refresh mechanism in PackageAPI.reValidate() would
+    // not function for the clone.
+
+    val sobject = TypeResolver(field.typeName, module).toOption match {
+      case Some(td: SObjectDeclaration) => Some(td)
+      case _                            => None
+    }
+    sobject match {
+      case Some(sobject: SObjectDeclaration) if sobject.crossModuleBase.nonEmpty =>
+        module.nextModule
+          .flatMap(next => TypeResolver(field.typeName, next).toOption)
+          .collect { case sobject: SObjectDeclaration => sobject }
+          .foreach(currentBase => {
+            if (currentBase ne sobject.crossModuleBase.get)
+              cloneSObject(currentBase, additionalSources)
+          })
+      case Some(sobject: SObjectDeclaration) if !sobject.moduleDeclaration.contains(module) =>
+        cloneSObject(sobject, additionalSources)
+      case Some(_) => ()
       case None =>
         if (module.isGhostedType(field.typeName)) {
           // Create ghost SObject for later validations
@@ -176,13 +177,33 @@ final case class SObjectDeclaration(
             s"Lookup object ${field.typeName} does not exist for field '${field.name}'"
           )
         }
-      case _ => ()
     }
 
     if (field.typeName != typeName)
       updateDependencies(field.typeName)
   }
 
+  private def cloneSObject(
+    baseSObject: SObjectDeclaration,
+    additionalSources: Array[SourceInfo]
+  ): SObjectDeclaration = {
+    val deployer = new SObjectDeployer(module)
+    val replacement = deployer.extendExistingSObject(
+      Some(baseSObject),
+      additionalSources,
+      baseSObject.typeName,
+      baseSObject.sobjectNature,
+      ArraySeq(),
+      ArraySeq(),
+      ArraySeq()
+    )
+    replacement.propagateOuterDependencies(new TypeCache())
+    module.types.put(replacement.typeName, replacement)
+    module.schemaSObjectType.add(replacement.typeName.name, hasFieldSets = true)
+    replacement
+  }
+
+  /** Custom validation steps for summary fields. */
   private def validateSummary(field: CustomField): Unit = {
     // Depend on the SObjects the field is derived from
     field.derivedFrom.foreach(updateDependencies)
