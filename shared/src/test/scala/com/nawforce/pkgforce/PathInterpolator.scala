@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2023 FinancialForce.com, inc. All rights reserved.
+ */
 package com.nawforce.pkgforce
 
 import com.nawforce.runtime.platform.{Environment, Path}

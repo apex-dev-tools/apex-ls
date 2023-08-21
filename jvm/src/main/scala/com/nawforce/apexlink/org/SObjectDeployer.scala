@@ -347,8 +347,7 @@ class SObjectDeployer(module: OPM.Module) {
         nature,
         fieldSets,
         ArraySeq(),
-        collectFields(typeName, nature, fields, hasOwner),
-        _isComplete = true
+        collectFields(typeName, nature, fields, hasOwner)
       )
   }
 
@@ -364,9 +363,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       sharingReasons,
-      shareFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      shareFieldsFor(typeName)
     )
   }
 
@@ -378,9 +375,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       ArraySeq(),
-      feedFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      feedFieldsFor(typeName)
     )
   }
 
@@ -392,9 +387,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       ArraySeq(),
-      historyFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      historyFieldsFor(typeName)
     )
   }
 
@@ -500,7 +493,7 @@ class SObjectDeployer(module: OPM.Module) {
     }
 
     // FUTURE: Add type for platform sobjects so we don't need this hackery
-    def asSObject: Option[SObjectDeclaration] = {
+    def baseAsSObject: Option[SObjectDeclaration] = {
       if (base.nonEmpty && base.get.isInstanceOf[SObjectDeclaration])
         base.map(_.asInstanceOf[SObjectDeclaration])
       else {
@@ -509,19 +502,19 @@ class SObjectDeployer(module: OPM.Module) {
     }
 
     val extend          = base.getOrElse(PlatformTypes.sObjectType)
-    val combinedSources = asSObject.map(_.sources).getOrElse(Array()) ++ sources
+    val combinedSources = baseAsSObject.map(_.sources).getOrElse(Array()) ++ sources
     val combinedFields =
       collectFields(typeName, nature, extend.fields ++ fields, hasOwner = base.isEmpty)
     val combinedFieldsets = ArraySeq.unsafeWrapArray(
       fieldSets
-        .foldLeft(asSObject.map(_.fieldSets).getOrElse(ArraySeq()).toSet)((acc, fieldset) =>
+        .foldLeft(baseAsSObject.map(_.fieldSets).getOrElse(ArraySeq()).toSet)((acc, fieldset) =>
           acc + fieldset
         )
         .toArray
     )
     val combinedSharingReasons = ArraySeq.unsafeWrapArray(
       sharingReasons
-        .foldLeft(asSObject.map(_.sharingReasons).getOrElse(ArraySeq()).toSet)(
+        .foldLeft(baseAsSObject.map(_.sharingReasons).getOrElse(ArraySeq()).toSet)(
           (acc, sharingReason) => acc + sharingReason
         )
         .toArray
@@ -535,7 +528,8 @@ class SObjectDeployer(module: OPM.Module) {
       combinedFieldsets,
       combinedSharingReasons,
       combinedFields,
-      base.nonEmpty && base.get.isComplete
+      isComplete = baseAsSObject.nonEmpty,
+      if (crossModule) baseAsSObject else None
     )
 
     // If we are extending over a module boundary then link via dependencies for refresh handling

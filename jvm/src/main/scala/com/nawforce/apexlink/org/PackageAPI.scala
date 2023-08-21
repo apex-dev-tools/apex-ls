@@ -367,7 +367,7 @@ trait PackageAPI extends Package {
     val tds = references.flatMap(typeId =>
       typeId.module.moduleType(typeId.typeName) match {
         case Some(sobject: SObjectDeclaration) =>
-          // TODO: Over general, reload only needed when a base SObject is changed
+          // TODO: We don't always need to do a full reload here, should only be needed if a base is changed.
           sobject.paths.find(typeId.module.isVisibleFile).map(path => refreshInternal(path))
           None
         case Some(summary: SummaryDeclaration) =>
