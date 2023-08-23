@@ -528,7 +528,7 @@ class SObjectDeployer(module: OPM.Module) {
       combinedFieldsets,
       combinedSharingReasons,
       combinedFields,
-      isComplete = baseAsSObject.nonEmpty,
+      isComplete = base.nonEmpty,
       if (crossModule) baseAsSObject else None
     )
 
