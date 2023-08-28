@@ -16,7 +16,6 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.cst.AssignableSupport.{couldBeEqual, isAssignable}
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.types.apex.ApexFieldLike
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.names.TypeName
@@ -61,8 +60,8 @@ abstract class Operation {
     typeName == TypeNames.Time
   }
 
-  def isNonReferenceKind(typeName: TypeName): Boolean = {
-    Operation.nonReferenceTypes.contains(typeName)
+  def isPrimitiveKind(typeName: TypeName): Boolean = {
+    Operation.primitiveTypes.contains(typeName)
   }
 
   def getArithmeticResult(leftType: TypeName, rightType: TypeName): Option[TypeDeclaration] = {
@@ -131,12 +130,13 @@ abstract class Operation {
 }
 
 object Operation {
-  private lazy val nonReferenceTypes: Set[TypeName] = Set(
+  private lazy val primitiveTypes: Set[TypeName] = Set(
     TypeNames.Integer,
     TypeNames.Long,
-    TypeNames.Decimal,
     TypeNames.Double,
+    TypeNames.Decimal,
     TypeNames.String,
+    TypeNames.Boolean,
     TypeNames.Date,
     TypeNames.Datetime,
     TypeNames.Time,
@@ -328,24 +328,15 @@ case object ExactEqualityOperation extends Operation {
     context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
 
-    if (isNonReferenceKind(leftContext.typeName)) {
-      Left(
-        s"Exact equality/inequality requires is not supported on non-reference types '${leftContext.typeName}'"
-      )
-    } else if (isNonReferenceKind(rightContext.typeName)) {
-      Left(
-        s"Exact equality/inequality requires is not supported on non-reference types '${rightContext.typeName}'"
-      )
-    } else if (
-      leftContext.typeName == rightContext.typeName ||
-      leftContext.typeName == TypeNames.InternalObject ||
-      rightContext.typeName == TypeNames.InternalObject ||
-      leftContext.typeDeclaration.extendsOrImplements(rightContext.typeName) ||
-      rightContext.typeDeclaration.extendsOrImplements(leftContext.typeName)
-    )
-      Right(ExprContext(isStatic = Some(false), PlatformTypes.booleanType))
-    else
+    if (!couldBeEqual(leftContext.typeDeclaration, rightContext.typeDeclaration, context))
       Left(s"Comparing incompatible types '${leftContext.typeName}' and '${rightContext.typeName}'")
+    else if (isPrimitiveKind(leftContext.typeName) && isPrimitiveKind(rightContext.typeName))
+      Left(
+        "Exact equality/inequality is not supported between primitive types " +
+          s"'${leftContext.typeName}' & '${rightContext.typeName}'"
+      )
+    else
+      Right(ExprContext(isStatic = Some(false), PlatformTypes.booleanType))
   }
 }
 
