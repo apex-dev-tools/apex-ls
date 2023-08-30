@@ -417,6 +417,34 @@ object GetDependencyCounts {
   }
 }
 
+case class GetAllDependencyCounts(
+  promise: Promise[GetAllDependencyCountsResult],
+  request: GetAllDependencyCountsRequest
+) extends APIRequest {
+  override def process(queue: OrgQueue): Unit = {
+    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
+    OrgInfo.current.withValue(orgImpl) {
+      promise.success(
+        GetAllDependencyCountsResult(
+          orgImpl
+            .getAllDependencyCounts(request.directoryScope, request.excludeTestClasses)
+        )
+      )
+    }
+  }
+}
+
+object GetAllDependencyCounts {
+  def apply(
+    queue: OrgQueue,
+    request: GetAllDependencyCountsRequest
+  ): Future[GetAllDependencyCountsResult] = {
+    val promise = Promise[GetAllDependencyCountsResult]()
+    queue.add(new GetAllDependencyCounts(promise, request))
+    promise.future
+  }
+}
+
 case class GetCompletionItems(
   promise: Promise[Array[CompletionItemLink]],
   path: String,
@@ -653,6 +681,12 @@ class OrgAPIImpl extends OrgAPI {
     request: GetDependencyCountsRequest
   ): Future[GetDependencyCountsResult] = {
     GetDependencyCounts(OrgQueue.instance(), request)
+  }
+
+  override def getAllDependencyCounts(
+    request: GetAllDependencyCountsRequest
+  ): Future[GetAllDependencyCountsResult] = {
+    GetAllDependencyCounts(OrgQueue.instance(), request)
   }
 
   override def getCompletionItems(
