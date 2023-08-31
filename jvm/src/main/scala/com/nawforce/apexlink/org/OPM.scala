@@ -410,6 +410,42 @@ object OPM extends TriHierarchy {
       }
     }
 
+    /** Returns dependency information for all classes & triggers
+      *
+      * @param scopeDirectory     limit to classes & triggers under this directory, maybe relative to org path
+      * @param excludeTestClasses ignore @isTest classes
+      */
+    def getAllDependencyCounts(
+      scopeDirectory: String,
+      excludeTestClasses: Boolean
+    ): Array[DependencyCount] = {
+      val scopePath = path.join(scopeDirectory)
+      if (!scopePath.isDirectory) {
+        Array()
+      } else {
+        // Traverse indexes under or same as scopePath extracting all class files within scopePath
+        val paths = mutable.ArrayBuffer[PathLike]()
+        workspace.indexes
+          .foreach(layerAndIndex => {
+            paths.addAll(
+              layerAndIndex._2.get(ApexNature).values.flatten.filter(scopePath.isParentOf)
+            )
+            paths.addAll(
+              layerAndIndex._2.get(TriggerNature).values.flatten.filter(scopePath.isParentOf)
+            )
+
+          })
+
+        // Use paths to direct getDependencyCounts to do the work
+        getDependencyCountsInternal(paths.toArray, excludeTestClasses)
+      }
+    }
+
+    /** Returns dependency information for classes & triggers identified via paths
+      *
+      * @param paths paths of types to find dependency information for
+      * @param excludeTestClasses ignore @isTest classes
+      */
     def getDependencyCounts(
       paths: Array[String],
       excludeTestClasses: Boolean
@@ -417,7 +453,12 @@ object OPM extends TriHierarchy {
       getDependencyCountsInternal(paths.map(Path.safeApply), excludeTestClasses)
     }
 
-    def getDependencyCountsInternal(
+    /** Returns dependency information for classes & triggers identified via paths
+      *
+      * @param paths              paths of classes to find dependency information for
+      * @param excludeTestClasses ignore @isTest classes
+      */
+    private def getDependencyCountsInternal(
       paths: Array[PathLike],
       excludeTestClasses: Boolean
     ): Array[DependencyCount] = {
@@ -471,6 +512,7 @@ object OPM extends TriHierarchy {
             }
         }
     }
+
   }
 
   class PackageImpl(
