@@ -18,69 +18,52 @@ import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.names.{Names, TypeName}
 
+/** Rules for determining if one type is assignable to another */
 object AssignableSupport {
 
-  implicit class AssignableName(fromType: TypeName) {
+  /** Options for determining assignability
+    * @param strictConversions limit implicit type conversions
+    * @param narrowSObjects narrowing of SObject conversions, i.e. SObject cast to Account
+    */
+  case class AssignableOptions(strictConversions: Boolean, narrowSObjects: Boolean)
 
-    def isAssignableTo(toType: TypeName, strict: Boolean, context: VerifyContext): Boolean =
-      isAssignable(
-        toType,
-        fromType,
-        AssignableOptions(strictConversions = strict, disableSObjectNarrowing = false),
-        context
-      )
+  object AssignableOptions {
 
+    /** Most commonly used options */
+    val default: AssignableOptions =
+      AssignableOptions(strictConversions = false, narrowSObjects = true)
   }
 
-  implicit class AssignableType(fromType: TypeDeclaration) {
-
-    def isAssignableTo(toType: TypeName, strict: Boolean, context: VerifyContext): Boolean =
-      isAssignable(
-        toType,
-        fromType,
-        AssignableOptions(strictConversions = strict, disableSObjectNarrowing = false),
-        context
-      )
-
-    def couldBeEqualTo(toType: TypeDeclaration, context: VerifyContext): Boolean =
-      couldBeEqual(toType, fromType, context)
-
-  }
-
-  case class AssignableOptions(
-    strictConversions: Boolean, // When enabled limits allowed implicit type conversions
-    disableSObjectNarrowing: Boolean // When enabled disallows narrowing of SObject conversions, i.e. Account->SObject
-  )
-
+  /** Determine if two values could be equal based on type
+    *
+    * Where possible prefer [[isAssignableDeclaration]] to avoid type resolution
+    * @param aType one of the types
+    * @param bType the other one
+    * @param context context of evaluation
+    */
   def couldBeEqual(
-    toType: TypeDeclaration,
-    fromType: TypeDeclaration,
+    aType: TypeDeclaration,
+    bType: TypeDeclaration,
     context: VerifyContext
   ): Boolean = {
-    val options = AssignableOptions(strictConversions = false, disableSObjectNarrowing = false)
-    isAssignable(toType.typeName, fromType, options, context) ||
-    isAssignable(fromType.typeName, toType, options, context)
+    val options = AssignableOptions(strictConversions = false, narrowSObjects = true)
+    isAssignableDeclaration(aType.typeName, bType, context, options) ||
+    isAssignableDeclaration(bType.typeName, aType, context, options)
   }
 
+  /** Determine if value of a type can be assigned to another type
+    *
+    * Where possible prefer [[isAssignableDeclaration]] to avoid type resolution
+    * @param toType type to assign to
+    * @param fromType type to assign from
+    * @param context context of assignment
+    * @param options options for type of assignment
+    */
   def isAssignable(
     toType: TypeName,
     fromType: TypeName,
-    strictConversions: Boolean,
-    context: VerifyContext
-  ): Boolean = {
-    isAssignable(
-      toType,
-      fromType,
-      AssignableOptions(strictConversions, disableSObjectNarrowing = false),
-      context
-    )
-  }
-
-  def isAssignable(
-    toType: TypeName,
-    fromType: TypeName,
-    options: AssignableOptions,
-    context: VerifyContext
+    context: VerifyContext,
+    options: AssignableOptions = AssignableOptions.default
   ): Boolean = {
     context.getTypeFor(fromType, context.thisType) match {
       case Left(_) =>
@@ -89,29 +72,21 @@ object AssignableSupport {
           .contains(TypeNames.Schema)) ||
         (toType == TypeNames.InternalObject && context.module.isGhostedType(fromType))
       case Right(fromDeclaration) =>
-        isAssignable(toType, fromDeclaration, options, context)
+        isAssignableDeclaration(toType, fromDeclaration, context, options)
     }
   }
 
-  def isAssignable(
+  /** Determine if value of a type declaration can be assigned to another type
+    * @param toType   type to assign to
+    * @param fromType type declaration to assign from
+    * @param context  context of assignment
+    * @param options  options for type of assignment
+    */
+  def isAssignableDeclaration(
     toType: TypeName,
     fromType: TypeDeclaration,
-    strictConversions: Boolean,
-    context: VerifyContext
-  ): Boolean = {
-    isAssignable(
-      toType,
-      fromType,
-      AssignableOptions(strictConversions, disableSObjectNarrowing = false),
-      context
-    )
-  }
-
-  def isAssignable(
-    toType: TypeName,
-    fromType: TypeDeclaration,
-    options: AssignableOptions,
-    context: VerifyContext
+    context: VerifyContext,
+    options: AssignableOptions = AssignableOptions.default
   ): Boolean = {
     if (
       fromType.typeName == TypeNames.Null ||
@@ -130,7 +105,7 @@ object AssignableSupport {
          strictAssignable.contains(toType, fromType.typeName)
        else
          looseAssignable.contains(toType, fromType.typeName)) ||
-      isSObjectNarrowable(toType, fromType.typeName, options, context) ||
+      canNarrowSObject(toType, fromType.typeName, options, context) ||
       fromType.extendsOrImplements(toType)
     }
   }
@@ -173,30 +148,30 @@ object AssignableSupport {
   ): Boolean = {
     val toParams   = toType.params
     val fromParams = fromType.params
-    val options    = AssignableOptions(strictConversions = false, disableSObjectNarrowing = false)
+    val options    = AssignableOptions(strictConversions = false, narrowSObjects = true)
 
     (fromType.name match {
       case Names.List$ | Names.Set$ =>
-        isSObjectNarrowable(toParams.head, fromParams.head, options, context)
-      case Names.Map$ => isSObjectNarrowable(toParams(1), fromParams(1), options, context)
+        canNarrowSObject(toParams.head, fromParams.head, options, context)
+      case Names.Map$ => canNarrowSObject(toParams(1), fromParams(1), options, context)
       case _          => false
     }) ||
     toParams
       .zip(fromParams)
-      .map(p => isAssignable(p._1, p._2, options, context))
+      .map(p => isAssignable(p._1, p._2, context, options))
       .forall(b => b)
   }
 
   /* Test if an System.SObject can be cast to a specific SObject type. This conversion is generally unsafe but is
    * supported in various (but not all) places in Apex. */
-  private def isSObjectNarrowable(
+  private def canNarrowSObject(
     toType: TypeName,
     fromType: TypeName,
     options: AssignableOptions,
     context: VerifyContext
   ): Boolean = {
     if (
-      !options.disableSObjectNarrowing &&
+      options.narrowSObjects &&
       fromType == TypeNames.SObject &&
       toType != TypeNames.SObject
     ) {
@@ -215,12 +190,7 @@ object AssignableSupport {
     context: VerifyContext
   ): Boolean = {
     if (fromType == TypeNames.QueryLocator && toType.isIterable && toType.params.nonEmpty) {
-      isAssignable(
-        toType.params.head,
-        TypeNames.SObject,
-        AssignableOptions(strictConversions = false, disableSObjectNarrowing = false),
-        context
-      )
+      isAssignable(toType.params.head, TypeNames.SObject, context, AssignableOptions.default)
     } else {
       false
     }
@@ -240,7 +210,7 @@ object AssignableSupport {
     }
   }
 
-  private lazy val strictAssignable: Set[(TypeName, TypeName)] =
+  private val strictAssignable: Set[(TypeName, TypeName)] =
     Set(
       (TypeNames.Long, TypeNames.Integer),
       (TypeNames.Decimal, TypeNames.Integer),
@@ -249,18 +219,15 @@ object AssignableSupport {
       (TypeNames.Datetime, TypeNames.Date)
     )
 
-  private lazy val looseAssignable: Set[(TypeName, TypeName)] =
-    Set(
-      (TypeNames.Long, TypeNames.Integer),
-      (TypeNames.Decimal, TypeNames.Integer),
-      (TypeNames.Double, TypeNames.Integer),
-      (TypeNames.Decimal, TypeNames.Long),
-      (TypeNames.Double, TypeNames.Long),
-      (TypeNames.Double, TypeNames.Decimal),
-      (TypeNames.Decimal, TypeNames.Double),
-      (TypeNames.IdType, TypeNames.String),
-      (TypeNames.String, TypeNames.IdType),
-      (TypeNames.Datetime, TypeNames.Date)
-    )
+  private val looseAssignable: Set[(TypeName, TypeName)] = {
+    strictAssignable ++
+      Set(
+        (TypeNames.Double, TypeNames.Integer),
+        (TypeNames.Decimal, TypeNames.Long),
+        (TypeNames.Double, TypeNames.Decimal),
+        (TypeNames.Decimal, TypeNames.Double),
+        (TypeNames.IdType, TypeNames.String)
+      )
+  }
 
 }

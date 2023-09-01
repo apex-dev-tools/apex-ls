@@ -3,7 +3,7 @@
  */
 
 package com.nawforce.apexlink.cst
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
+import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignable}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike, ApexDeclaration}
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
@@ -86,7 +86,14 @@ final case class ConstructorMap(
   ): Option[Either[String, ConstructorDeclaration]] = {
     val assignable = matches.filter(c => {
       val argZip = c.parameters.map(_.typeName).zip(params)
-      argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict, context))
+      argZip.forall(argPair =>
+        isAssignable(
+          argPair._1,
+          argPair._2,
+          context,
+          AssignableOptions(strict, narrowSObjects = true)
+        )
+      )
     })
     if (assignable.isEmpty)
       None

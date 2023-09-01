@@ -174,7 +174,7 @@ trait Parameters {
         val thisScore   = scoreRecordSetAssignability(tuple._3.typeName, sObjectType)
         thisScore.nonEmpty && (otherScore.isEmpty || thisScore.get < otherScore.get)
       } else {
-        isAssignable(tuple._2.typeName, tuple._3.typeName, strictConversions = false, context)
+        isAssignable(tuple._2.typeName, tuple._3.typeName, context)
       }
     }))
   }
@@ -312,8 +312,8 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
         isAssignable(
           paramPair._2,
           paramPair._1.typeName,
-          AssignableOptions(strictConversions = false, disableSObjectNarrowing = true),
-          context
+          context,
+          AssignableOptions(strictConversions = false, narrowSObjects = false)
         )
       })
   }

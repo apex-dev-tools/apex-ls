@@ -14,12 +14,15 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.AssignableSupport.couldBeEqual
+import com.nawforce.apexlink.cst.AssignableSupport.{
+  AssignableOptions,
+  couldBeEqual,
+  isAssignableDeclaration
+}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.core.TypeDeclaration
-import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
 import com.nawforce.pkgforce.names._
@@ -27,6 +30,7 @@ import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.immutable.ArraySeq
 
+/** New expression type name, similar to a typeRef */
 final case class CreatedName(idPairs: List[IdCreatedNamePair]) extends CST {
 
   lazy val typeName: TypeName = idPairs.tail.map(_.typeName).foldLeft(idPairs.head.typeName) {
@@ -79,6 +83,7 @@ object IdCreatedNamePair {
   }
 }
 
+/** New expression node, these always start 'new TYPE' but there a few form alternatives */
 final case class Creator(createdName: CreatedName, creatorRest: Option[CreatorRest]) extends CST {
   def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     assert(input.declaration.nonEmpty)
@@ -97,12 +102,13 @@ object Creator {
         .orElse(CodeParser.toScala(from.classCreatorRest()).map(ClassCreatorRest.construct))
         .orElse(CodeParser.toScala(from.arrayCreatorRest()).map(ArrayCreatorRest.construct))
         .orElse(CodeParser.toScala(from.mapCreatorRest()).map(MapCreatorRest.construct))
-        .orElse(CodeParser.toScala(from.setCreatorRest()).map(SetCreatorRest.construct))
+        .orElse(CodeParser.toScala(from.setCreatorRest()).map(SetOrListCreatorRest.construct))
 
     Creator(CreatedName.construct(from.createdName()), rest).withContext(from)
   }
 }
 
+/** Base for things that appear after 'new TYPE' expressions */
 sealed abstract class CreatorRest extends CST {
   def verify(
     createdName: CreatedName,
@@ -111,6 +117,7 @@ sealed abstract class CreatorRest extends CST {
   ): ExprContext
 }
 
+/** Object creation without arguments, e.g. new Foo() */
 final class NoRest extends CreatorRest {
   override def verify(
     createdName: CreatedName,
@@ -127,6 +134,9 @@ object NoRest {
   }
 }
 
+/** Object creation with arguments, e.g. new Foo(a, b)
+  * @param arguments constructor argument expressions
+  */
 final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends CreatorRest {
   override def verify(
     createdName: CreatedName,
@@ -161,7 +171,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     }
   }
 
-  def validateConstructor(
+  private def validateConstructor(
     input: Option[TypeDeclaration],
     arguments: ArraySeq[TypeName],
     context: ExpressionVerifyContext
@@ -182,7 +192,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     }
   }
 
-  def validateFieldConstructorArgumentsGhosted(
+  private def validateFieldConstructorArgumentsGhosted(
     typeName: TypeName,
     input: ExprContext,
     arguments: ArraySeq[Expression],
@@ -221,11 +231,15 @@ object ClassCreatorRest {
     ClassCreatorRest(Arguments.construct(from.arguments())).withContext(from)
   }
 
-  def isFieldConstructedExt(ext: Name): Boolean = fieldConstructedExt.contains(ext)
+  private def isFieldConstructedExt(ext: Name): Boolean = fieldConstructedExt.contains(ext)
 }
 
+/** Array creation arguments, e.g. either new String[3] or new Account[]{accountA, accountB}
+  * @param indexExpression expression for size of array
+  * @param arrayInitializer an list of initializer expressions
+  */
 final case class ArrayCreatorRest(
-  expressions: Option[Expression],
+  indexExpression: Option[Expression],
   arrayInitializer: Option[ArrayInitializer]
 ) extends CreatorRest {
   override def verify(
@@ -234,20 +248,49 @@ final case class ArrayCreatorRest(
     context: ExpressionVerifyContext
   ): ExprContext = {
 
-    // FUTURE: Expression type should be number
-    expressions.foreach(_.verify(input, context))
-
-    // FUTURE: initializer type should match 'creating'
-    arrayInitializer.foreach(_.verify(input, context))
-
+    // Validate type of Array we are creating
     val creating = createdName.verify(context)
-    if (creating.isDefined) {
-      val listType        = creating.typeName.asListOf
-      val listDeclaration = context.getTypeAndAddDependency(listType, context.thisType)
-      ExprContext(isStatic = Some(false), listDeclaration.toOption.get)
-    } else {
-      ExprContext.empty
+    if (!creating.isDefined) {
+      return ExprContext.empty
     }
+
+    // If we a size that must be an integer
+    indexExpression.foreach(expr => {
+      val indexType = expr.verify(input, context)
+      indexType.declaration.foreach(indexType => {
+        if (indexType.typeName != TypeNames.Integer) {
+          OrgInfo.logError(
+            expr.location,
+            s"Index for array construction must be an Integer, not '${indexType.typeName}'"
+          )
+        }
+      })
+    })
+
+    // If we have initializer expressions the type must be assignable
+    arrayInitializer.foreach(_.expressions.foreach(expr => {
+      val exprType = expr.verify(input, context)
+      exprType.declaration.foreach(exprType => {
+        if (
+          !isAssignableDeclaration(
+            creating.typeName,
+            exprType,
+            context,
+            AssignableOptions(strictConversions = false, narrowSObjects = true)
+          )
+        ) {
+          OrgInfo.logError(
+            expr.location,
+            s"Expression of type '${exprType.typeName}' can not be assigned to ${creating.typeName}'"
+          )
+        }
+      })
+    }))
+
+    // Return the array type
+    val listType        = creating.typeName.asListOf
+    val listDeclaration = context.getTypeAndAddDependency(listType, context.thisType).toOption.get
+    ExprContext(isStatic = Some(false), listDeclaration)
   }
 }
 
@@ -374,25 +417,23 @@ object MapCreatorRestPair {
   }
 }
 
-/* This is really Set & List creator, where TYPE{expr, expr, ...} form is allowed, it's different from array */
-final case class SetCreatorRest(parts: ArraySeq[Expression]) extends CreatorRest {
+/** Set or List creation arguments, e.g. new List<Account>{accountA, accountB}
+  * @param parts expressions for each argument
+  */
+final case class SetOrListCreatorRest(parts: ArraySeq[Expression]) extends CreatorRest {
   override def verify(
     createdName: CreatedName,
     input: ExprContext,
     context: ExpressionVerifyContext
   ): ExprContext = {
 
-    // FUTURE: Validate the expressions are assignable to 'creating'
-
-    parts.foreach(_.verify(input, context))
-
+    // Validate the basic types are OK
     val creating = createdName.verify(context)
     if (creating.declaration.isEmpty)
       return ExprContext.empty
 
     val td           = creating.declaration.get
     val enclosedType = td.typeName.getSetOrListType
-
     if (enclosedType.isEmpty) {
       OrgInfo.logError(
         location,
@@ -401,20 +442,40 @@ final case class SetCreatorRest(parts: ArraySeq[Expression]) extends CreatorRest
       return ExprContext.empty
     }
 
+    // Check generic type is available
     context.getTypeAndAddDependency(enclosedType.get, context.thisType) match {
       case Left(error) =>
         if (!context.module.isGhostedType(enclosedType.get))
           OrgInfo.log(error.asIssue(location))
         ExprContext.empty
-      case Right(_) =>
+      case Right(toType) =>
+        // For each expression check we can assign to the generic type
+        parts.foreach(part => {
+          val exprType = part.verify(input, context)
+          exprType.declaration.foreach(exprType => {
+            if (
+              !isAssignableDeclaration(
+                toType.typeName,
+                exprType,
+                context,
+                AssignableOptions(strictConversions = false, narrowSObjects = true)
+              )
+            ) {
+              OrgInfo.logError(
+                location,
+                s"Expression of type '${exprType.typeName}' can not be assigned to ${toType.typeName}'"
+              )
+            }
+          })
+        })
         creating
     }
   }
 }
 
-object SetCreatorRest {
-  def construct(from: SetCreatorRestContext): SetCreatorRest = {
+object SetOrListCreatorRest {
+  def construct(from: SetCreatorRestContext): SetOrListCreatorRest = {
     val parts = CodeParser.toScala(from.expression())
-    SetCreatorRest(Expression.construct(parts)).withContext(from)
+    SetOrListCreatorRest(Expression.construct(parts)).withContext(from)
   }
 }
