@@ -223,7 +223,7 @@ object AssignableSupport {
     strictAssignable ++
       Set(
         (TypeNames.Double, TypeNames.Integer),
-        (TypeNames.Decimal, TypeNames.Long),
+        (TypeNames.Double, TypeNames.Long),
         (TypeNames.Double, TypeNames.Decimal),
         (TypeNames.Decimal, TypeNames.Double),
         (TypeNames.IdType, TypeNames.String)
