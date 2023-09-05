@@ -51,9 +51,6 @@ abstract class ClassBodyDeclaration(modifierResults: ModifierResults)
   override lazy val signature: String       = null
   override val description: String          = null
 
-  lazy val isGlobal: Boolean =
-    modifiers.contains(GLOBAL_MODIFIER) || modifiers.contains(WEBSERVICE_MODIFIER)
-
   protected var depends: Option[SkinnySet[Dependent]] = None
 
   override def dependencies(): Iterable[Dependent] = {
@@ -333,7 +330,8 @@ final case class ApexFieldDeclaration(
   thisType: ThisType,
   _modifiers: ModifierResults,
   typeName: TypeName,
-  variableDeclarator: VariableDeclarator
+  variableDeclarator: VariableDeclarator,
+  isEnumConstant: Boolean = false
 ) extends ClassBodyDeclaration(_modifiers)
     with ApexFieldLike {
 
@@ -352,6 +350,11 @@ final case class ApexFieldDeclaration(
   override val inTest: Boolean              = thisType.inTest
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
+    // Ignore enum constants so they don't become dependency holders on defining enum type
+    // We need better handling of dependency holders to determine if internal
+    if (isEnumConstant)
+      return
+
     val staticContext = if (isStatic) Some(true) else None
 
     if (isStatic && modifiers.contains(PROTECTED_MODIFIER)) {

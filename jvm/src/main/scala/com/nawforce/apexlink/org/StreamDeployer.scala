@@ -114,11 +114,8 @@ class StreamDeployer(
       module.schemaSObjectType.add(sobject.typeName.name, hasFieldSets = true)
     })
 
-    // Run custom validation to setup dependencies and establish cross objects relationship fields from this
-    sobjects.foreach(_.validate(withRelationshipCollection = false))
-    types.values
-      .collect { case sobject: SObjectDeclaration => sobject }
-      .foreach(sobject => sobject.collectRelationshipFields(sobject.getTypeDependencyHolders.toSet))
+    // Run custom validation to setup dependencies
+    sobjects.foreach(_.validate())
   }
 
   /** Consume Apex class events, this is a bit more involved as we try and load first via cache and

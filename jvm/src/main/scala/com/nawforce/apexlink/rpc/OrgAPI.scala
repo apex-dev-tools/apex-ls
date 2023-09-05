@@ -157,6 +157,18 @@ object GetDependencyCountsResult {
   implicit val rw: RW[GetDependencyCountsResult] = macroRW
 }
 
+case class GetAllDependencyCountsRequest(directoryScope: String, excludeTestClasses: Boolean)
+
+object GetAllDependencyCountsRequest {
+  implicit val rw: RW[GetAllDependencyCountsRequest] = macroRW
+}
+
+case class GetAllDependencyCountsResult(counts: Array[DependencyCount])
+
+object GetAllDependencyCountsResult {
+  implicit val rw: RW[GetAllDependencyCountsResult] = macroRW
+}
+
 case class TestClassItemsResult(items: Array[ClassTestItem])
 
 object TestClassItemsResult {
@@ -311,7 +323,12 @@ trait OrgAPI {
   def getTestMethodItems(paths: Array[String]): Future[TestMethodItemsResult]
 
   @api.JSONRPCMethod(name = "getDependencyCounts")
-  def getDependencyCounts(paths: GetDependencyCountsRequest): Future[GetDependencyCountsResult]
+  def getDependencyCounts(request: GetDependencyCountsRequest): Future[GetDependencyCountsResult]
+
+  @api.JSONRPCMethod(name = "getAllDependencyCounts")
+  def getAllDependencyCounts(
+    request: GetAllDependencyCountsRequest
+  ): Future[GetAllDependencyCountsResult]
 
   @api.JSONRPCMethod(name = "getCompletionItems")
   def getCompletionItems(

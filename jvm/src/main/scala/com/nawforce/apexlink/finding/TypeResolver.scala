@@ -109,8 +109,7 @@ object TypeResolver {
               PlatformObjectNature,
               ArraySeq(),
               ArraySeq(),
-              base.fields,
-              _isComplete = true
+              base.fields
             )
             m.upsertMetadata(td)
             Right(td)
