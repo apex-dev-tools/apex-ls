@@ -391,6 +391,12 @@ object ApexModifiers {
         } else if (!outer && mods.contains(ISTEST_ANNOTATION)) {
           logger.logError(idContext, s"isTest can only be used on outer classes")
           mods.filterNot(_ == ISTEST_ANNOTATION)
+        } else if (
+          mods.contains(ISTEST_ANNOTATION) && (mods
+            .contains(ABSTRACT_MODIFIER) || mods.contains(VIRTUAL_MODIFIER))
+        ) {
+          logger.logError(idContext, s"isTest classes can not be abstract or virtual")
+          mods.filterNot(_ == ISTEST_ANNOTATION)
         } else {
           mods
         }
