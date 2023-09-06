@@ -20,7 +20,6 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.{OPM, OrgInfo, SObjectDeployer}
 import com.nawforce.apexlink.types.core._
-import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexlink.types.schema.SObjectDeclaration.syntheticExtension
 import com.nawforce.apexlink.types.synthetic.{
   CustomField,
@@ -244,17 +243,20 @@ final case class SObjectDeclaration(
     staticContext: Option[Boolean],
     verifyContext: VerifyContext
   ): Either[String, MethodDeclaration] = {
-    if (staticContext.contains(true)) {
-      val customMethods = sobjectNature match {
-        case HierarchyCustomSettingsNature => hierarchyCustomSettingsMethods
-        case ListCustomSettingNature       => listCustomSettingsMethods
-        case _                             => SObjectDeclaration.sObjectMethodMap
+    // Some types of SObject have special static methods that use the typeName
+    val customMethods = if (staticContext.contains(true)) {
+      sobjectNature match {
+        case HierarchyCustomSettingsNature => Some(hierarchyCustomSettingsMethods)
+        case ListCustomSettingNature       => Some(listCustomSettingsMethods)
+        case CustomMetadataNature          => Some(customMetadataMethods)
+        case _                             => None
       }
-      val customMethod = customMethods.get((name, params.length))
-      if (customMethod.nonEmpty)
-        return Right(customMethod.get)
-    }
-    defaultFindMethod(name, params, staticContext, verifyContext)
+    } else { None }
+    val method = customMethods.flatMap(_.get((name, params.length)))
+    if (method.nonEmpty)
+      Right(method.get)
+    else
+      defaultFindMethod(name, params, staticContext, verifyContext)
   }
 
   private lazy val hierarchyCustomSettingsMethods: Map[(Name, Int), MethodDeclaration] =
@@ -312,13 +314,27 @@ final case class SObjectDeclaration(
         ArraySeq(CustomParameterDeclaration(Name("Name"), TypeNames.String))
       )
     ).map(m => ((m.name, m.parameters.length), m)).toMap
+
+  private lazy val customMetadataMethods: Map[(Name, Int), MethodDeclaration] =
+    Seq(
+      CustomMethodDeclaration(
+        Location.empty,
+        Name("getAll"),
+        TypeNames.mapOf(TypeNames.String, typeName),
+        CustomMethodDeclaration.emptyParameters
+      ),
+      CustomMethodDeclaration(
+        Location.empty,
+        Name("getInstance"),
+        typeName,
+        ArraySeq(CustomParameterDeclaration(Name("Name"), TypeNames.String))
+      )
+    ).map(m => ((m.name, m.parameters.length), m)).toMap
+
 }
 
 object SObjectDeclaration {
   val globalModifiers: ArraySeq[Modifier] = ArraySeq(GLOBAL_MODIFIER)
 
   val syntheticExtension: Set[Name] = Set(Name("Share"), Name("Feed"), Name("History"))
-
-  lazy val sObjectMethodMap: Map[(Name, Int), MethodDeclaration] =
-    PlatformTypes.sObjectType.methods.map(m => ((m.name, m.parameters.length), m)).toMap
 }
