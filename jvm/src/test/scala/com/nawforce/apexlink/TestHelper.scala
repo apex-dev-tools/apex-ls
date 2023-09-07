@@ -117,6 +117,13 @@ trait TestHelper {
     }
   }
 
+  def happyTypeDeclaration(clsText: String): ApexClassDeclaration = {
+    val td = typeDeclarations(Map("Dummy.cls" -> clsText)).headOption
+    assert(td.nonEmpty)
+    assert(!hasIssues)
+    td.get
+  }
+
   def typeDeclaration(clsText: String): ApexClassDeclaration = {
     typeDeclarations(Map("Dummy.cls" -> clsText)).head
   }

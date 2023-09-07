@@ -16,12 +16,13 @@ package com.nawforce.apexlink.types.schema
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration, TypeId}
+import com.nawforce.apexlink.org.OPM.Module
+import com.nawforce.apexlink.types.core.FieldDeclaration
+import com.nawforce.apexlink.types.schema.SObjectFieldFinder.relationshipExtension
 import com.nawforce.apexlink.types.synthetic.{CustomField, CustomFieldDeclaration}
 import com.nawforce.pkgforce.names._
 
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable
 
 /* SObject field finding support. This is separated so it can be used by TypeDeclarations that can be used to
  * represent SObjects, the current cases being PlatformTypeDeclaration for standard objects and SObjectDeclarations
@@ -30,58 +31,15 @@ import scala.collection.mutable
  * FUTURE: Remove this as part of refactor work on TypeDeclarations
  */
 trait SObjectFieldFinder {
-  this: TypeDeclaration =>
+  this: SObjectLikeDeclaration =>
 
+  val typeName: TypeName
   val fields: ArraySeq[FieldDeclaration]
-  private var relationshipFields: mutable.Map[Name, FieldDeclaration] = _
-
-  def validate(withRelationshipCollection: Boolean): Unit
-
-  def collectRelationshipFields(dependencyHolders: Set[TypeId]): Unit = {
-    // Find SObject relationship fields that reference this one via dependency analysis
-    val incomingObjects = this +: dependencyHolders.toSeq
-      .flatMap(typeId => TypeResolver(typeId.typeName, typeId.module).toOption)
-      .collect { case sobject: SObjectFieldFinder => sobject }
-    val incomingObjectAndField: Seq[(TypeDeclaration, CustomField)] =
-      incomingObjects.flatMap(sobject => {
-        sobject.fields
-          .collect { case field: CustomField => field }
-          .filter(field =>
-            field.relationshipName.nonEmpty &&
-              field.typeName == typeName &&
-              field.name.value
-                .endsWith("__r")
-          )
-          .map(field => (sobject.asInstanceOf[TypeDeclaration], field))
-      })
-
-    relationshipFields = this.moduleDeclaration
-      .flatMap(_.nextModule)
-      .flatMap(nextModule => {
-        TypeResolver(typeName, nextModule).toOption
-          .collect { case sobject: SObjectFieldFinder => sobject }
-          .flatMap(sobject => Option(sobject.relationshipFields))
-      })
-      .getOrElse(mutable.Map())
-
-    incomingObjectAndField.foreach(incoming => {
-      val relationshipName = Name(incoming._2.relationshipName.get + "__r")
-      val ns               = this.moduleDeclaration.flatMap(_.namespace)
-      val targetFieldName =
-        EncodedName(relationshipName).defaultNamespace(ns).fullName
-      relationshipFields.put(
-        targetFieldName,
-        CustomFieldDeclaration(targetFieldName, TypeNames.recordSetOf(incoming._1.typeName), None)
-      )
-    })
-  }
 
   def findSObjectField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
     findFieldSObject(name, staticContext, findField(name))
       .orElse {
-        Option(relationshipFields).flatMap(fields => {
-          findFieldSObject(name, staticContext, fields.get(name))
-        })
+        findFieldSObject(name, staticContext, getRelationshipField(name))
       }
   }
 
@@ -110,4 +68,59 @@ trait SObjectFieldFinder {
       }
     }
   }
+
+  private def getRelationshipField(name: Name): Option[FieldDeclaration] = {
+    val encodedName = EncodedName(name).defaultNamespace(module.namespace)
+    if (encodedName.ext.contains(relationshipExtension)) {
+      getRelationshipField(this, encodedName)
+        .orElse(
+          getTypeDependencyHolders.toIterable.view
+            .flatMap(typeId => {
+              getSObjectFieldFinder(typeId.module, typeId.typeName)
+                .flatMap(sobject => getRelationshipField(sobject, encodedName))
+            })
+            .headOption
+        )
+        .orElse(
+          this.moduleDeclaration
+            .flatMap(_.nextModule)
+            .flatMap(nextModule => {
+              getSObjectFieldFinder(nextModule, typeName)
+                .flatMap(_.getRelationshipField(name))
+            })
+        )
+    } else {
+      None
+    }
+  }
+
+  private def getSObjectFieldFinder(
+    module: Module,
+    typeName: TypeName
+  ): Option[SObjectFieldFinder] = {
+    TypeResolver(typeName, module).toOption
+      .collect { case sobject: SObjectFieldFinder => sobject }
+  }
+
+  private def getRelationshipField(
+    sobject: SObjectFieldFinder,
+    encodedName: EncodedName
+  ): Option[FieldDeclaration] = {
+    sobject.fields
+      .collect { case field: CustomField if field.relationshipName.nonEmpty => field }
+      .find(field => {
+        EncodedName(
+          Name(field.relationshipName.get),
+          Some(relationshipExtension),
+          EncodedName(field.name).namespace
+        ) == encodedName && field.typeName == typeName
+      })
+      .map(_ =>
+        CustomFieldDeclaration(encodedName.fullName, TypeNames.recordSetOf(sobject.typeName), None)
+      )
+  }
+}
+
+object SObjectFieldFinder {
+  val relationshipExtension: Name = Name("r")
 }

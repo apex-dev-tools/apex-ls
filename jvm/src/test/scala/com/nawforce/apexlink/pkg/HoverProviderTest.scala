@@ -97,6 +97,36 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Hover for class implementing interfaces and extending classes") {
+    val contentAndCursorPos =
+      withCursor(s"public virtual class Foo {public void after(){Du${CURSOR}mmy.dummyMethod();} }")
+    val dummy =
+      "public class Dummy extends DummyTwo implements DummyThree, DummyFour {public static void dummyMethod(){} }"
+    val dummyTwo   = "public abstract class DummyTwo {}"
+    val dummyThree = "public interface DummyThree {}"
+    val dummyFour  = "public interface DummyFour {}"
+    FileSystemHelper.run(
+      Map(
+        "Foo.cls"        -> contentAndCursorPos._1,
+        "Dummy.cls"      -> dummy,
+        "DummyTwo.cls"   -> dummyTwo,
+        "DummyThree.cls" -> dummyThree,
+        "DummyFour.cls"  -> dummyFour
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      val hoverItem =
+        org.unmanaged.getHover(root.join("Foo.cls"), line = 1, contentAndCursorPos._2, None)
+      assert(
+        hoverItem.content.get == "public class Dummy extends DummyTwo implements DummyThree, DummyFour"
+      )
+      assert(hoverItem.location.get.startLine == 1)
+      assert(hoverItem.location.get.startPosition == 46)
+      assert(hoverItem.location.get.endLine == 1)
+      assert(hoverItem.location.get.endPosition == 51)
+    }
+  }
+
   test("Hover for constructor") {
     val contentAndCursorPos =
       withCursor(s"public virtual class Foo {public void after(){new Du${CURSOR}mmy(1);} }")

@@ -18,7 +18,7 @@ import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.pkgforce.modifiers._
-import com.nawforce.pkgforce.names.{DotName, Name, TypeIdentifier, TypeName}
+import com.nawforce.pkgforce.names.{DotName, Name, TypeName}
 import com.nawforce.pkgforce.parsers.{FIELD_NATURE, PROPERTY_NATURE}
 import com.nawforce.pkgforce.path.Location
 import org.scalatest.funsuite.AnyFunSuite
@@ -28,7 +28,6 @@ import scala.collection.immutable.ArraySeq
 class SummaryTest extends AnyFunSuite with TestHelper {
 
   private val dummyTypeName      = DotName("Dummy").asTypeName()
-  private val dummyTypeId        = TypeIdentifier.fromJava(null, dummyTypeName)
   private val objectTypeName     = DotName("Internal.Object$").asTypeName()
   private val interfaceTypeName  = DotName("Internal.Interface$").asTypeName()
   private val rawIntegerTypeName = DotName("Integer").asTypeName()
@@ -542,7 +541,7 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               dummyTypeName,
               PUBLIC_MODIFIER,
               PUBLIC_MODIFIER,
-              Array(TypeDependentSummary(dummyTypeId, -1270140630))
+              Array()
             ),
             FieldSummary(
               Location(1, 19, 1, 20),
@@ -553,7 +552,7 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               dummyTypeName,
               PUBLIC_MODIFIER,
               PUBLIC_MODIFIER,
-              Array(TypeDependentSummary(dummyTypeId, -1270140630))
+              Array()
             ),
             FieldSummary(
               Location(1, 25, 1, 26),
@@ -564,7 +563,7 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               dummyTypeName,
               PUBLIC_MODIFIER,
               PUBLIC_MODIFIER,
-              Array(TypeDependentSummary(dummyTypeId, -1270140630))
+              Array()
             )
           ),
           ArraySeq(),
