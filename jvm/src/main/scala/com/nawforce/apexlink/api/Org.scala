@@ -23,6 +23,7 @@ import com.nawforce.apexlink.rpc.{
   HoverItem,
   LocationLink,
   MethodTestItem,
+  Rename,
   TargetLocation
 }
 import io.github.apexdevtools.apexls.api.IssuesCollection
@@ -159,6 +160,8 @@ trait Org {
     * locate inner classes within that file.
     */
   def getHover(path: String, line: Int, offset: Int, content: String): HoverItem
+
+  def getRenameLocations(path: String, line: Int, offset: Int, content: String): Array[Rename]
 
   /** Locate the references given the location and offset.
     *
