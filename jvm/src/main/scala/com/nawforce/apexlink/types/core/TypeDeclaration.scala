@@ -234,7 +234,7 @@ trait ConstructorDeclaration extends DependencyHolder with Parameters {
 
   override def toString: String =
     modifiers.map(_.toString).mkString(" ") + " constructor(" + parameters
-      .map(p => { p.typeName.name + " " + p.name.toString })
+      .map(p => { p.typeName.name.toString + " " + p.name.toString })
       .mkString(", ") + ")"
 }
 
