@@ -18,11 +18,9 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{FullDeclaration, ThisType}
 import com.nawforce.apexparser.ApexParser._
-import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers._
-import com.nawforce.runtime.parsers.CodeParser.TerminalNode
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import scala.collection.immutable.ArraySeq
@@ -414,7 +412,8 @@ object EnumDeclaration {
         ApexModifiers.enumConstantModifiers(),
         thisType.typeName,
         VariableDeclarator(thisType.typeName, isReadOnly = true, Id.construct(constant), None)
-          .withContext(constant)
+          .withContext(constant),
+        isEnumConstant = true
       ).withContext(constant)
     })
 

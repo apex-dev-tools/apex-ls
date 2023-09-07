@@ -25,11 +25,14 @@ import com.nawforce.apexlink.types.core.{
 }
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue, UNUSED_CATEGORY}
 import com.nawforce.pkgforce.modifiers._
-import com.nawforce.pkgforce.parsers.{FIELD_NATURE, PROPERTY_NATURE}
+import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, FIELD_NATURE, PROPERTY_NATURE}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
+/** Provides plugin for generating unused warnings on a single type
+  * @param td type being handled by this plugin
+  */
 class UnusedPlugin(td: DependentType) extends Plugin(td) {
 
   override def onClassValidated(td: ClassDeclaration): Seq[DependentType] = reportUnused(td)
@@ -93,6 +96,10 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
 
   private implicit class DeclarationOps(td: FullDeclaration) {
 
+    /** Generates unused issues for a type, see doc/Unused.md for details.
+      *
+      * @return the issues
+      */
     def unusedIssues: ArraySeq[Issue] = {
 
       // Hack: Unused calculation requires a methodMap as it establishes shadow relationships
@@ -119,15 +126,20 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
 
       // Check if need to promote the used to the type level to reduce noise in output
       if (canPromoteUnusedToType(issues.length)) {
-        val suffix =
-          if (
-            td.hasHolders || (issues.nonEmpty && issues.forall(
-              _.diagnostic.message.contains(onlyTestCodeReferenceText)
-            ))
-          )
-            s", $onlyTestCodeReferenceText"
-          else
-            ""
+        val onlyTestReferenced = td.hasHolders || (issues.nonEmpty && issues
+          .forall(_.diagnostic.message.contains(onlyTestCodeReferenceText)))
+
+        // Classes should likely be @isTest, but you can't use that on enum/interfaces
+        val suffix = new StringBuilder()
+        if (onlyTestReferenced) {
+          suffix.append(", only referenced by test code")
+          td.nature match {
+            case CLASS_NATURE =>
+              suffix.append(", consider using @isTest or @SuppressWarnings('Unused') if needed")
+            case _ => suffix.append(", consider using @SuppressWarnings('Unused') if needed")
+          }
+        }
+
         ArraySeq(
           new Issue(
             td.location.path,
@@ -154,7 +166,8 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
         return false
 
       // Exclude reporting on empty outers, that is just a bit harsh
-      val childCount = td.nestedTypes.length + td.localFields.length + td.localMethods.length
+      val childCount = td.nestedTypes.length + td.localFields.length +
+        (if (td.nature == ENUM_NATURE) 0 else td.localMethods.length)
       if (td.outerTypeName.isEmpty && childCount == 0)
         return false
 

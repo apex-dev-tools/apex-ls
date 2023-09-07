@@ -145,7 +145,7 @@ final case class TriggerDeclaration(
   override def getTypeDependencyHolders: SkinnySet[TypeId] =
     DependentType.emptyTypeDependencyHolders
 
-  override def updateTypeDependencyHolders(holders: SkinnySet[TypeId]): Unit = {}
+  override def setTypeDependencyHolders(holders: SkinnySet[TypeId]): Unit = {}
 
   override def summary: TypeSummary = {
     TypeSummary(
@@ -233,14 +233,14 @@ object TriggerDeclaration {
   }
 
   // Construct the trigger name, looks like a namespace but doc indicates just a prefix
-  def constructTypeName(namespace: Option[Name], name: Name): TypeName = {
+  private def constructTypeName(namespace: Option[Name], name: Name): TypeName = {
     val qname: String = namespace
       .map(ns => s"$prefix/${ns.value}/${name.value}")
       .getOrElse(s"$prefix/${name.value}")
     TypeName(Name(qname))
   }
 
-  def constructCase(triggerCase: TriggerCaseContext): TriggerCase = {
+  private def constructCase(triggerCase: TriggerCaseContext): TriggerCase = {
     if (CodeParser.toScala(triggerCase.BEFORE()).nonEmpty) {
       if (CodeParser.toScala(triggerCase.INSERT()).nonEmpty)
         BEFORE_INSERT
