@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2023 Certinia Inc. All rights reserved.
+ */
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.cst.{ApexFieldDeclaration, Id, VariableDeclarator}
