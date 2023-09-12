@@ -18,18 +18,18 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |} }""".stripMargin
           .replaceAll("\r\n", "\n")
       )
-      val completions = org.unmanaged.getRenameLocations(
+      val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
         contentAndCursorPos._2.offset,
         Some(contentAndCursorPos._1)
       )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 3)
-      assert(completions(0).edits(0) == Location(1, 51, 1, 55))
-      assert(completions(0).edits(1) == Location(3, 7, 3, 11))
-      assert(completions(0).edits(2) == Location(2, 17, 2, 21))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(1, 51, 1, 55))
+      assert(renames(0).edits(1) == Location(3, 7, 3, 11))
+      assert(renames(0).edits(2) == Location(2, 17, 2, 21))
     }
   }
 
@@ -44,18 +44,18 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           |} }""".stripMargin
           .replaceAll("\r\n", "\n")
       )
-      val completions = org.unmanaged.getRenameLocations(
+      val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
         contentAndCursorPos._2.offset,
         Some(contentAndCursorPos._1)
       )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 3)
-      assert(completions(0).edits(0) == Location(2, 17, 2, 21))
-      assert(completions(0).edits(1) == Location(3, 7, 3, 11))
-      assert(completions(0).edits(2) == Location(1, 51, 1, 55))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(2, 17, 2, 21))
+      assert(renames(0).edits(1) == Location(3, 7, 3, 11))
+      assert(renames(0).edits(2) == Location(1, 51, 1, 55))
 
     }
   }
@@ -72,18 +72,18 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |} }""".stripMargin
           .replaceAll("\r\n", "\n")
       )
-      val completions = org.unmanaged.getRenameLocations(
+      val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
         contentAndCursorPos._2.offset,
         Some(contentAndCursorPos._1)
       )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 3)
-      assert(completions(0).edits(0) == Location(2, 7, 2, 11))
-      assert(completions(0).edits(1) == Location(3, 17, 3, 21))
-      assert(completions(0).edits(2) == Location(4, 7, 4, 11))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(2, 7, 2, 11))
+      assert(renames(0).edits(1) == Location(3, 17, 3, 21))
+      assert(renames(0).edits(2) == Location(4, 7, 4, 11))
     }
   }
 
@@ -99,18 +99,18 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |} }""".stripMargin
           .replaceAll("\r\n", "\n")
       )
-      val completions = org.unmanaged.getRenameLocations(
+      val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
         contentAndCursorPos._2.offset,
         Some(contentAndCursorPos._1)
       )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 3)
-      assert(completions(0).edits(0) == Location(3, 17, 3, 21))
-      assert(completions(0).edits(1) == Location(2, 7, 2, 11))
-      assert(completions(0).edits(2) == Location(4, 7, 4, 11))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(3, 17, 3, 21))
+      assert(renames(0).edits(1) == Location(2, 7, 2, 11))
+      assert(renames(0).edits(2) == Location(4, 7, 4, 11))
     }
   }
 
@@ -126,16 +126,16 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |} }""".stripMargin
           .replaceAll("\r\n", "\n")
       )
-      val completions = org.unmanaged.getRenameLocations(
+      val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
         contentAndCursorPos._2.offset,
         Some(contentAndCursorPos._1)
       )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 1)
-      assert(completions(0).edits(0) == Location(2, 7, 2, 11))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(2, 7, 2, 11))
     }
   }
 
@@ -152,19 +152,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |} }""".stripMargin
           .replaceAll("\r\n", "\n")
       )
-      val completions = org.unmanaged.getRenameLocations(
+      val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
         contentAndCursorPos._2.offset,
         Some(contentAndCursorPos._1)
       )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 4)
-      assert(completions(0).edits(0) == Location(2, 20, 2, 22))
-      assert(completions(0).edits(1) == Location(5, 7, 5, 9))
-      assert(completions(0).edits(2) == Location(3, 0, 3, 2))
-      assert(completions(0).edits(3) == Location(4, 0, 4, 2))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 4)
+      assert(renames(0).edits(0) == Location(2, 20, 2, 22))
+      assert(renames(0).edits(1) == Location(5, 7, 5, 9))
+      assert(renames(0).edits(2) == Location(3, 0, 3, 2))
+      assert(renames(0).edits(3) == Location(4, 0, 4, 2))
     }
   }
 
@@ -181,19 +181,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |} }""".stripMargin
           .replaceAll("\r\n", "\n")
       )
-      val completions = org.unmanaged.getRenameLocations(
+      val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
         contentAndCursorPos._2.offset,
         Some(contentAndCursorPos._1)
       )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 4)
-      assert(completions(0).edits(0) == Location(3, 0, 3, 2))
-      assert(completions(0).edits(1) == Location(5, 7, 5, 9))
-      assert(completions(0).edits(2) == Location(2, 20, 2, 22))
-      assert(completions(0).edits(3) == Location(4, 0, 4, 2))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 4)
+      assert(renames(0).edits(0) == Location(3, 0, 3, 2))
+      assert(renames(0).edits(1) == Location(5, 7, 5, 9))
+      assert(renames(0).edits(2) == Location(2, 20, 2, 22))
+      assert(renames(0).edits(3) == Location(4, 0, 4, 2))
     }
   }
 
@@ -211,20 +211,20 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |private String methodPrivate(){return myField;}
            |}""".stripMargin.replaceAll("\r\n", "\n"))
 
-      val completions =
+      val renames =
         org.unmanaged.getRenameLocations(
           path,
           contentAndCursorPos._2.line,
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 4)
-      assert(completions(0).edits(0) == Location(2, 14, 2, 21))
-      assert(completions(0).edits(1) == Location(5, 14, 5, 21))
-      assert(completions(0).edits(2) == Location(7, 39, 7, 46))
-      assert(completions(0).edits(3) == Location(8, 38, 8, 45))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 4)
+      assert(renames(0).edits(0) == Location(2, 14, 2, 21))
+      assert(renames(0).edits(1) == Location(5, 14, 5, 21))
+      assert(renames(0).edits(2) == Location(7, 39, 7, 46))
+      assert(renames(0).edits(3) == Location(8, 38, 8, 45))
     }
   }
 
@@ -242,20 +242,20 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |private String methodPrivate(){return myField;}
            |}""".stripMargin.replaceAll("\r\n", "\n"))
 
-      val completions =
+      val renames =
         org.unmanaged.getRenameLocations(
           path,
           contentAndCursorPos._2.line,
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 4)
-      assert(completions(0).edits(0) == Location(5, 14, 5, 21))
-      assert(completions(0).edits(1) == Location(2, 14, 2, 21))
-      assert(completions(0).edits(2) == Location(7, 39, 7, 46))
-      assert(completions(0).edits(3) == Location(8, 38, 8, 45))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 4)
+      assert(renames(0).edits(0) == Location(5, 14, 5, 21))
+      assert(renames(0).edits(1) == Location(2, 14, 2, 21))
+      assert(renames(0).edits(2) == Location(7, 39, 7, 46))
+      assert(renames(0).edits(3) == Location(8, 38, 8, 45))
     }
   }
 
@@ -270,17 +270,17 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |}
            |}""".stripMargin.replaceAll("\r\n", "\n"))
 
-      val completions =
+      val renames =
         org.unmanaged.getRenameLocations(
           path,
           contentAndCursorPos._2.line,
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 1)
-      assert(completions(0).edits(0) == Location(2, 14, 2, 21))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(2, 14, 2, 21))
     }
   }
 
@@ -299,19 +299,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |private String methodPrivate(){return myField;}
            |}""".stripMargin.replaceAll("\r\n", "\n"))
 
-      val completions =
+      val renames =
         org.unmanaged.getRenameLocations(
           path,
           contentAndCursorPos._2.line,
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 3)
-      assert(completions(0).edits(0) == Location(4, 7, 4, 14))
-      assert(completions(0).edits(1) == Location(5, 16, 5, 23))
-      assert(completions(0).edits(2) == Location(6, 7, 6, 14))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(4, 7, 4, 14))
+      assert(renames(0).edits(1) == Location(5, 16, 5, 23))
+      assert(renames(0).edits(2) == Location(6, 7, 6, 14))
     }
   }
 
@@ -330,19 +330,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |private String methodPrivate(){return myField;}
            |}""".stripMargin.replaceAll("\r\n", "\n"))
 
-      val completions =
+      val renames =
         org.unmanaged.getRenameLocations(
           path,
           contentAndCursorPos._2.line,
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 3)
-      assert(completions(0).edits(0) == Location(5, 16, 5, 23))
-      assert(completions(0).edits(1) == Location(4, 7, 4, 14))
-      assert(completions(0).edits(2) == Location(6, 7, 6, 14))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(5, 16, 5, 23))
+      assert(renames(0).edits(1) == Location(4, 7, 4, 14))
+      assert(renames(0).edits(2) == Location(6, 7, 6, 14))
     }
   }
 
@@ -361,19 +361,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |private String methodPrivate(){return myField;}
            |}""".stripMargin.replaceAll("\r\n", "\n"))
 
-      val completions =
+      val renames =
         org.unmanaged.getRenameLocations(
           path,
           contentAndCursorPos._2.line,
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 3)
-      assert(completions(0).edits(0) == Location(2, 14, 2, 21))
-      assert(completions(0).edits(1) == Location(8, 39, 8, 46))
-      assert(completions(0).edits(2) == Location(9, 38, 9, 45))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(2, 14, 2, 21))
+      assert(renames(0).edits(1) == Location(8, 39, 8, 46))
+      assert(renames(0).edits(2) == Location(9, 38, 9, 45))
     }
   }
 
@@ -392,19 +392,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
            |private String methodPrivate(){return my${CURSOR}Field;}
            |}""".stripMargin.replaceAll("\r\n", "\n"))
 
-      val completions =
+      val renames =
         org.unmanaged.getRenameLocations(
           path,
           contentAndCursorPos._2.line,
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(completions.length == 1)
-      assert(completions(0).path == "/Completion.cls")
-      assert(completions(0).edits.length == 3)
-      assert(completions(0).edits(0) == Location(9, 38, 9, 45))
-      assert(completions(0).edits(1) == Location(8, 39, 8, 46))
-      assert(completions(0).edits(2) == Location(2, 14, 2, 21))
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Completion.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(9, 38, 9, 45))
+      assert(renames(0).edits(1) == Location(8, 39, 8, 46))
+      assert(renames(0).edits(2) == Location(2, 14, 2, 21))
     }
   }
 }
