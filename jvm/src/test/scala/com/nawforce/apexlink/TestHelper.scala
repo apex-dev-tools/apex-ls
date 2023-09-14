@@ -330,6 +330,16 @@ trait TestHelper {
   def withCursor(content: String): (String, Int) = {
     (content.replace(CURSOR, ""), content.indexOf(CURSOR))
   }
+
+  def withCursorMultiLine(content: String): (String, CursorPos) = {
+    val lineWithCursor = content.split('\n').find(contentLine => contentLine.contains(CURSOR)).get
+    val line           = content.split('\n').indexOf(lineWithCursor) + 1
+    val offset         = lineWithCursor.indexOf(CURSOR)
+
+    (content.replace(CURSOR, ""), CursorPos(line, offset))
+  }
+
+  case class CursorPos(line: Int, offset: Int)
 }
 
 object TestHelper {

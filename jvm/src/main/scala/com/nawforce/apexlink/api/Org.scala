@@ -23,6 +23,7 @@ import com.nawforce.apexlink.rpc.{
   HoverItem,
   LocationLink,
   MethodTestItem,
+  Rename,
   TargetLocation
 }
 import io.github.apexdevtools.apexls.api.IssuesCollection
@@ -159,6 +160,19 @@ trait Org {
     * locate inner classes within that file.
     */
   def getHover(path: String, line: Int, offset: Int, content: String): HoverItem
+
+  /** Retrieve a list of files and the edits for each to rename a symbol, given the location of one
+    * of the uses of the symbol.
+    *
+    * This will attempt to locate all occurrence of a symbol provided the line & offset of one such
+    * occurrence within a class. The returned array contains each file where changes are to be made,
+    * and an array for each file containing locations where changes are due. If no type declaration
+    * can be found for the provided symbol or it is an unsupported type, an empty array is returned.
+    * If content is null, path will be used to load the source code. It is not necessary for the
+    * file being searched from to be free of errors, but errors may impact the ability to locate
+    * inner classes within that file.
+    */
+  def getRenameLocations(path: String, line: Int, offset: Int, content: String): Array[Rename]
 
   /** Locate the references given the location and offset.
     *
