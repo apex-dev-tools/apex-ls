@@ -14,14 +14,14 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFieldLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
-import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
+import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.apexparser.ApexParserBaseVisitor
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
+import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.compat.immutable.ArraySeq
 
@@ -177,9 +177,75 @@ final case class IdPrimary(id: Id) extends Primary {
   }
 }
 
-final case class SOQL(boundExpressions: ArraySeq[Expression]) extends Primary {
+/** Inline SOQL primary, captures just enough detail to enable downstream processing
+  * @param hasAggregateFunctions does the query use aggregate functions
+  * @param fromNames dot names used in FROM
+  * @param boundExpressions bound expressions used anywhere in the query
+  */
+final case class SOQL(
+  hasAggregateFunctions: Boolean,
+  fromNames: Array[TypeName],
+  boundExpressions: ArraySeq[Expression]
+) extends Primary {
 
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+
+    boundExpressions.foreach(expr => {
+      expr.verify(input, context)
+    })
+
+    if (fromNames.length != 1) {
+      context.logError(
+        location,
+        s"Expecting SOQL to query only a single SObject, found '${fromNames.mkString(", ")}'"
+      )
+    }
+
+    context.getTypeAndAddDependency(TypeNames.recordSetOf(fromNames.head), context.thisType) match {
+      case Left(_) =>
+        context.missingType(location, fromNames.head)
+        ExprContext(isStatic = Some(false), context.module.any)
+      case Right(td) =>
+        ExprContext(isStatic = Some(false), td)
+    }
+  }
+}
+
+object SOQL {
+  def apply(query: QueryContext): SOQL = {
+    val isAggregate = CodeParser
+      .toScala(query.selectList().selectEntry())
+      .flatMap(se => CodeParser.toScala(se.soqlFunction()))
+      .exists(se =>
+        CodeParser.toScala(se.AVG()).nonEmpty ||
+          CodeParser.toScala(se.COUNT()).nonEmpty ||
+          CodeParser.toScala(se.MIN()).nonEmpty ||
+          CodeParser.toScala(se.MAX()).nonEmpty ||
+          CodeParser.toScala(se.SUM()).nonEmpty
+      )
+
+    // NOTE: Bound variables don't support all any expression but we have not worked out what
+    // is available so currently model as an expression
+    val boundedExpressions = new BoundExprVisitor().visit(query).map(ec => Expression.construct(ec))
+    val fromNames =
+      CodeParser
+        .toScala(query.fromNameList().fieldName())
+        .map(nameList =>
+          TypeName(
+            CodeParser.toScala(nameList.soqlId()).map(name => Name(CodeParser.getText(name)))
+          )
+        )
+    new SOQL(isAggregate, fromNames.toArray, boundedExpressions)
+  }
+}
+
+/** Inline SOSL primary, captures just enough detail to enable downstream processing
+  * @param boundExpressions bound expressions used anywhere in the query
+  */
+final case class SOSL(boundExpressions: ArraySeq[Expression]) extends Primary {
+
+  override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+
     boundExpressions.foreach(expr => {
       expr.verify(input, context)
     })
@@ -188,21 +254,14 @@ final case class SOQL(boundExpressions: ArraySeq[Expression]) extends Primary {
   }
 }
 
-object SOQL {
-  def apply(query: QueryContext): SOQL = {
-    val visitor     = new BoundExprVisitor()
-    val expressions = visitor.visit(query).map(ec => Expression.construct(ec))
-    SOQL(expressions)
+object SOSL {
+  def apply(query: SoslLiteralContext): SOSL = {
+    val boundedExpressions = new BoundExprVisitor().visit(query).map(ec => Expression.construct(ec))
+    new SOSL(boundedExpressions)
   }
 }
 
-final case class SOSL(query: SoslLiteralContext) extends Primary {
-
-  override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
-    ExprContext(isStatic = Some(false), context.module.any)
-  }
-}
-
+/** ANTLR visitor for extracting bound expressions from SOQL or SOSL queries, e.g. WHERE Id in :Ids */
 class BoundExprVisitor extends ApexParserBaseVisitor[ArraySeq[ExpressionContext]] {
 
   override def defaultResult(): ArraySeq[ExpressionContext] = ArraySeq[ExpressionContext]()
@@ -240,6 +299,7 @@ object Primary {
         case ctx: SoslPrimaryContext =>
           SOSL(ctx.soslLiteral())
         case _ =>
+          // TODO: Replace with void.class handler
           EmptyPrimary()
       }
     cst.withContext(from)
