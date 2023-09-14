@@ -96,7 +96,7 @@ class CreationTest extends AnyFunSuite with TestHelper {
   test("Map with any key type") {
     // SOQL currently produces an any result, this should break if we fix that as String != RecordSet<Account>
     typeDeclaration(
-      "public class Dummy {{Object a = new Map<String, String>{[Select Id From Account] => ''};}}"
+      "public class Dummy {{Object a = new Map<SObject, String>{[Select Id From Account] => ''};}}"
     )
     assert(dummyIssues.isEmpty)
   }
@@ -104,7 +104,7 @@ class CreationTest extends AnyFunSuite with TestHelper {
   test("Map with any value type") {
     // SOQL currently produces an any result, this should break if we fix that as String != RecordSet<Account>
     typeDeclaration(
-      "public class Dummy {{Object a = new Map<String, String>{'' => [Select Id From Account]};}}"
+      "public class Dummy {{Object a = new Map<String, SObject>{'' => [Select Id From Account]};}}"
     )
     assert(dummyIssues.isEmpty)
   }

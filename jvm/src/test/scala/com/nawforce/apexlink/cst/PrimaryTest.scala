@@ -4,26 +4,23 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 import scala.collection.immutable.ArraySeq
 
-/** Tests for SOSL and SOQL Primaries */
-class InlineQueryTest extends AnyFunSuite with Matchers with TestHelper {
+/** Tests for Primaries */
+class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
 
-  private def soql(query: String): SOQL = {
-    primary(query).asInstanceOf[SOQL]
+  private def primaryOf[T](expr: String): T = {
+    primary(expr).asInstanceOf[T]
   }
 
-  private def sosl(query: String): SOSL = {
-    primary(query).asInstanceOf[SOSL]
-  }
-
-  private def primary(query: String): Primary = {
+  private def primary(expr: String): Primary = {
     val statements = typeDeclaration(
-      s"public class Dummy {{ Object a = [$query]; }}"
+      s"public class Dummy {{ Object a = $expr; }}"
     ).blocks.head match {
       case ApexInitializerBlock(_, block: LazyBlock, _) => block.statements()
       case _                                            => Seq()
@@ -41,14 +38,14 @@ class InlineQueryTest extends AnyFunSuite with Matchers with TestHelper {
   }
 
   test("SOQL simple query") {
-    val soqlPrimary = soql("Select Id from Account")
+    val soqlPrimary = primaryOf[SOQL]("[Select Id from Account]")
     assert(!soqlPrimary.hasAggregateFunctions)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
 
   test("SOQL multiple from") {
-    val soqlPrimary = soql("Select Id from Account, Contact")
+    val soqlPrimary = primaryOf[SOQL]("[Select Id from Account, Contact]")
     assert(!soqlPrimary.hasAggregateFunctions)
     assert(
       soqlPrimary.fromNames sameElements
@@ -58,14 +55,14 @@ class InlineQueryTest extends AnyFunSuite with Matchers with TestHelper {
   }
 
   test("SOQL aggregate") {
-    val soqlPrimary = soql("Select Name, Count(Id) from Account")
+    val soqlPrimary = primaryOf[SOQL]("[Select Name, Count(Id) from Account]")
     assert(soqlPrimary.hasAggregateFunctions)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
 
   test("SOQL bound WHERE expression") {
-    val soqlPrimary = soql("Select Id from Account WHERE Id in :Ids")
+    val soqlPrimary = primaryOf[SOQL]("[Select Id from Account WHERE Id in :Ids]")
     assert(!soqlPrimary.hasAggregateFunctions)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     soqlPrimary.boundExpressions should matchPattern {
@@ -74,7 +71,8 @@ class InlineQueryTest extends AnyFunSuite with Matchers with TestHelper {
   }
 
   test("SOQL multiple bound WHERE expressions") {
-    val soqlPrimary = soql("Select Id from Account WHERE Id in :Ids AND Name like :Name+1")
+    val soqlPrimary =
+      primaryOf[SOQL]("[Select Id from Account WHERE Id in :Ids AND Name like :Name+1]")
     assert(!soqlPrimary.hasAggregateFunctions)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     soqlPrimary.boundExpressions should matchPattern {
@@ -90,7 +88,7 @@ class InlineQueryTest extends AnyFunSuite with Matchers with TestHelper {
   }
 
   test("SOQL multiple bound LIMIT expressions") {
-    val soqlPrimary = soql("Select Id from Account Limit :Limit")
+    val soqlPrimary = primaryOf[SOQL]("[Select Id from Account Limit :Limit]")
     assert(!soqlPrimary.hasAggregateFunctions)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     soqlPrimary.boundExpressions should matchPattern {
@@ -112,19 +110,19 @@ class InlineQueryTest extends AnyFunSuite with Matchers with TestHelper {
   }
 
   test("SOSL simple query") {
-    val soslPrimary = sosl("Find 'something' RETURNING Account")
+    val soslPrimary = primaryOf[SOSL]("[Find 'something' RETURNING Account]")
     assert(soslPrimary.boundExpressions.isEmpty)
   }
 
   test("SOSL bound search") {
-    val soslPrimary = sosl("Find :Text RETURNING Account")
+    val soslPrimary = primaryOf[SOSL]("[Find :Text RETURNING Account]")
     soslPrimary.boundExpressions should matchPattern {
       case ArraySeq(PrimaryExpression(IdPrimary(Id(Name("Text"))))) =>
     }
   }
 
   test("SOSL bound search and limit") {
-    val soslPrimary = sosl("Find :Text RETURNING Account LIMIT :1+1")
+    val soslPrimary = primaryOf[SOSL]("[Find :Text RETURNING Account LIMIT :1+1]")
     soslPrimary.boundExpressions should matchPattern {
       case ArraySeq(
             PrimaryExpression(IdPrimary(Id(Name("Text")))),
@@ -135,6 +133,41 @@ class InlineQueryTest extends AnyFunSuite with Matchers with TestHelper {
             )
           ) =>
     }
+  }
+
+  test("Type References") {
+
+    assert(primaryOf[TypeReferencePrimary]("void.class").typeName == TypeName(Name("void")))
+    assert(primaryOf[TypeReferencePrimary]("String.class").typeName == TypeName(Name("String")))
+    assert(
+      primaryOf[TypeReferencePrimary]("System.String.class").typeName == TypeName(
+        Name("String"),
+        Nil,
+        Some(TypeNames.System)
+      )
+    )
+    assert(
+      primaryOf[TypeReferencePrimary]("List<String>.class").typeName == TypeName(
+        Name("List"),
+        Seq(TypeName(Name("String"))),
+        None
+      )
+    )
+    assert(
+      primaryOf[TypeReferencePrimary]("List<System.String>.class").typeName == TypeName(
+        Name("List"),
+        Seq(TypeName(Name("String"), Nil, Some(TypeNames.System))),
+        None
+      )
+    )
+    assert(
+      primaryOf[TypeReferencePrimary]("System.List<System.String>.class").typeName == TypeName(
+        Name("List"),
+        Seq(TypeName(Name("String"), Nil, Some(TypeNames.System))),
+        Some(TypeNames.System)
+      )
+    )
+
   }
 
 }
