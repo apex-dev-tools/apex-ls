@@ -281,7 +281,7 @@ class SObjectDeployer(module: OPM.Module) {
             sources
               .find(_.location.path == path)
               .foreach(source => {
-                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, event.name))
+                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, typeName.name))
               })
           })
           Array.empty
@@ -302,6 +302,7 @@ class SObjectDeployer(module: OPM.Module) {
     sharingReasons: ArraySeq[Name],
     sharingModel: Option[SharingModel]
   ): Array[SObjectDeclaration] = {
+
     val syntheticSObjects =
       if (nature == CustomObjectNature) {
         // FUTURE: Check fields & when these should be available
@@ -329,8 +330,7 @@ class SObjectDeployer(module: OPM.Module) {
         nature,
         fieldSets,
         ArraySeq(),
-        collectFields(typeName, nature, fields, hasOwner),
-        _isComplete = true
+        collectFields(typeName, nature, fields, hasOwner)
       )
   }
 
@@ -346,9 +346,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       sharingReasons,
-      shareFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      shareFieldsFor(typeName)
     )
   }
 
@@ -360,9 +358,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       ArraySeq(),
-      feedFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      feedFieldsFor(typeName)
     )
   }
 
@@ -374,9 +370,7 @@ class SObjectDeployer(module: OPM.Module) {
       CustomObjectNature,
       ArraySeq(),
       ArraySeq(),
-      historyFieldsFor(typeName),
-      _isComplete = true,
-      isSynthetic = true
+      historyFieldsFor(typeName)
     )
   }
 
@@ -482,7 +476,7 @@ class SObjectDeployer(module: OPM.Module) {
     }
 
     // FUTURE: Add type for platform sobjects so we don't need this hackery
-    def asSObject: Option[SObjectDeclaration] = {
+    def baseAsSObject: Option[SObjectDeclaration] = {
       if (base.nonEmpty && base.get.isInstanceOf[SObjectDeclaration])
         base.map(_.asInstanceOf[SObjectDeclaration])
       else {
@@ -491,19 +485,19 @@ class SObjectDeployer(module: OPM.Module) {
     }
 
     val extend          = base.getOrElse(PlatformTypes.sObjectType)
-    val combinedSources = asSObject.map(_.sources).getOrElse(Array()) ++ sources
+    val combinedSources = baseAsSObject.map(_.sources).getOrElse(Array()) ++ sources
     val combinedFields =
       collectFields(typeName, nature, extend.fields ++ fields, hasOwner = base.isEmpty)
     val combinedFieldsets = ArraySeq.unsafeWrapArray(
       fieldSets
-        .foldLeft(asSObject.map(_.fieldSets).getOrElse(ArraySeq()).toSet)((acc, fieldset) =>
+        .foldLeft(baseAsSObject.map(_.fieldSets).getOrElse(ArraySeq()).toSet)((acc, fieldset) =>
           acc + fieldset
         )
         .toArray
     )
     val combinedSharingReasons = ArraySeq.unsafeWrapArray(
       sharingReasons
-        .foldLeft(asSObject.map(_.sharingReasons).getOrElse(ArraySeq()).toSet)(
+        .foldLeft(baseAsSObject.map(_.sharingReasons).getOrElse(ArraySeq()).toSet)(
           (acc, sharingReason) => acc + sharingReason
         )
         .toArray
@@ -517,7 +511,8 @@ class SObjectDeployer(module: OPM.Module) {
       combinedFieldsets,
       combinedSharingReasons,
       combinedFields,
-      base.nonEmpty && base.get.isComplete
+      isComplete = baseAsSObject.nonEmpty,
+      if (crossModule) baseAsSObject else None
     )
 
     // If we are extending over a module boundary then link via dependencies for refresh handling
@@ -712,20 +707,7 @@ object SObjectDeployer {
 
   /** Standard fields for a \_\_Share SObject. */
   def shareFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
-    shareFields ++ ArraySeq(
-      CustomFieldDeclaration(
-        Names.SObjectType,
-        TypeNames.sObjectType$(typeName),
-        None,
-        asStatic = true
-      ),
-      CustomFieldDeclaration(
-        Names.Fields,
-        TypeNames.sObjectFields$(typeName),
-        None,
-        asStatic = true
-      )
-    )
+    shareFields ++ commonFieldsFor(typeName)
   }
 
   private val shareFields: ArraySeq[FieldDeclaration] =
@@ -741,7 +723,11 @@ object SObjectDeployer {
     )
 
   def feedFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
-    feedFields ++ ArraySeq(
+    feedFields ++ commonFieldsFor(typeName)
+  }
+
+  private def commonFieldsFor(typeName: TypeName): ArraySeq[FieldDeclaration] = {
+    ArraySeq(
       CustomFieldDeclaration(
         Names.SObjectType,
         TypeNames.sObjectType$(typeName),

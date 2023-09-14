@@ -40,7 +40,7 @@ trait ModuleRefresh {
   def refreshInternal(existingLabels: LabelDeclaration): Seq[(TypeId, Set[TypeId])] = {
     val newLabels = createLabelDeclaration()
     val holders   = existingLabels.getTypeDependencyHolders
-    newLabels.updateTypeDependencyHolders(holders)
+    newLabels.setTypeDependencyHolders(holders)
     replaceType(newLabels.typeName, Some(newLabels))
     newLabels.validate()
     Seq((newLabels.typeId, holders.toSet))
@@ -80,7 +80,7 @@ trait ModuleRefresh {
               val holders = existingType
                 .map(_.getTypeDependencyHolders)
                 .getOrElse(DependentType.emptyTypeDependencyHolders)
-              newType.updateTypeDependencyHolders(holders)
+              newType.setTypeDependencyHolders(holders)
 
               // Update and validate
               replaceType(newType.typeName, Some(newType))

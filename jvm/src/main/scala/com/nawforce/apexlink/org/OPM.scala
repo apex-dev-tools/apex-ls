@@ -349,6 +349,22 @@ object OPM extends TriHierarchy {
       }
     }
 
+    override def getRenameLocations(
+      path: String,
+      line: Int,
+      offset: Int,
+      content: String
+    ): Array[Rename] = {
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          packages
+            .find(_.isPackagePath(path))
+            .map(_.getRenameLocations(Path(path), line, offset, Option(content)))
+            .getOrElse(Array.empty)
+        }
+      }
+    }
+
     override def getReferences(path: String, line: Int, offset: Int): Array[TargetLocation] = {
       if (path == null)
         return Array.empty
@@ -529,6 +545,7 @@ object OPM extends TriHierarchy {
       with CompletionProvider
       with ImplementationProvider
       with HoverProvider
+      with RenameProvider
       with ReferenceProvider {
 
     val modules: ArraySeq[Module] =

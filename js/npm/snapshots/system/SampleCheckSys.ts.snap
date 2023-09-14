@@ -21,10 +21,6 @@ exports[`Check samples Sample: ActionPlansV4 1`] = `
       "Warning: line 43 at 3-77: Local variable is hiding class field 'dependentApts', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTaskTriggerUtilities.cls: line 24 at 16-70",
     ],
     [
-      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTriggerHandlers.cls",
-      "Missing: line 330 at 42-73: Unknown field 'IsClosed' on SObject 'Schema.Event'",
-    ],
-    [
       "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls",
       "Warning: line 595 at 3-114: Local variable is hiding class field 'apSettings', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls: line 567 at 16-52",
     ],
@@ -41,7 +37,7 @@ exports[`Check samples Sample: ActionPlansV4 1`] = `
       "Warning: line 57 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -250,10 +246,6 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Missing: line 74 at 8-20: No variable or type found for 'SfdoLogUtils' on 'npsp.SfdoInstrumentationService'",
       "Missing: line 84 at 8-20: No variable or type found for 'SfdoLogUtils' on 'npsp.SfdoInstrumentationService'",
       "Missing: line 93 at 8-20: No variable or type found for 'SfdoLogUtils' on 'npsp.SfdoInstrumentationService'",
-    ],
-    [
-      "Cumulus/force-app/main/service/DonationHistoryService.cls",
-      "Missing: line 77 at 15-95: Unknown field or type 'npe01__Payments_Enabled__c' on 'System.SObject'",
     ],
     [
       "Cumulus/force-app/tdtm/classes/TDTM_DMLgt200_TEST.cls",
@@ -694,10 +686,6 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Missing: line 93 at 8-20: No variable or type found for 'SfdoLogUtils' on 'npsp.SfdoInstrumentationService'",
     ],
     [
-      "NPSP/force-app/main/service/DonationHistoryService.cls",
-      "Missing: line 77 at 15-95: Unknown field or type 'npe01__Payments_Enabled__c' on 'System.SObject'",
-    ],
-    [
       "NPSP/force-app/tdtm/classes/TDTM_DMLgt200_TEST.cls",
       "Warning: line 382 at 8-30: Local variable is hiding class field 'insertCnt', see NPSP/force-app/tdtm/classes/TDTM_DMLgt200_TEST.cls: line 51 at 25-49",
     ],
@@ -720,27 +708,6 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Error: line 23:109 to 25:5: Constructor not defined: LoggerCache.PlatformCachePartitionDelegate.<constructor>(cache.SessionPartition)",
     ],
     [
-      "nebula-logger/core/main/log-management/classes/LogBatchPurgeController_Tests.cls",
-      "Error: line 105 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 112 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 135 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 142 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 166 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 173 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 197 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 204 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 227 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 234 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 257 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 264 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 287 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 294 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 50 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 57 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 82 at 16-73: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-      "Error: line 85 at 16-72: Exact equality/inequality requires is not supported on non-reference types 'System.String'",
-    ],
-    [
       "nebula-logger/core/main/log-management/classes/LogEntryEventHandler.cls",
       "Missing: line 237 at 31-54: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
     ],
@@ -753,10 +720,6 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
     [
       "nebula-logger/core/main/logger-engine/classes/Logger.cls",
       "Warning: line 2682 at 12-62: Local variable is hiding class field 'userSettings', see nebula-logger/core/main/logger-engine/classes/Logger.cls: line 36 at 19-50",
-    ],
-    [
-      "nebula-logger/core/tests/configuration/classes/LoggerParameter_Tests.cls",
-      "Missing: line 214 at 33-102: Unknown field or type 'Value__c' on 'System.SObject'",
     ],
     [
       "nebula-logger/core/tests/log-management/classes/LogEntryEventHandler_Tests.cls",
@@ -1337,18 +1300,6 @@ exports[`Check samples Sample: rflib 1`] = `
 {
   "logs": [
     [
-      "rflib/main/default/classes/rflib_GlobalSettings.cls",
-      "Missing: line 70 at 75-165: Unknown field or type 'Value__c' on 'System.SObject'",
-    ],
-    [
-      "rflib/test/default/classes/rflib_GlobalSettingsTest.cls",
-      "Missing: line 35 at 31-101: Unknown field or type 'Value__c' on 'System.SObject'",
-      "Missing: line 44 at 48-138: Unknown field or type 'Value__c' on 'System.SObject'",
-      "Missing: line 53 at 48-138: Unknown field or type 'Value__c' on 'System.SObject'",
-      "Missing: line 64 at 48-138: Unknown field or type 'Value__c' on 'System.SObject'",
-      "Missing: line 77 at 48-138: Unknown field or type 'Value__c' on 'System.SObject'",
-    ],
-    [
       "rflib/test/default/classes/rflib_LogArchiveControllerTest.cls",
       "Warning: line 90 at 8-150: Local variable is hiding class field 'result', see rflib/test/default/classes/rflib_LogArchiveControllerTest.cls: line 33:25 to 35:6",
       "Warning: line 99 at 8-126: Local variable is hiding class field 'result', see rflib/test/default/classes/rflib_LogArchiveControllerTest.cls: line 33:25 to 35:6",
@@ -1360,7 +1311,7 @@ exports[`Check samples Sample: rflib 1`] = `
       "Warning: line 38 at 16: Package dependency for 'RFLIB-FS@2.0.0-1' ignored as metadata is not available for analysis.",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
