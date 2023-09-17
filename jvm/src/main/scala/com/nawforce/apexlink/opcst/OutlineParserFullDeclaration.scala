@@ -44,12 +44,18 @@ object OutlineParserFullDeclaration {
         )
         None
       } else {
-        td.get match {
-          case ctd: ClassTypeDeclaration => toClassDeclaration(ctd, cls, srcData, module, None)
-          case itd: InterfaceTypeDeclaration =>
-            toInterfaceDeclaration(itd, cls, srcData, module, None)
-          case etd: EnumTypeDeclaration => toEnumDeclaration(etd, cls, srcData, module, None)
-          case _                        => None
+        try {
+          td.get match {
+            case ctd: ClassTypeDeclaration => toClassDeclaration(ctd, cls, srcData, module, None)
+            case itd: InterfaceTypeDeclaration =>
+              toInterfaceDeclaration(itd, cls, srcData, module, None)
+            case etd: EnumTypeDeclaration => toEnumDeclaration(etd, cls, srcData, module, None)
+            case _                        => None
+          }
+        } catch {
+          case ex: Throwable =>
+            module.log(cls.path, "CST construction from Outline parser failed", ex)
+            None
         }
       }
     rv
@@ -62,6 +68,8 @@ object OutlineParserFullDeclaration {
     module: OPM.Module,
     outerTypeName: Option[TypeName]
   ): Option[ClassDeclaration] = {
+
+    throw new NoSuchElementException()
 
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
