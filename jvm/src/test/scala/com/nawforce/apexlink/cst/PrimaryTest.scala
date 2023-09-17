@@ -49,7 +49,7 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
     assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
     assert(
       soqlPrimary.fromNames sameElements
-        Array(TypeName(Name("Account"), Nil, None), TypeName(Name("Contact"), Nil, None))
+        Array(DotName(Name("Account")), DotName(Name("Contact")))
     )
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
@@ -57,28 +57,36 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
   test("SOQL simple count") {
     val soqlPrimary = primaryOf[SOQL]("[Select Count() from Account]")
     assert(soqlPrimary.queryResultType == COUNT_RESULT_QUERY)
-    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
 
   test("SOQL count in aggregate") {
     val soqlPrimary = primaryOf[SOQL]("[Select Name, Count() from Account]")
     assert(soqlPrimary.queryResultType == AGGREGATE_RESULT_QUERY)
-    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
 
   test("SOQL aggregate") {
     val soqlPrimary = primaryOf[SOQL]("[Select Name, Count(Id) from Account]")
     assert(soqlPrimary.queryResultType == AGGREGATE_RESULT_QUERY)
-    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
+    assert(soqlPrimary.boundExpressions.isEmpty)
+  }
+
+  test("SOQL GROUP BY aggregate") {
+    val soqlPrimary =
+      primaryOf[SOQL]("[Select Name from Account GROUP BY Name]")
+    assert(soqlPrimary.queryResultType == AGGREGATE_RESULT_QUERY)
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
 
   test("SOQL bound WHERE expression") {
     val soqlPrimary = primaryOf[SOQL]("[Select Id from Account WHERE Id in :Ids]")
     assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
-    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
     soqlPrimary.boundExpressions should matchPattern {
       case ArraySeq(PrimaryExpression(IdPrimary(Id(Name("Ids"))))) =>
     }
@@ -88,7 +96,7 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
     val soqlPrimary =
       primaryOf[SOQL]("[Select Id from Account WHERE Id in :Ids AND Name like :Name+1]")
     assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
-    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
     soqlPrimary.boundExpressions should matchPattern {
       case ArraySeq(
             PrimaryExpression(IdPrimary(Id(Name("Ids")))),
@@ -104,7 +112,7 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
   test("SOQL multiple bound LIMIT expressions") {
     val soqlPrimary = primaryOf[SOQL]("[Select Id from Account Limit :Limit]")
     assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
-    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
     soqlPrimary.boundExpressions should matchPattern {
       case ArraySeq(PrimaryExpression(IdPrimary(Id(Name("Limit"))))) =>
     }

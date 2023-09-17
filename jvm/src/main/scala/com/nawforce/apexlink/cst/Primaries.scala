@@ -228,16 +228,17 @@ object SOQL {
   def apply(query: QueryContext): SOQL = {
     val entries = CodeParser
       .toScala(query.selectList().selectEntry())
-    val functions = entries
-      .flatMap(se => CodeParser.toScala(se.soqlFunction()))
 
-    val aggregateFunctions = functions.filter(fn =>
-      CodeParser.toScala(fn.AVG()).nonEmpty ||
-        CodeParser.toScala(fn.COUNT()).nonEmpty ||
-        CodeParser.toScala(fn.MIN()).nonEmpty ||
-        CodeParser.toScala(fn.MAX()).nonEmpty ||
-        CodeParser.toScala(fn.SUM()).nonEmpty
-    )
+    val aggregateFunctions = entries
+      .flatMap(se => CodeParser.toScala(se.soqlFunction()))
+      .filter(fn =>
+        CodeParser.toScala(fn.AVG()).nonEmpty ||
+          CodeParser.toScala(fn.COUNT()).nonEmpty ||
+          CodeParser.toScala(fn.COUNT_DISTINCT()).nonEmpty ||
+          CodeParser.toScala(fn.MIN()).nonEmpty ||
+          CodeParser.toScala(fn.MAX()).nonEmpty ||
+          CodeParser.toScala(fn.SUM()).nonEmpty
+      )
     val countFunctions = aggregateFunctions.filter(fn => CodeParser.toScala(fn.COUNT()).nonEmpty)
     val emptyCountFunctions =
       countFunctions.filter(fn => CodeParser.toScala(fn.fieldName()).isEmpty)
@@ -246,13 +247,15 @@ object SOQL {
       if (entries.size == 1 && emptyCountFunctions.size == 1) {
         // Count queries are only valid for 'Select Count() From...', otherwise assume is aggregate
         COUNT_RESULT_QUERY
-      } else if (aggregateFunctions.nonEmpty) {
+      } else if (
+        CodeParser.toScala(query.groupByClause()).nonEmpty || aggregateFunctions.nonEmpty
+      ) {
         AGGREGATE_RESULT_QUERY
       } else {
         LIST_RESULT_QUERY
       }
 
-    // NOTE: Bound variables don't support all any expression but we have not worked out what
+    // NOTE: Bound variables don't support all expressions but we have not worked out what
     // is available so currently model as an expression
     val boundedExpressions = new BoundExprVisitor().visit(query).map(ec => Expression.construct(ec))
     val fromNames =

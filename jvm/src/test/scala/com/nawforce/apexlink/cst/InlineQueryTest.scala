@@ -19,7 +19,7 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
 
   test("SOQL unknown FROM validate error") {
     typeDeclaration("public class Dummy {{ Object a = [Select Id from Foo]; }}")
-    assert(dummyIssues == "Missing: line 1 at 33-53: No type declaration found for 'Foo'\n")
+    assert(dummyIssues == "Missing: line 1 at 33-53: No type declaration found for 'Schema.Foo'\n")
   }
 
   test("SOQL ghosted FROM") {
@@ -47,7 +47,17 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
 
   test("SOQL list assignment to wrong type") {
     typeDeclaration("public class Dummy {{ List<Contact> a = [Select Id from Account]; }}")
-    assert(dummyIssues == "Should error\n")
+    assert(
+      dummyIssues == "Error: line 1 at 36-64: Incompatible types in assignment, from '[Schema.Account Records]' to 'System.List<Schema.Contact>'\n"
+    )
+  }
+
+  test("SOQL list unknown type") {
+    happyTypeDeclaration("public class Dummy {{ List<Account> a = Database.query(''); }}")
+  }
+
+  test("SOQL list unknown type to SObject") {
+    happyTypeDeclaration("public class Dummy {{ List<SObject> a = Database.query(''); }}")
   }
 
   test("SOQL single assignment") {
@@ -60,7 +70,17 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
 
   test("SOQL single assignment to wrong type") {
     typeDeclaration("public class Dummy {{ Contact a = [Select Id from Account]; }}")
-    assert(dummyIssues == "Should error\n")
+    assert(
+      dummyIssues == "Error: line 1 at 30-58: Incompatible types in assignment, from '[Schema.Account Records]' to 'Schema.Contact'\n"
+    )
+  }
+
+  test("SOQL single unknown type") {
+    happyTypeDeclaration("public class Dummy {{ Account a = Database.query(''); }}")
+  }
+
+  test("SOQL single unknown type to SObject") {
+    happyTypeDeclaration("public class Dummy {{ SObject a = Database.query(''); }}")
   }
 
   test("SOQL field reference") {
