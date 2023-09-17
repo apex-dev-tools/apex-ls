@@ -69,8 +69,6 @@ object OutlineParserFullDeclaration {
     outerTypeName: Option[TypeName]
   ): Option[ClassDeclaration] = {
 
-    throw new NoSuchElementException()
-
     val source: Source     = Source(cls.path, srcData, 0, 0, None)
     val thisTypeNameWithNS = TypeName(cls.name).withNamespace(module.namespace)
 
