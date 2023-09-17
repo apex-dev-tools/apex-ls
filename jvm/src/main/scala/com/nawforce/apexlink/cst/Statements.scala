@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.api.ServerOps
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
+import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
@@ -477,14 +477,7 @@ final case class ReturnStatement(expression: Option[Expression]) extends Stateme
       Some(s"Missing return value of type '$expectedType'")
     else {
       expr.flatMap(e => {
-        if (
-          e.isDefined && !isAssignable(
-            expectedType,
-            e.typeDeclaration,
-            strictConversions = false,
-            context
-          )
-        )
+        if (e.isDefined && !isAssignableDeclaration(expectedType, e.typeDeclaration, context))
           Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
         else
           None

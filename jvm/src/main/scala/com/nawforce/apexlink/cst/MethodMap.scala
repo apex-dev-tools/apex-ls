@@ -13,7 +13,7 @@
  */
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
+import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignable}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.org.OPM
@@ -190,7 +190,14 @@ final case class MethodMap(
 
     val assignable = matches.filter(m => {
       val argZip = m.parameters.map(_.typeName).zip(params)
-      argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict, context))
+      argZip.forall(argPair =>
+        isAssignable(
+          argPair._1,
+          argPair._2,
+          context,
+          AssignableOptions(strict, narrowSObjects = true)
+        )
+      )
     })
 
     if (assignable.isEmpty)
@@ -808,7 +815,7 @@ object MethodMap {
       from match {
         case ad: ApexDeclaration =>
           val context = new TypeVerifyContext(None, ad, None, enablePlugins = false)
-          isAssignable(toType, fromType, strictConversions = false, context)
+          isAssignable(toType, fromType, context)
         case _ =>
           false
       }
