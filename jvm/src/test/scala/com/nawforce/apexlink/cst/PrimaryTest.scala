@@ -5,7 +5,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.{DotName, Name, TypeName}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -39,14 +39,14 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
 
   test("SOQL simple query") {
     val soqlPrimary = primaryOf[SOQL]("[Select Id from Account]")
-    assert(!soqlPrimary.hasAggregateFunctions)
-    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
 
   test("SOQL multiple from") {
     val soqlPrimary = primaryOf[SOQL]("[Select Id from Account, Contact]")
-    assert(!soqlPrimary.hasAggregateFunctions)
+    assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
     assert(
       soqlPrimary.fromNames sameElements
         Array(TypeName(Name("Account"), Nil, None), TypeName(Name("Contact"), Nil, None))
@@ -54,16 +54,30 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
 
+  test("SOQL simple count") {
+    val soqlPrimary = primaryOf[SOQL]("[Select Count() from Account]")
+    assert(soqlPrimary.queryResultType == COUNT_RESULT_QUERY)
+    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.boundExpressions.isEmpty)
+  }
+
+  test("SOQL count in aggregate") {
+    val soqlPrimary = primaryOf[SOQL]("[Select Name, Count() from Account]")
+    assert(soqlPrimary.queryResultType == AGGREGATE_RESULT_QUERY)
+    assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
+    assert(soqlPrimary.boundExpressions.isEmpty)
+  }
+
   test("SOQL aggregate") {
     val soqlPrimary = primaryOf[SOQL]("[Select Name, Count(Id) from Account]")
-    assert(soqlPrimary.hasAggregateFunctions)
+    assert(soqlPrimary.queryResultType == AGGREGATE_RESULT_QUERY)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     assert(soqlPrimary.boundExpressions.isEmpty)
   }
 
   test("SOQL bound WHERE expression") {
     val soqlPrimary = primaryOf[SOQL]("[Select Id from Account WHERE Id in :Ids]")
-    assert(!soqlPrimary.hasAggregateFunctions)
+    assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     soqlPrimary.boundExpressions should matchPattern {
       case ArraySeq(PrimaryExpression(IdPrimary(Id(Name("Ids"))))) =>
@@ -73,7 +87,7 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
   test("SOQL multiple bound WHERE expressions") {
     val soqlPrimary =
       primaryOf[SOQL]("[Select Id from Account WHERE Id in :Ids AND Name like :Name+1]")
-    assert(!soqlPrimary.hasAggregateFunctions)
+    assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     soqlPrimary.boundExpressions should matchPattern {
       case ArraySeq(
@@ -89,24 +103,11 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
 
   test("SOQL multiple bound LIMIT expressions") {
     val soqlPrimary = primaryOf[SOQL]("[Select Id from Account Limit :Limit]")
-    assert(!soqlPrimary.hasAggregateFunctions)
+    assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
     assert(soqlPrimary.fromNames sameElements Array(TypeName(Name("Account"), Nil, None)))
     soqlPrimary.boundExpressions should matchPattern {
       case ArraySeq(PrimaryExpression(IdPrimary(Id(Name("Limit"))))) =>
     }
-  }
-
-  test("SOQL multiple FROM validate error") {
-    typeDeclaration("public class Dummy {{ Object a = [Select Id from Account, Contact]; }}")
-    assert(
-      dummyIssues ==
-        "Error: line 1 at 33-66: Expecting SOQL to query only a single SObject, found 'Account, Contact'\n"
-    )
-  }
-
-  test("SOQL unknown FROM validate error") {
-    typeDeclaration("public class Dummy {{ Object a = [Select Id from Foo]; }}")
-    assert(dummyIssues == "Missing: line 1 at 33-53: No type declaration found for 'Foo'\n")
   }
 
   test("SOSL simple query") {

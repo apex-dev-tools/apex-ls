@@ -20,7 +20,7 @@ import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.apexparser.ApexParserBaseVisitor
-import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
+import com.nawforce.pkgforce.names.{DotName, EncodedName, Name, Names, TypeName}
 import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.compat.immutable.ArraySeq
@@ -75,9 +75,11 @@ final case class TypeReferencePrimary(typeName: TypeName) extends Primary {
         typeName
       }
 
-    val td = context.getTypeAndAddDependency(targetTypeName, context.thisType).toOption
-    if (td.isEmpty)
-      context.missingType(location, typeName)
+    if (targetTypeName != TypeNames.Void) {
+      val td = context.getTypeAndAddDependency(targetTypeName, context.thisType).toOption
+      if (td.isEmpty)
+        context.missingType(location, typeName)
+    }
     ExprContext(isStatic = Some(false), Some(PlatformTypes.typeType))
   }
 }
@@ -171,14 +173,20 @@ final case class IdPrimary(id: Id) extends Primary {
   }
 }
 
+/** Type of return from SOQL queries, based on functions used in the query */
+sealed trait QueryResultType
+case object LIST_RESULT_QUERY      extends QueryResultType
+case object COUNT_RESULT_QUERY     extends QueryResultType
+case object AGGREGATE_RESULT_QUERY extends QueryResultType
+
 /** Inline SOQL primary, captures just enough detail to enable downstream processing
-  * @param hasAggregateFunctions does the query use aggregate functions
+  * @param queryResultType type of results expected from query
   * @param fromNames dot names used in FROM
   * @param boundExpressions bound expressions used anywhere in the query
   */
 final case class SOQL(
-  hasAggregateFunctions: Boolean,
-  fromNames: Array[TypeName],
+  queryResultType: QueryResultType,
+  fromNames: Array[DotName],
   boundExpressions: ArraySeq[Expression]
 ) extends Primary {
 
@@ -188,35 +196,61 @@ final case class SOQL(
       expr.verify(input, context)
     })
 
-    if (fromNames.length != 1) {
+    if (fromNames.length != 1 || fromNames.head.names.size != 1) {
       context.logError(
         location,
         s"Expecting SOQL to query only a single SObject, found '${fromNames.mkString(", ")}'"
       )
     }
+    val sobjectType = TypeName(fromNames.head.names.head, Nil, Some(TypeNames.Schema))
 
-    context.getTypeAndAddDependency(TypeNames.recordSetOf(fromNames.head), context.thisType) match {
-      case Left(_) =>
-        context.missingType(location, fromNames.head)
-        ExprContext(isStatic = Some(false), context.module.any)
-      case Right(td) =>
-        ExprContext(isStatic = Some(false), td)
+    if (queryResultType == COUNT_RESULT_QUERY) {
+      ExprContext(isStatic = Some(false), PlatformTypes.integerType)
+    } else {
+      val recordSetType =
+        if (queryResultType == AGGREGATE_RESULT_QUERY) TypeNames.AggregateResult else sobjectType
+      context.getTypeAndAddDependency(
+        TypeNames.recordSetOf(recordSetType),
+        context.thisType
+      ) match {
+        case Left(_) =>
+          if (!context.module.isGhostedType(sobjectType))
+            context.missingType(location, sobjectType)
+          ExprContext(isStatic = Some(false), context.module.any)
+        case Right(td) =>
+          ExprContext(isStatic = Some(false), td)
+      }
     }
   }
 }
 
 object SOQL {
   def apply(query: QueryContext): SOQL = {
-    val isAggregate = CodeParser
+    val entries = CodeParser
       .toScala(query.selectList().selectEntry())
+    val functions = entries
       .flatMap(se => CodeParser.toScala(se.soqlFunction()))
-      .exists(se =>
-        CodeParser.toScala(se.AVG()).nonEmpty ||
-          CodeParser.toScala(se.COUNT()).nonEmpty ||
-          CodeParser.toScala(se.MIN()).nonEmpty ||
-          CodeParser.toScala(se.MAX()).nonEmpty ||
-          CodeParser.toScala(se.SUM()).nonEmpty
-      )
+
+    val aggregateFunctions = functions.filter(fn =>
+      CodeParser.toScala(fn.AVG()).nonEmpty ||
+        CodeParser.toScala(fn.COUNT()).nonEmpty ||
+        CodeParser.toScala(fn.MIN()).nonEmpty ||
+        CodeParser.toScala(fn.MAX()).nonEmpty ||
+        CodeParser.toScala(fn.SUM()).nonEmpty
+    )
+    val countFunctions = aggregateFunctions.filter(fn => CodeParser.toScala(fn.COUNT()).nonEmpty)
+    val emptyCountFunctions =
+      countFunctions.filter(fn => CodeParser.toScala(fn.fieldName()).isEmpty)
+
+    val resultType =
+      if (entries.size == 1 && emptyCountFunctions.size == 1) {
+        // Count queries are only valid for 'Select Count() From...', otherwise assume is aggregate
+        COUNT_RESULT_QUERY
+      } else if (aggregateFunctions.nonEmpty) {
+        AGGREGATE_RESULT_QUERY
+      } else {
+        LIST_RESULT_QUERY
+      }
 
     // NOTE: Bound variables don't support all any expression but we have not worked out what
     // is available so currently model as an expression
@@ -225,11 +259,9 @@ object SOQL {
       CodeParser
         .toScala(query.fromNameList().fieldName())
         .map(nameList =>
-          TypeName(
-            CodeParser.toScala(nameList.soqlId()).map(name => Name(CodeParser.getText(name)))
-          )
+          DotName(CodeParser.toScala(nameList.soqlId()).map(name => Name(CodeParser.getText(name))))
         )
-    new SOQL(isAggregate, fromNames.toArray, boundedExpressions)
+    new SOQL(resultType, fromNames.toArray, boundedExpressions)
   }
 }
 

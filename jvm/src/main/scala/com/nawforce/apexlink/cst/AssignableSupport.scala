@@ -228,7 +228,9 @@ object AssignableSupport {
 
   @scala.annotation.tailrec
   private def isRecordSetAssignable(toType: TypeName, context: VerifyContext): Boolean = {
-    if (toType == TypeNames.SObject || toType.isSObjectList || toType.isObjectList) {
+    if (
+      toType == TypeNames.SObject || toType.isSObjectList || toType.isSObjectRecordSet || toType.isObjectList
+    ) {
       true
     } else if (toType.isList) {
       isRecordSetAssignable(toType.params.head, context)

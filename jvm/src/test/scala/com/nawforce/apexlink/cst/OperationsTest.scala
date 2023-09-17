@@ -115,6 +115,12 @@ class OperationsTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Ternary common SObject") {
+    happyTypeDeclaration(
+      "public class Dummy {{List<SObject> a = true ? Database.query('') : [Select Count(Id) from Account];}}"
+    )
+  }
+
   test("Ternary SObjectType") {
     happyTypeDeclaration(
       "public virtual class Dummy {{ SObjectType a = 2>0 ? Account.SObjectType : Contact.SObjectType;}}"
