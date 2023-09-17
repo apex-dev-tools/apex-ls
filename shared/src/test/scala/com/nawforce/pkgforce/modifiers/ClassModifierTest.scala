@@ -111,6 +111,38 @@ class ClassModifierTest extends AnyFunSuite {
     assert(legalClassAccess(ArraySeq(ISTEST_ANNOTATION)))
   }
 
+  test("isTest and abstract modifier") {
+    val issues = illegalClassAccess(ArraySeq(ISTEST_ANNOTATION, ABSTRACT_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          diagnostics.Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 23, 1, 28),
+            "isTest classes can not be abstract or virtual"
+          )
+        )
+      )
+    )
+  }
+
+  test("isTest and virtual modifier") {
+    val issues = illegalClassAccess(ArraySeq(ISTEST_ANNOTATION, VIRTUAL_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          diagnostics.Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 22, 1, 27),
+            "isTest classes can not be abstract or virtual"
+          )
+        )
+      )
+    )
+  }
+
   test("Abstract modifier") {
     assert(legalClassAccess(ArraySeq(ABSTRACT_MODIFIER, PUBLIC_MODIFIER)))
   }

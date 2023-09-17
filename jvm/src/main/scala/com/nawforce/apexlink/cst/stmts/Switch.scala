@@ -28,30 +28,53 @@ import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.parsers.ENUM_NATURE
 import com.nawforce.runtime.parsers.CodeParser
 
-sealed abstract class WhenLiteral extends CST
+sealed abstract class WhenLiteral extends CST {
+  def isComparableTo(typeName: TypeName): Boolean
+}
 
-final class WhenNullLiteral extends WhenLiteral
+final class WhenNullLiteral extends WhenLiteral {
+  override def isComparableTo(typeName: TypeName): Boolean = true
+}
 final case class WhenIdLiteral(id: Id) extends WhenLiteral {
-  override def toString: String = id.name.value.toLowerCase
+  override def isComparableTo(typeName: TypeName): Boolean = false // Not used
+  override def toString: String                            = id.name.value.toLowerCase
 }
 final case class WhenStringLiteral(value: String) extends WhenLiteral {
-  override def toString: String = value
+  override def isComparableTo(typeName: TypeName): Boolean = typeName == TypeNames.String
+  override def toString: String                            = value
 }
 final case class WhenIntegerLiteral(negate: Boolean, value: String) extends WhenLiteral {
+  override def isComparableTo(typeName: TypeName): Boolean =
+    typeName == TypeNames.Integer || typeName == TypeNames.Long
   override def toString: String = (if (negate) "-" else "") + value
+}
+final case class WhenLongLiteral(negate: Boolean, value: String) extends WhenLiteral {
+  override def isComparableTo(typeName: TypeName): Boolean = typeName == TypeNames.Long
+  override def toString: String                            = (if (negate) "-" else "") + value
 }
 
 object WhenLiteral {
-  def construct(literal: WhenLiteralContext): Option[WhenLiteral] = {
-    val whenLiteral = CodeParser
+  def construct(context: WhenLiteralContext): Option[WhenLiteral] = {
+    val literal = flattenLiteral(context)
+    CodeParser
       .toScala(literal.NULL())
       .map(_ => new WhenNullLiteral())
       .orElse(
         CodeParser
           .toScala(literal.IntegerLiteral())
-          .map(l =>
-            WhenIntegerLiteral(CodeParser.toScala(literal.SUB()).nonEmpty, CodeParser.getText(l))
-          )
+          .map(l => {
+            val negate = CodeParser.toScala(literal.SUB()).size % 2 != 0
+            WhenIntegerLiteral(negate, CodeParser.getText(l))
+          })
+      )
+      .orElse(
+        CodeParser
+          .toScala(literal.LongLiteral())
+          .map(l => {
+            val negate = CodeParser.toScala(literal.SUB()).size % 2 != 0
+            val text   = CodeParser.getText(l)
+            WhenLongLiteral(negate, text.substring(0, text.length - 1))
+          })
       )
       .orElse(
         CodeParser
@@ -63,8 +86,12 @@ object WhenLiteral {
           .toScala(literal.id())
           .map(l => WhenIdLiteral(Id.construct(l)))
       )
+      .map(_.withContext(literal))
+  }
 
-    whenLiteral.map(_.withContext(literal))
+  private def flattenLiteral(value: WhenLiteralContext): WhenLiteralContext = {
+    // Remove nesting when a literal is wrapped in brackets
+    CodeParser.toScala(value.whenLiteral()).map(flattenLiteral).getOrElse(value)
   }
 }
 
@@ -84,28 +111,14 @@ final class WhenElseValue extends WhenValue {
 
 final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue {
   override def checkMatchableTo(typeName: TypeName): Seq[String] = {
-
-    def processErrors(
-      invalid: Seq[WhenLiteral],
-      all: Seq[WhenLiteral],
-      typeName: TypeName
-    ): Seq[String] = {
-      if (invalid.nonEmpty) {
-        OrgInfo.logError(invalid.head.location, s"A $typeName literal is required for this value")
-        Seq()
+    literals.flatMap(literal => {
+      if (!literal.isComparableTo(typeName)) {
+        OrgInfo.logError(literal.location, s"A $typeName literal is required for this value")
+        None
       } else {
-        all.map(_.toString())
+        Some(literal.toString)
       }
-    }
-
-    val nonNull = literals.filterNot(_.isInstanceOf[WhenNullLiteral])
-    typeName match {
-      case TypeNames.Integer | TypeNames.Long =>
-        processErrors(nonNull.filter(!_.isInstanceOf[WhenIntegerLiteral]), nonNull, typeName)
-      case TypeNames.String =>
-        processErrors(nonNull.filter(!_.isInstanceOf[WhenStringLiteral]), nonNull, typeName)
-      case _ => assert(false); Seq()
-    }
+    })
   }
 
   override def checkIsSObject(context: BlockVerifyContext): Seq[String] = {
@@ -178,19 +191,22 @@ final case class WhenIdsValue(ids: Seq[Id]) extends WhenValue {
 
 object WhenValue {
   def construct(value: WhenValueContext): WhenValue = {
-    if (CodeParser.toScala(value.ELSE()).nonEmpty)
-      new WhenElseValue()
-    else {
-      val literals = CodeParser.toScala(value.whenLiteral()).flatMap(l => WhenLiteral.construct(l))
-      if (literals.nonEmpty)
-        WhenLiteralsValue(literals)
-      else
+    CodeParser
+      .toScala(value.ELSE())
+      .map(_ => new WhenElseValue())
+      .getOrElse(if (!value.whenLiteral().isEmpty) {
+        WhenLiteralsValue(
+          CodeParser
+            .toScala(value.whenLiteral())
+            .flatMap(l => WhenLiteral.construct(l))
+        )
+      } else {
         WhenIdsValue(
           CodeParser
             .toScala(value.id())
             .map(id => Id.construct(id).withContext(id))
         )
-    }
+      })
   }
 }
 

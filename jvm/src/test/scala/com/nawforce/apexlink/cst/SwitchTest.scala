@@ -25,11 +25,11 @@ class SwitchTest extends AnyFunSuite with TestHelper {
   test("Empty switch") {
     FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {{switch on 'A' {}}}")) {
       root: PathLike =>
-        val org = createOrg(root)
-        val expectedMsg = ServerOps.getCurrentParser == ANTLRParser match {
-          case false => "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\n"
-          case true =>
-            "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\nSyntax: line 1 at 38: extraneous input '}' expecting <EOF>\n"
+        createOrg(root)
+        val expectedMsg = if (ServerOps.getCurrentParser == ANTLRParser) {
+          "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\nSyntax: line 1 at 38: extraneous input '}' expecting <EOF>\n"
+        } else {
+          "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\n"
         }
         assert(getMessages(root.join("Dummy.cls")) == expectedMsg)
     }
@@ -145,6 +145,16 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     assert(!hasIssues)
   }
 
+  test("String single control with brackets") {
+    typeDeclaration("public class Dummy {{switch on 'A' {when ('A') {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("String single control with double brackets") {
+    typeDeclaration("public class Dummy {{switch on 'A' {when (('A')) {} }}}")
+    assert(!hasIssues)
+  }
+
   test("String multi control") {
     typeDeclaration("public class Dummy {{switch on 'A' {when 'A' {} when 'B' {}}}}")
     assert(!hasIssues)
@@ -167,6 +177,11 @@ class SwitchTest extends AnyFunSuite with TestHelper {
 
   test("String switch with Null") {
     typeDeclaration("public class Dummy {{switch on 'A' {when null {} when else {}}}}")
+    assert(!hasIssues)
+  }
+
+  test("String switch with bracketed Null") {
+    typeDeclaration("public class Dummy {{switch on 'A' {when (null) {} when else {}}}}")
     assert(!hasIssues)
   }
 
@@ -196,6 +211,16 @@ class SwitchTest extends AnyFunSuite with TestHelper {
 
   test("Integer single control") {
     typeDeclaration("public class Dummy {{switch on 1 {when 1 {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("Integer control with brackets") {
+    typeDeclaration("public class Dummy {{switch on 1 {when (1) {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("Integer control with double brackets") {
+    typeDeclaration("public class Dummy {{switch on 1 {when ((1)) {} }}}")
     assert(!hasIssues)
   }
 
@@ -248,7 +273,89 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Integer switch with long") {
+    typeDeclaration("public class Dummy {{switch on 1 {when 1l {} }}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 39-41: A System.Integer literal is required for this value\n"
+    )
+  }
+
   test("Long single control") {
+    typeDeclaration("public class Dummy {{switch on 1l {when 1l {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("Long control with brackets") {
+    typeDeclaration("public class Dummy {{switch on 1l {when (1l) {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("Long control with double brackets") {
+    typeDeclaration("public class Dummy {{switch on 1l {when ((1l)) {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("Long multi control") {
+    typeDeclaration("public class Dummy {{switch on 1l {when 1l {} when 2l {}}}}")
+    assert(!hasIssues)
+  }
+
+  test("Long multi control (duplicate)") {
+    typeDeclaration("public class Dummy {{switch on 1l {when 1l {} when 1l {}}}}")
+    assert(dummyIssues == "Error: line 1 at 31-33: Duplicate when case for 1\n")
+  }
+
+  test("Long multi control (integer duplicate)") {
+    typeDeclaration("public class Dummy {{switch on 1l {when 1l {} when 1 {}}}}")
+    assert(dummyIssues == "Error: line 1 at 31-33: Duplicate when case for 1\n")
+  }
+
+  test("Long multi-part control") {
+    typeDeclaration("public class Dummy {{switch on 1l {when 1l, 2l {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("Long multi-part control (duplicate)") {
+    typeDeclaration("public class Dummy {{switch on 1l {when 1l, 1l {} }}}")
+    assert(dummyIssues == "Error: line 1 at 31-33: Duplicate when case for 1\n")
+  }
+
+  test("Long multi-part control (integer duplicate)") {
+    typeDeclaration("public class Dummy {{switch on 1l {when 1l, 1 {} }}}")
+    assert(dummyIssues == "Error: line 1 at 31-33: Duplicate when case for 1\n")
+  }
+
+  test("Long switch with Null") {
+    typeDeclaration("public class Dummy {{switch on 1l {when null {} when else {}}}}")
+    assert(!hasIssues)
+  }
+
+  test("Long switch with id") {
+    typeDeclaration("public class Dummy {{switch on 1l {when Bar {}}}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 40-43: A System.Long literal is required for this value\n"
+    )
+  }
+
+  test("Long switch with id id") {
+    typeDeclaration("public class Dummy {{switch on 1l {when Account record {}}}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 40-47: A System.Long literal is required for this value\n"
+    )
+  }
+
+  test("Long switch with string") {
+    typeDeclaration("public class Dummy {{switch on 1l {when 'a' {}}}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 40-43: A System.Long literal is required for this value\n"
+    )
+  }
+
+  test("Long switch with integer") {
     typeDeclaration("public class Dummy {{switch on 1l {when 1 {} }}}")
     assert(!hasIssues)
   }
