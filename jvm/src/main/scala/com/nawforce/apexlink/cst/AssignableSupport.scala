@@ -206,13 +206,13 @@ object AssignableSupport {
     if (toType.isList || toType.isRecordSet) {
       // Assignment to List or RecordSet must be same type or SObject/Object
       val toObject = toType.params.head
-      if (toObject == TypeNames.SObject || toObject == TypeNames.Object)
+      if (toObject == TypeNames.SObject || toObject == TypeNames.InternalObject)
         true
       else
         genericSObject || toType.params.head == fromType.params.head
     } else {
       // Assignment non-list/Recordset must be same type or SObject/Object
-      if (toType == TypeNames.SObject || toType == TypeNames.Object)
+      if (toType == TypeNames.SObject || toType == TypeNames.InternalObject)
         true
       else
         genericSObject || toType == fromType.params.head

@@ -45,6 +45,10 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
     happyTypeDeclaration("public class Dummy {{ List<SObject> a = [Select Id from Account]; }}")
   }
 
+  test("SOQL list assignment to Object") {
+    happyTypeDeclaration("public class Dummy {{ List<Object> a = [Select Id from Account]; }}")
+  }
+
   test("SOQL list assignment to wrong type") {
     typeDeclaration("public class Dummy {{ List<Contact> a = [Select Id from Account]; }}")
     assert(
@@ -68,6 +72,10 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
     happyTypeDeclaration("public class Dummy {{ SObject a = [Select Id from Account]; }}")
   }
 
+  test("SOQL single assignment to Object") {
+    happyTypeDeclaration("public class Dummy {{ Object a = [Select Id from Account]; }}")
+  }
+
   test("SOQL single assignment to wrong type") {
     typeDeclaration("public class Dummy {{ Contact a = [Select Id from Account]; }}")
     assert(
@@ -81,6 +89,10 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
 
   test("SOQL single unknown type to SObject") {
     happyTypeDeclaration("public class Dummy {{ SObject a = Database.query(''); }}")
+  }
+
+  test("SOQL single unknown type to Object") {
+    happyTypeDeclaration("public class Dummy {{ Object a = Database.query(''); }}")
   }
 
   test("SOQL field reference") {
@@ -100,6 +112,12 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
   test("SOQL Aggregate assignment to SObject") {
     happyTypeDeclaration(
       "public class Dummy {{ List<SObject> a = [Select Count(Id) from Account]; }}"
+    )
+  }
+
+  test("SOQL Aggregate assignment to Object") {
+    happyTypeDeclaration(
+      "public class Dummy {{ List<Object> a = [Select Count(Id) from Account]; }}"
     )
   }
 
