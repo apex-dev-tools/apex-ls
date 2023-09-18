@@ -271,14 +271,7 @@ final case class ArrayCreatorRest(
     arrayInitializer.foreach(_.expressions.foreach(expr => {
       val exprType = expr.verify(input, context)
       exprType.declaration.foreach(exprType => {
-        if (
-          !isAssignableDeclaration(
-            creating.typeName,
-            exprType,
-            context,
-            AssignableOptions(strictConversions = false, narrowSObjects = true)
-          )
-        ) {
+        if (!isAssignableDeclaration(creating.typeName, exprType, context)) {
           OrgInfo.logError(
             expr.location,
             s"Expression of type '${exprType.typeName}' can not be assigned to ${creating.typeName}'"
@@ -453,14 +446,7 @@ final case class SetOrListCreatorRest(parts: ArraySeq[Expression]) extends Creat
         parts.foreach(part => {
           val exprType = part.verify(input, context)
           exprType.declaration.foreach(exprType => {
-            if (
-              !isAssignableDeclaration(
-                toType.typeName,
-                exprType,
-                context,
-                AssignableOptions(strictConversions = false, narrowSObjects = true)
-              )
-            ) {
+            if (!isAssignableDeclaration(toType.typeName, exprType, context)) {
               OrgInfo.logError(
                 location,
                 s"Expression of type '${exprType.typeName}' can not be assigned to ${toType.typeName}'"

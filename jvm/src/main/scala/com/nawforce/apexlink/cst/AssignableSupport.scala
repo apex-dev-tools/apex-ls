@@ -46,9 +46,8 @@ object AssignableSupport {
     bType: TypeDeclaration,
     context: VerifyContext
   ): Boolean = {
-    val options = AssignableOptions(strictConversions = false, narrowSObjects = true)
-    isAssignableDeclaration(aType.typeName, bType, context, options) ||
-    isAssignableDeclaration(bType.typeName, aType, context, options)
+    isAssignableDeclaration(aType.typeName, bType, context) ||
+    isAssignableDeclaration(bType.typeName, aType, context)
   }
 
   /** Determine if value of a type can be assigned to another type
@@ -105,7 +104,7 @@ object AssignableSupport {
          strictAssignable.contains(toType, fromType.typeName)
        else
          looseAssignable.contains(toType, fromType.typeName)) ||
-      canNarrowSObject(toType, fromType.typeName, options, context) ||
+      canNarrowSObject(toType, fromType.typeName, context, options) ||
       fromType.extendsOrImplements(toType)
     }
   }
@@ -148,17 +147,17 @@ object AssignableSupport {
   ): Boolean = {
     val toParams   = toType.params
     val fromParams = fromType.params
-    val options    = AssignableOptions(strictConversions = false, narrowSObjects = true)
 
     (fromType.name match {
       case Names.List$ | Names.Set$ =>
-        canNarrowSObject(toParams.head, fromParams.head, options, context)
-      case Names.Map$ => canNarrowSObject(toParams(1), fromParams(1), options, context)
-      case _          => false
+        canNarrowSObject(toParams.head, fromParams.head, context)
+      case Names.Map$ =>
+        canNarrowSObject(toParams(1), fromParams(1), context)
+      case _ => false
     }) ||
     toParams
       .zip(fromParams)
-      .map(p => isAssignable(p._1, p._2, context, options))
+      .map(p => isAssignable(p._1, p._2, context))
       .forall(b => b)
   }
 
@@ -167,8 +166,8 @@ object AssignableSupport {
   private def canNarrowSObject(
     toType: TypeName,
     fromType: TypeName,
-    options: AssignableOptions,
-    context: VerifyContext
+    context: VerifyContext,
+    options: AssignableOptions = AssignableOptions.default
   ): Boolean = {
     if (
       options.narrowSObjects &&
