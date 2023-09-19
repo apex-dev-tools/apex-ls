@@ -46,9 +46,7 @@ trait ControlFlowContext {
     getPaths
       .filter(_.unreachable)
       .flatMap(_.location)
-      .foreach(pl =>
-        log(Issue(pl.path, ERROR_CATEGORY, pl.location, s"Unreachable block or statement"))
-      )
+      .foreach(location => log(Issue(ERROR_CATEGORY, location, s"Unreachable block or statement")))
   }
 }
 
@@ -74,7 +72,7 @@ trait OuterControlFlowContext {
       case _: UnknownPath => s"Expected return statement"
       case _              => s"Code path does not return a value"
     })
-    path.location.foreach(pl => log(Issue(pl.path, ERROR_CATEGORY, pl.location, message)))
+    path.location.foreach(location => log(Issue(ERROR_CATEGORY, location, message)))
   }
 }
 

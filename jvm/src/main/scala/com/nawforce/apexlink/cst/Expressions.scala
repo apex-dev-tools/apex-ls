@@ -421,14 +421,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
       case Left(err) =>
         if (callee.isComplete) {
           if (argTypes.contains(TypeNames.Any)) {
-            context.log(
-              Issue(
-                location.path,
-                WARNING_CATEGORY,
-                location.location,
-                s"$err, likely due to unknown type"
-              )
-            )
+            context.log(Issue(WARNING_CATEGORY, location, s"$err, likely due to unknown type"))
           } else {
             context.logMissing(location, s"$err")
           }
@@ -645,9 +638,7 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
           ArithmeticAddSubtractAssignmentOperation | ArithmeticMultiplyDivideAssignmentOperation =>
         operation
           .getReadOnlyError(leftInter, context)
-          .foreach(msg =>
-            context.log(Issue(location.path, WARNING_CATEGORY, location.location, msg))
-          )
+          .foreach(msg => context.log(Issue(WARNING_CATEGORY, location, msg)))
       case _ =>
     }
 

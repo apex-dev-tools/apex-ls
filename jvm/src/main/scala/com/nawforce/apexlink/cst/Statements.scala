@@ -152,6 +152,15 @@ object LocalVariableDeclarationStatement {
 final case class IfStatement(expression: Expression, statements: Seq[Statement]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     val expr = expression.verify(context)
+    if (expr.isDefined && expr.typeName != TypeNames.Boolean) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          expression.location,
+          s"If expression should return a Boolean value, not a '${expr.typeName}'"
+        )
+      )
+    }
 
     // This is replicating a feature where non-block statements can pass declarations forward
     val stmtRootContext = new InnerBlockVerifyContext(context).withBranchingControl()
@@ -338,7 +347,17 @@ object ForUpdate {
 final case class WhileStatement(expression: Expression, statement: Option[Statement])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    val expr = expression.verify(context)
+    if (expr.isDefined && expr.typeName != TypeNames.Boolean) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          expression.location,
+          s"While expression should return a Boolean value, not a '${expr.typeName}'"
+        )
+      )
+    }
+
     statement.foreach(_.verify(context))
   }
 }
@@ -352,10 +371,20 @@ object WhileStatement {
   }
 }
 
-final case class DoWhileStatement(statement: Option[Statement], expression: Option[Expression])
+final case class DoWhileStatement(statement: Option[Statement], expression: Expression)
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.foreach(_.verify(context))
+    val expr = expression.verify(context)
+    if (expr.isDefined && expr.typeName != TypeNames.Boolean) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          expression.location,
+          s"While expression should return a Boolean value, not a '${expr.typeName}'"
+        )
+      )
+    }
+
     statement.foreach(_.verify(context))
   }
 }
@@ -364,8 +393,7 @@ object DoWhileStatement {
   def construct(parser: CodeParser, statement: DoWhileStatementContext): DoWhileStatement = {
     DoWhileStatement(
       Statement.construct(parser, statement.statement(), isTrigger = false),
-      Option(statement.parExpression())
-        .map(parExpression => Expression.construct(parExpression.expression()))
+      Expression.construct(statement.parExpression.expression())
     ).withContext(statement)
   }
 }
@@ -461,9 +489,7 @@ object CatchClause {
 final case class ReturnStatement(expression: Option[Expression]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     assertReturnType(context, expression.map(_.verify(context)))
-      .foreach(msg =>
-        context.log(Issue(this.location.path, ERROR_CATEGORY, this.location.location, msg))
-      )
+      .foreach(msg => context.log(Issue(ERROR_CATEGORY, location, msg)))
     verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }
 

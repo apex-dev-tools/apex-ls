@@ -49,9 +49,8 @@ final case class VariableDeclarator(
         ) {
           context.log(
             Issue(
-              location.path,
               ERROR_CATEGORY,
-              location.location,
+              location,
               s"Incompatible types in assignment, from '${rhsCtx.typeDeclaration.typeName}' to '${lhsType.typeName}'"
             )
           )
