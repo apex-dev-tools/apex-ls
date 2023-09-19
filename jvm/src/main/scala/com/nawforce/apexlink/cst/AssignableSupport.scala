@@ -202,20 +202,21 @@ object AssignableSupport {
     */
   private def isRecordSetAssignable(toType: TypeName, fromType: TypeName): Boolean = {
     // Where we don't know specific RecordSet SObject we need some flex in rules
-    val genericSObject = fromType.params.head == TypeNames.SObject
+    val fromSObjectType    = fromType.params.head
+    val isSObjectRecordSet = fromSObjectType == TypeNames.SObject
     if (toType.isList || toType.isRecordSet) {
       // Assignment to List or RecordSet must be same type or SObject/Object
       val toObject = toType.params.head
       if (toObject == TypeNames.SObject || toObject == TypeNames.InternalObject)
         true
       else
-        genericSObject || toType.params.head == fromType.params.head
+        isSObjectRecordSet || toObject == fromSObjectType
     } else {
       // Assignment non-list/Recordset must be same type or SObject/Object
       if (toType == TypeNames.SObject || toType == TypeNames.InternalObject)
         true
       else
-        genericSObject || toType == fromType.params.head
+        isSObjectRecordSet || toType == fromSObjectType
     }
   }
 
