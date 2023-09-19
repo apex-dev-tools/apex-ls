@@ -29,13 +29,12 @@ trait ControlFlowContext {
     path
   }
 
-  def getControlRoot(): ControlFlowContext = root
   def setControlRoot(context: BlockVerifyContext with ControlFlowContext): BlockVerifyContext = {
     root = context
     this
   }
 
-  def hasBranchingControl(): Boolean = root.branching
+  def hasBranchingControl: Boolean = root.branching
   def withBranchingControl(): BlockVerifyContext = {
     root.branching = true
     this

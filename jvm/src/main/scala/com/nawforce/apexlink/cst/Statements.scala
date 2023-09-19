@@ -411,7 +411,7 @@ final case class TryStatement(block: Block, catches: Seq[CatchClause], finallyBl
       .ArrayBuffer(true)
       .addAll(catches.map(_ => true))
     finallyBlock.foreach(_ => a.addOne(false))
-    verifyControlPath(tryContext, BranchControlPattern(None, a.toArray))
+    verifyControlPath(tryContext, BranchControlPattern(a.toArray))
   }
 }
 
