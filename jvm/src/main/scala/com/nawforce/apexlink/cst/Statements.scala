@@ -31,6 +31,39 @@ import scala.collection.mutable
 
 abstract class Statement extends CST with ControlFlow {
   def verify(context: BlockVerifyContext): Unit
+
+  /** Verify an expression result type matches a specific type logging an issue if not
+    *
+    * @param expression to verify
+    * @param context verify context to use
+    * @param typeName to check for
+    * @param isStatic check for static or instance value
+    * @param prefix for the log issue
+    */
+  def verifyExpressionIs(
+    expression: Expression,
+    context: BlockVerifyContext,
+    typeName: TypeName,
+    isStatic: Boolean,
+    prefix: String
+  ): (Boolean, ExprContext) = {
+    val expr = expression.verify(context)
+    if (expr.isDefined && (!expr.isStatic.contains(isStatic) || expr.typeName != typeName)) {
+      val qualifier       = if (isStatic) "type" else "instance"
+      val resultQualifier = if (expr.isStatic.contains(true)) "type" else "instance"
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          expression.location,
+          s"$prefix expression should return a '$typeName' $qualifier, not a '${expr.typeName}' $resultQualifier"
+        )
+      )
+      (false, expr)
+    } else {
+      (true, expr)
+    }
+  }
+
 }
 
 // Treat Block as Statement for blocks in blocks
@@ -151,7 +184,8 @@ object LocalVariableDeclarationStatement {
 
 final case class IfStatement(expression: Expression, statements: Seq[Statement]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    val expr = expression.verify(context)
+    val exprResult =
+      verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "If")
 
     // This is replicating a feature where non-block statements can pass declarations forward
     val stmtRootContext = new InnerBlockVerifyContext(context).withBranchingControl()
@@ -168,7 +202,7 @@ final case class IfStatement(expression: Expression, statements: Seq[Statement])
         )
     })
 
-    verifyControlPath(stmtRootContext, BranchControlPattern(Some(expr), 2))
+    verifyControlPath(stmtRootContext, BranchControlPattern(Some(exprResult._2), 2))
   }
 }
 
@@ -338,7 +372,7 @@ object ForUpdate {
 final case class WhileStatement(expression: Expression, statement: Option[Statement])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -352,10 +386,10 @@ object WhileStatement {
   }
 }
 
-final case class DoWhileStatement(statement: Option[Statement], expression: Option[Expression])
+final case class DoWhileStatement(statement: Option[Statement], expression: Expression)
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.foreach(_.verify(context))
+    verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -364,8 +398,7 @@ object DoWhileStatement {
   def construct(parser: CodeParser, statement: DoWhileStatementContext): DoWhileStatement = {
     DoWhileStatement(
       Statement.construct(parser, statement.statement(), isTrigger = false),
-      Option(statement.parExpression())
-        .map(parExpression => Expression.construct(parExpression.expression()))
+      Expression.construct(statement.parExpression.expression())
     ).withContext(statement)
   }
 }
@@ -383,7 +416,7 @@ final case class TryStatement(block: Block, catches: Seq[CatchClause], finallyBl
       .ArrayBuffer(true)
       .addAll(catches.map(_ => true))
     finallyBlock.foreach(_ => a.addOne(false))
-    verifyControlPath(tryContext, BranchControlPattern(None, a.toArray))
+    verifyControlPath(tryContext, BranchControlPattern(a.toArray))
   }
 }
 
@@ -461,9 +494,7 @@ object CatchClause {
 final case class ReturnStatement(expression: Option[Expression]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     assertReturnType(context, expression.map(_.verify(context)))
-      .foreach(msg =>
-        context.log(Issue(this.location.path, ERROR_CATEGORY, this.location.location, msg))
-      )
+      .foreach(msg => context.log(Issue(ERROR_CATEGORY, location, msg)))
     verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }
 

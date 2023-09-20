@@ -800,7 +800,7 @@ object OPM extends TriHierarchy {
       writer.append(message)
       writer.append(": ")
       ex.printStackTrace(new PrintWriter(writer))
-      log(Issue(path, ERROR_CATEGORY, Location.empty, writer.toString))
+      log(Issue(ERROR_CATEGORY, PathLocation(path, Location.empty), writer.toString))
     }
 
     override def toString: String = {

@@ -39,7 +39,7 @@ sealed trait ControlPattern {
   protected def nextPathUnreachable(context: BlockVerifyContext): Boolean = {
     val paths   = context.getPaths
     val nonVoid = context.returnType != TypeNames.Void
-    !context.hasBranchingControl() && (paths.lastOption.exists(_.unreachable) || paths.exists {
+    !context.hasBranchingControl && (paths.lastOption.exists(_.unreachable) || paths.exists {
       // some block returns depend on entry to the block
       // we cannot be certain in all cases
       case s: StatementPath => s.returns || s.exitsBlock
@@ -137,11 +137,8 @@ object BlockControlPattern {
 }
 
 // if/else, try/catch
-class BranchControlPattern(
-  expr: Option[ExprContext],
-  requiredBranches: Array[Boolean],
-  exclusive: Boolean
-) extends BlockControlPattern {
+class BranchControlPattern(requiredBranches: Array[Boolean], exclusive: Boolean)
+    extends BlockControlPattern {
   override protected def collectFailedPaths(
     context: BlockVerifyContext,
     paths: Array[ControlPath]
@@ -171,10 +168,10 @@ class BranchControlPattern(
 }
 
 object BranchControlPattern {
-  def apply(expr: Option[ExprContext], requiredBranches: Array[Boolean]): BranchControlPattern = {
-    new BranchControlPattern(expr, requiredBranches, false)
+  def apply(requiredBranches: Array[Boolean]): BranchControlPattern = {
+    new BranchControlPattern(requiredBranches, false)
   }
   def apply(expr: Option[ExprContext], requiredBranches: Int): BranchControlPattern = {
-    new BranchControlPattern(expr, Array.fill(requiredBranches)(true), true)
+    new BranchControlPattern(Array.fill(requiredBranches)(true), true)
   }
 }
