@@ -31,6 +31,39 @@ import scala.collection.mutable
 
 abstract class Statement extends CST with ControlFlow {
   def verify(context: BlockVerifyContext): Unit
+
+  /** Verify an expression result type matches a specific type logging an issue if not
+    *
+    * @param expression to verify
+    * @param context verify context to use
+    * @param typeName to check for
+    * @param isStatic check for static or instance value
+    * @param prefix for the log issue
+    */
+  def verifyExpressionIs(
+    expression: Expression,
+    context: BlockVerifyContext,
+    typeName: TypeName,
+    isStatic: Boolean,
+    prefix: String
+  ): (Boolean, ExprContext) = {
+    val expr = expression.verify(context)
+    if (expr.isDefined && (!expr.isStatic.contains(isStatic) || expr.typeName != typeName)) {
+      val qualifier       = if (isStatic) "type" else "instance"
+      val resultQualifier = if (expr.isStatic.contains(true)) "type" else "instance"
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          expression.location,
+          s"$prefix expression should return a '$typeName' $qualifier, not a '${expr.typeName}' $resultQualifier"
+        )
+      )
+      (false, expr)
+    } else {
+      (true, expr)
+    }
+  }
+
 }
 
 // Treat Block as Statement for blocks in blocks
@@ -151,16 +184,8 @@ object LocalVariableDeclarationStatement {
 
 final case class IfStatement(expression: Expression, statements: Seq[Statement]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    val expr = expression.verify(context)
-    if (expr.isDefined && expr.typeName != TypeNames.Boolean) {
-      context.log(
-        Issue(
-          ERROR_CATEGORY,
-          expression.location,
-          s"If expression should return a Boolean value, not a '${expr.typeName}'"
-        )
-      )
-    }
+    val exprResult =
+      verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "If")
 
     // This is replicating a feature where non-block statements can pass declarations forward
     val stmtRootContext = new InnerBlockVerifyContext(context).withBranchingControl()
@@ -177,7 +202,7 @@ final case class IfStatement(expression: Expression, statements: Seq[Statement])
         )
     })
 
-    verifyControlPath(stmtRootContext, BranchControlPattern(Some(expr), 2))
+    verifyControlPath(stmtRootContext, BranchControlPattern(Some(exprResult._2), 2))
   }
 }
 
@@ -347,17 +372,7 @@ object ForUpdate {
 final case class WhileStatement(expression: Expression, statement: Option[Statement])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    val expr = expression.verify(context)
-    if (expr.isDefined && expr.typeName != TypeNames.Boolean) {
-      context.log(
-        Issue(
-          ERROR_CATEGORY,
-          expression.location,
-          s"While expression should return a Boolean value, not a '${expr.typeName}'"
-        )
-      )
-    }
-
+    verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -374,17 +389,7 @@ object WhileStatement {
 final case class DoWhileStatement(statement: Option[Statement], expression: Expression)
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    val expr = expression.verify(context)
-    if (expr.isDefined && expr.typeName != TypeNames.Boolean) {
-      context.log(
-        Issue(
-          ERROR_CATEGORY,
-          expression.location,
-          s"While expression should return a Boolean value, not a '${expr.typeName}'"
-        )
-      )
-    }
-
+    verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }

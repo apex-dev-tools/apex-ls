@@ -18,14 +18,21 @@ class WhileTest extends AnyFunSuite with TestHelper {
   test("Non boolean conditional") {
     typeDeclaration("public class Dummy {{ while ('') {} }}")
     assert(
-      dummyIssues == "Error: line 1 at 29-31: While expression should return a Boolean value, not a 'System.String'\n"
+      dummyIssues == "Error: line 1 at 29-31: While expression should return a 'System.Boolean' instance, not a 'System.String' instance\n"
     )
   }
 
   test("Null boolean conditional") {
     typeDeclaration("public class Dummy {{ while (null) {} }}")
     assert(
-      dummyIssues == "Error: line 1 at 29-33: While expression should return a Boolean value, not a 'null'\n"
+      dummyIssues == "Error: line 1 at 29-33: While expression should return a 'System.Boolean' instance, not a 'null' instance\n"
+    )
+  }
+
+  test("Static boolean conditional") {
+    typeDeclaration("public class Dummy {{ while (Boolean) {} }}")
+    assert(
+      dummyIssues == "Error: line 1 at 29-36: While expression should return a 'System.Boolean' instance, not a 'System.Boolean' type\n"
     )
   }
 
@@ -36,5 +43,4 @@ class WhileTest extends AnyFunSuite with TestHelper {
   test("Single block") {
     happyTypeDeclaration("public class Dummy {{ while (true) {System.debug('');} }}")
   }
-
 }

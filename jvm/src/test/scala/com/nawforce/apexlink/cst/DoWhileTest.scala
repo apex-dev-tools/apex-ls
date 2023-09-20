@@ -18,14 +18,21 @@ class DoWhileTest extends AnyFunSuite with TestHelper {
   test("Non boolean conditional") {
     typeDeclaration("public class Dummy {{ do {} while (''); }}")
     assert(
-      dummyIssues == "Error: line 1 at 35-37: While expression should return a Boolean value, not a 'System.String'\n"
+      dummyIssues == "Error: line 1 at 35-37: While expression should return a 'System.Boolean' instance, not a 'System.String' instance\n"
     )
   }
 
   test("Null boolean conditional") {
     typeDeclaration("public class Dummy {{ do {} while (null); }}")
     assert(
-      dummyIssues == "Error: line 1 at 35-39: While expression should return a Boolean value, not a 'null'\n"
+      dummyIssues == "Error: line 1 at 35-39: While expression should return a 'System.Boolean' instance, not a 'null' instance\n"
+    )
+  }
+
+  test("Static boolean conditional") {
+    typeDeclaration("public class Dummy {{ do {} while (Boolean); }}")
+    assert(
+      dummyIssues == "Error: line 1 at 35-42: While expression should return a 'System.Boolean' instance, not a 'System.Boolean' type\n"
     )
   }
 
