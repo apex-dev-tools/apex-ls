@@ -22,7 +22,7 @@ import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import java.lang.ref.WeakReference
@@ -498,7 +498,19 @@ object ReturnStatement {
 
 final case class ThrowStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    val expr = expression.verify(context)
+    if (expr.isDefined) {
+      if (expr.isStatic.contains(true) || !expr.typeName.name.endsWith(Names.Exception)) {
+        context.log(
+          Issue(
+            expression.location.path,
+            ERROR_CATEGORY,
+            expression.location.location,
+            s"Only Exception objects may be thrown, not '${expr.typeName}'"
+          )
+        )
+      }
+    }
     verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }
 }
