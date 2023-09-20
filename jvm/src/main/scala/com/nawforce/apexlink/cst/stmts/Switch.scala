@@ -260,7 +260,6 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
     verifyControlPath(
       switchContext,
       BranchControlPattern(
-        None,
         Option
           .when(whenControls.isEmpty) { Array(x = true) }
           .getOrElse(whenControls.map(_ => true).toArray)

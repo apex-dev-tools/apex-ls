@@ -358,14 +358,7 @@ final case class ApexFieldDeclaration(
     val staticContext = if (isStatic) Some(true) else None
 
     if (isStatic && modifiers.contains(PROTECTED_MODIFIER)) {
-      context.log(
-        Issue(
-          location.path,
-          ERROR_CATEGORY,
-          location.location,
-          s"protected field '${id.name}' cannot be static"
-        )
-      )
+      context.log(Issue(ERROR_CATEGORY, location, s"protected field '${id.name}' cannot be static"))
     }
 
     variableDeclarator.verify(

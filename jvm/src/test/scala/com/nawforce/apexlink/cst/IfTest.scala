@@ -19,10 +19,73 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class IfTest extends AnyFunSuite with TestHelper {
 
-  test("Block bug") {
-    typeDeclaration("public class Dummy {{ if (false) String a = ''; else a =''; }}")
-    assert(!hasIssues)
+  test("Bad conditional") {
+    typeDeclaration("public class Dummy {{ if (foo) {} }}")
+    assert(
+      dummyIssues == "Missing: line 1 at 26-29: No variable or type found for 'foo' on 'Dummy'\n"
+    )
   }
 
-  // TODO: Write some tests!
+  test("Non boolean conditional") {
+    typeDeclaration("public class Dummy {{ if ('') {} }}")
+    assert(
+      dummyIssues == "Error: line 1 at 26-28: If expression should return a 'System.Boolean' instance, not a 'System.String' instance\n"
+    )
+  }
+
+  test("Null boolean conditional") {
+    typeDeclaration("public class Dummy {{ if (null) {} }}")
+    assert(
+      dummyIssues == "Error: line 1 at 26-30: If expression should return a 'System.Boolean' instance, not a 'null' instance\n"
+    )
+  }
+
+  test("Static boolean conditional") {
+    typeDeclaration("public class Dummy {{ if (Boolean) {} }}")
+    assert(
+      dummyIssues == "Error: line 1 at 26-33: If expression should return a 'System.Boolean' instance, not a 'System.Boolean' type\n"
+    )
+  }
+
+  test("Single statement") {
+    happyTypeDeclaration("public class Dummy {{ if (true) System.debug(''); }}")
+  }
+
+  test("Else statement") {
+    happyTypeDeclaration(
+      "public class Dummy {{ if (true) System.debug(''); else System.debug(''); }}"
+    )
+  }
+
+  test("Scoping bug") {
+    happyTypeDeclaration("public class Dummy {{ if (false) String a = ''; else a =''; }}")
+  }
+
+  test("Scoping bug with block") {
+    typeDeclaration("public class Dummy {{ if (false) {String a = '';} else a =''; }}")
+    assert(
+      dummyIssues == "Missing: line 1 at 55-56: No variable or type found for 'a' on 'Dummy'\n"
+    )
+  }
+
+  test("Scoping bug with else block") {
+    happyTypeDeclaration("public class Dummy {{ if (false) String a = ''; else { a ='';} }}")
+  }
+
+  test("Single block") {
+    happyTypeDeclaration("public class Dummy {{ if (true) {System.debug('');} }}")
+  }
+
+  test("Else block") {
+    happyTypeDeclaration(
+      "public class Dummy {{ if (true) System.debug(''); else {System.debug('');} }}"
+    )
+  }
+
+  test("Dual block") {
+    happyTypeDeclaration(
+      "public class Dummy {{ if (true) {System.debug('');} else {System.debug('');} }}"
+    )
+  }
+
 }
