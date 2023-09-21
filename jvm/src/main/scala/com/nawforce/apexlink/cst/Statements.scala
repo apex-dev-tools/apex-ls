@@ -152,7 +152,7 @@ object LocalVariableDeclarationStatement {
 final case class IfStatement(expression: Expression, statements: Seq[Statement]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     val exprResult =
-      expression.verifyIs(context, TypeNames.Boolean, isStatic = false, "If")
+      expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "If")
 
     // This is replicating a feature where non-block statements can pass declarations forward
     val stmtRootContext = new InnerBlockVerifyContext(context).withBranchingControl()
@@ -339,7 +339,7 @@ object ForUpdate {
 final case class WhileStatement(expression: Expression, statement: Option[Statement])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verifyIs(context, TypeNames.Boolean, isStatic = false, "While")
+    expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -356,7 +356,7 @@ object WhileStatement {
 final case class DoWhileStatement(statement: Option[Statement], expression: Expression)
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verifyIs(context, TypeNames.Boolean, isStatic = false, "While")
+    expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -427,7 +427,7 @@ final case class CatchClause(
                 Issue(
                   ERROR_CATEGORY,
                   qname.location,
-                  s"Catch clause should catch an Exception instance, not a '${exceptionTypeName}' instance"
+                  s"Catch clause should catch an Exception instance, not a '$exceptionTypeName' instance"
                 )
               )
               context.module.any
@@ -634,7 +634,22 @@ object MergeStatement {
 final case class RunAsStatement(expressions: ArraySeq[Expression], block: Option[Block])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expressions.foreach(_.verify(context))
+    if (expressions.size != 1) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"System.runAs must be provided a User or Version argument, not ${expressions.size} arguments"
+        )
+      )
+    } else {
+      expressions.head.verifyIs(
+        context,
+        Set(TypeNames.UserSObject, TypeNames.Version),
+        isStatic = false,
+        "System.runAs"
+      )
+    }
     block.foreach(_.verify(context))
     verifyControlPath(context)
   }

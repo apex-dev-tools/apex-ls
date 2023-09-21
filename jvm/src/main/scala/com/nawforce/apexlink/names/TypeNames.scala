@@ -112,6 +112,9 @@ object TypeNames extends InternCache[TypeName] {
   lazy val QueryLocator: TypeName =
     TypeName(XNames.QueryLocator, Nil, Some(TypeNames.Database)).intern
 
+  lazy val UserSObject: TypeName = TypeName(Names.User, Nil, Some(TypeNames.Schema))
+  lazy val Version: TypeName     = TypeName(Names.Version, Nil, Some(TypeNames.System))
+
   lazy val User: TypeName             = TypeName(Names.User).intern
   lazy val UserRecordAccess: TypeName = TypeName(Names.UserRecordAccess).intern
 
