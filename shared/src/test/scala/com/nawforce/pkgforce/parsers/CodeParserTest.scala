@@ -68,6 +68,13 @@ class CodeParserTest extends AnyFunSuite {
     assert(result.issues.isEmpty)
   }
 
+  test("UTF-8 class") {
+    val path   = Path("Dummy.cls")
+    val cp     = CodeParser(path, SourceData("public class Dummy {{String a = 'Kimi Räikkönen';}}"))
+    val result = cp.parseClass()
+    assert(result.issues.isEmpty)
+  }
+
   test("Class with error & surrogate pair") {
     val path   = Path("Dummy.cls")
     val cp     = CodeParser(path, SourceData("public class Dummy {String a = '\uD83E\uDD26'"))

@@ -21,7 +21,7 @@ import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
-import com.nawforce.apexlink.types.other.AnyDeclaration
+import com.nawforce.apexlink.types.other.{AnyDeclaration, RecordSetDeclaration}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.apexparser.ApexParser._
@@ -46,11 +46,7 @@ final case class ExprContext(
   def isDefined: Boolean =
     declaration.nonEmpty && !declaration.exists(_.isInstanceOf[AnyDeclaration])
 
-  def moduleDeclarationOpt: Option[OPM.Module] = declaration.flatMap(_.moduleDeclaration)
-
   def typeDeclaration: TypeDeclaration = declaration.get
-
-  def moduleDeclaration: OPM.Module = moduleDeclarationOpt.get
 
   def typeName: TypeName = declaration.get.typeName
 }
@@ -114,7 +110,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
 
     // When we have a leading IdPrimary there are a couple of special cases to handle, we could with a better
     // understanding of how these are handled, likely it via some parser hack
-    getInterceptPrimary()
+    getInterceptPrimary
       .flatMap(primary => {
         val td       = input.declaration.get
         val localVar = context.isVar(primary.id.name)
@@ -134,7 +130,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       .getOrElse(verifyInternal(input, context))
   }
 
-  private def getInterceptPrimary(): Option[IdPrimary] = {
+  private def getInterceptPrimary: Option[IdPrimary] = {
     expression match {
       case PrimaryExpression(primary: IdPrimary) if !safeNavigation => Some(primary)
       case _                                                        => None
@@ -229,7 +225,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       PlatformTypeDeclaration.namespaces.contains(name)
   }
 
-  def verifyWithId(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+  private def verifyWithId(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     val inputType = input.declaration.get
 
     val name = target.name
@@ -253,14 +249,16 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       }
     }
 
-    if (inputType.isComplete) {
-      if (inputType.isSObject) {
-        if (!context.module.isGhostedFieldName(name)) {
-          context.log(IssueOps.unknownFieldOnSObject(location, name, inputType.typeName))
-        }
-      } else {
-        context.log(IssueOps.unknownFieldOrType(location, name, inputType.typeName))
+    // Field is missing
+    if (inputType.isSObject || inputType.isInstanceOf[RecordSetDeclaration]) {
+      // For SObject or RecordSet being used as an SObject, ignore if we not have a
+      // complete type or the field is using a ghosted namespace
+      if (inputType.isComplete && !context.module.isGhostedFieldName(name)) {
+        context.log(IssueOps.unknownFieldOnSObject(location, name, inputType.typeName))
       }
+    } else if (inputType.isComplete) {
+      // For other types, if complete we should error
+      context.log(IssueOps.unknownFieldOrType(location, name, inputType.typeName))
     }
     ExprContext.empty
   }
@@ -958,15 +956,6 @@ object Expression {
 
   def construct(expression: ArraySeq[ExpressionContext]): ArraySeq[Expression] = {
     expression.map(x => Expression.construct(x))
-  }
-}
-
-final case class TypeArguments(typeList: List[TypeName]) extends CST
-
-object TypeArguments {
-  def construct(from: TypeArgumentsContext): TypeArguments = {
-    val types = CodeParser.toScala(from.typeList().typeRef())
-    TypeArguments(TypeReference.construct(types.toList)).withContext(from)
   }
 }
 

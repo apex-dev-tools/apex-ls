@@ -12,7 +12,7 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.apexlink.parsers
+package com.nawforce.pkgforce.parsers
 
 import com.nawforce.apexparser.ApexParser.LiteralContext
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}

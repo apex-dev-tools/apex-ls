@@ -126,6 +126,7 @@ object ApexParser {
   @JSImport("@apexdevtools/apex-parser", "LiteralContext")
   class LiteralContext extends ParserRuleContext {
     def IntegerLiteral(): js.UndefOr[TerminalNode] = js.native
+    def LongLiteral(): js.UndefOr[TerminalNode]    = js.native
     def NumberLiteral(): js.UndefOr[TerminalNode]  = js.native
     def StringLiteral(): js.UndefOr[TerminalNode]  = js.native
     def BooleanLiteral(): js.UndefOr[TerminalNode] = js.native

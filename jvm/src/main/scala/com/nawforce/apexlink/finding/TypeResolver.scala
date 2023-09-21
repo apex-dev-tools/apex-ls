@@ -14,8 +14,10 @@
 
 package com.nawforce.apexlink.finding
 
+import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core.TypeDeclaration
+import com.nawforce.apexlink.types.other.RecordSetDeclaration
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.schema.{PlatformObjectNature, SObjectDeclaration}
 import com.nawforce.pkgforce.names.TypeName
@@ -92,26 +94,34 @@ object TypeResolver {
     }
   }
 
-  /** Hook to upgrade a SObject defined as a platform type into an SObject for the module. This
-    * allows us to support dependencies on Standard SObjects but also allows for module specific
-    * versions to be managed.
+  /** Hook to upgrade an SObject obtained as a platform type into an SObject for the module.
+    *
+    * This allows us to support dependencies on Standard SObjects but also allows for module
+    * specific versions to be managed. We also capture Internal.RecordSet<SObject> here
+    * for consistency and to allow the use of a more specialized TypeDeclaration for these.
+    *
+    * @param module the module to inject types into
     */
   private def sobjectIntercept(module: Option[OPM.Module])(op: => TypeResponse): TypeResponse = {
     val result = op
     module
-      .map(m => {
+      .map(module => {
         result match {
           case Right(base) if base.isSObject && base.isInstanceOf[PlatformTypeDeclaration] =>
             val td = new SObjectDeclaration(
               Array(),
-              m,
+              module,
               base.typeName,
               PlatformObjectNature,
               ArraySeq(),
               ArraySeq(),
               base.fields
             )
-            m.upsertMetadata(td)
+            module.upsertMetadata(td)
+            Right(td)
+          case Right(base) if base.typeName.isRecordSet =>
+            val td = new RecordSetDeclaration(module, base)
+            module.upsertMetadata(td)
             Right(td)
           case x => x
         }

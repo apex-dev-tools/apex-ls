@@ -68,6 +68,8 @@ object TypeNames extends InternCache[TypeName] {
   lazy val ProcessInstanceHistory: TypeName =
     TypeName(Name("ProcessInstanceHistory"), Nil, Some(TypeNames.Schema)).intern
   lazy val NameSObject: TypeName = TypeName(Name("Name"), Nil, Some(TypeNames.Schema)).intern
+  lazy val AggregateResult: TypeName =
+    TypeName(Name("AggregateResult"), Nil, Some(TypeNames.Schema)).intern
 
   lazy val ApexPages: TypeName = TypeName(Names.ApexPages).intern
   lazy val ApexPagesPageReference: TypeName =
@@ -82,8 +84,6 @@ object TypeNames extends InternCache[TypeName] {
   lazy val SObjectType: TypeName  = TypeName(Names.SObjectType, Nil, Some(TypeNames.Schema)).intern
   lazy val SObjectField: TypeName = TypeName(Names.SObjectField, Nil, Some(TypeNames.Schema)).intern
   lazy val FieldSet: TypeName     = TypeName(Names.FieldSet, Nil, Some(TypeNames.Schema)).intern
-  lazy val DescribeSObjectResult: TypeName =
-    TypeName(Names.DescribeSObjectResult, Nil, Some(TypeNames.Schema)).intern
   lazy val DescribeFieldResult: TypeName =
     TypeName(Names.DescribeFieldResult, Nil, Some(TypeNames.Schema)).intern
   lazy val SObjectTypeFieldSets: TypeName =
@@ -104,7 +104,8 @@ object TypeNames extends InternCache[TypeName] {
     TypeName(Names.SObjectFields$, Nil, Some(TypeNames.Internal)).intern
   lazy val SObjectFieldRowCause$ : TypeName =
     TypeName(Names.SObjectFieldRowCause$, Nil, Some(TypeNames.Internal)).intern
-  lazy val Trigger$ : TypeName = TypeName(Names.Trigger$, Nil, Some(TypeNames.Internal)).intern
+  private lazy val Trigger$ : TypeName =
+    TypeName(Names.Trigger$, Nil, Some(TypeNames.Internal)).intern
 
   lazy val Database: TypeName = TypeName(Names.Database).intern
   lazy val BatchableContext: TypeName =
@@ -140,7 +141,7 @@ object TypeNames extends InternCache[TypeName] {
   def recordSetOf(typeName: TypeName): TypeName =
     TypeName(Names.RecordSet$, Seq(typeName), Some(TypeNames.Internal)).intern
 
-  val standardShareNames: Set[String] = Set(
+  private val standardShareNames: Set[String] = Set(
     "AccountShare",
     "AssetShare",
     "AuthorizationFormConsentShare",
@@ -294,13 +295,6 @@ object TypeNames extends InternCache[TypeName] {
       )
     }
 
-    def maybeNamespace: Option[Name] = {
-      if (typeName.outer.nonEmpty)
-        Some(outerName)
-      else
-        None
-    }
-
     def withNamespace(namespace: Option[Name]): TypeName = {
       namespace.map(ns => withTail(TypeName(ns))).getOrElse(typeName)
     }
@@ -372,8 +366,6 @@ object TypeNames extends InternCache[TypeName] {
       }
     }
 
-    def isStringOrId: Boolean = typeName == TypeNames.String || typeName == TypeNames.IdType
-
     def isList: Boolean =
       typeName.name == Names.List$ && typeName.outer.contains(
         TypeNames.System
@@ -386,12 +378,13 @@ object TypeNames extends InternCache[TypeName] {
         TypeNames.Internal
       ) && typeName.params.size == 1
 
+    def isSObjectRecordSet: Boolean = {
+      isRecordSet && typeName.params.head == TypeNames.SObject
+    }
+
     def isSObjectList: Boolean = isList && typeName.params.head == TypeNames.SObject
 
     def isObjectList: Boolean = isList && typeName.params.head == TypeNames.InternalObject
-
-    def isBatchable: Boolean =
-      typeName.name == Names.Batchable && typeName.outer.contains(TypeNames.Database)
 
     def isIterable: Boolean =
       typeName.name == XNames.Iterable && typeName.outer.contains(
@@ -422,15 +415,6 @@ object TypeNames extends InternCache[TypeName] {
       typeName.name == other.name &&
       typeName.outer.nonEmpty == other.outer.nonEmpty &&
       typeName.outer.forall(_.equalsNamesOnly(other.outer.get))
-    }
-
-    def decodedExtendedGeneric(): Option[TypeName] = {
-      val parts = typeName.name.value.split('_')
-      if (typeName.params.isEmpty && parts.length > 1) {
-        Some(new TypeName(Name(parts.head), Seq(), typeName.outer))
-      } else {
-        None
-      }
     }
   }
 }

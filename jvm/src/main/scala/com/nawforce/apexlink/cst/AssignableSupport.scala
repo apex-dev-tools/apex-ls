@@ -96,7 +96,7 @@ object AssignableSupport {
     ) {
       true
     } else if (!options.strictConversions && fromType.typeName.isRecordSet) {
-      isRecordSetAssignable(toType, context)
+      isRecordSetAssignable(toType, fromType.typeName)
     } else if (toType.params.nonEmpty || fromType.typeName.params.nonEmpty) {
       isAssignableGeneric(toType, fromType, context)
     } else {
@@ -195,17 +195,27 @@ object AssignableSupport {
     }
   }
 
-  @scala.annotation.tailrec
-  private def isRecordSetAssignable(toType: TypeName, context: VerifyContext): Boolean = {
-    if (toType == TypeNames.SObject || toType.isSObjectList || toType.isObjectList) {
-      true
-    } else if (toType.isList) {
-      isRecordSetAssignable(toType.params.head, context)
+  /** Test if RecordSet in fromType is assignable to toType.
+    * @param toType the type we are trying to assign to
+    * @param fromType the RecordSet typeName, maybe over SObject or a specific SObject
+    */
+  private def isRecordSetAssignable(toType: TypeName, fromType: TypeName): Boolean = {
+    // Where we don't know specific RecordSet SObject we need some flex in rules
+    val fromSObjectType    = fromType.params.head
+    val isSObjectRecordSet = fromSObjectType == TypeNames.SObject
+    if (toType.isList || toType.isRecordSet) {
+      // Assignment to List or RecordSet must be same type or SObject/Object
+      val toObject = toType.params.head
+      if (toObject == TypeNames.SObject || toObject == TypeNames.InternalObject)
+        true
+      else
+        isSObjectRecordSet || toObject == fromSObjectType
     } else {
-      context.getTypeFor(toType, context.thisType) match {
-        case Left(_)              => false
-        case Right(toDeclaration) => toDeclaration.isSObject
-      }
+      // Assignment non-list/Recordset must be same type or SObject/Object
+      if (toType == TypeNames.SObject || toType == TypeNames.InternalObject)
+        true
+      else
+        isSObjectRecordSet || toType == fromSObjectType
     }
   }
 
