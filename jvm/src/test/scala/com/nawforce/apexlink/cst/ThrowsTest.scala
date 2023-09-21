@@ -15,7 +15,7 @@ class ThrowsTest extends AnyFunSuite with TestHelper {
   test("Throw platform exception class errors") {
     typeDeclaration("public class Dummy {{ throw AssertException; }}")
     assert(
-      dummyIssues == "Error: line 1 at 28-43: Only Exception objects may be thrown, not 'System.AssertException'\n"
+      dummyIssues == "Error: line 1 at 28-43: Throw expression should return an Exception instance, not a 'System.AssertException' type\n"
     )
   }
 
@@ -37,7 +37,7 @@ class ThrowsTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 28-39: Only Exception objects may be thrown, not 'MyException'\n"
+      dummyIssues == "Error: line 1 at 28-39: Throw expression should return an Exception instance, not a 'MyException' type\n"
     )
   }
 
@@ -49,15 +49,14 @@ class ThrowsTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(
-      dummyIssues == "Error: line 1 at 28-41: Only Exception objects may be thrown, not 'MyClass'\n"
+      dummyIssues == "Error: line 1 at 28-41: Throw expression should return an Exception instance, not a 'MyClass' instance\n"
     )
   }
 
   test("Throw primitive errors") {
     typeDeclaration("public class Dummy {{ throw 'Hello'; }}")
     assert(
-      dummyIssues == "Error: line 1 at 28-35: Only Exception objects may be thrown, not 'System.String'\n"
+      dummyIssues == "Error: line 1 at 28-35: Throw expression should return an Exception instance, not a 'System.String' instance\n"
     )
   }
-
 }

@@ -25,8 +25,8 @@ import com.nawforce.apexlink.types.other.AnyDeclaration
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.apexparser.ApexParser._
-import com.nawforce.pkgforce.diagnostics.{Issue, WARNING_CATEGORY}
-import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
+import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, WARNING_CATEGORY}
+import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
 import com.nawforce.pkgforce.path.{Locatable, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 
@@ -75,12 +75,75 @@ object ExprContext {
   }
 }
 
+/** base for any type of expression, provides helpers for type validation */
 sealed abstract class Expression extends CST {
   def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext
 
   def verify(context: BlockVerifyContext): ExprContext = {
     val staticContext = if (context.isStatic) Some(true) else None
     verify(ExprContext(staticContext, context.thisType), new ExpressionVerifyContext(context))
+  }
+
+  /** Verify an expression result type is an exception
+    *
+    * @param context    verify context to use
+    * @param prefix     for the log issue
+    */
+  def verifyIsExceptionInstance(
+    context: BlockVerifyContext,
+    prefix: String
+  ): (Boolean, ExprContext) = {
+    val verifyResult = verify(context)
+    if (
+      verifyResult.isDefined && (verifyResult.isStatic
+        .contains(true) || !verifyResult.typeName.name.endsWith(Names.Exception))
+    ) {
+      val resultQualifier = if (verifyResult.isStatic.contains(true)) "type" else "instance"
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"$prefix expression should return an Exception instance, not a '${verifyResult.typeName}' $resultQualifier"
+        )
+      )
+      (false, verifyResult)
+    } else {
+      (true, verifyResult)
+    }
+  }
+
+  /** Verify an expression result type matches a specific type logging an issue if not
+    *
+    * @param context    verify context to use
+    * @param typeName   to check for
+    * @param isStatic   check for static or instance value
+    * @param prefix     for the log issue
+    */
+  def verifyIs(
+    context: BlockVerifyContext,
+    typeName: TypeName,
+    isStatic: Boolean,
+    prefix: String
+  ): (Boolean, ExprContext) = {
+    val verifyResult = verify(context)
+    if (
+      verifyResult.isDefined && (!verifyResult.isStatic.contains(
+        isStatic
+      ) || verifyResult.typeName != typeName)
+    ) {
+      val qualifier       = if (isStatic) "type" else "instance"
+      val resultQualifier = if (verifyResult.isStatic.contains(true)) "type" else "instance"
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"$prefix expression should return a '$typeName' $qualifier, not a '${verifyResult.typeName}' $resultQualifier"
+        )
+      )
+      (false, verifyResult)
+    } else {
+      (true, verifyResult)
+    }
   }
 }
 
@@ -229,7 +292,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       PlatformTypeDeclaration.namespaces.contains(name)
   }
 
-  def verifyWithId(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+  private def verifyWithId(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     val inputType = input.declaration.get
 
     val name = target.name
