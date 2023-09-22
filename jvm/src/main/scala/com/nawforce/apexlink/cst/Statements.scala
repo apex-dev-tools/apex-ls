@@ -22,7 +22,7 @@ import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import java.lang.ref.WeakReference
@@ -31,39 +31,6 @@ import scala.collection.mutable
 
 abstract class Statement extends CST with ControlFlow {
   def verify(context: BlockVerifyContext): Unit
-
-  /** Verify an expression result type matches a specific type logging an issue if not
-    *
-    * @param expression to verify
-    * @param context verify context to use
-    * @param typeName to check for
-    * @param isStatic check for static or instance value
-    * @param prefix for the log issue
-    */
-  def verifyExpressionIs(
-    expression: Expression,
-    context: BlockVerifyContext,
-    typeName: TypeName,
-    isStatic: Boolean,
-    prefix: String
-  ): (Boolean, ExprContext) = {
-    val expr = expression.verify(context)
-    if (expr.isDefined && (!expr.isStatic.contains(isStatic) || expr.typeName != typeName)) {
-      val qualifier       = if (isStatic) "type" else "instance"
-      val resultQualifier = if (expr.isStatic.contains(true)) "type" else "instance"
-      context.log(
-        Issue(
-          ERROR_CATEGORY,
-          expression.location,
-          s"$prefix expression should return a '$typeName' $qualifier, not a '${expr.typeName}' $resultQualifier"
-        )
-      )
-      (false, expr)
-    } else {
-      (true, expr)
-    }
-  }
-
 }
 
 // Treat Block as Statement for blocks in blocks
@@ -185,7 +152,7 @@ object LocalVariableDeclarationStatement {
 final case class IfStatement(expression: Expression, statements: Seq[Statement]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     val exprResult =
-      verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "If")
+      expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "If")
 
     // This is replicating a feature where non-block statements can pass declarations forward
     val stmtRootContext = new InnerBlockVerifyContext(context).withBranchingControl()
@@ -372,7 +339,7 @@ object ForUpdate {
 final case class WhileStatement(expression: Expression, statement: Option[Statement])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "While")
+    expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -389,7 +356,7 @@ object WhileStatement {
 final case class DoWhileStatement(statement: Option[Statement], expression: Expression)
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    verifyExpressionIs(expression, context, TypeNames.Boolean, isStatic = false, "While")
+    expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -452,7 +419,19 @@ final case class CatchClause(
           case Left(_) =>
             context.missingType(qname.location, exceptionTypeName)
             context.module.any
-          case Right(td) => td
+          case Right(td) =>
+            if (exceptionTypeName.name.endsWith(Names.Exception)) {
+              td
+            } else {
+              context.log(
+                Issue(
+                  ERROR_CATEGORY,
+                  qname.location,
+                  s"Catch clause should catch an Exception instance, not a '$exceptionTypeName' instance"
+                )
+              )
+              context.module.any
+            }
         }
       // definition = None disables issues like 'Unused' for exceptions
       blockContext.addVar(
@@ -529,7 +508,7 @@ object ReturnStatement {
 
 final case class ThrowStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsExceptionInstance(context, "Throw")
     verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }
 }
@@ -655,7 +634,22 @@ object MergeStatement {
 final case class RunAsStatement(expressions: ArraySeq[Expression], block: Option[Block])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expressions.foreach(_.verify(context))
+    if (expressions.size != 1) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"System.runAs must be provided a User or Version argument, not ${expressions.size} arguments"
+        )
+      )
+    } else {
+      expressions.head.verifyIs(
+        context,
+        Set(TypeNames.UserSObject, TypeNames.Version),
+        isStatic = false,
+        "System.runAs"
+      )
+    }
     block.foreach(_.verify(context))
     verifyControlPath(context)
   }
