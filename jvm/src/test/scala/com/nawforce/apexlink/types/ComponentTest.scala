@@ -48,7 +48,7 @@ class ComponentTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Test.component" -> "<apex:component/>",
-        "Dummy.cls"      -> "public class Dummy { {Component.Test;} }"
+        "Dummy.cls"      -> "public class Dummy { {Object a = Component.Test;} }"
       )
     ) { root: PathLike =>
       createOrg(root)
@@ -57,13 +57,14 @@ class ComponentTest extends AnyFunSuite with TestHelper {
   }
 
   test("Missing component") {
-    FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy { {Component.Test;} }")) {
-      root: PathLike =>
-        createOrg(root)
-        assert(
-          getMessages(root.join("Dummy.cls")) ==
-            "Missing: line 1 at 22-36: Unknown field or type 'Test' on 'Component'\n"
-        )
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy { {Object a = Component.Test;} }")
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) ==
+          "Missing: line 1 at 33-47: Unknown field or type 'Test' on 'Component'\n"
+      )
     }
   }
 

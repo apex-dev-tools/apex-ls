@@ -26,6 +26,7 @@ import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import java.lang.ref.WeakReference
+import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
@@ -678,9 +679,35 @@ object RunAsStatement {
 
 final case class ExpressionStatement(var expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    // Future: What causes 'expression can not be a statement' error
     expression.verify(context)
+    if (!allowableExpression(expression)) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          expression.location,
+          "Only assignment, new & method call expressions can be used as statements"
+        )
+      )
+    }
+
     verifyControlPath(context)
+  }
+
+  @tailrec
+  private def allowableExpression(expression: Expression): Boolean = {
+    expression match {
+      case e: SubExpression           => allowableExpression(e.expression)
+      case e: BinaryExpression        => e.isAssignmentOperation
+      case e: PrefixExpression        => e.isAssignmentOperation
+      case _: PostfixExpression       => true
+      case _: MethodCallCtor          => true
+      case _: MethodCallWithId        => true
+      case _: DotExpressionWithMethod => true
+      case _: NewExpression           => true
+
+      case _ =>
+        false
+    }
   }
 }
 
