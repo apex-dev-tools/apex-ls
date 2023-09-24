@@ -723,50 +723,48 @@ object Statement {
       LoggerOps.info(s"Apex Statement found without content in ${parser.source.path}")
     }
     try {
-      CodeParser
-        .toScala(statement.getChild(0))
-        .map {
-          case stmt: BlockContext =>
-            Block.construct(parser, stmt, isTrigger = false)
-          case stmt: LocalVariableDeclarationStatementContext =>
-            LocalVariableDeclarationStatement.construct(parser, stmt, isTrigger)
-          case stmt: IfStatementContext =>
-            IfStatement.construct(parser, stmt)
-          case stmt: SwitchStatementContext =>
-            SwitchStatement.construct(parser, stmt)
-          case stmt: ForStatementContext =>
-            ForStatement.construct(parser, stmt)
-          case stmt: WhileStatementContext =>
-            WhileStatement.construct(parser, stmt)
-          case stmt: DoWhileStatementContext =>
-            DoWhileStatement.construct(parser, stmt)
-          case stmt: TryStatementContext =>
-            TryStatement.construct(parser, stmt)
-          case stmt: ReturnStatementContext =>
-            ReturnStatement.construct(stmt)
-          case stmt: ThrowStatementContext =>
-            ThrowStatement.construct(stmt)
-          case stmt: BreakStatementContext =>
-            BreakStatement.construct(stmt)
-          case stmt: ContinueStatementContext =>
-            ContinueStatement.construct(stmt)
-          case stmt: InsertStatementContext =>
-            InsertStatement.construct(stmt)
-          case stmt: UpdateStatementContext =>
-            UpdateStatement.construct(stmt)
-          case stmt: DeleteStatementContext =>
-            DeleteStatement.construct(stmt)
-          case stmt: UndeleteStatementContext =>
-            UndeleteStatement.construct(stmt)
-          case stmt: UpsertStatementContext =>
-            UpsertStatement.construct(stmt)
-          case stmt: MergeStatementContext =>
-            MergeStatement.construct(stmt)
-          case stmt: RunAsStatementContext =>
-            RunAsStatement.construct(parser, stmt)
-          case stmt: ExpressionStatementContext =>
-            ExpressionStatement.construct(stmt)
-        }
+      typedStatement.map {
+        case stmt: BlockContext =>
+          Block.construct(parser, stmt, isTrigger = false)
+        case stmt: LocalVariableDeclarationStatementContext =>
+          LocalVariableDeclarationStatement.construct(parser, stmt, isTrigger)
+        case stmt: IfStatementContext =>
+          IfStatement.construct(parser, stmt)
+        case stmt: SwitchStatementContext =>
+          SwitchStatement.construct(parser, stmt)
+        case stmt: ForStatementContext =>
+          ForStatement.construct(parser, stmt)
+        case stmt: WhileStatementContext =>
+          WhileStatement.construct(parser, stmt)
+        case stmt: DoWhileStatementContext =>
+          DoWhileStatement.construct(parser, stmt)
+        case stmt: TryStatementContext =>
+          TryStatement.construct(parser, stmt)
+        case stmt: ReturnStatementContext =>
+          ReturnStatement.construct(stmt)
+        case stmt: ThrowStatementContext =>
+          ThrowStatement.construct(stmt)
+        case stmt: BreakStatementContext =>
+          BreakStatement.construct(stmt)
+        case stmt: ContinueStatementContext =>
+          ContinueStatement.construct(stmt)
+        case stmt: InsertStatementContext =>
+          InsertStatement.construct(stmt)
+        case stmt: UpdateStatementContext =>
+          UpdateStatement.construct(stmt)
+        case stmt: DeleteStatementContext =>
+          DeleteStatement.construct(stmt)
+        case stmt: UndeleteStatementContext =>
+          UndeleteStatement.construct(stmt)
+        case stmt: UpsertStatementContext =>
+          UpsertStatement.construct(stmt)
+        case stmt: MergeStatementContext =>
+          MergeStatement.construct(stmt)
+        case stmt: RunAsStatementContext =>
+          RunAsStatement.construct(parser, stmt)
+        case stmt: ExpressionStatementContext =>
+          ExpressionStatement.construct(stmt)
+      }
     } catch {
       case _: MatchError =>
         // Log here just in case
