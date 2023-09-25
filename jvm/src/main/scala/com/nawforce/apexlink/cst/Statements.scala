@@ -20,7 +20,7 @@ import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
-import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
+import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, LoggerOps}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
@@ -627,12 +627,12 @@ final case class UpsertStatement(expression: Expression, field: Option[Qualified
 }
 
 object UpsertStatement {
-  def construct(statement: UpsertStatementContext): Option[UpsertStatement] = {
+  def construct(statement: UpsertStatementContext): UpsertStatement = {
     val expression = Expression.construct(statement.expression())
     val qualifiedName = CodeParser
       .toScala(statement.qualifiedName())
       .flatMap(qualifiedName => QualifiedName.construct(qualifiedName))
-    Some(UpsertStatement(expression, qualifiedName).withContext(statement))
+    UpsertStatement(expression, qualifiedName).withContext(statement)
   }
 }
 
@@ -718,6 +718,13 @@ object ExpressionStatement {
 }
 
 object Statement {
+
+  /** Create CST statements from ANTLR tree
+    *
+    * @param parser ANTLR parser, used to extract block source
+    * @param statements ANTLR statement contexts
+    * @param isTrigger construction is for a trigger
+    */
   def construct(
     parser: CodeParser,
     statements: Seq[StatementContext],
@@ -726,112 +733,70 @@ object Statement {
     statements.flatMap(s => Statement.construct(parser, s, isTrigger))
   }
 
+  /** Create CST statement from ANTLR tree
+    *
+    * @param parser ANTLR parser, used to extract block source
+    * @param statement ANTLR statement context
+    * @param isTrigger construction is for a trigger
+    */
   def construct(
     parser: CodeParser,
     statement: StatementContext,
     isTrigger: Boolean
   ): Option[Statement] = {
-    CodeParser
-      .toScala(statement.block())
-      .map(x => Block.construct(parser, x, isTrigger = false))
-      .orElse(
-        CodeParser
-          .toScala(statement.localVariableDeclarationStatement())
-          .map(x => LocalVariableDeclarationStatement.construct(parser, x, isTrigger))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.ifStatement())
-          .map(x => IfStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.switchStatement())
-          .map(x => SwitchStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.forStatement())
-          .map(x => ForStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.whileStatement())
-          .map(x => WhileStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.doWhileStatement())
-          .map(x => DoWhileStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.tryStatement())
-          .map(x => TryStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.returnStatement())
-          .map(x => ReturnStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.throwStatement())
-          .map(x => ThrowStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.breakStatement())
-          .map(x => BreakStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.continueStatement())
-          .map(x => ContinueStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.insertStatement())
-          .map(x => InsertStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.updateStatement())
-          .map(x => UpdateStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.deleteStatement())
-          .map(x => DeleteStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.undeleteStatement())
-          .map(x => UndeleteStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.upsertStatement())
-          .flatMap(x => UpsertStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.mergeStatement())
-          .map(x => MergeStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.runAsStatement())
-          .map(x => RunAsStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.expressionStatement())
-          .map(x => ExpressionStatement.construct(x))
-      )
-      .orElse({
-        // Parsing failed
+    val typedStatement = CodeParser.toScala(statement.getChild(0))
+    if (typedStatement.isEmpty) {
+      // Log here just in case
+      LoggerOps.info(s"Apex Statement found without content in ${parser.source.path}")
+    }
+    try {
+      typedStatement.map {
+        case stmt: BlockContext =>
+          Block.construct(parser, stmt, isTrigger = false)
+        case stmt: LocalVariableDeclarationStatementContext =>
+          LocalVariableDeclarationStatement.construct(parser, stmt, isTrigger)
+        case stmt: IfStatementContext =>
+          IfStatement.construct(parser, stmt)
+        case stmt: SwitchStatementContext =>
+          SwitchStatement.construct(parser, stmt)
+        case stmt: ForStatementContext =>
+          ForStatement.construct(parser, stmt)
+        case stmt: WhileStatementContext =>
+          WhileStatement.construct(parser, stmt)
+        case stmt: DoWhileStatementContext =>
+          DoWhileStatement.construct(parser, stmt)
+        case stmt: TryStatementContext =>
+          TryStatement.construct(parser, stmt)
+        case stmt: ReturnStatementContext =>
+          ReturnStatement.construct(stmt)
+        case stmt: ThrowStatementContext =>
+          ThrowStatement.construct(stmt)
+        case stmt: BreakStatementContext =>
+          BreakStatement.construct(stmt)
+        case stmt: ContinueStatementContext =>
+          ContinueStatement.construct(stmt)
+        case stmt: InsertStatementContext =>
+          InsertStatement.construct(stmt)
+        case stmt: UpdateStatementContext =>
+          UpdateStatement.construct(stmt)
+        case stmt: DeleteStatementContext =>
+          DeleteStatement.construct(stmt)
+        case stmt: UndeleteStatementContext =>
+          UndeleteStatement.construct(stmt)
+        case stmt: UpsertStatementContext =>
+          UpsertStatement.construct(stmt)
+        case stmt: MergeStatementContext =>
+          MergeStatement.construct(stmt)
+        case stmt: RunAsStatementContext =>
+          RunAsStatement.construct(parser, stmt)
+        case stmt: ExpressionStatementContext =>
+          ExpressionStatement.construct(stmt)
+      }
+    } catch {
+      case _: MatchError =>
+        // Log here just in case
+        LoggerOps.info(s"Unexpected Apex Statement type found in ${parser.source.path}")
         None
-      })
+    }
   }
 }
