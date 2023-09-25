@@ -21,6 +21,9 @@ import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.names.TypeName
 
 abstract class Operation {
+
+  def isAssignmentOperation: Boolean = false
+
   def verify(
     leftType: ExprContext,
     rightContext: ExprContext,
@@ -224,6 +227,8 @@ object Operation {
 }
 
 case object AssignmentOperation extends Operation {
+  override def isAssignmentOperation: Boolean = true
+
   override def verify(
     leftContext: ExprContext,
     rightContext: ExprContext,
@@ -374,6 +379,8 @@ case object ArithmeticOperation extends Operation {
 }
 
 case object ArithmeticAddSubtractAssignmentOperation extends Operation {
+  override def isAssignmentOperation: Boolean = true
+
   override def verify(
     leftContext: ExprContext,
     rightContext: ExprContext,
@@ -396,6 +403,8 @@ case object ArithmeticAddSubtractAssignmentOperation extends Operation {
 }
 
 case object ArithmeticMultiplyDivideAssignmentOperation extends Operation {
+  override def isAssignmentOperation: Boolean = true
+
   override def verify(
     leftContext: ExprContext,
     rightContext: ExprContext,
@@ -431,6 +440,8 @@ case object BitwiseOperation extends Operation {
 }
 
 case object BitwiseAssignmentOperation extends Operation {
+  override def isAssignmentOperation: Boolean = true
+
   override def verify(
     leftContext: ExprContext,
     rightContext: ExprContext,

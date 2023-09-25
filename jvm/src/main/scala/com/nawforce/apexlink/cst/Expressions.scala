@@ -720,6 +720,9 @@ final case class PostfixExpression(expression: Expression, op: String) extends E
 }
 
 final case class PrefixExpression(expression: Expression, op: String) extends Expression {
+
+  def isAssignmentOperation: Boolean = op == "++" || op == "--"
+
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     val inter = expression.verify(input, context)
     if (!inter.isDefined)
@@ -758,7 +761,7 @@ final case class NegationExpression(expression: Expression, isBitwise: Boolean) 
 }
 
 final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) extends Expression {
-  private lazy val operation = op match {
+  private lazy val operation: Operation = op match {
     case "="    => AssignmentOperation
     case "&&"   => LogicalOperation
     case "||"   => LogicalOperation
@@ -792,6 +795,8 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
     case ">>="  => BitwiseAssignmentOperation
     case ">>>=" => BitwiseAssignmentOperation
   }
+
+  def isAssignmentOperation: Boolean = operation.isAssignmentOperation
 
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     val leftInter  = lhs.verify(input, context)
