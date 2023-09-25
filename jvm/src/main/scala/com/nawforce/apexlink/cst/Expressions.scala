@@ -111,29 +111,33 @@ sealed abstract class Expression extends CST {
   /** Verify an expression result type matches a specific type logging an issue if not
     *
     * @param context    verify context to use
-    * @param typeName   to check for
+    * @param typeNames  set of permitted types
     * @param isStatic   check for static or instance value
     * @param prefix     for the log issue
     */
   def verifyIs(
     context: BlockVerifyContext,
-    typeName: TypeName,
+    typeNames: Set[TypeName],
     isStatic: Boolean,
     prefix: String
   ): (Boolean, ExprContext) = {
     val verifyResult = verify(context)
     if (
-      verifyResult.isDefined && (!verifyResult.isStatic.contains(
-        isStatic
-      ) || verifyResult.typeName != typeName)
+      verifyResult.isDefined && (!verifyResult.isStatic.contains(isStatic) ||
+        !typeNames.contains(verifyResult.typeName))
     ) {
-      val qualifier       = if (isStatic) "type" else "instance"
       val resultQualifier = if (verifyResult.isStatic.contains(true)) "type" else "instance"
+      val qualifier       = if (isStatic) "type" else "instance"
+      val requiredTypes = if (typeNames.size == 1) {
+        s"a '${typeNames.head}' $qualifier"
+      } else {
+        typeNames.map(n => s"'$n'").mkString("one of ", " or ", s" ${qualifier}s")
+      }
       context.log(
         Issue(
           ERROR_CATEGORY,
           location,
-          s"$prefix expression should return a '$typeName' $qualifier, not a '${verifyResult.typeName}' $resultQualifier"
+          s"$prefix expression should return $requiredTypes, not a '${verifyResult.typeName}' $resultQualifier"
         )
       )
       (false, verifyResult)
