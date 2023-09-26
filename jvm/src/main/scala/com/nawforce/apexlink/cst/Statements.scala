@@ -18,6 +18,7 @@ import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, LoggerOps}
@@ -210,6 +211,9 @@ object ForStatement {
   }
 }
 
+/** base for the two types of 'for' loop, Base style e.g. for(Integer i=0; i<10; i++) or enhanced
+  * style e.g. for(String a: new List<String>{'x', 'y', 'z'}
+  */
 sealed abstract class ForControl extends CST {
   def verify(context: BlockVerifyContext): Unit
   def addVars(context: BlockVerifyContext): Unit
@@ -226,31 +230,97 @@ object ForControl {
   }
 }
 
+/** for-each iteration, e.g. for(String a: new List<String>{'x', 'y', 'z'}
+  * @param typeName loop variable type
+  * @param id loop variable identifier
+  * @param expression iteration expression
+  */
 final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expression)
     extends ForControl {
-  override def verify(context: BlockVerifyContext): Unit = {
-    id.validate()
-    val forType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
-    if (forType.isEmpty)
-      context.missingType(id.location, typeName)
-    expression.verify(context)
+
+  /** Add vars introduced by the control to a context */
+  override def addVars(context: BlockVerifyContext): Unit = {
+    context.addVar(id.name, this, isReadOnly = false, typeName)
   }
 
-  def addVars(context: BlockVerifyContext): Unit = {
-    context.addVar(id.name, this, isReadOnly = false, typeName)
+  override def verify(context: BlockVerifyContext): Unit = {
+    id.validate()
+
+    // Check the loop var type is available
+    var varTd = context.getTypeAndAddDependency(typeName, context.thisType).toOption
+    if (varTd.isEmpty) {
+      context.missingType(id.location, typeName)
+      return
+    }
+
+    var varTypeName = varTd.get.typeName
+    val exprContext = expression.verify(context)
+    if (exprContext.isDefined) {
+
+      // Unwrap varTypeName If using grouping query via list loop var,
+      // e.g. for(List<Account> a : [Select Id from Account]){..}
+      if (varTypeName.isList && exprContext.typeName.isRecordSet) {
+        varTypeName = varTypeName.params.head
+        varTd = context.getTypeAndAddDependency(varTypeName, context.thisType).toOption
+      }
+
+      // Check we are trying to iterate over something iterable
+      val iteratorTypeName = exprContext.typeName
+      val iterationType    = getIterationType(iteratorTypeName)
+      if (iterationType.isEmpty) {
+        context.log(
+          Issue(
+            ERROR_CATEGORY,
+            this.location,
+            s"For loop can only iterate over Lists or Sets, not '$iteratorTypeName'"
+          )
+        )
+      } else {
+        // Check we can assign the iterable type to loop var type
+        if (!AssignableSupport.isAssignable(varTypeName, iterationType.get, context)) {
+          context.log(
+            Issue(
+              ERROR_CATEGORY,
+              id.location,
+              s"Incompatible types in assignment, from '${iterationType.get}' to '$varTypeName'"
+            )
+          )
+        } else {
+          // All good, setup save context for definition resolution on loop var, we have do this manually
+          // as the loop var is not in scope yet
+          context.saveResult(id, id.location.location) {
+            ExprContext(Some(false), varTd, varTd.get)
+          }
+        }
+      }
+    }
+  }
+
+  private def getIterationType(typeName: TypeName): Option[TypeName] = {
+    if (typeName.isList || typeName.isSet || typeName.isRecordSet) {
+      typeName.params.headOption
+    } else {
+      None
+    }
   }
 }
 
 object EnhancedForControl {
+
   def construct(from: EnhancedForControlContext): EnhancedForControl = {
     EnhancedForControl(
       TypeReference.construct(from.typeRef()),
       Id.construct(from.id()),
-      Expression.construct(from.expression()).withContext(from)
+      Expression.construct(from.expression())
     ).withContext(from)
   }
 }
 
+/** for loop, e.g. for(Integer i; i<10; i++}
+  * @param forInit initialization statement
+  * @param expression continuation condition
+  * @param forUpdate increment statement
+  */
 final case class BasicForControl(
   forInit: Option[ForInit],
   expression: Option[Expression],
@@ -258,7 +328,9 @@ final case class BasicForControl(
 ) extends ForControl {
   override def verify(context: BlockVerifyContext): Unit = {
     forInit.foreach(_.verify(context))
-    expression.foreach(_.verify(context))
+    expression.foreach(
+      _.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "For condition")
+    )
     forUpdate.foreach(_.verify(context))
   }
 

@@ -369,6 +369,11 @@ object TypeNames extends InternCache[TypeName] {
       }
     }
 
+    def isSet: Boolean =
+      typeName.name == Names.Set$ && typeName.outer.contains(
+        TypeNames.System
+      ) && typeName.params.size == 1
+
     def isList: Boolean =
       typeName.name == Names.List$ && typeName.outer.contains(
         TypeNames.System
