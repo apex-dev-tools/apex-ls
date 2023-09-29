@@ -3,8 +3,6 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst.ApexMethodDeclaration
-import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.HoverItem
 import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
@@ -12,7 +10,7 @@ import com.nawforce.apexlink.types.apex.{
   ApexFullDeclaration,
   ApexMethodLike
 }
-import com.nawforce.pkgforce.path.{IdLocatable, Locatable, Location, PathLike, UnsafeLocatable}
+import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
 
 trait HoverProvider extends SourceOps {
   this: OPM.PackageImpl =>
