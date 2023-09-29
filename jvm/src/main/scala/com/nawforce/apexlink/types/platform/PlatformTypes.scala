@@ -25,8 +25,6 @@ import scala.collection.mutable
 
 object PlatformTypes {
   lazy val nullType: TypeDeclaration               = loadType(TypeNames.Null)
-  lazy val recordSetType: TypeDeclaration          = loadType(TypeNames.RecordSet)
-  lazy val objectType: TypeDeclaration             = loadType(TypeNames.InternalObject)
   lazy val sObjectType: TypeDeclaration            = loadType(TypeNames.SObject)
   lazy val sObjectTypeType: TypeDeclaration        = loadType(TypeNames.SObjectType)
   lazy val sObjectTypeFieldSets: TypeDeclaration   = loadType(TypeNames.SObjectTypeFieldSets)
@@ -43,7 +41,6 @@ object PlatformTypes {
   lazy val dateType: TypeDeclaration               = loadType(TypeNames.Date)
   lazy val datetimeType: TypeDeclaration           = loadType(TypeNames.Datetime)
   lazy val timeType: TypeDeclaration               = loadType(TypeNames.Time)
-  lazy val blobType: TypeDeclaration               = loadType(TypeNames.Blob)
   lazy val locationType: TypeDeclaration           = loadType(TypeNames.Location)
   lazy val componentType: TypeDeclaration          = loadType(TypeNames.ApexPagesComponent)
   lazy val interviewType: TypeDeclaration          = loadType(TypeNames.Interview)

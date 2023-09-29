@@ -400,6 +400,16 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused empty interface extending another interface ") {
+    FileSystemHelper.run(
+      Map("A.cls" -> "public interface A extends B {}", "B.cls" -> "public interface B {}")
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("A.cls")).isEmpty)
+      assert(orgIssuesFor(org, root.join("B.cls")).isEmpty)
+    }
+  }
+
   test("Unused empty enum") {
     FileSystemHelper.run(Map("Dummy.cls" -> "public enum Dummy {}")) { root: PathLike =>
       val org = createOrgWithUnused(root)
@@ -433,6 +443,51 @@ class UnusedTest extends AnyFunSuite with TestHelper {
           orgIssuesFor(org, root.join("Dummy.cls")) ==
             "Unused: line 1 at 17-22: Unused interface 'Dummy'\n"
         )
+    }
+  }
+
+  test("Unused interface extending another interface") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public interface Dummy extends Foo {void func();}",
+        "Foo.cls"   -> "public interface Foo {void func();}"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 17-22: Unused interface 'Dummy'\n"
+      )
+      assert(
+        orgIssuesFor(org, root.join("Foo.cls")) ==
+          "Unused: line 1 at 27-31: Unused public method 'void func()'\n"
+      )
+    }
+  }
+
+  test("Unused interface extending an interface extending another interface") {
+    // This is rather specific test case to cover a bug that caused a stack overflow due to
+    // incorrectly setup shadows relationship between the methods
+    FileSystemHelper.run(
+      Map(
+        "C.cls" -> "public interface C extends B {void other();}",
+        "B.cls" -> "public interface B extends A {void func();}",
+        "A.cls" -> "public interface A {void func();}"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("C.cls")) ==
+          "Unused: line 1 at 17-18: Unused interface 'C'\n"
+      )
+      assert(
+        orgIssuesFor(org, root.join("B.cls")) ==
+          "Unused: line 1 at 35-39: Unused public method 'void func()'\n"
+      )
+      assert(
+        orgIssuesFor(org, root.join("A.cls")) ==
+          "Unused: line 1 at 25-29: Unused public method 'void func()'\n"
+      )
     }
   }
 

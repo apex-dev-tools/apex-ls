@@ -14,13 +14,16 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.AssignableSupport.{couldBeEqual, isAssignable}
+import com.nawforce.apexlink.cst.AssignableSupport.{couldBeEqual, isAssignableDeclaration}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.names.TypeName
 
 abstract class Operation {
+
+  def isAssignmentOperation: Boolean = false
+
   def verify(
     leftType: ExprContext,
     rightContext: ExprContext,
@@ -224,6 +227,8 @@ object Operation {
 }
 
 case object AssignmentOperation extends Operation {
+  override def isAssignmentOperation: Boolean = true
+
   override def verify(
     leftContext: ExprContext,
     rightContext: ExprContext,
@@ -233,12 +238,7 @@ case object AssignmentOperation extends Operation {
     if (rightContext.typeName == TypeNames.Null) {
       Right(leftContext)
     } else if (
-      isAssignable(
-        leftContext.typeName,
-        rightContext.typeDeclaration,
-        strictConversions = false,
-        context
-      )
+      isAssignableDeclaration(leftContext.typeName, rightContext.typeDeclaration, context)
     ) {
       Right(leftContext)
     } else {
@@ -256,23 +256,9 @@ case object LogicalOperation extends Operation {
     op: String,
     context: ExpressionVerifyContext
   ): Either[String, ExprContext] = {
-    if (
-      !isAssignable(
-        TypeNames.Boolean,
-        rightContext.typeDeclaration,
-        strictConversions = false,
-        context
-      )
-    ) {
+    if (!isAssignableDeclaration(TypeNames.Boolean, rightContext.typeDeclaration, context)) {
       Left(s"Right expression of logical $op must a boolean, not '${rightContext.typeName}'")
-    } else if (
-      !isAssignable(
-        TypeNames.Boolean,
-        leftContext.typeDeclaration,
-        strictConversions = false,
-        context
-      )
-    ) {
+    } else if (!isAssignableDeclaration(TypeNames.Boolean, leftContext.typeDeclaration, context)) {
       Left(s"Left expression of logical $op must a boolean, not '${leftContext.typeName}'")
     } else {
       Right(leftContext)
@@ -393,6 +379,8 @@ case object ArithmeticOperation extends Operation {
 }
 
 case object ArithmeticAddSubtractAssignmentOperation extends Operation {
+  override def isAssignmentOperation: Boolean = true
+
   override def verify(
     leftContext: ExprContext,
     rightContext: ExprContext,
@@ -415,6 +403,8 @@ case object ArithmeticAddSubtractAssignmentOperation extends Operation {
 }
 
 case object ArithmeticMultiplyDivideAssignmentOperation extends Operation {
+  override def isAssignmentOperation: Boolean = true
+
   override def verify(
     leftContext: ExprContext,
     rightContext: ExprContext,
@@ -450,6 +440,8 @@ case object BitwiseOperation extends Operation {
 }
 
 case object BitwiseAssignmentOperation extends Operation {
+  override def isAssignmentOperation: Boolean = true
+
   override def verify(
     leftContext: ExprContext,
     rightContext: ExprContext,
@@ -475,22 +467,10 @@ case object ConditionalOperation extends Operation {
   ): Either[String, ExprContext] = {
 
     // Future: How does this really function, Java mechanics are very complex
-    if (
-      isAssignable(
-        leftContext.typeName,
-        rightContext.typeDeclaration,
-        strictConversions = false,
-        context
-      )
-    ) {
+    if (isAssignableDeclaration(leftContext.typeName, rightContext.typeDeclaration, context)) {
       Right(leftContext)
     } else if (
-      isAssignable(
-        rightContext.typeName,
-        leftContext.typeDeclaration,
-        strictConversions = false,
-        context
-      )
+      isAssignableDeclaration(rightContext.typeName, leftContext.typeDeclaration, context)
     ) {
       Right(rightContext)
     } else {

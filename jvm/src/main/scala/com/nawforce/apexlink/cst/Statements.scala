@@ -15,17 +15,18 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.api.ServerOps
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
+import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
-import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
+import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, LoggerOps}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import java.lang.ref.WeakReference
+import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
@@ -151,7 +152,8 @@ object LocalVariableDeclarationStatement {
 
 final case class IfStatement(expression: Expression, statements: Seq[Statement]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    val expr = expression.verify(context)
+    val exprResult =
+      expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "If")
 
     // This is replicating a feature where non-block statements can pass declarations forward
     val stmtRootContext = new InnerBlockVerifyContext(context).withBranchingControl()
@@ -168,7 +170,7 @@ final case class IfStatement(expression: Expression, statements: Seq[Statement])
         )
     })
 
-    verifyControlPath(stmtRootContext, BranchControlPattern(Some(expr), 2))
+    verifyControlPath(stmtRootContext, BranchControlPattern(Some(exprResult._2), 2))
   }
 }
 
@@ -338,7 +340,7 @@ object ForUpdate {
 final case class WhileStatement(expression: Expression, statement: Option[Statement])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -352,10 +354,10 @@ object WhileStatement {
   }
 }
 
-final case class DoWhileStatement(statement: Option[Statement], expression: Option[Expression])
+final case class DoWhileStatement(statement: Option[Statement], expression: Expression)
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.foreach(_.verify(context))
+    expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
     statement.foreach(_.verify(context))
   }
 }
@@ -364,8 +366,7 @@ object DoWhileStatement {
   def construct(parser: CodeParser, statement: DoWhileStatementContext): DoWhileStatement = {
     DoWhileStatement(
       Statement.construct(parser, statement.statement(), isTrigger = false),
-      Option(statement.parExpression())
-        .map(parExpression => Expression.construct(parExpression.expression()))
+      Expression.construct(statement.parExpression.expression())
     ).withContext(statement)
   }
 }
@@ -383,7 +384,7 @@ final case class TryStatement(block: Block, catches: Seq[CatchClause], finallyBl
       .ArrayBuffer(true)
       .addAll(catches.map(_ => true))
     finallyBlock.foreach(_ => a.addOne(false))
-    verifyControlPath(tryContext, BranchControlPattern(None, a.toArray))
+    verifyControlPath(tryContext, BranchControlPattern(a.toArray))
   }
 }
 
@@ -419,7 +420,19 @@ final case class CatchClause(
           case Left(_) =>
             context.missingType(qname.location, exceptionTypeName)
             context.module.any
-          case Right(td) => td
+          case Right(td) =>
+            if (exceptionTypeName.name.endsWith(Names.Exception)) {
+              td
+            } else {
+              context.log(
+                Issue(
+                  ERROR_CATEGORY,
+                  qname.location,
+                  s"Catch clause should catch an Exception instance, not a '$exceptionTypeName' instance"
+                )
+              )
+              context.module.any
+            }
         }
       // definition = None disables issues like 'Unused' for exceptions
       blockContext.addVar(
@@ -461,9 +474,7 @@ object CatchClause {
 final case class ReturnStatement(expression: Option[Expression]) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     assertReturnType(context, expression.map(_.verify(context)))
-      .foreach(msg =>
-        context.log(Issue(this.location.path, ERROR_CATEGORY, this.location.location, msg))
-      )
+      .foreach(msg => context.log(Issue(ERROR_CATEGORY, location, msg)))
     verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }
 
@@ -477,14 +488,7 @@ final case class ReturnStatement(expression: Option[Expression]) extends Stateme
       Some(s"Missing return value of type '$expectedType'")
     else {
       expr.flatMap(e => {
-        if (
-          e.isDefined && !isAssignable(
-            expectedType,
-            e.typeDeclaration,
-            strictConversions = false,
-            context
-          )
-        )
+        if (e.isDefined && !isAssignableDeclaration(expectedType, e.typeDeclaration, context))
           Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
         else
           None
@@ -505,7 +509,7 @@ object ReturnStatement {
 
 final case class ThrowStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsExceptionInstance(context, "Throw")
     verifyControlPath(context, ExitControlPattern(exitsMethod = true, exitsBlock = true))
   }
 }
@@ -602,12 +606,12 @@ final case class UpsertStatement(expression: Expression, field: Option[Qualified
 }
 
 object UpsertStatement {
-  def construct(statement: UpsertStatementContext): Option[UpsertStatement] = {
+  def construct(statement: UpsertStatementContext): UpsertStatement = {
     val expression = Expression.construct(statement.expression())
     val qualifiedName = CodeParser
       .toScala(statement.qualifiedName())
       .flatMap(qualifiedName => QualifiedName.construct(qualifiedName))
-    Some(UpsertStatement(expression, qualifiedName).withContext(statement))
+    UpsertStatement(expression, qualifiedName).withContext(statement)
   }
 }
 
@@ -631,7 +635,22 @@ object MergeStatement {
 final case class RunAsStatement(expressions: ArraySeq[Expression], block: Option[Block])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expressions.foreach(_.verify(context))
+    if (expressions.size != 1) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"System.runAs must be provided a User or Version argument, not ${expressions.size} arguments"
+        )
+      )
+    } else {
+      expressions.head.verifyIs(
+        context,
+        Set(TypeNames.UserSObject, TypeNames.Version),
+        isStatic = false,
+        "System.runAs"
+      )
+    }
     block.foreach(_.verify(context))
     verifyControlPath(context)
   }
@@ -654,9 +673,35 @@ object RunAsStatement {
 
 final case class ExpressionStatement(var expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    // Future: What causes 'expression can not be a statement' error
     expression.verify(context)
+    if (!allowableExpression(expression)) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          expression.location,
+          "Only assignment, new & method call expressions can be used as statements"
+        )
+      )
+    }
+
     verifyControlPath(context)
+  }
+
+  @tailrec
+  private def allowableExpression(expression: Expression): Boolean = {
+    expression match {
+      case e: SubExpression           => allowableExpression(e.expression)
+      case e: BinaryExpression        => e.isAssignmentOperation
+      case e: PrefixExpression        => e.isAssignmentOperation
+      case _: PostfixExpression       => true
+      case _: MethodCallCtor          => true
+      case _: MethodCallWithId        => true
+      case _: DotExpressionWithMethod => true
+      case _: NewExpression           => true
+
+      case _ =>
+        false
+    }
   }
 }
 
@@ -667,6 +712,13 @@ object ExpressionStatement {
 }
 
 object Statement {
+
+  /** Create CST statements from ANTLR tree
+    *
+    * @param parser ANTLR parser, used to extract block source
+    * @param statements ANTLR statement contexts
+    * @param isTrigger construction is for a trigger
+    */
   def construct(
     parser: CodeParser,
     statements: Seq[StatementContext],
@@ -675,112 +727,70 @@ object Statement {
     statements.flatMap(s => Statement.construct(parser, s, isTrigger))
   }
 
+  /** Create CST statement from ANTLR tree
+    *
+    * @param parser ANTLR parser, used to extract block source
+    * @param statement ANTLR statement context
+    * @param isTrigger construction is for a trigger
+    */
   def construct(
     parser: CodeParser,
     statement: StatementContext,
     isTrigger: Boolean
   ): Option[Statement] = {
-    CodeParser
-      .toScala(statement.block())
-      .map(x => Block.construct(parser, x, isTrigger = false))
-      .orElse(
-        CodeParser
-          .toScala(statement.localVariableDeclarationStatement())
-          .map(x => LocalVariableDeclarationStatement.construct(parser, x, isTrigger))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.ifStatement())
-          .map(x => IfStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.switchStatement())
-          .map(x => SwitchStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.forStatement())
-          .map(x => ForStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.whileStatement())
-          .map(x => WhileStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.doWhileStatement())
-          .map(x => DoWhileStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.tryStatement())
-          .map(x => TryStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.returnStatement())
-          .map(x => ReturnStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.throwStatement())
-          .map(x => ThrowStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.breakStatement())
-          .map(x => BreakStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.continueStatement())
-          .map(x => ContinueStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.insertStatement())
-          .map(x => InsertStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.updateStatement())
-          .map(x => UpdateStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.deleteStatement())
-          .map(x => DeleteStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.undeleteStatement())
-          .map(x => UndeleteStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.upsertStatement())
-          .flatMap(x => UpsertStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.mergeStatement())
-          .map(x => MergeStatement.construct(x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.runAsStatement())
-          .map(x => RunAsStatement.construct(parser, x))
-      )
-      .orElse(
-        CodeParser
-          .toScala(statement.expressionStatement())
-          .map(x => ExpressionStatement.construct(x))
-      )
-      .orElse({
-        // Parsing failed
+    val typedStatement = CodeParser.toScala(statement.getChild(0))
+    if (typedStatement.isEmpty) {
+      // Log here just in case
+      LoggerOps.info(s"Apex Statement found without content in ${parser.source.path}")
+    }
+    try {
+      typedStatement.map {
+        case stmt: BlockContext =>
+          Block.construct(parser, stmt, isTrigger = false)
+        case stmt: LocalVariableDeclarationStatementContext =>
+          LocalVariableDeclarationStatement.construct(parser, stmt, isTrigger)
+        case stmt: IfStatementContext =>
+          IfStatement.construct(parser, stmt)
+        case stmt: SwitchStatementContext =>
+          SwitchStatement.construct(parser, stmt)
+        case stmt: ForStatementContext =>
+          ForStatement.construct(parser, stmt)
+        case stmt: WhileStatementContext =>
+          WhileStatement.construct(parser, stmt)
+        case stmt: DoWhileStatementContext =>
+          DoWhileStatement.construct(parser, stmt)
+        case stmt: TryStatementContext =>
+          TryStatement.construct(parser, stmt)
+        case stmt: ReturnStatementContext =>
+          ReturnStatement.construct(stmt)
+        case stmt: ThrowStatementContext =>
+          ThrowStatement.construct(stmt)
+        case stmt: BreakStatementContext =>
+          BreakStatement.construct(stmt)
+        case stmt: ContinueStatementContext =>
+          ContinueStatement.construct(stmt)
+        case stmt: InsertStatementContext =>
+          InsertStatement.construct(stmt)
+        case stmt: UpdateStatementContext =>
+          UpdateStatement.construct(stmt)
+        case stmt: DeleteStatementContext =>
+          DeleteStatement.construct(stmt)
+        case stmt: UndeleteStatementContext =>
+          UndeleteStatement.construct(stmt)
+        case stmt: UpsertStatementContext =>
+          UpsertStatement.construct(stmt)
+        case stmt: MergeStatementContext =>
+          MergeStatement.construct(stmt)
+        case stmt: RunAsStatementContext =>
+          RunAsStatement.construct(parser, stmt)
+        case stmt: ExpressionStatementContext =>
+          ExpressionStatement.construct(stmt)
+      }
+    } catch {
+      case _: MatchError =>
+        // Log here just in case
+        LoggerOps.info(s"Unexpected Apex Statement type found in ${parser.source.path}")
         None
-      })
+    }
   }
 }

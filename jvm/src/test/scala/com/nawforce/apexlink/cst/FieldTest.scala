@@ -70,7 +70,7 @@ class FieldTest extends AnyFunSuite with TestHelper {
     typeDeclarations(
       Map(
         "Foo.cls" -> "public virtual class Foo {  public final static Bar Account {get {return new Bar();}} }",
-        "Bar.cls" -> "public class Bar extends Foo { public void method(){Account.Name;} }"
+        "Bar.cls" -> "public class Bar extends Foo { public void method(){SObjectField a = Account.Name;} }"
       )
     )
     assert(getMessages(root.join("Bar.cls")).isEmpty)

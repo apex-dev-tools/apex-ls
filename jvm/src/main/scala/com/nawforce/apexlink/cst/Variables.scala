@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
+import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexparser.ApexParser.{
   LocalVariableDeclarationContext,
   VariableDeclaratorContext,
@@ -41,18 +41,16 @@ final case class VariableDeclarator(
       val rhsCtx = e.verify(input, exprContext)
       lhsType.foreach(lhsType => {
         if (
-          rhsCtx.isDefined && !isAssignable(
+          rhsCtx.isDefined && !isAssignableDeclaration(
             lhsType.typeName,
             rhsCtx.typeDeclaration,
-            strictConversions = false,
             context
           )
         ) {
           context.log(
             Issue(
-              location.path,
               ERROR_CATEGORY,
-              location.location,
+              location,
               s"Incompatible types in assignment, from '${rhsCtx.typeDeclaration.typeName}' to '${lhsType.typeName}'"
             )
           )

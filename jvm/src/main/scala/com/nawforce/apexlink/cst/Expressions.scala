@@ -20,14 +20,14 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
-import com.nawforce.apexlink.types.core.{FieldDeclaration, MethodDeclaration, TypeDeclaration}
-import com.nawforce.apexlink.types.other.AnyDeclaration
+import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.other.{AnyDeclaration, RecordSetDeclaration}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.apexparser.ApexParser._
-import com.nawforce.pkgforce.diagnostics.{Issue, WARNING_CATEGORY}
-import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
-import com.nawforce.pkgforce.path.{Locatable, Location, PathLocation}
+import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, WARNING_CATEGORY}
+import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
+import com.nawforce.pkgforce.path.{Locatable, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.immutable.ArraySeq
@@ -46,11 +46,7 @@ final case class ExprContext(
   def isDefined: Boolean =
     declaration.nonEmpty && !declaration.exists(_.isInstanceOf[AnyDeclaration])
 
-  def moduleDeclarationOpt: Option[OPM.Module] = declaration.flatMap(_.moduleDeclaration)
-
   def typeDeclaration: TypeDeclaration = declaration.get
-
-  def moduleDeclaration: OPM.Module = moduleDeclarationOpt.get
 
   def typeName: TypeName = declaration.get.typeName
 }
@@ -75,12 +71,79 @@ object ExprContext {
   }
 }
 
+/** base for any type of expression, provides helpers for type validation */
 sealed abstract class Expression extends CST {
   def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext
 
   def verify(context: BlockVerifyContext): ExprContext = {
     val staticContext = if (context.isStatic) Some(true) else None
     verify(ExprContext(staticContext, context.thisType), new ExpressionVerifyContext(context))
+  }
+
+  /** Verify an expression result type is an exception
+    *
+    * @param context    verify context to use
+    * @param prefix     for the log issue
+    */
+  def verifyIsExceptionInstance(
+    context: BlockVerifyContext,
+    prefix: String
+  ): (Boolean, ExprContext) = {
+    val verifyResult = verify(context)
+    if (
+      verifyResult.isDefined && (verifyResult.isStatic
+        .contains(true) || !verifyResult.typeName.name.endsWith(Names.Exception))
+    ) {
+      val resultQualifier = if (verifyResult.isStatic.contains(true)) "type" else "instance"
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"$prefix expression should return an Exception instance, not a '${verifyResult.typeName}' $resultQualifier"
+        )
+      )
+      (false, verifyResult)
+    } else {
+      (true, verifyResult)
+    }
+  }
+
+  /** Verify an expression result type matches a specific type logging an issue if not
+    *
+    * @param context    verify context to use
+    * @param typeNames  set of permitted types
+    * @param isStatic   check for static or instance value
+    * @param prefix     for the log issue
+    */
+  def verifyIs(
+    context: BlockVerifyContext,
+    typeNames: Set[TypeName],
+    isStatic: Boolean,
+    prefix: String
+  ): (Boolean, ExprContext) = {
+    val verifyResult = verify(context)
+    if (
+      verifyResult.isDefined && (!verifyResult.isStatic.contains(isStatic) ||
+        !typeNames.contains(verifyResult.typeName))
+    ) {
+      val resultQualifier = if (verifyResult.isStatic.contains(true)) "type" else "instance"
+      val qualifier       = if (isStatic) "type" else "instance"
+      val requiredTypes = if (typeNames.size == 1) {
+        s"a '${typeNames.head}' $qualifier"
+      } else {
+        typeNames.map(n => s"'$n'").mkString("one of ", " or ", s" ${qualifier}s")
+      }
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"$prefix expression should return $requiredTypes, not a '${verifyResult.typeName}' $resultQualifier"
+        )
+      )
+      (false, verifyResult)
+    } else {
+      (true, verifyResult)
+    }
   }
 }
 
@@ -114,7 +177,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
 
     // When we have a leading IdPrimary there are a couple of special cases to handle, we could with a better
     // understanding of how these are handled, likely it via some parser hack
-    getInterceptPrimary()
+    getInterceptPrimary
       .flatMap(primary => {
         val td       = input.declaration.get
         val localVar = context.isVar(primary.id.name)
@@ -134,7 +197,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       .getOrElse(verifyInternal(input, context))
   }
 
-  private def getInterceptPrimary(): Option[IdPrimary] = {
+  private def getInterceptPrimary: Option[IdPrimary] = {
     expression match {
       case PrimaryExpression(primary: IdPrimary) if !safeNavigation => Some(primary)
       case _                                                        => None
@@ -229,7 +292,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       PlatformTypeDeclaration.namespaces.contains(name)
   }
 
-  def verifyWithId(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+  private def verifyWithId(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     val inputType = input.declaration.get
 
     val name = target.name
@@ -253,14 +316,16 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       }
     }
 
-    if (inputType.isComplete) {
-      if (inputType.isSObject) {
-        if (!context.module.isGhostedFieldName(name)) {
-          context.log(IssueOps.unknownFieldOnSObject(location, name, inputType.typeName))
-        }
-      } else {
-        context.log(IssueOps.unknownFieldOrType(location, name, inputType.typeName))
+    // Field is missing
+    if (inputType.isSObject || inputType.isInstanceOf[RecordSetDeclaration]) {
+      // For SObject or RecordSet being used as an SObject, ignore if we not have a
+      // complete type or the field is using a ghosted namespace
+      if (inputType.isComplete && !context.module.isGhostedFieldName(name)) {
+        context.log(IssueOps.unknownFieldOnSObject(location, name, inputType.typeName))
       }
+    } else if (inputType.isComplete) {
+      // For other types, if complete we should error
+      context.log(IssueOps.unknownFieldOrType(location, name, inputType.typeName))
     }
     ExprContext.empty
   }
@@ -424,14 +489,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
       case Left(err) =>
         if (callee.isComplete) {
           if (argTypes.contains(TypeNames.Any)) {
-            context.log(
-              Issue(
-                location.path,
-                WARNING_CATEGORY,
-                location.location,
-                s"$err, likely due to unknown type"
-              )
-            )
+            context.log(Issue(WARNING_CATEGORY, location, s"$err, likely due to unknown type"))
           } else {
             context.logMissing(location, s"$err")
           }
@@ -563,6 +621,9 @@ final case class PostfixExpression(expression: Expression, op: String) extends E
 }
 
 final case class PrefixExpression(expression: Expression, op: String) extends Expression {
+
+  def isAssignmentOperation: Boolean = op == "++" || op == "--"
+
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     val inter = expression.verify(input, context)
     if (!inter.isDefined)
@@ -601,7 +662,7 @@ final case class NegationExpression(expression: Expression, isBitwise: Boolean) 
 }
 
 final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) extends Expression {
-  private lazy val operation = op match {
+  private lazy val operation: Operation = op match {
     case "="    => AssignmentOperation
     case "&&"   => LogicalOperation
     case "||"   => LogicalOperation
@@ -636,6 +697,8 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
     case ">>>=" => BitwiseAssignmentOperation
   }
 
+  def isAssignmentOperation: Boolean = operation.isAssignmentOperation
+
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     val leftInter  = lhs.verify(input, context)
     val rightInter = rhs.verify(input, context)
@@ -661,9 +724,7 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
           ArithmeticAddSubtractAssignmentOperation | ArithmeticMultiplyDivideAssignmentOperation =>
         operation
           .getReadOnlyError(leftInter, context)
-          .foreach(msg =>
-            context.log(Issue(location.path, WARNING_CATEGORY, location.location, msg))
-          )
+          .foreach(msg => context.log(Issue(WARNING_CATEGORY, location, msg)))
       case _ =>
     }
 
@@ -983,15 +1044,6 @@ object Expression {
 
   def construct(expression: ArraySeq[ExpressionContext]): ArraySeq[Expression] = {
     expression.map(x => Expression.construct(x))
-  }
-}
-
-final case class TypeArguments(typeList: List[TypeName]) extends CST
-
-object TypeArguments {
-  def construct(from: TypeArgumentsContext): TypeArguments = {
-    val types = CodeParser.toScala(from.typeList().typeRef())
-    TypeArguments(TypeReference.construct(types.toList)).withContext(from)
   }
 }
 

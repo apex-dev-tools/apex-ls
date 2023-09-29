@@ -30,7 +30,7 @@ package com.nawforce.pkgforce.diagnostics
 
 import io.github.apexdevtools.api.{IssueLocation, Rule}
 import com.nawforce.pkgforce.diagnostics.DiagnosticCategory.isErrorType
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.runtime.platform.Path
 import upickle.default.{macroRW, ReadWriter => RW}
 
@@ -74,14 +74,10 @@ object Issue {
     .orElseBy(_.diagnostic.location.startLine)
     .orElseBy(_.diagnostic.location.startPosition)
 
-  def apply(
-    path: PathLike,
-    category: DiagnosticCategory,
-    location: Location,
-    message: String
-  ): Issue = {
-    new Issue(path, Diagnostic(category, location, message))
+  def apply(category: DiagnosticCategory, pathLocation: PathLocation, message: String): Issue = {
+    new Issue(pathLocation.path, Diagnostic(category, pathLocation.location, message))
   }
+
 }
 
 sealed case class IssuesAnd[T](issues: ArraySeq[Issue], value: T)

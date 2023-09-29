@@ -65,7 +65,11 @@ object LabelGenerator {
                     )
                   } catch {
                     case e: XMLException =>
-                      Iterator(IssuesEvent(Issue(document.path, ERROR_CATEGORY, e.where, e.msg)))
+                      Iterator(
+                        IssuesEvent(
+                          Issue(ERROR_CATEGORY, PathLocation(document.path, e.where), e.msg)
+                        )
+                      )
                   }
                 })
               labels ++ Iterator(
@@ -73,7 +77,9 @@ object LabelGenerator {
               )
             } catch {
               case e: XMLException =>
-                Iterator(IssuesEvent(Issue(document.path, ERROR_CATEGORY, e.where, e.msg)))
+                Iterator(
+                  IssuesEvent(Issue(ERROR_CATEGORY, PathLocation(document.path, e.where), e.msg))
+                )
             }
         }
       })
