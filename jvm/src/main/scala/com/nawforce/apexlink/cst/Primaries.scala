@@ -196,13 +196,26 @@ object SOQL {
   }
 }
 
-final case class SOSL(query: SoslLiteralContext) extends Primary {
+final case class SOSL(boundExpressions: ArraySeq[Expression]) extends Primary {
 
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+
+    boundExpressions.foreach(expr => {
+      expr.verify(input, context)
+    })
+
     ExprContext(isStatic = Some(false), context.module.any)
   }
 }
 
+object SOSL {
+  def apply(query: SoslLiteralContext): SOSL = {
+    val boundedExpressions = new BoundExprVisitor().visit(query).map(ec => Expression.construct(ec))
+    new SOSL(boundedExpressions)
+  }
+}
+
+/** ANTLR visitor for extracting bound expressions from SOQL or SOSL queries, e.g. WHERE Id in :Ids */
 class BoundExprVisitor extends ApexParserBaseVisitor[ArraySeq[ExpressionContext]] {
 
   override def defaultResult(): ArraySeq[ExpressionContext] = ArraySeq[ExpressionContext]()
