@@ -35,7 +35,10 @@ class InterviewTest extends AnyFunSuite with TestHelper {
 
   test("Custom flow (MDAPI)") {
     FileSystemHelper.run(
-      Map("Test.flow" -> "", "Dummy.cls" -> "public class Dummy { {Flow.Interview.Test;} }")
+      Map(
+        "Test.flow" -> "",
+        "Dummy.cls" -> "public class Dummy { {Object a = Flow.Interview.Test;} }"
+      )
     ) { root: PathLike =>
       val org = createOrg(root)
       assert(org.issues.isEmpty)
@@ -46,7 +49,7 @@ class InterviewTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Test.flow-meta.xml" -> "",
-        "Dummy.cls"          -> "public class Dummy { {Flow.Interview.Test;} }"
+        "Dummy.cls"          -> "public class Dummy { {Object a = Flow.Interview.Test;} }"
       )
     ) { root: PathLike =>
       val org = createOrg(root)
@@ -55,14 +58,15 @@ class InterviewTest extends AnyFunSuite with TestHelper {
   }
 
   test("Missing flow") {
-    FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy { {Flow.Interview.Test;} }")) {
-      root: PathLike =>
-        createOrg(root)
-        // TODO: This should be a missing issue
-        assert(
-          getMessages(root.join("Dummy.cls")) ==
-            "Missing: line 1 at 22-41: Unknown field or type 'Test' on 'Flow.Interview'\n"
-        )
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy { {Object a = Flow.Interview.Test;} }")
+    ) { root: PathLike =>
+      createOrg(root)
+      // TODO: This should be a missing issue
+      assert(
+        getMessages(root.join("Dummy.cls")) ==
+          "Missing: line 1 at 33-52: Unknown field or type 'Test' on 'Flow.Interview'\n"
+      )
     }
   }
 

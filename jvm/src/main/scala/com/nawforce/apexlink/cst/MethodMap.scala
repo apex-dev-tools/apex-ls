@@ -13,7 +13,7 @@
  */
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignable
+import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignable}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.org.OPM
@@ -190,7 +190,14 @@ final case class MethodMap(
 
     val assignable = matches.filter(m => {
       val argZip = m.parameters.map(_.typeName).zip(params)
-      argZip.forall(argPair => isAssignable(argPair._1, argPair._2, strict, context))
+      argZip.forall(argPair =>
+        isAssignable(
+          argPair._1,
+          argPair._2,
+          context,
+          AssignableOptions(strict, narrowSObjects = true)
+        )
+      )
     })
 
     if (assignable.isEmpty)
@@ -309,7 +316,7 @@ object MethodMap {
 
     // For interfaces make sure we have all methods
     if (td.nature == INTERFACE_NATURE) {
-      mergeInterfaces(workingMap, interfaces)
+      interfaces.foreach(interface => mergeInterface(workingMap, interface))
     }
 
     // Add local statics, de-duped
@@ -458,18 +465,19 @@ object MethodMap {
     emptyMethodDeclarations
   }
 
-  private def mergeInterfaces(
-    workingMap: WorkingMap,
-    interfaces: ArraySeq[TypeDeclaration]
-  ): Unit = {
-    interfaces.foreach({
-      case i: TypeDeclaration if i.nature == INTERFACE_NATURE =>
-        mergeInterface(workingMap, i)
-      case _ => ()
-    })
-  }
-
+  /** Update working map with interface methods.
+    *
+    * If interface methods are not in the map then we add, if they are then the 'shadow' relationship is created
+    * linking from the interface method to the previously discovered impl method. This processes interfaces
+    * recursively so we handle interfaces implemented by interfaces.
+    *
+    * @param workingMap map to add to
+    * @param interface interface to process
+    */
   private def mergeInterface(workingMap: WorkingMap, interface: TypeDeclaration): Unit = {
+    // This should not be needed, but we can't type interfaces here due to platform types
+    if (interface.nature != INTERFACE_NATURE)
+      return
 
     // We merge top-down here to make sure shadows is always set up in correct direction, doing it bottom
     // up can result in an inverted shadowing relationship when both interfaces contains the same method
@@ -490,8 +498,9 @@ object MethodMap {
         }
       })
 
-    if (interface.isInstanceOf[ApexClassDeclaration] && interface.nature == INTERFACE_NATURE)
-      mergeInterfaces(workingMap, interface.interfaceDeclarations)
+    if (interface.isInstanceOf[ApexClassDeclaration] && interface.nature == INTERFACE_NATURE) {
+      interface.interfaceDeclarations.foreach(interface => mergeInterface(workingMap, interface))
+    }
   }
 
   private def checkInterfaces(
@@ -811,7 +820,7 @@ object MethodMap {
       from match {
         case ad: ApexDeclaration =>
           val context = new TypeVerifyContext(None, ad, None, enablePlugins = false)
-          isAssignable(toType, fromType, strictConversions = false, context)
+          isAssignable(toType, fromType, context)
         case _ =>
           false
       }

@@ -203,9 +203,8 @@ object SObjectGenerator {
         IssuesAnd(
           ArraySeq(
             Issue(
-              doc.path,
               ERROR_CATEGORY,
-              Location(doc.rootElement.line),
+              PathLocation(doc.path, Location(doc.rootElement.line)),
               s"Unexpected customSettingsType value '$x', should be 'List' or 'Hierarchy'"
             )
           ),
@@ -236,9 +235,8 @@ object SObjectGenerator {
         IssuesAnd(
           ArraySeq(
             Issue(
-              doc.path,
               ERROR_CATEGORY,
-              Location(doc.rootElement.line),
+              PathLocation(doc.path, Location(doc.rootElement.line)),
               s"Unexpected sharingModel value '${sharingModel.get}'"
             )
           ),

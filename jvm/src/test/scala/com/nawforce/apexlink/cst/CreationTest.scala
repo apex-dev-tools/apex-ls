@@ -96,7 +96,7 @@ class CreationTest extends AnyFunSuite with TestHelper {
   test("Map with any key type") {
     // SOQL currently produces an any result, this should break if we fix that as String != RecordSet<Account>
     typeDeclaration(
-      "public class Dummy {{Object a = new Map<String, String>{[Select Id From Account] => ''};}}"
+      "public class Dummy {{Object a = new Map<SObject, String>{[Select Id From Account] => ''};}}"
     )
     assert(dummyIssues.isEmpty)
   }
@@ -104,7 +104,7 @@ class CreationTest extends AnyFunSuite with TestHelper {
   test("Map with any value type") {
     // SOQL currently produces an any result, this should break if we fix that as String != RecordSet<Account>
     typeDeclaration(
-      "public class Dummy {{Object a = new Map<String, String>{'' => [Select Id From Account]};}}"
+      "public class Dummy {{Object a = new Map<String, SObject>{'' => [Select Id From Account]};}}"
     )
     assert(dummyIssues.isEmpty)
   }
@@ -128,11 +128,6 @@ class CreationTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
-  test("List with argument") {
-    typeDeclaration("public class Dummy {{Object a = new List<Address>{new Address()};}}")
-    assert(dummyIssues.isEmpty)
-  }
-
   test("List with map constructor") {
     typeDeclaration("public class Dummy {{Object a = new List<Address>{1 => 2};}}")
     assert(
@@ -141,13 +136,43 @@ class CreationTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Empty Set") {
-    typeDeclaration("public class Dummy {{Object a = new Set<Address>();}}")
+  test("List with assignable arguments") {
+    typeDeclaration(
+      "public class Dummy {{Object a = new List<Address>{new Address(), new Address()};}}"
+    )
     assert(dummyIssues.isEmpty)
   }
 
-  test("Set with argument") {
-    typeDeclaration("public class Dummy {{Object a = new Set<Address>{new Address()};}}")
+  test("List with non-assignable arguments") {
+    typeDeclaration("public class Dummy {{Object a = new List<Integer>{'Hello'};}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 49-58: Expression of type 'System.String' can not be assigned to System.Integer'\n"
+    )
+  }
+
+  test("List with assignable arguments to Object") {
+    typeDeclaration(
+      "public class Dummy {{Object a = new List<Object>{new Address(), new Dummy()};}}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("List with assignable arguments to SObject") {
+    typeDeclaration("public class Dummy {{Object a = new List<SObject>{new Account()};}}")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("List with non-assignable arguments to SObject") {
+    typeDeclaration("public class Dummy {{Object a = new List<SObject>{'Hello'};}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 49-58: Expression of type 'System.String' can not be assigned to System.SObject'\n"
+    )
+  }
+
+  test("Empty Set") {
+    typeDeclaration("public class Dummy {{Object a = new Set<Address>();}}")
     assert(dummyIssues.isEmpty)
   }
 
@@ -159,13 +184,88 @@ class CreationTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Array with Index") {
+  test("Set with assignable arguments") {
+    typeDeclaration(
+      "public class Dummy {{Object a = new Set<Address>{new Address(), new Address()};}}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Set with non-assignable arguments") {
+    typeDeclaration("public class Dummy {{Object a = new Set<Integer>{'Hello'};}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 48-57: Expression of type 'System.String' can not be assigned to System.Integer'\n"
+    )
+  }
+
+  test("Set with assignable arguments to Object") {
+    typeDeclaration(
+      "public class Dummy {{Object a = new Set<Object>{new Address(), new Dummy()};}}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Set with assignable arguments to SObject") {
+    typeDeclaration("public class Dummy {{Object a = new Set<SObject>{new Account()};}}")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Set with non-assignable arguments to SObject") {
+    typeDeclaration("public class Dummy {{Object a = new Set<SObject>{'Hello'};}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 48-57: Expression of type 'System.String' can not be assigned to System.SObject'\n"
+    )
+  }
+
+  test("Array with literal Integer index") {
     typeDeclaration("public class Dummy {{List<Object> a = new Address[0];}}")
     assert(dummyIssues.isEmpty)
   }
 
-  test("Array with Init") {
+  test("Array with Integer value index") {
+    typeDeclaration("public class Dummy {{Integer b; List<Object> a = new Address[b];}}")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Array with non-Integer index") {
+    typeDeclaration("public class Dummy {{List<Object> a = new Address[true];}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 50-54: Index for array construction must be an Integer, not 'System.Boolean'\n"
+    )
+  }
+
+  test("Array with assignable arguments") {
     typeDeclaration("public class Dummy {{ List<Object> a = new Address[]{new Address()}; }}")
     assert(dummyIssues.isEmpty)
   }
+
+  test("Array with non-assignable arguments") {
+    typeDeclaration("public class Dummy {{Object a = new Integer[]{'Hello'};}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 46-53: Expression of type 'System.String' can not be assigned to System.Integer'\n"
+    )
+  }
+
+  test("Array with assignable arguments to Object") {
+    typeDeclaration("public class Dummy {{Object a = new Object[]{new Address(), new Dummy()};}}")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Array with assignable arguments to SObject") {
+    typeDeclaration("public class Dummy {{Object a = new SObject[]{new Account()};}}")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Array with non-assignable arguments to SObject") {
+    typeDeclaration("public class Dummy {{Object a = new SObject[]{'Hello'};}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 46-53: Expression of type 'System.String' can not be assigned to System.SObject'\n"
+    )
+  }
+
 }

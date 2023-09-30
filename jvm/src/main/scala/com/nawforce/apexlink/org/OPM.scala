@@ -339,6 +339,22 @@ object OPM extends TriHierarchy {
       }
     }
 
+    override def getRenameLocations(
+      path: String,
+      line: Int,
+      offset: Int,
+      content: String
+    ): Array[Rename] = {
+      refreshLock.synchronized {
+        OrgInfo.current.withValue(this) {
+          packages
+            .find(_.isPackagePath(path))
+            .map(_.getRenameLocations(Path(path), line, offset, Option(content)))
+            .getOrElse(Array.empty)
+        }
+      }
+    }
+
     override def getReferences(path: String, line: Int, offset: Int): Array[TargetLocation] = {
       if (path == null)
         return Array.empty
@@ -400,6 +416,42 @@ object OPM extends TriHierarchy {
       }
     }
 
+    /** Returns dependency information for all classes & triggers
+      *
+      * @param scopeDirectory     limit to classes & triggers under this directory, maybe relative to org path
+      * @param excludeTestClasses ignore @isTest classes
+      */
+    def getAllDependencyCounts(
+      scopeDirectory: String,
+      excludeTestClasses: Boolean
+    ): Array[DependencyCount] = {
+      val scopePath = path.join(scopeDirectory)
+      if (!scopePath.isDirectory) {
+        Array()
+      } else {
+        // Traverse indexes under or same as scopePath extracting all class files within scopePath
+        val paths = mutable.ArrayBuffer[PathLike]()
+        workspace.indexes
+          .foreach(layerAndIndex => {
+            paths.addAll(
+              layerAndIndex._2.get(ApexNature).values.flatten.filter(scopePath.isParentOf)
+            )
+            paths.addAll(
+              layerAndIndex._2.get(TriggerNature).values.flatten.filter(scopePath.isParentOf)
+            )
+
+          })
+
+        // Use paths to direct getDependencyCounts to do the work
+        getDependencyCountsInternal(paths.toArray, excludeTestClasses)
+      }
+    }
+
+    /** Returns dependency information for classes & triggers identified via paths
+      *
+      * @param paths paths of types to find dependency information for
+      * @param excludeTestClasses ignore @isTest classes
+      */
     def getDependencyCounts(
       paths: Array[String],
       excludeTestClasses: Boolean
@@ -407,7 +459,12 @@ object OPM extends TriHierarchy {
       getDependencyCountsInternal(paths.map(Path.safeApply), excludeTestClasses)
     }
 
-    def getDependencyCountsInternal(
+    /** Returns dependency information for classes & triggers identified via paths
+      *
+      * @param paths              paths of classes to find dependency information for
+      * @param excludeTestClasses ignore @isTest classes
+      */
+    private def getDependencyCountsInternal(
       paths: Array[PathLike],
       excludeTestClasses: Boolean
     ): Array[DependencyCount] = {
@@ -461,6 +518,7 @@ object OPM extends TriHierarchy {
             }
         }
     }
+
   }
 
   class PackageImpl(
@@ -476,6 +534,7 @@ object OPM extends TriHierarchy {
       with CompletionProvider
       with ImplementationProvider
       with HoverProvider
+      with RenameProvider
       with ReferenceProvider {
 
     val modules: ArraySeq[Module] =
@@ -735,7 +794,7 @@ object OPM extends TriHierarchy {
       writer.append(message)
       writer.append(": ")
       ex.printStackTrace(new PrintWriter(writer))
-      log(Issue(path, ERROR_CATEGORY, Location.empty, writer.toString))
+      log(Issue(ERROR_CATEGORY, PathLocation(path, Location.empty), writer.toString))
     }
 
     override def toString: String = {

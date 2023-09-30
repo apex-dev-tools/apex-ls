@@ -25,7 +25,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class DependencyTest extends AnyFunSuite with TestHelper {
 
   test("Empty class has no imports") {
-    val tds = typeDeclarations(Map("Dummy.cls" -> "public class Dummy {}"))
+    typeDeclarations(Map("Dummy.cls" -> "public class Dummy {}"))
     assert(!hasIssues)
   }
 
@@ -270,8 +270,8 @@ class DependencyTest extends AnyFunSuite with TestHelper {
   test("Catch creates dependency") {
     val tds = typeDeclarations(
       Map(
-        "Dummy.cls" -> "public class Dummy { void func() { try {} catch(A a){} } }",
-        "A.cls"     -> "public class A {}"
+        "Dummy.cls"      -> "public class Dummy { void func() { try {} catch(AException a){} } }",
+        "AException.cls" -> "public class AException extends Exception {}"
       )
     )
     assert(!hasIssues)
@@ -452,8 +452,8 @@ class DependencyTest extends AnyFunSuite with TestHelper {
   test("Inner Catch creates dependency") {
     val tds = typeDeclarations(
       Map(
-        "Dummy.cls" -> "public class Dummy { class Inner {void func() { try {} catch(A a){} } } }",
-        "A.cls"     -> "public class A {}"
+        "Dummy.cls" -> "public class Dummy { class Inner {void func() { try {} catch(AException a){} } } }",
+        "AException.cls" -> "public class AException extends Exception {}"
       )
     )
     assert(!hasIssues)

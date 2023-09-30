@@ -25,6 +25,11 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class UnusedTest extends AnyFunSuite with TestHelper {
 
+  private val testUsedOuterClassWarning =
+    "only referenced by test code, consider using @isTest or @SuppressWarnings('Unused') if needed"
+  private val testUsedOuterInterfaceOrEnumWarning =
+    "only referenced by test code, consider using @SuppressWarnings('Unused') if needed"
+
   def orgIssuesFor(org: OPM.OrgImpl, path: PathLike): String = {
     val messages = org.issueManager.issuesForFileInternal(path).map(_.asString()).mkString("\n")
     if (messages.nonEmpty) messages + "\n" else ""
@@ -166,7 +171,49 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls")) ==
-          "Unused: line 1 at 13-18: Unused class 'Dummy', only referenced by test code, remove or make private @TestVisible\n"
+          s"Unused: line 1 at 13-18: Unused class 'Dummy', $testUsedOuterClassWarning\n"
+      )
+    }
+  }
+
+  test("Used prod method from test (suppressed)") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@SuppressWarnings('Unused') public class Dummy {public void foo() {}}",
+        "Foo.cls"   -> "@isTest public class Foo{ {new Dummy().foo();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Used prod interface method from test") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public interface Dummy {void foo();}",
+        "Foo.cls"   -> "@isTest public class Foo{ {Dummy d; d.foo();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          s"Unused: line 1 at 17-22: Unused interface 'Dummy', $testUsedOuterInterfaceOrEnumWarning\n"
+      )
+    }
+  }
+
+  test("Used prod enum constant from test") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public enum Dummy {A}",
+        "Foo.cls"   -> "@isTest public class Foo{ {Dummy d; d = Dummy.A;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          s"Unused: line 1 at 12-17: Unused enum 'Dummy', $testUsedOuterInterfaceOrEnumWarning\n"
       )
     }
   }
@@ -346,6 +393,30 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused empty interface") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "public interface Dummy {}")) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused empty interface extending another interface ") {
+    FileSystemHelper.run(
+      Map("A.cls" -> "public interface A extends B {}", "B.cls" -> "public interface B {}")
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("A.cls")).isEmpty)
+      assert(orgIssuesFor(org, root.join("B.cls")).isEmpty)
+    }
+  }
+
+  test("Unused empty enum") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "public enum Dummy {}")) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
   test("Unused empty test class") {
     FileSystemHelper.run(Map("Dummy.cls" -> "@isTest public class Dummy {}")) { root: PathLike =>
       val org = createOrgWithUnused(root)
@@ -364,6 +435,72 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused interface") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "public interface Dummy {void func();}")) {
+      root: PathLike =>
+        val org = createOrgWithUnused(root)
+        assert(
+          orgIssuesFor(org, root.join("Dummy.cls")) ==
+            "Unused: line 1 at 17-22: Unused interface 'Dummy'\n"
+        )
+    }
+  }
+
+  test("Unused interface extending another interface") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public interface Dummy extends Foo {void func();}",
+        "Foo.cls"   -> "public interface Foo {void func();}"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 17-22: Unused interface 'Dummy'\n"
+      )
+      assert(
+        orgIssuesFor(org, root.join("Foo.cls")) ==
+          "Unused: line 1 at 27-31: Unused public method 'void func()'\n"
+      )
+    }
+  }
+
+  test("Unused interface extending an interface extending another interface") {
+    // This is rather specific test case to cover a bug that caused a stack overflow due to
+    // incorrectly setup shadows relationship between the methods
+    FileSystemHelper.run(
+      Map(
+        "C.cls" -> "public interface C extends B {void other();}",
+        "B.cls" -> "public interface B extends A {void func();}",
+        "A.cls" -> "public interface A {void func();}"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("C.cls")) ==
+          "Unused: line 1 at 17-18: Unused interface 'C'\n"
+      )
+      assert(
+        orgIssuesFor(org, root.join("B.cls")) ==
+          "Unused: line 1 at 35-39: Unused public method 'void func()'\n"
+      )
+      assert(
+        orgIssuesFor(org, root.join("A.cls")) ==
+          "Unused: line 1 at 25-29: Unused public method 'void func()'\n"
+      )
+    }
+  }
+
+  test("Unused enum") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "public enum Dummy {A}")) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 12-17: Unused enum 'Dummy'\n"
+      )
+    }
+  }
+
   test("Non-empty class used from prod code") {
     FileSystemHelper.run(
       Map(
@@ -379,6 +516,36 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Non-empty interface used from prod code") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public interface Dummy {void func();}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 29-33: Unused public method 'void func()'\n"
+      )
+    }
+  }
+
+  test("Non-empty enum used from prod code") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public enum Dummy {A}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 19-20: Unused field 'A'\n"
+      )
+    }
+  }
+
   test("Non-empty class used from test code") {
     FileSystemHelper.run(
       Map(
@@ -389,7 +556,37 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls")) ==
-          "Unused: line 1 at 13-18: Unused class 'Dummy', only referenced by test code, remove or make private @TestVisible\n"
+          s"Unused: line 1 at 13-18: Unused class 'Dummy', $testUsedOuterClassWarning\n"
+      )
+    }
+  }
+
+  test("Non-empty interface used from test code") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public interface Dummy {void func();}",
+        "Foo.cls"   -> "@isTest public class Foo{ @isTest void func() {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          s"Unused: line 1 at 17-22: Unused interface 'Dummy', $testUsedOuterInterfaceOrEnumWarning\n"
+      )
+    }
+  }
+
+  test("Non-empty enum used from test code") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public enum Dummy {A}",
+        "Foo.cls"   -> "@isTest public class Foo{ @isTest void func() {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          s"Unused: line 1 at 12-17: Unused enum 'Dummy', $testUsedOuterInterfaceOrEnumWarning\n"
       )
     }
   }
@@ -754,7 +951,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls"))
-          == s"Unused: line 1 at 13-18: Unused class 'Dummy', $onlyTestCodeReferenceText\n"
+          == s"Unused: line 1 at 13-18: Unused class 'Dummy', $testUsedOuterClassWarning\n"
       )
     }
   }
@@ -769,7 +966,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls"))
-          == s"Unused: line 1 at 13-18: Unused class 'Dummy', $onlyTestCodeReferenceText\n"
+          == s"Unused: line 1 at 13-18: Unused class 'Dummy', $testUsedOuterClassWarning\n"
       )
     }
   }
@@ -784,7 +981,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls"))
-          == s"Unused: line 1 at 13-18: Unused class 'Dummy', $onlyTestCodeReferenceText\n"
+          == s"Unused: line 1 at 13-18: Unused class 'Dummy', $testUsedOuterClassWarning\n"
       )
     }
   }

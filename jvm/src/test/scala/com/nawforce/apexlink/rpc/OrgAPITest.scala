@@ -211,7 +211,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       ServerOps.setIndexerConfiguration(IndexerConfiguration(0, 0))
       Environment.setCacheDirOverride(None)
       deleteDir(cacheDir)
-      assert(true)
+      assert(1 == 1)
     }
   }
 
@@ -507,7 +507,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
         new GetDependencyCountsRequest(
           Array(
             workspace.toString + "/force-app/main/default/classes/NoDeps.cls",
-            workspace.toString + "/force-app/main/default/classes/SingleDep.cls",
+            workspace.toString + "/force-app/main/default/classes2/SingleDep.cls",
             workspace.toString + "/force-app/main/default/classes/TransDep.cls",
             workspace.toString + "/force-app/main/default/classes/TestDep.cls"
           ),
@@ -541,7 +541,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
         new GetDependencyCountsRequest(
           Array(
             workspace.toString + "/force-app/main/default/classes/NoDeps.cls",
-            workspace.toString + "/force-app/main/default/classes/SingleDep.cls",
+            workspace.toString + "/force-app/main/default/classes2/SingleDep.cls",
             workspace.toString + "/force-app/main/default/classes/TransDep.cls",
             workspace.toString + "/force-app/main/default/classes/TestDep.cls"
           ),
@@ -696,12 +696,102 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
       val orgAPI = createHappyOrg(root)
       val transitiveCount = orgAPI
-        .getDependencyCountsInternal(
-          Array(root.join("/force-app/main/default/classes/GulpTransDep.cls")),
+        .getDependencyCounts(
+          Array(root.join("/force-app/main/default/classes/GulpTransDep.cls").toString),
           excludeTestClasses = false
         )
         .map(_.count)
       assert(transitiveCount.head == 4)
     }
   }
+
+  test("Get All DependencyCounts") {
+    val workspace = samplesDir.join("dependency-counts")
+    val orgAPI    = OrgAPI()
+    for {
+      result <- orgAPI.open(workspace.toString)
+      dependencyCounts <- orgAPI.getAllDependencyCounts(
+        new GetAllDependencyCountsRequest(workspace.toString, excludeTestClasses = false)
+      )
+    } yield {
+      assert(result.error.isEmpty)
+      assert(
+        dependencyCounts.counts.map(dependency => Path(dependency.path)).toSet == Set(
+          ".apexlink/gulp/ns1/classes/Dep.cls",
+          ".apexlink/gulp/ns1/classes/Dep2.cls",
+          "force-app/main/default/classes2/SingleDep.cls",
+          "force-app/main/default/classes/NoDeps.cls",
+          "force-app/main/default/classes/TransDep.cls",
+          "force-app/main/default/classes/GulpTransDep.cls",
+          "force-app/main/default/classes/TestDep.cls",
+          "force-app/main/default/triggers/AccountTrigger.trigger"
+        ).map(workspace.join(_))
+      )
+    }
+  }
+
+  test("Get All DependencyCounts excluding tests") {
+    val workspace = samplesDir.join("dependency-counts")
+    val orgAPI    = OrgAPI()
+    for {
+      result <- orgAPI.open(workspace.toString)
+      dependencyCounts <- orgAPI.getAllDependencyCounts(
+        new GetAllDependencyCountsRequest(workspace.toString, excludeTestClasses = true)
+      )
+    } yield {
+      assert(result.error.isEmpty)
+      assert(
+        dependencyCounts.counts.map(dependency => Path(dependency.path)).toSet == Set(
+          ".apexlink/gulp/ns1/classes/Dep.cls",
+          ".apexlink/gulp/ns1/classes/Dep2.cls",
+          "force-app/main/default/classes2/SingleDep.cls",
+          "force-app/main/default/classes/NoDeps.cls",
+          "force-app/main/default/classes/TransDep.cls",
+          "force-app/main/default/classes/GulpTransDep.cls",
+          "force-app/main/default/triggers/AccountTrigger.trigger"
+        ).map(workspace.join(_))
+      )
+    }
+  }
+
+  test("Get All DependencyCounts specific directory") {
+    val workspace = samplesDir.join("dependency-counts")
+    val orgAPI    = OrgAPI()
+    for {
+      result <- orgAPI.open(workspace.toString)
+      dependencyCounts <- orgAPI.getAllDependencyCounts(
+        new GetAllDependencyCountsRequest(
+          workspace.join("force-app/main/default/classes").toString,
+          excludeTestClasses = true
+        )
+      )
+    } yield {
+      assert(result.error.isEmpty)
+      assert(
+        dependencyCounts.counts.map(dependency => Path(dependency.path)).toSet == Set(
+          "force-app/main/default/classes/NoDeps.cls",
+          "force-app/main/default/classes/TransDep.cls",
+          "force-app/main/default/classes/GulpTransDep.cls"
+        ).map(workspace.join(_))
+      )
+    }
+  }
+
+  test("Get All DependencyCounts specific directory outside workspace") {
+    val workspace = samplesDir.join("dependency-counts")
+    val orgAPI    = OrgAPI()
+    for {
+      result <- orgAPI.open(workspace.toString)
+      dependencyCounts <- orgAPI.getAllDependencyCounts(
+        new GetAllDependencyCountsRequest(
+          workspace.join("../test-classes").toString,
+          excludeTestClasses = true
+        )
+      )
+    } yield {
+      assert(result.error.isEmpty)
+      assert(dependencyCounts.counts.isEmpty)
+    }
+  }
+
 }

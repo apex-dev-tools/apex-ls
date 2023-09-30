@@ -6,7 +6,7 @@ package com.nawforce.apexlink.analysis
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, NoAnalysis, RefreshAnalysis}
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue => InternalIssue}
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.Path
 import io.github.apexdevtools.api.Issue
@@ -75,9 +75,8 @@ class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
           val testClassPath = root.join("foo").join("Dummy.cls")
           MockAnalysisProvider.issues = Array(
             InternalIssue(
-              testClassPath,
               ERROR_CATEGORY,
-              Location(1, 18),
+              PathLocation(testClassPath, Location(1, 18)),
               "mismatched input '<EOF>' expecting {'extends', 'implements', '{'}"
             )
           )

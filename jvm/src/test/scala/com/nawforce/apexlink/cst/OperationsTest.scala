@@ -20,83 +20,67 @@ import org.scalatest.funsuite.AnyFunSuite
 class OperationsTest extends AnyFunSuite with TestHelper {
 
   test("String prefix bug on SObject") {
-    typeDeclaration("public class Dummy {{Object a;  String b = '' + + a;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Object a;  String b = '' + + a;}}")
   }
 
   test("Date addition") {
-    typeDeclaration("public class Dummy {{Date a;  Date b = a + 1;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Date a;  Date b = a + 1;}}")
   }
 
   test("Date subtraction") {
-    typeDeclaration("public class Dummy {{Date a;  Date b = a - 12l;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Date a;  Date b = a - 12l;}}")
   }
 
   test("Datetime addition") {
-    typeDeclaration("public class Dummy {{Datetime a;  Datetime b = a + 1;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Datetime a;  Datetime b = a + 1;}}")
   }
 
   test("Datetime subtraction") {
-    typeDeclaration("public class Dummy {{Datetime a;  Datetime b = a - 12l;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Datetime a;  Datetime b = a - 12l;}}")
   }
 
   test("Time addition") {
-    typeDeclaration("public class Dummy {{Time a;  Time b = a + 1;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Time a;  Time b = a + 1;}}")
   }
 
   test("Time subtraction") {
-    typeDeclaration("public class Dummy {{Time a;  Time b = a - 12l;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Time a;  Time b = a - 12l;}}")
   }
 
   test("List assignment to Object") {
-    typeDeclaration("public class Dummy {{Object a; a = new List<String>{''}; }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Object a; a = new List<String>{''}; }}")
   }
 
   test("sObject List to Specific Object List") {
-    typeDeclaration("public class Dummy {{List<Account> a; a = new List<sObject>(); }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{List<Account> a; a = new List<sObject>(); }}")
   }
 
   test("Alternative not equal") {
-    typeDeclaration("public class Dummy {{Boolean a; a = 1 <> 2; }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Boolean a; a = 1 <> 2; }}")
   }
 
   test("Split comparator") {
-    typeDeclaration("public class Dummy {{Boolean a; a = 1 < = 2; }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Boolean a; a = 1 < = 2; }}")
   }
 
   test("Bitwise Integer to Integer") {
-    typeDeclaration("public class Dummy {{Integer a; a = a & 2; }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Integer a; a = a & 2; }}")
   }
 
   test("Bitwise Long to Integer") {
-    typeDeclaration("public class Dummy {{Long a; a = a | 2; }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Long a; a = a | 2; }}")
   }
 
   test("Bitwise Boolean to Boolean") {
-    typeDeclaration("public class Dummy {{Boolean a; a = a ^ false; }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Boolean a; a = a ^ false; }}")
   }
 
   test("Bitwise Assigment Integer to Integer") {
-    typeDeclaration("public class Dummy {{Integer a; a ^= a; }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Integer a; a ^= a; }}")
   }
 
   test("Bitwise Assigment Integer to Long") {
-    typeDeclaration("public class Dummy {{Long a; a &= 2; }}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{Long a; a &= 2; }}")
   }
 
   test("Bitwise Assigment Long to Integer") {
@@ -108,36 +92,130 @@ class OperationsTest extends AnyFunSuite with TestHelper {
   }
 
   test("Bitwise Shift in Array Index") {
-    typeDeclaration("public class Dummy {{List<String> a; Integer b; String c = a[b << 2];}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{List<String> a; Integer b; String c = a[b << 2];}}")
   }
 
   test("String concat assignment") {
-    typeDeclaration("public class Dummy {{String a; a += 12;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {{String a; a += 12;}}")
   }
 
   test("Enum value assignment") {
-    typeDeclaration("public class Dummy {enum MyEnum{A} {MyEnum a; a = Dummy.MyEnum.A;}}")
-    assert(!hasIssues)
+    happyTypeDeclaration("public class Dummy {enum MyEnum{A} {MyEnum a; a = Dummy.MyEnum.A;}}")
   }
 
   test("Nested ternary") {
-    typeDeclaration("public class Dummy {{ String a; a = (1==0) ? 'a' : (1==-1) ? null : 'b';}}")
-    assert(!hasIssues)
+    happyTypeDeclaration(
+      "public class Dummy {{ String a; a = (1==0) ? 'a' : (1==-1) ? null : 'b';}}"
+    )
   }
 
   test("Ternary common base") {
-    typeDeclaration(
+    happyTypeDeclaration(
       "public virtual class Dummy {class A extends Dummy {} class B extends Dummy {} { A a; B b; Object c = 2>0 ? a : b;}}"
     )
-    assert(!hasIssues)
+  }
+
+  test("Ternary common SObject") {
+    happyTypeDeclaration(
+      "public class Dummy {{List<SObject> a = true ? Database.query('') : [Select Count(Id) from Account];}}"
+    )
   }
 
   test("Ternary SObjectType") {
-    typeDeclaration(
+    happyTypeDeclaration(
       "public virtual class Dummy {{ SObjectType a = 2>0 ? Account.SObjectType : Contact.SObjectType;}}"
     )
-    assert(!hasIssues)
+  }
+
+  test("Object exact equality") {
+    happyTypeDeclaration("public class Dummy {{Object a,b; Boolean c = a===b;}}")
+  }
+
+  test("SObject exact equality") {
+    happyTypeDeclaration("public class Dummy {{Account a,b; Boolean c = a===b;}}")
+  }
+
+  test("Apex Reference exact equality") {
+    happyTypeDeclaration("public class Dummy {{Dummy a,b; Boolean c = a===b;}}")
+  }
+
+  test("Primitive exact equality") {
+    typeDeclaration("public class Dummy {{Integer a,b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 46-51: Exact equality/inequality is not supported between primitive types 'System.Integer' & 'System.Integer'\n"
+    )
+  }
+
+  test("Primitive & Object exact equality") {
+    happyTypeDeclaration("public class Dummy {{Integer a; Object b; Boolean c = a===b;}}")
+  }
+
+  test("Primitive & Object exact equality (reversed)") {
+    happyTypeDeclaration("public class Dummy {{Object a; Integer b; Boolean c = a===b;}}")
+  }
+
+  test("Primitive & SObject exact equality") {
+    typeDeclaration("public class Dummy {{Integer a; Account b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 55-60: Comparing incompatible types 'System.Integer' and 'Schema.Account'\n"
+    )
+  }
+
+  test("Primitive & SObject exact equality (reversed)") {
+    typeDeclaration("public class Dummy {{Account a; Integer b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 55-60: Comparing incompatible types 'Schema.Account' and 'System.Integer'\n"
+    )
+  }
+
+  test("Primitive & Apex Reference exact equality") {
+    typeDeclaration("public class Dummy {{Integer a; Dummy b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 53-58: Comparing incompatible types 'System.Integer' and 'Dummy'\n"
+    )
+  }
+
+  test("Primitive & Apex Reference exact equality (reversed)") {
+    typeDeclaration("public class Dummy {{Dummy a; Integer b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 53-58: Comparing incompatible types 'Dummy' and 'System.Integer'\n"
+    )
+  }
+
+  test("Mixed assignable primitive exact equality") {
+    typeDeclaration("public class Dummy {{Integer a; Long b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 52-57: Exact equality/inequality is not supported between primitive types 'System.Integer' & 'System.Long'\n"
+    )
+  }
+
+  test("Mixed assignable primitive exact equality (reversed)") {
+    typeDeclaration("public class Dummy {{Long a; Integer b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 52-57: Exact equality/inequality is not supported between primitive types 'System.Long' & 'System.Integer'\n"
+    )
+  }
+
+  test("Mixed non-assignable primitive exact equality") {
+    typeDeclaration("public class Dummy {{Integer a; String b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 54-59: Comparing incompatible types 'System.Integer' and 'System.String'\n"
+    )
+  }
+
+  test("Mixed non-assignable primitive exact equality (reversed)") {
+    typeDeclaration("public class Dummy {{String a; Integer b; Boolean c = a===b;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 54-59: Comparing incompatible types 'System.String' and 'System.Integer'\n"
+    )
   }
 }

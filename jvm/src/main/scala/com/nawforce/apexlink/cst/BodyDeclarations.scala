@@ -330,7 +330,8 @@ final case class ApexFieldDeclaration(
   thisType: ThisType,
   _modifiers: ModifierResults,
   typeName: TypeName,
-  variableDeclarator: VariableDeclarator
+  variableDeclarator: VariableDeclarator,
+  isEnumConstant: Boolean = false
 ) extends ClassBodyDeclaration(_modifiers)
     with ApexFieldLike {
 
@@ -349,17 +350,15 @@ final case class ApexFieldDeclaration(
   override val inTest: Boolean              = thisType.inTest
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
+    // Ignore enum constants so they don't become dependency holders on defining enum type
+    // We need better handling of dependency holders to determine if internal
+    if (isEnumConstant)
+      return
+
     val staticContext = if (isStatic) Some(true) else None
 
     if (isStatic && modifiers.contains(PROTECTED_MODIFIER)) {
-      context.log(
-        Issue(
-          location.path,
-          ERROR_CATEGORY,
-          location.location,
-          s"protected field '${id.name}' cannot be static"
-        )
-      )
+      context.log(Issue(ERROR_CATEGORY, location, s"protected field '${id.name}' cannot be static"))
     }
 
     variableDeclarator.verify(
