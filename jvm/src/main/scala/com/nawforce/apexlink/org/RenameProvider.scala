@@ -8,6 +8,7 @@ import com.nawforce.apexlink.cst.{
   ApexMethodDeclaration,
   BasicForControl,
   BinaryExpression,
+  ClassDeclaration,
   DeleteStatement,
   DoWhileStatement,
   DotExpressionWithMethod,
@@ -37,13 +38,12 @@ import com.nawforce.apexlink.cst.{
   UndeleteStatement,
   UpdateStatement,
   UpsertStatement,
-  ValidationResult,
   VariableDeclarator,
   WhileStatement
 }
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.Rename
-import com.nawforce.apexlink.types.apex.FullDeclaration
+import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.MethodDeclaration
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
@@ -60,31 +60,22 @@ trait RenameProvider extends SourceOps {
     content: Option[String]
   ): Array[Rename] = {
 
-    val sourceAndType = loadFullSourceAndType(path, content)
-    val validation    = locateFromValidation(sourceAndType.get._2, line, offset)
+    val sourceAndType = loadFullSourceAndType(path, content).getOrElse(return Array.empty)
 
-    val validationResult = validation._1(validation._2.getOrElse(return Array.empty))
-    validationResult.cst match {
-      case _: MethodCallWithId => return getMethodSymbolLocations(validationResult)
-      case _                   =>
+    val methodDeclaration = getMethodDeclaration(sourceAndType._2, line, offset)
+
+    methodDeclaration match {
+      case Some(md) => return getMethodSymbolLocations(md)
+      case _        =>
     }
 
-    val searchSymbolLocation = sourceAndType match {
-      case Some(source) =>
-        source._1
-          .extractSymbolLocation(() => new IdentifierAndMethodLimiter, line, offset)
-
-      case None => return Array(Rename(path.toString, Array.empty))
-    }
+    val searchSymbolLocation = sourceAndType._1
+      .extractSymbolLocation(() => new IdentifierAndMethodLimiter, line, offset)
 
     searchSymbolLocation match {
       case Some(location) =>
-        val editLocations = getVarLocations(
-          sourceAndType.get._2.asInstanceOf[FullDeclaration],
-          line,
-          offset,
-          location
-        )
+        val editLocations =
+          getVarLocations(sourceAndType._2.asInstanceOf[FullDeclaration], line, offset, location)
         Array(Rename(path.toString, editLocations))
       case None => Array(Rename(path.toString, Array.empty))
     }
@@ -172,55 +163,91 @@ trait RenameProvider extends SourceOps {
     locations.toArray
   }
 
-  private def getMethodSymbolLocations(vr: ValidationResult): Array[Rename] = {
-    vr.cst match {
-      case _: MethodCallWithId =>
-        vr.result.locatable match {
-          case Some(locatable: Locatable) =>
-            refresh(locatable.location.path.toString, highPriority = true)
-            val sourceAndType = loadFullSourceAndType(vr.cst.location.path, None)
-            val validation = locateFromValidation(
-              sourceAndType.get._2,
-              vr.cst.location.location.startLine,
-              vr.cst.location.location.startPosition
-            )
-            val md =
-              validation
-                ._1(validation._2.get)
-                .result
-                .locatable
-                .get
-                .asInstanceOf[ApexMethodDeclaration]
+  private def getMethodDeclaration(
+    classDeclaration: ApexFullDeclaration,
+    requestLine: Int,
+    requestOffset: Int
+  ): Option[ApexMethodDeclaration] = {
+    val validation = locateFromValidation(classDeclaration, requestLine, requestOffset)
+    validation._2 match {
+      case Some(location) =>
+        val vr = validation._1(location)
+        vr.cst match {
+          case _: MethodCallWithId =>
+            vr.result.locatable match {
+              case Some(locatable: Locatable) =>
+                refresh(locatable.location.path.toString, highPriority = true)
+                val sourceAndType = loadFullSourceAndType(vr.cst.location.path, None)
+                val validation = locateFromValidation(
+                  sourceAndType.get._2,
+                  vr.cst.location.location.startLine,
+                  vr.cst.location.location.startPosition
+                )
 
-            var calloutLocations = md.getDependencyHolders.collect {
-              case a: ApexMethodDeclaration =>
-                val currentClassPath = a.location.path
-                val methodRenameLocations: mutable.Set[Location] = a.block match {
-                  case Some(block: LazyBlock)  => getLocationsFromStatements(block.statements(), md)
-                  case Some(block: EagerBlock) => getLocationsFromStatements(block.statements, md)
-                  case _                       => mutable.Set.empty
-                }
+                val md = validation
+                  ._1(validation._2.get)
+                  .result
+                  .locatable
+                  .get
+                  .asInstanceOf[ApexMethodDeclaration]
 
-                if (currentClassPath.toString == locatable.location.path.toString)
-                  methodRenameLocations.add(md.idLocation)
+                Some(md)
+              case _ =>
+                None
 
-                Rename(currentClassPath.toString, methodRenameLocations.toArray)
-            }.toArray
-
-            // add Rename for the method declaration if that file has no other edits
-            calloutLocations.find(rename => rename.path == md.location.path.toString) match {
-              case Some(_) =>
-              case None =>
-                calloutLocations =
-                  calloutLocations :+ Rename(md.location.path.toString, Array(md.idLocation))
             }
-
-            calloutLocations
-          case _ =>
-            Array.empty
-
+          case _ => None
         }
+
+      case None =>
+        refresh(classDeclaration.location.path.toString, highPriority = true)
+        val sourceAndType = loadFullSourceAndType(classDeclaration.location.path, None)
+
+        sourceAndType
+          .getOrElse(return None)
+          ._2
+          .asInstanceOf[ClassDeclaration]
+          .bodyDeclarations
+          .foreach {
+            case md: ApexMethodDeclaration =>
+              if (
+                md.idLocation.startLine <= requestLine && md.idLocation.startPosition <= requestOffset && md.idLocation.endLine >= requestLine && md.idLocation.endPosition >= requestOffset
+              ) {
+
+                return Some(md)
+              }
+            case _ => None
+          }
+        None
     }
+
+  }
+
+  private def getMethodSymbolLocations(md: ApexMethodDeclaration): Array[Rename] = {
+    var calloutLocations = md.getDependencyHolders.collect { case a: ApexMethodDeclaration =>
+      val currentClassPath = a.location.path
+      val methodRenameLocations: mutable.Set[Location] = a.block match {
+        case Some(block: LazyBlock)  => getLocationsFromStatements(block.statements(), md)
+        case Some(block: EagerBlock) => getLocationsFromStatements(block.statements, md)
+        case _                       => mutable.Set.empty
+      }
+
+      if (currentClassPath.toString == md.location.path.toString)
+        methodRenameLocations.add(md.idLocation)
+
+      Rename(currentClassPath.toString, methodRenameLocations.toArray)
+    }.toArray
+
+    // add Rename for the method declaration if that file has no other edits
+    calloutLocations.find(rename => rename.path == md.location.path.toString) match {
+      case Some(_) =>
+      case None =>
+        calloutLocations =
+          calloutLocations :+ Rename(md.location.path.toString, Array(md.idLocation))
+    }
+
+    calloutLocations
+
   }
 
   private def getLocationsFromStatements(
