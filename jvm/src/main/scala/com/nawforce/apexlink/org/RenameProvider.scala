@@ -78,7 +78,7 @@ trait RenameProvider extends SourceOps {
     }
 
     searchSymbolLocation match {
-      case Some(location) => {
+      case Some(location) =>
         val editLocations = getVarLocations(
           sourceAndType.get._2.asInstanceOf[FullDeclaration],
           line,
@@ -86,7 +86,6 @@ trait RenameProvider extends SourceOps {
           location
         )
         Array(Rename(path.toString, editLocations))
-      }
       case None => Array(Rename(path.toString, Array.empty))
     }
 
@@ -175,7 +174,7 @@ trait RenameProvider extends SourceOps {
 
   private def getMethodSymbolLocations(vr: ValidationResult): Array[Rename] = {
     vr.cst match {
-      case _: MethodCallWithId => {
+      case _: MethodCallWithId =>
         vr.result.locatable match {
           case Some(locatable: Locatable) =>
             refresh(locatable.location.path.toString, highPriority = true)
@@ -221,8 +220,6 @@ trait RenameProvider extends SourceOps {
             Array.empty
 
         }
-
-      }
     }
   }
 
@@ -328,7 +325,7 @@ trait RenameProvider extends SourceOps {
 
       case doWhileStatement: DoWhileStatement =>
         doWhileStatement.expression match {
-          case Some(expression: Expression) =>
+          case expression: Expression =>
             methodRenameLocations.addAll(getMethodLocationsFromExpression(expression, md))
           case _ =>
         }
