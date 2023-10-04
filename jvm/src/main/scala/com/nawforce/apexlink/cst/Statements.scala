@@ -546,7 +546,7 @@ object ContinueStatement {
 
 final case class InsertStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsSObjectOrSObjectList(context, "Insert")
     verifyControlPath(context)
   }
 }
@@ -559,7 +559,7 @@ object InsertStatement {
 
 final case class UpdateStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsSObjectOrSObjectList(context, "Update")
     verifyControlPath(context)
   }
 }
@@ -572,7 +572,7 @@ object UpdateStatement {
 
 final case class DeleteStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsSObjectOrSObjectList(context, "Delete")
     verifyControlPath(context)
   }
 }
@@ -585,7 +585,7 @@ object DeleteStatement {
 
 final case class UndeleteStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsSObjectOrSObjectList(context, "Undelete")
     verifyControlPath(context)
   }
 }
@@ -599,8 +599,10 @@ object UndeleteStatement {
 final case class UpsertStatement(expression: Expression, field: Option[QualifiedName])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
-    // Future: Verify Field
+    expression.verifyIsSObjectOrSObjectList(context, "Upsert")
+    // We don't attempt to verify the field here as we don't have the means to determine
+    // if standard fields are external ids, and I can't see this being important enough
+    // to justify that we work out how to do that.
     verifyControlPath(context)
   }
 }
@@ -618,8 +620,17 @@ object UpsertStatement {
 final case class MergeStatement(expression1: Expression, expression2: Expression)
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression1.verify(context)
-    expression2.verify(context)
+    val masterTypeName = expression1.verifyIsMergeableSObject(context, "Merge")
+    val mergeTypesName = expression2.verifyIsMergeableSObjectOrSObjectList(context, "Merge")
+    if (masterTypeName.nonEmpty && mergeTypesName.nonEmpty && masterTypeName != mergeTypesName) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"Incompatible types used in merge, '${masterTypeName.get}' and '${mergeTypesName.get}'"
+        )
+      )
+    }
     verifyControlPath(context)
   }
 }
