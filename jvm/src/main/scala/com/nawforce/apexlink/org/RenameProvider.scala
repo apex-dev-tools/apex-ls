@@ -454,7 +454,7 @@ trait RenameProvider extends SourceOps {
     )
 
     validation
-      ._1(validation._2.get)
+      ._1(validation._2.getOrElse(return None))
       .cst match {
       case validatedMethodCall: MethodCallWithId => Some(validatedMethodCall)
       case _                                     => None
