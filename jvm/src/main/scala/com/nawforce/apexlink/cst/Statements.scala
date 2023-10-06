@@ -35,8 +35,10 @@ abstract class Statement extends CST with ControlFlow {
   def verify(context: BlockVerifyContext): Unit
 }
 
-// Treat Block as Statement for blocks in blocks
-abstract class Block extends Statement
+// Block of statements, nesting uses a Block as a Statement
+abstract class Block extends Statement {
+  def statements(): Seq[Statement]
+}
 
 // Standard eager block
 final case class EagerBlock(statements: Seq[Statement]) extends Block {
@@ -108,25 +110,24 @@ final case class LazyBlock(
 }
 
 object Block {
-  def constructLazy(
+  def construct(
     parser: CodeParser,
     blockContext: BlockContext,
     isTrigger: Boolean = false
   ): Block = {
     if (ServerOps.isLazyBlocksEnabled) {
       LazyBlock(parser.extractSource(blockContext), new WeakReference(blockContext), isTrigger)
+        .withContext(blockContext)
     } else {
-      construct(parser, blockContext, isTrigger)
+      // For debugging use only
+      EagerBlock(
+        Statement.construct(parser, CodeParser.toScala(blockContext.statement()), isTrigger)
+      ).withContext(blockContext)
     }
   }
 
-  def construct(parser: CodeParser, blockContext: BlockContext, isTrigger: Boolean): Block = {
-    EagerBlock(Statement.construct(parser, CodeParser.toScala(blockContext.statement()), isTrigger))
-      .withContext(blockContext)
-  }
-
   def constructOption(parser: CodeParser, blockContext: Option[BlockContext]): Option[Block] = {
-    blockContext.map(bc => constructLazy(parser, bc))
+    blockContext.map(bc => construct(parser, bc))
   }
 }
 
@@ -466,9 +467,9 @@ object TryStatement {
     val finallyBlock =
       CodeParser
         .toScala(from.finallyBlock())
-        .map(fb => Block.construct(parser, fb.block(), isTrigger = false))
+        .map(fb => Block.construct(parser, fb.block()))
     TryStatement(
-      Block.construct(parser, from.block(), isTrigger = false),
+      Block.construct(parser, from.block()),
       CatchClause.construct(parser, catches),
       finallyBlock
     ).withContext(from)
@@ -537,7 +538,7 @@ object CatchClause {
           CodeParser.getText(from.id()),
           CodeParser
             .toScala(from.block())
-            .map(block => Block.construct(parser, block, isTrigger = false))
+            .map(block => Block.construct(parser, block))
         ).withContext(from)
       })
   }
@@ -749,7 +750,7 @@ object RunAsStatement {
     val block =
       CodeParser
         .toScala(statement.block())
-        .map(b => Block.construct(parser, b, isTrigger = false))
+        .map(b => Block.construct(parser, b))
     RunAsStatement(expressions, block).withContext(statement)
   }
 }
@@ -829,7 +830,7 @@ object Statement {
     try {
       typedStatement.map {
         case stmt: BlockContext =>
-          Block.construct(parser, stmt, isTrigger = false)
+          Block.construct(parser, stmt)
         case stmt: LocalVariableDeclarationStatementContext =>
           LocalVariableDeclarationStatement.construct(parser, stmt, isTrigger)
         case stmt: IfStatementContext =>

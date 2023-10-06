@@ -226,7 +226,7 @@ object ApexInitializerBlock {
     modifiers: ModifierResults,
     block: BlockContext
   ): ApexInitializerBlock = {
-    ApexInitializerBlock(modifiers, Block.constructLazy(parser, block), thisType)
+    ApexInitializerBlock(modifiers, Block.construct(parser, block), thisType)
       .withContext(block)
   }
 }
@@ -292,7 +292,7 @@ object ApexMethodDeclaration {
   ): ApexMethodDeclaration = {
     val block = CodeParser
       .toScala(from.block())
-      .map(b => Block.constructLazy(parser, b))
+      .map(b => Block.construct(parser, b))
 
     new ApexMethodDeclaration(
       thisType,
@@ -442,7 +442,7 @@ object ApexConstructorDeclaration {
           qname,
           FormalParameters.construct(parser, typeContext, from.formalParameters()),
           thisType,
-          Block.constructLazy(parser, from.block())
+          Block.construct(parser, from.block())
         ).withContext(from)
       })
   }
@@ -491,7 +491,7 @@ object FormalParameter {
 }
 
 object FormalParameterList {
-  val noParams: ArraySeq[FormalParameter] = ArraySeq()
+  private val noParams: ArraySeq[FormalParameter] = ArraySeq()
 
   def construct(
     parser: CodeParser,
