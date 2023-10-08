@@ -213,7 +213,7 @@ object TriggerDeclaration {
       val cases = CodeParser.toScala(trigger.triggerCase()).map(constructCase)
       val block = CodeParser
         .toScala(trigger.block())
-        .map(block => Block.construct(parser, block, isTrigger = true))
+        .map(block => Block.constructANTLROuter(parser, block, isTrigger = true))
       if (ids.length == 2) {
         Some(
           new TriggerDeclaration(

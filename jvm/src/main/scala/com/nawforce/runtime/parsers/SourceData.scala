@@ -23,6 +23,14 @@ import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 import scala.util.hashing.MurmurHash3
 
+/** Source code data chunk.
+  *
+  * @param source some block of code, typically shared between SourceData instances to save memory.
+  * @param offset index into source to start
+  * @param length length from offset to use in bytes
+  * @param sourceHash hash code for all of source, maybe precomputed
+  * @param isASCII set if source only uses ASCII characters, maybe precomputed
+  */
 final case class SourceData(
   source: Array[Byte],
   offset: Int,

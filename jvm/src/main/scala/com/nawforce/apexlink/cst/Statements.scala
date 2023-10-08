@@ -14,7 +14,6 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
@@ -26,38 +25,90 @@ import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierR
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
+import com.financialforce.types.base.{
+  UnresolvedTypeRef,
+  IdWithLocation => OPId,
+  Location => OPLocation,
+  PropertyBlock => OPPropertyBlock
+}
+
 import java.lang.ref.WeakReference
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
+/** Base class for all types of Statement */
 abstract class Statement extends CST with ControlFlow {
   def verify(context: BlockVerifyContext): Unit
 }
 
-// Block of statements, nesting uses a Block as a Statement
+/** Block of statements, nesting uses a Block as a Statement.
+  *
+  * There are two types of Block, an Outer which can use lazy loading and an Inner which does not. The OuterBlock
+  * helps significantly reduce memory needs at the cost of needing to re-parse the block contents. As re-parsing
+  * will parse all nested blocks we use an InnerBlock for these just to reduce the number of WeakReferences we
+  * need to use.
+  */
 abstract class Block extends Statement {
   def statements(): Seq[Statement]
 }
 
-// Standard eager block
-final case class EagerBlock(statements: Seq[Statement]) extends Block {
-  override def verify(context: BlockVerifyContext): Unit = {
-    val blockContext = new InnerBlockVerifyContext(context)
-    statements.foreach(_.verify(blockContext))
-    verifyControlPath(blockContext, BlockControlPattern())
+object Block {
+  val empty: Block = InnerBlock(Seq())
+
+  /** Create an OuterBlock from ANTLR parser output.
+    *
+    * @param parser the parser used
+    * @param blockContext the ANTLR block context
+    * @param isTrigger set if outer block of a trigger
+    */
+  def constructANTLROuter(
+    parser: CodeParser,
+    blockContext: BlockContext,
+    isTrigger: Boolean = false
+  ): Block = {
+    OuterBlock(parser.extractSource(blockContext), isTrigger, new WeakReference(blockContext))
+      .withContext(blockContext)
+  }
+
+  /** Create an OuterBlock from Outline parser output.
+    *
+    * @param blockSource  location and cached source of the block
+    */
+  def constructOutlineOuter(blockSource: Source, location: OPLocation): Block = {
+    val block = OuterBlock(blockSource, isTrigger = false, null)
+    block.setLocation(
+      blockSource.path,
+      location.startLine,
+      location.startLineOffset,
+      location.endLine,
+      location.startLineOffset
+    )
+    block
+  }
+
+  /** Create an InnerBlock from ANTLR parser output.
+    *
+    * @param parser       the parser used
+    * @param blockContext the ANTLR block context
+    */
+  def constructInner(parser: CodeParser, blockContext: BlockContext): Block = {
+    InnerBlock(
+      Statement.construct(parser, CodeParser.toScala(blockContext.statement()), isTrigger = false)
+    ).withContext(blockContext)
   }
 }
 
-object EagerBlock {
-  val empty = new EagerBlock(Seq())
-}
-
-// Lazy block, will re-parse when needed
-final case class LazyBlock(
+/** Outer block, holds weak reference to statements, will re-parse as needed
+  *
+  * @param source location of the block with cached source
+  * @param isTrigger is the the outer block of a trigger
+  * @param blockContextRef ANTLR BlockContext if one is available
+  */
+private final case class OuterBlock(
   source: Source,
-  var blockContextRef: WeakReference[BlockContext],
-  isTrigger: Boolean
+  isTrigger: Boolean,
+  var blockContextRef: WeakReference[BlockContext] = null
 ) extends Block {
   private var statementsRef: WeakReference[Seq[Statement]] = _
   private var reParsed                                     = false
@@ -69,13 +120,13 @@ final case class LazyBlock(
     context.typePlugin.foreach(_.onBlockValidated(this, context.isStatic, blockContext))
   }
 
-  def statements(): Seq[Statement] = {
+  override def statements(): Seq[Statement] = {
     var statements = Option(statementsRef).map(_.get).orNull
 
     // If the statement WeakRef has gone stale we need to re-build them
     if (statements == null) {
       // If the block AST WeakRef has gone stale as well we need to re-parse first
-      var statementContext = blockContextRef.get
+      var statementContext = if (blockContextRef != null) blockContextRef.get else null
       if (statementContext == null) {
         val parser = new CodeParser(source)
         val result = parser.parseBlock()
@@ -97,7 +148,7 @@ final case class LazyBlock(
     statements
   }
 
-  // Construct statements from AST
+  // Construct statements from ANTLR AST
   private def createStatements(
     context: BlockContext,
     parser: CodeParser,
@@ -109,25 +160,14 @@ final case class LazyBlock(
   }
 }
 
-object Block {
-  def construct(
-    parser: CodeParser,
-    blockContext: BlockContext,
-    isTrigger: Boolean = false
-  ): Block = {
-    if (ServerOps.isLazyBlocksEnabled) {
-      LazyBlock(parser.extractSource(blockContext), new WeakReference(blockContext), isTrigger)
-        .withContext(blockContext)
-    } else {
-      // For debugging use only
-      EagerBlock(
-        Statement.construct(parser, CodeParser.toScala(blockContext.statement()), isTrigger)
-      ).withContext(blockContext)
-    }
-  }
-
-  def constructOption(parser: CodeParser, blockContext: Option[BlockContext]): Option[Block] = {
-    blockContext.map(bc => construct(parser, bc))
+/** Inner block, a container for statements. Used for blocks nested in an OuterBlock as re-parsing can be expensive.
+  * @param statements the statements in the block
+  */
+private final case class InnerBlock(statements: Seq[Statement]) extends Block {
+  override def verify(context: BlockVerifyContext): Unit = {
+    val blockContext = new InnerBlockVerifyContext(context)
+    statements.foreach(_.verify(blockContext))
+    verifyControlPath(blockContext, BlockControlPattern())
   }
 }
 
@@ -467,9 +507,9 @@ object TryStatement {
     val finallyBlock =
       CodeParser
         .toScala(from.finallyBlock())
-        .map(fb => Block.construct(parser, fb.block()))
+        .map(fb => Block.constructInner(parser, fb.block()))
     TryStatement(
-      Block.construct(parser, from.block()),
+      Block.constructInner(parser, from.block()),
       CatchClause.construct(parser, catches),
       finallyBlock
     ).withContext(from)
@@ -538,7 +578,7 @@ object CatchClause {
           CodeParser.getText(from.id()),
           CodeParser
             .toScala(from.block())
-            .map(block => Block.construct(parser, block))
+            .map(block => Block.constructInner(parser, block))
         ).withContext(from)
       })
   }
@@ -750,7 +790,7 @@ object RunAsStatement {
     val block =
       CodeParser
         .toScala(statement.block())
-        .map(b => Block.construct(parser, b))
+        .map(b => Block.constructInner(parser, b))
     RunAsStatement(expressions, block).withContext(statement)
   }
 }
@@ -830,7 +870,7 @@ object Statement {
     try {
       typedStatement.map {
         case stmt: BlockContext =>
-          Block.construct(parser, stmt)
+          Block.constructInner(parser, stmt)
         case stmt: LocalVariableDeclarationStatementContext =>
           LocalVariableDeclarationStatement.construct(parser, stmt, isTrigger)
         case stmt: IfStatementContext =>

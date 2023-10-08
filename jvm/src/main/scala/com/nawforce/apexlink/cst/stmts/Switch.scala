@@ -223,7 +223,7 @@ object WhenControl {
   def construct(parser: CodeParser, whenControl: WhenControlContext): WhenControl = {
     WhenControl(
       CodeParser.toScala(whenControl.whenValue()).map(v => WhenValue.construct(v)).get,
-      Block.construct(parser, whenControl.block(), isTrigger = false)
+      Block.constructInner(parser, whenControl.block())
     ).withContext(whenControl)
   }
 }

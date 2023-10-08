@@ -52,15 +52,10 @@ case class IndexerConfiguration(rescanTriggerTimeMs: Long, quietPeriodForRescanM
 
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
-  private val lazyBlocks: Boolean            = true
   private var autoFlush: Boolean             = true
   private var externalAnalysis: AnalysisMode = RefreshAnalysis
   private var currentParser: AvailableParser = ANTLRParser
   private var indexerConfiguration           = IndexerConfiguration(0, 0)
-
-  def isLazyBlocksEnabled: Boolean = {
-    lazyBlocks
-  }
 
   def isAutoFlushEnabled: Boolean = {
     autoFlush
