@@ -226,7 +226,7 @@ object ApexInitializerBlock {
     modifiers: ModifierResults,
     block: BlockContext
   ): ApexInitializerBlock = {
-    ApexInitializerBlock(modifiers, Block.constructLazy(parser, block), thisType)
+    ApexInitializerBlock(modifiers, Block.constructANTLROuter(parser, block), thisType)
       .withContext(block)
   }
 }
@@ -254,7 +254,7 @@ class ApexMethodDeclaration(
   override val inTest: Boolean              = thisType.inTest
 
   // If using a fake block then consider synthetic, we need to use a block to avoid confusion with abstract
-  override def isSynthetic: Boolean = block.contains(EagerBlock.empty)
+  override def isSynthetic: Boolean = block.contains(Block.empty)
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
 
@@ -292,7 +292,7 @@ object ApexMethodDeclaration {
   ): ApexMethodDeclaration = {
     val block = CodeParser
       .toScala(from.block())
-      .map(b => Block.constructLazy(parser, b))
+      .map(b => Block.constructANTLROuter(parser, b))
 
     new ApexMethodDeclaration(
       thisType,
@@ -442,7 +442,7 @@ object ApexConstructorDeclaration {
           qname,
           FormalParameters.construct(parser, typeContext, from.formalParameters()),
           thisType,
-          Block.constructLazy(parser, from.block())
+          Block.constructANTLROuter(parser, from.block())
         ).withContext(from)
       })
   }
@@ -491,7 +491,7 @@ object FormalParameter {
 }
 
 object FormalParameterList {
-  val noParams: ArraySeq[FormalParameter] = ArraySeq()
+  private val noParams: ArraySeq[FormalParameter] = ArraySeq()
 
   def construct(
     parser: CodeParser,

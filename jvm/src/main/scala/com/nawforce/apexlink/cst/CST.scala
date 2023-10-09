@@ -18,13 +18,10 @@ import com.nawforce.apexlink.names.XNames.NameUtils
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
-import com.nawforce.pkgforce.path.{PathLike, Positionable}
+import com.nawforce.pkgforce.path.Positionable
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
 import scala.util.DynamicVariable
-
-// Information about current parsing context
-case class CSTParsingContext(path: PathLike, lineAdjust: Int = 0, columnAdjust: Int = 0)
 
 /** Base for all CST nodes, provides some basic location handling.
   *
@@ -151,10 +148,6 @@ object ElementValueArrayInitializer {
 final case class ElementValuePair(id: String, elementValue: Option[ElementValue]) extends CST
 
 object ElementValuePair {
-  def construct(aList: Seq[ElementValuePairContext]): Seq[ElementValuePair] = {
-    aList.map(x => ElementValuePair.construct(x))
-  }
-
   def construct(from: ElementValuePairContext): ElementValuePair = {
     ElementValuePair(CodeParser.getText(from.id()), ElementValue.construct(from.elementValue()))
       .withContext(from)

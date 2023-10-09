@@ -14,10 +14,10 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, LoggerOps}
@@ -25,36 +25,90 @@ import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierR
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 
+import com.financialforce.types.base.{
+  UnresolvedTypeRef,
+  IdWithLocation => OPId,
+  Location => OPLocation,
+  PropertyBlock => OPPropertyBlock
+}
+
 import java.lang.ref.WeakReference
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
+/** Base class for all types of Statement */
 abstract class Statement extends CST with ControlFlow {
   def verify(context: BlockVerifyContext): Unit
 }
 
-// Treat Block as Statement for blocks in blocks
-abstract class Block extends Statement
+/** Block of statements, nesting uses a Block as a Statement.
+  *
+  * There are two types of Block, an Outer which can use lazy loading and an Inner which does not. The OuterBlock
+  * helps significantly reduce memory needs at the cost of needing to re-parse the block contents. As re-parsing
+  * will parse all nested blocks we use an InnerBlock for these just to reduce the number of WeakReferences we
+  * need to use.
+  */
+abstract class Block extends Statement {
+  def statements(): Seq[Statement]
+}
 
-// Standard eager block
-final case class EagerBlock(statements: Seq[Statement]) extends Block {
-  override def verify(context: BlockVerifyContext): Unit = {
-    val blockContext = new InnerBlockVerifyContext(context)
-    statements.foreach(_.verify(blockContext))
-    verifyControlPath(blockContext, BlockControlPattern())
+object Block {
+  val empty: Block = InnerBlock(Seq())
+
+  /** Create an OuterBlock from ANTLR parser output.
+    *
+    * @param parser the parser used
+    * @param blockContext the ANTLR block context
+    * @param isTrigger set if outer block of a trigger
+    */
+  def constructANTLROuter(
+    parser: CodeParser,
+    blockContext: BlockContext,
+    isTrigger: Boolean = false
+  ): Block = {
+    OuterBlock(parser.extractSource(blockContext), isTrigger, new WeakReference(blockContext))
+      .withContext(blockContext)
+  }
+
+  /** Create an OuterBlock from Outline parser output.
+    *
+    * @param blockSource  location and cached source of the block
+    */
+  def constructOutlineOuter(blockSource: Source, location: OPLocation): Block = {
+    val block = OuterBlock(blockSource, isTrigger = false, null)
+    block.setLocation(
+      blockSource.path,
+      location.startLine,
+      location.startLineOffset,
+      location.endLine,
+      location.startLineOffset
+    )
+    block
+  }
+
+  /** Create an InnerBlock from ANTLR parser output.
+    *
+    * @param parser       the parser used
+    * @param blockContext the ANTLR block context
+    */
+  def constructInner(parser: CodeParser, blockContext: BlockContext): Block = {
+    InnerBlock(
+      Statement.construct(parser, CodeParser.toScala(blockContext.statement()), isTrigger = false)
+    ).withContext(blockContext)
   }
 }
 
-object EagerBlock {
-  val empty = new EagerBlock(Seq())
-}
-
-// Lazy block, will re-parse when needed
-final case class LazyBlock(
+/** Outer block, holds weak reference to statements, will re-parse as needed
+  *
+  * @param source location of the block with cached source
+  * @param isTrigger is the the outer block of a trigger
+  * @param blockContextRef ANTLR BlockContext if one is available
+  */
+private final case class OuterBlock(
   source: Source,
-  var blockContextRef: WeakReference[BlockContext],
-  isTrigger: Boolean
+  isTrigger: Boolean,
+  var blockContextRef: WeakReference[BlockContext] = null
 ) extends Block {
   private var statementsRef: WeakReference[Seq[Statement]] = _
   private var reParsed                                     = false
@@ -66,13 +120,13 @@ final case class LazyBlock(
     context.typePlugin.foreach(_.onBlockValidated(this, context.isStatic, blockContext))
   }
 
-  def statements(): Seq[Statement] = {
+  override def statements(): Seq[Statement] = {
     var statements = Option(statementsRef).map(_.get).orNull
 
     // If the statement WeakRef has gone stale we need to re-build them
     if (statements == null) {
       // If the block AST WeakRef has gone stale as well we need to re-parse first
-      var statementContext = blockContextRef.get
+      var statementContext = if (blockContextRef != null) blockContextRef.get else null
       if (statementContext == null) {
         val parser = new CodeParser(source)
         val result = parser.parseBlock()
@@ -94,7 +148,7 @@ final case class LazyBlock(
     statements
   }
 
-  // Construct statements from AST
+  // Construct statements from ANTLR AST
   private def createStatements(
     context: BlockContext,
     parser: CodeParser,
@@ -106,26 +160,14 @@ final case class LazyBlock(
   }
 }
 
-object Block {
-  def constructLazy(
-    parser: CodeParser,
-    blockContext: BlockContext,
-    isTrigger: Boolean = false
-  ): Block = {
-    if (ServerOps.isLazyBlocksEnabled) {
-      LazyBlock(parser.extractSource(blockContext), new WeakReference(blockContext), isTrigger)
-    } else {
-      construct(parser, blockContext, isTrigger)
-    }
-  }
-
-  def construct(parser: CodeParser, blockContext: BlockContext, isTrigger: Boolean): Block = {
-    EagerBlock(Statement.construct(parser, CodeParser.toScala(blockContext.statement()), isTrigger))
-      .withContext(blockContext)
-  }
-
-  def constructOption(parser: CodeParser, blockContext: Option[BlockContext]): Option[Block] = {
-    blockContext.map(bc => constructLazy(parser, bc))
+/** Inner block, a container for statements. Used for blocks nested in an OuterBlock as re-parsing can be expensive.
+  * @param statements the statements in the block
+  */
+private final case class InnerBlock(statements: Seq[Statement]) extends Block {
+  override def verify(context: BlockVerifyContext): Unit = {
+    val blockContext = new InnerBlockVerifyContext(context)
+    statements.foreach(_.verify(blockContext))
+    verifyControlPath(blockContext, BlockControlPattern())
   }
 }
 
@@ -210,6 +252,9 @@ object ForStatement {
   }
 }
 
+/** base for the two types of 'for' loop, Base style e.g. for(Integer i=0; i<10; i++) or enhanced
+  * style e.g. for(String a: new List<String>{'x', 'y', 'z'}
+  */
 sealed abstract class ForControl extends CST {
   def verify(context: BlockVerifyContext): Unit
   def addVars(context: BlockVerifyContext): Unit
@@ -226,31 +271,97 @@ object ForControl {
   }
 }
 
+/** for-each iteration, e.g. for(String a: new List<String>{'x', 'y', 'z'}
+  * @param typeName loop variable type
+  * @param id loop variable identifier
+  * @param expression iteration expression
+  */
 final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expression)
     extends ForControl {
-  override def verify(context: BlockVerifyContext): Unit = {
-    id.validate()
-    val forType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
-    if (forType.isEmpty)
-      context.missingType(id.location, typeName)
-    expression.verify(context)
+
+  /** Add vars introduced by the control to a context */
+  override def addVars(context: BlockVerifyContext): Unit = {
+    context.addVar(id.name, this, isReadOnly = false, typeName)
   }
 
-  def addVars(context: BlockVerifyContext): Unit = {
-    context.addVar(id.name, this, isReadOnly = false, typeName)
+  override def verify(context: BlockVerifyContext): Unit = {
+    id.validate()
+
+    // Check the loop var type is available
+    var varTd = context.getTypeAndAddDependency(typeName, context.thisType).toOption
+    if (varTd.isEmpty) {
+      context.missingType(id.location, typeName)
+      return
+    }
+
+    var varTypeName = varTd.get.typeName
+    val exprContext = expression.verify(context)
+    if (exprContext.isDefined) {
+
+      // Unwrap varTypeName If using grouping query via list loop var,
+      // e.g. for(List<Account> a : [Select Id from Account]){..}
+      if (varTypeName.isList && exprContext.typeName.isRecordSet) {
+        varTypeName = varTypeName.params.head
+        varTd = context.getTypeAndAddDependency(varTypeName, context.thisType).toOption
+      }
+
+      // Check we are trying to iterate over something iterable
+      val iteratorTypeName = exprContext.typeName
+      val iterationType    = getIterationType(iteratorTypeName)
+      if (iterationType.isEmpty) {
+        context.log(
+          Issue(
+            ERROR_CATEGORY,
+            this.location,
+            s"For loop can only iterate over Lists or Sets, not '$iteratorTypeName'"
+          )
+        )
+      } else {
+        // Check we can assign the iterable type to loop var type
+        if (!AssignableSupport.isAssignable(varTypeName, iterationType.get, context)) {
+          context.log(
+            Issue(
+              ERROR_CATEGORY,
+              id.location,
+              s"Incompatible types in assignment, from '${iterationType.get}' to '$varTypeName'"
+            )
+          )
+        } else {
+          // All good, setup save context for definition resolution on loop var, we have do this manually
+          // as the loop var is not in scope yet
+          context.saveResult(id, id.location.location) {
+            ExprContext(Some(false), varTd, varTd.get)
+          }
+        }
+      }
+    }
+  }
+
+  private def getIterationType(typeName: TypeName): Option[TypeName] = {
+    if (typeName.isList || typeName.isSet || typeName.isRecordSet) {
+      typeName.params.headOption
+    } else {
+      None
+    }
   }
 }
 
 object EnhancedForControl {
+
   def construct(from: EnhancedForControlContext): EnhancedForControl = {
     EnhancedForControl(
       TypeReference.construct(from.typeRef()),
       Id.construct(from.id()),
-      Expression.construct(from.expression()).withContext(from)
+      Expression.construct(from.expression())
     ).withContext(from)
   }
 }
 
+/** for loop, e.g. for(Integer i; i<10; i++}
+  * @param forInit initialization statement
+  * @param expression continuation condition
+  * @param forUpdate increment statement
+  */
 final case class BasicForControl(
   forInit: Option[ForInit],
   expression: Option[Expression],
@@ -258,7 +369,9 @@ final case class BasicForControl(
 ) extends ForControl {
   override def verify(context: BlockVerifyContext): Unit = {
     forInit.foreach(_.verify(context))
-    expression.foreach(_.verify(context))
+    expression.foreach(
+      _.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "For condition")
+    )
     forUpdate.foreach(_.verify(context))
   }
 
@@ -394,9 +507,9 @@ object TryStatement {
     val finallyBlock =
       CodeParser
         .toScala(from.finallyBlock())
-        .map(fb => Block.construct(parser, fb.block(), isTrigger = false))
+        .map(fb => Block.constructInner(parser, fb.block()))
     TryStatement(
-      Block.construct(parser, from.block(), isTrigger = false),
+      Block.constructInner(parser, from.block()),
       CatchClause.construct(parser, catches),
       finallyBlock
     ).withContext(from)
@@ -465,7 +578,7 @@ object CatchClause {
           CodeParser.getText(from.id()),
           CodeParser
             .toScala(from.block())
-            .map(block => Block.construct(parser, block, isTrigger = false))
+            .map(block => Block.constructInner(parser, block))
         ).withContext(from)
       })
   }
@@ -546,7 +659,7 @@ object ContinueStatement {
 
 final case class InsertStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsSObjectOrSObjectList(context, "Insert")
     verifyControlPath(context)
   }
 }
@@ -559,7 +672,7 @@ object InsertStatement {
 
 final case class UpdateStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsSObjectOrSObjectList(context, "Update")
     verifyControlPath(context)
   }
 }
@@ -572,7 +685,7 @@ object UpdateStatement {
 
 final case class DeleteStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsSObjectOrSObjectList(context, "Delete")
     verifyControlPath(context)
   }
 }
@@ -585,7 +698,7 @@ object DeleteStatement {
 
 final case class UndeleteStatement(expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
+    expression.verifyIsSObjectOrSObjectList(context, "Undelete")
     verifyControlPath(context)
   }
 }
@@ -599,8 +712,10 @@ object UndeleteStatement {
 final case class UpsertStatement(expression: Expression, field: Option[QualifiedName])
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression.verify(context)
-    // Future: Verify Field
+    expression.verifyIsSObjectOrSObjectList(context, "Upsert")
+    // We don't attempt to verify the field here as we don't have the means to determine
+    // if standard fields are external ids, and I can't see this being important enough
+    // to justify that we work out how to do that.
     verifyControlPath(context)
   }
 }
@@ -618,8 +733,17 @@ object UpsertStatement {
 final case class MergeStatement(expression1: Expression, expression2: Expression)
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
-    expression1.verify(context)
-    expression2.verify(context)
+    val masterTypeName = expression1.verifyIsMergeableSObject(context, "Merge")
+    val mergeTypesName = expression2.verifyIsMergeableSObjectOrSObjectList(context, "Merge")
+    if (masterTypeName.nonEmpty && mergeTypesName.nonEmpty && masterTypeName != mergeTypesName) {
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"Incompatible types used in merge, '${masterTypeName.get}' and '${mergeTypesName.get}'"
+        )
+      )
+    }
     verifyControlPath(context)
   }
 }
@@ -666,7 +790,7 @@ object RunAsStatement {
     val block =
       CodeParser
         .toScala(statement.block())
-        .map(b => Block.construct(parser, b, isTrigger = false))
+        .map(b => Block.constructInner(parser, b))
     RunAsStatement(expressions, block).withContext(statement)
   }
 }
@@ -746,7 +870,7 @@ object Statement {
     try {
       typedStatement.map {
         case stmt: BlockContext =>
-          Block.construct(parser, stmt, isTrigger = false)
+          Block.constructInner(parser, stmt)
         case stmt: LocalVariableDeclarationStatementContext =>
           LocalVariableDeclarationStatement.construct(parser, stmt, isTrigger)
         case stmt: IfStatementContext =>

@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
+import com.nawforce.apexlink.cst.Expression.mergeableSObjects
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.names.TypeNames
@@ -144,6 +145,120 @@ sealed abstract class Expression extends CST {
     } else {
       (true, verifyResult)
     }
+  }
+
+  /** Verify an expression result type is an SObject or SObject List/RecordSet
+    *
+    * @param context   verify context to use
+    * @param prefix    for the log issue
+    */
+  def verifyIsSObjectOrSObjectList(
+    context: BlockVerifyContext,
+    prefix: String
+  ): (Boolean, ExprContext) = {
+    val verifyResult = verify(context)
+    if (
+      verifyResult.isDefined &&
+      (verifyResult.isStatic
+        .contains(true) || !isSObjectOrSObjectList(verifyResult.typeName, context))
+    ) {
+      val resultQualifier = if (verifyResult.isStatic.contains(true)) "type" else "instance"
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"$prefix expression should return an SObject or list of SObjects, not a '${verifyResult.typeName}' $resultQualifier"
+        )
+      )
+      (false, verifyResult)
+    } else {
+      (true, verifyResult)
+    }
+  }
+
+  private def isSObjectOrSObjectList(typeName: TypeName, context: VerifyContext): Boolean = {
+    if (
+      typeName == TypeNames.SObject || typeName == TypeNames.listOf(
+        SObject
+      ) || typeName == TypeNames.recordSetOf(SObject)
+    )
+      return true
+
+    val sObjectTypeName =
+      if (typeName.isList || typeName.isRecordSet) typeName.params.head else typeName
+    context.getTypeFor(sObjectTypeName, context.thisType).toOption.forall(_.isSObject)
+  }
+
+  /** Verify an expression result type is an SObject suitable for merging. Only leads, contacts,
+    * cases, and accounts can be merged. Returns typeName on success.
+    *
+    * @param context verify context to use
+    * @param prefix  for the log issue
+    */
+  def verifyIsMergeableSObject(context: BlockVerifyContext, prefix: String): Option[TypeName] = {
+    val verifyResult = verify(context)
+    if (
+      verifyResult.isDefined &&
+      (verifyResult.isStatic.contains(true) ||
+        !verifyResult.typeName.outer.contains(TypeName.Schema) ||
+        !mergeableSObjects.contains(verifyResult.typeName.name))
+    ) {
+      val resultQualifier       = if (verifyResult.isStatic.contains(true)) "type" else "instance"
+      val mergeableSObjectNames = mergeableSObjects.map(_.toString).mkString(" or ")
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"$prefix expression should return a $mergeableSObjectNames SObject, not a '${verifyResult.typeName}' $resultQualifier"
+        )
+      )
+      None
+    } else {
+      verifyResult.declaration.map(_.typeName)
+    }
+  }
+
+  /** Verify an expression result type is an SObject or SObject List/RecordSet suitable for merging. Only
+    * leads, contacts, cases, and accounts can be merged. Returns typeName on success.
+    *
+    * @param context verify context to use
+    * @param prefix  for the log issue
+    */
+  def verifyIsMergeableSObjectOrSObjectList(
+    context: BlockVerifyContext,
+    prefix: String
+  ): Option[TypeName] = {
+    val verifyResult      = verify(context)
+    val mergeableTypeName = getMergeableTypeNameFromSObjectOrSObjectList(verifyResult.typeName)
+    if (
+      verifyResult.isDefined && verifyResult.isStatic.contains(true) || mergeableTypeName.isEmpty
+    ) {
+      val resultQualifier       = if (verifyResult.isStatic.contains(true)) "type" else "instance"
+      val mergeableSObjectNames = mergeableSObjects.map(_.toString).mkString(" or ")
+      context.log(
+        Issue(
+          ERROR_CATEGORY,
+          location,
+          s"$prefix expression should return a $mergeableSObjectNames SObject or list of SObjects, not a '${verifyResult.typeName}' $resultQualifier"
+        )
+      )
+      None
+    } else {
+      mergeableTypeName
+    }
+  }
+
+  private def getMergeableTypeNameFromSObjectOrSObjectList(typeName: TypeName): Option[TypeName] = {
+    val sObjectTypeName = {
+      if (typeName.isList || typeName.isRecordSet) typeName.params.head else typeName
+    }
+    if (
+      sObjectTypeName.outer.contains(
+        TypeNames.Schema
+      ) && sObjectTypeName.params.isEmpty && mergeableSObjects
+        .contains(sObjectTypeName.name)
+    ) Some(sObjectTypeName)
+    else None
   }
 }
 
@@ -777,6 +892,8 @@ final case class PrimaryExpression(var primary: Primary) extends Expression {
 
 object Expression {
   val emptyExpressions: ArraySeq[Expression] = ArraySeq()
+
+  val mergeableSObjects: Set[Name] = Set("Lead", "Contact", "Case", "Account").map(Name(_))
 
   def construct(from: ExpressionContext): Expression = {
     val cst: Expression = {

@@ -323,7 +323,7 @@ final case class EnumDeclaration(
         RelativeTypeName(typeContext, TypeNames.String),
         fakeId("name"),
         FormalParameters.empty,
-        Some(EagerBlock.empty)
+        Some(Block.empty)
       ).withLocation(location),
       new ApexMethodDeclaration(
         thisType,
@@ -331,7 +331,7 @@ final case class EnumDeclaration(
         RelativeTypeName(typeContext, TypeNames.Integer),
         fakeId("ordinal"),
         FormalParameters.empty,
-        Some(EagerBlock.empty)
+        Some(Block.empty)
       ).withLocation(location),
       new ApexMethodDeclaration(
         thisType,
@@ -339,7 +339,7 @@ final case class EnumDeclaration(
         RelativeTypeName(typeContext, TypeNames.listOf(typeName)),
         fakeId("values"),
         FormalParameters.empty,
-        Some(EagerBlock.empty)
+        Some(Block.empty)
       ).withLocation(location),
       new ApexMethodDeclaration(
         thisType,
@@ -353,7 +353,7 @@ final case class EnumDeclaration(
             fakeId("name")
           )
         ),
-        Some(EagerBlock.empty)
+        Some(Block.empty)
       ).withLocation(location),
       new ApexMethodDeclaration(
         thisType,
@@ -367,7 +367,7 @@ final case class EnumDeclaration(
             fakeId("other")
           )
         ),
-        Some(EagerBlock.empty)
+        Some(Block.empty)
       ).withLocation(location),
       new ApexMethodDeclaration(
         thisType,
@@ -375,7 +375,7 @@ final case class EnumDeclaration(
         RelativeTypeName(typeContext, TypeNames.Integer),
         fakeId("hashCode"),
         FormalParameters.empty,
-        Some(EagerBlock.empty)
+        Some(Block.empty)
       ).withLocation(location)
     )
   }

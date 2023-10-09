@@ -22,8 +22,8 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
     val statements = typeDeclaration(
       s"public class Dummy {{ Object a = $expr; }}"
     ).blocks.head match {
-      case ApexInitializerBlock(_, block: LazyBlock, _) => block.statements()
-      case _                                            => Seq()
+      case ApexInitializerBlock(_, block: Block, _) => block.statements()
+      case _                                        => Seq()
     }
     statements.head
       .asInstanceOf[LocalVariableDeclarationStatement]

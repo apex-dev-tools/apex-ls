@@ -19,7 +19,16 @@ import com.nawforce.runtime.SourceBlob
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
 import org.antlr.v4.runtime.CharStream
 
-/** Encapsulation of a chunk of code, position tells you where it came from in path */
+/** A block of source code loaded from a file
+  *
+  * @param path source file path
+  * @param code source file contents or some subpart of
+  * @param lineOffset line in path where source code is found
+  * @param columnOffset column of lineOffset where source code is found
+  * @param outer outer source container that this was extracted from
+  * @param startLine used by Outline parser for hack
+  * @param startColumn used by Outline parser for hack
+  */
 case class Source(
   path: PathLike,
   code: SourceData,
