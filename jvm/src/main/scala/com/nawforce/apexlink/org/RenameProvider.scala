@@ -8,11 +8,11 @@ import com.nawforce.apexlink.cst.{
   ApexMethodDeclaration,
   BasicForControl,
   BinaryExpression,
+  Block,
   ClassDeclaration,
   DeleteStatement,
   DoWhileStatement,
   DotExpressionWithMethod,
-  EagerBlock,
   EnhancedForControl,
   Expression,
   ExpressionListForInit,
@@ -22,7 +22,6 @@ import com.nawforce.apexlink.cst.{
   Id,
   IfStatement,
   InsertStatement,
-  LazyBlock,
   LocalVariableDeclarationStatement,
   LocalVariableForInit,
   MergeStatement,
@@ -227,9 +226,8 @@ trait RenameProvider extends SourceOps {
     var calloutLocations = md.getDependencyHolders.collect { case a: ApexMethodDeclaration =>
       val currentClassPath = a.location.path
       val methodRenameLocations: mutable.Set[Location] = a.block match {
-        case Some(block: LazyBlock)  => getLocationsFromStatements(block.statements(), md)
-        case Some(block: EagerBlock) => getLocationsFromStatements(block.statements, md)
-        case _                       => mutable.Set.empty
+        case Some(block: Block) => getLocationsFromStatements(block.statements(), md)
+        case _                  => mutable.Set.empty
       }
 
       if (currentClassPath.toString == md.location.path.toString)
@@ -284,10 +282,9 @@ trait RenameProvider extends SourceOps {
         methodRenameLocations.addAll(getMethodLocationsFromExpression(ifStatement.expression, md))
 
         ifStatement.statements.foreach {
-          case eagerBlock: EagerBlock =>
-            methodRenameLocations.addAll(getLocationsFromStatements(eagerBlock.statements, md))
-          case lazyBlock: LazyBlock =>
-            methodRenameLocations.addAll(getLocationsFromStatements(lazyBlock.statements(), md))
+          case block: Block =>
+            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
+          case _ =>
         }
 
       case forStatement: ForStatement =>
@@ -330,10 +327,8 @@ trait RenameProvider extends SourceOps {
         }
 
         forStatement.statement match {
-          case Some(eagerBlock: EagerBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(eagerBlock.statements, md))
-          case Some(lazyBlock: LazyBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(lazyBlock.statements(), md))
+          case Some(block: Block) =>
+            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
           case _ =>
         }
 
@@ -343,10 +338,8 @@ trait RenameProvider extends SourceOps {
         )
 
         whileStatement.statement match {
-          case Some(eagerBlock: EagerBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(eagerBlock.statements, md))
-          case Some(lazyBlock: LazyBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(lazyBlock.statements(), md))
+          case Some(block: Block) =>
+            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
           case _ =>
         }
 
@@ -356,36 +349,28 @@ trait RenameProvider extends SourceOps {
         )
 
         doWhileStatement.statement match {
-          case Some(eagerBlock: EagerBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(eagerBlock.statements, md))
-          case Some(lazyBlock: LazyBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(lazyBlock.statements(), md))
+          case Some(block: Block) =>
+            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
           case _ =>
         }
 
       case tryStatement: TryStatement =>
         tryStatement.block match {
-          case eagerBlock: EagerBlock =>
-            methodRenameLocations.addAll(getLocationsFromStatements(eagerBlock.statements, md))
-          case lazyBlock: LazyBlock =>
-            methodRenameLocations.addAll(getLocationsFromStatements(lazyBlock.statements(), md))
+          case block: Block =>
+            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
         }
 
         tryStatement.catches.foreach(catchStatement =>
           catchStatement.block match {
-            case Some(eagerBlock: EagerBlock) =>
-              methodRenameLocations.addAll(getLocationsFromStatements(eagerBlock.statements, md))
-            case Some(lazyBlock: LazyBlock) =>
-              methodRenameLocations.addAll(getLocationsFromStatements(lazyBlock.statements(), md))
+            case Some(block: Block) =>
+              methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
             case _ =>
           }
         )
 
         tryStatement.finallyBlock match {
-          case Some(eagerBlock: EagerBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(eagerBlock.statements, md))
-          case Some(lazyBlock: LazyBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(lazyBlock.statements(), md))
+          case Some(block: Block) =>
+            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
           case _ =>
         }
 
@@ -433,10 +418,8 @@ trait RenameProvider extends SourceOps {
         )
 
         runAsStatement.block match {
-          case Some(eagerBlock: EagerBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(eagerBlock.statements, md))
-          case Some(lazyBlock: LazyBlock) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(lazyBlock.statements(), md))
+          case Some(block: Block) =>
+            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
           case _ =>
         }
       case _ =>
