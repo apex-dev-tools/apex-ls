@@ -187,7 +187,9 @@ object PropertyBlock {
         Some(
           GetterPropertyBlock(
             modifiers,
-            Block.constructOption(parser, CodeParser.toScala(getter.get.block()))
+            CodeParser
+              .toScala(getter.get.block())
+              .map(bc => Block.constructOuterFromANTLR(parser, bc))
           )
         )
       } else if (setter.nonEmpty) {
@@ -195,7 +197,9 @@ object PropertyBlock {
           SetterPropertyBlock(
             modifiers,
             typeName,
-            Block.constructOption(parser, CodeParser.toScala(setter.get.block()))
+            CodeParser
+              .toScala(setter.get.block())
+              .map(bc => Block.constructOuterFromANTLR(parser, bc))
           )
         )
       } else {

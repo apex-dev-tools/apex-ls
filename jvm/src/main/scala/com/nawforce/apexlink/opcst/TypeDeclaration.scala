@@ -23,6 +23,7 @@ import com.nawforce.apexlink.cst.{
   ApexInitializerBlock,
   ApexMethodDeclaration,
   ApexPropertyDeclaration,
+  Block,
   CST,
   ClassBodyDeclaration,
   ClassDeclaration,
@@ -31,7 +32,6 @@ import com.nawforce.apexlink.cst.{
   FormalParameter,
   Id,
   InterfaceDeclaration,
-  LazyBlock,
   PropertyBlock,
   QualifiedName,
   VariableDeclarator
@@ -40,8 +40,6 @@ import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.apex.ThisType
-import com.nawforce.apexlink.types.core.ParameterDeclaration
-import com.nawforce.apexparser.ApexParser.BlockContext
 import com.nawforce.pkgforce.modifiers.{FINAL_MODIFIER, MethodOwnerNature, ModifierResults}
 import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
@@ -65,7 +63,6 @@ import com.nawforce.runtime.workspace.{
   InterfaceTypeDeclaration
 }
 
-import java.lang.ref.WeakReference
 import scala.collection.immutable.ArraySeq
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -554,7 +551,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     VariableDeclarator(typeName, isReadOnly, OutlineParserId.construct(id, source.path), None)
   }
 
-  def constructVariableDeclarator(
+  private def constructVariableDeclarator(
     fd: OPFieldDeclaration,
     source: Source,
     typeName: TypeName,
@@ -684,8 +681,6 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
 private[opcst] object OutlineParserFormalParameter {
 
-  val noParams: ArraySeq[ParameterDeclaration] = ArraySeq()
-
   def construct(
     path: PathLike,
     src: OPFormalParameter,
@@ -703,14 +698,9 @@ private[opcst] object OutlineParserFormalParameter {
 }
 
 private[opcst] object OutlineParserBlock {
-  val b = new BlockContext(null, 0)
-
-  def construct(src: Source, blockLocation: OPLocation, outer: Option[Source]): LazyBlock = {
-
+  def construct(src: Source, blockLocation: OPLocation, outer: Option[Source]): Block = {
     SourceOps.withSource(src, blockLocation, 1, outer) { source =>
-      val wf = new WeakReference(b)
-      wf.clear()
-      LazyBlock(source, wf, isTrigger = false)
+      Block.constructOuterFromOutline(source, blockLocation)
     }
   }
 }
