@@ -198,17 +198,18 @@ trait RenameProvider extends SourceOps {
   }
 
   private def getMethodSymbolLocations(md: ApexMethodDeclaration): Array[Rename] = {
-    var calloutLocations = md.getDependencyHolders.collect { case a: ApexMethodDeclaration =>
-      val currentClassPath = a.location.path
-      val methodRenameLocations: mutable.Set[Location] = a.block match {
-        case Some(block: Block) => getLocationsFromStatements(block.statements(), md)
-        case _                  => mutable.Set.empty
-      }
+    var calloutLocations = md.getDependencyHolders.collect {
+      case holdingMethod: ApexMethodDeclaration =>
+        val currentClassPath = holdingMethod.location.path
+        val methodRenameLocations: mutable.Set[Location] = holdingMethod.block match {
+          case Some(block: Block) => getLocationsFromStatements(block.statements(), md)
+          case _                  => mutable.Set.empty
+        }
 
-      if (currentClassPath.toString == md.location.path.toString)
-        methodRenameLocations.add(md.idLocation)
+        if (currentClassPath.toString == md.location.path.toString)
+          methodRenameLocations.add(md.idLocation)
 
-      Rename(currentClassPath.toString, methodRenameLocations.toArray)
+        Rename(currentClassPath.toString, methodRenameLocations.toArray)
     }.toArray
 
     // add Rename for the method declaration if that file has no other edits
