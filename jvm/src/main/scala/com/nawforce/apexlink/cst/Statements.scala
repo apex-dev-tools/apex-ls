@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
+import com.financialforce.types.base.{Location => OPLocation}
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
@@ -24,13 +25,6 @@ import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, LoggerOps}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
-
-import com.financialforce.types.base.{
-  UnresolvedTypeRef,
-  IdWithLocation => OPId,
-  Location => OPLocation,
-  PropertyBlock => OPPropertyBlock
-}
 
 import java.lang.ref.WeakReference
 import scala.annotation.tailrec
@@ -62,7 +56,7 @@ object Block {
     * @param blockContext the ANTLR block context
     * @param isTrigger set if outer block of a trigger
     */
-  def constructANTLROuter(
+  def constructOuterFromANTLR(
     parser: CodeParser,
     blockContext: BlockContext,
     isTrigger: Boolean = false
@@ -75,14 +69,14 @@ object Block {
     *
     * @param blockSource  location and cached source of the block
     */
-  def constructOutlineOuter(blockSource: Source, location: OPLocation): Block = {
+  def constructOuterFromOutline(blockSource: Source, location: OPLocation): Block = {
     val block = OuterBlock(blockSource, isTrigger = false, null)
     block.setLocation(
       blockSource.path,
       location.startLine,
       location.startLineOffset,
       location.endLine,
-      location.startLineOffset
+      location.endLineOffset
     )
     block
   }

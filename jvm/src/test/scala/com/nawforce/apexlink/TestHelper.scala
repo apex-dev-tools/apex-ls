@@ -33,10 +33,19 @@ trait TestHelper {
   private var defaultOrg: OPM.OrgImpl = _
   protected var root: PathLike        = _
 
-  def createOrg(path: PathLike): OPM.OrgImpl = {
+  def createHappyOrg(path: PathLike, requestedParser: Option[String] = None): OPM.OrgImpl = {
+    createOrg(path, requestedParser)
+    val messages = getMessages()
+    if (messages.nonEmpty)
+      println(getMessages())
+    assert(!hasIssues)
+    defaultOrg
+  }
+
+  def createOrg(path: PathLike, requestedParser: Option[String] = None): OPM.OrgImpl = {
     val plugins = PluginsManager.overridePlugins(Seq())
     try {
-      ParserHelper.setParser()
+      ParserHelper.setParser(requestedParser)
       defaultOrg = Org.newOrg(path).asInstanceOf[OPM.OrgImpl]
       defaultOrg
     } finally {
@@ -53,15 +62,6 @@ trait TestHelper {
     } finally {
       PluginsManager.overridePlugins(plugins)
     }
-  }
-
-  def createHappyOrg(path: PathLike): OPM.OrgImpl = {
-    createOrg(path)
-    val messages = getMessages()
-    if (messages.nonEmpty)
-      println(getMessages())
-    assert(!hasIssues)
-    defaultOrg
   }
 
   def emptyOrg(): OPM.OrgImpl = {

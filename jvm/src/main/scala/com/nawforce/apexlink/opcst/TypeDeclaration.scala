@@ -700,7 +700,7 @@ private[opcst] object OutlineParserFormalParameter {
 private[opcst] object OutlineParserBlock {
   def construct(src: Source, blockLocation: OPLocation, outer: Option[Source]): Block = {
     SourceOps.withSource(src, blockLocation, 1, outer) { source =>
-      Block.constructOutlineOuter(source, blockLocation)
+      Block.constructOuterFromOutline(source, blockLocation)
     }
   }
 }
