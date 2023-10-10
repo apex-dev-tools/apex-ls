@@ -76,7 +76,7 @@ object Block {
       location.startLine,
       location.startLineOffset,
       location.endLine,
-      location.startLineOffset
+      location.endLineOffset
     )
     block
   }
