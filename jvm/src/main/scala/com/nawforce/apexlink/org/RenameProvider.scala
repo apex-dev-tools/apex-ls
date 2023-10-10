@@ -3,43 +3,7 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst.{
-  ApexFieldDeclaration,
-  ApexMethodDeclaration,
-  BasicForControl,
-  BinaryExpression,
-  Block,
-  ClassDeclaration,
-  DeleteStatement,
-  DoWhileStatement,
-  DotExpressionWithMethod,
-  EnhancedForControl,
-  Expression,
-  ExpressionListForInit,
-  ExpressionStatement,
-  ForStatement,
-  ForUpdate,
-  Id,
-  IfStatement,
-  InsertStatement,
-  LocalVariableDeclarationStatement,
-  LocalVariableForInit,
-  MergeStatement,
-  MethodCallWithId,
-  PrimaryExpression,
-  ReturnStatement,
-  RunAsStatement,
-  SOQL,
-  SOSL,
-  Statement,
-  ThrowStatement,
-  TryStatement,
-  UndeleteStatement,
-  UpdateStatement,
-  UpsertStatement,
-  VariableDeclarator,
-  WhileStatement
-}
+import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.Rename
 import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration}
