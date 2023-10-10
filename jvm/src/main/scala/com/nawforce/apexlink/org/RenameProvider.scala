@@ -175,22 +175,33 @@ trait RenameProvider extends SourceOps {
           case _: MethodCallWithId =>
             vr.result.locatable match {
               case Some(locatable: Locatable) =>
-                refresh(locatable.location.path.toString, highPriority = true)
+                refresh(
+                  locatable.location.path.toString,
+                  highPriority = true
+                ) // required to get all dependencyHolders for declaration file
                 val sourceAndType = loadFullSourceAndType(vr.cst.location.path, None)
-                val validation = locateFromValidation(
-                  sourceAndType.get._2,
-                  vr.cst.location.location.startLine,
-                  vr.cst.location.location.startPosition
-                )
+                val refreshedValidation =
+                  locateFromValidation(sourceAndType.get._2, requestLine, requestOffset)
 
-                val md = validation
-                  ._1(validation._2.get)
-                  .result
-                  .locatable
-                  .get
-                  .asInstanceOf[ApexMethodDeclaration]
+                refreshedValidation._2 match {
+                  case Some(l) =>
+                    val md = refreshedValidation
+                      ._1(l)
+                      .result
+                      .locatable
+                      .get
+                      .asInstanceOf[ApexMethodDeclaration]
+                    Some(md)
 
-                Some(md)
+                  case None =>
+                    val md = validation
+                      ._1(validation._2.get)
+                      .result
+                      .locatable
+                      .get
+                      .asInstanceOf[ApexMethodDeclaration]
+                    Some(md)
+                }
               case _ =>
                 None
 
@@ -204,22 +215,22 @@ trait RenameProvider extends SourceOps {
 
         sourceAndType
           .getOrElse(return None)
-          ._2
-          .asInstanceOf[ClassDeclaration]
-          .bodyDeclarations
-          .foreach {
-            case md: ApexMethodDeclaration =>
-              if (
-                md.idLocation.startLine <= requestLine && md.idLocation.startPosition <= requestOffset && md.idLocation.endLine >= requestLine && md.idLocation.endPosition >= requestOffset
-              ) {
-
-                return Some(md)
+          ._2 match {
+          case cd: ClassDeclaration =>
+            cd.bodyDeclarations
+              .foreach {
+                case md: ApexMethodDeclaration =>
+                  if (
+                    md.idLocation.startLine <= requestLine && md.idLocation.startPosition <= requestOffset && md.idLocation.endLine >= requestLine && md.idLocation.endPosition >= requestOffset
+                  ) {
+                    return Some(md)
+                  }
+                case _ =>
               }
-            case _ => None
-          }
+          case _ =>
+        }
         None
     }
-
   }
 
   private def getMethodSymbolLocations(md: ApexMethodDeclaration): Array[Rename] = {
@@ -245,7 +256,6 @@ trait RenameProvider extends SourceOps {
     }
 
     calloutLocations
-
   }
 
   private def getLocationsFromStatements(
