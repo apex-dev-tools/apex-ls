@@ -226,7 +226,7 @@ object ApexInitializerBlock {
     modifiers: ModifierResults,
     block: BlockContext
   ): ApexInitializerBlock = {
-    ApexInitializerBlock(modifiers, Block.constructANTLROuter(parser, block), thisType)
+    ApexInitializerBlock(modifiers, Block.constructOuterFromANTLR(parser, block), thisType)
       .withContext(block)
   }
 }
@@ -292,7 +292,7 @@ object ApexMethodDeclaration {
   ): ApexMethodDeclaration = {
     val block = CodeParser
       .toScala(from.block())
-      .map(b => Block.constructANTLROuter(parser, b))
+      .map(b => Block.constructOuterFromANTLR(parser, b))
 
     new ApexMethodDeclaration(
       thisType,
@@ -442,7 +442,7 @@ object ApexConstructorDeclaration {
           qname,
           FormalParameters.construct(parser, typeContext, from.formalParameters()),
           thisType,
-          Block.constructANTLROuter(parser, from.block())
+          Block.constructOuterFromANTLR(parser, from.block())
         ).withContext(from)
       })
   }
