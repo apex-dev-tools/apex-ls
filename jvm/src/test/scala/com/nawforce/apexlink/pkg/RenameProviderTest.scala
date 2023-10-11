@@ -461,14 +461,59 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
               Some(fooContentAndCursorPos._1)
             )
         }
-        assert(renames.length == 2)
+        assert(renames.length == 3)
         assert(renames(0).path == "/Dummy.cls")
-        assert(renames(0).edits.length == 2)
-        assert(renames(0).edits(0) == Location(2, 21, 2, 33))
-        assert(renames(0).edits(1) == Location(7, 0, 7, 12))
+        assert(renames(0).edits.length == 1)
+        assert(renames(0).edits(0) == Location(7, 0, 7, 12))
         assert(renames(1).path == "/Foo.cls")
         assert(renames(1).edits.length == 1)
         assert(renames(1).edits(0) == Location(3, 6, 3, 18))
+        assert(renames(2).path == "/Dummy.cls")
+        assert(renames(2).edits.length == 1)
+        assert(renames(2).edits(0) == Location(2, 21, 2, 33))
+    }
+  }
+
+  test("Rename: Method | multiple different blocks") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String targetMethod() {
+         |return 'A string value';
+         |}
+         |private void privateMethod(){
+         |target${CURSOR}Method();
+         |}
+         |private void privateMethod2(){
+         |target${CURSOR}Method();
+         |}
+         |private void privateMethod3(){
+         |target${CURSOR}Method();
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 4)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 0, 6, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(9, 0, 9, 12))
+      assert(renames(2).path == "/Dummy.cls")
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(12, 0, 12, 12))
+      assert(renames(3).path == "/Dummy.cls")
+      assert(renames(3).edits.length == 1)
+      assert(renames(3).edits(0) == Location(2, 14, 2, 26))
     }
   }
 
@@ -547,11 +592,135 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
             Some(dummyContentAndCursorPos._1)
           )
       }
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
-      assert(renames(0).edits(0) == Location(2, 21, 2, 33))
-      assert(renames(0).edits(1) == Location(7, 0, 7, 12))
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(7, 0, 7, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 21, 2, 33))
+    }
+  }
+
+  test("Rename: Method | Call-Out Holder: Method Declaration") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String targetMethod() {
+         |return 'A string value';
+         |}
+         |private void privateMethod(){
+         |target${CURSOR}Method();
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 0, 6, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 26))
+    }
+  }
+
+  test("Rename: Method | Call-Out Holder: Constructor Declaration") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |Dummy(){
+         |target${CURSOR}Method();
+         |}
+         |public String targetMethod() {
+         |return 'A string value';
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(3, 0, 3, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(5, 14, 5, 26))
+    }
+  }
+
+  test("Rename: Method | Call-Out Holder: Field Declaration") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |static String newName = target${CURSOR}Method();
+         |public static String targetMethod() {
+         |return 'A string value';
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(2, 24, 2, 36))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(3, 21, 3, 33))
+    }
+  }
+
+  test("Rename: Method | Call-Out Holder: Initializer") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |{
+         |target${CURSOR}Method();
+         |}
+         |public String targetMethod() {
+         |return 'A string value';
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(3, 0, 3, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(5, 14, 5, 26))
     }
   }
 
@@ -576,11 +745,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
-      assert(renames(0).edits(0) == Location(2, 14, 2, 26))
-      assert(renames(0).edits(1) == Location(6, 0, 6, 12))
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 0, 6, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 26))
     }
   }
 
@@ -605,11 +776,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
-      assert(renames(0).edits(0) == Location(2, 14, 2, 26))
-      assert(renames(0).edits(1) == Location(6, 17, 6, 29))
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 17, 6, 29))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 26))
     }
   }
 
@@ -634,11 +807,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
-      assert(renames(0).edits(0) == Location(2, 14, 2, 26))
-      assert(renames(0).edits(1) == Location(6, 7, 6, 19))
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 7, 6, 19))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 26))
     }
   }
 
@@ -665,12 +840,14 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 3)
-      assert(renames(0).edits(0) == Location(2, 14, 2, 26))
-      assert(renames(0).edits(1) == Location(7, 2, 7, 14))
-      assert(renames(0).edits(2) == Location(6, 3, 6, 15))
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(7, 2, 7, 14))
+      assert(renames(0).edits(1) == Location(6, 3, 6, 15))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 26))
     }
   }
 
@@ -697,14 +874,16 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 5)
+      assert(renames(0).edits.length == 4)
       assert(renames(0).edits(0) == Location(7, 2, 7, 14))
       assert(renames(0).edits(1) == Location(6, 61, 6, 73))
       assert(renames(0).edits(2) == Location(6, 36, 6, 48))
-      assert(renames(0).edits(3) == Location(2, 15, 2, 27))
-      assert(renames(0).edits(4) == Location(6, 16, 6, 28))
+      assert(renames(0).edits(3) == Location(6, 16, 6, 28))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
 
     }
   }
@@ -732,12 +911,14 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits.length == 2)
       assert(renames(0).edits(0) == Location(7, 2, 7, 14))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
-      assert(renames(0).edits(2) == Location(6, 16, 6, 28))
+      assert(renames(0).edits(1) == Location(6, 16, 6, 28))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
 
     }
   }
@@ -765,12 +946,14 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits.length == 2)
       assert(renames(0).edits(0) == Location(6, 7, 6, 19))
       assert(renames(0).edits(1) == Location(7, 1, 7, 13))
-      assert(renames(0).edits(2) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -797,12 +980,14 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits.length == 2)
       assert(renames(0).edits(0) == Location(7, 1, 7, 13))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
-      assert(renames(0).edits(2) == Location(8, 9, 8, 21))
+      assert(renames(0).edits(1) == Location(8, 9, 8, 21))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -833,13 +1018,15 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 4)
+      assert(renames(0).edits.length == 3)
       assert(renames(0).edits(0) == Location(7, 2, 7, 14))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
-      assert(renames(0).edits(2) == Location(9, 2, 9, 14))
-      assert(renames(0).edits(3) == Location(11, 2, 11, 14))
+      assert(renames(0).edits(1) == Location(9, 2, 9, 14))
+      assert(renames(0).edits(2) == Location(11, 2, 11, 14))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -864,11 +1051,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(6, 7, 6, 19))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -893,11 +1082,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(6, 8, 6, 20))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -922,11 +1113,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(6, 8, 6, 20))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -951,11 +1144,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(6, 8, 6, 20))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -980,11 +1175,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(6, 10, 6, 22))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -1009,11 +1206,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(6, 8, 6, 20))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -1038,12 +1237,14 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits.length == 2)
       assert(renames(0).edits(0) == Location(6, 7, 6, 19))
       assert(renames(0).edits(1) == Location(6, 22, 6, 34))
-      assert(renames(0).edits(2) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
 
     }
   }
@@ -1071,12 +1272,14 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits.length == 2)
       assert(renames(0).edits(0) == Location(7, 2, 7, 14))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
-      assert(renames(0).edits(2) == Location(6, 14, 6, 26))
+      assert(renames(0).edits(1) == Location(6, 14, 6, 26))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
 
     }
   }
@@ -1106,11 +1309,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(9, 15, 9, 27))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -1139,11 +1344,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
-      assert(renames(0).edits(0) == Location(2, 15, 2, 27))
-      assert(renames(0).edits(1) == Location(7, 7, 7, 19))
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(7, 7, 7, 19))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -1168,11 +1375,13 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(6, 28, 6, 40))
-      assert(renames(0).edits(1) == Location(2, 15, 2, 27))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 
@@ -1200,11 +1409,279 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 14, 6, 26))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
+    }
+  }
+
+  test("Rename: Method | From: Call-out Statement | Statement: CastExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Integer targetMethod() {
+         |return 5;
+         |}
+         |private void privateMethod(){
+         |Decimal newVar = (Decimal) target${CURSOR}Method();
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 27, 6, 39))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
+    }
+  }
+
+  test("Rename: Method | From: Call-out Statement | Statement: New set expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Integer targetMethod() {
+         |return 5;
+         |}
+         |private void privateMethod(){
+         |Set<Decimal> newSet = new Set<Decimal>{
+         |  target${CURSOR}Method(),
+         |  targetMethod()
+         |  };
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 2)
-      assert(renames(0).edits(0) == Location(2, 15, 2, 27))
-      assert(renames(0).edits(1) == Location(6, 14, 6, 26))
+      assert(renames(0).edits(0) == Location(7, 2, 7, 14))
+      assert(renames(0).edits(1) == Location(8, 2, 8, 14))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
+    }
+  }
+
+  test("Rename: Method | From: Call-out Statement | Statement: New list expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Integer targetMethod() {
+         |return 5;
+         |}
+         |private void privateMethod(){
+         |List<Decimal> newSet = new List<Decimal>{
+         |  target${CURSOR}Method(),
+         |  targetMethod()
+         |  };
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(7, 2, 7, 14))
+      assert(renames(0).edits(1) == Location(8, 2, 8, 14))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
+    }
+  }
+
+  test("Rename: Method | From: Call-out Statement | Statement: New array expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal targetMethod() {
+         |return 5;
+         |}
+         |private void privateMethod(){
+         |Decimal[] decArray = new Decimal[]{
+         |  target${CURSOR}Method(),
+         |  targetMethod()
+         |  };
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(7, 2, 7, 14))
+      assert(renames(0).edits(1) == Location(8, 2, 8, 14))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
+    }
+  }
+
+  test("Rename: Method | From: Call-out Statement | Statement: New map expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal targetMethod() {
+         |return 5;
+         |}
+         |private void privateMethod(){
+         |new Map<Decimal, Decimal>{
+         |  targetMethod() => target${CURSOR}Method()
+         |  };
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(7, 2, 7, 14))
+      assert(renames(0).edits(1) == Location(7, 20, 7, 32))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
+    }
+  }
+
+  test("Rename: Method | From: Call-out Statement | Statement: New class expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal targetMethod() {
+         |return 5;
+         |}
+         |private void privateMethod(){
+         |new PrivateClass(target${CURSOR}Method());
+         |}
+         |private class PrivateClass {
+         |	PrivateClass(Decimal thing) {}
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 17, 6, 29))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
+    }
+  }
+
+  test("Rename: Method | From: Call-out Statement | Statement: NegationExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String targetMethod() {
+         |return 'test';
+         |}
+         |private void privateMethod(){
+         |if (!target${CURSOR}Method().isAllLowerCase()) {}
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 5, 6, 17))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 26))
+    }
+  }
+
+  test("Rename: Method | From: Call-out Statement | Statement: SubExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal targetMethod() {
+         |return 5;
+         |}
+         |private void privateMethod(){
+         |Decimal thing = 1 * (target${CURSOR}Method() + 5);
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(6, 21, 6, 33))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 27))
     }
   }
 }
