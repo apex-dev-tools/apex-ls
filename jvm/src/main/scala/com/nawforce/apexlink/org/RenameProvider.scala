@@ -162,7 +162,7 @@ trait RenameProvider extends SourceOps {
   }
 
   private def getMethodSymbolLocations(md: ApexMethodDeclaration): Array[Rename] = {
-    var calloutLocations = md.getDependencyHolders.collect {
+    val calloutLocations = md.getDependencyHolders.collect {
       case holdingMethod: ApexMethodDeclaration =>
         val currentClassPath = holdingMethod.location.path
         val methodRenameLocations: mutable.Set[Location] = holdingMethod.block match {
@@ -170,21 +170,34 @@ trait RenameProvider extends SourceOps {
           case _                  => mutable.Set.empty
         }
 
-        if (currentClassPath.toString == md.location.path.toString)
-          methodRenameLocations.add(md.idLocation)
+        Rename(currentClassPath.toString, methodRenameLocations.toArray)
+
+      case holdingConstructor: ApexConstructorDeclaration =>
+        val currentClassPath = holdingConstructor.location.path
+        val methodRenameLocations: mutable.Set[Location] =
+          getLocationsFromStatements(holdingConstructor.block.statements(), md)
+
+        Rename(currentClassPath.toString, methodRenameLocations.toArray)
+
+      case fieldDeclaration: ApexFieldDeclaration =>
+        val currentClassPath                             = fieldDeclaration.location.path
+        val methodRenameLocations: mutable.Set[Location] = mutable.Set.empty
+        fieldDeclaration.variableDeclarator.init match {
+          case Some(exp) => methodRenameLocations.addAll(getMethodLocationsFromExpression(exp, md))
+          case None      =>
+        }
+
+        Rename(currentClassPath.toString, methodRenameLocations.toArray)
+
+      case holdingInitializerBlock: ApexInitializerBlock =>
+        val currentClassPath = holdingInitializerBlock.location.path
+        val methodRenameLocations: mutable.Set[Location] =
+          getLocationsFromStatements(holdingInitializerBlock.block.statements(), md)
 
         Rename(currentClassPath.toString, methodRenameLocations.toArray)
     }.toArray
 
-    // add Rename for the method declaration if that file has no other edits
-    calloutLocations.find(rename => rename.path == md.location.path.toString) match {
-      case Some(_) =>
-      case None =>
-        calloutLocations =
-          calloutLocations :+ Rename(md.location.path.toString, Array(md.idLocation))
-    }
-
-    calloutLocations
+    calloutLocations :+ Rename(md.location.path.toString, Array(md.idLocation))
   }
 
   private def getLocationsFromStatements(
