@@ -7,9 +7,8 @@ import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.Rename
 import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration}
-import com.nawforce.apexlink.types.core.MethodDeclaration
 import com.nawforce.pkgforce.names.Name
-import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
+import com.nawforce.pkgforce.path.{Location, PathLike}
 
 import scala.collection.mutable
 
@@ -23,7 +22,8 @@ trait RenameProvider extends SourceOps {
     content: Option[String]
   ): Array[Rename] = {
 
-    val sourceAndType = loadFullSourceAndType(path, content).getOrElse(return Array.empty)
+    val sourceAndType =
+      loadFullSourceAndType(path, None).getOrElse(return Array.empty)
 
     val methodDeclaration = getMethodDeclaration(sourceAndType._2, line, offset)
 
@@ -136,57 +136,21 @@ trait RenameProvider extends SourceOps {
       case Some(location) =>
         val vr = validation._1(location)
         vr.cst match {
-          case _: MethodCallWithId =>
-            vr.result.locatable match {
-              case Some(locatable: Locatable) =>
-                refresh(
-                  locatable.location.path.toString,
-                  highPriority = true
-                ) // required to get all dependencyHolders for declaration file
-                val sourceAndType = loadFullSourceAndType(vr.cst.location.path, None)
-                val refreshedValidation =
-                  locateFromValidation(sourceAndType.get._2, requestLine, requestOffset)
-
-                refreshedValidation._2 match {
-                  case Some(l) =>
-                    val md = refreshedValidation
-                      ._1(l)
-                      .result
-                      .locatable
-                      .get
-                      .asInstanceOf[ApexMethodDeclaration]
-                    Some(md)
-
-                  case None =>
-                    val md = validation
-                      ._1(validation._2.get)
-                      .result
-                      .locatable
-                      .get
-                      .asInstanceOf[ApexMethodDeclaration]
-                    Some(md)
-                }
-              case _ =>
-                None
-
+          case methodCall: MethodCallWithId =>
+            methodCall.cachedMethod match {
+              case Some(amd: ApexMethodDeclaration) => Some(amd)
+              case _                                => None
             }
           case _ => None
         }
 
       case None =>
-        refresh(classDeclaration.location.path.toString, highPriority = true)
-        val sourceAndType = loadFullSourceAndType(classDeclaration.location.path, None)
-
-        sourceAndType
-          .getOrElse(return None)
-          ._2 match {
+        classDeclaration match {
           case cd: ClassDeclaration =>
             cd.bodyDeclarations
               .foreach {
                 case md: ApexMethodDeclaration =>
-                  if (
-                    md.idLocation.startLine <= requestLine && md.idLocation.startPosition <= requestOffset && md.idLocation.endLine >= requestLine && md.idLocation.endPosition >= requestOffset
-                  ) {
+                  if (md.idLocation.contains(requestLine, requestOffset)) {
                     return Some(md)
                   }
                 case _ =>
@@ -421,13 +385,13 @@ trait RenameProvider extends SourceOps {
 
   private def getLocationFromMethodCall(
     methodCall: MethodCallWithId,
-    md: MethodDeclaration
+    md: ApexMethodDeclaration
   ): Option[Location] = {
     if (methodCall.cachedMethod.isEmpty) {
       val validatedMethodCall = validateMethodCall(methodCall)
       validatedMethodCall match {
-        case methodCall: Some[MethodCallWithId] =>
-          methodCall.get.getTargetLocationForMethodCallOut(md)
+        case Some(methodCall: MethodCallWithId) =>
+          methodCall.getTargetLocationForMethodCallOut(md)
         case _ => None
       }
     } else {
