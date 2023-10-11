@@ -2,24 +2,24 @@ package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.TestHelper.CURSOR
-import com.nawforce.apexlink.org.OPM
-import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class RenameProviderTest extends AnyFunSuite with TestHelper {
   test("Rename: Variable | Scope: Function | rename param var declaration") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(
+      s"""public class Dummy { public void someMethod(String te${CURSOR}st) {
+         |String fakeVar = test;
+         |return test;
+         |} }""".stripMargin
+        .replaceAll("\r\n", "\n")
+    )
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(
-        s"""public class Dummy { public void someMethod(String te${CURSOR}st) {
-           |String fakeVar = test;
-           |return test;
-           |} }""".stripMargin
-          .replaceAll("\r\n", "\n")
-      )
+
       val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
@@ -36,16 +36,17 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Function | rename param var usage") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(
+      s"""public class Dummy { public void someMethod(String test) {
+         |String fakeVar = te${CURSOR}st;
+         |return test;
+         |} }""".stripMargin
+        .replaceAll("\r\n", "\n")
+    )
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(
-        s"""public class Dummy { public void someMethod(String test) {
-          |String fakeVar = te${CURSOR}st;
-          |return test;
-          |} }""".stripMargin
-          .replaceAll("\r\n", "\n")
-      )
       val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
@@ -63,17 +64,18 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Function | rename function var declartion") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(
+      s"""public class Dummy { public void someMethod() {
+         |String te${CURSOR}st;
+         |String fakeVar = test;
+         |return test;
+         |} }""".stripMargin
+        .replaceAll("\r\n", "\n")
+    )
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(
-        s"""public class Dummy { public void someMethod() {
-           |String te${CURSOR}st;
-           |String fakeVar = test;
-           |return test;
-           |} }""".stripMargin
-          .replaceAll("\r\n", "\n")
-      )
       val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
@@ -90,17 +92,18 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Function | rename function var usage") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(
+      s"""public class Dummy { public void someMethod() {
+         |String test;
+         |String fakeVar = te${CURSOR}st;
+         |return test;
+         |} }""".stripMargin
+        .replaceAll("\r\n", "\n")
+    )
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(
-        s"""public class Dummy { public void someMethod() {
-           |String test;
-           |String fakeVar = te${CURSOR}st;
-           |return test;
-           |} }""".stripMargin
-          .replaceAll("\r\n", "\n")
-      )
       val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
@@ -117,17 +120,18 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Function | rename unused var") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(
+      s"""public class Dummy { public void someMethod() {
+         |String te${CURSOR}st;
+         |String fakeVar = 'thing';
+         |return fakeVar;
+         |} }""".stripMargin
+        .replaceAll("\r\n", "\n")
+    )
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(
-        s"""public class Dummy { public void someMethod() {
-           |String te${CURSOR}st;
-           |String fakeVar = 'thing';
-           |return fakeVar;
-           |} }""".stripMargin
-          .replaceAll("\r\n", "\n")
-      )
       val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
@@ -142,18 +146,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Function | rename var declaration with dot chaining") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(
+      s"""public class Dummy { public void someMethod() {
+         |Map<String, String> m${CURSOR}1 = new Map<String, String>();
+         |m1.put('Type', 'Fruit');
+         |m1.put('Colour', 'Green');
+         |return m1.get('Type');
+         |} }""".stripMargin
+        .replaceAll("\r\n", "\n")
+    )
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(
-        s"""public class Dummy { public void someMethod() {
-           |Map<String, String> m${CURSOR}1 = new Map<String, String>();
-           |m1.put('Type', 'Fruit');
-           |m1.put('Colour', 'Green');
-           |return m1.get('Type');
-           |} }""".stripMargin
-          .replaceAll("\r\n", "\n")
-      )
       val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
@@ -171,18 +176,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Function | rename var usage with dot chaining") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(
+      s"""public class Dummy { public void someMethod() {
+         |Map<String, String> m1 = new Map<String, String>();
+         |m${CURSOR}1.put('Type', 'Fruit');
+         |m1.put('Colour', 'Green');
+         |return m1.get('Type');
+         |} }""".stripMargin
+        .replaceAll("\r\n", "\n")
+    )
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(
-        s"""public class Dummy { public void someMethod() {
-           |Map<String, String> m1 = new Map<String, String>();
-           |m${CURSOR}1.put('Type', 'Fruit');
-           |m1.put('Colour', 'Green');
-           |return m1.get('Type');
-           |} }""".stripMargin
-          .replaceAll("\r\n", "\n")
-      )
       val renames = org.unmanaged.getRenameLocations(
         path,
         contentAndCursorPos._2.line,
@@ -200,18 +206,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Class | rename var declaration") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String my${CURSOR}Field;
+         |public void someMethod() {
+         |String fakeVar = 'myField';
+         |String test = myField;
+         |}
+         |public String methodA(){String test2 = myField;}
+         |private String methodPrivate(){return myField;}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-           |public String my${CURSOR}Field;
-           |public void someMethod() {
-           |String fakeVar = 'myField';
-           |String test = myField;
-           |}
-           |public String methodA(){String test2 = myField;}
-           |private String methodPrivate(){return myField;}
-           |}""".stripMargin.replaceAll("\r\n", "\n"))
 
       val renames =
         org.unmanaged.getRenameLocations(
@@ -231,18 +238,19 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Class | rename var usage") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |public void someMethod() {
+         |String fakeVar = 'myField';
+         |String test = my${CURSOR}Field;
+         |}
+         |public String methodA(){String test2 = myField;}
+         |private String methodPrivate(){return myField;}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-           |public String myField;
-           |public void someMethod() {
-           |String fakeVar = 'myField';
-           |String test = my${CURSOR}Field;
-           |}
-           |public String methodA(){String test2 = myField;}
-           |private String methodPrivate(){return myField;}
-           |}""".stripMargin.replaceAll("\r\n", "\n"))
 
       val renames =
         org.unmanaged.getRenameLocations(
@@ -262,15 +270,16 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Rename: Variable | Scope: Class | unused class var") {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String my${CURSOR}Field;
+         |public void someMethod() {
+         |String fakeVar = 'myField';
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-           |public String my${CURSOR}Field;
-           |public void someMethod() {
-           |String fakeVar = 'myField';
-           |}
-           |}""".stripMargin.replaceAll("\r\n", "\n"))
 
       val renames =
         org.unmanaged.getRenameLocations(
@@ -289,19 +298,20 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   test(
     "Rename: Variable | Scope: Class | function var shadows class var | rename function var declaration"
   ) {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |public void someMethod() {
+         |String myFi${CURSOR}eld = 'string value';
+         |String newVar = myField
+         |return myField
+         |}
+         |public String methodA(){String test2 = myField;}
+         |private String methodPrivate(){return myField;}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-           |public String myField;
-           |public void someMethod() {
-           |String myFi${CURSOR}eld = 'string value';
-           |String newVar = myField
-           |return myField
-           |}
-           |public String methodA(){String test2 = myField;}
-           |private String methodPrivate(){return myField;}
-           |}""".stripMargin.replaceAll("\r\n", "\n"))
 
       val renames =
         org.unmanaged.getRenameLocations(
@@ -322,19 +332,20 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   test(
     "Rename: Variable | Scope: Class | function var shadows class var | rename function var usage"
   ) {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |public void someMethod() {
+         |String myField = 'string value';
+         |String newVar = my${CURSOR}Field
+         |return myField
+         |}
+         |public String methodA(){String test2 = myField;}
+         |private String methodPrivate(){return myField;}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-           |public String myField;
-           |public void someMethod() {
-           |String myField = 'string value';
-           |String newVar = my${CURSOR}Field
-           |return myField
-           |}
-           |public String methodA(){String test2 = myField;}
-           |private String methodPrivate(){return myField;}
-           |}""".stripMargin.replaceAll("\r\n", "\n"))
 
       val renames =
         org.unmanaged.getRenameLocations(
@@ -355,19 +366,20 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   test(
     "Rename: Variable | Scope: Class | function var shadows class var | rename class var declaration"
   ) {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String my${CURSOR}Field;
+         |public void someMethod() {
+         |String myField = 'string value';
+         |String newVar = myField
+         |return myField
+         |}
+         |public String methodA(){String test2 = myField;}
+         |private String methodPrivate(){return myField;}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-           |public String my${CURSOR}Field;
-           |public void someMethod() {
-           |String myField = 'string value';
-           |String newVar = myField
-           |return myField
-           |}
-           |public String methodA(){String test2 = myField;}
-           |private String methodPrivate(){return myField;}
-           |}""".stripMargin.replaceAll("\r\n", "\n"))
 
       val renames =
         org.unmanaged.getRenameLocations(
@@ -388,19 +400,20 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   test(
     "Rename: Variable | Scope: Class | function var shadows class var | rename class var usage"
   ) {
-    FileSystemHelper.run(Map()) { root: PathLike =>
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |public void someMethod() {
+         |String myField = 'string value';
+         |String newVar = myField
+         |return myField
+         |}
+         |public String methodA(){String test2 = myField;}
+         |private String methodPrivate(){return my${CURSOR}Field;}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Dummy.cls")
-      val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-           |public String myField;
-           |public void someMethod() {
-           |String myField = 'string value';
-           |String newVar = myField
-           |return myField
-           |}
-           |public String methodA(){String test2 = myField;}
-           |private String methodPrivate(){return my${CURSOR}Field;}
-           |}""".stripMargin.replaceAll("\r\n", "\n"))
 
       val renames =
         org.unmanaged.getRenameLocations(
@@ -447,9 +460,6 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
               fooContentAndCursorPos._2.offset,
               Some(fooContentAndCursorPos._1)
             )
-            .filter(x =>
-              x.edits.length > 0
-            ) // filter out entries with no edits because this only happens in tests,
         }
         assert(renames.length == 2)
         assert(renames(0).path == "/Dummy.cls")
@@ -462,112 +472,88 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  // TODO: these need to be fixed
-//  test("Rename: Method | does not rename different methods with the same name") {
-//    val dummyContent =
-//      """public class Dummy {
-//        |public static String targetMethod() {
-//        |return 'A string value';
-//        |}
-//        |}""".stripMargin.replaceAll("\r\n", "\n")
-//    val dummy2Content =
-//      """public class Dummy2 {
-//        |public static String targetMethod() {
-//        |return 'A string value';
-//        |}
-//        |}""".stripMargin.replaceAll("\r\n", "\n")
-//    val fooContentAndCursorPos = withCursorMultiLine(s"""public class Foo {
-//         |private void privateMethod(){
-//         |Dummy.target${CURSOR}Method();
-//         |Dummy2.targetMethod();
-//         |}
-//         |}""".stripMargin.replaceAll("\r\n", "\n"))
-//
-//    FileSystemHelper.run(
-//      Map(
-//        "Dummy.cls"  -> dummyContent,
-//        "Foo.cls"    -> fooContentAndCursorPos._1,
-//        "Dummy2.cls" -> dummy2Content
-//      )
-//    ) { root: PathLike =>
-//      val org  = createOrg(root)
-//      val path = root.join("Foo.cls")
-//
-//      val renames = {
-//        org.unmanaged
-//          .getRenameLocations(
-//            path,
-//            fooContentAndCursorPos._2.line,
-//            fooContentAndCursorPos._2.offset,
-//            Some(fooContentAndCursorPos._1)
-//          )
-//          .filter(x =>
-//            x.edits.length > 0
-//          ) // filter out entries with no edits because this only happens in tests,
-//      }
-//      assert(renames(0).path == "/Foo.cls")
-//      assert(renames(0).edits.length == 1)
-//      assert(renames(0).edits(0) == Location(4, 7, 4, 19))
-//      assert(renames(1).path == "/Foo.cls")
-//      assert(renames(1).edits.length == 1)
-//      assert(renames(1).edits(0) == Location(4, 7, 4, 19))
-//      assert(renames(2).path == "/Dummy.cls")
-//      assert(renames(2).edits.length == 2)
-//      assert(renames(2).edits(0) == Location(3, 6, 3, 18))
-//
-//    }
-//  }
+  test("Rename: Method | does not rename different methods with the same name") {
+    val dummyContent =
+      """public class Dummy {
+        |public static String targetMethod() {
+        |return 'A string value';
+        |}
+        |}""".stripMargin.replaceAll("\r\n", "\n")
+    val dummy2Content =
+      """public class Dummy2 {
+        |public static String targetMethod() {
+        |return 'A string value';
+        |}
+        |}""".stripMargin.replaceAll("\r\n", "\n")
+    val fooContentAndCursorPos = withCursorMultiLine(s"""public class Foo {
+         |private void privateMethod(){
+         |Dummy.target${CURSOR}Method();
+         |Dummy2.targetMethod();
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
 
-//  private def orgIssuesFor(org: OPM.OrgImpl, path: PathLike): String = {
-//    val messages = org.issueManager.issuesForFileInternal(path).map(_.asString()).mkString("\n")
-//    if (messages.nonEmpty) messages + "\n" else ""
-//  }
-//
-//  test("Rename: Method | From: Declaration") {
-//    ParsedCache.clear()
-//    withManualFlush {
-//      val dummyContentAndCursorPos =
-//        withCursorMultiLine(s"""public class Dummy {
-//          |public static String target${CURSOR}Method() {
-//          |return 'A string value';
-//          |}
-//          |
-//          |private void privateMethod(){
-//          |targetMethod();
-//          |}
-//          |}""".stripMargin.replaceAll("\r\n", "\n"))
-//
-//      FileSystemHelper.run(Map("Dummy.cls" -> dummyContentAndCursorPos._1)) { root: PathLike =>
-//        val org = createOrg(root)
-//        assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
-//        val dummyTypeId =
-//          org.unmanaged.getTypeOfPathInternal(root.join("Dummy.cls")).get.asTypeIdentifier
-////        assert(org.flush())
-////        assert(org.unmanaged.getDependencyHolders(dummyTypeId, apexOnly = false).isEmpty)
-//        assert(org.issues.isEmpty)
-//
-//        val path = root.join("Dummy.cls")
-//
-//        val renames = {
-//          org.unmanaged
-//            .getRenameLocations(
-//              path,
-//              dummyContentAndCursorPos._2.line,
-//              dummyContentAndCursorPos._2.offset,
-//              Some(dummyContentAndCursorPos._1)
-//            )
-//            .filter(x =>
-//              x.edits.length > 0
-//            ) // filter out entries with no edits because this only happens in tests,
-//        }
-//        assert(renames.length == 1)
-//        assert(renames(0).path == "/Dummy.cls")
-//        assert(renames(0).edits.length == 2)
-//        assert(renames(0).edits(0) == Location(2, 21, 2, 33))
-//        assert(renames(0).edits(1) == Location(7, 0, 7, 12))
-//      }
-//    }
-//  }
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls"  -> dummyContent,
+        "Foo.cls"    -> fooContentAndCursorPos._1,
+        "Dummy2.cls" -> dummy2Content
+      )
+    ) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Foo.cls")
+
+      val renames = {
+        org.unmanaged
+          .getRenameLocations(
+            path,
+            fooContentAndCursorPos._2.line,
+            fooContentAndCursorPos._2.offset,
+            Some(fooContentAndCursorPos._1)
+          )
+      }
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Foo.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(3, 6, 3, 18))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 21, 2, 33))
+
+    }
+  }
+
+  test("Rename: Method | From: Declaration") {
+    val dummyContentAndCursorPos =
+      withCursorMultiLine(s"""public class Dummy {
+          |public static String target${CURSOR}Method() {
+          |return 'A string value';
+          |}
+          |
+          |private void privateMethod(){
+          |targetMethod();
+          |}
+          |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> dummyContentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames = {
+        org.unmanaged
+          .getRenameLocations(
+            path,
+            dummyContentAndCursorPos._2.line,
+            dummyContentAndCursorPos._2.offset,
+            Some(dummyContentAndCursorPos._1)
+          )
+      }
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(2, 21, 2, 33))
+      assert(renames(0).edits(1) == Location(7, 0, 7, 12))
+    }
+  }
 
   test("Rename: Method | From: Call-out Statement | Statement: ExpressionStatement") {
     val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
