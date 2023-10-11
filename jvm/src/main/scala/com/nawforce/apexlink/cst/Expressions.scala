@@ -616,11 +616,14 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
   /** Given a method declaration, if this method callout belongs to that method declaration then returns the location
     * if the callout. If the callout does not match to the method declaration, returns None.
     */
-  def getTargetLocationForMethodCallOut(md: MethodDeclaration): Option[Location] = {
-    cachedMethod.getOrElse(None) match {
-      case mdFromCallout: ApexMethodDeclaration
-          if mdFromCallout.idLocation == md.asInstanceOf[ApexMethodDeclaration].idLocation =>
-        Some(target.location.location)
+  def getTargetLocationForMethodCallOut(md: ApexMethodDeclaration): Option[Location] = {
+    cachedMethod match {
+      case Some(mdFromCallout: ApexMethodDeclaration) =>
+        if (mdFromCallout.idPathLocation == md.idPathLocation) {
+          Some(target.location.location)
+        } else {
+          None
+        }
       case _ => None
     }
   }
