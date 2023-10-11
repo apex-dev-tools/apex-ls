@@ -448,6 +448,54 @@ trait RenameProvider extends SourceOps {
           case _ =>
         }
 
+      case arrayExpression: ArrayExpression =>
+        methodCallLocations.addAll(getMethodLocationsFromExpression(arrayExpression.expression, md))
+        methodCallLocations.addAll(
+          getMethodLocationsFromExpression(arrayExpression.arrayExpression, md)
+        )
+
+      case castExpression: CastExpression =>
+        methodCallLocations.addAll(getMethodLocationsFromExpression(castExpression.expression, md))
+
+      case newExpression: NewExpression =>
+        newExpression.creator.creatorRest match {
+          case Some(cr: SetOrListCreatorRest) =>
+            cr.parts.foreach(exp =>
+              methodCallLocations.addAll(getMethodLocationsFromExpression(exp, md))
+            )
+          case Some(cr: ArrayCreatorRest) =>
+            cr.indexExpression match {
+              case Some(exp: Expression) =>
+                methodCallLocations.addAll(getMethodLocationsFromExpression(exp, md))
+              case _ =>
+            }
+            cr.arrayInitializer match {
+              case Some(initialiser) =>
+                initialiser.expressions.foreach(exp =>
+                  methodCallLocations.addAll(getMethodLocationsFromExpression(exp, md))
+                )
+              case _ =>
+            }
+          case Some(cr: MapCreatorRest) =>
+            cr.pairs.foreach(pair => {
+              methodCallLocations.addAll(getMethodLocationsFromExpression(pair.from, md))
+              methodCallLocations.addAll(getMethodLocationsFromExpression(pair.to, md))
+            })
+          case Some(cr: ClassCreatorRest) =>
+            cr.arguments.foreach(exp =>
+              methodCallLocations.addAll(getMethodLocationsFromExpression(exp, md))
+            )
+          case _ =>
+        }
+
+      case negationExpression: NegationExpression =>
+        methodCallLocations.addAll(
+          getMethodLocationsFromExpression(negationExpression.expression, md)
+        )
+
+      case subExpression: SubExpression =>
+        methodCallLocations.addAll(getMethodLocationsFromExpression(subExpression.expression, md))
+
       case _ =>
     }
     methodCallLocations
