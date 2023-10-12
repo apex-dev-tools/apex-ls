@@ -6,7 +6,7 @@ package com.nawforce.apexlink.org
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.Rename
-import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration}
+import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, FullDeclaration, SummaryMethod}
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Location, PathLike}
 
@@ -139,7 +139,22 @@ trait RenameProvider extends SourceOps {
           case methodCall: MethodCallWithId =>
             methodCall.cachedMethod match {
               case Some(amd: ApexMethodDeclaration) => Some(amd)
-              case _                                => None
+              case Some(sm: SummaryMethod) =>
+                reValidate(Set(sm.thisTypeId) ++ sm.getDependencyHolders.collect {
+                  case dh if dh.thisTypeIdOpt.isDefined => dh.thisTypeIdOpt.get
+                })
+                loadTypeFromModule(sm.location.path) match {
+                  case Some(reloadedClassDec: ClassDeclaration) =>
+                    reloadedClassDec.bodyDeclarations
+                      .find {
+                        case amd: ApexMethodDeclaration =>
+                          amd.idPathLocation == sm.idPathLocation
+                        case _ => false
+                      }
+                      .map(cbd => cbd.asInstanceOf[ApexMethodDeclaration])
+                  case _ => None
+                }
+              case _ => None
             }
           case _ => None
         }
