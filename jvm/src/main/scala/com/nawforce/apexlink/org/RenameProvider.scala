@@ -509,6 +509,21 @@ trait RenameProvider extends SourceOps {
       case subExpression: SubExpression =>
         methodCallLocations.addAll(getMethodLocationsFromExpression(subExpression.expression, md))
 
+      case prefixExpression: PrefixExpression =>
+        methodCallLocations.addAll(
+          getMethodLocationsFromExpression(prefixExpression.expression, md)
+        )
+
+      case postfixExpression: PostfixExpression =>
+        methodCallLocations.addAll(
+          getMethodLocationsFromExpression(postfixExpression.expression, md)
+        )
+
+      case instanceOfExpression: InstanceOfExpression =>
+        methodCallLocations.addAll(
+          getMethodLocationsFromExpression(instanceOfExpression.expression, md)
+        )
+
       case _ =>
     }
     methodCallLocations
