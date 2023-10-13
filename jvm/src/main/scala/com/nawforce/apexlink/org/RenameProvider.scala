@@ -399,6 +399,18 @@ trait RenameProvider extends SourceOps {
             methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
           case _ =>
         }
+
+      case switchStatement: SwitchStatement =>
+        methodRenameLocations.addAll(
+          getMethodLocationsFromExpression(switchStatement.expression, cbd)
+        )
+
+        switchStatement.whenControls.foreach(whenControl =>
+          methodRenameLocations.addAll(
+            getLocationsFromStatements(whenControl.block.statements(), cbd)
+          )
+        )
+
       case _ =>
     }
 
