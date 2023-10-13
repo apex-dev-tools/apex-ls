@@ -138,8 +138,33 @@ trait RenameProvider extends SourceOps {
         vr.cst match {
           case methodCall: MethodCallWithId =>
             methodCall.cachedMethod match {
-              case Some(amd: ApexMethodDeclaration) => Some(amd)
-              case _                                => None
+              case Some(amd: ApexMethodDeclaration) =>
+                refresh(amd.location.path, highPriority = true)
+                loadTypeFromModule(amd.location.path) match {
+                  case Some(reloadedClassDec: ClassDeclaration) =>
+                    reloadedClassDec.bodyDeclarations
+                      .find {
+                        case reloadedMethodDec: ApexMethodDeclaration =>
+                          reloadedMethodDec.idPathLocation == amd.idPathLocation
+                        case _ => false
+                      }
+                  case _ => None
+                }
+              case Some(sm: SummaryMethod) =>
+                reValidate(Set(sm.thisTypeId) ++ sm.getDependencyHolders.collect {
+                  case dh if dh.thisTypeIdOpt.isDefined => dh.thisTypeIdOpt.get
+                })
+                loadTypeFromModule(sm.location.path) match {
+                  case Some(reloadedClassDec: ClassDeclaration) =>
+                    reloadedClassDec.bodyDeclarations
+                      .find {
+                        case amd: ApexMethodDeclaration =>
+                          amd.idPathLocation == sm.idPathLocation
+                        case _ => false
+                      }
+                  case _ => None
+                }
+              case _ => None
             }
           case _ => None
         }
