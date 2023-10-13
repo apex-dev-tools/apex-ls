@@ -21,6 +21,7 @@ import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.apexparser.ApexParserBaseVisitor
 import com.nawforce.pkgforce.names.{DotName, EncodedName, Name, Names, TypeName}
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.compat.immutable.ArraySeq
@@ -85,7 +86,9 @@ final case class TypeReferencePrimary(typeName: TypeName) extends Primary {
 }
 
 final case class IdPrimary(id: Id) extends Primary {
+  var cachedFieldDeclaration: Option[FieldDeclaration] = None
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+    cachedFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
     isVarReference(context)
       .getOrElse(
         isFieldReference(input, context)
@@ -95,6 +98,15 @@ final case class IdPrimary(id: Id) extends Primary {
             ExprContext.empty
           }))
       )
+  }
+
+  def getLocationForFieldDeclaration(fd: ApexFieldDeclaration): Option[Location] = {
+    cachedFieldDeclaration match {
+      case Some(fdFromCallout: ApexFieldDeclaration) =>
+        if (fdFromCallout.idPathLocation == fd.idPathLocation) Some(id.location.location)
+        else None
+      case _ => None
+    }
   }
 
   private def isVarReference(context: ExpressionVerifyContext): Option[ExprContext] = {
