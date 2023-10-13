@@ -21,14 +21,14 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
-import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{FieldDeclaration, MethodDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.other.{AnyDeclaration, RecordSetDeclaration}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
-import com.nawforce.pkgforce.path.{Locatable, PathLocation}
+import com.nawforce.pkgforce.path.{Locatable, Location, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.immutable.ArraySeq
@@ -555,6 +555,8 @@ abstract class MethodCall extends Expression
 
 final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) extends MethodCall {
 
+  var cachedMethod: Option[MethodDeclaration] = None
+
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     verify(location, input.typeDeclaration, input.isStatic, input, context)
   }
@@ -572,6 +574,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     val argTypes = args.map(arg => if (arg.isDefined) arg.typeName else TypeNames.Any)
     callee.findMethod(target.name, argTypes, staticContext, context) match {
       case Right(method) =>
+        cachedMethod = Some(method)
         context.addDependency(method)
         method match {
           case ref: Referenceable => ref.addLocation(location)
@@ -609,6 +612,22 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
         ExprContext.empty
     }
   }
+
+  /** Given a method declaration, if this method callout belongs to that method declaration then returns the location
+    * if the callout. If the callout does not match to the method declaration, returns None.
+    */
+  def getTargetLocationForMethodCallOut(md: ApexMethodDeclaration): Option[Location] = {
+    cachedMethod match {
+      case Some(mdFromCallout: ApexMethodDeclaration) =>
+        if (mdFromCallout.idPathLocation == md.idPathLocation) {
+          Some(target.location.location)
+        } else {
+          None
+        }
+      case _ => None
+    }
+  }
+
 }
 
 final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression])
