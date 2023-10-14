@@ -15,6 +15,8 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.nio.file.{Path => JVMPath}
+import java.util
+import scala.jdk.CollectionConverters._
 
 class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
 
@@ -135,10 +137,61 @@ class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
     }
   }
 
+  test("Provider not configured with bad id") {
+    withExternalAnalysis(LoadAndRefreshAnalysis, Map("BAD" -> List(("param", List("a", "b"))))) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        createHappyOrg(root)
+        assert(MockAnalysisProvider.config == Nil)
+        assert(MockAnalysisProvider.requests.length == 1)
+      }
+    }
+  }
+
+  test("Provider not configured with empty list") {
+    withExternalAnalysis(LoadAndRefreshAnalysis, Map("MOCK" -> List())) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        createHappyOrg(root)
+        assert(MockAnalysisProvider.config == Nil)
+        assert(MockAnalysisProvider.requests.length == 1)
+      }
+    }
+  }
+
+  test("Provider configured") {
+    withExternalAnalysis(LoadAndRefreshAnalysis, Map("MOCK" -> List(("param", List("a", "b"))))) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        createHappyOrg(root)
+        assert(MockAnalysisProvider.config == List(("param", List("a", "b"))))
+        assert(MockAnalysisProvider.requests.length == 1)
+      }
+    }
+  }
+
+  test("Provider configured with multiple params") {
+    withExternalAnalysis(
+      LoadAndRefreshAnalysis,
+      Map("MOCK" -> List(("param", List("a", "b")), ("param", List("c", "d"))))
+    ) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        createHappyOrg(root)
+        assert(
+          MockAnalysisProvider.config == List(("param", List("c", "d")), ("param", List("a", "b")))
+        )
+        assert(MockAnalysisProvider.requests.length == 1)
+      }
+    }
+  }
+
 }
 
 class MockAnalysisProvider extends AnalysisProvider {
   override def getProviderId: String = "MOCK"
+
+  override def isConfigured(workspacePath: JVMPath): java.lang.Boolean = true
+
+  override def setConfiguration(name: String, values: util.List[String]): Unit = {
+    MockAnalysisProvider.config = (name, values.asScala.toList) :: MockAnalysisProvider.config
+  }
 
   override def collectIssues(workspacePath: JVMPath, files: Array[JVMPath]): Array[Issue] = {
     MockAnalysisProvider.requests = (workspacePath, files) :: MockAnalysisProvider.requests
@@ -147,10 +200,12 @@ class MockAnalysisProvider extends AnalysisProvider {
 }
 
 object MockAnalysisProvider {
+  var config: List[(String, List[String])]      = Nil
   var issues: Array[Issue]                      = Array()
   var requests: List[(JVMPath, Array[JVMPath])] = Nil
 
   def reset(): Unit = {
+    config = Nil
     issues = Array()
     requests = Nil
   }

@@ -14,7 +14,13 @@
 package com.nawforce.apexlink
 
 import com.nawforce.apexlink.TestHelper.{CURSOR, locToString}
-import com.nawforce.apexlink.api.{AnalysisMode, Org, ServerOps, TypeSummary}
+import com.nawforce.apexlink.api.{
+  AnalysisMode,
+  ExternalAnalysisConfiguration,
+  Org,
+  ServerOps,
+  TypeSummary
+}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.rpc.{LocationLink, TargetLocation}
@@ -86,12 +92,15 @@ trait TestHelper {
     }
   }
 
-  def withExternalAnalysis[T](mode: AnalysisMode)(op: => T): T = {
-    val current = ServerOps.setExternalAnalysisMode(mode)
+  def withExternalAnalysis[T](
+    mode: AnalysisMode,
+    params: Map[String, List[(String, List[String])]] = Map()
+  )(op: => T): T = {
+    val current = ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode, params))
     try {
       op
     } finally {
-      ServerOps.setExternalAnalysisMode(current)
+      ServerOps.setExternalAnalysis(current)
     }
   }
 

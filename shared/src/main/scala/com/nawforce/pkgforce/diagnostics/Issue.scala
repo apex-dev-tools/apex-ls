@@ -28,10 +28,10 @@
 
 package com.nawforce.pkgforce.diagnostics
 
-import io.github.apexdevtools.api.{IssueLocation, Rule}
 import com.nawforce.pkgforce.diagnostics.DiagnosticCategory.isErrorType
-import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
+import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.runtime.platform.Path
+import io.github.apexdevtools.api.{IssueLocation, Rule}
 import upickle.default.{macroRW, ReadWriter => RW}
 
 import scala.collection.compat.immutable.ArraySeq
@@ -46,7 +46,7 @@ final case class DiagnosticRule(category: DiagnosticCategory) extends Rule {
 final case class Issue(
   path: PathLike,
   diagnostic: Diagnostic,
-  provider: String = io.github.apexdevtools.api.Issue.APEX_LS_PROVIDER
+  provider: String = Issue.APEX_LS_PROVIDER
 ) extends io.github.apexdevtools.api.Issue {
 
   override def filePath(): String = path.toString
@@ -61,6 +61,7 @@ final case class Issue(
 }
 
 object Issue {
+  val APEX_LS_PROVIDER            = "apex-ls"
   val emptyArray: ArraySeq[Issue] = ArraySeq.empty
 
   implicit val pathLikeRW: RW[PathLike] =
