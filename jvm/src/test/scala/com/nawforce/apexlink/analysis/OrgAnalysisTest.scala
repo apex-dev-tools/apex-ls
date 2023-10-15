@@ -182,12 +182,27 @@ class OrgAnalysisTest extends AnyFunSuite with BeforeAndAfter with TestHelper {
     }
   }
 
+  test("Provider not properly configured") {
+    MockAnalysisProvider.configured = false
+    withExternalAnalysis(LoadAndRefreshAnalysis) {
+      FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {}")) { root: PathLike =>
+        val org = createHappyOrg(root)
+        assert(MockAnalysisProvider.requests.isEmpty)
+
+        val dummyPath = root.join("Dummy.cls")
+        org.unmanaged.refresh(dummyPath, highPriority = true)
+        assert(MockAnalysisProvider.requests.isEmpty)
+      }
+    }
+  }
+
 }
 
 class MockAnalysisProvider extends AnalysisProvider {
   override def getProviderId: String = "MOCK"
 
-  override def isConfigured(workspacePath: JVMPath): java.lang.Boolean = true
+  override def isConfigured(workspacePath: JVMPath): java.lang.Boolean =
+    MockAnalysisProvider.configured
 
   override def setConfiguration(name: String, values: util.List[String]): Unit = {
     MockAnalysisProvider.config = (name, values.asScala.toList) :: MockAnalysisProvider.config
@@ -200,11 +215,13 @@ class MockAnalysisProvider extends AnalysisProvider {
 }
 
 object MockAnalysisProvider {
+  var configured: Boolean                       = true
   var config: List[(String, List[String])]      = Nil
   var issues: Array[Issue]                      = Array()
   var requests: List[(JVMPath, Array[JVMPath])] = Nil
 
   def reset(): Unit = {
+    configured = true
     config = Nil
     issues = Array()
     requests = Nil

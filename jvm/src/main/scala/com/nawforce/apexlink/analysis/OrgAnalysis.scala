@@ -26,6 +26,7 @@ class OrgAnalysis(org: OrgImpl) {
     .iterator()
     .asScala
     .flatMap(provider => configureProvider(provider))
+    .toList
 
   /** Apply custom parameters to a provider.
     * @param provider apply to this provider
@@ -57,6 +58,10 @@ class OrgAnalysis(org: OrgImpl) {
     if (ServerOps.getExternalAnalysis.mode != LoadAndRefreshAnalysis)
       return
 
+    val workspaceProviders = analysisProviders.filter(_.isConfigured(Path(org.path).native))
+    if (workspaceProviders.isEmpty)
+      return
+
     // Collect Apex class files over all modules
     val files  = mutable.Set[Path]()
     var module = org.packages.headOption.flatMap(_.firstModule)
@@ -68,7 +73,7 @@ class OrgAnalysis(org: OrgImpl) {
         .foreach(files.add)
       module = module.get.nextModule
     }
-    runAnalysis(files.toSet)
+    runAnalysis(workspaceProviders, files.toSet)
   }
 
   /** Invoke the providers after some files have been changed.
@@ -78,10 +83,14 @@ class OrgAnalysis(org: OrgImpl) {
     if (ServerOps.getExternalAnalysis.mode == NoAnalysis)
       return
 
-    runAnalysis(paths)
+    val workspaceProviders = analysisProviders.filter(_.isConfigured(Path(org.path).native))
+    if (workspaceProviders.isEmpty)
+      return
+
+    runAnalysis(workspaceProviders, paths)
   }
 
-  private def runAnalysis(files: Set[Path]): Unit = {
+  private def runAnalysis(providers: List[AnalysisProvider], files: Set[Path]): Unit = {
     val issueManager = org.issues
     val syntaxGroups = files.groupBy(file => issueManager.hasSyntaxIssues(file))
     // Clear provider issues for files that already have syntax errors to reduce noise
@@ -89,7 +98,7 @@ class OrgAnalysis(org: OrgImpl) {
       .getOrElse(true, Set())
       .foreach(path => org.issues.clearProviderIssues(path))
 
-    analysisProviders
+    providers
       .foreach(provider => {
         val providerId = provider.getProviderId
 
