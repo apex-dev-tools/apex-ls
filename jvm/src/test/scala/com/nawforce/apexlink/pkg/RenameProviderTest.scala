@@ -29,9 +29,9 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames.length == 1)
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 3)
-      assert(renames(0).edits(0) == Location(1, 51, 1, 55))
-      assert(renames(0).edits(1) == Location(3, 7, 3, 11))
-      assert(renames(0).edits(2) == Location(2, 17, 2, 21))
+      assert(renames(0).edits(0) == Location(3, 7, 3, 11))
+      assert(renames(0).edits(1) == Location(2, 17, 2, 21))
+      assert(renames(0).edits(2) == Location(1, 51, 1, 55))
     }
   }
 
@@ -56,8 +56,8 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames.length == 1)
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 3)
-      assert(renames(0).edits(0) == Location(2, 17, 2, 21))
-      assert(renames(0).edits(1) == Location(3, 7, 3, 11))
+      assert(renames(0).edits(0) == Location(3, 7, 3, 11))
+      assert(renames(0).edits(1) == Location(2, 17, 2, 21))
       assert(renames(0).edits(2) == Location(1, 51, 1, 55))
 
     }
@@ -85,9 +85,9 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames.length == 1)
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 3)
-      assert(renames(0).edits(0) == Location(2, 7, 2, 11))
-      assert(renames(0).edits(1) == Location(3, 17, 3, 21))
-      assert(renames(0).edits(2) == Location(4, 7, 4, 11))
+      assert(renames(0).edits(0) == Location(3, 17, 3, 21))
+      assert(renames(0).edits(1) == Location(4, 7, 4, 11))
+      assert(renames(0).edits(2) == Location(2, 7, 2, 11))
     }
   }
 
@@ -114,8 +114,8 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 3)
       assert(renames(0).edits(0) == Location(3, 17, 3, 21))
-      assert(renames(0).edits(1) == Location(2, 7, 2, 11))
-      assert(renames(0).edits(2) == Location(4, 7, 4, 11))
+      assert(renames(0).edits(1) == Location(4, 7, 4, 11))
+      assert(renames(0).edits(2) == Location(2, 7, 2, 11))
     }
   }
 
@@ -168,10 +168,10 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames.length == 1)
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 4)
-      assert(renames(0).edits(0) == Location(2, 20, 2, 22))
-      assert(renames(0).edits(1) == Location(5, 7, 5, 9))
-      assert(renames(0).edits(2) == Location(3, 0, 3, 2))
-      assert(renames(0).edits(3) == Location(4, 0, 4, 2))
+      assert(renames(0).edits(0) == Location(3, 0, 3, 2))
+      assert(renames(0).edits(1) == Location(4, 0, 4, 2))
+      assert(renames(0).edits(2) == Location(5, 7, 5, 9))
+      assert(renames(0).edits(3) == Location(2, 20, 2, 22))
     }
   }
 
@@ -199,17 +199,17 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 4)
       assert(renames(0).edits(0) == Location(3, 0, 3, 2))
-      assert(renames(0).edits(1) == Location(5, 7, 5, 9))
-      assert(renames(0).edits(2) == Location(2, 20, 2, 22))
-      assert(renames(0).edits(3) == Location(4, 0, 4, 2))
+      assert(renames(0).edits(1) == Location(4, 0, 4, 2))
+      assert(renames(0).edits(2) == Location(5, 7, 5, 9))
+      assert(renames(0).edits(3) == Location(2, 20, 2, 22))
     }
   }
 
   test("Rename: Variable | Scope: Class | rename var declaration") {
     val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-         |public String my${CURSOR}Field;
+         |String my${CURSOR}Field;
          |public void someMethod() {
-         |String fakeVar = 'myField';
+         |String fakeVar = myField;
          |String test = myField;
          |}
          |public String methodA(){String test2 = myField;}
@@ -227,21 +227,25 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 4)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 4)
-      assert(renames(0).edits(0) == Location(2, 14, 2, 21))
-      assert(renames(0).edits(1) == Location(5, 14, 5, 21))
-      assert(renames(0).edits(2) == Location(7, 39, 7, 46))
-      assert(renames(0).edits(3) == Location(8, 38, 8, 45))
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(5, 14, 5, 21))
+      assert(renames(0).edits(1) == Location(4, 17, 4, 24))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(7, 39, 7, 46))
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(8, 38, 8, 45))
+      assert(renames(3).edits.length == 1)
+      assert(renames(3).edits(0) == Location(2, 7, 2, 14))
     }
   }
 
   test("Rename: Variable | Scope: Class | rename var usage") {
     val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
-         |public String myField;
+         |String myField;
          |public void someMethod() {
-         |String fakeVar = 'myField';
+         |String fakeVar = myField;
          |String test = my${CURSOR}Field;
          |}
          |public String methodA(){String test2 = myField;}
@@ -259,13 +263,17 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 4)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 4)
+      assert(renames(0).edits.length == 2)
       assert(renames(0).edits(0) == Location(5, 14, 5, 21))
-      assert(renames(0).edits(1) == Location(2, 14, 2, 21))
-      assert(renames(0).edits(2) == Location(7, 39, 7, 46))
-      assert(renames(0).edits(3) == Location(8, 38, 8, 45))
+      assert(renames(0).edits(1) == Location(4, 17, 4, 24))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(7, 39, 7, 46))
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(8, 38, 8, 45))
+      assert(renames(3).edits.length == 1)
+      assert(renames(3).edits(0) == Location(2, 7, 2, 14))
     }
   }
 
@@ -302,8 +310,8 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
          |public String myField;
          |public void someMethod() {
          |String myFi${CURSOR}eld = 'string value';
-         |String newVar = myField
-         |return myField
+         |String newVar = myField;
+         |return myField;
          |}
          |public String methodA(){String test2 = myField;}
          |private String methodPrivate(){return myField;}
@@ -323,8 +331,8 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames.length == 1)
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 3)
-      assert(renames(0).edits(0) == Location(4, 7, 4, 14))
-      assert(renames(0).edits(1) == Location(5, 16, 5, 23))
+      assert(renames(0).edits(0) == Location(5, 16, 5, 23))
+      assert(renames(0).edits(1) == Location(4, 7, 4, 14))
       assert(renames(0).edits(2) == Location(6, 7, 6, 14))
     }
   }
@@ -336,8 +344,8 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
          |public String myField;
          |public void someMethod() {
          |String myField = 'string value';
-         |String newVar = my${CURSOR}Field
-         |return myField
+         |String newVar = my${CURSOR}Field;
+         |return myField;
          |}
          |public String methodA(){String test2 = myField;}
          |private String methodPrivate(){return myField;}
@@ -370,8 +378,8 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
          |public String my${CURSOR}Field;
          |public void someMethod() {
          |String myField = 'string value';
-         |String newVar = myField
-         |return myField
+         |String newVar = myField;
+         |return myField;
          |}
          |public String methodA(){String test2 = myField;}
          |private String methodPrivate(){return myField;}
@@ -388,12 +396,14 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 3)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 3)
-      assert(renames(0).edits(0) == Location(2, 14, 2, 21))
-      assert(renames(0).edits(1) == Location(8, 39, 8, 46))
-      assert(renames(0).edits(2) == Location(9, 38, 9, 45))
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(8, 39, 8, 46))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(9, 38, 9, 45))
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(2, 14, 2, 21))
     }
   }
 
@@ -404,8 +414,8 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
          |public String myField;
          |public void someMethod() {
          |String myField = 'string value';
-         |String newVar = myField
-         |return myField
+         |String newVar = myField;
+         |return myField;
          |}
          |public String methodA(){String test2 = myField;}
          |private String methodPrivate(){return my${CURSOR}Field;}
@@ -422,12 +432,14 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
           contentAndCursorPos._2.offset,
           Some(contentAndCursorPos._1)
         )
-      assert(renames.length == 1)
+      assert(renames.length == 3)
       assert(renames(0).path == "/Dummy.cls")
-      assert(renames(0).edits.length == 3)
-      assert(renames(0).edits(0) == Location(9, 38, 9, 45))
-      assert(renames(0).edits(1) == Location(8, 39, 8, 46))
-      assert(renames(0).edits(2) == Location(2, 14, 2, 21))
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(8, 39, 8, 46))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(9, 38, 9, 45))
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(2, 14, 2, 21))
     }
   }
 
