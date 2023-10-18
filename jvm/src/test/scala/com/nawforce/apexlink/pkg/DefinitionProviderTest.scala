@@ -499,4 +499,50 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
       )
     }
   }
+
+  test("for loop type") {
+    val contentAndCursorPos =
+      withCursor(s"public class Foo { {List<Foo> a; for(Fo${CURSOR}o b: a) {} } }")
+    FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+          .map(LocationLinkString(root, contentAndCursorPos._1, _))
+          sameElements
+            Array(LocationLinkString("Foo", path"/Foo.cls", contentAndCursorPos._1, "Foo"))
+      )
+    }
+  }
+
+  test("for loop variable") {
+    val contentAndCursorPos =
+      withCursor(s"public class Foo { {List<Foo> a; for(Foo b$CURSOR: a) {} } }")
+    FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+          .map(LocationLinkString(root, contentAndCursorPos._1, _))
+          sameElements
+            Array(LocationLinkString("b", path"/Foo.cls", contentAndCursorPos._1, "Foo"))
+      )
+    }
+  }
+
+  test("for loop list") {
+    val contentAndCursorPos =
+      withCursor(s"public class Foo { {List<Foo> aList; for(Foo b: a${CURSOR}List) {} } }")
+    FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assert(
+        org.unmanaged
+          .getDefinition(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+          .map(LocationLinkString(root, contentAndCursorPos._1, _))
+          sameElements
+            Array(LocationLinkString("aList", path"/Foo.cls", "aList", "aList"))
+      )
+    }
+  }
+
 }
