@@ -651,7 +651,16 @@ trait RenameProvider extends SourceOps {
   ): Option[Location] = {
     primaryExpression.primary match {
       case id: IdPrimary =>
-        id.getLocationForFieldDeclaration(fd)
+        if (id.cachedClassFieldDeclaration.isEmpty) {
+          val validatedPrimaryExpression = validateExpression(primaryExpression)
+          validatedPrimaryExpression match {
+            case Some(primaryExpression: PrimaryExpression) =>
+              primaryExpression.primary.asInstanceOf[IdPrimary].getLocationForFieldDeclaration(fd)
+            case _ => None
+          }
+        } else {
+          id.getLocationForFieldDeclaration(fd)
+        }
       case _ => None
     }
   }
