@@ -8,7 +8,7 @@ import com.nawforce.apexlink.cst.stmts.SwitchStatement
 import com.nawforce.apexlink.rpc.Rename
 import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, SummaryMethod}
 import com.nawforce.apexlink.types.core.DependencyHolder
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
 
 import scala.collection.mutable
 
@@ -24,21 +24,29 @@ trait RenameProvider extends SourceOps {
 
     val sourceAndType =
       loadFullSourceAndType(path, None).getOrElse(return Array.empty)
+    val validation = locateFromValidation(sourceAndType._2, line, offset)
 
-    val classBodyDeclaration = getClassBodyDeclaration(sourceAndType._2, line, offset)
+    val declaration = getClassBodyDeclaration(sourceAndType._2, validation, line, offset)
 
-    classBodyDeclaration match {
-      case Some(cbd) => getSymbolLocations(cbd)
-      case _         => Array.empty
+    declaration match {
+      case Some(cbd: ClassBodyDeclaration)  => getSymbolLocations(cbd)
+      case Some(varDec: VariableDeclarator) => getLocalVarSymbolLocations(varDec.id, validation)
+      case Some(id: Id)                     => getLocalVarSymbolLocations(id, validation)
+      case _                                => Array.empty
     }
   }
 
+  /** Retrieves the declaration for the symbol that the rename event was fired on.
+    *
+    * If the declaration is at the class level, then the Locatable returned will be a ClassBodyDeclaration.
+    * Otherwise, expect either an Id or a VariableDeclarator object to be returned for local declarations.
+    */
   private def getClassBodyDeclaration(
     classDeclaration: ApexFullDeclaration,
+    validation: (Map[Location, ValidationResult], Option[Location]),
     requestLine: Int,
     requestOffset: Int
-  ): Option[ClassBodyDeclaration] = {
-    val validation = locateFromValidation(classDeclaration, requestLine, requestOffset)
+  ): Option[Locatable] = {
     validation._2 match {
       case Some(location) =>
         val vr = validation._1(location)
@@ -77,13 +85,20 @@ trait RenameProvider extends SourceOps {
           case primaryExpression: PrimaryExpression =>
             primaryExpression.primary match {
               case idPrimary: IdPrimary =>
-                idPrimary.cachedFieldDeclaration match {
-                  case Some(afd: ApexFieldDeclaration) => Some(afd)
-                  case _                               => None
+                idPrimary.cachedClassFieldDeclaration match {
+                  case Some(fieldDec) => Some(fieldDec)
+                  case None =>
+                    vr.result.locatable match {
+                      case Some(enhancedForControl: EnhancedForControl) =>
+                        Some(enhancedForControl.id)
+                      case _ => vr.result.locatable
+                    }
                 }
               case _ => None
-
             }
+
+          case id: Id =>
+            Some(id)
 
           case _ => None
         }
@@ -97,12 +112,242 @@ trait RenameProvider extends SourceOps {
                   if (cbd.idLocation.contains(requestLine, requestOffset)) {
                     return Some(cbd)
                   }
+                  if (cbd.location.location.contains(requestLine, requestOffset)) {
+                    cbd match {
+                      case methodDec: ApexMethodDeclaration =>
+                        methodDec.parameters.foreach(parameter =>
+                          if (parameter.id.location.location.contains(requestLine, requestOffset)) {
+                            return Some(parameter.id)
+                          }
+                        )
+
+                        methodDec.block match {
+                          case Some(block: Block) =>
+                            block
+                              .statements()
+                              .foreach(statement => {
+                                val localVarDec =
+                                  getLocalVariableDeclaration(statement, requestLine, requestOffset)
+                                if (localVarDec.isDefined) return localVarDec
+                              })
+                          case _ => None
+                        }
+                      case constructorDec: ApexConstructorDeclaration =>
+                        constructorDec.parameters.foreach(parameter =>
+                          if (parameter.id.location.location.contains(requestLine, requestOffset)) {
+                            return Some(parameter.id)
+                          }
+                        )
+
+                        constructorDec.block match {
+                          case block: Block =>
+                            block
+                              .statements()
+                              .foreach(statement => {
+                                val localVarDec =
+                                  getLocalVariableDeclaration(statement, requestLine, requestOffset)
+                                if (localVarDec.isDefined) return localVarDec
+                              })
+                          case _ => None
+                        }
+                      case apd: ApexPropertyDeclaration =>
+                        apd.getter match {
+                          case Some(getterBlock) if getterBlock.block.isDefined =>
+                            getterBlock.block.get
+                              .statements()
+                              .foreach(statement => {
+                                val localVarDec =
+                                  getLocalVariableDeclaration(statement, requestLine, requestOffset)
+                                if (localVarDec.isDefined) return localVarDec
+                              })
+                          case _ =>
+                        }
+                        apd.setter match {
+                          case Some(setterBlock) if setterBlock.block.isDefined =>
+                            setterBlock.block.get
+                              .statements()
+                              .foreach(statement => {
+                                val localVarDec =
+                                  getLocalVariableDeclaration(statement, requestLine, requestOffset)
+                                if (localVarDec.isDefined) return localVarDec
+                              })
+                          case _ =>
+                        }
+
+                      case initializerBlock: ApexInitializerBlock =>
+                        initializerBlock.block match {
+                          case block: Block =>
+                            block
+                              .statements()
+                              .foreach(statement => {
+                                val localVarDec =
+                                  getLocalVariableDeclaration(statement, requestLine, requestOffset)
+                                if (localVarDec.isDefined) return localVarDec
+                              })
+                          case _ => None
+                        }
+                      case _ =>
+                    }
+                  }
                 case _ =>
               }
           case _ =>
         }
         None
     }
+  }
+
+  private def getLocalVariableDeclaration(
+    statement: Statement,
+    line: Int,
+    offset: Int
+  ): Option[VariableDeclarator] = {
+    statement match {
+      case varDecStatement: LocalVariableDeclarationStatement =>
+        varDecStatement.localVariableDeclaration.variableDeclarators.declarators.foreach(
+          varDeclarator =>
+            if (varDeclarator.location.location.contains(line, offset)) {
+              return Some(varDeclarator)
+            }
+        )
+
+      case ifStatement: IfStatement =>
+        ifStatement.statements.foreach {
+          case block: Block =>
+            block
+              .statements()
+              .foreach(statement => {
+                val varDec = getLocalVariableDeclaration(statement, line, offset)
+                if (varDec.isDefined) return varDec
+              })
+          case _ =>
+        }
+
+      case forStatement: ForStatement =>
+        forStatement.control match {
+          case Some(control: BasicForControl) =>
+            control.forInit match {
+              case Some(forInit: LocalVariableForInit) =>
+                forInit.variable.variableDeclarators.declarators.foreach(varDeclarator =>
+                  if (varDeclarator.location.location.contains(line, offset)) {
+                    return Some(varDeclarator)
+                  }
+                )
+              case _ =>
+            }
+
+          case _ =>
+        }
+
+        forStatement.statement match {
+          case Some(block: Block) =>
+            block
+              .statements()
+              .foreach(statement => {
+                val varDec = getLocalVariableDeclaration(statement, line, offset)
+                if (varDec.isDefined) return varDec
+              })
+          case _ =>
+        }
+
+      case whileStatement: WhileStatement =>
+        whileStatement.statement match {
+          case Some(block: Block) =>
+            block
+              .statements()
+              .foreach(statement => {
+                val varDec = getLocalVariableDeclaration(statement, line, offset)
+                if (varDec.isDefined) return varDec
+              })
+          case _ =>
+        }
+
+      case doWhileStatement: DoWhileStatement =>
+        doWhileStatement.statement match {
+          case Some(block: Block) =>
+            block
+              .statements()
+              .foreach(statement => {
+                val varDec = getLocalVariableDeclaration(statement, line, offset)
+                if (varDec.isDefined) return varDec
+              })
+          case _ =>
+        }
+
+      case tryStatement: TryStatement =>
+        tryStatement.block match {
+          case block: Block =>
+            block
+              .statements()
+              .foreach(statement => {
+                val varDec = getLocalVariableDeclaration(statement, line, offset)
+                if (varDec.isDefined) return varDec
+              })
+        }
+
+        tryStatement.catches.foreach(catchStatement =>
+          catchStatement.block match {
+            case Some(block: Block) =>
+              block
+                .statements()
+                .foreach(statement => {
+                  val varDec = getLocalVariableDeclaration(statement, line, offset)
+                  if (varDec.isDefined) return varDec
+                })
+            case _ =>
+          }
+        )
+
+        tryStatement.finallyBlock match {
+          case Some(block: Block) =>
+            block
+              .statements()
+              .foreach(statement => {
+                val varDec = getLocalVariableDeclaration(statement, line, offset)
+                if (varDec.isDefined) return varDec
+              })
+          case _ =>
+        }
+
+      case switchStatement: SwitchStatement =>
+        switchStatement.whenControls.foreach(whenControl =>
+          whenControl.block
+            .statements()
+            .foreach(statement => {
+              val varDec = getLocalVariableDeclaration(statement, line, offset)
+              if (varDec.isDefined) return varDec
+            })
+        )
+
+      case _ =>
+    }
+    None
+  }
+
+  private def getLocalVarSymbolLocations(
+    varDecId: Id,
+    validation: (Map[Location, ValidationResult], Option[Location])
+  ): Array[Rename] = {
+    val locations: mutable.Set[Location] = mutable.Set(varDecId.location.location)
+    validation._1.foreach(vr =>
+      vr._2.result.locatable match {
+        case Some(currentSymbolVarDec: VariableDeclarator) =>
+          if (currentSymbolVarDec.id eq varDecId) {
+            locations.add(vr._1)
+          }
+        case Some(enhancedForControl: EnhancedForControl) =>
+          if (enhancedForControl.id eq varDecId) {
+            locations.add(vr._1)
+          }
+        case Some(id: Id) =>
+          if (id eq varDecId) {
+            locations.add(vr._1)
+          }
+        case _ =>
+      }
+    )
+
+    Array(Rename(varDecId.location.path.toString, locations.toArray))
   }
 
   private def getSymbolLocations(cbd: ClassBodyDeclaration): Array[Rename] = {
@@ -406,16 +651,7 @@ trait RenameProvider extends SourceOps {
   ): Option[Location] = {
     primaryExpression.primary match {
       case id: IdPrimary =>
-        if (id.cachedFieldDeclaration.isEmpty) {
-          val validatedPrimaryExpression = validateExpression(primaryExpression)
-          validatedPrimaryExpression match {
-            case Some(primaryExpression: PrimaryExpression) =>
-              primaryExpression.primary.asInstanceOf[IdPrimary].getLocationForFieldDeclaration(fd)
-            case _ => None
-          }
-        } else {
-          id.getLocationForFieldDeclaration(fd)
-        }
+        id.getLocationForFieldDeclaration(fd)
       case _ => None
     }
   }
@@ -483,7 +719,7 @@ trait RenameProvider extends SourceOps {
             getLocationFromPrimaryExp(primaryExpression, fd) match {
               case Some(l) => methodCallLocations.add(l)
               case _       =>
-            } // maybe primaryExpression.primary
+            }
           case _ =>
         }
 
