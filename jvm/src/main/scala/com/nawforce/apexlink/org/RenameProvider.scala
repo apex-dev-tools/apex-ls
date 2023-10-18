@@ -21,9 +21,8 @@ trait RenameProvider extends SourceOps {
     offset: Int,
     content: Option[String]
   ): Array[Rename] = {
+    val sourceAndType = loadFullSourceAndType(path, None).getOrElse(return Array.empty)
 
-    val sourceAndType =
-      loadFullSourceAndType(path, None).getOrElse(return Array.empty)
     val validation = locateFromValidation(sourceAndType._2, line, offset)
 
     val declaration = getClassBodyDeclaration(sourceAndType._2, validation, line, offset)
@@ -54,6 +53,7 @@ trait RenameProvider extends SourceOps {
           case methodCall: MethodCallWithId =>
             methodCall.cachedMethod match {
               case Some(amd: ApexMethodDeclaration) =>
+                // refresh require for correct dependencyHolders on declaration
                 refresh(amd.location.path, highPriority = true)
                 loadTypeFromModule(amd.location.path) match {
                   case Some(reloadedClassDec: ClassDeclaration) =>
@@ -84,15 +84,11 @@ trait RenameProvider extends SourceOps {
 
           case primaryExpression: PrimaryExpression =>
             primaryExpression.primary match {
-              case idPrimary: IdPrimary =>
-                idPrimary.cachedClassFieldDeclaration match {
-                  case Some(fieldDec) => Some(fieldDec)
-                  case None =>
-                    vr.result.locatable match {
-                      case Some(enhancedForControl: EnhancedForControl) =>
-                        Some(enhancedForControl.id)
-                      case _ => vr.result.locatable
-                    }
+              case _: IdPrimary =>
+                vr.result.locatable match {
+                  case Some(enhancedForControl: EnhancedForControl) =>
+                    Some(enhancedForControl.id)
+                  case _ => vr.result.locatable
                 }
               case _ => None
             }
@@ -651,15 +647,17 @@ trait RenameProvider extends SourceOps {
   ): Option[Location] = {
     primaryExpression.primary match {
       case id: IdPrimary =>
-        if (id.cachedClassFieldDeclaration.isEmpty) {
+        if (id.isCachedFieldEmpty) {
           val validatedPrimaryExpression = validateExpression(primaryExpression)
           validatedPrimaryExpression match {
             case Some(primaryExpression: PrimaryExpression) =>
-              primaryExpression.primary.asInstanceOf[IdPrimary].getLocationForFieldDeclaration(fd)
+              primaryExpression.primary
+                .asInstanceOf[IdPrimary]
+                .getLocationForClassFieldUsage(fd)
             case _ => None
           }
         } else {
-          id.getLocationForFieldDeclaration(fd)
+          id.getLocationForClassFieldUsage(fd)
         }
       case _ => None
     }
