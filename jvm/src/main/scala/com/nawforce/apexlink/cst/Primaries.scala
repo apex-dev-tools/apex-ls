@@ -86,9 +86,9 @@ final case class TypeReferencePrimary(typeName: TypeName) extends Primary {
 }
 
 final case class IdPrimary(id: Id) extends Primary {
-  var cachedFieldDeclaration: Option[FieldDeclaration] = None
+  var cachedClassFieldDeclaration: Option[FieldDeclaration] = None
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
-    cachedFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
+    cachedClassFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
     isVarReference(context)
       .getOrElse(
         isFieldReference(input, context)
@@ -101,7 +101,7 @@ final case class IdPrimary(id: Id) extends Primary {
   }
 
   def getLocationForFieldDeclaration(fd: ApexFieldDeclaration): Option[Location] = {
-    cachedFieldDeclaration match {
+    cachedClassFieldDeclaration match {
       case Some(fdFromCallout: ApexFieldDeclaration) =>
         if (fdFromCallout.idPathLocation == fd.idPathLocation) Some(id.location.location)
         else None
