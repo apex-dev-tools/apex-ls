@@ -315,11 +315,9 @@ trait RenameProvider extends SourceOps {
           getMethodLocationsFromExpression(doWhileStatement.expression, md)
         )
 
-        doWhileStatement.statement match {
-          case Some(block: Block) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), md))
-          case _ =>
-        }
+        methodRenameLocations.addAll(
+          getLocationsFromStatements(doWhileStatement.block.statements(), md)
+        )
 
       case tryStatement: TryStatement =>
         tryStatement.block match {
