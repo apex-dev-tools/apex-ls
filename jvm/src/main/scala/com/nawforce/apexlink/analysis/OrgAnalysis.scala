@@ -16,6 +16,7 @@ import java.util.ServiceLoader
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
+import scala.util.{Success, Try, Failure}
 
 /** Service to invoke custom analysis providers that can augment normal diagnostics.
   * @param org run analysis against for this org
@@ -33,22 +34,21 @@ class OrgAnalysis(org: OrgImpl) {
     * @return the provider or None if an error occurred
     */
   private def configureProvider(provider: AnalysisProvider): Option[AnalysisProvider] = {
-    val results = ServerOps.getExternalAnalysis.params
-      .getOrElse(provider.getProviderId, Nil)
-      .map(param => {
-        try {
-          provider.setConfiguration(param._1, param._2.asJava)
-          true
-        } catch {
-          case ex: Throwable =>
-            LoggerOps.info(
-              s"Analysis provider '${provider.getProviderId} threw when setting parameter ${param._1}",
-              ex
-            )
-            false
-        }
-      })
-    if (results.contains(false)) None else Some(provider)
+    Option.when(
+      ServerOps.getExternalAnalysis.params
+        .getOrElse(provider.getProviderId, Nil)
+        .forall(param => {
+          Try(provider.setConfiguration(param._1, param._2.asJava)) match {
+            case Success(_) => true
+            case Failure(ex) =>
+              LoggerOps.info(
+                s"Analysis provider '${provider.getProviderId} threw when setting parameter ${param._1}",
+                ex
+              )
+              false
+          }
+        })
+    ) { provider }
   }
 
   /** Invoke the providers after the org has been loaded.
