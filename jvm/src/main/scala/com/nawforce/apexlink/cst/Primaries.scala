@@ -86,7 +86,10 @@ final case class TypeReferencePrimary(typeName: TypeName) extends Primary {
 }
 
 final case class IdPrimary(id: Id) extends Primary {
-  var cachedClassFieldDeclaration: Option[FieldDeclaration] = None
+  // NOTE: cachedClassFieldDeclaration stores the field declaration if there is a class field that shares a name with
+  // this IdPrimary. This means if this IdPrimary belongs to a local field declaration with the same name as a
+  // class field, then cachedClassFieldDeclaration will store the class field declaration, even though it is shadowed.
+  private var cachedClassFieldDeclaration: Option[FieldDeclaration] = None
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     cachedClassFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
     isVarReference(context)
@@ -100,13 +103,22 @@ final case class IdPrimary(id: Id) extends Primary {
       )
   }
 
-  def getLocationForFieldDeclaration(fd: ApexFieldDeclaration): Option[Location] = {
+  /** Will return the location of this IdPrimary if the ApexFieldDeclaration is a class variable with the same name as the
+    * IdPrimary.
+    * This method does not handle shadowed variables - it only checks a class field declaration matches the provided
+    * declaration.
+    */
+  def getLocationForClassFieldUsage(fd: ApexFieldDeclaration): Option[Location] = {
     cachedClassFieldDeclaration match {
       case Some(fdFromCallout: ApexFieldDeclaration) =>
         if (fdFromCallout.idPathLocation == fd.idPathLocation) Some(id.location.location)
         else None
       case _ => None
     }
+  }
+
+  def isCachedFieldEmpty: Boolean = {
+    cachedClassFieldDeclaration.isEmpty
   }
 
   private def isVarReference(context: ExpressionVerifyContext): Option[ExprContext] = {
