@@ -93,6 +93,21 @@ trait RenameProvider extends SourceOps {
               case _ => None
             }
 
+          case dotExpression: DotExpressionWithId =>
+            dotExpression.expression match {
+              case primaryExpression: PrimaryExpression =>
+                primaryExpression.primary match {
+                  case _: IdPrimary =>
+                    vr.result.locatable match {
+                      case Some(enhancedForControl: EnhancedForControl) =>
+                        Some(enhancedForControl.id)
+                      case _ => vr.result.locatable
+                    }
+                  case _ => None
+                }
+              case _ => None
+            }
+
           case id: Id =>
             Some(id)
 
@@ -372,7 +387,7 @@ trait RenameProvider extends SourceOps {
         val currentClassPath = fieldDeclaration.location.path
         val methodRenameLocations: mutable.Set[Location] =
           fieldDeclaration.variableDeclarator.init match {
-            case Some(exp) => getMethodLocationsFromExpression(exp, cbd)
+            case Some(exp) => getLocationsFromExpression(exp, cbd)
             case None      => mutable.Set.empty
           }
 
@@ -427,7 +442,7 @@ trait RenameProvider extends SourceOps {
     statements.foreach {
       case expressionStatement: ExpressionStatement =>
         methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(expressionStatement.expression, cbd)
+          getLocationsFromExpression(expressionStatement.expression, cbd)
         )
 
       case varDecStatement: LocalVariableDeclarationStatement =>
@@ -435,7 +450,7 @@ trait RenameProvider extends SourceOps {
           varDeclarator =>
             varDeclarator.init match {
               case Some(exp: Expression) =>
-                methodRenameLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+                methodRenameLocations.addAll(getLocationsFromExpression(exp, cbd))
               case _ =>
             }
         )
@@ -443,12 +458,12 @@ trait RenameProvider extends SourceOps {
       case returnStatement: ReturnStatement =>
         returnStatement.expression match {
           case Some(exp: Expression) =>
-            methodRenameLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+            methodRenameLocations.addAll(getLocationsFromExpression(exp, cbd))
           case _ =>
         }
 
       case ifStatement: IfStatement =>
-        methodRenameLocations.addAll(getMethodLocationsFromExpression(ifStatement.expression, cbd))
+        methodRenameLocations.addAll(getLocationsFromExpression(ifStatement.expression, cbd))
 
         ifStatement.statements.foreach {
           case block: Block =>
@@ -464,33 +479,33 @@ trait RenameProvider extends SourceOps {
                 forInit.variable.variableDeclarators.declarators.foreach(varDeclarator =>
                   varDeclarator.init match {
                     case Some(exp: Expression) =>
-                      methodRenameLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+                      methodRenameLocations.addAll(getLocationsFromExpression(exp, cbd))
                     case _ =>
                   }
                 )
               case Some(forInit: ExpressionListForInit) =>
                 forInit.expressions.foreach(expression =>
-                  methodRenameLocations.addAll(getMethodLocationsFromExpression(expression, cbd))
+                  methodRenameLocations.addAll(getLocationsFromExpression(expression, cbd))
                 )
               case _ =>
             }
 
             control.expression match {
               case Some(expression: Expression) =>
-                methodRenameLocations.addAll(getMethodLocationsFromExpression(expression, cbd))
+                methodRenameLocations.addAll(getLocationsFromExpression(expression, cbd))
               case _ =>
             }
 
             control.forUpdate match {
               case Some(forUpdate: ForUpdate) =>
                 forUpdate.expressions.foreach(expression =>
-                  methodRenameLocations.addAll(getMethodLocationsFromExpression(expression, cbd))
+                  methodRenameLocations.addAll(getLocationsFromExpression(expression, cbd))
                 )
               case _ =>
             }
 
           case Some(control: EnhancedForControl) =>
-            methodRenameLocations.addAll(getMethodLocationsFromExpression(control.expression, cbd))
+            methodRenameLocations.addAll(getLocationsFromExpression(control.expression, cbd))
 
           case _ =>
         }
@@ -502,9 +517,7 @@ trait RenameProvider extends SourceOps {
         }
 
       case whileStatement: WhileStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(whileStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(whileStatement.expression, cbd))
 
         whileStatement.statement match {
           case Some(block: Block) =>
@@ -513,9 +526,7 @@ trait RenameProvider extends SourceOps {
         }
 
       case doWhileStatement: DoWhileStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(doWhileStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(doWhileStatement.expression, cbd))
 
         doWhileStatement.statement match {
           case Some(block: Block) =>
@@ -544,46 +555,30 @@ trait RenameProvider extends SourceOps {
         }
 
       case throwStatement: ThrowStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(throwStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(throwStatement.expression, cbd))
 
       case insertStatement: InsertStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(insertStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(insertStatement.expression, cbd))
 
       case updateStatement: UpdateStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(updateStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(updateStatement.expression, cbd))
 
       case deleteStatement: DeleteStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(deleteStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(deleteStatement.expression, cbd))
 
       case undeleteStatement: UndeleteStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(undeleteStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(undeleteStatement.expression, cbd))
 
       case upsertStatement: UpsertStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(upsertStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(upsertStatement.expression, cbd))
 
       case mergeStatement: MergeStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(mergeStatement.expression1, cbd)
-        )
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(mergeStatement.expression2, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(mergeStatement.expression1, cbd))
+        methodRenameLocations.addAll(getLocationsFromExpression(mergeStatement.expression2, cbd))
 
       case runAsStatement: RunAsStatement =>
         runAsStatement.expressions.foreach(exp =>
-          methodRenameLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+          methodRenameLocations.addAll(getLocationsFromExpression(exp, cbd))
         )
 
         runAsStatement.block match {
@@ -593,9 +588,7 @@ trait RenameProvider extends SourceOps {
         }
 
       case switchStatement: SwitchStatement =>
-        methodRenameLocations.addAll(
-          getMethodLocationsFromExpression(switchStatement.expression, cbd)
-        )
+        methodRenameLocations.addAll(getLocationsFromExpression(switchStatement.expression, cbd))
 
         switchStatement.whenControls.foreach(whenControl =>
           methodRenameLocations.addAll(
@@ -663,7 +656,7 @@ trait RenameProvider extends SourceOps {
     }
   }
 
-  private def getMethodLocationsFromExpression(
+  private def getLocationsFromExpression(
     expression: Expression,
     cbd: ClassBodyDeclaration
   ): mutable.Set[Location] = {
@@ -671,7 +664,7 @@ trait RenameProvider extends SourceOps {
     expression match {
       case methodCall: MethodCallWithId =>
         methodCall.arguments.foreach(exp =>
-          methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+          methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
         )
 
         cbd match {
@@ -685,26 +678,32 @@ trait RenameProvider extends SourceOps {
 
       case constructorCall: MethodCallCtor =>
         constructorCall.arguments.foreach(exp =>
-          methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+          methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
         )
 
       case dotExpression: DotExpressionWithMethod =>
         dotExpression.target match {
           case Some(exp: Expression) =>
-            methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+            methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
           case _ =>
         }
-        methodCallLocations.addAll(getMethodLocationsFromExpression(dotExpression.expression, cbd))
+        methodCallLocations.addAll(getLocationsFromExpression(dotExpression.expression, cbd))
+
+      case dotExpression: DotExpressionWithId =>
+        getVarLocationFromDotExpression(dotExpression, cbd) match {
+          case Some(location) => methodCallLocations.add(location)
+          case _              =>
+        }
 
       case binaryExpression: BinaryExpression =>
         binaryExpression.rhs match {
           case exp: Expression =>
-            methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+            methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
           case _ =>
         }
         binaryExpression.lhs match {
           case exp: Expression =>
-            methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+            methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
           case _ =>
         }
 
@@ -712,11 +711,11 @@ trait RenameProvider extends SourceOps {
         primaryExpression.primary match {
           case soql: SOQL =>
             soql.boundExpressions.foreach(exp =>
-              methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+              methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
             )
           case sosl: SOSL =>
             sosl.boundExpressions.foreach(exp =>
-              methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+              methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
             )
           case _ =>
         }
@@ -731,73 +730,86 @@ trait RenameProvider extends SourceOps {
         }
 
       case arrayExpression: ArrayExpression =>
-        methodCallLocations.addAll(
-          getMethodLocationsFromExpression(arrayExpression.expression, cbd)
-        )
-        methodCallLocations.addAll(
-          getMethodLocationsFromExpression(arrayExpression.arrayExpression, cbd)
-        )
+        methodCallLocations.addAll(getLocationsFromExpression(arrayExpression.expression, cbd))
+        methodCallLocations.addAll(getLocationsFromExpression(arrayExpression.arrayExpression, cbd))
 
       case castExpression: CastExpression =>
-        methodCallLocations.addAll(getMethodLocationsFromExpression(castExpression.expression, cbd))
+        methodCallLocations.addAll(getLocationsFromExpression(castExpression.expression, cbd))
 
       case newExpression: NewExpression =>
         newExpression.creator.creatorRest match {
           case Some(cr: SetOrListCreatorRest) =>
             cr.parts.foreach(exp =>
-              methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+              methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
             )
           case Some(cr: ArrayCreatorRest) =>
             cr.indexExpression match {
               case Some(exp: Expression) =>
-                methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+                methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
               case _ =>
             }
             cr.arrayInitializer match {
               case Some(initialiser) =>
                 initialiser.expressions.foreach(exp =>
-                  methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+                  methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
                 )
               case _ =>
             }
           case Some(cr: MapCreatorRest) =>
             cr.pairs.foreach(pair => {
-              methodCallLocations.addAll(getMethodLocationsFromExpression(pair.from, cbd))
-              methodCallLocations.addAll(getMethodLocationsFromExpression(pair.to, cbd))
+              methodCallLocations.addAll(getLocationsFromExpression(pair.from, cbd))
+              methodCallLocations.addAll(getLocationsFromExpression(pair.to, cbd))
             })
           case Some(cr: ClassCreatorRest) =>
             cr.arguments.foreach(exp =>
-              methodCallLocations.addAll(getMethodLocationsFromExpression(exp, cbd))
+              methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
             )
           case _ =>
         }
 
       case negationExpression: NegationExpression =>
-        methodCallLocations.addAll(
-          getMethodLocationsFromExpression(negationExpression.expression, cbd)
-        )
+        methodCallLocations.addAll(getLocationsFromExpression(negationExpression.expression, cbd))
 
       case subExpression: SubExpression =>
-        methodCallLocations.addAll(getMethodLocationsFromExpression(subExpression.expression, cbd))
+        methodCallLocations.addAll(getLocationsFromExpression(subExpression.expression, cbd))
 
       case prefixExpression: PrefixExpression =>
-        methodCallLocations.addAll(
-          getMethodLocationsFromExpression(prefixExpression.expression, cbd)
-        )
+        methodCallLocations.addAll(getLocationsFromExpression(prefixExpression.expression, cbd))
 
       case postfixExpression: PostfixExpression =>
-        methodCallLocations.addAll(
-          getMethodLocationsFromExpression(postfixExpression.expression, cbd)
-        )
+        methodCallLocations.addAll(getLocationsFromExpression(postfixExpression.expression, cbd))
 
       case instanceOfExpression: InstanceOfExpression =>
-        methodCallLocations.addAll(
-          getMethodLocationsFromExpression(instanceOfExpression.expression, cbd)
-        )
+        methodCallLocations.addAll(getLocationsFromExpression(instanceOfExpression.expression, cbd))
 
       case _ =>
     }
     methodCallLocations
+  }
+
+  private def getVarLocationFromDotExpression(
+    dotExpression: DotExpressionWithId,
+    fd: ClassBodyDeclaration
+  ): Option[Location] = {
+    fd match {
+      case fd: ApexFieldDeclaration =>
+        dotExpression.expression match {
+          case primaryExpression: PrimaryExpression if dotExpression.target == fd.id =>
+            primaryExpression.primary match {
+              case idPrimary: IdPrimary =>
+                if (idPrimary.id.name == fd.thisTypeId.typeName.name) {
+                  Some(dotExpression.target.location.location)
+                } else {
+                  None
+                }
+              case _ => None
+            }
+
+          case _ => None
+        }
+      case _ => None
+    }
+
   }
 
 }
