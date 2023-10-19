@@ -33,23 +33,50 @@ import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.immutable.ArraySeq
 
-/* Context used during expression verification to indicate focus & return state. Declaration provides the
- * current context TypeDeclaration. isStatic=None is used as a marker that we have yet to enter an explicit
- * static/instance context as you find on the outermost expression used in an instance method. In this state
- * declaration == this & both static/instance resolution is allowed. If isStatic is set the specific expression
- * should become restricted to either static or instance resolution.
- */
-final case class ExprContext(
+/** Context used during expression verification to indicate focus & return state.
+  *
+  * Declaration provides the current context TypeDeclaration. isStatic=None is used as a marker that we have yet to
+  * enter an explicit static/instance context as you find on the outermost expression used in an instance method. In
+  * this state declaration == this & both static/instance resolution is allowed. If isStatic is set the specific
+  * expression should become restricted to either static or instance resolution.
+  *
+  * @param isStatic static or instance or either context
+  * @param declaration input/return type declaration, for return None is used to mean unknown/indeterminable
+  * @param locatable position of code that generated this context to support introspection
+  */
+case class ExprContext(
   isStatic: Option[Boolean],
   declaration: Option[TypeDeclaration],
   locatable: Option[Locatable] = None
 ) {
+  def isVoid = false
+
   def isDefined: Boolean =
     declaration.nonEmpty && !declaration.exists(_.isInstanceOf[AnyDeclaration])
 
   def typeDeclaration: TypeDeclaration = declaration.get
 
   def typeName: TypeName = declaration.get.typeName
+}
+
+/** ExprContext of type 'void'
+  *
+  * void is not commonly used in expressions, essentially just as method return type so we use simple
+  * null-object style implementation for it.
+  *
+  * @param locatable position of code that generated this context to support introspection
+  */
+class VoidExprContext(locatable: Option[Locatable]) extends ExprContext(None, None, locatable) {
+  override def isVoid = true
+}
+
+object VoidExprContext {
+  def apply(locatable: Any): ExprContext = {
+    locatable match {
+      case l: Locatable => new VoidExprContext(Some(l))
+      case _            => new VoidExprContext(None)
+    }
+  }
 }
 
 object ExprContext {
@@ -595,9 +622,8 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
               }
           }
         } else {
-          // TODO: How to error if attempt to use return
           context.saveResult(this, target.location.location) {
-            ExprContext(None, None, method)
+            VoidExprContext(method)
           }
         }
 

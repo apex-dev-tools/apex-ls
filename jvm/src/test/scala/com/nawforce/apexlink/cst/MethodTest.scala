@@ -287,7 +287,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Base.cls" -> "public virtual class Base { void getInstance() {} }",
-        "Dummy.cls" -> "public class Dummy extends Base { void getInstance() {return null;} { this.getInstance();} }"
+        "Dummy.cls" -> "public class Dummy extends Base { void getInstance() {return;} { this.getInstance();} }"
       )
     ) { root: PathLike =>
       createHappyOrg(root)

@@ -590,9 +590,11 @@ final case class ReturnStatement(expression: Option[Expression]) extends Stateme
   ): Option[String] = {
     val expectedType = context.returnType
 
-    if (expr.isEmpty && expectedType != TypeNames.Void)
+    if (expr.isEmpty && expectedType != TypeNames.Void) {
       Some(s"Missing return value of type '$expectedType'")
-    else {
+    } else if (expr.nonEmpty && expectedType == TypeNames.Void) {
+      Some(s"Void method can not return a value")
+    } else {
       expr.flatMap(e => {
         if (e.isDefined && !isAssignableDeclaration(expectedType, e.typeDeclaration, context))
           Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
