@@ -121,7 +121,16 @@ trait RenameProvider extends SourceOps {
               .foreach {
                 case cbd: ClassBodyDeclaration =>
                   if (cbd.idLocation.contains(requestLine, requestOffset)) {
-                    return Some(cbd)
+                    // need to refresh for class level to ensure variables set during verify are correct
+                    refresh(classDeclaration.location.path, highPriority = true)
+                    val reloadedClassDec =
+                      loadFullSourceAndType(classDeclaration.location.path, None)
+                        .getOrElse(return None)
+                        ._2
+                    return reloadedClassDec
+                      .asInstanceOf[ClassDeclaration]
+                      .bodyDeclarations
+                      .find(bodyDec => bodyDec.idLocation == cbd.idLocation)
                   }
                   if (cbd.location.location.contains(requestLine, requestOffset)) {
                     cbd match {
@@ -797,10 +806,16 @@ trait RenameProvider extends SourceOps {
           case primaryExpression: PrimaryExpression if dotExpression.target == fd.id =>
             primaryExpression.primary match {
               case idPrimary: IdPrimary =>
-                if (idPrimary.id.name == fd.thisTypeId.typeName.name) {
-                  Some(dotExpression.target.location.location)
-                } else {
-                  None
+                idPrimary.typeName match {
+                  // when called off an object
+                  case Some(typeName) if typeName == fd.thisTypeId.typeName =>
+                    Some(dotExpression.target.location.location)
+
+                  // when called off a class
+                  case None if idPrimary.id.name == fd.thisTypeId.typeName.name =>
+                    Some(dotExpression.target.location.location)
+
+                  case _ => None
                 }
               case _ => None
             }
