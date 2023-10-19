@@ -1754,6 +1754,60 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Rename: Method | Declaration is cached") {
+    val dummyContent =
+      """public class Dummy {
+        |public static String targetMethod() {
+        |return 'A string value';
+        |}
+        |
+        |private void privateMethod(){
+        |targetMethod();
+        |}
+        |}""".stripMargin.replaceAll("\r\n", "\n")
+    val fooContentAndCursorPos = withCursorMultiLine(s"""public class Foo {
+         |private void privateMethod(){
+         |Dummy.target${CURSOR}Method();
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map("Dummy.cls" -> dummyContent, "Foo.cls" -> fooContentAndCursorPos._1)
+      ) { root: PathLike =>
+        val path = root.join("Foo.cls")
+        val org  = createHappyOrg(root)
+        org.flush()
+
+        // Reload from cache
+        createOrg(root)
+
+        val newOrg = createOrg(root)
+        newOrg.flush()
+
+        val renames = {
+          newOrg.unmanaged
+            .getRenameLocations(
+              path,
+              fooContentAndCursorPos._2.line,
+              fooContentAndCursorPos._2.offset,
+              Some(fooContentAndCursorPos._1)
+            )
+        }
+        assert(renames.length == 3)
+        assert(renames(0).path == "/Dummy.cls")
+        assert(renames(0).edits.length == 1)
+        assert(renames(0).edits(0) == Location(7, 0, 7, 12))
+        assert(renames(1).path == "/Foo.cls")
+        assert(renames(1).edits.length == 1)
+        assert(renames(1).edits(0) == Location(3, 6, 3, 18))
+        assert(renames(2).path == "/Dummy.cls")
+        assert(renames(2).edits.length == 1)
+        assert(renames(2).edits(0) == Location(2, 21, 2, 33))
+      }
+    }
+  }
+
   test("Rename: Method | cross-file") {
     val dummyContent = """public class Dummy {
          |public static String targetMethod() {
