@@ -90,6 +90,7 @@ final case class IdPrimary(id: Id) extends Primary {
   // this IdPrimary. This means if this IdPrimary belongs to a local field declaration with the same name as a
   // class field, then cachedClassFieldDeclaration will store the class field declaration, even though it is shadowed.
   private var cachedClassFieldDeclaration: Option[FieldDeclaration] = None
+  var typeName: Option[TypeName]                                    = None
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     cachedClassFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
     isVarReference(context)
@@ -125,6 +126,7 @@ final case class IdPrimary(id: Id) extends Primary {
     context
       .isVar(id.name, markUsed = true)
       .map(varTypeAndDefinition => {
+        typeName = Some(varTypeAndDefinition.declaration.typeName)
         ExprContext(
           isStatic = Some(false),
           Some(varTypeAndDefinition.declaration),
