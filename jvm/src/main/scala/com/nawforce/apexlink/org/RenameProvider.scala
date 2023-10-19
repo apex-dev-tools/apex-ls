@@ -283,16 +283,12 @@ trait RenameProvider extends SourceOps {
         }
 
       case doWhileStatement: DoWhileStatement =>
-        doWhileStatement.statement match {
-          case Some(block: Block) =>
-            block
-              .statements()
-              .foreach(statement => {
-                val varDec = getLocalVariableDeclaration(statement, line, offset)
-                if (varDec.isDefined) return varDec
-              })
-          case _ =>
-        }
+        doWhileStatement.block
+          .statements()
+          .foreach(statement => {
+            val varDec = getLocalVariableDeclaration(statement, line, offset)
+            if (varDec.isDefined) return varDec
+          })
 
       case tryStatement: TryStatement =>
         tryStatement.block match {
@@ -537,11 +533,9 @@ trait RenameProvider extends SourceOps {
       case doWhileStatement: DoWhileStatement =>
         methodRenameLocations.addAll(getLocationsFromExpression(doWhileStatement.expression, cbd))
 
-        doWhileStatement.statement match {
-          case Some(block: Block) =>
-            methodRenameLocations.addAll(getLocationsFromStatements(block.statements(), cbd))
-          case _ =>
-        }
+        methodRenameLocations.addAll(
+          getLocationsFromStatements(doWhileStatement.block.statements(), cbd)
+        )
 
       case tryStatement: TryStatement =>
         tryStatement.block match {
