@@ -52,9 +52,12 @@ class ReturnTest extends AnyFunSuite with TestHelper {
 
   test("Return expecting void") {
     typeDeclaration("public class Dummy { void fn(){ return 0; } }")
-    assert(
-      dummyIssues == "Error: line 1 at 32-41: Incompatible return type, 'System.Integer' is not assignable to 'void'\n"
-    )
+    assert(dummyIssues == "Error: line 1 at 32-41: Void method can not return a value\n")
+  }
+
+  test("Return void expecting void") {
+    typeDeclaration("public class Dummy { void fn(){ return fn();} }")
+    assert(dummyIssues == "Error: line 1 at 32-44: Void method can not return a value\n")
   }
 
   test("Return mismatched value") {
