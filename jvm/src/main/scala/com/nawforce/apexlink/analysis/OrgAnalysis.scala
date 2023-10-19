@@ -5,8 +5,8 @@ package com.nawforce.apexlink.analysis
 
 import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, NoAnalysis, ServerOps}
 import com.nawforce.apexlink.org.OPM.OrgImpl
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
-import com.nawforce.pkgforce.documents.{ApexNature, MetadataDocument}
+import com.nawforce.pkgforce.diagnostics._
+import com.nawforce.pkgforce.documents.ApexNature
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.platform.Path
 import io.github.apexdevtools.api.{Issue => APIIssue}
@@ -16,38 +16,81 @@ import java.util.ServiceLoader
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
+import scala.util.{Success, Try, Failure}
 
+/** Service to invoke custom analysis providers that can augment normal diagnostics.
+  * @param org run analysis against for this org
+  */
 class OrgAnalysis(org: OrgImpl) {
-  private val analysisProviders = ServiceLoader.load(classOf[AnalysisProvider])
+  private val analysisProviders = ServiceLoader
+    .load(classOf[AnalysisProvider])
+    .iterator()
+    .asScala
+    .flatMap(provider => configureProvider(provider))
+    .toList
 
-  def afterLoad(): Unit = {
-    if (ServerOps.externalAnalysisMode != LoadAndRefreshAnalysis)
-      return
-
-    val files = mutable.Set[Path]()
-    // TODO: Tidy?
-    org.packages.foreach(pkg =>
-      pkg.modules.foreach(module => {
-        val docs = module.index.get(ApexNature)
-        docs.iterator.foreach(md => {
-          md._2
-            .map(p => Path(p))
-            .filter(p => MetadataDocument(p).exists(_.nature == ApexNature))
-            .foreach(p => files.add(p))
+  /** Apply custom parameters to a provider.
+    * @param provider apply to this provider
+    * @return the provider or None if an error occurred
+    */
+  private def configureProvider(provider: AnalysisProvider): Option[AnalysisProvider] = {
+    Option.when(
+      ServerOps.getExternalAnalysis.params
+        .getOrElse(provider.getProviderId, Nil)
+        .forall(param => {
+          Try(provider.setConfiguration(param._1, param._2.asJava)) match {
+            case Success(_) => true
+            case Failure(ex) =>
+              LoggerOps.info(
+                s"Analysis provider '${provider.getProviderId} threw when setting parameter ${param._1}",
+                ex
+              )
+              false
+          }
         })
-      })
-    )
-    runAnalysis(files.toSet)
+    ) { provider }
   }
 
-  def afterRefresh(files: Set[Path]): Unit = {
-    if (ServerOps.externalAnalysisMode == NoAnalysis)
+  /** Invoke the providers after the org has been loaded.
+    * Passed all Apex classes for analysis.
+    */
+  def afterLoad(): Unit = {
+    if (ServerOps.getExternalAnalysis.mode != LoadAndRefreshAnalysis)
       return
 
-    runAnalysis(files)
+    val workspaceProviders = analysisProviders.filter(_.isConfigured(Path(org.path).native))
+    if (workspaceProviders.isEmpty)
+      return
+
+    // Collect Apex class files over all modules
+    val files  = mutable.Set[Path]()
+    var module = org.packages.headOption.flatMap(_.firstModule)
+    while (module.nonEmpty) {
+      module.get.index
+        .getControllingDocuments(ApexNature)
+        .map(_.path)
+        .collect { case p: Path => p }
+        .foreach(files.add)
+      module = module.get.nextModule
+    }
+    runAnalysis(workspaceProviders, files.toSet)
   }
 
-  private def runAnalysis(files: Set[Path]): Unit = {
+  /** Invoke the providers after some files have been changed.
+    * @param paths the files (assumed to be Apex classes) that changed
+    */
+  def afterRefresh(paths: Set[Path]): Unit = {
+    if (ServerOps.getExternalAnalysis.mode == NoAnalysis)
+      return
+
+    val workspaceProviders = analysisProviders.filter(_.isConfigured(Path(org.path).native))
+    if (workspaceProviders.isEmpty)
+      return
+
+    runAnalysis(workspaceProviders, paths)
+  }
+
+  private def runAnalysis(providers: List[AnalysisProvider], files: Set[Path]): Unit = {
     val issueManager = org.issues
     val syntaxGroups = files.groupBy(file => issueManager.hasSyntaxIssues(file))
     // Clear provider issues for files that already have syntax errors to reduce noise
@@ -55,9 +98,7 @@ class OrgAnalysis(org: OrgImpl) {
       .getOrElse(true, Set())
       .foreach(path => org.issues.clearProviderIssues(path))
 
-    analysisProviders
-      .iterator()
-      .asScala
+    providers
       .foreach(provider => {
         val providerId = provider.getProviderId
 
