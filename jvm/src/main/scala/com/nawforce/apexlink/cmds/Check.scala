@@ -73,7 +73,7 @@ object Check {
     try {
       // Setup cache flushing, analysis & logging defaults
       ServerOps.setAutoFlush(false)
-      ServerOps.setExternalAnalysisMode(LoadAndRefreshAnalysis)
+      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(LoadAndRefreshAnalysis, Map()))
       if (useOutlineParserSingleThreaded)
         ServerOps.setCurrentParser(OutlineParserSingleThreaded)
       else if (useOutlineParserMultithreaded)

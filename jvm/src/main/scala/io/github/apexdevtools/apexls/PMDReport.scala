@@ -3,7 +3,12 @@
  */
 package io.github.apexdevtools.apexls
 
-import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, Org, ServerOps}
+import com.nawforce.apexlink.api.{
+  ExternalAnalysisConfiguration,
+  LoadAndRefreshAnalysis,
+  Org,
+  ServerOps
+}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
 import com.nawforce.runtime.platform.{Environment, Path}
@@ -16,17 +21,14 @@ import scala.xml.XML
   * https://github.com/pmd/pmd/blob/master/pmd-core/src/main/resources/report_2_0_0.xsd
   */
 object PMDReport {
-  final val REPORT_NAME           = "apex-ls-pmd-report.xml"
-  final val STATUS_OK: Int        = 0
-  final val STATUS_ARGS: Int      = 1
-  final val STATUS_EXCEPTION: Int = 3
+  private final val REPORT_NAME           = "apex-ls-pmd-report.xml"
+  private final val STATUS_OK: Int        = 0
+  private final val STATUS_ARGS: Int      = 1
+  private final val STATUS_EXCEPTION: Int = 3
 
   def main(args: Array[String]): Unit = {
     System.exit(run(args))
   }
-
-  def usage(name: String) =
-    s"Usage: $name -verbose [-unused]] [-nocache] [-info|-debug] <directory>"
 
   def run(args: Array[String]): Int = {
     val flags =
@@ -54,7 +56,7 @@ object PMDReport {
     try {
       // Setup cache flushing, analysis & logging defaults
       ServerOps.setAutoFlush(false)
-      ServerOps.setExternalAnalysisMode(LoadAndRefreshAnalysis)
+      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(LoadAndRefreshAnalysis, Map()))
       LoggerOps.setLogger(new DefaultLogger(System.err))
       if (debug)
         LoggerOps.setLoggingLevel(LoggerOps.DEBUG_LOGGING)

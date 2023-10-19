@@ -50,10 +50,35 @@ case class IndexerConfiguration(rescanTriggerTimeMs: Long, quietPeriodForRescanM
   val enabled: Boolean = rescanTriggerTimeMs > 0 && quietPeriodForRescanMs > 0
 }
 
+/** Setting for external analysis, such as PMD. The mode determines if/when analysis is performed
+  * while the params provide directives on how to perform the analysis. Params are grouped by
+  * analysis provider name, e.g. PMD, within each group is a list of params each with a list
+  * of values (which may be empty). The meaning of the params is specific to each provider.
+  */
+case class ExternalAnalysisConfiguration(
+  mode: AnalysisMode,
+  params: Map[String, List[(String, List[String])]]
+)
+
+object ExternalAnalysisConfiguration {
+  def apply(
+    mode: String,
+    params: Map[String, List[(String, List[String])]] = Map()
+  ): ExternalAnalysisConfiguration = {
+    val analysisMode = mode.toLowerCase match {
+      case NoAnalysis.shortName             => NoAnalysis
+      case RefreshAnalysis.shortName        => RefreshAnalysis
+      case LoadAndRefreshAnalysis.shortName => LoadAndRefreshAnalysis
+      case _ => throw new IllegalArgumentException(s"Unexpected analysis mode '$mode'")
+    }
+    new ExternalAnalysisConfiguration(analysisMode, params)
+  }
+}
+
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
-  private var autoFlush: Boolean             = true
-  private var externalAnalysis: AnalysisMode = RefreshAnalysis
+  private var autoFlush                      = true
+  private var externalAnalysis               = ExternalAnalysisConfiguration(RefreshAnalysis, Map())
   private var currentParser: AvailableParser = ANTLRParser
   private var indexerConfiguration           = IndexerConfiguration(0, 0)
 
@@ -67,23 +92,14 @@ object ServerOps {
     current
   }
 
-  def externalAnalysisMode: AnalysisMode = {
+  def getExternalAnalysis: ExternalAnalysisConfiguration = {
     externalAnalysis
   }
 
-  def setExternalAnalysisMode(mode: AnalysisMode): AnalysisMode = {
+  def setExternalAnalysis(config: ExternalAnalysisConfiguration): ExternalAnalysisConfiguration = {
     val current = externalAnalysis
-    externalAnalysis = mode
+    externalAnalysis = config
     current
-  }
-
-  def setExternalAnalysisMode(mode: String): AnalysisMode = {
-    setExternalAnalysisMode(mode.toLowerCase match {
-      case NoAnalysis.shortName             => NoAnalysis
-      case RefreshAnalysis.shortName        => RefreshAnalysis
-      case LoadAndRefreshAnalysis.shortName => LoadAndRefreshAnalysis
-      case _                                => NoAnalysis
-    })
   }
 
   def getCurrentParser: AvailableParser = {

@@ -14,7 +14,12 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.api.{IndexerConfiguration, Org, ServerOps}
+import com.nawforce.apexlink.api.{
+  ExternalAnalysisConfiguration,
+  IndexerConfiguration,
+  Org,
+  ServerOps
+}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -548,7 +553,7 @@ class OrgAPIImpl extends OrgAPI {
   }
 
   override def setExternalAnalysisMode(mode: String): Future[Unit] = {
-    ServerOps.setExternalAnalysisMode(mode)
+    ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode))
     Future.successful(())
   }
 
@@ -571,7 +576,9 @@ class OrgAPIImpl extends OrgAPI {
   override def open(directory: String, options: OpenOptions): Future[OpenResult] = {
     options.loggingLevel.foreach(LoggerOps.setLoggingLevel)
     options.parser.foreach(ServerOps.setCurrentParser)
-    options.externalAnalysisMode.foreach(ServerOps.setExternalAnalysisMode)
+    options.externalAnalysisMode.foreach(mode =>
+      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode))
+    )
     options.cacheDirectory.foreach(path => {
       Environment.setCacheDirOverride(Some(Some(Path(path))))
       ServerOps.setAutoFlush(path.nonEmpty)
