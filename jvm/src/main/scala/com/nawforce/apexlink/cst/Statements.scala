@@ -461,18 +461,17 @@ object WhileStatement {
   }
 }
 
-final case class DoWhileStatement(statement: Option[Statement], expression: Expression)
-    extends Statement {
+final case class DoWhileStatement(block: Block, expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
-    statement.foreach(_.verify(context))
+    block.verify(context)
   }
 }
 
 object DoWhileStatement {
   def construct(parser: CodeParser, statement: DoWhileStatementContext): DoWhileStatement = {
     DoWhileStatement(
-      Statement.construct(parser, statement.statement(), isTrigger = false),
+      Block.constructInner(parser, statement.block()),
       Expression.construct(statement.parExpression.expression())
     ).withContext(statement)
   }

@@ -659,7 +659,7 @@ object ApexParser {
   @js.native
   @JSImport("@apexdevtools/apex-parser", "DoWhileStatementContext")
   class DoWhileStatementContext extends ParserRuleContext {
-    def statement(): StatementContext         = js.native
+    def block(): BlockContext                 = js.native
     def parExpression(): ParExpressionContext = js.native
   }
 

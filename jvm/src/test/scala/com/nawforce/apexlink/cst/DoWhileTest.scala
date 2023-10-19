@@ -4,6 +4,8 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class DoWhileTest extends AnyFunSuite with TestHelper {
@@ -37,8 +39,15 @@ class DoWhileTest extends AnyFunSuite with TestHelper {
   }
 
   test("Single statement") {
-    // TODO: This should fail a block is required, apex-parser is over general
-    happyTypeDeclaration("public class Dummy {{ do System.debug(''); while (true); }}")
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy {{ do System.debug(''); while (true); }}")
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Dummy.cls"))
+          .startsWith("Syntax: line 1 at 25: missing '{' at 'System'")
+      )
+    }
   }
 
   test("Single block") {
