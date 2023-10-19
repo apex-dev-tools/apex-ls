@@ -63,7 +63,7 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Rename: Variable | Scope: Function | rename function var declartion") {
+  test("Rename: Variable | Scope: Function | rename function var declaration") {
     val contentAndCursorPos = withCursorMultiLine(
       s"""public class Dummy { public void someMethod() {
          |String te${CURSOR}st;
@@ -440,6 +440,1317 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames(1).edits(0) == Location(9, 38, 9, 45))
       assert(renames(2).edits.length == 1)
       assert(renames(2).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: Usage | rename across multiple blocks") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |private void privateMethod1(){
+         |String newVar = my${CURSOR}Field;
+         |}
+         |private void privateMethod2(){
+         |String newVar = myField;
+         |}
+         |private void privateMethod3(){
+         |String newVar = myField;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 4)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 16, 4, 23))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(7, 16, 7, 23))
+      assert(renames(2).path == "/Dummy.cls")
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(10, 16, 10, 23))
+      assert(renames(3).path == "/Dummy.cls")
+      assert(renames(3).edits.length == 1)
+      assert(renames(3).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: Declaration | rename across multiple blocks") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String my${CURSOR}Field;
+         |private void privateMethod1(){
+         |String newVar = myField;
+         |}
+         |private void privateMethod2(){
+         |String newVar = myField;
+         |}
+         |private void privateMethod3(){
+         |String newVar = myField;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 4)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 16, 4, 23))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(7, 16, 7, 23))
+      assert(renames(2).path == "/Dummy.cls")
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(10, 16, 10, 23))
+      assert(renames(3).path == "/Dummy.cls")
+      assert(renames(3).edits.length == 1)
+      assert(renames(3).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Class object chain") {
+    val dummyContent =
+      """public class Dummy {
+        |public String myField = 'test string';
+        |}""".stripMargin.replaceAll("\r\n", "\n")
+    val foo1ContentAndCursorPos = withCursorMultiLine(s"""public class Foo1 {
+         |private void privateMethod(){
+         |Dummy test = new Dummy();
+         |test.my${CURSOR}Field = 'a new string';
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> dummyContent, "Foo1.cls" -> foo1ContentAndCursorPos._1)
+    ) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Foo1.cls")
+
+      val renames = {
+        org.unmanaged
+          .getRenameLocations(
+            path,
+            foo1ContentAndCursorPos._2.line,
+            foo1ContentAndCursorPos._2.offset,
+            Some(foo1ContentAndCursorPos._1)
+          )
+      }
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Foo1.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 5, 4, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: Declaration | Class object chain") {
+    val dummyContentAndCursorPos =
+      withCursorMultiLine(s"""public class Dummy {
+        |public String my${CURSOR}Field = 'test string';
+        |}""".stripMargin.replaceAll("\r\n", "\n"))
+    val foo1Content = """public class Foo1 {
+         |private void privateMethod(){
+         |Dummy test = new Dummy();
+         |test.myField = 'a new string';
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n")
+
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> dummyContentAndCursorPos._1, "Foo1.cls" -> foo1Content)
+    ) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames = {
+        org.unmanaged
+          .getRenameLocations(
+            path,
+            dummyContentAndCursorPos._2.line,
+            dummyContentAndCursorPos._2.offset,
+            Some(dummyContentAndCursorPos._1)
+          )
+      }
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Foo1.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 5, 4, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: Usage | cross-file") {
+    val dummyContent =
+      """public class Dummy {
+        |public static String myField = 'test string';
+        |
+        |private void privateMethod(){
+        |myField = 'abc';
+        |}
+        |}""".stripMargin.replaceAll("\r\n", "\n")
+    val foo1ContentAndCursorPos = withCursorMultiLine(s"""public class Foo1 {
+         |private void privateMethod(){
+         |Dummy.my${CURSOR}Field = 'a new string';
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+    val foo2Content =
+      """public class Foo2 {
+        |private void privateMethod(){
+        |Dummy.myField = 'a new string but different';
+        |}
+        |}""".stripMargin.replaceAll("\r\n", "\n")
+
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> dummyContent,
+        "Foo1.cls"  -> foo1ContentAndCursorPos._1,
+        "Foo2.cls"  -> foo2Content
+      )
+    ) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Foo1.cls")
+
+      val renames = {
+        org.unmanaged
+          .getRenameLocations(
+            path,
+            foo1ContentAndCursorPos._2.line,
+            foo1ContentAndCursorPos._2.offset,
+            Some(foo1ContentAndCursorPos._1)
+          )
+      }
+      assert(renames.length == 4)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(5, 0, 5, 7))
+      assert(renames(1).path == "/Foo1.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(3, 6, 3, 13))
+      assert(renames(2).path == "/Foo2.cls")
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(3, 6, 3, 13))
+      assert(renames(3).path == "/Dummy.cls")
+      assert(renames(3).edits.length == 1)
+      assert(renames(3).edits(0) == Location(2, 21, 2, 28))
+    }
+  }
+
+  test("Rename: Variable | From: Declaration | cross-file") {
+    val dummyContentAndCursorPos =
+      withCursorMultiLine(s"""public class Dummy {
+        |public static String my${CURSOR}Field = 'test string';
+        |
+        |private void privateMethod(){
+        |myField = 'abc';
+        |}
+        |}""".stripMargin.replaceAll("\r\n", "\n"))
+    val foo1Content = """public class Foo1 {
+         |private void privateMethod(){
+         |Dummy.myField = 'a new string';
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n")
+    val foo2Content =
+      """public class Foo2 {
+        |private void privateMethod(){
+        |Dummy.myField = 'a new string but different';
+        |}
+        |}""".stripMargin.replaceAll("\r\n", "\n")
+
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> dummyContentAndCursorPos._1,
+        "Foo1.cls"  -> foo1Content,
+        "Foo2.cls"  -> foo2Content
+      )
+    ) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames = {
+        org.unmanaged
+          .getRenameLocations(
+            path,
+            dummyContentAndCursorPos._2.line,
+            dummyContentAndCursorPos._2.offset,
+            Some(dummyContentAndCursorPos._1)
+          )
+      }
+      assert(renames.length == 4)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(5, 0, 5, 7))
+      assert(renames(1).path == "/Foo2.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(3, 6, 3, 13))
+      assert(renames(2).path == "/Foo1.cls")
+      assert(renames(2).edits.length == 1)
+      assert(renames(2).edits(0) == Location(3, 6, 3, 13))
+      assert(renames(3).path == "/Dummy.cls")
+      assert(renames(3).edits.length == 1)
+      assert(renames(3).edits(0) == Location(2, 21, 2, 28))
+    }
+  }
+
+  test("Rename: Variable | Scope: Class | rename var from constructor") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |public Dummy() {
+         |String newVar = my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 16, 4, 23))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | Scope: Class | rename var from initializer block") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |{
+         |String newVar = my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 16, 4, 23))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: LocalVariableDeclarationStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |private void privateMethod(){
+         |String newVar = my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 16, 4, 23))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: ReturnStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField;
+         |private void privateMethod(){
+         |return my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 7, 4, 14))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: IfStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField = 'abc';
+         |private String privateMethod(){
+         |if(my${CURSOR}Field.length() > 0){
+         |  myField = 'test';
+         |  }
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(5, 2, 5, 9))
+      assert(renames(0).edits(1) == Location(4, 3, 4, 10))
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: Basic ForStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 1;
+         |private void privateMethod(){
+         |for(Decimal i = my${CURSOR}Field; i < myField * 2; i += myField){
+         |  myField = 1;
+         |  }
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 4)
+      assert(renames(0).edits(0) == Location(4, 47, 4, 54))
+      assert(renames(0).edits(1) == Location(5, 2, 5, 9))
+      assert(renames(0).edits(2) == Location(4, 16, 4, 23))
+      assert(renames(0).edits(3) == Location(4, 29, 4, 36))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: ForInit declaration | Statement: Basic ForStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |private void privateMethod(){
+         |for(Decimal cou${CURSOR}nter = 5; counter < 10; counter ++){
+         |  counter = counter + 2;
+         |  }
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 5)
+      assert(renames(0).edits(0) == Location(3, 25, 3, 32))
+      assert(renames(0).edits(1) == Location(3, 12, 3, 19))
+      assert(renames(0).edits(2) == Location(4, 12, 4, 19))
+      assert(renames(0).edits(3) == Location(4, 2, 4, 9))
+      assert(renames(0).edits(4) == Location(3, 39, 3, 46))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: Enhanced ForStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal[] myField = new List<Decimal>{1,2,3,4,5};
+         |private void privateMethod(){
+         |for(Decimal loopVar : my${CURSOR}Field){
+         |  loopVar = 2;
+         |  }
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 22, 4, 29))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 17, 2, 24))
+
+    }
+  }
+
+  test("Rename: Variable | From: EnhancedFor Declaration | Statement: Enhanced ForStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal[] myField = new List<Decimal>{1,2,3,4,5};
+         |private void privateMethod(){
+         |for(Decimal loop${CURSOR}Var : myField){
+         |  loopVar = 2;
+         |  }
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 1)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(4, 12, 4, 19))
+      assert(renames(0).edits(1) == Location(5, 2, 5, 9))
+
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: WhileStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |while (my${CURSOR}Field < 10) {
+         |	myField = myField + 1;
+         |	}
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(5, 11, 5, 18))
+      assert(renames(0).edits(1) == Location(4, 7, 4, 14))
+      assert(renames(0).edits(2) == Location(5, 1, 5, 8))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: DoWhileStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |do {
+         |  myField = myField + 1;
+         |} while (my${CURSOR}Field < 10) 
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(5, 2, 5, 9))
+      assert(renames(0).edits(1) == Location(5, 12, 5, 19))
+      assert(renames(0).edits(2) == Location(6, 9, 6, 16))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: TryStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |try{
+         |  my${CURSOR}Field = 1 / 0;
+         |  } catch(myField) {
+         |  myField = 1;
+         |  } finally {
+         |  myField = 2;
+         |  }
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 3)
+      assert(renames(0).edits(0) == Location(5, 2, 5, 9))
+      assert(renames(0).edits(1) == Location(9, 2, 9, 9))
+      assert(renames(0).edits(2) == Location(7, 2, 7, 9))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: ThrowStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | throw my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 7, 4, 14))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: InsertStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | insert my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 8, 4, 15))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: UpdateStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | update my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 8, 4, 15))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: DeleteStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | delete my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 8, 4, 15))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: UndeleteStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | undelete my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 10, 4, 17))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: UpsertStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | upsert my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 8, 4, 15))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: MergeStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | merge my${CURSOR}Field myField;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(4, 7, 4, 14))
+      assert(renames(0).edits(1) == Location(4, 15, 4, 22))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: RunAsStatement") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | System.runAs(myField){
+         |  my${CURSOR}Field;
+         | }
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(4, 14, 4, 21))
+      assert(renames(0).edits(1) == Location(5, 2, 5, 9))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: SOQL") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | List<SObject> things = [
+         |  SELECT Id
+         |	FROM Account
+         |	WHERE Name = :my${CURSOR}Field
+         | ]
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(7, 15, 7, 22))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: SOSL") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         | List<SObject> things = [
+         |	FIND :my${CURSOR}Field
+         |	IN ALL FIELDS
+         |	RETURNING Account(Name)
+         | ]
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(5, 7, 5, 14))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: ArrayExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |String arr = new List<String>{'a', 'b', 'c'}
+         |Decimal newVar = arr[my${CURSOR}Field];
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(5, 21, 5, 28))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: CastExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |Decimal newVar = (Decimal) my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 27, 4, 34))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: New set expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |Set<Decimal> newSet = new Set<Decimal>{
+         |  my${CURSOR}Field,
+         |  myField
+         |  };
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(6, 2, 6, 9))
+      assert(renames(0).edits(1) == Location(5, 2, 5, 9))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: New list expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |List<Decimal> newSet = new List<Decimal>{
+         |  my${CURSOR}Field,
+         |  myField
+         |  };
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(6, 2, 6, 9))
+      assert(renames(0).edits(1) == Location(5, 2, 5, 9))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: New array expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |Decimal[] newSet = new Decimal[]{
+         |  my${CURSOR}Field,
+         |  myField
+         |  };
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(6, 2, 6, 9))
+      assert(renames(0).edits(1) == Location(5, 2, 5, 9))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: New map expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |new Map<Decimal, Decimal>{
+         |  myField => my${CURSOR}Field
+         |  };
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 2)
+      assert(renames(0).edits(0) == Location(5, 13, 5, 20))
+      assert(renames(0).edits(1) == Location(5, 2, 5, 9))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: New class expression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |new PrivateClass(my${CURSOR}Field);
+         |}
+         |private class PrivateClass {
+         |	PrivateClass(Decimal thing) {}
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 17, 4, 24))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: NegationExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public String myField = 'abc';
+         |private void privateMethod(){
+         |if (!my${CURSOR}Field.isAllLowerCase()) {}
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 5, 4, 12))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 14, 2, 21))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: SubExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |Decimal thing = 1 * (my${CURSOR}Field + 5);
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 21, 4, 28))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: PostfixExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |Decimal thing = my${CURSOR}Field++;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 16, 4, 23))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: PrefixExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |Decimal thing = ++my${CURSOR}Field;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 18, 4, 25))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
+    }
+  }
+
+  test("Rename: Variable | From: usage | Statement: InstanceOfExpression") {
+    val contentAndCursorPos = withCursorMultiLine(s"""public class Dummy {
+         |public Decimal myField = 5;
+         |private void privateMethod(){
+         |Boolean thing = my${CURSOR}Field instanceOf System.Decimal;
+         |}
+         |}""".stripMargin.replaceAll("\r\n", "\n"))
+
+    FileSystemHelper.run(Map("Dummy.cls" -> contentAndCursorPos._1)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Dummy.cls")
+
+      val renames =
+        org.unmanaged.getRenameLocations(
+          path,
+          contentAndCursorPos._2.line,
+          contentAndCursorPos._2.offset,
+          Some(contentAndCursorPos._1)
+        )
+      assert(renames.length == 2)
+      assert(renames(0).path == "/Dummy.cls")
+      assert(renames(0).edits.length == 1)
+      assert(renames(0).edits(0) == Location(4, 16, 4, 23))
+      assert(renames(1).path == "/Dummy.cls")
+      assert(renames(1).edits.length == 1)
+      assert(renames(1).edits(0) == Location(2, 15, 2, 22))
     }
   }
 
