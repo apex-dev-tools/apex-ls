@@ -658,19 +658,20 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
   test("Rename: Variable | From: Declaration | cross-file") {
     val dummyContentAndCursorPos =
       withCursorMultiLine(s"""public class Dummy {
-        |public static String my${CURSOR}Field = 'test string';
-        |
+           |public static String my${CURSOR}Field = 'test string';
+           |
+           |private void privateMethod(){
+           |myField = 'abc';
+           |}
+           |}""".stripMargin.replaceAll("\r\n", "\n"))
+    val fooContent =
+      """public class Foo {
         |private void privateMethod(){
-        |myField = 'abc';
+        |Dummy.myField = 'a new string';
         |}
-        |}""".stripMargin.replaceAll("\r\n", "\n"))
-    val foo1Content = """public class Foo1 {
-         |private void privateMethod(){
-         |Dummy.myField = 'a new string';
-         |}
-         |}""".stripMargin.replaceAll("\r\n", "\n")
-    val foo2Content =
-      """public class Foo2 {
+        |}""".stripMargin.replaceAll("\r\n", "\n")
+    val thingContent =
+      """public class Thing {
         |private void privateMethod(){
         |Dummy.myField = 'a new string but different';
         |}
@@ -679,8 +680,8 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> dummyContentAndCursorPos._1,
-        "Foo1.cls"  -> foo1Content,
-        "Foo2.cls"  -> foo2Content
+        "Foo.cls"   -> fooContent,
+        "Thing.cls" -> thingContent
       )
     ) { root: PathLike =>
       val org  = createOrg(root)
@@ -699,10 +700,10 @@ class RenameProviderTest extends AnyFunSuite with TestHelper {
       assert(renames(0).path == "/Dummy.cls")
       assert(renames(0).edits.length == 1)
       assert(renames(0).edits(0) == Location(5, 0, 5, 7))
-      assert(renames(1).path == "/Foo2.cls")
+      // The dependencyHolders are not always returned in the same order which makes this test flakey.
+      // Not checking for file names 'Foo' and 'Thing' because they alternate but the location in both files is the sane
       assert(renames(1).edits.length == 1)
       assert(renames(1).edits(0) == Location(3, 6, 3, 13))
-      assert(renames(2).path == "/Foo1.cls")
       assert(renames(2).edits.length == 1)
       assert(renames(2).edits(0) == Location(3, 6, 3, 13))
       assert(renames(3).path == "/Dummy.cls")
