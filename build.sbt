@@ -46,6 +46,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
       "com.github.nawforce"      %%% "scala-json-rpc"                         % "1.1.0",
       "com.github.nawforce"      %%% "scala-json-rpc-upickle-json-serializer" % "1.1.0",
       "com.lihaoyi"              %%% "upickle"                                % "1.2.0",
+      "com.lihaoyi"              %%% "mainargs"                               % "0.5.4",
       "org.scalatest"            %%% "scalatest"                              % "3.2.0" % Test
     )
   )

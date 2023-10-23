@@ -15,6 +15,7 @@
 package com.nawforce.apexlink.api
 
 import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.rpc.{
   BombScore,
   ClassTestItem,
@@ -23,6 +24,7 @@ import com.nawforce.apexlink.rpc.{
   HoverItem,
   LocationLink,
   MethodTestItem,
+  OpenOptions,
   Rename,
   TargetLocation
 }
@@ -31,7 +33,7 @@ import com.nawforce.pkgforce.diagnostics.{IssuesManager, LoggerOps}
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.pkgforce.workspace.{ProjectConfig, Workspace}
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.platform.{Environment, Path}
 
 /** A virtual Org used to present the analysis functionality in a familiar way.
   *
@@ -39,19 +41,13 @@ import com.nawforce.runtime.platform.Path
   * same time but most use cases just need one creating, see Org.newOrg(). The Org functions as a
   * container of multiple [[Package]] objects and maintains a set of discovered issues from the
   * analysis of the package metadata. All orgs have at least one 'unmanaged' package identifiable by
-  * having no namespace.
+  * having no namespace. At any point you can list of current issues with the packages from
+  * getIssues. When you create an Org the metadata from the provided workspace directory will be
+  * loaded automatically, honouring the settings in sfdx-project.json & .forceignore files if present.
   *
-  * In the simple case after creating an Org, you should add one or more packages detailing where
-  * package metadata is stored. Adding large packages can take considerable CPU and memory
-  * resources. Once the packages are loaded the metadata within them can be mutated using the
-  * [[Package]] methods. At any point you can list of current issues with the packages from
-  * getIssues.
-  *
-  * When metadata changes are requested (see [[Package.refresh]] they are queued for later
-  * processing either via calling [[Org.flush]] or via automatic flushing (the default). Flushing
-  * also updates a disk cache that helps significantly reduce initial loading times. The flushing
-  * model used by an [[Org]] is set on construction, see [[ServerOps.setAutoFlush]] to change to
-  * manual flushing.
+  * Changes made to the workspace metadata files are automatically handled, although there can be some
+  * lag in the file watching. You can also prompt for changes to be handled via [[Package.refresh]]
+  * to have better control over handling.
   *
   * Orgs and Packages are not thread safe, serialise all calls to them.
   */
@@ -250,13 +246,44 @@ trait Org {
 
 object Org {
 
-  /** Create a new empty Org to which you can add packages for code analysis. */
+  /** Create a new virtual org for a workspace
+    * @param path workspace directory
+    */
   def newOrg(path: String): Org = {
     newOrg(Path(path))
   }
 
-  /** Create a new empty Org to which you can add packages for code analysis. */
+  /** Create a new virtual org for a workspace
+    * @param path workspace directory
+    */
   def newOrg(path: PathLike): Org = {
+    newOrg(path, OpenOptions.default())
+  }
+
+  /** Create a new virtual org for a workspace
+    * @param path workspace directory
+    * @param options org options
+    */
+  def newOrg(path: PathLike, options: OpenOptions): Org = {
+    // All should be options on the org, some are cached when the org is created
+    options.loggingLevel.foreach(LoggerOps.setLoggingLevel)
+    options.parser.foreach(ServerOps.setCurrentParser)
+    options.externalAnalysisMode.foreach(mode =>
+      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode))
+    )
+    options.cacheDirectory.foreach(path => {
+      Environment.setCacheDirOverride(Some(Some(Path(path))))
+      ServerOps.setAutoFlush(path.nonEmpty)
+    })
+    options.indexerConfiguration.foreach(values =>
+      ServerOps.setIndexerConfiguration(IndexerConfiguration(values._1, values._2))
+    )
+    options.autoFlush.foreach(enabled => ServerOps.setAutoFlush(enabled))
+    options.cache.foreach(enabled => if (!enabled) Environment.setCacheDirOverride(Some(None)))
+    options.unused.foreach(enabled =>
+      if (!enabled) PluginsManager.removePlugins(Seq(classOf[UnusedPlugin]))
+    )
+
     LoggerOps.infoTime(
       s"Org created",
       show = true,

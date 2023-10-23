@@ -3,18 +3,13 @@
  */
 package io.github.apexdevtools.apexls
 
-import com.nawforce.apexlink.api.{
-  ExternalAnalysisConfiguration,
-  LoadAndRefreshAnalysis,
-  Org,
-  ServerOps
-}
-import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
-import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
-import com.nawforce.runtime.platform.{Environment, Path}
+import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, Org}
+import com.nawforce.apexlink.rpc.OpenOptions
+import com.nawforce.runtime.platform.Path
+import mainargs.{Flag, Leftover, ParserForClass, arg}
 
 import java.time.Instant
-import scala.collection.immutable
+import scala.collection.immutable.ArraySeq
 import scala.xml.XML
 
 /** Generate a report using PMD format XML, see
@@ -26,62 +21,83 @@ object PMDReport {
   private final val STATUS_ARGS: Int      = 1
   private final val STATUS_EXCEPTION: Int = 3
 
+  private case class ConfigArgs(
+    @arg(short = 'w', doc = "Output warning issues")
+    warnings: Flag,
+    @arg(short = 'u', doc = "Output unused warning issues, requires --warnings")
+    unused: Flag,
+    @arg(short = 'i', doc = "Enable info logging")
+    info: Flag,
+    @arg(short = 'd', doc = "Enable debug logging")
+    debug: Flag,
+    @arg(short = 'n', doc = "Disable cache use")
+    nocache: Flag,
+    @arg(doc = "SFDX Workspace directory path")
+    dirs: Leftover[String]
+  )
+
+  private class Config(args: ConfigArgs) {
+
+    val dirs: Seq[String] = args.dirs.value
+
+    val asOpenOptions: OpenOptions = {
+      OpenOptions
+        .default()
+        .withAutoFlush(enabled = false)
+        .withExternalAnalysisMode(LoadAndRefreshAnalysis.shortName)
+        .withLoggingLevel(
+          if (args.debug.value) "debug"
+          else if (args.info.value) "info"
+          else "none"
+        )
+        .withCache(!args.nocache.value)
+        .withUnused(args.unused.value)
+    }
+
+    val shouldManualFlush: Boolean = !args.nocache.value
+
+    val writeWarnings: Boolean = args.warnings.value
+  }
+
+  private object Config {
+    def apply(args: Array[String]): Config = {
+      new Config(
+        ParserForClass[ConfigArgs]
+          .constructOrExit(ArraySeq.unsafeWrapArray(args), customName = classOf[PMDReport].getName)
+      )
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     System.exit(run(args))
   }
 
   def run(args: Array[String]): Int = {
-    val flags =
-      Set("-verbose", "-unused", "-nocache", "-info", "-debug")
-
-    val verbose = args.contains("-verbose")
-    val unused  = verbose && args.contains("-unused")
-    val noCache = args.contains("-nocache")
-    val debug   = args.contains("-debug")
-    val info    = !debug && args.contains("-info")
-
-    // Check we have some metadata directories to work with
-    val dirs = args.filterNot(flags.contains)
-    if (dirs.isEmpty) {
-      System.err.println(s"No workspace directory argument provided.")
-      return STATUS_ARGS
-    }
-    if (dirs.length > 1) {
-      System.err.println(
-        s"Multiple arguments provided, expected workspace directory, '${dirs.mkString(", ")}'}"
-      )
-      return STATUS_ARGS
-    }
-
     try {
-      // Setup cache flushing, analysis & logging defaults
-      ServerOps.setAutoFlush(false)
-      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(LoadAndRefreshAnalysis, Map()))
-      LoggerOps.setLogger(new DefaultLogger(System.err))
-      if (debug)
-        LoggerOps.setLoggingLevel(LoggerOps.DEBUG_LOGGING)
-      else if (info)
-        LoggerOps.setLoggingLevel(LoggerOps.INFO_LOGGING)
+      val config = Config(args)
 
-      // Disable loading from the cache
-      if (noCache) {
-        Environment.setCacheDirOverride(Some(None))
+      // Check we have some metadata directories to work with
+      if (config.dirs.isEmpty) {
+        System.err.println(s"No workspace directory argument provided.")
+        return STATUS_ARGS
       }
-
-      // Don't use unused analysis unless we have both verbose and unused flags
-      if (!verbose || !unused) {
-        PluginsManager.removePlugins(immutable.Seq(classOf[UnusedPlugin]))
+      if (config.dirs.length > 1) {
+        System.err.println(
+          s"Multiple arguments provided, expected single workspace directory, '${config.dirs.mkString(", ")}'}"
+        )
+        return STATUS_ARGS
       }
 
       // Load org and flush to cache if we are using it
-      val org = Org.newOrg(dirs.head)
-      if (!noCache) {
+      val workspace = config.dirs.head
+      val org       = Org.newOrg(Path(workspace), config.asOpenOptions)
+      if (config.shouldManualFlush) {
         org.flush()
       }
 
       // Output report
-      val outputPath = Path(dirs.head).join(REPORT_NAME)
-      writeIssues(outputPath, org, verbose)
+      val outputPath = Path(workspace).join(REPORT_NAME)
+      writeIssues(outputPath, org, config.writeWarnings)
 
     } catch {
       case ex: Throwable =>
@@ -132,4 +148,8 @@ object PMDReport {
     )
     STATUS_OK
   }
+}
+
+class PMDReport {
+  // To allow getting classOf, see use above
 }
