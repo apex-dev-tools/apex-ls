@@ -21,8 +21,6 @@ trait RenameProvider extends SourceOps {
     offset: Int,
     content: Option[String]
   ): Array[Rename] = {
-    // TODO move this
-    refresh(path, highPriority = true)
     val sourceAndType = loadFullSourceAndType(path, None).getOrElse(return Array.empty)
 
     val validation = locateFromValidation(sourceAndType._2, line, offset)
@@ -121,7 +119,13 @@ trait RenameProvider extends SourceOps {
         classDeclaration match {
           case cd: ClassDeclaration =>
             if (cd.idLocation.contains(requestLine, requestOffset)) {
-              return Some(cd)
+              // refresh for correct dependency holders
+              refresh(classDeclaration.location.path, highPriority = true)
+              val reloadedClassDec =
+                loadFullSourceAndType(classDeclaration.location.path, None)
+                  .getOrElse(return None)
+                  ._2
+              return Some(reloadedClassDec)
             }
 
             cd.bodyDeclarations
@@ -134,6 +138,13 @@ trait RenameProvider extends SourceOps {
                       loadFullSourceAndType(classDeclaration.location.path, None)
                         .getOrElse(return None)
                         ._2
+
+                    cbd match {
+                      // if the declaration on the cursor is a constructor then the declaration is the class itself
+                      case _: ApexConstructorDeclaration =>
+                        return Some(reloadedClassDec.asInstanceOf[ClassDeclaration])
+                    }
+
                     return reloadedClassDec
                       .asInstanceOf[ClassDeclaration]
                       .bodyDeclarations
