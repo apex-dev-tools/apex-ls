@@ -21,6 +21,8 @@ trait RenameProvider extends SourceOps {
     offset: Int,
     content: Option[String]
   ): Array[Rename] = {
+    // TODO move this
+    refresh(path, highPriority = true)
     val sourceAndType = loadFullSourceAndType(path, None).getOrElse(return Array.empty)
 
     val validation = locateFromValidation(sourceAndType._2, line, offset)
@@ -28,6 +30,7 @@ trait RenameProvider extends SourceOps {
     val declaration = getClassBodyDeclaration(sourceAndType._2, validation, line, offset)
 
     declaration match {
+      case Some(cd: ClassDeclaration)       => getSymbolLocations(cd)
       case Some(cbd: ClassBodyDeclaration)  => getSymbolLocations(cbd)
       case Some(varDec: VariableDeclarator) => getLocalVarSymbolLocations(varDec.id, validation)
       case Some(id: Id)                     => getLocalVarSymbolLocations(id, validation)
@@ -117,6 +120,10 @@ trait RenameProvider extends SourceOps {
       case None =>
         classDeclaration match {
           case cd: ClassDeclaration =>
+            if (cd.idLocation.contains(requestLine, requestOffset)) {
+              return Some(cd)
+            }
+
             cd.bodyDeclarations
               .foreach {
                 case cbd: ClassBodyDeclaration =>
@@ -371,7 +378,7 @@ trait RenameProvider extends SourceOps {
       return Array(Rename(cbd.location.path.toString, Array(cbd.idLocation)))
     )
 
-    val calloutLocations = declarationDependencyHolders.collect {
+    var calloutLocations = declarationDependencyHolders.collect {
       case holdingMethod: ApexMethodDeclaration =>
         val currentClassPath = holdingMethod.location.path
         val methodRenameLocations: mutable.Set[Location] = holdingMethod.block match {
@@ -426,13 +433,33 @@ trait RenameProvider extends SourceOps {
         Rename(currentClassPath.toString, methodRenameLocations.toArray)
     }.toArray
 
+    cbd match {
+      case cd: ClassDeclaration =>
+        getConstructorDeclarationLocations(cd) match {
+          case Some(rename) => calloutLocations = calloutLocations :+ rename
+          case None         =>
+        }
+      case _ =>
+    }
+
     calloutLocations :+ Rename(cbd.location.path.toString, Array(cbd.idLocation))
+  }
+
+  private def getConstructorDeclarationLocations(cd: ClassDeclaration): Option[Rename] = {
+    val constructorLocations =
+      cd.localConstructors.map(localConstructor => localConstructor.idLocation)
+    if (constructorLocations.nonEmpty) {
+      Some(Rename(cd.location.path.toString, constructorLocations.toArray))
+    } else {
+      None
+    }
   }
 
   private def getDependencyHolders(cbd: ClassBodyDeclaration): Option[Set[DependencyHolder]] = {
     cbd match {
       case md: ApexMethodDeclaration => Some(md.getDependencyHolders)
       case fd: ApexFieldDeclaration  => Some(fd.getDependencyHolders)
+      case cd: ClassDeclaration      => Some(cd.getDependencyHolders)
       case _                         => None
     }
   }
@@ -451,6 +478,14 @@ trait RenameProvider extends SourceOps {
         )
 
       case varDecStatement: LocalVariableDeclarationStatement =>
+        cbd match {
+          case cd: ClassDeclaration =>
+            getTypeLocationForVarDec(varDecStatement, cd) match {
+              case Some(location) => methodRenameLocations.add(location)
+              case None           =>
+            }
+          case _ =>
+        }
         varDecStatement.localVariableDeclaration.variableDeclarators.declarators.foreach(
           varDeclarator =>
             varDeclarator.init match {
@@ -605,6 +640,26 @@ trait RenameProvider extends SourceOps {
     methodRenameLocations
   }
 
+  private def getTypeLocationForVarDec(
+    statement: LocalVariableDeclarationStatement,
+    cd: ClassDeclaration
+  ): Option[Location] = {
+    if (statement.localVariableDeclaration.typeName.name == cd.name) {
+      val varDec = statement.localVariableDeclaration.variableDeclarators.declarators.head
+
+      // variable name location minus the length of the type dec -1 (for the space before)
+      val startPosition = varDec.location.location.startPosition - cd.name.value.length - 1
+      // variable name start pos -1 (for the space) to get the end of the type dec location.
+      val endPosition = varDec.location.location.startPosition - 1
+      val startLine   = varDec.location.location.startLine
+      val endLine     = varDec.location.location.endLine
+
+      Some(Location(startLine, startPosition, endLine, endPosition))
+    } else {
+      None
+    }
+  }
+
   private def validateExpression(expression: Expression): Option[Expression] = {
     val sourceAndType = loadFullSourceAndType(expression.location.path, None)
     val validation = locateFromValidation(
@@ -637,7 +692,7 @@ trait RenameProvider extends SourceOps {
     }
   }
 
-  private def getLocationFromPrimaryExp(
+  private def getVarLocationFromPrimaryExp(
     primaryExpression: PrimaryExpression,
     fd: ApexFieldDeclaration
   ): Option[Location] = {
@@ -693,9 +748,14 @@ trait RenameProvider extends SourceOps {
         methodCallLocations.addAll(getLocationsFromExpression(dotExpression.expression, cbd))
 
       case dotExpression: DotExpressionWithId =>
-        getVarLocationFromDotExpression(dotExpression, cbd) match {
-          case Some(location) => methodCallLocations.add(location)
-          case _              =>
+        methodCallLocations.addAll(getLocationsFromExpression(dotExpression.expression, cbd))
+        cbd match {
+          case fd: ApexFieldDeclaration =>
+            getVarLocationFromDotExpression(dotExpression, fd) match {
+              case Some(location) => methodCallLocations.add(location)
+              case _              =>
+            }
+          case _ =>
         }
 
       case binaryExpression: BinaryExpression =>
@@ -725,9 +785,14 @@ trait RenameProvider extends SourceOps {
 
         cbd match {
           case fd: ApexFieldDeclaration =>
-            getLocationFromPrimaryExp(primaryExpression, fd) match {
+            getVarLocationFromPrimaryExp(primaryExpression, fd) match {
               case Some(l) => methodCallLocations.add(l)
               case _       =>
+            }
+          case cd: ClassDeclaration =>
+            getClassNameLocationFromPrimaryExp(primaryExpression, cd) match {
+              case Some(location) => methodCallLocations.add(location)
+              case _              =>
             }
           case _ =>
         }
@@ -770,6 +835,15 @@ trait RenameProvider extends SourceOps {
           case _ =>
         }
 
+        cbd match {
+          case cd: ClassDeclaration =>
+            getConstructorLocationFromExp(newExpression, cd) match {
+              case Some(l) => methodCallLocations.add(l)
+              case _       =>
+            }
+          case _ =>
+        }
+
       case negationExpression: NegationExpression =>
         methodCallLocations.addAll(getLocationsFromExpression(negationExpression.expression, cbd))
 
@@ -792,33 +866,49 @@ trait RenameProvider extends SourceOps {
 
   private def getVarLocationFromDotExpression(
     dotExpression: DotExpressionWithId,
-    fd: ClassBodyDeclaration
+    fd: ApexFieldDeclaration
   ): Option[Location] = {
-    fd match {
-      case fd: ApexFieldDeclaration =>
-        dotExpression.expression match {
-          case primaryExpression: PrimaryExpression if dotExpression.target == fd.id =>
-            primaryExpression.primary match {
-              case idPrimary: IdPrimary =>
-                idPrimary.typeName match {
-                  // when called off an object
-                  case Some(typeName) if typeName == fd.thisTypeId.typeName =>
-                    Some(dotExpression.target.location.location)
+    dotExpression.expression match {
+      case primaryExpression: PrimaryExpression if dotExpression.target == fd.id =>
+        primaryExpression.primary match {
+          case idPrimary: IdPrimary =>
+            idPrimary.typeName match {
+              // when called off an object
+              case Some(typeName) if typeName == fd.thisTypeId.typeName =>
+                Some(dotExpression.target.location.location)
 
-                  // when called off a class
-                  case None if idPrimary.id.name == fd.thisTypeId.typeName.name =>
-                    Some(dotExpression.target.location.location)
+              // when called off a class
+              case None if idPrimary.id.name == fd.thisTypeId.typeName.name =>
+                Some(dotExpression.target.location.location)
 
-                  case _ => None
-                }
               case _ => None
             }
-
           case _ => None
         }
+
       case _ => None
     }
+  }
 
+  private def getConstructorLocationFromExp(
+    newExpression: NewExpression,
+    cd: ClassDeclaration
+  ): Option[Location] = {
+    if (newExpression.creator.createdName.typeName.name == cd.name) {
+      Some(newExpression.creator.createdName.location.location)
+    } else {
+      None
+    }
+  }
+
+  private def getClassNameLocationFromPrimaryExp(
+    primaryExp: PrimaryExpression,
+    cd: ClassDeclaration
+  ): Option[Location] = {
+    primaryExp.primary match {
+      case idPrimary: IdPrimary if idPrimary.id == cd.id => Some(idPrimary.location.location)
+      case _                                             => None
+    }
   }
 
 }
