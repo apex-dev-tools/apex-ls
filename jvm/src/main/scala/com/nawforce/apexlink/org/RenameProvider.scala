@@ -48,6 +48,7 @@ trait RenameProvider extends SourceOps {
     requestOffset: Int
   ): Option[Locatable] = {
     validation._2 match {
+      // if symbol at location is usage/call-out
       case Some(location) =>
         val vr = validation._1(location)
         vr.cst match {
@@ -115,6 +116,7 @@ trait RenameProvider extends SourceOps {
           case _ => None
         }
 
+      // if symbol location is the declaration
       case None =>
         classDeclaration match {
           case cd: ClassDeclaration =>
@@ -397,6 +399,15 @@ trait RenameProvider extends SourceOps {
           case _                  => mutable.Set.empty
         }
 
+        cbd match {
+          case cd: ClassDeclaration =>
+            getDeclarationTypeLocation(holdingMethod, cd) match {
+              case Some(location) => methodRenameLocations.add(location)
+              case None           =>
+            }
+          case _ =>
+        }
+
         Rename(currentClassPath.toString, methodRenameLocations.toArray)
 
       case holdingConstructor: ApexConstructorDeclaration =>
@@ -413,6 +424,15 @@ trait RenameProvider extends SourceOps {
             case Some(exp) => getLocationsFromExpression(exp, cbd)
             case None      => mutable.Set.empty
           }
+
+        cbd match {
+          case cd: ClassDeclaration =>
+            getDeclarationTypeLocation(fieldDeclaration, cd) match {
+              case Some(location) => methodRenameLocations.add(location)
+              case None           =>
+            }
+          case _ =>
+        }
 
         Rename(currentClassPath.toString, methodRenameLocations.toArray)
 
@@ -431,6 +451,15 @@ trait RenameProvider extends SourceOps {
             methodRenameLocations.addAll(
               getLocationsFromStatements(setterBlock.block.get.statements(), cbd)
             )
+          case _ =>
+        }
+
+        cbd match {
+          case cd: ClassDeclaration =>
+            getDeclarationTypeLocation(propertyDeclaration, cd) match {
+              case Some(location) => methodRenameLocations.add(location)
+              case None           =>
+            }
           case _ =>
         }
 
@@ -454,6 +483,35 @@ trait RenameProvider extends SourceOps {
     }
 
     calloutLocations :+ Rename(cbd.location.path.toString, Array(cbd.idLocation))
+  }
+
+  private def getDeclarationTypeLocation(
+    cbd: ClassBodyDeclaration,
+    cd: ClassDeclaration
+  ): Option[Location] = {
+    cbd match {
+      case md: ApexMethodDeclaration if md.typeName.name == cd.name =>
+        Some(constructTypeLocation(cbd, cd))
+
+      case fd: ApexFieldDeclaration if fd.typeName.name == cd.name =>
+        Some(constructTypeLocation(cbd, cd))
+
+      case pd: ApexPropertyDeclaration if pd.typeName.name == cd.name =>
+        Some(constructTypeLocation(cbd, cd))
+
+      case _ => None
+    }
+  }
+
+  private def constructTypeLocation(cbd: ClassBodyDeclaration, cd: ClassDeclaration): Location = {
+    // symbol name location minus the length of the type dec -1 (for the space before)
+    val startPosition = cbd.idLocation.startPosition - cd.name.value.length - 1
+    // symbol name start pos -1 (for the space) to get the end of the type dec location.
+    val endPosition = cbd.idLocation.startPosition - 1
+    val startLine   = cbd.idLocation.startLine
+    val endLine     = cbd.idLocation.endLine
+
+    Location(startLine, startPosition, endLine, endPosition)
   }
 
   private def getConstructorDeclarationLocations(cd: ClassDeclaration): Option[Rename] = {
