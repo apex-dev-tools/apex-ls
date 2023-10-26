@@ -190,7 +190,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       .default()
       .withParser("OutlineSingle")
       .withLoggingLevel("DEBUG")
-      .withExternalAnalysisMode("NoAnalysis")
+      .withExternalAnalysisMode(NoAnalysis.shortName, Map())
       .withCacheDirectory(cacheDir.toString)
       .withIndexerConfiguration(1, 2)
     val oldLogger = LoggerOps.setLogger(new TestNullLogger())
