@@ -110,6 +110,14 @@ trait RenameProvider extends SourceOps {
               case _ => None
             }
 
+          case newExpression: NewExpression
+              if newExpression.creator.createdName.location.location
+                .contains(requestLine, requestOffset) =>
+            vr.result.declaration match {
+              case Some(cd: ClassDeclaration) => Some(cd)
+              case _                          => None
+            }
+
           case id: Id =>
             Some(id)
 
