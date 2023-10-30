@@ -46,6 +46,13 @@ final case class ApexPropertyDeclaration(
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
 
+  val returnTypeNameLocation: Location = Location(
+    idLocation.startLine,
+    idLocation.startPosition - 1 - typeName.name.value.length,
+    idLocation.endLine,
+    idLocation.startPosition - 1
+  )
+
   override def idLocation: Location = id.location.location
 
   val setter: Option[SetterPropertyBlock] =

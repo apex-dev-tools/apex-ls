@@ -3,11 +3,12 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst._
+import com.nawforce.apexlink.cst.{ClassDeclaration, _}
 import com.nawforce.apexlink.cst.stmts.SwitchStatement
+import com.nawforce.apexlink.finding.{TypeError, TypeResolver}
 import com.nawforce.apexlink.rpc.Rename
-import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, SummaryMethod}
-import com.nawforce.apexlink.types.core.DependencyHolder
+import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, SummaryDeclaration, SummaryMethod}
+import com.nawforce.apexlink.types.core.{DependencyHolder, TypeDeclaration}
 import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
 
 import scala.collection.mutable
@@ -153,6 +154,7 @@ trait RenameProvider extends SourceOps {
                       // if the declaration on the cursor is a constructor then the declaration is the class itself
                       case _: ApexConstructorDeclaration =>
                         return Some(reloadedClassDec.asInstanceOf[ClassDeclaration])
+                      case _ =>
                     }
 
                     return reloadedClassDec
@@ -160,9 +162,50 @@ trait RenameProvider extends SourceOps {
                       .bodyDeclarations
                       .find(bodyDec => bodyDec.idLocation == cbd.idLocation)
                   }
+
                   if (cbd.location.location.contains(requestLine, requestOffset)) {
                     cbd match {
+                      // if the cursor is on a field declaration data type then a class is the declaration
+                      case fieldDec: ApexFieldDeclaration =>
+                        if (fieldDec.returnTypeNameLocation.contains(requestLine, requestOffset)) {
+                          val typeResolver = TypeResolver(fieldDec.typeName, cd)
+                          return typeResolver.toOption match {
+                            // the problem is it is a summary declaration
+                            case Some(declarationClass: ClassDeclaration) => Some(declarationClass)
+                            case Some(summaryDec: SummaryDeclaration) =>
+                              reValidate(
+                                Set(summaryDec.typeId) ++ summaryDec.getTypeDependencyHolders.toSet
+                              )
+
+                              loadTypeFromModule(summaryDec.location.path) match {
+                                case Some(td: TypeDeclaration) =>
+                                  // the type resolver gave a summary declaration so the full declaration will be a class
+                                  Some(td.asInstanceOf[ClassDeclaration])
+                                case _ => None
+                              }
+                            case _ => None
+                          }
+                        }
                       case methodDec: ApexMethodDeclaration =>
+                        // check return type for renaming classes
+                        if (methodDec.returnTypeNameLocation.contains(requestLine, requestOffset)) {
+                          return TypeResolver(methodDec.typeName, cd).toOption match {
+                            case Some(declarationClass: ClassDeclaration) => Some(declarationClass)
+                            case Some(summaryDec: SummaryDeclaration) =>
+                              reValidate(
+                                Set(summaryDec.typeId) ++ summaryDec.getTypeDependencyHolders.toSet
+                              )
+
+                              loadTypeFromModule(summaryDec.location.path) match {
+                                case Some(td: TypeDeclaration) =>
+                                  // the type resolver gave a summary declaration so the full declaration will be a class
+                                  Some(td.asInstanceOf[ClassDeclaration])
+                                case _ => None
+                              }
+                            case _ => None
+                          }
+                        }
+
                         methodDec.parameters.foreach(parameter =>
                           if (parameter.id.location.location.contains(requestLine, requestOffset)) {
                             return Some(parameter.id)
@@ -199,6 +242,25 @@ trait RenameProvider extends SourceOps {
                           case _ => None
                         }
                       case apd: ApexPropertyDeclaration =>
+                        // check return type for renaming classes
+                        if (apd.returnTypeNameLocation.contains(requestLine, requestOffset)) {
+                          return TypeResolver(apd.typeName, cd).toOption match {
+                            case Some(declarationClass: ClassDeclaration) => Some(declarationClass)
+                            case Some(summaryDec: SummaryDeclaration) =>
+                              reValidate(
+                                Set(summaryDec.typeId) ++ summaryDec.getTypeDependencyHolders.toSet
+                              )
+
+                              loadTypeFromModule(summaryDec.location.path) match {
+                                case Some(td: TypeDeclaration) =>
+                                  // the type resolver gave a summary declaration so the full declaration will be a class
+                                  Some(td.asInstanceOf[ClassDeclaration])
+                                case _ => None
+                              }
+                            case _ => None
+                          }
+                        }
+
                         apd.getter match {
                           case Some(getterBlock) if getterBlock.block.isDefined =>
                             getterBlock.block.get

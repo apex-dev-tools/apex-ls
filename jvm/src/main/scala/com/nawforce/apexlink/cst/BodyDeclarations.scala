@@ -244,10 +244,16 @@ class ApexMethodDeclaration(
 
   override def idLocation: Location = id.location.location
 
-  override val name: Name                   = id.name
-  override val thisTypeId: TypeId           = thisType.typeId
-  override val hasBlock: Boolean            = block.nonEmpty
-  override def typeName: TypeName           = returnTypeName.typeName
+  override val name: Name         = id.name
+  override val thisTypeId: TypeId = thisType.typeId
+  override val hasBlock: Boolean  = block.nonEmpty
+  override def typeName: TypeName = returnTypeName.typeName
+  val returnTypeNameLocation: Location = Location(
+    idLocation.startLine,
+    location.location.startPosition,
+    idLocation.endLine,
+    idLocation.startPosition - 1
+  )
   override val nature: Nature               = METHOD_NATURE
   override val children: ArraySeq[ApexNode] = ArraySeq.empty
   override lazy val signature: String       = super[ApexMethodLike].signature
@@ -348,6 +354,13 @@ final case class ApexFieldDeclaration(
   override val nature: Nature               = FIELD_NATURE
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
+
+  val returnTypeNameLocation: Location = Location(
+    idLocation.startLine,
+    location.location.startPosition,
+    idLocation.endLine,
+    idLocation.startPosition - 1
+  )
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     // Ignore enum constants so they don't become dependency holders on defining enum type
