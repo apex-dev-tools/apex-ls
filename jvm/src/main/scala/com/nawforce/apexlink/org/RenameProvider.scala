@@ -3,9 +3,9 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst.{ClassDeclaration, _}
 import com.nawforce.apexlink.cst.stmts.SwitchStatement
-import com.nawforce.apexlink.finding.{TypeError, TypeResolver}
+import com.nawforce.apexlink.cst._
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.rpc.Rename
 import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, SummaryDeclaration, SummaryMethod}
 import com.nawforce.apexlink.types.core.{DependencyHolder, TypeDeclaration}
@@ -549,10 +549,14 @@ trait RenameProvider extends SourceOps {
           case Some(rename) => calloutLocations = calloutLocations :+ rename
           case None         =>
         }
-      case _ =>
+        calloutLocations :+ Rename(
+          cbd.location.path.toString,
+          Array(cbd.idLocation),
+          renameFile = true
+        )
+      case _ => calloutLocations :+ Rename(cbd.location.path.toString, Array(cbd.idLocation))
     }
 
-    calloutLocations :+ Rename(cbd.location.path.toString, Array(cbd.idLocation))
   }
 
   private def getDeclarationTypeLocation(
