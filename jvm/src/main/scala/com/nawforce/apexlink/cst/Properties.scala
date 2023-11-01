@@ -46,7 +46,7 @@ final case class ApexPropertyDeclaration(
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
 
-  val returnTypeNameLocation: Location = Location(
+  def returnTypeNameLocation: Location = Location(
     idLocation.startLine,
     idLocation.startPosition - 1 - typeName.name.value.length,
     idLocation.endLine,

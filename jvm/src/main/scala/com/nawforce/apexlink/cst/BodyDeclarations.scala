@@ -248,9 +248,9 @@ class ApexMethodDeclaration(
   override val thisTypeId: TypeId = thisType.typeId
   override val hasBlock: Boolean  = block.nonEmpty
   override def typeName: TypeName = returnTypeName.typeName
-  val returnTypeNameLocation: Location = Location(
+  def returnTypeNameLocation: Location = Location(
     idLocation.startLine,
-    location.location.startPosition,
+    idLocation.startPosition - 1 - typeName.name.value.length,
     idLocation.endLine,
     idLocation.startPosition - 1
   )
@@ -355,9 +355,9 @@ final case class ApexFieldDeclaration(
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
 
-  val returnTypeNameLocation: Location = Location(
+  def returnTypeNameLocation: Location = Location(
     idLocation.startLine,
-    location.location.startPosition,
+    idLocation.startPosition - 1 - typeName.name.value.length,
     idLocation.endLine,
     idLocation.startPosition - 1
   )
