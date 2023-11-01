@@ -92,7 +92,6 @@ final case class IdPrimary(id: Id) extends Primary {
   private var cachedClassFieldDeclaration: Option[FieldDeclaration] = None
   var typeName: Option[TypeName]                                    = None
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
-    cachedClassFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
     isVarReference(context)
       .getOrElse(
         isFieldReference(input, context)
@@ -139,6 +138,8 @@ final case class IdPrimary(id: Id) extends Primary {
     input: ExprContext,
     context: ExpressionVerifyContext
   ): Option[ExprContext] = {
+    cachedClassFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
+
     val td            = input.typeDeclaration
     val staticContext = Some(true).filter(input.isStatic.contains)
 
