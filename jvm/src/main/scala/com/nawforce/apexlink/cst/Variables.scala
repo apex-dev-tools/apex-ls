@@ -23,6 +23,7 @@ import com.nawforce.apexparser.ApexParser.{
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.TypeName
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
 
 final case class VariableDeclarator(
@@ -114,6 +115,13 @@ final case class LocalVariableDeclaration(
   typeName: TypeName,
   variableDeclarators: VariableDeclarators
 ) extends CST {
+  def returnTypeNameLocation: Location = Location(
+    location.location.startLine,
+    location.location.startPosition,
+    location.location.startLine,
+    variableDeclarators.location.location.startLine - 1
+  )
+
   def verify(context: BlockVerifyContext): Unit = {
 
     variableDeclarators.declarators.foreach(vd => {
