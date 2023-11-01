@@ -172,7 +172,7 @@ trait RenameProvider extends SourceOps {
                           return resolveClassName(fieldDec.typeName, cd)
                         }
                       case methodDec: ApexMethodDeclaration =>
-                        // check return type for renaming classes
+                        // if the cursor is on the return data type then a class is the declaration
                         if (methodDec.returnTypeNameLocation.contains(requestLine, requestOffset)) {
                           return resolveClassName(methodDec.typeName, cd)
                         }
@@ -301,7 +301,6 @@ trait RenameProvider extends SourceOps {
 
         loadTypeFromModule(summaryDec.location.path) match {
           case Some(td: TypeDeclaration) =>
-            // the type resolver gave a summary declaration so the full declaration will be a class
             Some(td.asInstanceOf[ClassDeclaration])
           case _ => None
         }
@@ -574,27 +573,16 @@ trait RenameProvider extends SourceOps {
   ): Option[Location] = {
     cbd match {
       case md: ApexMethodDeclaration if md.typeName.name == cd.name =>
-        Some(constructTypeLocation(cbd, cd))
+        Some(md.returnTypeNameLocation)
 
       case fd: ApexFieldDeclaration if fd.typeName.name == cd.name =>
-        Some(constructTypeLocation(cbd, cd))
+        Some(fd.returnTypeNameLocation)
 
       case pd: ApexPropertyDeclaration if pd.typeName.name == cd.name =>
-        Some(constructTypeLocation(cbd, cd))
+        Some(pd.returnTypeNameLocation)
 
       case _ => None
     }
-  }
-
-  private def constructTypeLocation(cbd: ClassBodyDeclaration, cd: ClassDeclaration): Location = {
-    // symbol name location minus the length of the type dec -1 (for the space before)
-    val startPosition = cbd.idLocation.startPosition - cd.name.value.length - 1
-    // symbol name start pos -1 (for the space) to get the end of the type dec location.
-    val endPosition = cbd.idLocation.startPosition - 1
-    val startLine   = cbd.idLocation.startLine
-    val endLine     = cbd.idLocation.endLine
-
-    Location(startLine, startPosition, endLine, endPosition)
   }
 
   private def getConstructorDeclarationLocations(cd: ClassDeclaration): Option[Rename] = {
