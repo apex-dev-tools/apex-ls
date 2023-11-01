@@ -140,6 +140,12 @@ trait RenameProvider extends SourceOps {
               return Some(reloadedClassDec)
             }
 
+            cd.getSuperClassSymbolLocation() match {
+              case Some(location) if location.contains(requestLine, requestOffset) =>
+                return cd.superClassDeclaration.map(td => td.asInstanceOf[ClassDeclaration])
+              case _ =>
+            }
+
             cd.bodyDeclarations
               .foreach {
                 case cbd: ClassBodyDeclaration =>
@@ -549,6 +555,17 @@ trait RenameProvider extends SourceOps {
           getLocationsFromStatements(holdingInitializerBlock.block.statements(), cbd)
 
         Rename(currentClassPath.toString, methodRenameLocations.toArray)
+
+      case childClass: ClassDeclaration =>
+        val currentClassPath = childClass.location.path
+        val parentClassSymbolLocation: Array[Location] =
+          childClass.getSuperClassSymbolLocation() match {
+            case Some(location) => Array(location)
+            case None           => Array.empty
+          }
+
+        Rename(currentClassPath.toString, parentClassSymbolLocation)
+
     }.toArray
 
     cbd match {
