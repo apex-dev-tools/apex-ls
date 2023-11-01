@@ -558,9 +558,9 @@ trait RenameProvider extends SourceOps {
           case None         =>
         }
         calloutLocations :+ Rename(
-          cbd.location.path.toString,
-          Array(cbd.idLocation),
-          renameFile = true
+          cd.location.path.toString,
+          Array(cd.idLocation),
+          renameFile = cd.outerTypeName.isEmpty // don't rename file for inner classes
         )
       case _ => calloutLocations :+ Rename(cbd.location.path.toString, Array(cbd.idLocation))
     }
