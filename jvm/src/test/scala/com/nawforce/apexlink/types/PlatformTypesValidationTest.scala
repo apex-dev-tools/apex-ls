@@ -30,6 +30,7 @@ class PlatformTypesValidationTest extends AnyFunSuite with TestHelper {
     "System.Map"                      -> "System.Map<K, V>",
     "System.Set"                      -> "System.Set<T>",
     "System.Iterable"                 -> "System.Iterable<T>",
+    "System.Comparator"               -> "System.Comparator<T>",
     "Database.Batchable"              -> "Database.Batchable<T>",
     "Internal.RecordSet$"             -> "Internal.RecordSet$<T>",
     "Internal.DescribeSObjectResult$" -> "Internal.DescribeSObjectResult$<T>",
@@ -41,7 +42,7 @@ class PlatformTypesValidationTest extends AnyFunSuite with TestHelper {
   )
 
   test("Right number of types (should exclude inners)") {
-    assert(PlatformTypeDeclaration.classNames.size == 2365)
+    assert(PlatformTypeDeclaration.classNames.size == 2435)
   }
 
   test("SObject type is visible") {

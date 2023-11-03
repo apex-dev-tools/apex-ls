@@ -133,10 +133,16 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     assert(td.get.outerTypeName.isEmpty)
 
     val nested = td.get.nestedTypes.sortBy(_.name.toString)
-    assert(nested.length == 3)
+    assert(nested.length == 5)
     assert(
       nested
-        .map(_.name.toString) sameElements Array("BinaryAttachment", "Header", "TextAttachment")
+        .map(_.name.toString) sameElements Array(
+        "AuthenticationResult",
+        "AuthenticationResultField",
+        "BinaryAttachment",
+        "Header",
+        "TextAttachment"
+      )
     )
     assert(
       nested.filter(
@@ -336,6 +342,7 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
         "public virtual void set(System.Integer index, System.String listElement)",
         "public virtual System.Integer size()",
         "public virtual void sort()",
+        "public virtual void sort(System.Comparator<System.String> comparator)",
         "public virtual System.String toString()",
         "public virtual System.Boolean equals(System.List<System.String> other)",
         "public virtual System.Integer hashCode()"
