@@ -28,6 +28,7 @@ import com.nawforce.runtime.parsers.CodeParser
 import scala.collection.immutable.ArraySeq
 
 trait CSTTypeName {
+  def context: Option[TypeNameContext]
   def typeArguments(): CSTTypeArguments
   def isList: Boolean
   def isSet: Boolean
@@ -62,6 +63,7 @@ private[cst] object ANTLRCST {
   }
 
   private class ANTLRTypeName(typeName: TypeNameContext) extends CSTTypeName {
+    override def context: Option[TypeNameContext] = Some(typeName)
     override def typeArguments(): CSTTypeArguments =
       new ANTLRTypeArguments(CodeParser.toScala(typeName.typeArguments()))
     override def isList: Boolean           = CodeParser.toScala(typeName.LIST()).nonEmpty
@@ -135,7 +137,26 @@ object TypeReference {
     if (typeArguments.typeRefs().isEmpty)
       TypeName.emptySeq
     else
-      typeArguments.typeRefs().map(param => TypeReference.construct(Option(param)))
+      typeArguments
+        .typeRefs()
+        .map(param => {
+          val paramType = TypeReference.construct(Option(param))
+
+          addContext(Some(paramType), param.typeNames().flatMap(_.context))
+
+          paramType
+        })
+  }
+
+  private def addContext(typeName: Option[TypeName], contexts: Seq[TypeNameContext]): Unit = {
+    typeName.foreach(tn => {
+      contexts match {
+        case hd :+ tail =>
+          CST.sourceContext.value.get.stampLocation(tn, tail)
+          addContext(tn.outer, hd)
+        case _ =>
+      }
+    })
   }
 }
 

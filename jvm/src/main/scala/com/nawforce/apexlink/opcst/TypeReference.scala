@@ -14,6 +14,7 @@ import com.nawforce.apexlink.cst.{
   CSTTypeReference,
   TypeReference => CSTTypeReferenceAlias
 }
+import com.nawforce.apexparser.ApexParser.TypeNameContext
 import com.nawforce.pkgforce.names.TypeName
 
 import scala.collection.immutable.ArraySeq
@@ -29,6 +30,7 @@ private[opcst] object TypeReference {
   }
 
   private class OutlineParserTypeName(typeName: OPTypeName) extends CSTTypeName {
+    override def context: Option[TypeNameContext] = None
     override def typeArguments(): CSTTypeArguments =
       new OutlineParserTypeArgument(typeName.typeArguments)
     override def isList: Boolean           = typeName.id.lowerCaseName == "list"
