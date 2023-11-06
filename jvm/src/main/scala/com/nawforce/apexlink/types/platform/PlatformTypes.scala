@@ -46,7 +46,7 @@ object PlatformTypes {
   lazy val interviewType: TypeDeclaration          = loadType(TypeNames.Interview)
   lazy val apexComponent: TypeDeclaration          = loadType(TypeNames.ApexComponent)
   lazy val chatterComponent: TypeDeclaration       = loadType(TypeNames.ChatterComponent)
-  lazy val label: TypeDeclaration                  = loadType(TypeNames.Label)
+  lazy val labelType: TypeDeclaration              = loadType(TypeNames.Label)
 
   private val typeCache                                   = mutable.Map[TypeName, TypeResponse]()
   private val firedTypes                                  = mutable.Set[TypeName]()

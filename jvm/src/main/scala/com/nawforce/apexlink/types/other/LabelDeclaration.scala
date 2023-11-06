@@ -83,7 +83,7 @@ final class LabelDeclaration(
   override val fields: ArraySeq[FieldDeclaration]     = labels
 
   // Provide platform APIs like Label.get
-  override lazy val methods: ArraySeq[MethodDeclaration] = PlatformTypes.label.methods
+  override lazy val methods: ArraySeq[MethodDeclaration] = PlatformTypes.labelType.methods
 
   /** Create new labels from merging those in the provided stream */
   def merge(stream: PackageStream): LabelDeclaration = {

@@ -98,6 +98,8 @@ final class InterviewDeclaration(
 
   val sourceHash: Int = MurmurHash3.unorderedHash(sources.map(_.hash), 0)
 
+  override lazy val methods: ArraySeq[MethodDeclaration] = PlatformTypes.interviewType.methods
+
   // Propagate dependencies to nested
   nestedInterviews.foreach(_.addTypeDependencyHolder(typeId))
 
