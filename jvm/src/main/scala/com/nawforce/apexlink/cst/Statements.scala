@@ -20,6 +20,7 @@ import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OrgInfo
+import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, LoggerOps}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
@@ -300,14 +301,14 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
       }
 
       // Check we are trying to iterate over something iterable
-      val iteratorTypeName = exprContext.typeName
-      val iterationType    = getIterationType(iteratorTypeName)
+      val iterationTd   = exprContext.typeDeclaration
+      val iterationType = getIterationType(iterationTd)
       if (iterationType.isEmpty) {
         context.log(
           Issue(
             ERROR_CATEGORY,
             this.location,
-            s"For loop can only iterate over Lists or Sets, not '$iteratorTypeName'"
+            s"For loop can only have iterable types, not '${iterationTd.typeName}'"
           )
         )
       } else {
@@ -331,11 +332,12 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
     }
   }
 
-  private def getIterationType(typeName: TypeName): Option[TypeName] = {
-    if (typeName.isList || typeName.isSet || typeName.isRecordSet) {
-      typeName.params.headOption
+  private def getIterationType(iterableType: TypeDeclaration): Option[TypeName] = {
+    val itTypeName = iterableType.typeName
+    if (itTypeName.isList || itTypeName.isSet || itTypeName.isIterable || itTypeName.isRecordSet) {
+      itTypeName.params.headOption
     } else {
-      None
+      iterableType.findImplementedTypeParams(TypeNames.Iterable).flatMap(_.headOption)
     }
   }
 }

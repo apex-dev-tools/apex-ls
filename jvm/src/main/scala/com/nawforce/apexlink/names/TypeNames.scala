@@ -48,6 +48,7 @@ object TypeNames extends InternCache[TypeName] {
   lazy val Address: TypeName  = TypeName(Names.Address, Nil, Some(TypeNames.System)).intern
   lazy val List: TypeName     = TypeName(Names.ListName, Nil, Some(TypeNames.System)).intern
   lazy val Set$ : TypeName    = TypeName(Names.SetName, Nil, Some(TypeNames.System)).intern
+  lazy val Iterable: TypeName = TypeName(XNames.Iterable, Nil, Some(TypeNames.System)).intern
   lazy val Iterator: TypeName = TypeName(XNames.Iterator, Nil, Some(TypeNames.System)).intern
 
   lazy val Exception: TypeName = TypeName(Names.Exception, Nil, Some(TypeNames.System)).intern

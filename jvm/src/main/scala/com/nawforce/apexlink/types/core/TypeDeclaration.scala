@@ -589,6 +589,22 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
       })
   }
 
+  def findImplementedTypeParams(typeName: TypeName): Option[Seq[TypeName]] = {
+    val interfaces = interfaceDeclarations
+
+    interfaces
+      .collectFirst({
+        case in if in.typeName.equalsNamesOnly(typeName) || in.typeName == typeName =>
+          in.typeName.params
+      })
+      .orElse(
+        interfaces
+          .flatMap(_.findImplementedTypeParams(typeName))
+          .headOption
+      )
+      .orElse(superClassDeclaration.flatMap(_.findImplementedTypeParams(typeName)))
+  }
+
 }
 
 object TypeDeclaration {
