@@ -148,37 +148,6 @@ object TextOps {
         })
     }
 
-    def extractSymbolLocation(
-      limiterFactory: () => Limiter,
-      line: Int,
-      offset: Int
-    ): Option[Location] = {
-      text
-        .getLine(line - 1)
-        .flatMap(lineText => {
-          // Search backwards from -1 as selection cursor position is on next character which is possibly not legal
-          lineText
-            .findLimit(limiterFactory(), forward = false, offset - 1)
-            .flatMap(dotChainStart => {
-              lineText
-                .findLimit(limiterFactory(), forward = true, dotChainStart)
-                .map(dotChainEnd => {
-                  val rawText            = lineText.substring(dotChainStart, dotChainEnd + 1)
-                  var subStringCursorPos = offset - lineText.indexOf(rawText)
-                  val cursorSymbol = rawText
-                    .split('.')
-                    .find(part => {
-                      subStringCursorPos -= part.length
-                      subStringCursorPos < 0
-                    })
-                  val symbolStart = offset - (subStringCursorPos + cursorSymbol.get.length)
-                  Location(line, symbolStart, line, symbolStart + cursorSymbol.get.length)
-                })
-            })
-        })
-
-    }
-
     /** Search for last allowed character from a set either forwards or backwards from an offset */
     def findLimit(limiter: Limiter, forward: Boolean, offset: Int): Option[Int] = {
       if (offset < 0 || offset >= text.length) {
