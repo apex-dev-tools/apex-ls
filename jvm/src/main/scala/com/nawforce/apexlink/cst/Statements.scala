@@ -337,7 +337,10 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
     if (itTypeName.isList || itTypeName.isSet || itTypeName.isIterable || itTypeName.isRecordSet) {
       itTypeName.params.headOption
     } else {
-      iterableType.findImplementedTypeParams(TypeNames.Iterable).flatMap(_.headOption)
+      iterableType
+        .superTypes()
+        .find(typeName => typeName.equalsNamesOnly(TypeNames.Iterable))
+        .flatMap(_.params.headOption)
     }
   }
 }
