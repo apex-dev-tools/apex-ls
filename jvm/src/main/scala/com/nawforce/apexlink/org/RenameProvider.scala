@@ -9,9 +9,10 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.rpc.Rename
 import com.nawforce.apexlink.types.apex.{ApexFullDeclaration, SummaryDeclaration, SummaryMethod}
 import com.nawforce.apexlink.types.core.{DependencyHolder, TypeDeclaration}
-import com.nawforce.pkgforce.names.TypeName
+import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 trait RenameProvider extends SourceOps {
@@ -44,7 +45,7 @@ trait RenameProvider extends SourceOps {
     * Otherwise, expect either an Id or a VariableDeclarator object to be returned for local declarations.
     */
   private def getClassBodyDeclaration(
-    classDeclaration: ApexFullDeclaration,
+    classDeclaration: ApexFullDeclaration, // TODO this function would be simplified if this was ClassDeclaration
     validation: (Map[Location, ValidationResult], Option[Location]),
     requestLine: Int,
     requestOffset: Int
@@ -115,9 +116,29 @@ trait RenameProvider extends SourceOps {
           case newExpression: NewExpression
               if newExpression.creator.createdName.location.location
                 .contains(requestLine, requestOffset) =>
-            vr.result.declaration match {
-              case Some(cd: ClassDeclaration) => Some(cd)
-              case _                          => None
+            val newExpressionType = newExpression.creator.createdName.typeName
+            if (
+              newExpressionType.name == Names.ListName || newExpressionType.name == Names.SetName || newExpressionType.name == Names.MapName
+            ) {
+              getTypeNameAtCursor(requestLine, requestOffset, newExpressionType) match {
+                case Some(typeName) =>
+                  resolveTypeToFullDeclaration(
+                    typeName,
+                    classDeclaration.asInstanceOf[ClassDeclaration]
+                  )
+                case _ => None
+              }
+
+            } else if (
+              newExpression.creator.createdName.typeNameLocation
+                .contains(requestLine, requestOffset)
+            ) {
+              vr.result.declaration match {
+                case Some(cd: ClassDeclaration) => Some(cd)
+                case _                          => None
+              }
+            } else {
+              None
             }
 
           case id: Id =>
@@ -146,6 +167,9 @@ trait RenameProvider extends SourceOps {
               case _ =>
             }
 
+            // TODO this logic could be improved by looking for the class body declaration containing the
+            // requestLine and requestOffset and only processing the block on that one, instead of looping through all
+            // blocks
             cd.bodyDeclarations
               .foreach {
                 case cbd: ClassBodyDeclaration =>
@@ -174,13 +198,42 @@ trait RenameProvider extends SourceOps {
                     cbd match {
                       // if the cursor is on a field declaration data type then a class is the declaration
                       case fieldDec: ApexFieldDeclaration =>
-                        if (fieldDec.returnTypeNameLocation.contains(requestLine, requestOffset)) {
-                          return resolveClassName(fieldDec.typeName, cd)
+                        // for renaming the type
+                        if (
+                          fieldDec.typeName.name == Names.ListName || fieldDec.typeName.name == Names.SetName || fieldDec.typeName.name == Names.MapName
+                        ) {
+                          getTypeNameAtCursor(requestLine, requestOffset, fieldDec.typeName) match {
+                            case Some(typeName) =>
+                              return resolveTypeToFullDeclaration(
+                                typeName,
+                                classDeclaration.asInstanceOf[ClassDeclaration]
+                              )
+                            case _ =>
+                          }
+                        } else if (fieldDec.typeNameLocation.contains(requestLine, requestOffset)) {
+                          return resolveTypeToFullDeclaration(fieldDec.typeName, cd)
                         }
                       case methodDec: ApexMethodDeclaration =>
                         // if the cursor is on the return data type then a class is the declaration
-                        if (methodDec.returnTypeNameLocation.contains(requestLine, requestOffset)) {
-                          return resolveClassName(methodDec.typeName, cd)
+                        if (
+                          methodDec.typeName.name == Names.ListName || methodDec.typeName.name == Names.SetName || methodDec.typeName.name == Names.MapName
+                        ) {
+                          getTypeNameAtCursor(
+                            requestLine,
+                            requestOffset,
+                            methodDec.typeName
+                          ) match {
+                            case Some(typeName) =>
+                              return resolveTypeToFullDeclaration(
+                                typeName,
+                                classDeclaration.asInstanceOf[ClassDeclaration]
+                              )
+                            case _ =>
+                          }
+                        } else if (
+                          methodDec.returnTypeNameLocation.contains(requestLine, requestOffset)
+                        ) {
+                          return resolveTypeToFullDeclaration(methodDec.typeName, cd)
                         }
 
                         methodDec.parameters.foreach(parameter =>
@@ -195,7 +248,7 @@ trait RenameProvider extends SourceOps {
                               .statements()
                               .foreach(statement => {
                                 val localVarDec =
-                                  getLocalVariableDeclaration(
+                                  getDeclarationFromStatement(
                                     statement,
                                     requestLine,
                                     requestOffset,
@@ -218,7 +271,7 @@ trait RenameProvider extends SourceOps {
                               .statements()
                               .foreach(statement => {
                                 val localVarDec =
-                                  getLocalVariableDeclaration(
+                                  getDeclarationFromStatement(
                                     statement,
                                     requestLine,
                                     requestOffset,
@@ -230,8 +283,19 @@ trait RenameProvider extends SourceOps {
                         }
                       case apd: ApexPropertyDeclaration =>
                         // check return type for renaming classes
-                        if (apd.returnTypeNameLocation.contains(requestLine, requestOffset)) {
-                          return resolveClassName(apd.typeName, cd)
+                        if (
+                          apd.typeName.name == Names.ListName || apd.typeName.name == Names.SetName || apd.typeName.name == Names.MapName
+                        ) {
+                          getTypeNameAtCursor(requestLine, requestOffset, apd.typeName) match {
+                            case Some(typeName) =>
+                              return resolveTypeToFullDeclaration(
+                                typeName,
+                                classDeclaration.asInstanceOf[ClassDeclaration]
+                              )
+                            case _ =>
+                          }
+                        } else if (apd.typeNameLocation.contains(requestLine, requestOffset)) {
+                          return resolveTypeToFullDeclaration(apd.typeName, cd)
                         }
 
                         apd.getter match {
@@ -240,7 +304,7 @@ trait RenameProvider extends SourceOps {
                               .statements()
                               .foreach(statement => {
                                 val localVarDec =
-                                  getLocalVariableDeclaration(
+                                  getDeclarationFromStatement(
                                     statement,
                                     requestLine,
                                     requestOffset,
@@ -256,7 +320,7 @@ trait RenameProvider extends SourceOps {
                               .statements()
                               .foreach(statement => {
                                 val localVarDec =
-                                  getLocalVariableDeclaration(
+                                  getDeclarationFromStatement(
                                     statement,
                                     requestLine,
                                     requestOffset,
@@ -274,7 +338,7 @@ trait RenameProvider extends SourceOps {
                               .statements()
                               .foreach(statement => {
                                 val localVarDec =
-                                  getLocalVariableDeclaration(
+                                  getDeclarationFromStatement(
                                     statement,
                                     requestLine,
                                     requestOffset,
@@ -295,11 +359,10 @@ trait RenameProvider extends SourceOps {
     }
   }
 
-  private def resolveClassName(
+  private def resolveTypeToFullDeclaration(
     typeName: TypeName,
     cd: ClassDeclaration
   ): Option[ClassDeclaration] = {
-    // if the cursor is on the type declaration, return the class declaration
     TypeResolver(typeName, cd).toOption match {
       case Some(declarationClass: ClassDeclaration) => Some(declarationClass)
       case Some(summaryDec: SummaryDeclaration) =>
@@ -314,7 +377,43 @@ trait RenameProvider extends SourceOps {
     }
   }
 
-  private def getLocalVariableDeclaration(
+  private def getTypeNameAtCursor(line: Int, offset: Int, typeName: TypeName): Option[TypeName] = {
+    if (
+      typeName.name != Names.ListName && typeName.name != Names.MapName && typeName.name != Names.SetName
+    ) {
+      if (typeName.location.location.contains(line, offset)) {
+        return Some(typeName)
+      }
+    } else {
+      val headTypeName = getTypeNameAtCursor(line, offset, typeName.params.head)
+      if (headTypeName.isDefined) return headTypeName
+    }
+
+    if (typeName.name == Names.Map$) {
+      val headTypeName = getTypeNameAtCursor(line, offset, typeName.params.last)
+      if (headTypeName.isDefined) return headTypeName
+    }
+
+    None
+  }
+
+  @tailrec
+  private def getLocationOfTypeNameInCollection(
+    typeName: TypeName,
+    cd: ClassDeclaration
+  ): Option[Location] = {
+    if (
+      typeName.name == Names.ListName || typeName.name == Names.MapName || typeName.name == Names.SetName
+    ) {
+      getLocationOfTypeNameInCollection(typeName.params.head, cd)
+    } else if (resolveTypeToFullDeclaration(typeName, cd).contains(cd)) {
+      Some(typeName.location.location)
+    } else {
+      None
+    }
+  }
+
+  private def getDeclarationFromStatement(
     statement: Statement,
     line: Int,
     offset: Int,
@@ -322,10 +421,19 @@ trait RenameProvider extends SourceOps {
   ): Option[Locatable] = {
     statement match {
       case varDecStatement: LocalVariableDeclarationStatement =>
+        val varDecTypeName = varDecStatement.localVariableDeclaration.typeName
         if (
+          varDecTypeName.name == Names.ListName || varDecTypeName.name == Names.SetName || varDecTypeName.name == Names.MapName
+        ) {
+          getTypeNameAtCursor(line, offset, varDecTypeName) match {
+            case Some(typeName) =>
+              return resolveTypeToFullDeclaration(typeName, cd)
+            case _ =>
+          }
+        } else if (
           varDecStatement.localVariableDeclaration.returnTypeNameLocation.contains(line, offset)
         ) {
-          return resolveClassName(varDecStatement.localVariableDeclaration.typeName, cd)
+          return resolveTypeToFullDeclaration(varDecStatement.localVariableDeclaration.typeName, cd)
         }
 
         varDecStatement.localVariableDeclaration.variableDeclarators.declarators.foreach(
@@ -341,7 +449,7 @@ trait RenameProvider extends SourceOps {
             block
               .statements()
               .foreach(statement => {
-                val varDec = getLocalVariableDeclaration(statement, line, offset, cd)
+                val varDec = getDeclarationFromStatement(statement, line, offset, cd)
                 if (varDec.isDefined) return varDec
               })
           case _ =>
@@ -368,7 +476,7 @@ trait RenameProvider extends SourceOps {
             block
               .statements()
               .foreach(statement => {
-                val varDec = getLocalVariableDeclaration(statement, line, offset, cd)
+                val varDec = getDeclarationFromStatement(statement, line, offset, cd)
                 if (varDec.isDefined) return varDec
               })
           case _ =>
@@ -380,7 +488,7 @@ trait RenameProvider extends SourceOps {
             block
               .statements()
               .foreach(statement => {
-                val varDec = getLocalVariableDeclaration(statement, line, offset, cd)
+                val varDec = getDeclarationFromStatement(statement, line, offset, cd)
                 if (varDec.isDefined) return varDec
               })
           case _ =>
@@ -390,7 +498,7 @@ trait RenameProvider extends SourceOps {
         doWhileStatement.block
           .statements()
           .foreach(statement => {
-            val varDec = getLocalVariableDeclaration(statement, line, offset, cd)
+            val varDec = getDeclarationFromStatement(statement, line, offset, cd)
             if (varDec.isDefined) return varDec
           })
 
@@ -400,7 +508,7 @@ trait RenameProvider extends SourceOps {
             block
               .statements()
               .foreach(statement => {
-                val varDec = getLocalVariableDeclaration(statement, line, offset, cd)
+                val varDec = getDeclarationFromStatement(statement, line, offset, cd)
                 if (varDec.isDefined) return varDec
               })
         }
@@ -411,7 +519,7 @@ trait RenameProvider extends SourceOps {
               block
                 .statements()
                 .foreach(statement => {
-                  val varDec = getLocalVariableDeclaration(statement, line, offset, cd)
+                  val varDec = getDeclarationFromStatement(statement, line, offset, cd)
                   if (varDec.isDefined) return varDec
                 })
             case _ =>
@@ -423,7 +531,7 @@ trait RenameProvider extends SourceOps {
             block
               .statements()
               .foreach(statement => {
-                val varDec = getLocalVariableDeclaration(statement, line, offset, cd)
+                val varDec = getDeclarationFromStatement(statement, line, offset, cd)
                 if (varDec.isDefined) return varDec
               })
           case _ =>
@@ -434,7 +542,7 @@ trait RenameProvider extends SourceOps {
           whenControl.block
             .statements()
             .foreach(statement => {
-              val varDec = getLocalVariableDeclaration(statement, line, offset, cd)
+              val varDec = getDeclarationFromStatement(statement, line, offset, cd)
               if (varDec.isDefined) return varDec
             })
         )
@@ -581,7 +689,6 @@ trait RenameProvider extends SourceOps {
         )
       case _ => calloutLocations :+ Rename(cbd.location.path.toString, Array(cbd.idLocation))
     }
-
   }
 
   private def getDeclarationTypeLocation(
@@ -589,14 +696,38 @@ trait RenameProvider extends SourceOps {
     cd: ClassDeclaration
   ): Option[Location] = {
     cbd match {
-      case md: ApexMethodDeclaration if md.typeName.name == cd.name =>
-        Some(md.returnTypeNameLocation)
+      case md: ApexMethodDeclaration =>
+        if (
+          md.typeName.name == Names.ListName || md.typeName.name == Names.SetName || md.typeName.name == Names.MapName
+        ) {
+          getLocationOfTypeNameInCollection(md.cachedCollectionTypeName.getOrElse(return None), cd)
+        } else if (md.typeName.name == cd.name) {
+          Some(md.returnTypeNameLocation)
+        } else {
+          None
+        }
 
-      case fd: ApexFieldDeclaration if fd.typeName.name == cd.name =>
-        Some(fd.returnTypeNameLocation)
+      case fd: ApexFieldDeclaration =>
+        if (
+          fd.typeName.name == Names.ListName || fd.typeName.name == Names.SetName || fd.typeName.name == Names.MapName
+        ) {
+          getLocationOfTypeNameInCollection(fd.typeName, cd)
+        } else if (fd.typeName.name == cd.name) {
+          Some(fd.typeNameLocation)
+        } else {
+          None
+        }
 
-      case pd: ApexPropertyDeclaration if pd.typeName.name == cd.name =>
-        Some(pd.returnTypeNameLocation)
+      case pd: ApexPropertyDeclaration =>
+        if (
+          pd.typeName.name == Names.ListName || pd.typeName.name == Names.SetName || pd.typeName.name == Names.MapName
+        ) {
+          getLocationOfTypeNameInCollection(pd.typeName, cd)
+        } else if (pd.typeName.name == cd.name) {
+          Some(pd.typeNameLocation)
+        } else {
+          None
+        }
 
       case _ => None
     }
@@ -801,7 +932,12 @@ trait RenameProvider extends SourceOps {
     statement: LocalVariableDeclarationStatement,
     cd: ClassDeclaration
   ): Option[Location] = {
-    if (statement.localVariableDeclaration.typeName.name == cd.name) {
+    val localVarTypeName = statement.localVariableDeclaration.typeName
+    if (
+      localVarTypeName.name == Names.ListName || localVarTypeName.name == Names.MapName || localVarTypeName.name == Names.SetName
+    ) {
+      getLocationOfTypeNameInCollection(localVarTypeName, cd)
+    } else if (localVarTypeName.name == cd.name) {
       val varDec = statement.localVariableDeclaration.variableDeclarators.declarators.head
 
       // variable name location minus the length of the type dec -1 (for the space before)
@@ -962,6 +1098,25 @@ trait RenameProvider extends SourceOps {
         methodCallLocations.addAll(getLocationsFromExpression(castExpression.expression, cbd))
 
       case newExpression: NewExpression =>
+        cbd match {
+          case cd: ClassDeclaration =>
+            val typeName = newExpression.creator.createdName.typeName
+            if (
+              typeName.name == Names.ListName || typeName.name == Names.MapName || typeName.name == Names.SetName
+            ) {
+
+              getLocationOfTypeNameInCollection(typeName, cd) match {
+                case Some(location) => methodCallLocations.add(location)
+                case None           =>
+              }
+            } else {
+              getConstructorLocationFromExp(newExpression, cd) match {
+                case Some(l) => methodCallLocations.add(l)
+                case _       =>
+              }
+            }
+        }
+
         newExpression.creator.creatorRest match {
           case Some(cr: SetOrListCreatorRest) =>
             cr.parts.foreach(exp =>
@@ -989,15 +1144,6 @@ trait RenameProvider extends SourceOps {
             cr.arguments.foreach(exp =>
               methodCallLocations.addAll(getLocationsFromExpression(exp, cbd))
             )
-          case _ =>
-        }
-
-        cbd match {
-          case cd: ClassDeclaration =>
-            getConstructorLocationFromExp(newExpression, cd) match {
-              case Some(l) => methodCallLocations.add(l)
-              case _       =>
-            }
           case _ =>
         }
 
