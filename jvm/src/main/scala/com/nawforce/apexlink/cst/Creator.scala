@@ -32,6 +32,12 @@ import scala.collection.immutable.ArraySeq
 
 /** New expression type name, similar to a typeRef */
 final case class CreatedName(idPairs: List[IdCreatedNamePair]) extends CST {
+  def typeNameLocation: Location = Location(
+    location.location.startLine,
+    location.location.startPosition,
+    location.location.endLine,
+    location.location.startPosition + typeName.name.value.length
+  )
 
   lazy val typeName: TypeName = idPairs.tail.map(_.typeName).foldLeft(idPairs.head.typeName) {
     (acc: TypeName, typeName: TypeName) =>
