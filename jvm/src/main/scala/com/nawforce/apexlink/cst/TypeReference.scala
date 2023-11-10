@@ -61,13 +61,14 @@ private[cst] object ANTLRCST {
     }
   }
 
-  private class ANTLRTypeName(typeName: TypeNameContext) extends CSTTypeName {
+  private[cst] class ANTLRTypeName(typeName: TypeNameContext) extends CSTTypeName {
     override def typeArguments(): CSTTypeArguments =
       new ANTLRTypeArguments(CodeParser.toScala(typeName.typeArguments()))
     override def isList: Boolean           = CodeParser.toScala(typeName.LIST()).nonEmpty
     override def isSet: Boolean            = CodeParser.toScala(typeName.SET()).nonEmpty
     override def isMap: Boolean            = CodeParser.toScala(typeName.MAP()).nonEmpty
     override def getIdText: Option[String] = Option(typeName.id()).map(id => CodeParser.getText(id))
+    def context: TypeNameContext           = typeName
   }
 
   private[cst] class ANTLRTypeReference(typeRef: TypeRefContext) extends CSTTypeReference {
@@ -84,11 +85,13 @@ object TypeReference {
     typeRefs.map(x => TypeReference.construct(x))
   }
 
-  def construct(typeRef: TypeRefContext): TypeName = {
-    construct(CodeParser.toScala(typeRef).map(new ANTLRCST.ANTLRTypeReference(_)))
+  def construct(typeRef: TypeRefContext, intern: Boolean = true): TypeName = {
+    construct(CodeParser.toScala(typeRef).map(new ANTLRCST.ANTLRTypeReference(_)), intern)
   }
 
-  def construct(typeRefOpt: Option[CSTTypeReference]): TypeName = {
+  // Interning is disabled for creating collection types. TypeNames that are a type parameter store location information
+  // so need to be separate objects to store unique locations.
+  def construct(typeRefOpt: Option[CSTTypeReference], intern: Boolean): TypeName = {
     typeRefOpt
       .map { typeRef =>
         {
@@ -96,10 +99,42 @@ object TypeReference {
           val names: ArraySeq[CSTTypeName] = typeRef.typeNames()
 
           // Only decode head as rest can't legally be in EncodedName format
-          createTypeName(decodeName(names.head), names.tail).withArraySubscripts(arraySubs)
+          val typeName =
+            createTypeName(decodeName(names.head, intern), names.tail, intern && arraySubs == 0)
+
+          if (arraySubs > 0) {
+            addContext(
+              Some(typeName),
+              names.collect { case tn: ANTLRCST.ANTLRTypeName =>
+                tn.context
+              }
+            )
+          }
+          typeName.withArraySubscripts(arraySubs)
         }
       }
       .getOrElse(TypeNames.Void)
+  }
+
+  def constructFromTypeList(typeList: TypeListContext): ArraySeq[TypeName] = {
+    val types = CodeParser.toScala(typeList.typeRef())
+    types.map(t => {
+      val typeRefOpt = CodeParser.toScala(t).map(new ANTLRCST.ANTLRTypeReference(_))
+      typeRefOpt
+        .map { typeRef =>
+          val names: ArraySeq[CSTTypeName] = typeRef.typeNames()
+          val typeName =
+            createTypeName(decodeName(names.head), names.tail, intern = false)
+          addContext(
+            Some(typeName),
+            names.collect { case tn: ANTLRCST.ANTLRTypeName =>
+              tn.context
+            }
+          )
+          typeName
+        }
+        .getOrElse(TypeNames.Void)
+    })
   }
 
   private def getName(name: CSTTypeName): Name = {
@@ -109,25 +144,33 @@ object TypeReference {
     else name.getIdText.map(Names(_)).getOrElse(Names.Empty)
   }
 
-  private def decodeName(name: CSTTypeName): TypeName = {
+  private def decodeName(name: CSTTypeName, intern: Boolean = false): TypeName = {
     val params   = createTypeParams(name.typeArguments())
     val typeName = getName(name)
     val encType  = EncodedName(typeName)
-    if (encType.ext.nonEmpty)
-      TypeName(encType.fullName, params, Some(TypeNames.Schema)).intern
-    else
-      TypeName(typeName, params, None).intern
+    if (encType.ext.nonEmpty) {
+      val tn = TypeName(encType.fullName, params, Some(TypeNames.Schema))
+      if (intern) tn.intern
+      tn
+    } else {
+      val tn = TypeName(typeName, params, None)
+      if (intern) tn.intern
+      tn
+    }
   }
 
   @scala.annotation.tailrec
-  private def createTypeName(outer: TypeName, names: Seq[CSTTypeName]): TypeName = {
+  private def createTypeName(
+    outer: TypeName,
+    names: Seq[CSTTypeName],
+    intern: Boolean = true
+  ): TypeName = {
     names match {
       case Nil => outer
       case hd +: tl =>
-        createTypeName(
-          TypeName(getName(hd), createTypeParams(hd.typeArguments()), Some(outer)).intern,
-          tl
-        )
+        val tn = TypeName(getName(hd), createTypeParams(hd.typeArguments()), Some(outer))
+        if (intern) { tn.intern }
+        createTypeName(tn, tl)
     }
   }
 
@@ -135,13 +178,37 @@ object TypeReference {
     if (typeArguments.typeRefs().isEmpty)
       TypeName.emptySeq
     else
-      typeArguments.typeRefs().map(param => TypeReference.construct(Option(param)))
+      typeArguments
+        .typeRefs()
+        .map(param => {
+          val paramType = TypeReference.construct(Option(param), intern = false)
+          addContext(
+            Some(paramType),
+            param
+              .typeNames()
+              .collect { case tn: ANTLRCST.ANTLRTypeName =>
+                tn.context
+              }
+          )
+
+          paramType
+        })
+  }
+
+  private def addContext(typeName: Option[TypeName], contexts: Seq[TypeNameContext]): Unit = {
+    typeName.foreach(tn => {
+      contexts match {
+        case hd :+ tail =>
+          CST.sourceContext.value.get.stampLocation(tn, tail)
+          addContext(tn.outer, hd)
+        case _ =>
+      }
+    })
   }
 }
 
 object TypeList {
   def construct(typeList: TypeListContext): ArraySeq[TypeName] = {
-    val types = CodeParser.toScala(typeList.typeRef())
-    types.map(t => TypeReference.construct(t))
+    TypeReference.constructFromTypeList(typeList)
   }
 }
