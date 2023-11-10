@@ -26,6 +26,7 @@ import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
 import com.nawforce.pkgforce.names._
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.immutable.ArraySeq
@@ -66,10 +67,13 @@ object CreatedName {
 final case class IdCreatedNamePair(id: Id, types: ArraySeq[TypeName]) extends CST {
   val typeName: TypeName = {
     val encName = EncodedName(id.name)
-    if (encName.ext.nonEmpty)
-      TypeName(encName.fullName, types, Some(TypeNames.Schema)).intern
-    else
-      TypeName(encName.fullName, types, None).intern
+    if (encName.ext.nonEmpty) {
+      if (types.isEmpty) TypeName(encName.fullName, types, Some(TypeNames.Schema)).intern
+      else TypeName(encName.fullName, types, Some(TypeNames.Schema))
+    } else {
+      if (types.isEmpty) TypeName(encName.fullName, types, None).intern
+      else TypeName(encName.fullName, types, None)
+    }
   }
 }
 
