@@ -306,26 +306,6 @@ abstract class FullDeclaration(
         Map.empty
     }
   }
-
-  def getValidationMapForMethodDeclarations: Array[Map[Location, ValidationResult]] = {
-    var mapArr = Array[Map[Location, ValidationResult]]()
-    this.children.foreach {
-      case method: ApexMethodDeclaration =>
-        val typeContext =
-          new TypeVerifyContext(None, this, None, enablePlugins = false)
-        val resultMap = mutable.Map[Location, ValidationResult]()
-        val context =
-          new BodyDeclarationVerifyContext(typeContext, method, Some(resultMap))
-        context.disableIssueReporting() {
-          method.validate(context)
-        }
-        mapArr = mapArr :+ resultMap.toMap
-      case _ =>
-    }
-
-    mapArr
-  }
-
   def getBodyDeclarationFromLocation(
     line: Int,
     offset: Int

@@ -138,10 +138,10 @@ describe("Check samples", () => {
         [
           "-cp",
           "jvm/target/scala-2.13/*:jvm/target/scala-2.13/apex-ls_2.13-*.jar",
-          "io.github.apexdevtools.apexls.Main",
-          "-verbose",
-          "-nocache",
-          "-outlinemulti",
+          "io.github.apexdevtools.apexls.CheckForIssues",
+          "-d", "warnings",
+          "-n",
+          "-w",
           path,
         ],
         {

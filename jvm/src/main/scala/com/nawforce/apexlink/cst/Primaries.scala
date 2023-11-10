@@ -21,6 +21,7 @@ import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.apexparser.ApexParserBaseVisitor
 import com.nawforce.pkgforce.names.{DotName, EncodedName, Name, Names, TypeName}
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.compat.immutable.ArraySeq
@@ -85,6 +86,11 @@ final case class TypeReferencePrimary(typeName: TypeName) extends Primary {
 }
 
 final case class IdPrimary(id: Id) extends Primary {
+  // NOTE: cachedClassFieldDeclaration stores the field declaration if there is a class field that shares a name with
+  // this IdPrimary. This means if this IdPrimary belongs to a local field declaration with the same name as a
+  // class field, then cachedClassFieldDeclaration will store the class field declaration, even though it is shadowed.
+  private var cachedClassFieldDeclaration: Option[FieldDeclaration] = None
+  var typeName: Option[TypeName]                                    = None
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     isVarReference(context)
       .getOrElse(
@@ -97,10 +103,29 @@ final case class IdPrimary(id: Id) extends Primary {
       )
   }
 
+  /** Will return the location of this IdPrimary if the ApexFieldDeclaration is a class variable with the same name as the
+    * IdPrimary.
+    * This method does not handle shadowed variables - it only checks a class field declaration matches the provided
+    * declaration.
+    */
+  def getLocationForClassFieldUsage(fd: ApexFieldDeclaration): Option[Location] = {
+    cachedClassFieldDeclaration match {
+      case Some(fdFromCallout: ApexFieldDeclaration) =>
+        if (fdFromCallout.idPathLocation == fd.idPathLocation) Some(id.location.location)
+        else None
+      case _ => None
+    }
+  }
+
+  def isCachedFieldEmpty: Boolean = {
+    cachedClassFieldDeclaration.isEmpty
+  }
+
   private def isVarReference(context: ExpressionVerifyContext): Option[ExprContext] = {
     context
       .isVar(id.name, markUsed = true)
       .map(varTypeAndDefinition => {
+        typeName = Some(varTypeAndDefinition.declaration.typeName)
         ExprContext(
           isStatic = Some(false),
           Some(varTypeAndDefinition.declaration),
@@ -113,6 +138,8 @@ final case class IdPrimary(id: Id) extends Primary {
     input: ExprContext,
     context: ExpressionVerifyContext
   ): Option[ExprContext] = {
+    cachedClassFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
+
     val td            = input.typeDeclaration
     val staticContext = Some(true).filter(input.isStatic.contains)
 

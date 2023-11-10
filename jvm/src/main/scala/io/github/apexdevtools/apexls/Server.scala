@@ -4,10 +4,20 @@
 
 package io.github.apexdevtools.apexls
 
-import com.nawforce.apexlink.cmds.{Server => ApexLinkServer}
+import com.nawforce.apexlink.rpc.RPCServer
 
+/** Start apex-ls as an RPC server.
+  *
+  * RPC messages are passed over stdin/stdout. See @OrgAPI for details of messages supported.
+  */
 object Server {
   def main(args: Array[String]): Unit = {
-    ApexLinkServer.main(args)
+    try {
+      new RPCServer().run()
+    } catch {
+      case ex: Throwable =>
+        ex.printStackTrace()
+        System.exit(-1)
+    }
   }
 }
