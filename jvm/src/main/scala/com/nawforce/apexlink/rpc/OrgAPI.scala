@@ -191,8 +191,11 @@ case class OpenOptions private (
   parser: Option[String] = None,
   loggingLevel: Option[String] = None,
   externalAnalysisMode: Option[String] = None,
+  cache: Option[Boolean] = None,
   cacheDirectory: Option[String] = None,
-  indexerConfiguration: Option[(Long, Long)] = None
+  indexerConfiguration: Option[(Long, Long)] = None,
+  autoFlush: Option[Boolean] = None,
+  unused: Option[Boolean] = None
 ) {
   def withParser(name: String): OpenOptions = {
     copy(parser = Some(name))
@@ -210,6 +213,10 @@ case class OpenOptions private (
     copy(cacheDirectory = Some(path))
   }
 
+  def withCache(enabled: Boolean): OpenOptions = {
+    copy(cache = Some(enabled))
+  }
+
   def withIndexerConfiguration(
     rescanTriggerTimeMs: Long,
     quietPeriodForRescanMs: Long
@@ -217,13 +224,20 @@ case class OpenOptions private (
     copy(indexerConfiguration = Some((rescanTriggerTimeMs, quietPeriodForRescanMs)))
   }
 
+  def withAutoFlush(enabled: Boolean): OpenOptions = {
+    copy(autoFlush = Some(enabled))
+  }
+
+  def withUnused(enabled: Boolean): OpenOptions = {
+    copy(unused = Some(enabled))
+  }
 }
 
 object OpenOptions {
   implicit val rw: RW[OpenOptions] = macroRW
 
   def default(): OpenOptions = {
-    new OpenOptions(None, None, None, None, None)
+    new OpenOptions()
   }
 }
 

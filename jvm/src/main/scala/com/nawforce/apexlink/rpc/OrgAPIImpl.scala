@@ -14,12 +14,7 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.api.{
-  ExternalAnalysisConfiguration,
-  IndexerConfiguration,
-  Org,
-  ServerOps
-}
+import com.nawforce.apexlink.api.{ExternalAnalysisConfiguration, Org, ServerOps}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -33,9 +28,9 @@ trait APIRequest {
   def process(org: OrgQueue): Unit
 }
 
-class OrgQueue(path: String) {
+class OrgQueue(path: String, options: OpenOptions) {
   self =>
-  val org: Org = Org.newOrg(path)
+  val org: Org = Org.newOrg(Path(path), options)
 
   private val queue      = new LinkedBlockingQueue[APIRequest]()
   private val dispatcher = new APIRequestDispatcher()
@@ -528,9 +523,9 @@ object GetTestMethodItems {
 object OrgQueue {
   private var _instance: Option[OrgQueue] = None
 
-  def open(path: String): OrgQueue = {
+  def open(path: String, options: OpenOptions = OpenOptions.default()): OrgQueue = {
     synchronized {
-      _instance = Some(new OrgQueue(path))
+      _instance = Some(new OrgQueue(path, options))
       _instance.get
     }
   }
@@ -574,19 +569,7 @@ class OrgAPIImpl extends OrgAPI {
   }
 
   override def open(directory: String, options: OpenOptions): Future[OpenResult] = {
-    options.loggingLevel.foreach(LoggerOps.setLoggingLevel)
-    options.parser.foreach(ServerOps.setCurrentParser)
-    options.externalAnalysisMode.foreach(mode =>
-      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode))
-    )
-    options.cacheDirectory.foreach(path => {
-      Environment.setCacheDirOverride(Some(Some(Path(path))))
-      ServerOps.setAutoFlush(path.nonEmpty)
-    })
-    options.indexerConfiguration.foreach(values =>
-      ServerOps.setIndexerConfiguration(IndexerConfiguration(values._1, values._2))
-    )
-    OrgQueue.open(directory)
+    OrgQueue.open(directory, options)
     OpenRequest(OrgQueue.instance())
   }
 

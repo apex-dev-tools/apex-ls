@@ -44,24 +44,22 @@ Maven:
 
 The library can be consumed in JVM and ScalaJS projects, however the features available to each differ. See the JavaDoc for more details on the API. <!-- TODO link to hosted javadoc -->
 
-The jar is also executable without a client:
+The jar is also executable without a client via the commands, `CheckForIssues` and `DependencyReport`:
 
   ```sh
   # Assuming dep jars are in the same directory
-  java -cp "apex-ls*.jar" io.github.apexdevtools.apexls.Main [args] <directory>
+  java -cp "apex-ls*.jar" io.github.apexdevtools.apexls.<CommandName> [args]
   ```
 
-The chosen directory should contain an `sfdx-project.json`. The following arguments are available:
+The following arguments are available:
 
-| Argument | Description |
-| --- | --- |
-| `-json` | Write output as JSON. Logging is suppressed. |
-| `-verbose` | Include warnings in log output. |
-| `-info` / `-debug` | Change log level from default. |
-| `-nocache` | Do not load from or write to an existing apex-ls cache. |
-| `-unused` | Display unused value warnings. (Requires `-verbose`) |
-| `-depends` | Display apex type dependencies as either csv or json if `-json` is set. |
-| `-outlinesingle` / `-outlinemulti` | Use the apex outline parser in single or multi threaded mode. Otherwise uses default ANTLR parser. |
+| Argument | Description | Supported Commands |
+| --- | --- | --- |
+| `--format` / `-f` | Output format: `text (default) \| json \| pmd` | All |
+| `--logging` / `-l` | Text output logging level: `none (default) \| info \| debug` | All |
+| `--nocache` / `-n` | Do not load from or write to an existing apex-ls cache. | All |
+| `--workspace` / `-w` | Workspace directory path, defaults to current directory. Must contain an `sfdx-project.json` file. | All |
+| `--detail` / `-d` | Detail level: `errors (default) \| warnings \| unused` | CheckForIssues |
 
 ## Development
 

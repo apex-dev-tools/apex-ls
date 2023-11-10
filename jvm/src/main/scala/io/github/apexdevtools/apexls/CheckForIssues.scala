@@ -12,104 +12,111 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.apexlink.cmds
+package io.github.apexdevtools.apexls
 
 import com.nawforce.apexlink.api._
-import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
-import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
-import com.nawforce.runtime.platform.Environment
+import com.nawforce.apexlink.rpc.OpenOptions
+import com.nawforce.runtime.platform.Path
 import io.github.apexdevtools.api.IssueLocation
+import mainargs.{Flag, ParserForMethods, arg, main}
 
+import java.time.Instant
+import scala.annotation.unused
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.jdk.CollectionConverters._
 
-/** Basic command line for exercising the project analysis */
-object Check {
-  final val STATUS_OK: Int        = 0
-  final val STATUS_ARGS: Int      = 1
-  final val STATUS_EXCEPTION: Int = 3
-  final val STATUS_ISSUES: Int    = 4
+/** Command line for running project analysis.
+  *
+  * Defaults to reporting issue but can also be used to report dependency information.
+  */
+object CheckForIssues {
+  private final val STATUS_OK: Int        = 0
+  private final val STATUS_ARGS: Int      = 1
+  private final val STATUS_EXCEPTION: Int = 3
+  private final val STATUS_ISSUES: Int    = 4
 
-  def usage(name: String) =
-    s"Usage: $name [-json] [-verbose [-unused]] [-info|-debug] [-nocache] [-depends] [-outlinesingle|-outlinemulti] <directory>"
+  @unused
+  @main(name = "io.github.apexdevtools.apexls.CheckForIssues")
+  def mainWithArgs(
+    @arg(short = 'f', doc = "Output format text (default), json or pmd")
+    format: String = "text",
+    @arg(short = 'l', doc = "Text output logging level, none (default), info or debug")
+    logging: String = "none",
+    @arg(short = 'd', doc = "Detail level, errors (default), warnings, unused")
+    detail: String = "errors",
+    @arg(short = 'n', doc = "Disable cache use")
+    nocache: Flag,
+    @arg(short = 'w', doc = "Workspace directory path, defaults to current directory")
+    workspace: String = ""
+  ): Unit = {
+    System.exit(run(format, logging, detail, nocache.value, workspace))
+  }
 
-  def run(args: Array[String]): Int = {
-    val flags =
-      Set(
-        "-json",
-        "-verbose",
-        "-info",
-        "-debug",
-        "-nocache",
-        "-unused",
-        "-depends",
-        "-outlinesingle",
-        "-outlinemulti"
-      )
+  def main(args: Array[String]): Unit = {
+    ParserForMethods(this).runOrExit(ArraySeq.unsafeWrapArray(args))
+  }
 
-    val json                           = args.contains("-json")
-    val verbose                        = !json && args.contains("-verbose")
-    val debug                          = !json && args.contains("-debug")
-    val info                           = !json && !debug && args.contains("-info")
-    val depends                        = args.contains("-depends")
-    val noCache                        = args.contains("-nocache")
-    val unused                         = args.contains("-unused")
-    val useOutlineParserSingleThreaded = args.contains("-outlinesingle")
-    val useOutlineParserMultithreaded  = args.contains("-outlinemulti")
-
-    // Check we have some metadata directories to work with
-    val dirs = args.filterNot(flags.contains)
-    if (dirs.isEmpty) {
-      System.err.println(s"No workspace directory argument provided.")
-      return STATUS_ARGS
-    }
-    if (dirs.length > 1) {
-      System.err.println(
-        s"Multiple arguments provided, expected workspace directory, '${dirs.mkString(", ")}'}"
-      )
-      return STATUS_ARGS
-    }
-
+  def run(
+    format: String,
+    logging: String,
+    detail: String,
+    nocache: Boolean,
+    directory: String
+  ): Int = {
     try {
-      // Setup cache flushing, analysis & logging defaults
-      ServerOps.setAutoFlush(false)
-      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(LoadAndRefreshAnalysis, Map()))
-      if (useOutlineParserSingleThreaded)
-        ServerOps.setCurrentParser(OutlineParserSingleThreaded)
-      else if (useOutlineParserMultithreaded)
-        ServerOps.setCurrentParser(OutlineParserMultithreaded)
-      LoggerOps.setLogger(new DefaultLogger(System.out))
-      if (debug)
-        LoggerOps.setLoggingLevel(LoggerOps.DEBUG_LOGGING)
-      else if (info)
-        LoggerOps.setLoggingLevel(LoggerOps.INFO_LOGGING)
-
-      // Disable loading from the cache
-      if (noCache) {
-        Environment.setCacheDirOverride(Some(None))
+      val workspace = Path(directory)
+      val outputFormat = format match {
+        case "text" | "json" | "pmd" => format
+        case _ =>
+          System.err.println(
+            s"Unknown output format provided '$format', should be 'text', 'json' or 'pmd'"
+          )
+          return STATUS_ARGS
       }
 
-      // Don't use unused analysis unless we have both verbose and unused flags
-      if (!verbose || !unused) {
-        PluginsManager.removePlugins(Seq(classOf[UnusedPlugin]))
+      val loggingLevel =
+        if (outputFormat != "text")
+          "none"
+        else
+          logging match {
+            case "none" | "info" | "debug" => logging
+            case _ =>
+              System.err.println(
+                s"Unknown logging level provided '$logging', should be 'none', 'info' or 'debug'"
+              )
+              return STATUS_ARGS
+          }
+
+      val detailLevel = detail match {
+        case "errors" | "warnings" | "unused" => detail
+        case _ =>
+          System.err.println(
+            s"Unknown detail level provided '$detail', should be 'errors', 'warnings' or 'unused'"
+          )
+          return STATUS_ARGS
       }
+
+      val options = OpenOptions
+        .default()
+        .withParser("OutlineSingle")
+        .withAutoFlush(enabled = false)
+        .withExternalAnalysisMode(LoadAndRefreshAnalysis.shortName)
+        .withLoggingLevel(loggingLevel)
+        .withCache(!nocache)
+        .withUnused(detailLevel == "unused")
 
       // Load org and flush to cache if we are using it
-      val org = Org.newOrg(dirs.head)
-      if (!noCache) {
+      val org = Org.newOrg(Path(workspace), options)
+      if (!nocache) {
         org.flush()
       }
 
       // Output issues
-      if (depends) {
-        if (json) {
-          writeDependenciesAsJSON(org)
-        } else {
-          writeDependenciesAsCSV(org)
-        }
-        STATUS_OK
+      val includeWarnings = detailLevel == "warnings" || detailLevel == "unused"
+      if (outputFormat == "pmd") {
+        writeIssuesPMD(org, includeWarnings)
       } else {
-        writeIssues(org, json, verbose)
+        writeIssues(org, outputFormat == "json", includeWarnings)
       }
 
     } catch {
@@ -117,29 +124,6 @@ object Check {
         ex.printStackTrace(System.err)
         STATUS_EXCEPTION
     }
-  }
-
-  private def writeDependenciesAsJSON(org: Org): Unit = {
-    val buffer = new mutable.StringBuilder()
-    var first  = true
-    buffer ++= s"""{ "dependencies": [\n"""
-    org.getDependencies.asScala.foreach(kv => {
-      if (!first)
-        buffer ++= ",\n"
-      first = false
-
-      buffer ++= s"""{ "name": "${kv._1}", "dependencies": ["""
-      buffer ++= kv._2.map("\"" + _ + "\"").mkString(", ")
-      buffer ++= s"]}"
-    })
-    buffer ++= "]}\n"
-    print(buffer.mkString)
-  }
-
-  private def writeDependenciesAsCSV(org: Org): Unit = {
-    org.getDependencies.asScala.foreach(kv => {
-      println(s"${kv._1}, ${kv._2.mkString(", ")}")
-    })
   }
 
   private def writeIssues(org: Org, asJSON: Boolean, includeWarnings: Boolean): Int = {
@@ -169,7 +153,6 @@ object Check {
       writer.endDocument()
 
     print(writer.output)
-    System.out.flush()
     if (hasErrors) STATUS_ISSUES else STATUS_OK
   }
 
@@ -238,7 +221,45 @@ object Check {
           .endCharOffset()} }"""
   }
 
-  object JSON {
+  private def writeIssuesPMD(org: Org, includeWarnings: Boolean): Int = {
+
+    val issues       = org.issues.issuesForFiles(null, includeWarnings, 0)
+    val issuesByFile = issues.groupBy(_.filePath())
+    val files = issuesByFile.map(kv => {
+      val path   = kv._1
+      val issues = kv._2
+
+      val violations = issues.map(issue => {
+        <violation beginline={issue.fileLocation().startLineNumber().toString}
+                   endline={issue.fileLocation().endLineNumber().toString}
+                   begincolumn={issue.fileLocation().startCharOffset().toString}
+                   endcolumn={issue.fileLocation().endCharOffset().toString}
+                   rule={issue.rule.name()}
+                   ruleset={issue.provider()}
+                   priority={issue.rule.priority().toString}>
+          {issue.message()}
+        </violation>
+      })
+      <file name={path}>
+        {violations}
+      </file>
+    })
+
+    val timestamp = Instant.now().toString
+    val pmd = <pmd xmlns="http://pmd.sourceforge.net/report/2.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://pmd.sourceforge.net/report/2.0.0 http://pmd.sourceforge.net/report_2_0_0.xsd"
+                   version="1.0.0"
+                   timestamp={timestamp}>
+      {files}
+    </pmd>
+
+    val printer = new scala.xml.PrettyPrinter(80, 2)
+    println(printer.format(pmd))
+    STATUS_OK
+  }
+
+  private object JSON {
     def encode(value: String): String = {
       val buf = new mutable.StringBuilder()
       value.foreach {
@@ -255,5 +276,4 @@ object Check {
       buf.mkString
     }
   }
-
 }
