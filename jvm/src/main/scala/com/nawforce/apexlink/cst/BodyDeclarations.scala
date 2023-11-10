@@ -355,7 +355,10 @@ final case class ApexFieldDeclaration(
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
 
-  def returnTypeNameLocation: Location = Location(
+  // This only returns the location of the type correctly if it is a plain type E.g. String.
+  // This Location is WRONG for collections like List, Set and Map.
+  // Instead use the location property on TypeName which is populated for these collections
+  def typeNameLocation: Location = Location(
     idLocation.startLine,
     idLocation.startPosition - 1 - typeName.name.value.length,
     idLocation.endLine,
