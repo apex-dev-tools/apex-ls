@@ -119,7 +119,7 @@ final case class LocalVariableDeclaration(
     location.location.startLine,
     location.location.startPosition,
     location.location.startLine,
-    variableDeclarators.location.location.startLine - 1
+    variableDeclarators.location.location.startPosition - 1
   )
 
   def verify(context: BlockVerifyContext): Unit = {
