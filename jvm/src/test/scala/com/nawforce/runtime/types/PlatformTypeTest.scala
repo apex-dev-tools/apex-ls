@@ -327,6 +327,7 @@ class PlatformTypeTest extends AnyFunSuite {
         "public virtual void set(System.Integer index, System.String listElement)",
         "public virtual System.Integer size()",
         "public virtual void sort()",
+        "public virtual void sort(System.Comparator<System.String> comparator)",
         "public virtual System.String toString()",
         "public virtual System.Boolean equals(System.List<System.String> other)",
         "public virtual System.Integer hashCode()"

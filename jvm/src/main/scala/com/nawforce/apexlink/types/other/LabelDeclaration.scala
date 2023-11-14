@@ -19,6 +19,7 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.XNames.NameUtils
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
+import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, UNUSED_CATEGORY}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{
@@ -80,6 +81,9 @@ final class LabelDeclaration(
 
   override val nestedTypes: ArraySeq[TypeDeclaration] = nestedLabels
   override val fields: ArraySeq[FieldDeclaration]     = labels
+
+  // Provide platform APIs like Label.get
+  override lazy val methods: ArraySeq[MethodDeclaration] = PlatformTypes.labelType.methods
 
   /** Create new labels from merging those in the provided stream */
   def merge(stream: PackageStream): LabelDeclaration = {

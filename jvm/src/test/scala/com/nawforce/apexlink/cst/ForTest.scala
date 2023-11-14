@@ -12,8 +12,62 @@ class ForTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {{ for(Integer a : new Set<Integer>().iterator()) {} }}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 26-67: For loop can only iterate over Lists or Sets, not 'System.Iterator<System.Integer>'\n"
+        "Error: line 1 at 26-67: For loop can only have iterable types, not 'System.Iterator<System.Integer>'\n"
     )
+  }
+
+  test("for-each iterable") {
+    happyTypeDeclaration(
+      "public class Dummy {{ Iterable<Integer> it = new List<Integer>(); for(Long a : it) {} }}"
+    )
+  }
+
+  test("for-each custom iterable") {
+    typeDeclarations(
+      Map(
+        "NumIterable.cls" ->
+          """public class NumIterable implements Iterable<Integer> {
+            |  public Iterator<Integer> iterator(){
+            |    return new List<Integer>().iterator();
+            |  }
+            |}""".stripMargin,
+        "Dummy.cls" -> "public class Dummy {{ NumIterable nums = new NumIterable(); for(Long a : nums) {} }}"
+      )
+    )
+    assert(!hasIssues)
+  }
+
+  test("for-each extended custom iterable interface") {
+    typeDeclarations(
+      Map(
+        "NumIterable.cls" ->
+          """public class NumIterable implements IterAPI {
+            |  public interface IterAPI extends Iterable<Integer> {}
+            |
+            |  public Iterator<Integer> iterator(){
+            |    return new List<Integer>().iterator();
+            |  }
+            |}""".stripMargin,
+        "Dummy.cls" -> "public class Dummy {{ NumIterable nums = new NumIterable(); for(Long a : nums) {} }}"
+      )
+    )
+    assert(!hasIssues)
+  }
+
+  test("for-each extended custom iterable class") {
+    typeDeclarations(
+      Map(
+        "NumIterable.cls" ->
+          """public virtual class NumIterable implements Iterable<Integer> {
+            |  public Iterator<Integer> iterator(){
+            |    return new List<Integer>().iterator();
+            |  }
+            |}""".stripMargin,
+        "NumIterable2.cls" -> "public class NumIterable2 extends NumIterable {}",
+        "Dummy.cls" -> "public class Dummy {{ NumIterable2 nums = new NumIterable2(); for(Long a : nums) {} }}"
+      )
+    )
+    assert(!hasIssues)
   }
 
   test("for-each assignable") {
@@ -76,7 +130,7 @@ class ForTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {{ for(Account a : [Select Count() From Account]) {} }}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 26-67: For loop can only iterate over Lists or Sets, not 'System.Integer'\n"
+        "Error: line 1 at 26-67: For loop can only have iterable types, not 'System.Integer'\n"
     )
   }
 
@@ -114,7 +168,7 @@ class ForTest extends AnyFunSuite with TestHelper {
     )
     assert(
       dummyIssues ==
-        "Error: line 1 at 26-73: For loop can only iterate over Lists or Sets, not 'System.Integer'\n"
+        "Error: line 1 at 26-73: For loop can only have iterable types, not 'System.Integer'\n"
     )
   }
 

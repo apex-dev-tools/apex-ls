@@ -42,8 +42,8 @@ class BasicTypeDeclaration(
   override val blocks: ArraySeq[BlockDeclaration] = BlockDeclaration.emptyBlockDeclarations
   override val fields: ArraySeq[FieldDeclaration] = FieldDeclaration.emptyFieldDeclarations
 
-  override val methods: ArraySeq[MethodDeclaration] = MethodDeclaration.emptyMethodDeclarations
-  override val constructors: ArraySeq[ConstructorDeclaration] =
+  override def methods: ArraySeq[MethodDeclaration] = MethodDeclaration.emptyMethodDeclarations
+  override def constructors: ArraySeq[ConstructorDeclaration] =
     ConstructorDeclaration.emptyConstructorDeclarations
 
   override def validate(): Unit = {}

@@ -51,9 +51,11 @@ class MethodTest extends AnyFunSuite with TestHelper {
   }
 
   test("Method call with ambiguous target") {
-    typeDeclaration("public class Dummy { {EventBus.publish(null); } }")
+    typeDeclaration(
+      "public class Dummy { {Dummy d; d.func(null);} void func(List<Integer> a) {} void func(Integer b) {} }"
+    )
     assert(
-      dummyIssues == "Missing: line 1 at 22-44: Ambiguous method call for 'publish' on 'System.EventBus' taking arguments 'null', wrong argument types for calling 'public static System.List<Database.SaveResult> publish(System.List<System.SObject> sobjects)'\n"
+      dummyIssues == "Missing: line 1 at 31-43: Ambiguous method call for 'func' on 'Dummy' taking arguments 'null', wrong argument types for calling 'void func(System.Integer b)'\n"
     )
   }
 
