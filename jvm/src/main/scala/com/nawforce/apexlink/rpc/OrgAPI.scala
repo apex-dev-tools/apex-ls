@@ -190,7 +190,7 @@ object TestMethodItemsResult {
 case class OpenOptions private (
   parser: Option[String] = None,
   loggingLevel: Option[String] = None,
-  externalAnalysisMode: Option[String] = None,
+  externalAnalysisMode: Option[(String, Map[String, List[(String, List[String])]])] = None,
   cache: Option[Boolean] = None,
   cacheDirectory: Option[String] = None,
   indexerConfiguration: Option[(Long, Long)] = None,
@@ -205,8 +205,11 @@ case class OpenOptions private (
     copy(loggingLevel = Some(level))
   }
 
-  def withExternalAnalysisMode(mode: String): OpenOptions = {
-    copy(externalAnalysisMode = Some(mode))
+  def withExternalAnalysisMode(
+    mode: String,
+    params: Map[String, List[(String, List[String])]]
+  ): OpenOptions = {
+    copy(externalAnalysisMode = Some(mode, params))
   }
 
   def withCacheDirectory(path: String): OpenOptions = {

@@ -81,7 +81,6 @@ object DependencyReport {
         .default()
         .withParser("OutlineSingle")
         .withAutoFlush(enabled = false)
-        .withExternalAnalysisMode(LoadAndRefreshAnalysis.shortName)
         .withLoggingLevel(loggingLevel)
         .withCache(!nocache)
         .withUnused(enabled = false)

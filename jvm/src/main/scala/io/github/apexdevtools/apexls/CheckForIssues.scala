@@ -18,7 +18,7 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.rpc.OpenOptions
 import com.nawforce.runtime.platform.Path
 import io.github.apexdevtools.api.IssueLocation
-import mainargs.{Flag, ParserForMethods, arg, main}
+import mainargs.{Flag, ParserForMethods, TokensReader, arg, main}
 
 import java.time.Instant
 import scala.annotation.unused
@@ -35,6 +35,38 @@ object CheckForIssues {
   private final val STATUS_EXCEPTION: Int = 3
   private final val STATUS_ISSUES: Int    = 4
 
+  case class Param(providerId: String, name: String, values: Option[List[String]])
+
+  private object Param {
+    def toMap(params: Seq[Param]): Map[String, List[(String, List[String])]] = {
+      val collected = mutable.Map[String, List[(String, List[String])]]()
+      params.foreach(param => {
+        val providerParams = collected.getOrElse(param.providerId, Nil)
+        collected.put(param.providerId, (param.name, param.values.getOrElse(Nil)) :: providerParams)
+      })
+      collected.toMap
+    }
+  }
+
+  implicit object ParamRead extends TokensReader.Simple[Param] {
+    def shortName = "param"
+
+    def read(text: Seq[String]): Either[String, Param] = {
+      val parts     = text.head.split("=", 2)
+      val value     = Option.when(parts.length == 2) { parts(1) }
+      val headParts = parts.head.split(":", 2)
+      if (headParts.length != 2) {
+        Left(
+          s"Expecting params to have format <provider-id>:<name>[=<value>[,<value>...], not '$text"
+        )
+      } else {
+        Right(
+          Param(headParts.head.trim, headParts(1).trim, value.map(_.split(",").map(_.trim).toList))
+        )
+      }
+    }
+  }
+
   @unused
   @main(name = "io.github.apexdevtools.apexls.CheckForIssues")
   def mainWithArgs(
@@ -46,10 +78,15 @@ object CheckForIssues {
     detail: String = "errors",
     @arg(short = 'n', doc = "Disable cache use")
     nocache: Flag,
+    @arg(
+      short = 'p',
+      doc = "Analysis provider param in format <provider-id>:<name>[=<value>[,<value>...]]"
+    )
+    param: Seq[Param],
     @arg(short = 'w', doc = "Workspace directory path, defaults to current directory")
     workspace: String = ""
   ): Unit = {
-    System.exit(run(format, logging, detail, nocache.value, workspace))
+    System.exit(run(format, logging, detail, nocache.value, param, workspace))
   }
 
   def main(args: Array[String]): Unit = {
@@ -61,6 +98,7 @@ object CheckForIssues {
     logging: String,
     detail: String,
     nocache: Boolean,
+    params: Seq[Param],
     directory: String
   ): Int = {
     try {
@@ -100,7 +138,7 @@ object CheckForIssues {
         .default()
         .withParser("OutlineSingle")
         .withAutoFlush(enabled = false)
-        .withExternalAnalysisMode(LoadAndRefreshAnalysis.shortName)
+        .withExternalAnalysisMode(LoadAndRefreshAnalysis.shortName, Param.toMap(params))
         .withLoggingLevel(loggingLevel)
         .withCache(!nocache)
         .withUnused(detailLevel == "unused")

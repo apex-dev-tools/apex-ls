@@ -269,7 +269,7 @@ object Org {
     options.loggingLevel.foreach(LoggerOps.setLoggingLevel)
     options.parser.foreach(ServerOps.setCurrentParser)
     options.externalAnalysisMode.foreach(mode =>
-      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode))
+      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode._1, mode._2))
     )
     options.cacheDirectory.foreach(path => {
       Environment.setCacheDirOverride(Some(Some(Path(path))))
