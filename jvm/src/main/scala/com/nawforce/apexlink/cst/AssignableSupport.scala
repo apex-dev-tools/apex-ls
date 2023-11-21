@@ -67,9 +67,11 @@ object AssignableSupport {
     context.getTypeFor(fromType, context.thisType) match {
       case Left(_) =>
         // Allow some ghosted assignments to support Lists
-        (toType == TypeNames.SObject && context.module.isGhostedType(fromType) && fromType.outer
-          .contains(TypeNames.Schema)) ||
-        (toType == TypeNames.InternalObject && context.module.isGhostedType(fromType))
+        // Exact match, assigning to Object or to SObject given a Schema type
+        context.module.isGhostedType(fromType) && (toType == fromType ||
+          toType == TypeNames.InternalObject || (
+            toType == TypeNames.SObject && fromType.outer.contains(TypeNames.Schema)
+          ))
       case Right(fromDeclaration) =>
         isAssignableDeclaration(toType, fromDeclaration, context, options)
     }

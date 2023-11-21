@@ -324,8 +324,12 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
         } else {
           // All good, setup save context for definition resolution on loop var, we have do this manually
           // as the loop var is not in scope yet
-          context.saveResult(id, id.location.location) {
-            ExprContext(Some(false), varTd, varTd.get)
+          if (varTd.isDefined) {
+            context.saveResult(id, id.location.location) {
+              ExprContext(Some(false), varTd, varTd.get)
+            }
+          } else {
+            context.missingType(id.location, varTypeName)
           }
         }
       }
