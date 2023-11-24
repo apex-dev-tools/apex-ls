@@ -280,7 +280,7 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
   }
 
   override def verify(context: BlockVerifyContext): Unit = {
-    id.validate()
+    id.validate(context)
 
     // Check the loop var type is available
     var varTd = context.getTypeAndAddDependency(typeName, context.thisType).toOption

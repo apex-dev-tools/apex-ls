@@ -32,7 +32,7 @@ final case class VariableDeclarator(
   init: Option[Expression]
 ) extends CST {
   def verify(input: ExprContext, context: BlockVerifyContext): Unit = {
-    id.validate()
+    id.validate(context)
 
     val lhsType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
 

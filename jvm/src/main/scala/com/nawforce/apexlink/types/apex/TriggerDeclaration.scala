@@ -84,16 +84,15 @@ final case class TriggerDeclaration(
 
   override def validate(): Unit = {
     LoggerOps.debugTime(s"Validated ${location.path}") {
-      nameId.validate()
+      val context = new TypeVerifyContext(None, this, None, enablePlugins = true)
+      val tdOpt   = context.getTypeAndAddDependency(objectTypeName, this)
+      nameId.validate(context)
 
       val duplicateCases = cases.groupBy(_.name).collect { case (_, Seq(_, y, _*)) => y }
       duplicateCases.foreach(triggerCase =>
         OrgInfo
           .logError(objectNameId.location, s"Duplicate trigger case for '${triggerCase.name}'")
       )
-
-      val context = new TypeVerifyContext(None, this, None, enablePlugins = true)
-      val tdOpt   = context.getTypeAndAddDependency(objectTypeName, this)
 
       tdOpt match {
         case Left(error) =>

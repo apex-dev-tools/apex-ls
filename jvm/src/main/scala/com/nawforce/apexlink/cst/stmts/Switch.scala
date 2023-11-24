@@ -16,7 +16,6 @@ package com.nawforce.apexlink.cst.stmts
 
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexparser.ApexParser.{
   SwitchStatementContext,
@@ -96,24 +95,24 @@ object WhenLiteral {
 }
 
 sealed abstract class WhenValue extends CST {
-  def checkMatchableTo(typeName: TypeName): Seq[String]
+  def checkMatchableTo(context: BlockVerifyContext, typeName: TypeName): Seq[String]
   def checkIsSObject(context: BlockVerifyContext): Seq[String]
-  def checkEnumValue(typeDeclaration: TypeDeclaration, context: BlockVerifyContext): Seq[String]
+  def checkEnumValue(context: BlockVerifyContext, typeDeclaration: TypeDeclaration): Seq[String]
   def verify(context: BlockVerifyContext): Unit = {}
 }
 
 final class WhenElseValue extends WhenValue {
-  def checkMatchableTo(typeName: TypeName): Seq[String]        = Seq()
-  def checkIsSObject(context: BlockVerifyContext): Seq[String] = Seq()
-  def checkEnumValue(typeDeclaration: TypeDeclaration, context: BlockVerifyContext): Seq[String] =
+  def checkMatchableTo(context: BlockVerifyContext, typeName: TypeName): Seq[String] = Seq()
+  def checkIsSObject(context: BlockVerifyContext): Seq[String]                       = Seq()
+  def checkEnumValue(context: BlockVerifyContext, typeDeclaration: TypeDeclaration): Seq[String] =
     Seq()
 }
 
 final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue {
-  override def checkMatchableTo(typeName: TypeName): Seq[String] = {
+  override def checkMatchableTo(context: BlockVerifyContext, typeName: TypeName): Seq[String] = {
     literals.flatMap(literal => {
       if (!literal.isComparableTo(typeName)) {
-        OrgInfo.logError(literal.location, s"A $typeName literal is required for this value")
+        context.logError(literal.location, s"A $typeName literal is required for this value")
         None
       } else {
         Some(literal.toString)
@@ -124,7 +123,7 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
   override def checkIsSObject(context: BlockVerifyContext): Seq[String] = {
     val nonNull = literals.filterNot(_.isInstanceOf[WhenNullLiteral])
     if (nonNull.nonEmpty)
-      OrgInfo.logError(
+      context.logError(
         nonNull.head.location,
         "An SObject name and variable name are required for this value"
       )
@@ -132,13 +131,13 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
   }
 
   override def checkEnumValue(
-    typeDeclaration: TypeDeclaration,
-    context: BlockVerifyContext
+    context: BlockVerifyContext,
+    typeDeclaration: TypeDeclaration
   ): Seq[String] = {
     val nonNull = literals.filterNot(_.isInstanceOf[WhenNullLiteral])
     val notEnum = nonNull.filter(!_.isInstanceOf[WhenIdLiteral])
     if (notEnum.nonEmpty) {
-      OrgInfo.logError(notEnum.head.location, "An Enum value is required for this value")
+      context.logError(notEnum.head.location, "An Enum value is required for this value")
       return Seq()
     }
 
@@ -147,7 +146,7 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
         val field = typeDeclaration.findField(iv.id.name, Some(true))
         field.foreach(context.addDependency)
         if (field.isEmpty) {
-          OrgInfo.logError(iv.id.location, "Value must be a enum constant")
+          context.logError(iv.id.location, "Value must be a enum constant")
           return Seq()
         }
       case _ =>
@@ -157,8 +156,8 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
 }
 
 final case class WhenIdsValue(ids: Seq[Id]) extends WhenValue {
-  override def checkMatchableTo(typeName: TypeName): Seq[String] = {
-    OrgInfo.logError(ids.head.location, s"A $typeName literal is required for this value")
+  override def checkMatchableTo(context: BlockVerifyContext, typeName: TypeName): Seq[String] = {
+    context.logError(ids.head.location, s"A $typeName literal is required for this value")
     Seq()
   }
 
@@ -168,11 +167,11 @@ final case class WhenIdsValue(ids: Seq[Id]) extends WhenValue {
   }
 
   override def checkEnumValue(
-    typeDeclaration: TypeDeclaration,
-    context: BlockVerifyContext
+    context: BlockVerifyContext,
+    typeDeclaration: TypeDeclaration
   ): Seq[String] = {
     ids.headOption.foreach(head => {
-      OrgInfo.logError(head.location, "Expecting an enum constant value")
+      context.logError(head.location, "Expecting an enum constant value")
     })
     Seq()
   }
@@ -235,23 +234,23 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
     if (result.isDefined) {
       val values = result.typeName match {
         case TypeNames.Integer | TypeNames.Long | TypeNames.String =>
-          checkMatchableTo(result.typeName)
+          checkMatchableTo(context, result.typeName)
         case TypeNames.SObject =>
           checkIsSObject(context)
         case _ if result.typeDeclaration.nature == ENUM_NATURE =>
-          checkEnumValue(result.typeDeclaration, context)
+          checkEnumValue(context, result.typeDeclaration)
         case _ =>
-          OrgInfo.logError(
+          context.logError(
             expression.location,
             s"Switch expression must be a Integer, Long, String, SObject record or enum value, not '${result.typeName}'"
           )
           return;
       }
-      checkWhenElseIsLast()
-      checkForDoubleNull()
+      checkWhenElseIsLast(context)
+      checkForDoubleNull(context)
       val duplicates = values.groupBy(identity).collect { case (_, Seq(_, y, _*)) => y }
       duplicates.headOption.foreach(dup =>
-        OrgInfo.logError(expression.location, s"Duplicate when case for $dup")
+        context.logError(expression.location, s"Duplicate when case for $dup")
       )
     }
 
@@ -267,8 +266,8 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
     )
   }
 
-  private def checkMatchableTo(typeName: TypeName): Seq[String] = {
-    whenControls.flatMap(_.whenValue.checkMatchableTo(typeName))
+  private def checkMatchableTo(context: BlockVerifyContext, typeName: TypeName): Seq[String] = {
+    whenControls.flatMap(_.whenValue.checkMatchableTo(context, typeName))
   }
 
   private def checkIsSObject(context: BlockVerifyContext): Seq[String] = {
@@ -276,21 +275,21 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
   }
 
   private def checkEnumValue(
-    typeDeclaration: TypeDeclaration,
-    context: BlockVerifyContext
+    context: BlockVerifyContext,
+    typeDeclaration: TypeDeclaration
   ): Seq[String] = {
-    whenControls.flatMap(_.whenValue.checkEnumValue(typeDeclaration, context))
+    whenControls.flatMap(_.whenValue.checkEnumValue(context, typeDeclaration))
   }
 
-  private def checkWhenElseIsLast(): Unit = {
+  private def checkWhenElseIsLast(context: BlockVerifyContext): Unit = {
     val notLastElse = whenControls.zipWithIndex
       .filter(_._1.whenValue.isInstanceOf[WhenElseValue])
       .find(_._2 != whenControls.length - 1)
     if (notLastElse.nonEmpty)
-      OrgInfo.logError(notLastElse.get._1.location, "'when else' must be the last when block")
+      context.logError(notLastElse.get._1.location, "'when else' must be the last when block")
   }
 
-  private def checkForDoubleNull(): Unit = {
+  private def checkForDoubleNull(context: BlockVerifyContext): Unit = {
     val literals = whenControls.flatMap(wc => {
       wc.whenValue match {
         case l: WhenLiteralsValue => l.literals
@@ -298,7 +297,7 @@ final case class SwitchStatement(expression: Expression, whenControls: List[When
       }
     })
     if (literals.count(_.isInstanceOf[WhenNullLiteral]) > 1)
-      OrgInfo.logError(
+      context.logError(
         literals.last.location,
         "There should only be one 'when null' block in a switch"
       )
