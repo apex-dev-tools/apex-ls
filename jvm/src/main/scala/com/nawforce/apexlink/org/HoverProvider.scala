@@ -46,8 +46,8 @@ trait HoverProvider extends SourceOps {
 
   private def toHoverItem(l: Option[(Locatable, Location)]): HoverItem = {
     l match {
-      case Some(l) => HoverItem(Some(l._1.toString), Some(l._2))
-      case _       => HoverItem(None, None)
+      case Some((td, loc)) => HoverItem(Some(td.toString), Some(loc))
+      case _               => HoverItem(None, None)
     }
   }
 }
