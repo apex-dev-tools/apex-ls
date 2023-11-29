@@ -15,7 +15,6 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.names.XNames.NameUtils
-import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.Positionable
@@ -44,13 +43,13 @@ object CST {
 }
 
 final case class Id(name: Name) extends CST {
-  def validate(): Unit = {
+  def validate(context: VerifyContext): Unit = {
     if (name.nonEmpty) {
       val illegalError = name.isLegalIdentifier
       if (illegalError.nonEmpty)
-        OrgInfo.log(IssueOps.illegalIdentifier(location, name, illegalError.get))
+        context.log(IssueOps.illegalIdentifier(location, name, illegalError.get))
       else if (name.isReservedIdentifier)
-        OrgInfo.log(IssueOps.reservedIdentifier(location, name))
+        context.log(IssueOps.reservedIdentifier(location, name))
     }
   }
 }

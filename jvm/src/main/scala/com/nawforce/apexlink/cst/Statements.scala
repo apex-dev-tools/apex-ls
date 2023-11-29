@@ -19,7 +19,6 @@ import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, LoggerOps}
@@ -45,7 +44,7 @@ abstract class Statement extends CST with ControlFlow {
   * need to use.
   */
 abstract class Block extends Statement {
-  def statements(): Seq[Statement]
+  def statements(context: Option[BlockVerifyContext] = None): Seq[Statement]
 }
 
 object Block {
@@ -110,12 +109,12 @@ private final case class OuterBlock(
 
   override def verify(context: BlockVerifyContext): Unit = {
     val blockContext = new InnerBlockVerifyContext(context)
-    statements().foreach(_.verify(blockContext))
+    statements(Some(blockContext)).foreach(_.verify(blockContext))
     verifyControlPath(blockContext, BlockControlPattern())
     context.typePlugin.foreach(_.onBlockValidated(this, context.isStatic, blockContext))
   }
 
-  override def statements(): Seq[Statement] = {
+  override def statements(context: Option[BlockVerifyContext] = None): Seq[Statement] = {
     var statements = Option(statementsRef).map(_.get).orNull
 
     // If the statement WeakRef has gone stale we need to re-build them
@@ -125,7 +124,7 @@ private final case class OuterBlock(
       if (statementContext == null) {
         val parser = new CodeParser(source)
         val result = parser.parseBlock()
-        result.issues.foreach(OrgInfo.log)
+        context.foreach(c => result.issues.foreach(c.log))
         statementContext = result.value
         blockContextRef = new WeakReference(statementContext)
         reParsed = true
@@ -164,6 +163,8 @@ private final case class InnerBlock(statements: Seq[Statement]) extends Block {
     statements.foreach(_.verify(blockContext))
     verifyControlPath(blockContext, BlockControlPattern())
   }
+
+  override def statements(context: Option[BlockVerifyContext] = None): Seq[Statement] = statements
 }
 
 final case class LocalVariableDeclarationStatement(
@@ -280,7 +281,7 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
   }
 
   override def verify(context: BlockVerifyContext): Unit = {
-    id.validate()
+    id.validate(context)
 
     // Check the loop var type is available
     var varTd = context.getTypeAndAddDependency(typeName, context.thisType).toOption

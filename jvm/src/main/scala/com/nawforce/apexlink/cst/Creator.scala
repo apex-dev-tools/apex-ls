@@ -14,14 +14,9 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.AssignableSupport.{
-  AssignableOptions,
-  couldBeEqual,
-  isAssignableDeclaration
-}
+import com.nawforce.apexlink.cst.AssignableSupport.{couldBeEqual, isAssignableDeclaration}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
@@ -179,12 +174,12 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     input match {
       case Some(td) =>
         if (td.modifiers.contains(ABSTRACT_MODIFIER)) {
-          OrgInfo.logError(location, s"Abstract classes cannot be constructed: ${td.typeName}")
+          context.logError(location, s"Abstract classes cannot be constructed: ${td.typeName}")
           return ExprContext.empty
         }
         td.findConstructor(arguments, context) match {
           case Left(error) =>
-            OrgInfo.logError(location, error)
+            context.logError(location, error)
             ExprContext.empty
           case Right(ctor) => ExprContext(Some(false), input, ctor)
         }
@@ -204,7 +199,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
         rhs.verify(input, context)
         Some(id)
       case argument =>
-        OrgInfo.logError(
+        context.logError(
           argument.location,
           s"SObject type '$typeName' construction needs '<field name> = <value>' arguments"
         )
@@ -214,7 +209,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     if (validArgs.length == arguments.length) {
       val duplicates = validArgs.groupBy(_.name).collect { case (_, ArraySeq(_, y, _*)) => y }
       if (duplicates.nonEmpty) {
-        OrgInfo.logError(
+        context.logError(
           duplicates.head.location,
           s"Duplicate assignment to field '${duplicates.head.name}' on SObject type '$typeName'"
         )
@@ -259,7 +254,7 @@ final case class ArrayCreatorRest(
       val indexType = expr.verify(input, context)
       indexType.declaration.foreach(indexType => {
         if (indexType.typeName != TypeNames.Integer) {
-          OrgInfo.logError(
+          context.logError(
             expr.location,
             s"Index for array construction must be an Integer, not '${indexType.typeName}'"
           )
@@ -272,7 +267,7 @@ final case class ArrayCreatorRest(
       val exprType = expr.verify(input, context)
       exprType.declaration.foreach(exprType => {
         if (!isAssignableDeclaration(creating.typeName, exprType, context)) {
-          OrgInfo.logError(
+          context.logError(
             expr.location,
             s"Expression of type '${exprType.typeName}' can not be assigned to ${creating.typeName}'"
           )
@@ -323,7 +318,7 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
     val enclosedTypes = td.typeName.getMapType
 
     if (enclosedTypes.isEmpty) {
-      OrgInfo.logError(
+      context.logError(
         location,
         s"Expression pair list construction is only supported for Map types, not '${td.typeName}'"
       )
@@ -333,14 +328,14 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
     val keyType = context.getTypeAndAddDependency(enclosedTypes.get._1, context.thisType)
     if (keyType.isLeft) {
       if (!context.module.isGhostedType(enclosedTypes.get._1))
-        OrgInfo.log(keyType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
+        context.log(keyType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
       return ExprContext.empty
     }
 
     val valueType = context.getTypeAndAddDependency(enclosedTypes.get._2, context.thisType)
     if (valueType.isLeft) {
       if (!context.module.isGhostedType(enclosedTypes.get._2))
-        OrgInfo.log(valueType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
+        context.log(valueType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
       return ExprContext.empty
     }
 
@@ -350,7 +345,7 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
         val isKeyAssignable =
           couldBeEqual(pairContext._1.typeDeclaration, keyType.toOption.get, context)
         if (!isKeyAssignable) {
-          OrgInfo.logError(
+          context.logError(
             location,
             s"Incompatible key type '${pairContext._1.typeName}' for '${keyType.toOption.get.typeName}'"
           )
@@ -361,7 +356,7 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
         val isValueAssignable =
           couldBeEqual(pairContext._2.typeDeclaration, valueType.toOption.get, context)
         if (!isValueAssignable) {
-          OrgInfo.logError(
+          context.logError(
             location,
             s"Incompatible value type '${pairContext._2.typeName}' for '${valueType.toOption.get.typeName}'"
           )
@@ -428,7 +423,7 @@ final case class SetOrListCreatorRest(parts: ArraySeq[Expression]) extends Creat
     val td           = creating.declaration.get
     val enclosedType = td.typeName.getSetOrListType
     if (enclosedType.isEmpty) {
-      OrgInfo.logError(
+      context.logError(
         location,
         s"Expression list construction is only supported for Set or List types, not '${td.typeName}'"
       )
@@ -439,7 +434,7 @@ final case class SetOrListCreatorRest(parts: ArraySeq[Expression]) extends Creat
     context.getTypeAndAddDependency(enclosedType.get, context.thisType) match {
       case Left(error) =>
         if (!context.module.isGhostedType(enclosedType.get))
-          OrgInfo.log(error.asIssue(location))
+          context.log(error.asIssue(location))
         ExprContext.empty
       case Right(toType) =>
         // For each expression check we can assign to the generic type
@@ -447,7 +442,7 @@ final case class SetOrListCreatorRest(parts: ArraySeq[Expression]) extends Creat
           val exprType = part.verify(input, context)
           exprType.declaration.foreach(exprType => {
             if (!isAssignableDeclaration(toType.typeName, exprType, context)) {
-              OrgInfo.logError(
+              context.logError(
                 location,
                 s"Expression of type '${exprType.typeName}' can not be assigned to ${toType.typeName}'"
               )
