@@ -304,7 +304,8 @@ object PlatformTypeDeclaration {
     if (td.typeName.params.size != typeName.params.size)
       return Left(WrongTypeArguments(typeName, td.typeName.params.size))
 
-    if (td.typeName.params.nonEmpty)
+    // FIXME: includes temp fix for recursion / stack overflow trying to extend generic interface
+    if (td.typeName.params.nonEmpty && td.nature != INTERFACE_NATURE)
       GenericPlatformTypeDeclaration.get(typeName, from)
     else
       Right(td)
