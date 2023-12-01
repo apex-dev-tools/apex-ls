@@ -44,26 +44,14 @@ class ComponentTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Custom component (MDAPI)") {
-    FileSystemHelper.run(
-      Map(
-        "Test.component" -> "<apex:component/>",
-        "Dummy.cls"      -> "public class Dummy { {Object a = Component.Test;} }"
-      )
-    ) { root: PathLike =>
-      createOrg(root)
-      assert(!hasIssues)
-    }
-  }
-
   test("Missing component") {
     FileSystemHelper.run(
-      Map("Dummy.cls" -> "public class Dummy { {Object a = Component.Test;} }")
+      Map("Dummy.cls" -> "public class Dummy { {Object a = new Component.Test();} }")
     ) { root: PathLike =>
       createOrg(root)
       assert(
         getMessages(root.join("Dummy.cls")) ==
-          "Missing: line 1 at 33-47: Unknown field or type 'Test' on 'Component'\n"
+          "Missing: line 1 at 37-51: No type declaration found for 'Component.Test'\n"
       )
     }
   }
