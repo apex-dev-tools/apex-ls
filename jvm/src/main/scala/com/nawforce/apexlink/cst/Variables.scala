@@ -37,23 +37,25 @@ final case class VariableDeclarator(
     val lhsType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
 
     val exprContext = new ExpressionVerifyContext(context)
-    init.foreach(e => {
-      val rhsCtx = e.verify(input, exprContext)
+    init.foreach(rhs => {
+      val rhsCtx = rhs.verify(input, exprContext)
+
       lhsType.foreach(lhsType => {
-        if (
-          rhsCtx.isDefined && !isAssignableDeclaration(
-            lhsType.typeName,
-            rhsCtx.typeDeclaration,
-            context
-          )
-        ) {
-          context.log(
-            Issue(
-              ERROR_CATEGORY,
+        if (rhsCtx.isDefined) {
+          if (rhsCtx.isStatic.contains(true)) {
+            context.logError(
               location,
-              s"Incompatible types in assignment, from '${rhsCtx.typeDeclaration.typeName}' to '${lhsType.typeName}'"
+              s"Expecting instance for operation, not type '${rhsCtx.typeName}'"
             )
-          )
+          } else if (!isAssignableDeclaration(lhsType.typeName, rhsCtx.typeDeclaration, context)) {
+            context.log(
+              Issue(
+                ERROR_CATEGORY,
+                location,
+                s"Incompatible types in assignment, from '${rhsCtx.typeName}' to '${lhsType.typeName}'"
+              )
+            )
+          }
         }
       })
     })
@@ -65,6 +67,7 @@ final case class VariableDeclarator(
   def addVars(context: BlockVerifyContext): Unit = {
     context.addVar(id.name, this, isReadOnly, typeName)
   }
+
 }
 
 object VariableDeclarator {
