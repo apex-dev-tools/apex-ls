@@ -91,6 +91,7 @@ final case class IdPrimary(id: Id) extends Primary {
   // class field, then cachedClassFieldDeclaration will store the class field declaration, even though it is shadowed.
   private var cachedClassFieldDeclaration: Option[FieldDeclaration] = None
   var typeName: Option[TypeName]                                    = None
+
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     isVarReference(context)
       .getOrElse(
@@ -138,12 +139,11 @@ final case class IdPrimary(id: Id) extends Primary {
     input: ExprContext,
     context: ExpressionVerifyContext
   ): Option[ExprContext] = {
-    cachedClassFieldDeclaration = input.typeDeclaration.findField(id.name, input.isStatic)
-
     val td            = input.typeDeclaration
     val staticContext = Some(true).filter(input.isStatic.contains)
 
     val field = findField(id.name, td, staticContext)
+    cachedClassFieldDeclaration = field
 
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
       context.addDependency(field.get)
