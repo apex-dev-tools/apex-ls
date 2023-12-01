@@ -103,4 +103,31 @@ class VarTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy { String a; static void func() {String a;}}")
     assert(!hasIssues)
   }
+
+  test("Reference local var") {
+    typeDeclaration("public class Dummy { void func() {String a; String b = a;}}")
+    assert(!hasIssues)
+  }
+
+  test("Static type in method argument") {
+    typeDeclaration("public class Dummy { void func(Dummy d) {} void func2() {func(dummy);} }")
+    assert(
+      dummyIssues == "Missing: line 1 at 62-67: No variable or type found for 'dummy' on 'Dummy'\n"
+    )
+  }
+
+  test("Static type in variable declaration") {
+    typeDeclaration("public class Dummy {{ Dummy d = dummy; }}")
+    assert(
+      dummyIssues == "Error: line 1 at 28-37: Expecting instance for operation, not type 'Dummy'\n"
+    )
+  }
+
+  test("Static type in variable assignment") {
+    typeDeclaration("public class Dummy {{ Dummy d; d = dummy; }}")
+    assert(
+      dummyIssues == "Error: line 1 at 31-40: Expecting instance for operation, not type 'Dummy'\n"
+    )
+  }
+
 }
