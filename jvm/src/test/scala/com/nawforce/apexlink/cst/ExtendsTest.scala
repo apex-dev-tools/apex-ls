@@ -115,6 +115,18 @@ class ExtendsTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Generic interface superclass") {
+    assert(
+      typeDeclarations(
+        Map("Dummy.cls" -> "global class Dummy extends Iterable<Integer> {}")
+      ).nonEmpty
+    )
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 13-18: Parent type 'Iterable' must be a class\n"
+    )
+  }
+
   test("Enum superclass") {
     assert(
       typeDeclarations(

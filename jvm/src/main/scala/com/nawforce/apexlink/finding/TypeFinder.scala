@@ -65,7 +65,10 @@ trait TypeFinder {
       return None
 
     // Ignore if looking for the superType itself, must be found by other means to avoid recursion
-    if (dotName == from.superClass.get.asDotName)
+    val superClass = from.superClass.get
+    if (dotName == superClass.asDotName)
+      return None
+    if (superClass.params.exists(dotName == _.asDotName))
       return None
 
     val superType = getTypeFor(from.superClass.get, from)
