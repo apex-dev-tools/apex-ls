@@ -595,10 +595,11 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     input: ExprContext,
     context: ExpressionVerifyContext
   ): ExprContext = {
-    val args = arguments.map(_.verify(input, context))
+    val argTypes = arguments.map(arg => {
+      val argExpr = arg.verify(input, context)
+      interceptFoundArg(input, context, arg, argExpr)
+    })
 
-    // If we failed to get argument type (maybe due to ghosting), use null as assignable to anything
-    val argTypes = args.map(arg => if (arg.isDefined) arg.typeName else TypeNames.Any)
     callee.findMethod(target.name, argTypes, staticContext, context) match {
       case Right(method) =>
         cachedMethod = Some(method)
@@ -651,6 +652,29 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
           None
         }
       case _ => None
+    }
+  }
+
+  private def interceptFoundArg(
+    input: ExprContext,
+    context: ExpressionVerifyContext,
+    arg: Expression,
+    foundType: ExprContext
+  ): TypeName = {
+    if (foundType.isDefined) {
+      // handle static type reference, expecting instance but most likely missing variable
+      if (foundType.isStatic.contains(true)) {
+        arg match {
+          case PrimaryExpression(IdPrimary(id)) =>
+            context.missingIdentifier(arg.location, input.typeName, id.name)
+          case _ =>
+        }
+      }
+
+      foundType.typeName
+    } else {
+      // If we failed to get argument type (maybe due to ghosting), use null as assignable to anything
+      TypeNames.Any
     }
   }
 
