@@ -28,8 +28,7 @@ class MDAPIWorkspaceConfig(namespace: Option[Name], paths: Seq[PathLike]) extend
     Seq(
       NamespaceLayer(
         namespace,
-        isGulped = false,
-        paths.map(path => ModuleLayer(path, ".", Seq())).toList
+        paths.map(path => ModuleLayer(path, ".", isGulped = false, Seq())).toList
       )
     )
 

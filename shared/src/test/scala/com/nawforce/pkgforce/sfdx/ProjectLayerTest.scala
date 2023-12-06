@@ -19,7 +19,6 @@ import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.pkgforce.workspace.{ModuleLayer, NamespaceLayer}
 import com.nawforce.runtime.FileSystemHelper
-import com.nawforce.runtime.platform.Path
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -29,6 +28,14 @@ import scala.collection.immutable.ArraySeq
 class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
   private var logger: CatchingLogger = _
+
+  implicit class ProjectOps(project: SFDXProject) {
+    def customLayers(logger: IssueLogger): List[NamespaceLayer] =
+      project.layers(logger).filterNot(_.isGulpedPlatform).toList
+
+    def metadataGlobPaths(): List[String] =
+      project.metadataGlobs.map(glob => glob.split('*').head).toList
+  }
 
   before {
     logger = new CatchingLogger
@@ -41,7 +48,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         assert(logger.issues.isEmpty)
         assert(project.nonEmpty)
         assert(project.get.layers(logger).isEmpty)
-        assert(project.get.metadataGlobs.isEmpty)
+        assert(project.get.metadataGlobPaths() == List(".apexlink/gulp/$platform/"))
         assert(
           logger.issues == ArraySeq(
             Issue(
@@ -66,13 +73,12 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       assert(project.nonEmpty)
 
       val dir = "foo"
-      project.get.layers(logger) should matchPattern {
-        case List(NamespaceLayer(None, false, List(ModuleLayer(projectPath, path, List()))))
+      project.get.customLayers(logger) should matchPattern {
+        case List(NamespaceLayer(None, List(ModuleLayer(projectPath, path, false, List()))))
             if projectPath == root && path == dir =>
       }
 
-      assert(project.get.metadataGlobs.size == 1)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -88,22 +94,19 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir1 = "foo"
       val dir2 = "bar"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 None,
-                false,
                 List(
-                  ModuleLayer(projectPath1, path1, List()),
-                  ModuleLayer(projectPath2, path2, List())
+                  ModuleLayer(projectPath1, path1, false, List()),
+                  ModuleLayer(projectPath2, path2, false, List())
                 )
               )
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith("bar/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", "bar/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -119,22 +122,19 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir1 = "foo"
       val dir2 = "bar"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 None,
-                false,
                 List(
-                  ModuleLayer(projectPath1, path1, List()),
-                  ModuleLayer(projectPath2, path2, List())
+                  ModuleLayer(projectPath1, path1, false, List()),
+                  ModuleLayer(projectPath2, path2, false, List())
                 )
               )
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith("bar/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", "bar/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -150,20 +150,20 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir1 = ".apexlink/gulp/ns1"
       val dir2 = "foo"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 Some(Name("ns1")),
-                true,
-                List(ModuleLayer(projectPath1, path1, List()))
+                List(ModuleLayer(projectPath1, path1, true, List()))
               ),
-              NamespaceLayer(None, false, List(ModuleLayer(projectPath2, path2, List())))
+              NamespaceLayer(None, List(ModuleLayer(projectPath2, path2, false, List())))
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith(".apexlink/gulp/ns1/"))
+      assert(
+        project.get
+          .metadataGlobPaths() == List("foo/", ".apexlink/gulp/$platform/", ".apexlink/gulp/ns1/")
+      )
     }
   }
 
@@ -178,22 +178,27 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       assert(project.nonEmpty)
 
       val dir2 = "foo"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 None,
-                false,
                 List(
-                  ModuleLayer(projectPath1, ".apexlink/gulp/unmanaged", List()),
-                  ModuleLayer(projectPath2, path2, List())
+                  ModuleLayer(projectPath1, ".apexlink/gulp/unmanaged", true, List()),
+                  ModuleLayer(projectPath2, path2, false, List())
                 )
               )
             ) if projectPath1 == root && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith(".apexlink/gulp/unmanaged/"))
+      assert(
+        project.get
+          .metadataGlobPaths() == List(
+          "foo/",
+          ".apexlink/gulp/$platform/",
+          ".apexlink/gulp/unmanaged/"
+        )
+      )
+
     }
   }
 
@@ -208,8 +213,8 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       assert(project.nonEmpty)
 
       val dir = "foo"
-      project.get.layers(logger) should matchPattern {
-        case List(NamespaceLayer(None, false, List(ModuleLayer(projectPath, path, List()))))
+      project.get.customLayers(logger) should matchPattern {
+        case List(NamespaceLayer(None, List(ModuleLayer(projectPath, path, false, List()))))
             if projectPath == root && path == dir =>
       }
 
@@ -226,8 +231,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         )
       )
 
-      assert(project.get.metadataGlobs.size == 1)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -242,13 +246,12 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       assert(project.nonEmpty)
 
       val dir = "foo"
-      project.get.layers(logger) should matchPattern {
-        case List(NamespaceLayer(None, false, List(ModuleLayer(projectPath, path, List()))))
+      project.get.customLayers(logger) should matchPattern {
+        case List(NamespaceLayer(None, List(ModuleLayer(projectPath, path, false, List()))))
             if projectPath == root && path == dir =>
       }
 
-      assert(project.get.metadataGlobs.size == 1)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -271,22 +274,19 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir1 = "foo"
       val dir2 = "bar"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 None,
-                false,
                 List(
-                  ModuleLayer(projectPath1, path1, List()),
-                  ModuleLayer(projectPath2, path2, List())
+                  ModuleLayer(projectPath1, path1, false, List()),
+                  ModuleLayer(projectPath2, path2, false, List())
                 )
               )
             ) if projectPath1 == root && path1 == dir1 && projectPath2 == root && path2 == dir2 =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith("bar/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", "bar/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -313,23 +313,25 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir1 = "foo"
       val dir2 = "bar"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 None,
-                false,
                 List(
-                  ModuleLayer(projectPath1, path1, List()),
-                  ModuleLayer(projectPath2, path2, List(ModuleLayer(projectPath3, path3, List())))
+                  ModuleLayer(projectPath1, path1, false, List()),
+                  ModuleLayer(
+                    projectPath2,
+                    path2,
+                    false,
+                    List(ModuleLayer(projectPath3, path3, false, List()))
+                  )
                 )
               )
             )
             if path1 == dir1 && path2 == dir2 && path3 == dir1 && projectPath1 == root && projectPath2 == root && projectPath3 == root =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith("bar/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", "bar/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -356,14 +358,18 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir1 = "foo"
       val dir2 = "bar"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 None,
-                false,
                 List(
-                  ModuleLayer(projectPath1, path1, List()),
-                  ModuleLayer(projectPath2, path2, List(ModuleLayer(projectPath3, path3, List())))
+                  ModuleLayer(projectPath1, path1, false, List()),
+                  ModuleLayer(
+                    projectPath2,
+                    path2,
+                    false,
+                    List(ModuleLayer(projectPath3, path3, false, List()))
+                  )
                 )
               )
             )
@@ -383,9 +389,7 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
         )
       )
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith("bar/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", "bar/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -412,23 +416,25 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
       val dir1 = "foo"
       val dir2 = "bar"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 None,
-                false,
                 List(
-                  ModuleLayer(projectPath1, path1, List()),
-                  ModuleLayer(projectPath2, path2, List(ModuleLayer(projectPath3, path3, List())))
+                  ModuleLayer(projectPath1, path1, false, List()),
+                  ModuleLayer(
+                    projectPath2,
+                    path2,
+                    false,
+                    List(ModuleLayer(projectPath3, path3, false, List()))
+                  )
                 )
               )
             )
             if path1 == dir1 && path2 == dir2 && path3 == dir1 && projectPath1 == root && projectPath2 == root && projectPath3 == root =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith("bar/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", "bar/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -454,15 +460,14 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       assert(project.nonEmpty)
 
       val dir1 = "foo"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
-              NamespaceLayer(Some(Name("ext")), false, List()),
-              NamespaceLayer(None, false, List(ModuleLayer(projectPath, path1, List())))
+              NamespaceLayer(Some(Name("ext")), List()),
+              NamespaceLayer(None, List(ModuleLayer(projectPath, path1, false, List())))
             ) if path1 == dir1 && projectPath == root =>
       }
 
-      assert(project.get.metadataGlobs.size == 1)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -488,15 +493,14 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       assert(project.nonEmpty)
 
       val dir1 = "foo"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
-              NamespaceLayer(Some(Name("ext")), false, List(ModuleLayer(projectPath2, ".", Seq()))),
-              NamespaceLayer(None, false, List(ModuleLayer(projectPath1, path1, List())))
+              NamespaceLayer(Some(Name("ext")), List(ModuleLayer(projectPath2, ".", false, Seq()))),
+              NamespaceLayer(None, List(ModuleLayer(projectPath1, path1, false, List())))
             ) if path1 == dir1 && projectPath1 == root && projectPath2 == root.join("bar") =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
+      assert(project.get.metadataGlobPaths() == List("foo/", "bar/", ".apexlink/gulp/$platform/"))
     }
   }
 
@@ -530,20 +534,24 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       assert(project.nonEmpty)
 
       val dir1 = "foo"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 Some(Name("pkg")),
-                false,
-                List(ModuleLayer(projectPath2, "bar", Seq()))
+                List(ModuleLayer(projectPath2, "bar", false, Seq()))
               ),
-              NamespaceLayer(None, false, List(ModuleLayer(projectPath1, path1, List())))
+              NamespaceLayer(None, List(ModuleLayer(projectPath1, path1, false, List())))
             ) if path1 == dir1 && projectPath1 == root && projectPath2 == root.join("pkg") =>
       }
 
-      assert(project.get.metadataGlobs.size == 2)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith(s"pkg${Path.separator}bar/"))
+      assert(
+        project.get.metadataGlobPaths() == List(
+          "foo/",
+          "pkg/.apexlink/gulp/$platform/",
+          "pkg/bar/",
+          ".apexlink/gulp/$platform/"
+        )
+      )
     }
   }
 
@@ -570,28 +578,25 @@ class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
       assert(project.nonEmpty)
 
       val dir1 = "foo"
-      project.get.layers(logger) should matchPattern {
+      project.get.customLayers(logger) should matchPattern {
         case List(
               NamespaceLayer(
                 Some(Name("ext1")),
-                false,
-                List(ModuleLayer(projectPath2, ".", Seq()))
+                List(ModuleLayer(projectPath2, ".", false, Seq()))
               ),
               NamespaceLayer(
                 Some(Name("ext2")),
-                false,
-                List(ModuleLayer(projectPath3, ".", Seq()))
+                List(ModuleLayer(projectPath3, ".", false, Seq()))
               ),
-              NamespaceLayer(None, false, List(ModuleLayer(projectPath1, path1, List())))
+              NamespaceLayer(None, List(ModuleLayer(projectPath1, path1, false, List())))
             )
             if path1 == dir1 && projectPath1 == root &&
               projectPath2 == root.join("bar") && projectPath3 == root.join("baz") =>
       }
 
-      assert(project.get.metadataGlobs.size == 3)
-      assert(project.get.metadataGlobs.head.startsWith("foo/"))
-      assert(project.get.metadataGlobs(1).startsWith("bar/"))
-      assert(project.get.metadataGlobs(2).startsWith("baz/"))
+      assert(
+        project.get.metadataGlobPaths() == List("foo/", "bar/", "baz/", ".apexlink/gulp/$platform/")
+      )
     }
   }
 }

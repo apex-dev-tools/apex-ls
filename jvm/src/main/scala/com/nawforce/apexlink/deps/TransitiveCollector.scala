@@ -20,9 +20,9 @@ import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier}
 import scala.collection.mutable
 
 /** Transitive dependency helper */
-class TransitiveCollector(org: Org, isSamePackage: Boolean, apexOnly: Boolean) {
+class TransitiveCollector(org: Org, inSamePackage: Boolean, apexOnly: Boolean) {
   private val packagesByNamespace =
-    org.getPackages().map(pkg => (Name(pkg.getNamespaces(!isSamePackage).head), pkg)).toMap
+    org.getPackages().map(pkg => (Name(pkg.getNamespaces(withDependents = false).head), pkg)).toMap
 
   def count(id: TypeIdentifier, ignoring: Array[TypeIdentifier]): Int = {
     transitives(id, ignoring).length
@@ -34,7 +34,7 @@ class TransitiveCollector(org: Org, isSamePackage: Boolean, apexOnly: Boolean) {
   ): Array[TypeIdentifier] = {
     val pkgNamespace = id.namespace.getOrElse(Names.Empty)
     val pkgs =
-      if (isSamePackage) packagesByNamespace.get(pkgNamespace).toArray
+      if (inSamePackage) packagesByNamespace.get(pkgNamespace).toArray
       else packagesByNamespace.values.toArray
 
     val depsSeen = mutable.Set[TypeIdentifier]()
@@ -49,7 +49,7 @@ class TransitiveCollector(org: Org, isSamePackage: Boolean, apexOnly: Boolean) {
           .getOrElse(Array.empty[TypeIdentifier])
           .filterNot(depsSeen.contains)
           .foreach(t => {
-            if (!isSamePackage || t.namespace.getOrElse(Names.Empty) == pkgNamespace) {
+            if (!inSamePackage || t.namespace.getOrElse(Names.Empty) == pkgNamespace) {
               deps.append(t)
               depsSeen.add(t)
             }

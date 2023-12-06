@@ -82,10 +82,12 @@ class SObjectDeployer(module: OPM.Module) {
       }
 
       derivedFields.addAll(derived)
-      val fields = nonDerived.flatMap(createCustomField)
+      val fields = nonDerived
+        .filter(f => module.isPlatformExtension || isCustomField(f))
+        .flatMap(createCustomField)
 
       val sobjects =
-        if (encodedName.ext.nonEmpty)
+        if (encodedName.ext.nonEmpty || module.isPlatformExtension) {
           createCustomObject(
             sources,
             sObjectEvent,
@@ -95,7 +97,7 @@ class SObjectDeployer(module: OPM.Module) {
             fieldSets,
             sharingReasons
           )
-        else
+        } else
           createReplacementSObject(sources, typeName, nature, fields, fieldSets, sharingReasons)
       sobjects.foreach(sobject => createdSObjects.put(sobject.typeName, sobject))
     }
@@ -103,6 +105,10 @@ class SObjectDeployer(module: OPM.Module) {
     addDerivedFieldsToObjects(derivedFields, createdSObjects)
 
     createdSObjects.values.toArray
+  }
+
+  private def isCustomField(field: CustomFieldEvent): Boolean = {
+    field.name.toString.endsWith("__c")
   }
 
   private def createCustomField(field: CustomFieldEvent): Array[FieldDeclaration] = {
@@ -281,7 +287,7 @@ class SObjectDeployer(module: OPM.Module) {
             sources
               .find(_.location.path == path)
               .foreach(source => {
-                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, typeName.name))
+                OrgInfo.log(IssueOps.extendingUnknownSObject(source.location, typeName.toString()))
               })
           })
           Array.empty
@@ -303,8 +309,19 @@ class SObjectDeployer(module: OPM.Module) {
     sharingModel: Option[SharingModel]
   ): Array[SObjectDeclaration] = {
 
+    if (module.isPlatformExtension && EncodedName(typeName.name).ext.nonEmpty) {
+      sources.headOption.foreach(source => {
+        OrgInfo.logError(
+          source.location,
+          s"${nature.nature} for '$typeName' can not be created in $$platform module"
+        )
+      })
+      return Array()
+    }
+
+    // We need to check __c here as we are allowing Standard object construction via $platform
     val syntheticSObjects =
-      if (nature == CustomObjectNature) {
+      if (nature == CustomObjectNature && typeName.name.toString.endsWith("__c")) {
         // FUTURE: Check fields & when these should be available
         Array(
           createShare(sources, typeName, sharingReasons),
@@ -511,7 +528,7 @@ class SObjectDeployer(module: OPM.Module) {
       combinedFieldsets,
       combinedSharingReasons,
       combinedFields,
-      isComplete = baseAsSObject.nonEmpty,
+      isComplete = base.nonEmpty,
       if (crossModule) baseAsSObject else None
     )
 

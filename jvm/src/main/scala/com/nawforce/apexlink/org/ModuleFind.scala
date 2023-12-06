@@ -18,7 +18,6 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.core.TypeDeclaration
-import com.nawforce.pkgforce.modifiers.GLOBAL_MODIFIER
 import com.nawforce.pkgforce.names.{EncodedName, TypeName}
 
 trait ModuleFind {
@@ -59,25 +58,20 @@ trait ModuleFind {
     from: Option[TypeDeclaration],
     inPackage: Boolean = true
   ): Option[TypeDeclaration] = {
-    // Might be an outer in this module
-    var declaration = findModuleType(typeName)
-    if (declaration.nonEmpty) {
-      if (inPackage || declaration.get.modifiers.contains(GLOBAL_MODIFIER))
-        return declaration
-      else
-        return None
+    val found = findModuleType(typeName) match {
+      case Some(declaration) if inPackage || declaration.isExternallyVisible => Some(declaration)
+      case _ =>
+        typeName.outer.flatMap(outer => {
+          findPackageType(outer, from, inPackage = inPackage)
+            .flatMap(
+              _.findNestedType(typeName.name).filter(td => inPackage || td.isExternallyVisible)
+            )
+        })
     }
 
-    // Or maybe an inner
-    if (typeName.outer.nonEmpty) {
-      declaration = findPackageType(typeName.outer.get, from, inPackage = inPackage)
-        .flatMap(_.findNestedType(typeName.name).filter(td => td.isExternallyVisible || inPackage))
-      if (declaration.nonEmpty)
-        return declaration
+    found.orElse {
+      nextModule.flatMap(next => next.findPackageType(typeName, from, next.pkg == pkg))
     }
-
-    // Try base modules & packages of this module
-    nextModule.flatMap(next => next.findPackageType(typeName, from, next.pkg == pkg))
   }
 
   /** Find a type just in this module. */

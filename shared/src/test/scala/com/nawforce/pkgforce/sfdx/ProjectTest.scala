@@ -18,7 +18,6 @@ import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
-import com.nawforce.runtime.platform.Environment
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -569,7 +568,15 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
   test("Dependencies duplicate namespace") {
     FileSystemHelper.run(
       Map(
-        "sfdx-project.json" -> "{\"namespace\": \"foo\", \"plugins\": {\"dependencies\": [{\"namespace\": \"foo\", \"path\": \"bar\"}] }, \"packageDirectories\": [{\"path\": \"path\"}]}"
+        "sfdx-project.json" ->
+          """{
+            |  "packageDirectories": [{"path": "path"}],
+            |  "namespace": "foo",
+            |  "plugins": {
+            |    "dependencies": [{"namespace": "foo", "path": "bar"}]
+            |   }
+            | }
+            |""".stripMargin
       )
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
@@ -583,7 +590,7 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
             root.join("sfdx-project.json"),
             diagnostics.Diagnostic(
               ERROR_CATEGORY,
-              Location(1, 50),
+              Location(5, 21),
               "plugin additionalNamespaces/dependencies must use unique namespaces"
             )
           )
@@ -916,9 +923,10 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
       assert(logger.issues.isEmpty)
 
       assert(project.get.additionalNamespaces sameElements Array(Some(Name("ns"))))
-      val globs = project.get.metadataGlobs
-      assert(globs.length == 1)
-      assert(globs.exists(_.startsWith(".apexlink/gulp/ns/**/")))
+      assert(
+        project.get.metadataGlobs
+          .map(_.split('*').head) == List(".apexlink/gulp/$platform/", ".apexlink/gulp/ns/")
+      )
     }
   }
 
@@ -932,10 +940,14 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
       assert(logger.issues.isEmpty)
 
       assert(project.get.additionalNamespaces sameElements Array(Some(Name("ns1")), None))
-      val globs = project.get.metadataGlobs
-      assert(globs.length == 2)
-      assert(globs.exists(_.startsWith(".apexlink/gulp/ns1/**/")))
-      assert(globs.exists(_.startsWith(".apexlink/gulp/unmanaged/**/")))
+      assert(
+        project.get.metadataGlobs
+          .map(_.split('*').head) == List(
+          ".apexlink/gulp/$platform/",
+          ".apexlink/gulp/ns1/",
+          ".apexlink/gulp/unmanaged/"
+        )
+      )
     }
   }
 

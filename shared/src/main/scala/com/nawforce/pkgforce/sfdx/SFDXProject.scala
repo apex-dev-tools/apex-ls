@@ -196,19 +196,20 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   }
 
-  private val gulpPackages = additionalNamespaces.flatMap(ns => {
-    createGulpPath(ns) match {
-      case Left(err) =>
-        config
-          .lineAndOffsetOf(plugins.get("additionalNamespaces"))
-          .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, err))
-          .getOrElse(None)
-        None
-      case Right(path) if ns != namespace =>
-        Some(NamespaceLayer(ns, isGulped = true, Seq(ModuleLayer(projectPath, path, Seq()))))
-      case Right(_) => None
-    }
-  })
+  private val gulpPackages =
+    additionalNamespaces.flatMap(ns => {
+      createGulpPath(ns) match {
+        case Left(err) =>
+          config
+            .lineAndOffsetOf(plugins.get("additionalNamespaces"))
+            .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, err))
+            .getOrElse(None)
+          None
+        case Right(path) if ns != namespace =>
+          Some(NamespaceLayer(ns, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
+        case Right(_) => None
+      }
+    })
 
   private val extendedPackageDirectories = packageDirectories ++ unpackagedMetadata
 
@@ -219,6 +220,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     val glob = MetadataDocument.extensionsGlob
     (extendedPackageDirectories.map(packageDirectory => packageDirectory.relativePath) ++
       externalPackages.flatMap(_.layers.map(layer => layer.pathRelativeTo(projectPath))) ++
+      createGulpPath(Some(Name("$platform"))).toSeq ++
       additionalNamespaces.map(gulpPath).map(pathParts => pathParts.mkString("/")))
       .map(prefix => s"$prefix/**/*.$glob")
   }
@@ -253,18 +255,25 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
 
     val gulpLocalModule =
       if (additionalNamespaces.contains(namespace))
-        Seq(ModuleLayer(projectPath, gulpPath(namespace).mkString("/"), Seq()))
+        Seq(ModuleLayer(projectPath, gulpPath(namespace).mkString("/"), isGulped = true, Seq()))
       else
         Seq()
 
-    val localPackage = NamespaceLayer(namespace, isGulped = false, gulpLocalModule ++ localModules)
+    val localPackage = NamespaceLayer(namespace, gulpLocalModule ++ localModules)
 
     if (!validatePackagePathsLocal(localPackage.layers, logger))
       return Seq.empty
 
-    val layers = externalPackages ++ gulpPackages :+ localPackage
+    val platformPackage =
+      createGulpPath(Some(Name("$platform")))
+        .map(path =>
+          Array(NamespaceLayer(None, Seq(ModuleLayer(projectPath, path, isGulped = true, Seq()))))
+        )
+        .getOrElse(Array())
 
-    if (layers.map(_.namespace).toSet.size != layers.size) {
+    val layers         = externalPackages ++ platformPackage ++ gulpPackages :+ localPackage
+    val declaredLayers = layers.filterNot(_.isGulpedPlatform)
+    if (declaredLayers.map(_.namespace).toSet.size != declaredLayers.size) {
       logger.log(
         Issue(
           projectFile,
@@ -343,13 +352,19 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
         )
         Seq.empty
       case (true, false) =>
-        Seq(NamespaceLayer(dependent.namespace, isGulped = false, Nil))
+        Seq(NamespaceLayer(dependent.namespace, Nil))
       case (true, true) =>
         Seq(
           NamespaceLayer(
             dependent.namespace,
-            isGulped = false,
-            Seq(ModuleLayer(projectPath.join(dependent.relativePath.get), ".", Seq.empty))
+            Seq(
+              ModuleLayer(
+                projectPath.join(dependent.relativePath.get),
+                ".",
+                isGulped = false,
+                Seq.empty
+              )
+            )
           )
         )
       case (false, true) =>
@@ -372,7 +387,12 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     )
     val newLayer = VersionedPackageLayer(
       packageDirectory.version,
-      ModuleLayer(projectPath, packageDirectory.relativePath, dependencies.map(_.packageLayer))
+      ModuleLayer(
+        projectPath,
+        packageDirectory.relativePath,
+        isGulped = false,
+        dependencies.map(_.packageLayer)
+      )
     )
 
     // For 2GP, named packages need a version as well

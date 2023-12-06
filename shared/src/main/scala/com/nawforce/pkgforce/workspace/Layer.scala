@@ -17,6 +17,7 @@ import com.nawforce.pkgforce.diagnostics.IssuesManager
 import com.nawforce.pkgforce.documents.DocumentIndex
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.platform.Path
 
 /** Project metadata is modeled as an ordered sequence of namespace layers which contain an ordered
   * sequence of module layers. The layers should be ordered by deploy order, this means external
@@ -31,11 +32,15 @@ sealed trait Layer
   * for 'ghosted' packages where only knowledge of a namespace is provided. In a 1GP package each
   * layer will depend on its predecessor, with 2GP the layer dependencies are declared.
   */
-case class NamespaceLayer(namespace: Option[Name], isGulped: Boolean, layers: Seq[ModuleLayer])
-    extends Layer {
+case class NamespaceLayer(namespace: Option[Name], layers: Seq[ModuleLayer]) extends Layer {
+
+  def isGulpedPlatform: Boolean =
+    namespace.isEmpty && layers.size == 1 &&
+      layers.head.path.toString.endsWith(Path.separator + "$platform")
+
   def indexes(logger: IssuesManager): Map[ModuleLayer, DocumentIndex] =
     layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
-      acc + (layer -> layer.index(logger, namespace, isGulped))
+      acc + (layer -> layer.index(logger, namespace))
     )
 }
 
@@ -46,16 +51,16 @@ case class NamespaceLayer(namespace: Option[Name], isGulped: Boolean, layers: Se
 case class ModuleLayer(
   projectPath: PathLike,
   relativePath: String,
+  isGulped: Boolean,
   dependencies: Seq[ModuleLayer]
 ) {
-
   val path: PathLike = projectPath.join(relativePath)
 
   def pathRelativeTo(root: PathLike): String = {
     path.toString.substring(root.toString.length)
   }
 
-  def index(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean): DocumentIndex = {
+  def index(logger: IssuesManager, namespace: Option[Name]): DocumentIndex = {
     DocumentIndex(logger, namespace, isGulped, projectPath, path)
   }
 }

@@ -203,21 +203,35 @@ object LabelDeclaration {
         base.addTypeDependencyHolder(newLabel.typeId)
         newLabel
       })
-      .getOrElse(new LabelDeclaration(module, ArraySeq(), ArraySeq(), createPackageLabels(module)))
+      .getOrElse {
+        val (sources, labels) = collectUnnamespacedLabels(module)
+        new LabelDeclaration(module, sources, labels, createPackageLabels(module))
+      }
   }
 
   // Create labels declarations for each base package
   private def createPackageLabels(module: OPM.Module): ArraySeq[NestedLabels] = {
     ArraySeq.unsafeWrapArray(
       module.basePackages
-        .map(basePkg => {
-          if (basePkg.orderedModules.isEmpty) {
-            new GhostedLabels(module, basePkg.namespace.get)
+        .flatMap(basePkg => {
+          if (basePkg.isPlatformExtension) {
+            None
+          } else if (basePkg.orderedModules.isEmpty) {
+            Some(new GhostedLabels(module, basePkg.namespace.get))
+          } else if (basePkg.namespace.nonEmpty) {
+            Some(new PackageLabels(module, basePkg.orderedModules.head.labels))
           } else {
-            new PackageLabels(module, basePkg.orderedModules.head.labels)
+            None
           }
         })
         .toArray
     )
+  }
+
+  private def collectUnnamespacedLabels(
+    module: OPM.Module
+  ): (ArraySeq[SourceInfo], ArraySeq[Label]) = {
+    val declarations = module.transitiveModules.filter(_.namespace.isEmpty).map(_.labels)
+    (declarations.flatMap(_.sources).distinct, declarations.flatMap(_.labels))
   }
 }

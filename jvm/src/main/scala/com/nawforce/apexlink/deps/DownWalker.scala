@@ -38,10 +38,8 @@ case class NodeData(
 )
 
 /** Downstream dependency walker. Collects information on the dependencies of a type. */
-class DownWalker(org: Org, apexOnly: Boolean, isSamePackage: Boolean = true) {
-  private val hasGulpedPackages =
-    org.getPackages().collect({ case p: TPackage => p }).map(_.isGulped).exists(b => b)
-  private val transitiveCollector      = new TransitiveCollector(org, !hasGulpedPackages, apexOnly)
+class DownWalker(org: Org, apexOnly: Boolean, inSamePackage: Boolean = true) {
+  private val transitiveCollector      = new TransitiveCollector(org, inSamePackage, apexOnly)
   private val maxDependencyCountParser = new MaxDependencyCountParser(org)
 
   /* Collect information on dependencies of the passed identifiers. The walk depth can be limited but the result will
