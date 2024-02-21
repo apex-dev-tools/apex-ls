@@ -218,4 +218,26 @@ class OperationsTest extends AnyFunSuite with TestHelper {
         "Error: line 1 at 54-59: Comparing incompatible types 'System.String' and 'System.Integer'\n"
     )
   }
+
+  test("Null coalesce") {
+    happyTypeDeclaration("public class Dummy {{ String a = null; String b = a ?? 'test';}}")
+  }
+
+  test("Null coalesce nested") {
+    happyTypeDeclaration(
+      "public class Dummy {{ String a = null; String b; String c = 'test'; String d = a ?? b ?? c;}}"
+    )
+  }
+
+  test("Null coalesce common base") {
+    happyTypeDeclaration(
+      "public virtual class Dummy {class A extends Dummy {} class B extends Dummy {} { A a; B b = new B(); Object c = a ?? b;}}"
+    )
+  }
+
+  test("Null coalesce SObject") {
+    happyTypeDeclaration(
+      "public class Dummy {{ Account def = new Account(name = 'Acme'); Account a = [SELECT Id FROM Account WHERE Id = ''] ?? def; }}"
+    )
+  }
 }
