@@ -834,6 +834,7 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
     case "="    => AssignmentOperation
     case "&&"   => LogicalOperation
     case "||"   => LogicalOperation
+    case "??"   => ConditionalOperation
     case "=="   => EqualityOperation
     case "!="   => EqualityOperation
     case "<>"   => EqualityOperation
@@ -1167,6 +1168,18 @@ object Expression {
               Expression.construct(expressions.head),
               Expression.construct(expressions(1)),
               "||"
+            )
+          } else {
+            EmptyExpr()
+          }
+
+        case expr: CoalExpressionContext =>
+          val expressions = CodeParser.toScala(expr.expression())
+          if (expressions.length == 2) {
+            BinaryExpression(
+              Expression.construct(expressions.head),
+              Expression.construct(expressions(1)),
+              "??"
             )
           } else {
             EmptyExpr()

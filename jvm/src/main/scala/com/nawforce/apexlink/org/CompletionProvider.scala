@@ -391,6 +391,7 @@ object CompletionProvider {
     ApexLexer.TRIPLENOTEQUAL,
     ApexLexer.AND,
     ApexLexer.OR,
+    ApexLexer.COAL,
     ApexLexer.INC,
     ApexLexer.DEC,
     ApexLexer.ADD,
