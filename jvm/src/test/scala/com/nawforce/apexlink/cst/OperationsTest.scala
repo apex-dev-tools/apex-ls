@@ -240,4 +240,12 @@ class OperationsTest extends AnyFunSuite with TestHelper {
       "public class Dummy {{ Account def = new Account(name = 'Acme'); Account a = [SELECT Id FROM Account WHERE Id = ''] ?? def; }}"
     )
   }
+
+  test("Null coalesce not assignable") {
+    typeDeclaration("public class Dummy {{ String a = null; String b = a ?? false;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 50-60: Incompatible types in conditional operation, 'System.String' and 'System.Boolean'\n"
+    )
+  }
 }
