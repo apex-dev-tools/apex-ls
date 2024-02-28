@@ -478,7 +478,7 @@ case object ConditionalOperation extends Operation {
         .map(td => Right(ExprContext(isStatic = Some(false), td)))
         .getOrElse({
           Left(
-            s"Incompatible types in operation '${leftContext.typeName}' and '${rightContext.typeName}'"
+            s"Incompatible types in conditional operation '${leftContext.typeName}' and '${rightContext.typeName}'"
           )
         })
     }
