@@ -66,6 +66,28 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Method implementations with super interface type") {
+    val contentAndCursorPos =
+      withCursor(s"public interface Foo extends Bar { void goTo${CURSOR}Method(); }")
+    val source = Map(
+      "Bar.cls" -> "public interface Bar { void goToSuperMethod(); }",
+      "Foo.cls" -> contentAndCursorPos._1,
+      "Dummy.cls" -> "public class Dummy implements Foo {public void goToSuperMethod(){} public void goToMethod(){}}",
+      "FooController.cls" -> "public class FooController implements Bar{ public void goToSuperMethod(){}}"
+    )
+    FileSystemHelper.run(source) { root: PathLike =>
+      val org = createHappyOrg(root)
+      val actual = org.unmanaged
+        .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+        .map(LocationLinkString(root, contentAndCursorPos._1, _))
+      assert(
+        actual sameElements Array(
+          LocationLinkString("goToMethod", path"/Dummy.cls", "void goToMethod(){}", "goToMethod")
+        )
+      )
+    }
+  }
+
   test("Identifier Implementation") {
     val contentAndCursorPos =
       withCursor(s"public interface F${CURSOR}oo { void goToMethod(); void concrete(); }")
