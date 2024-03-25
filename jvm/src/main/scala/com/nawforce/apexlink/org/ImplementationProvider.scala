@@ -7,10 +7,9 @@ package com.nawforce.apexlink.org
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.LocationLink
-import com.nawforce.apexlink.types.apex.{ApexDeclaration, ApexMethodLike}
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.{Dependent, DependentType, TypeDeclaration}
-import com.nawforce.pkgforce.modifiers.{ABSTRACT_MODIFIER, VIRTUAL_MODIFIER}
-import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
+import com.nawforce.pkgforce.parsers.CLASS_NATURE
 import com.nawforce.pkgforce.path.{Locatable, PathLike}
 
 import scala.collection.mutable.ArrayBuffer
@@ -63,15 +62,10 @@ trait ImplementationProvider extends SourceOps {
       td match {
         case ExtensibleClassesAndInterface(td) =>
           // Only find method or class declaration to search implementations for
-          td.methods
+          td.localMethods
             .collect { case m: ApexMethodLike => m }
             .find(_.location.location.contains(line, offset))
-            .orElse({
-              (td, td.location.location.contains(line, offset)) match {
-                case (ad: ApexDeclaration, true) => Some(ad)
-                case _                           => None
-              }
-            })
+            .orElse(Option.when(td.location.location.contains(line, offset)) { td })
 
         case _ =>
           if (td.nestedTypes.isEmpty) None else td.nestedTypes.flatMap(getSearchContext).headOption
@@ -128,6 +122,6 @@ trait ImplementationProvider extends SourceOps {
 }
 
 private object ExtensibleClassesAndInterface {
-  def unapply(td: TypeDeclaration): Option[DependentType with Locatable] =
-    Option.when(td.isExtensible) { td } collect { case td: DependentType with Locatable => td }
+  def unapply(td: TypeDeclaration): Option[ApexClassDeclaration] =
+    Option.when(td.isExtensible) { td } collect { case td: ApexClassDeclaration => td }
 }
