@@ -1121,4 +1121,58 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
       assert(org.issues.isEmpty)
     }
   }
+
+  test("Custom setting static methods exist") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "objects/DummySettings__c.object" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <customSettingsType>Hierarchy</customSettingsType>
+            |  <description>dummy</description>
+            |  <enableFeeds>false</enableFeeds>
+            |  <label>Dummy Settings</label>
+            |  <visibility>Public</visibility>
+            |</CustomObject>
+            |""".stripMargin,
+        "Dummy.cls" -> "public class Dummy { DummySettings__c record { get; private set; } public void test() { DummySettings__c a = DummySettings__c.getInstance(); } }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+    }
+  }
+
+  test("Custom setting static methods exist on extended sobject") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "pkg"}, {"path": "pkg2"}]
+            |}""".stripMargin,
+        "pkg/objects/DummySettings__c/DummySettings__c.object-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+            |  <customSettingsType>Hierarchy</customSettingsType>
+            |  <description>dummy</description>
+            |  <enableFeeds>false</enableFeeds>
+            |  <label>Dummy Settings</label>
+            |  <visibility>Public</visibility>
+            |</CustomObject>
+            |""".stripMargin,
+        "pkg2/objects/DummySettings__c/fields/DummyField__c.field-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+             |<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+             |    <fullName>DummyField__c</fullName>
+             |    <type>Text</type>
+             |</CustomField>
+             |""".stripMargin,
+        "pkg2/classes/Dummy.cls" -> "public class Dummy { DummySettings__c record { get; private set; } public void test() { DummySettings__c a = DummySettings__c.getInstance(); } }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      assert(org.issues.isEmpty)
+    }
+  }
+
 }

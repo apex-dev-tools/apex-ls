@@ -458,23 +458,6 @@ class SObjectDeployer(module: OPM.Module) {
     fieldSets: ArraySeq[Name],
     sharingReasons: ArraySeq[Name]
   ): SObjectDeclaration = {
-
-    // Check we are not trying to extend a non-extensible over a namespace boundary
-    val crossModule = base.flatMap(_.moduleDeclaration).exists(_ != module)
-    if (crossModule && !nature.extendable) {
-      val baseNS = base.flatMap(_.moduleDeclaration).flatMap(_.namespace)
-      if (baseNS != module.namespace) {
-        OrgInfo.log(
-          IssueOps.extendingOverNamespace(
-            sources.head.location,
-            nature,
-            baseNS.getOrElse(Names.Empty),
-            module.namespace.getOrElse(Names.Empty)
-          )
-        )
-      }
-    }
-
     // FUTURE: Add type for platform sobjects so we don't need this hackery
     def baseAsSObject: Option[SObjectDeclaration] = {
       if (base.nonEmpty && base.get.isInstanceOf[SObjectDeclaration])
@@ -484,10 +467,29 @@ class SObjectDeployer(module: OPM.Module) {
       }
     }
 
+    // Prefer base type nature, more accurate e.g. custom setting
+    val definedNature = baseAsSObject.map(_.sobjectNature).getOrElse(nature)
+
+    // Check we are not trying to extend a non-extensible over a namespace boundary
+    val crossModule = base.flatMap(_.moduleDeclaration).exists(_ != module)
+    if (crossModule && !definedNature.extendable) {
+      val baseNS = base.flatMap(_.moduleDeclaration).flatMap(_.namespace)
+      if (baseNS != module.namespace) {
+        OrgInfo.log(
+          IssueOps.extendingOverNamespace(
+            sources.head.location,
+            definedNature,
+            baseNS.getOrElse(Names.Empty),
+            module.namespace.getOrElse(Names.Empty)
+          )
+        )
+      }
+    }
+
     val extend          = base.getOrElse(PlatformTypes.sObjectType)
     val combinedSources = baseAsSObject.map(_.sources).getOrElse(Array()) ++ sources
     val combinedFields =
-      collectFields(typeName, nature, extend.fields ++ fields, hasOwner = base.isEmpty)
+      collectFields(typeName, definedNature, extend.fields ++ fields, hasOwner = base.isEmpty)
     val combinedFieldsets = ArraySeq.unsafeWrapArray(
       fieldSets
         .foldLeft(baseAsSObject.map(_.fieldSets).getOrElse(ArraySeq()).toSet)((acc, fieldset) =>
@@ -507,7 +509,7 @@ class SObjectDeployer(module: OPM.Module) {
       combinedSources,
       module,
       typeName,
-      nature,
+      definedNature,
       combinedFieldsets,
       combinedSharingReasons,
       combinedFields,
