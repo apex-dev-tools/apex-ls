@@ -18,10 +18,10 @@ import com.nawforce.apexlink.cst.AssignableSupport.{couldBeEqual, isAssignableDe
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.types.core.TypeDeclaration
-import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
 import com.nawforce.pkgforce.names._
 import com.nawforce.runtime.parsers.CodeParser
+import io.github.apexdevtools.apexparser.ApexParser._
 
 import scala.collection.immutable.ArraySeq
 

@@ -22,13 +22,13 @@ import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
-import com.nawforce.apexparser.ApexParser.{TriggerCaseContext, TriggerUnitContext}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.modifiers.{Modifier, ModifierOps}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{Nature, TRIGGER_NATURE}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
+import io.github.apexdevtools.apexparser.ApexParser.{TriggerCaseContext, TriggerUnitContext}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable

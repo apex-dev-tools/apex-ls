@@ -13,11 +13,11 @@
  */
 package com.nawforce.pkgforce.parsers
 
-import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
 import com.nawforce.runtime.parsers.{CodeParser, TreeVisitor}
+import io.github.apexdevtools.apexparser.ApexParser._
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable

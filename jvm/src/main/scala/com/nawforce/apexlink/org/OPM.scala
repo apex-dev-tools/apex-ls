@@ -23,17 +23,11 @@ import com.nawforce.apexlink.indexer.{Indexer, Monitor}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.plugins.PluginsManager
 import com.nawforce.apexlink.rpc._
-import com.nawforce.apexlink.types.apex.{
-  ApexClassDeclaration,
-  ApexDeclaration,
-  ApexFullDeclaration,
-  TriggerDeclaration
-}
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexFullDeclaration, TriggerDeclaration}
 import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType}
-import com.nawforce.apexparser.ApexParser
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
@@ -44,6 +38,7 @@ import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, ProjectConfig, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
+import io.github.apexdevtools.apexparser.ApexParser
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.charset.StandardCharsets

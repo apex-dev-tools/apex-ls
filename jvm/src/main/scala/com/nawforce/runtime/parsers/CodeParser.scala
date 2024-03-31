@@ -13,10 +13,10 @@
  */
 package com.nawforce.runtime.parsers
 
-import com.nawforce.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
 import com.nawforce.pkgforce.diagnostics.IssuesAnd
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
+import io.github.apexdevtools.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 
 import java.io.ByteArrayInputStream

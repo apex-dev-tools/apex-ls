@@ -14,9 +14,9 @@
 
 package com.nawforce.runtime.parsers
 
-import com.nawforce.apexparser.CaseInsensitiveInputStream
 import com.nawforce.pkgforce.parsers.UTF8Decode
 import com.nawforce.runtime.SourceBlob
+import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
 import org.antlr.v4.runtime.{CharStream, CharStreams}
 
 import java.io.ByteArrayInputStream

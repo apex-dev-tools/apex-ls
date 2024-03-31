@@ -15,15 +15,11 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
-import com.nawforce.apexparser.ApexParser.{
-  LocalVariableDeclarationContext,
-  VariableDeclaratorContext,
-  VariableDeclaratorsContext
-}
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.runtime.parsers.CodeParser
+import io.github.apexdevtools.apexparser.ApexParser.{LocalVariableDeclarationContext, VariableDeclaratorContext, VariableDeclaratorsContext}
 
 final case class VariableDeclarator(
   typeName: TypeName,

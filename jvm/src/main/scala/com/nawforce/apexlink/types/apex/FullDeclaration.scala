@@ -22,7 +22,6 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
-import com.nawforce.apexparser.ApexParser.TypeDeclarationContext
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
@@ -30,6 +29,7 @@ import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.parsers.{ApexNode, CLASS_NATURE, INTERFACE_NATURE, Nature}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
+import io.github.apexdevtools.apexparser.ApexParser.TypeDeclarationContext
 import upickle.default.writeBinary
 
 import scala.collection.immutable.ArraySeq

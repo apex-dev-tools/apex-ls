@@ -16,9 +16,9 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.apexparser.ApexParser.LiteralContext
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.runtime.parsers.CodeParser
+import io.github.apexdevtools.apexparser.ApexParser.LiteralContext
 
 sealed abstract class Literal() {
   def getType: TypeDeclaration

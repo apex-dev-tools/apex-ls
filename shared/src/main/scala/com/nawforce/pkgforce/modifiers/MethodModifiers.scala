@@ -13,16 +13,11 @@
  */
 package com.nawforce.pkgforce.modifiers
 
-import com.nawforce.apexparser.ApexParser.ModifierContext
 import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
-import com.nawforce.pkgforce.modifiers.ApexModifiers.{
-  allowableModifiers,
-  asModifiers,
-  toModifiers,
-  visibilityModifiers
-}
+import com.nawforce.pkgforce.modifiers.ApexModifiers.{allowableModifiers, asModifiers, toModifiers, visibilityModifiers}
 import com.nawforce.runtime.parsers.CodeParser
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
+import io.github.apexdevtools.apexparser.ApexParser.ModifierContext
 
 import scala.collection.compat.immutable.ArraySeq
 

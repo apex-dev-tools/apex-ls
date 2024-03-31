@@ -14,21 +14,16 @@
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.cst._
-import com.nawforce.apexlink.org.CompletionProvider.{
-  MAX_STATES,
-  emptyCompletions,
-  ignoredTokens,
-  preferredRules
-}
+import com.nawforce.apexlink.org.CompletionProvider.{MAX_STATES, emptyCompletions, ignoredTokens, preferredRules}
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.CompletionItemLink
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration}
 import com.nawforce.apexlink.types.core._
-import com.nawforce.apexparser.{ApexLexer, ApexParser}
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
 import com.nawforce.pkgforce.modifiers.PUBLIC_MODIFIER
 import com.nawforce.pkgforce.path.PathLike
 import com.vmware.antlr4c3.CodeCompletionCore
+import io.github.apexdevtools.apexparser.{ApexLexer, ApexParser}
 import org.antlr.v4.runtime.Token
 
 import scala.collection.mutable
