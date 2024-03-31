@@ -21,7 +21,10 @@ import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.{ApexNode, Nature, PROPERTY_NATURE}
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
-import io.github.apexdevtools.apexparser.ApexParser.{PropertyBlockContext, PropertyDeclarationContext}
+import io.github.apexdevtools.apexparser.ApexParser.{
+  PropertyBlockContext,
+  PropertyDeclarationContext
+}
 
 import scala.collection.immutable.ArraySeq
 

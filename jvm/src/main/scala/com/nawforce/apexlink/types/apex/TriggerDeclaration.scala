@@ -210,9 +210,13 @@ object TriggerDeclaration {
     CST.sourceContext.withValue(Some(parser.source)) {
       val ids   = CodeParser.toScala(trigger.id()).map(Id.construct)
       val cases = CodeParser.toScala(trigger.triggerCase()).map(constructCase)
+      // TODO: Re-enable this
+      /*
       val block = CodeParser
         .toScala(trigger.block())
         .map(block => Block.constructOuterFromANTLR(parser, block, isTrigger = true))
+       */
+      val block = None
       if (ids.length == 2) {
         Some(
           new TriggerDeclaration(

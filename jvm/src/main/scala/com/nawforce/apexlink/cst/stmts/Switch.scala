@@ -20,7 +20,12 @@ import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.parsers.ENUM_NATURE
 import com.nawforce.runtime.parsers.CodeParser
-import io.github.apexdevtools.apexparser.ApexParser.{SwitchStatementContext, WhenControlContext, WhenLiteralContext, WhenValueContext}
+import io.github.apexdevtools.apexparser.ApexParser.{
+  SwitchStatementContext,
+  WhenControlContext,
+  WhenLiteralContext,
+  WhenValueContext
+}
 
 sealed abstract class WhenLiteral extends CST {
   def isComparableTo(typeName: TypeName): Boolean

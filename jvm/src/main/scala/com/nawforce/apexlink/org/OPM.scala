@@ -23,7 +23,12 @@ import com.nawforce.apexlink.indexer.{Indexer, Monitor}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.plugins.PluginsManager
 import com.nawforce.apexlink.rpc._
-import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexFullDeclaration, TriggerDeclaration}
+import com.nawforce.apexlink.types.apex.{
+  ApexClassDeclaration,
+  ApexDeclaration,
+  ApexFullDeclaration,
+  TriggerDeclaration
+}
 import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration

@@ -13,7 +13,7 @@
  */
 package com.nawforce.runtime.parsers.antlr
 
-import com.nawforce.apexparser.CaseInsensitiveInputStream
+import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport

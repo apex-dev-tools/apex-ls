@@ -14,10 +14,10 @@
 
 package com.nawforce.runtime.parsers
 
-import com.nawforce.apexparser.CaseInsensitiveInputStream
 import com.nawforce.pkgforce.parsers.UTF8Decode
 import com.nawforce.runtime.SourceBlob
 import com.nawforce.runtime.parsers.antlr.CharStreams
+import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
 
 import java.nio.charset.StandardCharsets
 import scala.util.hashing.MurmurHash3

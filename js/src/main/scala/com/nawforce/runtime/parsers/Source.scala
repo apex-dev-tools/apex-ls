@@ -13,10 +13,10 @@
  */
 package com.nawforce.runtime.parsers
 
-import com.nawforce.apexparser.CaseInsensitiveInputStream
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.runtime.SourceBlob
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
+import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
 
 trait Locatable {
   var locationPath: PathLike

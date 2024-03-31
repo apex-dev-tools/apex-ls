@@ -11,9 +11,9 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.apexparser
+package io.github.apexdevtools.apexparser
 
-import com.nawforce.apexparser.ApexParser._
+import io.github.apexdevtools.apexparser.ApexParser._
 import com.nawforce.runtime.parsers.antlr.{CommonTokenStream, ParserRuleContext, TerminalNode}
 
 import scala.scalajs.js

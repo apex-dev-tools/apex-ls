@@ -14,7 +14,12 @@
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.cst._
-import com.nawforce.apexlink.org.CompletionProvider.{MAX_STATES, emptyCompletions, ignoredTokens, preferredRules}
+import com.nawforce.apexlink.org.CompletionProvider.{
+  MAX_STATES,
+  emptyCompletions,
+  ignoredTokens,
+  preferredRules
+}
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.CompletionItemLink
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration}
