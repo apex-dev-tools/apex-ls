@@ -72,7 +72,7 @@ class BlockTest extends AnyFunSuite with Matchers with TestHelper {
         .statements()
         .head
         .asInstanceOf[Block] should matchPattern {
-        case blk: InnerBlock if blk.location.location == Location(2, 3, 4, 4) =>
+        case blk: StatementBlock if blk.location.location == Location(2, 3, 4, 4) =>
       }
     }
   }
@@ -97,7 +97,7 @@ class BlockTest extends AnyFunSuite with Matchers with TestHelper {
         .statements()
         .head
         .asInstanceOf[Block] should matchPattern {
-        case blk: InnerBlock if blk.location.location == Location(2, 3, 4, 4) =>
+        case blk: StatementBlock if blk.location.location == Location(2, 3, 4, 4) =>
       }
     }
   }

@@ -23,6 +23,7 @@ import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, LoggerOps}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
+import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 import io.github.apexdevtools.apexparser.ApexParser._
 
@@ -48,20 +49,15 @@ abstract class Block extends Statement {
 }
 
 object Block {
-  val empty: Block = InnerBlock(Seq())
+  val empty: Block = StatementBlock(Seq())
 
   /** Create an OuterBlock from ANTLR parser output.
     *
     * @param parser the parser used
     * @param blockContext the ANTLR block context
-    * @param isTrigger set if outer block of a trigger
     */
-  def constructOuterFromANTLR(
-    parser: CodeParser,
-    blockContext: BlockContext,
-    isTrigger: Boolean = false
-  ): Block = {
-    OuterBlock(parser.extractSource(blockContext), isTrigger, new WeakReference(blockContext))
+  def constructOuterFromANTLR(parser: CodeParser, blockContext: BlockContext): Block = {
+    OuterBlock(parser.extractSource(blockContext), new WeakReference(blockContext))
       .withContext(blockContext)
   }
 
@@ -70,7 +66,7 @@ object Block {
     * @param blockSource  location and cached source of the block
     */
   def constructOuterFromOutline(blockSource: Source, location: OPLocation): Block = {
-    val block = OuterBlock(blockSource, isTrigger = false, null)
+    val block = OuterBlock(blockSource, null)
     block.setLocation(
       blockSource.path,
       location.startLine,
@@ -81,27 +77,37 @@ object Block {
     block
   }
 
-  /** Create an InnerBlock from ANTLR parser output.
+  /** Create an inner Block from ANTLR parser output.
     *
     * @param parser       the parser used
     * @param blockContext the ANTLR block context
     */
   def constructInner(parser: CodeParser, blockContext: BlockContext): Block = {
-    InnerBlock(
-      Statement.construct(parser, CodeParser.toScala(blockContext.statement()), isTrigger = false)
-    ).withContext(blockContext)
+    StatementBlock(Statement.construct(parser, CodeParser.toScala(blockContext.statement())))
+      .withContext(blockContext)
+  }
+
+  /** Create an block for trigger statements.
+    *
+    * @param context the ANTLR trigger context
+    * @param parser  the parser used
+    */
+  def constructTrigger(
+    parser: CodeParser,
+    context: ParserRuleContext,
+    statements: Seq[Statement]
+  ): Block = {
+    StatementBlock(statements).withContext(context)
   }
 }
 
 /** Outer block, holds weak reference to statements, will re-parse as needed
   *
   * @param source location of the block with cached source
-  * @param isTrigger is the the outer block of a trigger
   * @param blockContextRef ANTLR BlockContext if one is available
   */
 private final case class OuterBlock(
   source: Source,
-  isTrigger: Boolean,
   var blockContextRef: WeakReference[BlockContext] = null
 ) extends Block {
   private var statementsRef: WeakReference[Seq[Statement]] = _
@@ -135,7 +141,7 @@ private final case class OuterBlock(
       CST.sourceContext.withValue(Some(parsedSource)) {
         withContext(statementContext)
         val parser = new CodeParser(parsedSource)
-        statementsRef = createStatements(statementContext, parser, isTrigger)
+        statementsRef = createStatements(statementContext, parser)
         statements = statementsRef.get
       }
     }
@@ -145,19 +151,19 @@ private final case class OuterBlock(
   // Construct statements from ANTLR AST
   private def createStatements(
     context: BlockContext,
-    parser: CodeParser,
-    isTrigger: Boolean
+    parser: CodeParser
   ): WeakReference[Seq[Statement]] = {
     val statementContexts = CodeParser.toScala(context.statement())
-    val statements        = Some(Statement.construct(parser, statementContexts, isTrigger))
+    val statements        = Some(Statement.construct(parser, statementContexts))
     new WeakReference(statements.get)
   }
 }
 
-/** Inner block, a container for statements. Used for blocks nested in an OuterBlock as re-parsing can be expensive.
+/** Statement block, just a container for statements. Used for blocks nested in an OuterBlock as re-parsing can
+  * be expensive and also for trigger statements.
   * @param statements the statements in the block
   */
-private final case class InnerBlock(statements: Seq[Statement]) extends Block {
+private final case class StatementBlock(statements: Seq[Statement]) extends Block {
   override def verify(context: BlockVerifyContext): Unit = {
     val blockContext = new InnerBlockVerifyContext(context)
     statements.foreach(_.verify(blockContext))
@@ -179,11 +185,20 @@ final case class LocalVariableDeclarationStatement(
 object LocalVariableDeclarationStatement {
   def construct(
     parser: CodeParser,
-    from: LocalVariableDeclarationStatementContext,
-    isTrigger: Boolean
+    from: LocalVariableDeclarationStatementContext
   ): LocalVariableDeclarationStatement = {
     LocalVariableDeclarationStatement(
-      LocalVariableDeclaration.construct(parser, from.localVariableDeclaration(), isTrigger)
+      LocalVariableDeclaration.construct(parser, from.localVariableDeclaration())
+    ).withContext(from)
+  }
+
+  def constructTriggerVar(
+    parser: CodeParser,
+    modifiers: ArraySeq[ModifierContext],
+    from: FieldDeclarationContext
+  ): LocalVariableDeclarationStatement = {
+    LocalVariableDeclarationStatement(
+      LocalVariableDeclaration.constructTriggerVar(parser, modifiers, from)
     ).withContext(from)
   }
 }
@@ -217,7 +232,7 @@ object IfStatement {
     val statements = CodeParser.toScala(ifStatement.statement())
     IfStatement(
       Expression.construct(ifStatement.parExpression().expression()),
-      Statement.construct(parser, statements.toList, isTrigger = false)
+      Statement.construct(parser, statements.toList)
     ).withContext(ifStatement)
   }
 }
@@ -243,7 +258,7 @@ object ForStatement {
       CodeParser.toScala(statement.forControl()).map(fc => ForControl.construct(parser, fc)),
       CodeParser
         .toScala(statement.statement())
-        .flatMap(stmt => Statement.construct(parser, stmt, isTrigger = false))
+        .flatMap(stmt => Statement.construct(parser, stmt))
     ).withContext(statement)
   }
 }
@@ -429,9 +444,7 @@ object ForInit {
   def construct(parser: CodeParser, from: ForInitContext): ForInit = {
     CodeParser
       .toScala(from.localVariableDeclaration())
-      .map(lvd =>
-        LocalVariableForInit(LocalVariableDeclaration.construct(parser, lvd, isTrigger = false))
-      )
+      .map(lvd => LocalVariableForInit(LocalVariableDeclaration.construct(parser, lvd)))
       .getOrElse({
         val expressions =
           CodeParser.toScala(CodeParser.toScala(from.expressionList()).get.expression())
@@ -466,7 +479,7 @@ object WhileStatement {
   def construct(parser: CodeParser, statement: WhileStatementContext): WhileStatement = {
     WhileStatement(
       Expression.construct(statement.parExpression().expression()),
-      Statement.construct(parser, statement.statement(), isTrigger = false)
+      Statement.construct(parser, statement.statement())
     ).withContext(statement)
   }
 }
@@ -846,27 +859,17 @@ object Statement {
     *
     * @param parser ANTLR parser, used to extract block source
     * @param statements ANTLR statement contexts
-    * @param isTrigger construction is for a trigger
     */
-  def construct(
-    parser: CodeParser,
-    statements: Seq[StatementContext],
-    isTrigger: Boolean
-  ): Seq[Statement] = {
-    statements.flatMap(s => Statement.construct(parser, s, isTrigger))
+  def construct(parser: CodeParser, statements: Seq[StatementContext]): Seq[Statement] = {
+    statements.flatMap(s => Statement.construct(parser, s))
   }
 
   /** Create CST statement from ANTLR tree
     *
     * @param parser ANTLR parser, used to extract block source
     * @param statement ANTLR statement context
-    * @param isTrigger construction is for a trigger
     */
-  def construct(
-    parser: CodeParser,
-    statement: StatementContext,
-    isTrigger: Boolean
-  ): Option[Statement] = {
+  def construct(parser: CodeParser, statement: StatementContext): Option[Statement] = {
     val typedStatement = CodeParser.toScala(statement.getChild(0))
     if (typedStatement.isEmpty) {
       // Log here just in case
@@ -877,7 +880,7 @@ object Statement {
         case stmt: BlockContext =>
           Block.constructInner(parser, stmt)
         case stmt: LocalVariableDeclarationStatementContext =>
-          LocalVariableDeclarationStatement.construct(parser, stmt, isTrigger)
+          LocalVariableDeclarationStatement.construct(parser, stmt)
         case stmt: IfStatementContext =>
           IfStatement.construct(parser, stmt)
         case stmt: SwitchStatementContext =>
