@@ -26,13 +26,13 @@ import com.nawforce.apexlink.types.apex.{
   ThisType
 }
 import com.nawforce.apexlink.types.core._
-import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers._
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
+import io.github.apexdevtools.apexparser.ApexParser._
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable

@@ -16,14 +16,14 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
-import com.nawforce.apexparser.ApexParser.{
+import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
+import com.nawforce.runtime.parsers.CodeParser
+import io.github.apexdevtools.apexparser.ApexParser.{
   TypeArgumentsContext,
   TypeListContext,
   TypeNameContext,
   TypeRefContext
 }
-import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
-import com.nawforce.runtime.parsers.CodeParser
 
 import scala.collection.immutable.ArraySeq
 

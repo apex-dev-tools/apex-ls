@@ -13,10 +13,10 @@
  */
 package com.nawforce.runtime.parsers
 
-import com.nawforce.apexparser.CaseInsensitiveInputStream
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.runtime.SourceBlob
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
+import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
 
 trait Locatable {
   var locationPath: PathLike
@@ -41,7 +41,8 @@ case class Source(
   lazy val hash: Int = code.hash
 
   def extractSource(context: ParserRuleContext): Source = {
-    val subdata = code.subdata(context.start.startIndex, context.stop.stopIndex + 1)
+    val stop    = CodeParser.toScala(context.stop).getOrElse(context.start)
+    val subdata = code.subdata(context.start.startIndex, stop.stopIndex + 1)
     new Source(
       path,
       subdata,
@@ -66,14 +67,15 @@ case class Source(
   /** Find a location for a rule, adapts based on source offsets to give absolute position in file
     */
   def getLocation(context: ParserRuleContext): PathLocation = {
+    val stop = CodeParser.toScala(context.stop).getOrElse(context.start)
     PathLocation(
       path,
       adjustLocation(
         Location(
           context.start.line,
           context.start.charPositionInLine,
-          context.stop.line,
-          context.stop.charPositionInLine + context.stop.text.length
+          stop.line,
+          stop.charPositionInLine + stop.text.length
         )
       )
     )
@@ -95,22 +97,6 @@ case class Source(
       endPosition += columnOffset
 
     Location(startLine, startPosition, endLine, endPosition)
-  }
-
-  def stampLocation(locatable: Locatable, context: ParserRuleContext): Unit = {
-    locatable.locationPath = path
-    locatable.startLine = context.start.line + lineOffset
-    locatable.startOffset =
-      if (context.start.line == 1)
-        context.start.charPositionInLine + columnOffset
-      else
-        context.start.charPositionInLine
-    locatable.endLine = context.stop.line + lineOffset
-    locatable.endOffset =
-      if (context.stop.line == 1)
-        context.stop.charPositionInLine + context.stop.text.length + columnOffset
-      else
-        context.stop.charPositionInLine + context.stop.text.length
   }
 }
 

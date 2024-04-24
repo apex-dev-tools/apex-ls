@@ -15,10 +15,10 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.names.XNames.NameUtils
-import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.Positionable
 import com.nawforce.runtime.parsers.{CodeParser, Source}
+import io.github.apexdevtools.apexparser.ApexParser._
 
 import scala.util.DynamicVariable
 

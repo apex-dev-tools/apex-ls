@@ -13,10 +13,10 @@
  */
 package com.nawforce.runtime.parsers
 
-import com.nawforce.apexparser.CaseInsensitiveInputStream
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation, Positionable}
 import com.nawforce.runtime.SourceBlob
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
+import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
 import org.antlr.v4.runtime.CharStream
 
 /** A block of source code loaded from a file
@@ -66,14 +66,15 @@ case class Source(
   /** Find a location for a rule, adapts based on source offsets to give absolute position in file
     */
   def getLocation(context: ParserRuleContext): PathLocation = {
+    val stop = CodeParser.toScala(context.stop).getOrElse(context.start)
     PathLocation(
       path,
       adjustLocation(
         Location(
           context.start.getLine,
           context.start.getCharPositionInLine,
-          context.stop.getLine,
-          context.stop.getCharPositionInLine + context.stop.getText.length
+          stop.getLine,
+          stop.getCharPositionInLine + stop.getText.length
         )
       )
     )

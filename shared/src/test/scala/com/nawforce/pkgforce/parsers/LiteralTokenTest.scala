@@ -14,9 +14,9 @@
 
 package com.nawforce.pkgforce.parsers
 
-import com.nawforce.apexparser.ApexParser.LiteralContext
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
+import io.github.apexdevtools.apexparser.ApexParser.LiteralContext
 import org.scalatest.funsuite.AnyFunSuite
 
 class LiteralTokenTest extends AnyFunSuite {

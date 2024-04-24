@@ -15,15 +15,13 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
-import com.nawforce.apexparser.ApexParser.{
-  LocalVariableDeclarationContext,
-  VariableDeclaratorContext,
-  VariableDeclaratorsContext
-}
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.runtime.parsers.CodeParser
+import io.github.apexdevtools.apexparser.ApexParser._
+
+import scala.collection.compat.immutable.ArraySeq
 
 final case class VariableDeclarator(
   typeName: TypeName,
@@ -150,16 +148,34 @@ final case class LocalVariableDeclaration(
 object LocalVariableDeclaration {
   def construct(
     parser: CodeParser,
-    from: LocalVariableDeclarationContext,
-    isTrigger: Boolean
+    from: LocalVariableDeclarationContext
   ): LocalVariableDeclaration = {
     val typeName = TypeReference.construct(from.typeRef())
     val modifiers = ApexModifiers.localVariableModifiers(
       parser,
       CodeParser.toScala(from.modifier()),
       from,
-      isTrigger
+      isTrigger = false
     )
+    LocalVariableDeclaration(
+      modifiers,
+      typeName,
+      VariableDeclarators.construct(
+        typeName,
+        modifiers.modifiers.contains(FINAL_MODIFIER),
+        from.variableDeclarators()
+      )
+    ).withContext(from)
+  }
+
+  def constructTriggerVar(
+    parser: CodeParser,
+    varModifiers: ArraySeq[ModifierContext],
+    from: FieldDeclarationContext
+  ): LocalVariableDeclaration = {
+    val typeName = TypeReference.construct(from.typeRef())
+    val modifiers =
+      ApexModifiers.localVariableModifiers(parser, varModifiers, from, isTrigger = true)
     LocalVariableDeclaration(
       modifiers,
       typeName,

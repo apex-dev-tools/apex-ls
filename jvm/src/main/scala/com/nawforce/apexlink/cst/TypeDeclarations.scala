@@ -17,11 +17,11 @@ import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{FullDeclaration, ThisType}
-import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers._
 import com.nawforce.runtime.parsers.{CodeParser, Source}
+import io.github.apexdevtools.apexparser.ApexParser._
 
 import scala.collection.immutable.ArraySeq
 

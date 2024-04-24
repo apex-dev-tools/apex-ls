@@ -14,10 +14,10 @@
 
 package com.nawforce.pkgforce.parsers
 
-import com.nawforce.apexparser.ApexParser
 import com.nawforce.runtime.SourceBlob
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 import com.nawforce.runtime.platform.Path
+import io.github.apexdevtools.apexparser.ApexParser
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

@@ -13,11 +13,11 @@
  */
 package com.nawforce.runtime.parsers
 
-import com.nawforce.apexparser.CaseInsensitiveInputStream
 import com.nawforce.pkgforce.diagnostics.IssuesAnd
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.runtime.parsers.PageParser.ParserRuleContext
 import com.nawforce.vfparser.{VFLexer, VFParser}
+import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 

@@ -22,13 +22,17 @@ import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.types.core._
-import com.nawforce.apexparser.ApexParser.{TriggerCaseContext, TriggerUnitContext}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.modifiers.{Modifier, ModifierOps}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{Nature, TRIGGER_NATURE}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
+import io.github.apexdevtools.apexparser.ApexParser.{
+  TriggerBlockMemberContext,
+  TriggerCaseContext,
+  TriggerUnitContext
+}
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -208,13 +212,32 @@ object TriggerDeclaration {
     trigger: TriggerUnitContext
   ): Option[TriggerDeclaration] = {
     CST.sourceContext.withValue(Some(parser.source)) {
-      val ids   = CodeParser.toScala(trigger.id()).map(Id.construct)
+      val ids = CodeParser.toScala(trigger.id()).map(Id.construct)
+      if (ids.length != 2) {
+        OrgInfo.logError(
+          parser.source.getLocation(trigger),
+          s"Failed to parse trigger, expected 2 ids but found ${ids.length}"
+        )
+        return None
+      }
+
       val cases = CodeParser.toScala(trigger.triggerCase()).map(constructCase)
-      val block = CodeParser
-        .toScala(trigger.block())
-        .map(block => Block.constructOuterFromANTLR(parser, block, isTrigger = true))
-      if (ids.length == 2) {
-        Some(
+      if (cases.isEmpty) {
+        OrgInfo.logError(
+          parser.source.getLocation(trigger),
+          s"Failed to parse trigger, no trigger cases found"
+        )
+        return None
+      }
+
+      CodeParser
+        .toScala(trigger.triggerBlock())
+        .map(triggerBlock => {
+          val statementsAndDeclarations = splitStatementsAndDeclarations(
+            parser,
+            CodeParser
+              .toScala(triggerBlock.triggerBlockMember())
+          )
           new TriggerDeclaration(
             parser.source,
             module,
@@ -222,13 +245,40 @@ object TriggerDeclaration {
             ids(1),
             constructTypeName(module.namespace, ids.head.name),
             cases,
-            block
+            Some(Block.constructTrigger(parser, trigger, statementsAndDeclarations._1))
           ).withContext(trigger)
-        )
-      } else {
-        None
-      }
+        })
     }
+  }
+
+  private def splitStatementsAndDeclarations(
+    parser: CodeParser,
+    members: Seq[TriggerBlockMemberContext]
+  ): (Seq[Statement], Seq[TriggerBlockMemberContext]) = {
+    /* TODO: Ignoring most declarations types here, e.g. methods, to fix the declaration hierarchy needs to change. */
+    val statements = mutable.ArrayBuffer[Statement]()
+    members.foreach(member => {
+      val statementContext   = CodeParser.toScala(member.statement())
+      val declarationContext = CodeParser.toScala(member.triggerMemberDeclaration())
+      if (statementContext.nonEmpty) {
+        Statement
+          .construct(parser, statementContext.get)
+          .foreach(statements.append)
+      } else if (declarationContext.nonEmpty) {
+        // Field & Property syntax is allowed in triggers but they are scoped as statements so we need to treat
+        // them as local variable declarations
+        val modifiers = CodeParser.toScala(member.modifier())
+        CodeParser
+          .toScala(declarationContext.get.fieldDeclaration())
+          .foreach(field =>
+            statements.append(
+              LocalVariableDeclarationStatement
+                .constructTriggerVar(parser, modifiers, field)
+            )
+          )
+      }
+    })
+    (statements.toSeq, Seq())
   }
 
   // Construct the trigger name, looks like a namespace but doc indicates just a prefix

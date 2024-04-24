@@ -16,18 +16,15 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.types.apex.{ApexFieldLike, ThisType}
 import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
-import com.nawforce.apexparser.ApexParser.{PropertyBlockContext, PropertyDeclarationContext}
-import com.nawforce.pkgforce.modifiers.{
-  ApexModifiers,
-  FINAL_MODIFIER,
-  Modifier,
-  ModifierResults,
-  PRIVATE_MODIFIER
-}
+import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.{ApexNode, Nature, PROPERTY_NATURE}
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
+import io.github.apexdevtools.apexparser.ApexParser.{
+  PropertyBlockContext,
+  PropertyDeclarationContext
+}
 
 import scala.collection.immutable.ArraySeq
 

@@ -11,9 +11,9 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.apexparser
+package io.github.apexdevtools.apexparser
 
-import com.nawforce.apexparser.ApexParser._
+import io.github.apexdevtools.apexparser.ApexParser._
 import com.nawforce.runtime.parsers.antlr.{CommonTokenStream, ParserRuleContext, TerminalNode}
 
 import scala.scalajs.js
@@ -43,7 +43,7 @@ object ApexParser {
   class TriggerUnitContext extends ParserRuleContext {
     def id(): js.Array[IdContext]                   = js.native
     def triggerCase(): js.Array[TriggerCaseContext] = js.native
-    def block(): BlockContext                       = js.native
+    def triggerBlock(): TriggerBlockContext         = js.native
   }
 
   @js.native
@@ -55,6 +55,30 @@ object ApexParser {
     def UPDATE(): js.UndefOr[TerminalNode]   = js.native
     def DELETE(): js.UndefOr[TerminalNode]   = js.native
     def UNDELETE(): js.UndefOr[TerminalNode] = js.native
+  }
+
+  @js.native
+  @JSImport("@apexdevtools/apex-parser", "TriggerBlockContext")
+  class TriggerBlockContext extends ParserRuleContext {
+    def triggerBlockMember(): js.Array[TriggerBlockMemberContext] = js.native
+  }
+
+  @js.native
+  @JSImport("@apexdevtools/apex-parser", "TriggerBlockMemberContext")
+  class TriggerBlockMemberContext extends ParserRuleContext {
+    def triggerMemberDeclaration(): js.UndefOr[TriggerMemberDeclarationContext] = js.native
+    def modifier(): js.Array[ModifierContext]                                   = js.native
+    def statement(): js.Array[StatementContext]                                 = js.native
+  }
+
+  @js.native
+  @JSImport("@apexdevtools/apex-parser", "TriggerMemberDeclarationContext")
+  class TriggerMemberDeclarationContext extends ParserRuleContext {
+    def methodDeclaration(): js.UndefOr[MethodDeclarationContext]       = js.native
+    def fieldDeclaration(): js.UndefOr[FieldDeclarationContext]         = js.native
+    def interfaceDeclaration(): js.UndefOr[InterfaceDeclarationContext] = js.native
+    def classDeclaration(): js.UndefOr[ClassDeclarationContext]         = js.native
+    def propertyDeclaration(): js.UndefOr[PropertyDeclarationContext]   = js.native
   }
 
   @js.native

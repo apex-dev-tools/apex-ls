@@ -13,13 +13,13 @@
  */
 package com.nawforce.pkgforce.parsers
 
-import com.nawforce.apexparser.ApexParser._
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers.{GLOBAL_MODIFIER, Modifier, WEBSERVICE_MODIFIER}
 import com.nawforce.pkgforce.names.{Name, Names}
 import com.nawforce.pkgforce.path.{IdLocatable, Location, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
+import io.github.apexdevtools.apexparser.ApexParser._
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer

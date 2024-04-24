@@ -11,13 +11,11 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.apexparser
-
-import com.nawforce.runtime.parsers.antlr.CharStream
+package io.github.apexdevtools.apexparser
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("@apexdevtools/apex-parser", "CaseInsensitiveInputStream")
-class CaseInsensitiveInputStream(src: CharStream) extends CharStream
+@JSImport("@apexdevtools/apex-parser", "ApexLexer")
+class ApexLexer(stream: CaseInsensitiveInputStream) extends js.Object {}

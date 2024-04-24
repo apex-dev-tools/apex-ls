@@ -8,7 +8,7 @@ import com.nawforce.apexlink.api.Org
 import com.nawforce.apexlink.deps.MaxDependencyCountParser.{maxCountMarker, maxCountMarkerLength}
 import com.nawforce.apexlink.types.apex.ApexDeclaration
 import com.nawforce.apexlink.types.core.TypeId
-import com.nawforce.apexparser.ApexLexer
+import io.github.apexdevtools.apexparser.ApexLexer
 import com.nawforce.runtime.parsers.CodeParser
 import org.antlr.v4.runtime.{CommonTokenStream, Token}
 
