@@ -52,7 +52,7 @@ jobs:
         run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
-          PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+          PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
 
