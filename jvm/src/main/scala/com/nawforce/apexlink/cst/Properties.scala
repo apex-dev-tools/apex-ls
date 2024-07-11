@@ -43,6 +43,16 @@ final case class ApexPropertyDeclaration(
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
 
+  // This only returns the location of the type correctly if it is a plain type E.g. String.
+  // This Location is WRONG for collections like List, Set and Map.
+  // Instead use the location property on TypeName which is populated for these collections
+  def typeNameLocation: Location = Location(
+    idLocation.startLine,
+    idLocation.startPosition - 1 - typeName.name.value.length,
+    idLocation.endLine,
+    idLocation.startPosition - 1
+  )
+
   override def idLocation: Location = id.location.location
 
   val setter: Option[SetterPropertyBlock] =
