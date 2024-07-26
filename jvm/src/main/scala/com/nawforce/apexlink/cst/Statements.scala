@@ -479,7 +479,7 @@ object WhileStatement {
   def construct(parser: CodeParser, statement: WhileStatementContext): WhileStatement = {
     WhileStatement(
       Expression.construct(statement.parExpression().expression()),
-      Statement.construct(parser, statement.statement())
+      CodeParser.toScala(statement.statement()).flatMap(stmt => Statement.construct(parser, stmt))
     ).withContext(statement)
   }
 }

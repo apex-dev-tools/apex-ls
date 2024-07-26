@@ -191,4 +191,8 @@ class ForTest extends AnyFunSuite with TestHelper {
         "Error: line 1 at 28-29: For condition expression should return a 'System.Boolean' instance, not a 'System.Integer' instance\n"
     )
   }
+
+  test("for condition no block") {
+    happyTypeDeclaration("public class Dummy {{ for(;;); }}")
+  }
 }

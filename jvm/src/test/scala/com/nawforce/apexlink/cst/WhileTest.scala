@@ -43,4 +43,8 @@ class WhileTest extends AnyFunSuite with TestHelper {
   test("Single block") {
     happyTypeDeclaration("public class Dummy {{ while (true) {System.debug('');} }}")
   }
+
+  test("No block") {
+    happyTypeDeclaration("public class Dummy {{ while (true); }}")
+  }
 }
