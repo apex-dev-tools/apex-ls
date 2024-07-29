@@ -42,11 +42,11 @@ object Environment {
     }
   }
 
-  // Only for test usage
   def setCacheDirOverride(value: Option[Option[PathLike]]): Unit = {
     cacheDirOverride = value
   }
 
+  // Only for test usage
   def getCacheDirOverride: Option[Option[PathLike]] = {
     cacheDirOverride
   }

@@ -558,7 +558,7 @@ class OrgAPIImpl extends OrgAPI {
   }
 
   override def setCacheDirectory(path: Option[String]): Future[Unit] = {
-    Environment.setCacheDirOverride(Some(path.map(p => Path(p))))
+    Environment.setCacheDirOverride(Some(path.filter(_.nonEmpty).map(p => Path(p))))
     ServerOps.setAutoFlush(path.nonEmpty)
     Future.successful(())
   }
