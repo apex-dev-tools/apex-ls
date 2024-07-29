@@ -213,7 +213,7 @@ case class OpenOptions private (
   }
 
   def withCacheDirectory(path: String): OpenOptions = {
-    copy(cacheDirectory = Some(path))
+    copy(cacheDirectory = Option(path).filter(_.nonEmpty))
   }
 
   def withCache(enabled: Boolean): OpenOptions = {

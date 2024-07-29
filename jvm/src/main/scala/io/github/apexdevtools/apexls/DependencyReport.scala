@@ -43,16 +43,24 @@ object DependencyReport {
     @arg(short = 'n', doc = "Disable cache use")
     nocache: Flag,
     @arg(short = 'w', doc = "Workspace directory path, defaults to current directory")
-    workspace: String = ""
+    workspace: String = "",
+    @arg(short = 'c', doc = "Cache directory path, defaults to env or home dir")
+    cacheDir: String = ""
   ): Unit = {
-    System.exit(run(format, logging, nocache.value, workspace))
+    System.exit(run(format, logging, nocache.value, workspace, cacheDir))
   }
 
   def main(args: Array[String]): Unit = {
     ParserForMethods(this).runOrExit(ArraySeq.unsafeWrapArray(args))
   }
 
-  def run(format: String, logging: String, nocache: Boolean, directory: String): Int = {
+  def run(
+    format: String,
+    logging: String,
+    nocache: Boolean,
+    directory: String,
+    cacheDirectory: String
+  ): Int = {
     try {
       val workspace = Path(directory)
       val outputFormat = format match {
@@ -83,6 +91,7 @@ object DependencyReport {
         .withAutoFlush(enabled = false)
         .withLoggingLevel(loggingLevel)
         .withCache(!nocache)
+        .withCacheDirectory(cacheDirectory)
         .withUnused(enabled = false)
 
       // Load org and flush to cache if we are using it
