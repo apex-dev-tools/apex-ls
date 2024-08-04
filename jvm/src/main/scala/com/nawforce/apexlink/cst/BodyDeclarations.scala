@@ -463,8 +463,8 @@ final case class FormalParameter(
   }
 
   def verify(context: BodyDeclarationVerifyContext): Unit = {
+    id.validate(context)
     modifiers.issues.foreach(context.log)
-    // This is validated when made available to a Block
   }
 }
 
