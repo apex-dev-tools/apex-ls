@@ -268,7 +268,7 @@ class ApexMethodDeclaration(
     }
 
     returnTypeName.dependOn(id.location, context)
-    id.validate(context)
+    id.validate(context, isMethod = true)
     parameters.foreach(_.verify(context))
 
     val blockContext =

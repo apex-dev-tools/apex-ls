@@ -43,13 +43,17 @@ object CST {
 }
 
 final case class Id(name: Name) extends CST {
-  def validate(context: VerifyContext): Unit = {
+  def validate(context: VerifyContext, isMethod: Boolean = false): Unit = {
     if (name.nonEmpty) {
       val illegalError = name.isLegalIdentifier
       if (illegalError.nonEmpty)
         context.log(IssueOps.illegalIdentifier(location, name, illegalError.get))
-      else if (name.isReservedIdentifier)
-        context.log(IssueOps.reservedIdentifier(location, name))
+      else {
+        val isReserved =
+          if (isMethod) name.isReservedMethodIdentifier else name.isReservedIdentifier
+        if (isReserved)
+          context.log(IssueOps.reservedIdentifier(location, name))
+      }
     }
   }
 }
