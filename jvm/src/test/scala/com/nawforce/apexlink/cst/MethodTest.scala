@@ -43,6 +43,18 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Method call illegal name") {
+    typeDeclaration("public class Dummy {void _a(){} void f2() {_a();} }")
+    assert(
+      dummyIssues == "Error: line 1 at 25-27: '_a' is not legal identifier in Apex, identifiers can not start or end with '_'\n"
+    )
+  }
+
+  test("Method call reserved name") {
+    typeDeclaration("public class Dummy {void limit(){} void f2() {limit();} }")
+    assert(dummyIssues == "Error: line 1 at 25-30: 'limit' is a reserved identifier in Apex\n")
+  }
+
   test("Method call illegal param") {
     typeDeclaration("public class Dummy {void f1(Integer _a){} void f2() {f1(1);} }")
     assert(
