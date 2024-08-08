@@ -21,7 +21,7 @@ object Identifier {
     assert(value.nonEmpty)
 
     if (value.startsWith("__sfdc_trigger")) {
-      if (!value.matches("^((__sfdc_trigger)[/][0-9a-zA-Z_]+)([/][0-9a-zA-Z_]+)?$")) {
+      if (!value.matches("^((__sfdc_trigger)/[0-9a-zA-Z_]+)(/[0-9a-zA-Z_]+)?$")) {
         return Some(
           "can only be in the format '__sfdc_trigger/namespace/name' or '__sfdc_trigger/name'"
         )
@@ -42,12 +42,17 @@ object Identifier {
 
   /** Check is name is a reserved identifier, None if OK or error message string. */
   def isReservedIdentifier(name: Name): Boolean = {
-    allReservedIdentifiers.contains(name)
+    reservedIdentifiers.contains(name)
   }
 
-  // This is the official reserved keyword list, not all are actually reserved, some are for "future" use, I have
-  // removed those known not to be enforced
-  lazy val reservedIdentifiers: Set[Name] = Set(
+  /** Check is name is a reserved identifier, None if OK or error message string. */
+  def isReservedMethodIdentifier(name: Name): Boolean = {
+    !methodNotReservedIdentifiers.contains(name) && reservedIdentifiers.contains(name)
+  }
+
+  // This is the official reserved keyword list, from
+  // https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_reserved_words.htm
+  private lazy val reservedIdentifiers: Set[Name] = Set(
     Name("abstract"),
     Name("activate"),
     Name("and"),
@@ -59,6 +64,7 @@ object Identifier {
     Name("begin"),
     Name("bigdecimal"),
     Name("blob"),
+    Name("boolean"),
     Name("break"),
     Name("bulk"),
     Name("by"),
@@ -72,11 +78,15 @@ object Identifier {
     Name("commit"),
     Name("const"),
     Name("continue"),
+    Name("currency"),
+    Name("date"),
+    Name("datetime"),
     Name("decimal"),
     Name("default"),
     Name("delete"),
     Name("desc"),
     Name("do"),
+    Name("double"),
     Name("else"),
     Name("end"),
     Name("enum"),
@@ -102,9 +112,10 @@ object Identifier {
     Name("inner"),
     Name("insert"),
     Name("instanceof"),
+    Name("int"),
+    Name("integer"),
     Name("interface"),
     Name("into"),
-    Name("int"),
     Name("join"),
     Name("like"),
     Name("limit"),
@@ -136,8 +147,10 @@ object Identifier {
     Name("select"),
     Name("set"),
     Name("short"),
+    Name("sobject"),
     Name("sort"),
     Name("static"),
+    Name("string"),
     Name("super"),
     Name("switch"),
     Name("synchronized"),
@@ -146,6 +159,7 @@ object Identifier {
     Name("then"),
     Name("this"),
     Name("throw"),
+    Name("time"),
     Name("transaction"),
     Name("trigger"),
     Name("true"),
@@ -155,23 +169,72 @@ object Identifier {
     Name("upsert"),
     Name("using"),
     Name("virtual"),
+    Name("void"),
     Name("webservice"),
     Name("when"),
     Name("where"),
     Name("while")
   )
 
-  // These are identifiers that don't work but are not reserved, yeah go figure
-  lazy val badIdentifiers: Set[Name] = Set(
+  // Methods can use some identifiers that are reserved
+  private lazy val methodNotReservedIdentifiers: Set[Name] = Set(
+    Name("activate"),
+    Name("any"),
+    Name("array"),
+    Name("autonomous"),
+    Name("begin"),
+    Name("bigdecimal"),
+    Name("blob"),
     Name("boolean"),
+    Name("byte"),
+    Name("case"),
+    Name("cast"),
+    Name("char"),
+    Name("collect"),
+    Name("const"),
     Name("currency"),
     Name("date"),
     Name("datetime"),
+    Name("decimal"),
+    Name("default"),
     Name("double"),
+    Name("end"),
+    Name("exception"),
+    Name("exit"),
+    Name("export"),
+    Name("float"),
+    Name("goto"),
+    Name("group"),
+    Name("hint"),
+    Name("import"),
+    Name("inner"),
     Name("integer"),
+    Name("int"),
+    Name("into"),
+    Name("join"),
+    Name("long"),
+    Name("loop"),
+    Name("number"),
+    Name("object"),
+    Name("of"),
+    Name("outer"),
+    Name("package"),
+    Name("parallel"),
+    Name("pragma"),
+    Name("retrieve"),
+    Name("rollback"),
+    Name("set"),
+    Name("short"),
+    Name("sobject"),
+    Name("sort"),
     Name("string"),
-    Name("time")
+    Name("switch"),
+    Name("synchronized"),
+    Name("system"),
+    Name("then"),
+    Name("time"),
+    Name("transaction"),
+    Name("void"),
+    Name("when")
   )
-
-  lazy val allReservedIdentifiers: Set[Name] = reservedIdentifiers ++ badIdentifiers
 }

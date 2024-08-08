@@ -38,8 +38,9 @@ class IdentifierTest extends AnyFunSuite {
     "can only be in the format '__sfdc_trigger/namespace/name' or '__sfdc_trigger/name'"
 
   implicit class NameUtils(name: Name) {
-    def isLegalIdentifier: Option[String] = Identifier.isLegalIdentifier(name)
-    def isReservedIdentifier: Boolean     = Identifier.isReservedIdentifier(name)
+    def isLegalIdentifier: Option[String]   = Identifier.isLegalIdentifier(name)
+    def isReservedIdentifier: Boolean       = Identifier.isReservedIdentifier(name)
+    def isReservedMethodIdentifier: Boolean = Identifier.isReservedMethodIdentifier(name)
   }
 
   test("Illegal identifiers") {
@@ -67,5 +68,11 @@ class IdentifierTest extends AnyFunSuite {
     assert(Name("if").isReservedIdentifier)
     assert(Name("date").isReservedIdentifier)
     assert(!Name("foo").isReservedIdentifier)
+  }
+
+  test("Reserved method identifiers") {
+    assert(!Name("foo").isReservedMethodIdentifier)
+    assert(!Name("void").isReservedMethodIdentifier)
+    assert(Name("and").isReservedMethodIdentifier)
   }
 }

@@ -43,6 +43,30 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Method call illegal name") {
+    typeDeclaration("public class Dummy {void _a(){} void f2() {_a();} }")
+    assert(
+      dummyIssues == "Error: line 1 at 25-27: '_a' is not legal identifier in Apex, identifiers can not start or end with '_'\n"
+    )
+  }
+
+  test("Method call reserved name") {
+    typeDeclaration("public class Dummy {void limit(){} void f2() {limit();} }")
+    assert(dummyIssues == "Error: line 1 at 25-30: 'limit' is a reserved identifier in Apex\n")
+  }
+
+  test("Method call illegal param") {
+    typeDeclaration("public class Dummy {void f1(Integer _a){} void f2() {f1(1);} }")
+    assert(
+      dummyIssues == "Error: line 1 at 36-38: '_a' is not legal identifier in Apex, identifiers can not start or end with '_'\n"
+    )
+  }
+
+  test("Method call reserved param") {
+    typeDeclaration("public class Dummy {void f1(Integer limit){} void f2() {f1(1);} }")
+    assert(dummyIssues == "Error: line 1 at 36-41: 'limit' is a reserved identifier in Apex\n")
+  }
+
   test("Method call wrong arguments") {
     typeDeclaration("public class Dummy {static void f1(String a){} void f2() {f1();} }")
     assert(
@@ -448,7 +472,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
         "force-app/Dummy.cls" ->
           """public class Dummy { {
             |ext.Something a;
-            | // Legal as should return an Any as we don't know which 'publish' was intended  
+            | // Legal as should return an Any as we don't know which 'publish' was intended
             |String b = EventBus.publish(a); } }
             |""".stripMargin
       )

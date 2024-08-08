@@ -85,8 +85,11 @@ object XNames {
     /** Check is name is a legal identifier, None if OK or error message string. */
     def isLegalIdentifier: Option[String] = Identifier.isLegalIdentifier(name)
 
-    /** Check is name is a reserved identifier, None if OK or error message string. */
+    /** Check is name is a reserved identifier. */
     def isReservedIdentifier: Boolean = Identifier.isReservedIdentifier(name)
+
+    /** Check is method name is a reserved identifier, special rules apply. */
+    def isReservedMethodIdentifier: Boolean = Identifier.isReservedMethodIdentifier(name)
 
     def isEmpty: Boolean = name.value.isEmpty
 

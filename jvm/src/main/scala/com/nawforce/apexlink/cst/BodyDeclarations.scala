@@ -268,6 +268,7 @@ class ApexMethodDeclaration(
     }
 
     returnTypeName.dependOn(id.location, context)
+    id.validate(context, isMethod = true)
     parameters.foreach(_.verify(context))
 
     val blockContext =
@@ -463,8 +464,8 @@ final case class FormalParameter(
   }
 
   def verify(context: BodyDeclarationVerifyContext): Unit = {
+    id.validate(context)
     modifiers.issues.foreach(context.log)
-    // This is validated when made available to a Block
   }
 }
 
