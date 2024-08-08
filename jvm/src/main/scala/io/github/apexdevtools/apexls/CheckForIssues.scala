@@ -84,9 +84,11 @@ object CheckForIssues {
     )
     param: Seq[Param],
     @arg(short = 'w', doc = "Workspace directory path, defaults to current directory")
-    workspace: String = ""
+    workspace: String = "",
+    @arg(short = 'c', doc = "Cache directory path, defaults to env or home dir")
+    cacheDir: String = ""
   ): Unit = {
-    System.exit(run(format, logging, detail, nocache.value, param, workspace))
+    System.exit(run(format, logging, detail, nocache.value, param, workspace, cacheDir))
   }
 
   def main(args: Array[String]): Unit = {
@@ -99,7 +101,8 @@ object CheckForIssues {
     detail: String,
     nocache: Boolean,
     params: Seq[Param],
-    directory: String
+    directory: String,
+    cacheDirectory: String
   ): Int = {
     try {
       val workspace = Path(directory)
@@ -141,6 +144,7 @@ object CheckForIssues {
         .withExternalAnalysisMode(LoadAndRefreshAnalysis.shortName, Param.toMap(params))
         .withLoggingLevel(loggingLevel)
         .withCache(!nocache)
+        .withCacheDirectory(cacheDirectory)
         .withUnused(detailLevel == "unused")
 
       // Load org and flush to cache if we are using it

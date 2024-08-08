@@ -273,13 +273,18 @@ object Org {
     )
     options.cacheDirectory.foreach(path => {
       Environment.setCacheDirOverride(Some(Some(Path(path))))
-      ServerOps.setAutoFlush(path.nonEmpty)
+      ServerOps.setAutoFlush(true)
     })
     options.indexerConfiguration.foreach(values =>
       ServerOps.setIndexerConfiguration(IndexerConfiguration(values._1, values._2))
     )
     options.autoFlush.foreach(enabled => ServerOps.setAutoFlush(enabled))
-    options.cache.foreach(enabled => if (!enabled) Environment.setCacheDirOverride(Some(None)))
+    options.cache.foreach(enabled =>
+      if (!enabled) {
+        Environment.setCacheDirOverride(Some(None))
+        ServerOps.setAutoFlush(false)
+      }
+    )
     options.unused.foreach(enabled =>
       if (!enabled) PluginsManager.removePlugins(Seq(classOf[UnusedPlugin]))
     )

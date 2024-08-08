@@ -53,13 +53,14 @@ The jar is also executable without a client via the commands, `CheckForIssues` a
 
 The following arguments are available:
 
-| Argument | Description | Supported Commands |
-| --- | --- | --- |
-| `--format` / `-f` | Output format: `text (default) \| json \| pmd` | All |
-| `--logging` / `-l` | Text output logging level: `none (default) \| info \| debug` | All |
-| `--nocache` / `-n` | Do not load from or write to an existing apex-ls cache. | All |
-| `--workspace` / `-w` | Workspace directory path, defaults to current directory. Must contain an `sfdx-project.json` file. | All |
-| `--detail` / `-d` | Detail level: `errors (default) \| warnings \| unused` | CheckForIssues |
+| Argument             | Description                                                                                        | Supported Commands |
+|----------------------|----------------------------------------------------------------------------------------------------|--------------------|
+| `--format` / `-f`    | Output format: `text (default) \| json \| pmd`                                                     | All                |
+| `--logging` / `-l`   | Text output logging level: `none (default) \| info \| debug`                                       | All                |
+| `--nocache` / `-n`   | Do not load from or write to an existing apex-ls cache.                                            | All                |
+| `--cache-dir` / `-c` | Cache directory path, defaults to `APEXLINK_CACHE_DIR` env or `$HOME/.apexlink_cache`.             | All                |
+| `--workspace` / `-w` | Workspace directory path, defaults to current directory. Must contain an `sfdx-project.json` file. | All                |
+| `--detail` / `-d`    | Detail level: `errors (default) \| warnings \| unused`                                             | CheckForIssues     |
 
 ## Development
 
