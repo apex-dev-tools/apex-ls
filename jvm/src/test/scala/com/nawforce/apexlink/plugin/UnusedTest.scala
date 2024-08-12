@@ -11,11 +11,12 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.apexlink.pkg
+package com.nawforce.apexlink.plugin
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.plugins.UnusedPlugin
 import com.nawforce.apexlink.plugins.UnusedPlugin.onlyTestCodeReferenceText
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryDeclaration}
 import com.nawforce.pkgforce.names.{Name, TypeName}
@@ -29,6 +30,10 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     "only referenced by test code, consider using @isTest or @SuppressWarnings('Unused') if needed"
   private val testUsedOuterInterfaceOrEnumWarning =
     "only referenced by test code, consider using @SuppressWarnings('Unused') if needed"
+
+  def createOrgWithUnused(root: PathLike): OPM.OrgImpl = {
+    createOrgWithPlugin(root, classOf[UnusedPlugin])
+  }
 
   def orgIssuesFor(org: OPM.OrgImpl, path: PathLike): String = {
     val messages = org.issueManager.issuesForFileInternal(path).map(_.asString()).mkString("\n")

@@ -91,8 +91,8 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
   private var _shadows: SkinnyWeakSet[MethodDeclaration]    = new SkinnyWeakSet()
   private var _shadowedBy: SkinnyWeakSet[MethodDeclaration] = new SkinnyWeakSet()
 
-  def shadows: Set[MethodDeclaration]            = _shadows.toSet
-  private def shadowedBy: Set[MethodDeclaration] = _shadowedBy.toSet
+  def shadows: Set[MethodDeclaration]    = _shadows.toSet
+  def shadowedBy: Set[MethodDeclaration] = _shadowedBy.toSet
 
   def resetShadows(): Unit = {
     _shadows = new SkinnyWeakSet()

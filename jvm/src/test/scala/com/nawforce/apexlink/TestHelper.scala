@@ -22,7 +22,7 @@ import com.nawforce.apexlink.api.{
   TypeSummary
 }
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
-import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
+import com.nawforce.apexlink.plugins.{Plugin, PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.rpc.{LocationLink, TargetLocation}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
@@ -59,8 +59,8 @@ trait TestHelper {
     }
   }
 
-  def createOrgWithUnused(path: PathLike): OPM.OrgImpl = {
-    val plugins = PluginsManager.overridePlugins(Seq(classOf[UnusedPlugin]))
+  def createOrgWithPlugin(path: PathLike, cls: Class[_ <: Plugin]): OPM.OrgImpl = {
+    val plugins = PluginsManager.overridePlugins(Seq(cls))
     try {
       ParserHelper.setParser()
       defaultOrg = Org.newOrg(path).asInstanceOf[OPM.OrgImpl]
