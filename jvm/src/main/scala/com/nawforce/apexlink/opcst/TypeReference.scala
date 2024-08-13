@@ -21,11 +21,11 @@ import scala.collection.immutable.ArraySeq
 private[opcst] object TypeReference {
 
   def construct(tr: Option[OPTypeRef]): TypeName = {
-    CSTTypeReferenceAlias.construct(Some(new OutlineParserTypeReference(tr)))
+    CSTTypeReferenceAlias.construct(Some(new OutlineParserTypeReference(tr)), intern=true)
   }
 
   def construct(tr: OPTypeRef): TypeName = {
-    CSTTypeReferenceAlias.construct(Some(new OutlineParserTypeReference(Some(tr))))
+    CSTTypeReferenceAlias.construct(Some(new OutlineParserTypeReference(Some(tr))), intern=true)
   }
 
   private class OutlineParserTypeName(typeName: OPTypeName) extends CSTTypeName {

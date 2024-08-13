@@ -13,6 +13,7 @@
  */
 package com.nawforce.pkgforce.names
 
+import com.nawforce.pkgforce.path.Positionable
 import upickle.default.{macroRW, ReadWriter => RW}
 
 import scala.collection.immutable.ArraySeq.ofRef
@@ -27,7 +28,8 @@ import scala.collection.mutable.ArrayBuffer
   * displaying a TypeName.
   */
 @upickle.implicits.key("TypeName")
-final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeName]) {
+final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeName])
+    extends Positionable {
 
   /** Cache hash code as heavily used in collections */
   override val hashCode: Int = scala.util.hashing.MurmurHash3.productHash(this)

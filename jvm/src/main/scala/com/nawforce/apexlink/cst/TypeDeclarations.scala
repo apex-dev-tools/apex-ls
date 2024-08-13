@@ -20,6 +20,7 @@ import com.nawforce.apexlink.types.apex.{FullDeclaration, ThisType}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers._
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 import io.github.apexdevtools.apexparser.ApexParser._
 
@@ -79,6 +80,21 @@ final case class ClassDeclaration(
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     verifyCommon(context)
     super.verify(new TypeVerifyContext(Some(context), this, None, enablePlugins = true))
+  }
+
+  def getSuperClassSymbolLocation(): Option[Location] = {
+    if (superClass.isDefined) {
+      Some(
+        Location(
+          idLocation.startLine,
+          idLocation.endPosition + " extends ".length,
+          idLocation.startLine,
+          idLocation.endPosition + " extends ".length + superClass.get.name.value.length
+        )
+      )
+    } else {
+      None
+    }
   }
 
   private def verifyCommon(context: VerifyContext): Unit = {
