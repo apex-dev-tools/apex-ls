@@ -14,18 +14,15 @@
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.cst._
-import com.nawforce.apexlink.org.CompletionProvider.{
-  MAX_STATES,
-  emptyCompletions,
-  ignoredTokens,
-  preferredRules
-}
+import com.nawforce.apexlink.finding.TypeResolver
+import com.nawforce.apexlink.org.CompletionProvider._
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.CompletionItemLink
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
 import com.nawforce.pkgforce.modifiers.PUBLIC_MODIFIER
+import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLike
 import com.vmware.antlr4c3.CodeCompletionCore
 import io.github.apexdevtools.apexparser.{ApexLexer, ApexParser}
@@ -33,6 +30,7 @@ import org.antlr.v4.runtime.Token
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
+import scala.util.matching.Regex
 
 trait CompletionProvider {
   this: OPM.PackageImpl =>
@@ -94,6 +92,13 @@ trait CompletionProvider {
       .map(keyword => stripQuotes(keyword))
       .map(keyword => CompletionItemLink(keyword, "Keyword"))
       .toArray
+
+    val creatorCompletions =
+      if (classDetails._2.nonEmpty && keywords.map(_.label).contains("new")) {
+        getEmptyCreatorCompletionItems(classDetails._2.get, terminatedContent._3)
+      } else {
+        emptyCompletions
+      }
 
     // Find completions for a dot expression, we use the safe navigation operator here as a trigger as it is unique to
     // dot expressions. We can't use rule matching for these as often the expression before the '.' is complete and
@@ -180,7 +185,10 @@ trait CompletionProvider {
       .flatten
       .toArray
 
-    keywords.filterNot(_.label == "?.") ++ dotCompletions ++ rules
+    (if (creatorCompletions.nonEmpty)
+       creatorCompletions
+     else
+       keywords.filterNot(_.label == "?.")) ++ dotCompletions ++ rules
   }
 
   private def findTokenAndIndex(
@@ -356,12 +364,41 @@ trait CompletionProvider {
       case None => emptyCompletions
     }
   }
+
+  private def getEmptyCreatorCompletionItems(
+    td: ApexFullDeclaration,
+    line: String
+  ): Array[CompletionItemLink] = {
+    // Strip 'id = n' from '... typeName id = new '
+    val trimmed = idAssignPattern.replaceFirstIn(line, "")
+    if (trimmed == line)
+      return emptyCompletions
+
+    // Map valid typeName to creation completion
+    findTrailingTypeName(trimmed)
+      .flatMap(typeName => {
+        TypeResolver(typeName, td).toOption
+          .filter(td => td.isSObject || td.constructors.exists(ctor => ctor.parameters.isEmpty))
+          .map(_ => new CompletionItemLink(s"new $typeName();", "Constructor", ""))
+      })
+      .toArray
+  }
+
+  private def findTrailingTypeName(text: String): Option[TypeName] = {
+    if (text.isEmpty)
+      None
+    else
+      TypeName(text).toOption.orElse(findTrailingTypeName(text.substring(1)))
+  }
 }
 
 object CompletionProvider {
   /* This limits how many states can be traversed during code completion, it provides a safeguard against run away
    * analysis but needs to be large enough for long files. */
   final val MAX_STATES: Int = 10000000
+
+  /* Match trailing 'id = n' as part of field/var creator pattern */
+  final val idAssignPattern: Regex = "\\s*[0-9a-zA-Z_]+\\s*=\\s*n\\s*$".r
 
   final val emptyCompletions: Array[CompletionItemLink] = Array[CompletionItemLink]()
 

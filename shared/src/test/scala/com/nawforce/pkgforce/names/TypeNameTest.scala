@@ -48,12 +48,44 @@ class TypeNameTest extends AnyFunSuite {
       TypeName.apply("Foo<Bar>") == Right(TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), None))
     )
     assert(
+      TypeName.apply("Foo< Bar>") == Right(TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), None))
+    )
+    assert(
+      TypeName.apply("Foo<Bar >") == Right(TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), None))
+    )
+    assert(
+      TypeName.apply("Foo<Bar> ") == Right(TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), None))
+    )
+    assert(
+      TypeName.apply("Foo <Bar>") == Right(TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), None))
+    )
+    assert(
       TypeName.apply("Baz.Foo<Bar>") == Right(
         TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), Some(TypeName(Name("Baz"))))
       )
     )
     assert(
+      TypeName.apply("Baz. Foo<Bar>") == Right(
+        TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), Some(TypeName(Name("Baz"))))
+      )
+    )
+    assert(
+      TypeName.apply("Baz. Foo<Bar>") == Right(
+        TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), Some(TypeName(Name("Baz"))))
+      )
+    )
+    assert(
       TypeName.apply("Foo<Bar>.Baz") == Right(
+        TypeName(Name("Baz"), Nil, Some(TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), None)))
+      )
+    )
+    assert(
+      TypeName.apply("Foo<Bar> .Baz") == Right(
+        TypeName(Name("Baz"), Nil, Some(TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), None)))
+      )
+    )
+    assert(
+      TypeName.apply("Foo<Bar>. Baz") == Right(
         TypeName(Name("Baz"), Nil, Some(TypeName(Name("Foo"), Seq(TypeName(Name("Bar"))), None)))
       )
     )
@@ -67,6 +99,16 @@ class TypeNameTest extends AnyFunSuite {
         TypeName(Name("Foo"), Seq(TypeName(Name("Bar")), TypeName(Name("Baz"))), None)
       )
     )
+    assert(
+      TypeName.apply("Foo<Bar ,Baz>") == Right(
+        TypeName(Name("Foo"), Seq(TypeName(Name("Bar")), TypeName(Name("Baz"))), None)
+      )
+    )
+    assert(
+      TypeName.apply("Foo<Bar,  Baz>") == Right(
+        TypeName(Name("Foo"), Seq(TypeName(Name("Bar")), TypeName(Name("Baz"))), None)
+      )
+    )
   }
 
   test("parse nested generic type names") {
@@ -77,7 +119,23 @@ class TypeNameTest extends AnyFunSuite {
     )
 
     assert(
+      TypeName.apply(" Foo < Bar < Baz > > ") == Right(
+        TypeName(Name("Foo"), Seq(TypeName(Name("Bar"), Seq(TypeName(Name("Baz"))), None)), None)
+      )
+    )
+
+    assert(
       TypeName.apply("Foo<Bar<Baz,Quz>>") == Right(
+        TypeName(
+          Name("Foo"),
+          Seq(TypeName(Name("Bar"), Seq(TypeName(Name("Baz")), TypeName(Name("Quz"))), None)),
+          None
+        )
+      )
+    )
+
+    assert(
+      TypeName.apply(" Foo < Bar < Baz , Quz > > ") == Right(
         TypeName(
           Name("Foo"),
           Seq(TypeName(Name("Bar"), Seq(TypeName(Name("Baz")), TypeName(Name("Quz"))), None)),
@@ -95,6 +153,17 @@ class TypeNameTest extends AnyFunSuite {
         )
       )
     )
+
+    assert(
+      TypeName.apply(" Foo < Bar < Baz > , Quz > ") == Right(
+        TypeName(
+          Name("Foo"),
+          Seq(TypeName(Name("Bar"), Seq(TypeName(Name("Baz"))), None), TypeName(Name("Quz"))),
+          None
+        )
+      )
+    )
+
   }
 
   test("parse trigger type names") {
@@ -106,21 +175,13 @@ class TypeNameTest extends AnyFunSuite {
 
   test("parse bad type names") {
     assert(TypeName.apply("") == Left("Empty identifier found in type name"))
-    assert(
-      TypeName
-        .apply(" ") == Left("Illegal identifier at ' ': can only use characters A-Z, a-z, 0-9 or _")
-    )
+    assert(TypeName.apply(" ") == Left("Empty identifier found in type name"))
     assert(
       TypeName
         .apply("__Bar") == Left("Illegal identifier at '__Bar': can not start or end with '_'")
     )
     assert(
       TypeName.apply("1Bar") == Left("Illegal identifier at '1Bar': can not start with a digit")
-    )
-    assert(
-      TypeName.apply("Foo ") == Left(
-        "Illegal identifier at 'Foo ': can only use characters A-Z, a-z, 0-9 or _"
-      )
     )
     assert(
       TypeName
