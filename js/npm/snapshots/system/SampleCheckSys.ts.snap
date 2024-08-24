@@ -96,12 +96,6 @@ exports[`Check samples Sample: ApexTestKit 1`] = `
 {
   "logs": [
     [
-      "apex-test-kit/main/classes/ATKCore.cls",
-      "Error: line 108 at 29-37: This override of a private method will fail in v61, see apex-test-kit/main/classes/ATKCore.cls: line 158 at 17-73",
-      "Error: line 158 at 22-30: The overrides of this private method will fail in v61, see ATKCore.MockGenerator, ATKCore.SaveGenerator",
-      "Error: line 57 at 29-37: This override of a private method will fail in v61, see apex-test-kit/main/classes/ATKCore.cls: line 158 at 17-73",
-    ],
-    [
       "apex-test-kit/main/classes/ATKMock.cls",
       "Error: line 643 at 12-32: Incompatible types in assignment, from 'ATK.Method' to 'ATKMock.Method'",
     ],
@@ -151,34 +145,14 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_QueryFactory.cls: line 84 at 9-47",
     ],
     [
-      "Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 93 at 32-46: The overrides of this private method will fail in v61, see fflib_AppBindingsSelector (npsp), fflib_SObjectSelectorTest.Testfflib_SObjectSelector (npsp), fflib_DynamicSelectorFactoryTest.MySelectorAbstract (npsp)",
-      "Error: line 98 at 39-58: The overrides of this private method will fail in v61, see fflib_AppBindingsSelector (npsp), fflib_SObjectSelectorTest.Testfflib_SObjectSelector (npsp), fflib_DynamicSelectorFactoryTest.MySelectorAbstract (npsp)",
-    ],
-    [
       "Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 100:2 to 103:3: Local variable is hiding class field 'unitOfWork', see Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
       "Warning: line 66 at 2-73: Local variable is hiding class field 'unitOfWork', see Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
     ],
     [
-      "Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_SObjectSelectorTest.cls",
-      "Error: line 263 at 35-54: This override of a private method will fail in v61, see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 273 at 28-42: This override of a private method will fail in v61, see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
       "Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls",
       "Warning: line 185 at 2-54: Local variable is hiding class field 'modules', see Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls: line 62 at 9-47",
       "Warning: line 206 at 3-58: Local variable is hiding class field 'bindings', see Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls: line 61 at 11-39",
-    ],
-    [
-      "Cumulus/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingsSelector.cls",
-      "Error: line 37 at 34-53: This override of a private method will fail in v61, see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 59 at 27-41: This override of a private method will fail in v61, see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "Cumulus/force-app/infrastructure/apex-extensions/tests/classes/application/fflib_DynamicSelectorFactoryTest.cls",
-      "Error: line 126 at 35-54: This override of a private method will fail in v61, see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 131 at 21-35: This override of a private method will fail in v61, see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
     [
       "Cumulus/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls",
@@ -210,26 +184,6 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls",
       "Warning: line 222 at 12-37: Local variable is hiding class field 'label', see Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
       "Warning: line 258 at 12-37: Local variable is hiding class field 'label', see Cumulus/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls",
-      "Error: line 117 at 29-47: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 122 at 27-46: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 133 at 38-65: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 142 at 25-44: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 151 at 25-37: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 159 at 25-47: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 173 at 46-70: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/ERR_AsyncErrors_TEST.cls",
-      "Error: line 260 at 34-52: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls: line 117:20 to 119:5",
-      "Error: line 263 at 32-51: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls: line 122:20 to 124:5",
-      "Error: line 266 at 43-70: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls: line 133:20 to 135:5",
-      "Error: line 269 at 30-49: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls: line 142:20 to 144:5",
-      "Error: line 272 at 30-42: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls: line 151:20 to 153:5",
-      "Error: line 275 at 30-52: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls: line 159:20 to 161:5",
-      "Error: line 278 at 67-91: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls: line 173:20 to 196:5",
     ],
     [
       "Cumulus/force-app/main/default/classes/ElevateBatchCapturer.cls",
@@ -277,22 +231,6 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Cumulus/force-app/main/default/classes/UTIL_BatchJobService.cls",
       "Warning: line 357 at 12-30: Local variable is hiding class field 'summary', see Cumulus/force-app/main/default/classes/UTIL_BatchJobService.cls: line 316 at 15-34",
       "Warning: line 414 at 12-57: Local variable is hiding class field 'percentComplete', see Cumulus/force-app/main/default/classes/UTIL_BatchJobService.cls: line 313 at 15-40",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/UTIL_OrgTelemetry_BATCH.cls",
-      "Error: line 167 at 25-53: The overrides of this private method will fail in v61, see UTIL_OrgTelemetry_Batch_TEST.MockTelemetryBatch (npsp)",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/UTIL_OrgTelemetry_Batch_TEST.cls",
-      "Error: line 246 at 38-66: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/UTIL_OrgTelemetry_BATCH.cls: line 167:20 to 170:5",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/UTIL_RecordTypeSettingsUpdate.cls",
-      "Error: line 214 at 36-60: The overrides of this private method will fail in v61, see UTIL_RecordTypeSettingsUpdate_TEST.NameMappingStub (npsp)",
-    ],
-    [
-      "Cumulus/force-app/main/default/classes/UTIL_RecordTypeSettingsUpdate_TEST.cls",
-      "Error: line 304 at 32-56: This override of a private method will fail in v61, see Cumulus/force-app/main/default/classes/UTIL_RecordTypeSettingsUpdate.cls: line 214:20 to 246:5",
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_Where.cls",
@@ -351,139 +289,15 @@ exports[`Check samples Sample: EDA 1`] = `
       "Warning: line 361 at 8-71: Local variable is hiding class field 'validAccRecordTypesInMappings', see force-app/main/default/classes/AFFL_MultiRecordTypeMapper.cls: line 65 at 11-54",
     ],
     [
-      "force-app/main/default/classes/AccountNamingService.cls",
-      "Error: line 102 at 23-47: The overrides of this private method will fail in v61, see AccountNamingService_TEST.STUB_HHAccountNamingServiceBatchNull (hed), AccountNamingService_TEST.STUB_HHAccountNamingServiceBatchNotNull (hed)",
-      "Error: line 78 at 23-52: The overrides of this private method will fail in v61, see AccountNamingService_TEST.STUB_AdminAccountNamingServiceBatchNull (hed), AccountNamingService_TEST.STUB_AdminAccountNamingServiceBatchNotNull (hed)",
-    ],
-    [
-      "force-app/main/default/classes/AccountNamingService_TEST.cls",
-      "Error: line 213 at 28-57: This override of a private method will fail in v61, see force-app/main/default/classes/AccountNamingService.cls: line 78:20 to 81:5",
-      "Error: line 223 at 28-57: This override of a private method will fail in v61, see force-app/main/default/classes/AccountNamingService.cls: line 78:20 to 81:5",
-      "Error: line 233 at 28-52: This override of a private method will fail in v61, see force-app/main/default/classes/AccountNamingService.cls: line 102:20 to 105:5",
-      "Error: line 243 at 28-52: This override of a private method will fail in v61, see force-app/main/default/classes/AccountNamingService.cls: line 102:20 to 105:5",
-    ],
-    [
-      "force-app/main/default/classes/AffiliationMappingsHCVMapper_TEST.cls",
-      "Error: line 2568 at 48-88: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 572:20 to 646:5",
-      "Error: line 2592 at 48-100: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 658:20 to 765:5",
-      "Error: line 2617 at 48-97: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 502:20 to 560:5",
-      "Error: line 2641 at 48-102: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 777:20 to 867:5",
-      "Error: line 2666 at 48-91: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 398:20 to 490:5",
-      "Error: line 2690 at 48-93: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 293:20 to 387:5",
-      "Error: line 2721 at 48-88: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 572:20 to 646:5",
-      "Error: line 2745 at 48-100: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 658:20 to 765:5",
-      "Error: line 2770 at 48-97: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 502:20 to 560:5",
-      "Error: line 2794 at 48-102: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 777:20 to 867:5",
-      "Error: line 2819 at 48-91: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 398:20 to 490:5",
-      "Error: line 2843 at 48-93: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 293:20 to 387:5",
-      "Error: line 2874 at 48-88: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 572:20 to 646:5",
-      "Error: line 2888 at 48-100: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 658:20 to 765:5",
-      "Error: line 2903 at 48-97: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 502:20 to 560:5",
-      "Error: line 2917 at 48-102: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 777:20 to 867:5",
-      "Error: line 2932 at 48-91: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 398:20 to 490:5",
-      "Error: line 2946 at 48-93: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 293:20 to 387:5",
-      "Error: line 2967 at 48-88: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 572:20 to 646:5",
-      "Error: line 2974 at 48-97: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 502:20 to 560:5",
-      "Error: line 2981 at 48-91: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 398:20 to 490:5",
-      "Error: line 2988 at 48-93: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 293:20 to 387:5",
-    ],
-    [
-      "force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls",
-      "Error: line 293 at 43-88: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSub (hed)",
-      "Error: line 398 at 43-86: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSub (hed)",
-      "Error: line 502 at 43-92: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSub (hed)",
-      "Error: line 572 at 43-83: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSub (hed)",
-      "Error: line 658 at 43-95: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed)",
-      "Error: line 777 at 43-97: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed)",
-    ],
-    [
       "force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls",
       "Warning: line 62 at 8-83: Local variable is hiding class field 'connsToUpdate', see force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls: line 46 at 12-53",
-    ],
-    [
-      "force-app/main/default/classes/ERR_AsyncErrors.cls",
-      "Error: line 108 at 29-47: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 113 at 27-46: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 124 at 42-69: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 133 at 25-44: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 142 at 25-37: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 150 at 25-47: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 164 at 46-70: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-    ],
-    [
-      "force-app/main/default/classes/ERR_AsyncErrors_TEST.cls",
-      "Error: line 260 at 34-52: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 108:20 to 110:5",
-      "Error: line 263 at 32-51: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 113:20 to 115:5",
-      "Error: line 266 at 41-68: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 124:20 to 126:5",
-      "Error: line 269 at 30-49: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 133:20 to 135:5",
-      "Error: line 272 at 30-42: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 142:20 to 144:5",
-      "Error: line 275 at 30-52: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 150:20 to 152:5",
-      "Error: line 278 at 67-91: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 164:20 to 189:5",
-    ],
-    [
-      "force-app/main/default/classes/HealthCheckGroupService.cls",
-      "Error: line 81 at 56-88: The overrides of this private method will fail in v61, see HealthCheckGroupService_TEST.STUB_HealthCheckGroupServiceEDAHealthCheckAPI (hed)",
-    ],
-    [
-      "force-app/main/default/classes/HealthCheckGroupService_TEST.cls",
-      "Error: line 256 at 61-93: This override of a private method will fail in v61, see force-app/main/default/classes/HealthCheckGroupService.cls: line 81:20 to 99:5",
-    ],
-    [
-      "force-app/main/default/classes/SRVC_Contact_PreferredEmail.cls",
-      "Error: line 446 at 23-60: The overrides of this private method will fail in v61, see SRVC_Contact_PreferredEmail_TEST.STUB_RunPreferredPhoneAndEmailCleanupBatchNull (hed), SRVC_Contact_PreferredEmail_TEST.STUB_RunPreferredPhoneAndEmailCleanupBatchNotNull (hed)",
-    ],
-    [
-      "force-app/main/default/classes/SRVC_Contact_PreferredEmail_TEST.cls",
-      "Error: line 872 at 28-65: This override of a private method will fail in v61, see force-app/main/default/classes/SRVC_Contact_PreferredEmail.cls: line 446:20 to 449:5",
-      "Error: line 882 at 28-65: This override of a private method will fail in v61, see force-app/main/default/classes/SRVC_Contact_PreferredEmail.cls: line 446:20 to 449:5",
-    ],
-    [
-      "force-app/main/default/classes/VersionCleanupBatchJobService.cls",
-      "Error: line 121 at 23-55: The overrides of this private method will fail in v61, see VersionCleanupBatchJobService_TEST.STUB_runCourseConnectionBackfillBatchNull (hed), VersionCleanupBatchJobService_TEST.STUB_runCourseConnectionBackfillBatchNotNull (hed)",
-      "Error: line 130 at 23-52: The overrides of this private method will fail in v61, see VersionCleanupBatchJobService_TEST.STUB_runCourseDescriptionCopyBatchNull (hed), VersionCleanupBatchJobService_TEST.STUB_runCourseDescriptionCopyBatchNotNull (hed)",
-      "Error: line 83 at 23-55: The overrides of this private method will fail in v61, see VersionCleanupBatchJobService_TEST.STUB_AdminVersionCleanupBatchJobServiceBatchNull (hed), VersionCleanupBatchJobService_TEST.STUB_AdminVersionCleanupBatchJobServiceBatchNotNull (hed)",
-    ],
-    [
-      "force-app/main/default/classes/VersionCleanupBatchJobService_TEST.cls",
-      "Error: line 224 at 28-60: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 83:20 to 86:5",
-      "Error: line 234 at 28-60: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 83:20 to 86:5",
-      "Error: line 244 at 28-60: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 121:20 to 124:5",
-      "Error: line 253 at 28-57: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 130:20 to 133:5",
-      "Error: line 263 at 28-60: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 121:20 to 124:5",
-      "Error: line 273 at 28-57: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 130:20 to 133:5",
-    ],
-    [
-      "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService.cls",
-      "Error: line 143 at 27-35: The overrides of this private method will fail in v61, see EDCSettingsProductAPIService_TEST.EDCSettingsProductAPIServiceStub (hed), EDCSettingsProductAPIService_TEST.EDCSettingsProductAPIServiceBadResponseStub (hed)",
-    ],
-    [
-      "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService_TEST.cls",
-      "Error: line 307 at 32-40: This override of a private method will fail in v61, see force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService.cls: line 143:20 to 149:5",
-      "Error: line 333 at 32-40: This override of a private method will fail in v61, see force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService.cls: line 143:20 to 149:5",
-    ],
-    [
-      "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductVMapper.cls",
-      "Error: line 102 at 55-84: The overrides of this private method will fail in v61, see EDCSettingsProductVMapper_TEST.EDCSettingsProductVMapperNullProductInformationStub (hed)",
-    ],
-    [
-      "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductVMapper_TEST.cls",
-      "Error: line 219 at 60-89: This override of a private method will fail in v61, see force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductVMapper.cls: line 102:20 to 121:5",
-    ],
-    [
-      "force-app/main/interoperability/classes/ProductRegistryMapper.cls",
-      "Error: line 132 at 48-76: The overrides of this private method will fail in v61, see ProductRegistryMapper_TEST.ProductRegistryMapperStub (hed), ProductRegistryMapper_TEST.ProductRegistryMapperNullRegistriesStub (hed)",
-    ],
-    [
-      "force-app/main/interoperability/classes/ProductRegistryMapper_TEST.cls",
-      "Error: line 282 at 53-81: This override of a private method will fail in v61, see force-app/main/interoperability/classes/ProductRegistryMapper.cls: line 132:20 to 140:5",
-      "Error: line 297 at 53-81: This override of a private method will fail in v61, see force-app/main/interoperability/classes/ProductRegistryMapper.cls: line 132:20 to 140:5",
     ],
     [
       "force-app/main/releaseGating/classes/ReleaseGateAPIService.cls",
       "Warning: line 217 at 8-68: Local variable is hiding class field 'callableInstance', see force-app/main/releaseGating/classes/ReleaseGateAPIService.cls: line 52 at 12-38",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -629,34 +443,6 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
 {
   "logs": [
     [
-      "fs-core/main/default/classes/FormulaShareAsyncApexJobSelector.cls",
-      "Error: line 3 at 30-44: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 7 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareBatchLogsSelector.cls",
-      "Error: line 24 at 30-44: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 28 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareMetadataDMLRules.cls",
-      "Error: line 13 at 17-30: The overrides of this private method will fail in v61, see FormulaShareMetadataDMLRulesAccount",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareMetadataDMLRulesAccount.cls",
-      "Error: line 34 at 17-30: This override of a private method will fail in v61, see fs-core/main/default/classes/FormulaShareMetadataDMLRules.cls: line 13:12 to 89:5",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareMetricsSelector.cls",
-      "Error: line 36 at 30-44: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 40 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareRecordLogsSelector.cls",
-      "Error: line 27 at 30-44: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 31 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-    ],
-    [
       "fs-core/main/default/classes/FormulaShareRuleAncestor.cls",
       "Warning: line 53 at 16-102: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
       "Warning: line 64 at 8-94: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
@@ -678,11 +464,6 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
       "Warning: line 94 at 8-66: Local variable is hiding class field 'prefix', see fs-core/main/default/classes/FormulaShareRuleFactory.cls: line 13 at 19-78",
     ],
     [
-      "fs-core/main/default/classes/FormulaShareRuleInBatchSelector.cls",
-      "Error: line 33 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 37 at 30-44: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
       "fs-core/main/default/classes/FormulaShareRuleInlaw.cls",
       "Warning: line 45 at 8-101: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
     ],
@@ -692,46 +473,17 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
       "Warning: line 90 at 12-105: Local variable is hiding class field 'type', see fs-core/main/default/classes/FormulaShareRule.cls: line 49 at 24-36",
     ],
     [
-      "fs-core/main/default/classes/FormulaShareSObjectSharesSelector.cls",
-      "Error: line 57 at 30-44: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 61 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareSObjectsSelector.cls",
-      "Error: line 56 at 30-44: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 60 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-    ],
-    [
       "fs-core/main/default/classes/FormulaShareService.cls",
       "Warning: line 140 at 3-104: Local variable is hiding class field 'settings', see fs-core/main/default/classes/FormulaShareService.cls: line 48 at 8-44",
-    ],
-    [
-      "fs-core/main/default/classes/FormulaShareSettingsSelector.cls",
-      "Error: line 40 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 59 at 30-44: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
     [
       "fs-core/main/libs/apex-common/classes/fflib_QueryFactory.cls",
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see fs-core/main/libs/apex-common/classes/fflib_QueryFactory.cls: line 84 at 9-47",
     ],
     [
-      "fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls",
-      "Error: line 93 at 32-46: The overrides of this private method will fail in v61, see FormulaShareRuleInBatchSelector, FormulaShareMetricsSelector, FormulaShareSObjectsSelector, fflib_ApplicationTest.OpportuntiesSelector, FormulaShareSettingsSelector, FormulaShareBatchLogsSelector, fflib_ApplicationTest.AccountsSelector, FormulaShareRecordLogsSelector, FormulaShareAsyncApexJobSelector, FormulaShareSObjectSharesSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector",
-      "Error: line 98 at 39-58: The overrides of this private method will fail in v61, see FormulaShareRuleInBatchSelector, FormulaShareMetricsSelector, FormulaShareSObjectsSelector, fflib_ApplicationTest.OpportuntiesSelector, FormulaShareSettingsSelector, FormulaShareBatchLogsSelector, fflib_ApplicationTest.AccountsSelector, FormulaShareRecordLogsSelector, FormulaShareAsyncApexJobSelector, FormulaShareSObjectSharesSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector",
-    ],
-    [
       "fs-core/main/libs/apex-common/classes/test/classes/fflib_ApplicationTest.cls",
-      "Error: line 578 at 35-54: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 586 at 28-42: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 594 at 35-54: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 604 at 28-42: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fs-core/main/libs/apex-common/classes/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fs-core/main/libs/apex-common/classes/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
-    ],
-    [
-      "fs-core/main/libs/apex-common/classes/test/classes/fflib_SObjectSelectorTest.cls",
-      "Error: line 263 at 35-54: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 273 at 28-42: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
     [
       "fs-core/main/libs/fflib-apex-mocks/classes/fflib_AnswerTest.cls",
@@ -750,139 +502,15 @@ exports[`Check samples Sample: HEDAP 1`] = `
       "Warning: line 361 at 8-71: Local variable is hiding class field 'validAccRecordTypesInMappings', see force-app/main/default/classes/AFFL_MultiRecordTypeMapper.cls: line 65 at 11-54",
     ],
     [
-      "force-app/main/default/classes/AccountNamingService.cls",
-      "Error: line 102 at 23-47: The overrides of this private method will fail in v61, see AccountNamingService_TEST.STUB_HHAccountNamingServiceBatchNull (hed), AccountNamingService_TEST.STUB_HHAccountNamingServiceBatchNotNull (hed)",
-      "Error: line 78 at 23-52: The overrides of this private method will fail in v61, see AccountNamingService_TEST.STUB_AdminAccountNamingServiceBatchNull (hed), AccountNamingService_TEST.STUB_AdminAccountNamingServiceBatchNotNull (hed)",
-    ],
-    [
-      "force-app/main/default/classes/AccountNamingService_TEST.cls",
-      "Error: line 213 at 28-57: This override of a private method will fail in v61, see force-app/main/default/classes/AccountNamingService.cls: line 78:20 to 81:5",
-      "Error: line 223 at 28-57: This override of a private method will fail in v61, see force-app/main/default/classes/AccountNamingService.cls: line 78:20 to 81:5",
-      "Error: line 233 at 28-52: This override of a private method will fail in v61, see force-app/main/default/classes/AccountNamingService.cls: line 102:20 to 105:5",
-      "Error: line 243 at 28-52: This override of a private method will fail in v61, see force-app/main/default/classes/AccountNamingService.cls: line 102:20 to 105:5",
-    ],
-    [
-      "force-app/main/default/classes/AffiliationMappingsHCVMapper_TEST.cls",
-      "Error: line 2568 at 48-88: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 572:20 to 646:5",
-      "Error: line 2592 at 48-100: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 658:20 to 765:5",
-      "Error: line 2617 at 48-97: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 502:20 to 560:5",
-      "Error: line 2641 at 48-102: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 777:20 to 867:5",
-      "Error: line 2666 at 48-91: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 398:20 to 490:5",
-      "Error: line 2690 at 48-93: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 293:20 to 387:5",
-      "Error: line 2721 at 48-88: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 572:20 to 646:5",
-      "Error: line 2745 at 48-100: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 658:20 to 765:5",
-      "Error: line 2770 at 48-97: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 502:20 to 560:5",
-      "Error: line 2794 at 48-102: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 777:20 to 867:5",
-      "Error: line 2819 at 48-91: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 398:20 to 490:5",
-      "Error: line 2843 at 48-93: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 293:20 to 387:5",
-      "Error: line 2874 at 48-88: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 572:20 to 646:5",
-      "Error: line 2888 at 48-100: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 658:20 to 765:5",
-      "Error: line 2903 at 48-97: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 502:20 to 560:5",
-      "Error: line 2917 at 48-102: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 777:20 to 867:5",
-      "Error: line 2932 at 48-91: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 398:20 to 490:5",
-      "Error: line 2946 at 48-93: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 293:20 to 387:5",
-      "Error: line 2967 at 48-88: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 572:20 to 646:5",
-      "Error: line 2974 at 48-97: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 502:20 to 560:5",
-      "Error: line 2981 at 48-91: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 398:20 to 490:5",
-      "Error: line 2988 at 48-93: This override of a private method will fail in v61, see force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls: line 293:20 to 387:5",
-    ],
-    [
-      "force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls",
-      "Error: line 293 at 43-88: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSub (hed)",
-      "Error: line 398 at 43-86: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSub (hed)",
-      "Error: line 502 at 43-92: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSub (hed)",
-      "Error: line 572 at 43-83: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSub (hed)",
-      "Error: line 658 at 43-95: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed)",
-      "Error: line 777 at 43-97: The overrides of this private method will fail in v61, see AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperPass (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperFail (hed), AffiliationMappingsHCVMapper_TEST.STUB_AffiliationMappingsHealthCheckVMapperSubFail (hed)",
-    ],
-    [
       "force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls",
       "Warning: line 62 at 8-83: Local variable is hiding class field 'connsToUpdate', see force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls: line 46 at 12-53",
-    ],
-    [
-      "force-app/main/default/classes/ERR_AsyncErrors.cls",
-      "Error: line 108 at 29-47: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 113 at 27-46: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 124 at 42-69: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 133 at 25-44: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 142 at 25-37: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 150 at 25-47: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-      "Error: line 164 at 46-70: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (hed)",
-    ],
-    [
-      "force-app/main/default/classes/ERR_AsyncErrors_TEST.cls",
-      "Error: line 260 at 34-52: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 108:20 to 110:5",
-      "Error: line 263 at 32-51: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 113:20 to 115:5",
-      "Error: line 266 at 41-68: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 124:20 to 126:5",
-      "Error: line 269 at 30-49: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 133:20 to 135:5",
-      "Error: line 272 at 30-42: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 142:20 to 144:5",
-      "Error: line 275 at 30-52: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 150:20 to 152:5",
-      "Error: line 278 at 67-91: This override of a private method will fail in v61, see force-app/main/default/classes/ERR_AsyncErrors.cls: line 164:20 to 189:5",
-    ],
-    [
-      "force-app/main/default/classes/HealthCheckGroupService.cls",
-      "Error: line 81 at 56-88: The overrides of this private method will fail in v61, see HealthCheckGroupService_TEST.STUB_HealthCheckGroupServiceEDAHealthCheckAPI (hed)",
-    ],
-    [
-      "force-app/main/default/classes/HealthCheckGroupService_TEST.cls",
-      "Error: line 256 at 61-93: This override of a private method will fail in v61, see force-app/main/default/classes/HealthCheckGroupService.cls: line 81:20 to 99:5",
-    ],
-    [
-      "force-app/main/default/classes/SRVC_Contact_PreferredEmail.cls",
-      "Error: line 446 at 23-60: The overrides of this private method will fail in v61, see SRVC_Contact_PreferredEmail_TEST.STUB_RunPreferredPhoneAndEmailCleanupBatchNull (hed), SRVC_Contact_PreferredEmail_TEST.STUB_RunPreferredPhoneAndEmailCleanupBatchNotNull (hed)",
-    ],
-    [
-      "force-app/main/default/classes/SRVC_Contact_PreferredEmail_TEST.cls",
-      "Error: line 872 at 28-65: This override of a private method will fail in v61, see force-app/main/default/classes/SRVC_Contact_PreferredEmail.cls: line 446:20 to 449:5",
-      "Error: line 882 at 28-65: This override of a private method will fail in v61, see force-app/main/default/classes/SRVC_Contact_PreferredEmail.cls: line 446:20 to 449:5",
-    ],
-    [
-      "force-app/main/default/classes/VersionCleanupBatchJobService.cls",
-      "Error: line 121 at 23-55: The overrides of this private method will fail in v61, see VersionCleanupBatchJobService_TEST.STUB_runCourseConnectionBackfillBatchNull (hed), VersionCleanupBatchJobService_TEST.STUB_runCourseConnectionBackfillBatchNotNull (hed)",
-      "Error: line 130 at 23-52: The overrides of this private method will fail in v61, see VersionCleanupBatchJobService_TEST.STUB_runCourseDescriptionCopyBatchNull (hed), VersionCleanupBatchJobService_TEST.STUB_runCourseDescriptionCopyBatchNotNull (hed)",
-      "Error: line 83 at 23-55: The overrides of this private method will fail in v61, see VersionCleanupBatchJobService_TEST.STUB_AdminVersionCleanupBatchJobServiceBatchNull (hed), VersionCleanupBatchJobService_TEST.STUB_AdminVersionCleanupBatchJobServiceBatchNotNull (hed)",
-    ],
-    [
-      "force-app/main/default/classes/VersionCleanupBatchJobService_TEST.cls",
-      "Error: line 224 at 28-60: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 83:20 to 86:5",
-      "Error: line 234 at 28-60: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 83:20 to 86:5",
-      "Error: line 244 at 28-60: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 121:20 to 124:5",
-      "Error: line 253 at 28-57: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 130:20 to 133:5",
-      "Error: line 263 at 28-60: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 121:20 to 124:5",
-      "Error: line 273 at 28-57: This override of a private method will fail in v61, see force-app/main/default/classes/VersionCleanupBatchJobService.cls: line 130:20 to 133:5",
-    ],
-    [
-      "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService.cls",
-      "Error: line 143 at 27-35: The overrides of this private method will fail in v61, see EDCSettingsProductAPIService_TEST.EDCSettingsProductAPIServiceStub (hed), EDCSettingsProductAPIService_TEST.EDCSettingsProductAPIServiceBadResponseStub (hed)",
-    ],
-    [
-      "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService_TEST.cls",
-      "Error: line 307 at 32-40: This override of a private method will fail in v61, see force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService.cls: line 143:20 to 149:5",
-      "Error: line 333 at 32-40: This override of a private method will fail in v61, see force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService.cls: line 143:20 to 149:5",
-    ],
-    [
-      "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductVMapper.cls",
-      "Error: line 102 at 55-84: The overrides of this private method will fail in v61, see EDCSettingsProductVMapper_TEST.EDCSettingsProductVMapperNullProductInformationStub (hed)",
-    ],
-    [
-      "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductVMapper_TEST.cls",
-      "Error: line 219 at 60-89: This override of a private method will fail in v61, see force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductVMapper.cls: line 102:20 to 121:5",
-    ],
-    [
-      "force-app/main/interoperability/classes/ProductRegistryMapper.cls",
-      "Error: line 132 at 48-76: The overrides of this private method will fail in v61, see ProductRegistryMapper_TEST.ProductRegistryMapperStub (hed), ProductRegistryMapper_TEST.ProductRegistryMapperNullRegistriesStub (hed)",
-    ],
-    [
-      "force-app/main/interoperability/classes/ProductRegistryMapper_TEST.cls",
-      "Error: line 282 at 53-81: This override of a private method will fail in v61, see force-app/main/interoperability/classes/ProductRegistryMapper.cls: line 132:20 to 140:5",
-      "Error: line 297 at 53-81: This override of a private method will fail in v61, see force-app/main/interoperability/classes/ProductRegistryMapper.cls: line 132:20 to 140:5",
     ],
     [
       "force-app/main/releaseGating/classes/ReleaseGateAPIService.cls",
       "Warning: line 217 at 8-68: Local variable is hiding class field 'callableInstance', see force-app/main/releaseGating/classes/ReleaseGateAPIService.cls: line 52 at 12-38",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -955,34 +583,14 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Warning: line 406 at 2-80: Local variable is hiding class field 'relationship', see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_QueryFactory.cls: line 84 at 9-47",
     ],
     [
-      "NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 93 at 32-46: The overrides of this private method will fail in v61, see fflib_AppBindingsSelector (npsp), fflib_SObjectSelectorTest.Testfflib_SObjectSelector (npsp), fflib_DynamicSelectorFactoryTest.MySelectorAbstract (npsp)",
-      "Error: line 98 at 39-58: The overrides of this private method will fail in v61, see fflib_AppBindingsSelector (npsp), fflib_SObjectSelectorTest.Testfflib_SObjectSelector (npsp), fflib_DynamicSelectorFactoryTest.MySelectorAbstract (npsp)",
-    ],
-    [
       "NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
       "Warning: line 100:2 to 103:3: Local variable is hiding class field 'unitOfWork', see NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
       "Warning: line 66 at 2-73: Local variable is hiding class field 'unitOfWork', see NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls: line 159:21 to 164:40",
     ],
     [
-      "NPSP/force-app/infrastructure/apex-common/test/classes/fflib_SObjectSelectorTest.cls",
-      "Error: line 263 at 35-54: This override of a private method will fail in v61, see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 273 at 28-42: This override of a private method will fail in v61, see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
       "NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls",
       "Warning: line 185 at 2-54: Local variable is hiding class field 'modules', see NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls: line 62 at 9-47",
       "Warning: line 206 at 3-58: Local variable is hiding class field 'bindings', see NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingResolver.cls: line 61 at 11-39",
-    ],
-    [
-      "NPSP/force-app/infrastructure/apex-extensions/main/application/dynamic/classes/fflib_AppBindingsSelector.cls",
-      "Error: line 37 at 34-53: This override of a private method will fail in v61, see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 59 at 27-41: This override of a private method will fail in v61, see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "NPSP/force-app/infrastructure/apex-extensions/tests/classes/application/fflib_DynamicSelectorFactoryTest.cls",
-      "Error: line 126 at 35-54: This override of a private method will fail in v61, see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 131 at 21-35: This override of a private method will fail in v61, see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
     [
       "NPSP/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls",
@@ -1014,26 +622,6 @@ exports[`Check samples Sample: NPSP 1`] = `
       "NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls",
       "Warning: line 222 at 12-37: Local variable is hiding class field 'label', see NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
       "Warning: line 258 at 12-37: Local variable is hiding class field 'label', see NPSP/force-app/main/default/classes/CRLP_RollupCMT.cls: line 176 at 15-28",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls",
-      "Error: line 117 at 29-47: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 122 at 27-46: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 133 at 38-65: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 142 at 25-44: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 151 at 25-37: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 159 at 25-47: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-      "Error: line 173 at 46-70: The overrides of this private method will fail in v61, see ERR_AsyncErrors_TEST.AsyncErrorsStub (npsp)",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/ERR_AsyncErrors_TEST.cls",
-      "Error: line 260 at 34-52: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls: line 117:20 to 119:5",
-      "Error: line 263 at 32-51: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls: line 122:20 to 124:5",
-      "Error: line 266 at 43-70: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls: line 133:20 to 135:5",
-      "Error: line 269 at 30-49: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls: line 142:20 to 144:5",
-      "Error: line 272 at 30-42: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls: line 151:20 to 153:5",
-      "Error: line 275 at 30-52: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls: line 159:20 to 161:5",
-      "Error: line 278 at 67-91: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls: line 173:20 to 196:5",
     ],
     [
       "NPSP/force-app/main/default/classes/ElevateBatchCapturer.cls",
@@ -1081,22 +669,6 @@ exports[`Check samples Sample: NPSP 1`] = `
       "NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls",
       "Warning: line 357 at 12-30: Local variable is hiding class field 'summary', see NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls: line 316 at 15-34",
       "Warning: line 414 at 12-57: Local variable is hiding class field 'percentComplete', see NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls: line 313 at 15-40",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/UTIL_OrgTelemetry_BATCH.cls",
-      "Error: line 167 at 25-53: The overrides of this private method will fail in v61, see UTIL_OrgTelemetry_Batch_TEST.MockTelemetryBatch (npsp)",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/UTIL_OrgTelemetry_Batch_TEST.cls",
-      "Error: line 246 at 38-66: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/UTIL_OrgTelemetry_BATCH.cls: line 167:20 to 170:5",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/UTIL_RecordTypeSettingsUpdate.cls",
-      "Error: line 214 at 36-60: The overrides of this private method will fail in v61, see UTIL_RecordTypeSettingsUpdate_TEST.NameMappingStub (npsp)",
-    ],
-    [
-      "NPSP/force-app/main/default/classes/UTIL_RecordTypeSettingsUpdate_TEST.cls",
-      "Error: line 304 at 32-56: This override of a private method will fail in v61, see NPSP/force-app/main/default/classes/UTIL_RecordTypeSettingsUpdate.cls: line 214:20 to 246:5",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_Where.cls",
@@ -1492,33 +1064,11 @@ exports[`Check samples Sample: at4dx 1`] = `
 {
   "logs": [
     [
-      "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls",
-      "Error: line 100 at 39-68: The overrides of this private method will fail in v61, see ApplicationFactoryTest.TestContactsSelector, ApplicationFactoryTest.MockAccountsSelector, ApplicationSObjectSelectorTest.TestAccountsSelector, AbstractSelectorMethodInjectableTest.TestApplication_SObjectSelector, ApplicationFactoryTest.TestAccountsSelector",
-      "Error: line 105 at 45-64: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 98 at 32-46: The overrides of this private method will fail in v61, see ApplicationFactoryTest.TestContactsSelector, ApplicationFactoryTest.MockAccountsSelector, ApplicationSObjectSelectorTest.TestAccountsSelector, AbstractSelectorMethodInjectableTest.TestApplication_SObjectSelector, ApplicationFactoryTest.TestAccountsSelector",
-      "Error: line 98 at 32-46: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "at4dx/sfdx-source/core/test/classes/framework-application-factory/ApplicationFactoryTest.cls",
-      "Error: line 317 at 34-48: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 98 at 13-48",
-      "Error: line 322 at 42-71: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 100 at 13-70",
-      "Error: line 337 at 34-48: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 98 at 13-48",
-      "Error: line 342 at 50-69: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 350 at 42-71: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 100 at 13-70",
-      "Error: line 378 at 34-48: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 98 at 13-48",
-      "Error: line 383 at 50-69: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 391 at 42-71: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 100 at 13-70",
-    ],
-    [
       "at4dx/sfdx-source/core/test/classes/framework-application-factory/ApplicationSObjectSelectorTest.cls",
-      "Error: line 111 at 34-48: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 98 at 13-48",
-      "Error: line 116 at 42-71: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 100 at 13-70",
       "Warning: line 86 at 12-92: Local variable is hiding class field 'params', see at4dx/sfdx-source/core/main/classes/framework-selector-method-injection/AbstractSelectorMethodInjectable.cls: line 5 at 12-48",
     ],
     [
       "at4dx/sfdx-source/core/test/classes/framework-selector-method-injection/AbstractSelectorMethodInjectableTest.cls",
-      "Error: line 100 at 28-42: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 98 at 13-48",
-      "Error: line 95 at 41-70: This override of a private method will fail in v61, see at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls: line 100 at 13-70",
       "Warning: line 73 at 12-55: Local variable is hiding class field 'params', see at4dx/sfdx-source/core/main/classes/framework-selector-method-injection/AbstractSelectorMethodInjectable.cls: line 5 at 12-48",
     ],
     [
@@ -1526,36 +1076,12 @@ exports[`Check samples Sample: at4dx 1`] = `
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
     ],
     [
-      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 93 at 32-46: The overrides of this private method will fail in v61, see fflib_SObjectSelectorTest.Testfflib_UserSelector, fflib_SObjectSelectorTest.Testfflib_LeadSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector, fflib_SObjectSelectorTest.Testfflib_CampaignMemberSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelectorDefaultSorting, fflib_ApplicationTest.OpportuntiesSelector, fflib_ApplicationTest.AccountsSelector, fflib_SObjectSelectorTest.Testfflib_UserSObjectSelector",
-      "Error: line 98 at 39-58: The overrides of this private method will fail in v61, see fflib_SObjectSelectorTest.Testfflib_UserSelector, fflib_SObjectSelectorTest.Testfflib_LeadSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector, fflib_SObjectSelectorTest.Testfflib_CampaignMemberSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelectorDefaultSorting, fflib_ApplicationTest.OpportuntiesSelector, fflib_ApplicationTest.AccountsSelector, fflib_SObjectSelectorTest.Testfflib_UserSObjectSelector",
-    ],
-    [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
-      "Error: line 578 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 586 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 594 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 604 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
     ],
-    [
-      "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_SObjectSelectorTest.cls",
-      "Error: line 390 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 400 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 418 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 428 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 442 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 452 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 513 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 520 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 530 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 537 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 547 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 554 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -1577,105 +1103,18 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
 {
   "logs": [
     [
-      "dlrs/libs/fflib-common/classes/fflib_ApplicationTest.cls",
-      "Error: line 515 at 37-56: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 519 at 30-44: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-      "Error: line 525 at 37-56: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 534 at 30-44: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-    ],
-    [
       "dlrs/libs/fflib-common/classes/fflib_QueryFactory.cls",
       "Warning: line 446 at 4-75: Local variable is hiding class field 'relationship', see dlrs/libs/fflib-common/classes/fflib_QueryFactory.cls: line 87 at 10-48",
     ],
-    [
-      "dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls",
-      "Error: line 88 at 30-44: The overrides of this private method will fail in v61, see fflib_SObjectSelectorTest.Testfflib_SObjectSelector (dlrs), fflib_ApplicationTest.OpportuntiesSelector (dlrs), fflib_ApplicationTest.AccountsSelector (dlrs)",
-      "Error: line 93 at 37-56: The overrides of this private method will fail in v61, see fflib_SObjectSelectorTest.Testfflib_SObjectSelector (dlrs), fflib_ApplicationTest.OpportuntiesSelector (dlrs), fflib_ApplicationTest.AccountsSelector (dlrs)",
-    ],
-    [
-      "dlrs/libs/fflib-common/classes/fflib_SObjectSelectorTest.cls",
-      "Error: line 333 at 37-56: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 342 at 30-44: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-    ],
-    [
-      "dlrs/main/classes/ApexClassesSelector.cls",
-      "Error: line 31 at 35-54: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 50 at 28-42: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-    ],
-    [
-      "dlrs/main/classes/ApexTriggersSelector.cls",
-      "Error: line 31 at 35-54: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 59 at 28-42: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-    ],
-    [
-      "dlrs/main/classes/AsyncApexJobsSelector.cls",
-      "Error: line 28 at 28-47: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 41 at 21-35: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-    ],
-    [
-      "dlrs/main/classes/CronJobDetailsSelector.cls",
-      "Error: line 28 at 28-47: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 36 at 21-35: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-    ],
-    [
-      "dlrs/main/classes/CronTriggersSelector.cls",
-      "Error: line 17 at 28-42: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-      "Error: line 2 at 35-54: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-    ],
-    [
-      "dlrs/main/classes/RollupSummariesSelector.cls",
-      "Error: line 142 at 37-56: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 166 at 30-44: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-      "Error: line 286 at 37-56: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 318 at 30-44: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-    ],
-    [
-      "dlrs/main/classes/RollupSummaryScheduleItemsSelector.cls",
-      "Error: line 28 at 35-54: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
-      "Error: line 48 at 28-42: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
-    ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
 exports[`Check samples Sample: df12-apex-enterprise-patterns 1`] = `
 {
-  "logs": [
-    [
-      "df12/src/classes/OpportunitiesSelector.cls",
-      "Error: line 29 at 34-53: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 36 at 10-57",
-      "Error: line 47 at 27-41: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 38 at 10-45",
-    ],
-    [
-      "df12/src/classes/OpportunityLineItemsSelector.cls",
-      "Error: line 29 at 27-46: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 36 at 10-57",
-      "Error: line 44 at 20-34: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 38 at 10-45",
-    ],
-    [
-      "df12/src/classes/PricebookEntriesSelector.cls",
-      "Error: line 29 at 27-46: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 36 at 10-57",
-      "Error: line 43 at 20-34: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 38 at 10-45",
-    ],
-    [
-      "df12/src/classes/PricebooksSelector.cls",
-      "Error: line 34 at 27-46: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 36 at 10-57",
-      "Error: line 45 at 20-34: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 38 at 10-45",
-    ],
-    [
-      "df12/src/classes/ProductsSelector.cls",
-      "Error: line 29 at 27-46: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 36 at 10-57",
-      "Error: line 41 at 20-34: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 38 at 10-45",
-    ],
-    [
-      "df12/src/classes/SObjectSelector.cls",
-      "Error: line 153 at 37-56: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 36 at 10-57",
-      "Error: line 163 at 30-44: This override of a private method will fail in v61, see df12/src/classes/SObjectSelector.cls: line 38 at 10-45",
-      "Error: line 36 at 36-55: The overrides of this private method will fail in v61, see PricebooksSelector, OpportunityLineItemsSelector, PricebookEntriesSelector, OpportunitiesSelector, SObjectSelector.TestSObjectSelector, ProductsSelector",
-      "Error: line 38 at 29-43: The overrides of this private method will fail in v61, see PricebooksSelector, OpportunityLineItemsSelector, PricebookEntriesSelector, OpportunitiesSelector, SObjectSelector.TestSObjectSelector, ProductsSelector",
-    ],
-  ],
-  "status": 4,
+  "logs": [],
+  "status": 0,
 }
 `;
 
@@ -1702,40 +1141,8 @@ exports[`Check samples Sample: einstein-ai 1`] = `
 
 exports[`Check samples Sample: esapi 1`] = `
 {
-  "logs": [
-    [
-      "force-app/main/default/classes/SFDCAccessController.cls",
-      "Error: line 100 at 47-55: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 759 at 25-72",
-      "Error: line 101 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 760 at 25-51",
-      "Error: line 102 at 47-55: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 761 at 25-72",
-      "Error: line 103 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 762 at 25-51",
-      "Error: line 104 at 49-57: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 763 at 25-74",
-      "Error: line 757 at 39-46: The overrides of this private method will fail in v61, see SFDCAccessController.AccessControllerWithSharing, SFDCAccessController.AccessControllerWithoutSharing, SFDCAccessController.AccessControllerInheritSharing",
-      "Error: line 758 at 30-38: The overrides of this private method will fail in v61, see SFDCAccessController.AccessControllerWithSharing, SFDCAccessController.AccessControllerWithoutSharing, SFDCAccessController.AccessControllerInheritSharing",
-      "Error: line 759 at 47-55: The overrides of this private method will fail in v61, see SFDCAccessController.AccessControllerWithSharing, SFDCAccessController.AccessControllerWithoutSharing, SFDCAccessController.AccessControllerInheritSharing",
-      "Error: line 760 at 30-38: The overrides of this private method will fail in v61, see SFDCAccessController.AccessControllerWithSharing, SFDCAccessController.AccessControllerWithoutSharing, SFDCAccessController.AccessControllerInheritSharing",
-      "Error: line 761 at 47-55: The overrides of this private method will fail in v61, see SFDCAccessController.AccessControllerWithSharing, SFDCAccessController.AccessControllerWithoutSharing, SFDCAccessController.AccessControllerInheritSharing",
-      "Error: line 762 at 30-38: The overrides of this private method will fail in v61, see SFDCAccessController.AccessControllerWithSharing, SFDCAccessController.AccessControllerWithoutSharing, SFDCAccessController.AccessControllerInheritSharing",
-      "Error: line 763 at 49-57: The overrides of this private method will fail in v61, see SFDCAccessController.AccessControllerWithSharing, SFDCAccessController.AccessControllerWithoutSharing, SFDCAccessController.AccessControllerInheritSharing",
-      "Error: line 78 at 39-46: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 757 at 25-60",
-      "Error: line 79 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 758 at 25-51",
-      "Error: line 80 at 47-55: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 759 at 25-72",
-      "Error: line 81 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 760 at 25-51",
-      "Error: line 82 at 47-55: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 761 at 25-72",
-      "Error: line 83 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 762 at 25-51",
-      "Error: line 84 at 49-57: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 763 at 25-74",
-      "Error: line 88 at 39-46: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 757 at 25-60",
-      "Error: line 89 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 758 at 25-51",
-      "Error: line 90 at 47-55: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 759 at 25-72",
-      "Error: line 91 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 760 at 25-51",
-      "Error: line 92 at 47-55: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 761 at 25-72",
-      "Error: line 93 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 762 at 25-51",
-      "Error: line 94 at 49-57: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 763 at 25-74",
-      "Error: line 98 at 39-46: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 757 at 25-60",
-      "Error: line 99 at 30-38: This override of a private method will fail in v61, see force-app/main/default/classes/SFDCAccessController.cls: line 758 at 25-51",
-    ],
-  ],
-  "status": 4,
+  "logs": [],
+  "status": 0,
 }
 `;
 
@@ -1766,36 +1173,12 @@ exports[`Check samples Sample: fflib-apex-common 1`] = `
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
     ],
     [
-      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 93 at 32-46: The overrides of this private method will fail in v61, see fflib_SObjectSelectorTest.Testfflib_UserSelector, fflib_SObjectSelectorTest.Testfflib_LeadSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector, fflib_SObjectSelectorTest.Testfflib_CampaignMemberSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelectorDefaultSorting, fflib_ApplicationTest.OpportuntiesSelector, fflib_ApplicationTest.AccountsSelector, fflib_SObjectSelectorTest.Testfflib_UserSObjectSelector",
-      "Error: line 98 at 39-58: The overrides of this private method will fail in v61, see fflib_SObjectSelectorTest.Testfflib_UserSelector, fflib_SObjectSelectorTest.Testfflib_LeadSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector, fflib_SObjectSelectorTest.Testfflib_CampaignMemberSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelectorDefaultSorting, fflib_ApplicationTest.OpportuntiesSelector, fflib_ApplicationTest.AccountsSelector, fflib_SObjectSelectorTest.Testfflib_UserSObjectSelector",
-    ],
-    [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
-      "Error: line 578 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 586 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 594 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 604 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
     ],
-    [
-      "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_SObjectSelectorTest.cls",
-      "Error: line 390 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 400 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 418 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 428 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 442 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 452 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 513 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 520 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 530 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 537 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 547 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 554 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -1803,75 +1186,16 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
 {
   "logs": [
     [
-      "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/classes/selectors/AccountsSelector.cls",
-      "Error: line 38 at 34-53: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 47 at 27-41: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/classes/selectors/OpportunitiesSelector.cls",
-      "Error: line 35 at 34-53: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 53 at 27-41: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/classes/selectors/OpportunityLineItemsSelector.cls",
-      "Error: line 35 at 34-53: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 50 at 27-41: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/classes/selectors/PricebookEntriesSelector.cls",
-      "Error: line 35 at 34-53: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 49 at 27-41: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/classes/selectors/PricebooksSelector.cls",
-      "Error: line 35 at 34-53: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 46 at 27-41: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/classes/selectors/ProductsSelector.cls",
-      "Error: line 45 at 34-53: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 57 at 27-41: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
-      "fflib-apex-common-samplecode/sfdx-source/apex-common-samplecode/main/classes/selectors/UsersSelector.cls",
-      "Error: line 38 at 34-53: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 44 at 27-41: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
-    [
       "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls",
       "Warning: line 435 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
     ],
     [
-      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 93 at 32-46: The overrides of this private method will fail in v61, see fflib_SObjectSelectorTest.Testfflib_UserSelector, fflib_SObjectSelectorTest.Testfflib_LeadSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector, fflib_SObjectSelectorTest.Testfflib_CampaignMemberSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelectorDefaultSorting, fflib_ApplicationTest.OpportuntiesSelector, fflib_ApplicationTest.AccountsSelector, fflib_SObjectSelectorTest.Testfflib_UserSObjectSelector",
-      "Error: line 98 at 39-58: The overrides of this private method will fail in v61, see fflib_SObjectSelectorTest.Testfflib_UserSelector, fflib_SObjectSelectorTest.Testfflib_LeadSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector, fflib_SObjectSelectorTest.Testfflib_CampaignMemberSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelectorDefaultSorting, fflib_ApplicationTest.OpportuntiesSelector, fflib_ApplicationTest.AccountsSelector, fflib_SObjectSelectorTest.Testfflib_UserSObjectSelector",
-    ],
-    [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
-      "Error: line 578 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 586 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 594 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 604 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
       "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
       "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
     ],
-    [
-      "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_SObjectSelectorTest.cls",
-      "Error: line 390 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 400 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 418 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 428 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 442 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 452 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 513 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 520 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 530 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 537 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-      "Error: line 547 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
-      "Error: line 554 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
-    ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -1898,49 +1222,8 @@ exports[`Check samples Sample: force-di 1`] = `
 
 exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
 {
-  "logs": [
-    [
-      "src/classes/CarsSelector.cls",
-      "Error: line 12 at 27-41: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 72 at 13-48",
-      "Error: line 3 at 34-53: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 77 at 13-60",
-    ],
-    [
-      "src/classes/ContestantsSelector.cls",
-      "Error: line 28 at 27-41: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 72 at 13-48",
-      "Error: line 8 at 34-53: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 77 at 13-60",
-    ],
-    [
-      "src/classes/DriversSelector.cls",
-      "Error: line 19 at 27-41: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 72 at 13-48",
-      "Error: line 8 at 34-53: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 77 at 13-60",
-    ],
-    [
-      "src/classes/RaceDataSelector.cls",
-      "Error: line 23 at 27-41: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 72 at 13-48",
-      "Error: line 8 at 34-53: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 77 at 13-60",
-    ],
-    [
-      "src/classes/RacesSelector.cls",
-      "Error: line 20 at 34-53: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 77 at 13-60",
-      "Error: line 34 at 27-41: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 72 at 13-48",
-    ],
-    [
-      "src/classes/TeamsSelector.cls",
-      "Error: line 12 at 27-41: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 72 at 13-48",
-      "Error: line 3 at 34-53: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 77 at 13-60",
-    ],
-    [
-      "src/classes/fflib_SObjectSelector.cls",
-      "Error: line 72 at 32-46: The overrides of this private method will fail in v61, see RacesSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector, TeamsSelector, ContestantsSelector, DriversSelector, RaceDataSelector, CarsSelector",
-      "Error: line 77 at 39-58: The overrides of this private method will fail in v61, see RacesSelector, fflib_SObjectSelectorTest.Testfflib_SObjectSelector, TeamsSelector, ContestantsSelector, DriversSelector, RaceDataSelector, CarsSelector",
-    ],
-    [
-      "src/classes/fflib_SObjectSelectorTest.cls",
-      "Error: line 208 at 35-54: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 77 at 13-60",
-      "Error: line 218 at 28-42: This override of a private method will fail in v61, see src/classes/fflib_SObjectSelector.cls: line 72 at 13-48",
-    ],
-  ],
-  "status": 4,
+  "logs": [],
+  "status": 0,
 }
 `;
 
