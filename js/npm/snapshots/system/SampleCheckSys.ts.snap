@@ -12,6 +12,10 @@ exports[`Check samples Sample: ActionPlansV4 1`] = `
       "Warning: line 251 at 3-93: Local variable is hiding class field 'taskIndex', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlanTemplateCreationController.cls: line 24 at 9-26",
     ],
     [
+      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlanTemplateExport.cls",
+      "Warning: line 46 at 11-17: 'export' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansRedirect.cls",
       "Warning: line 36 at 2-34: Local variable is hiding class field 'recordId', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansRedirect.cls: line 24 at 9-21",
     ],
@@ -36,6 +40,10 @@ exports[`Check samples Sample: ActionPlansV4 1`] = `
       "Warning: line 450 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
       "Warning: line 57 at 2-45: Local variable is hiding class field 'testClosedStatus', see sfdx-source/LabsActionPlans/main/default/tests/ActionPlansTaskTriggerUtilitiesTest.cls: line 24 at 16-40",
     ],
+    [
+      "sfdx-source/LabsActionPlans/main/default/tests/ActionPlansUtilitiesTest.cls",
+      "Warning: line 122 at 21-25: 'case' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
   ],
   "status": 0,
 }
@@ -57,9 +65,21 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
 {
   "logs": [
     [
+      "force-app/commons/core/classes/SObjectCache.cls",
+      "Warning: line 80 at 25-33: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "force-app/commons/core/classes/SObjectCacheTest.cls",
       "Warning: line 109 at 8-87: Local variable is hiding class field 'accounts', see force-app/commons/core/classes/SObjectCacheTest.cls: line 26:11 to 36:6",
       "Warning: line 83:8 to 87:10: Local variable is hiding class field 'accounts', see force-app/commons/core/classes/SObjectCacheTest.cls: line 26:11 to 36:6",
+    ],
+    [
+      "force-app/commons/core/classes/Stringifier.cls",
+      "Warning: line 237 at 26-30: 'join' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "force-app/commons/core/classes/collections/Collection.cls",
+      "Warning: line 43 at 29-31: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
       "force-app/commons/core/classes/collections/CollectionTest.cls",
@@ -96,6 +116,14 @@ exports[`Check samples Sample: ApexTestKit 1`] = `
 {
   "logs": [
     [
+      "apex-test-kit/main/classes/ATK.cls",
+      "Warning: line 276 at 25-28: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 280 at 25-28: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 794 at 15-18: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 795 at 15-18: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 81 at 25-29: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "apex-test-kit/main/classes/ATKCore.cls",
       "Error: line 108 at 29-37: This override of a private method will fail in v61, see apex-test-kit/main/classes/ATKCore.cls: line 158 at 17-73",
       "Error: line 158 at 22-30: The overrides of this private method will fail in v61, see ATKCore.MockGenerator, ATKCore.SaveGenerator",
@@ -104,6 +132,9 @@ exports[`Check samples Sample: ApexTestKit 1`] = `
     [
       "apex-test-kit/main/classes/ATKMock.cls",
       "Error: line 643 at 12-32: Incompatible types in assignment, from 'ATK.Method' to 'ATKMock.Method'",
+      "Warning: line 2082 at 22-25: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 2087 at 22-25: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 2531 at 23-27: 'join' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
   "status": 4,
@@ -112,7 +143,19 @@ exports[`Check samples Sample: ApexTestKit 1`] = `
 
 exports[`Check samples Sample: ApexTriggerHandler 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "apex-trigger-handler/classes/TriggersTest.cls",
+      "Warning: line 628 at 21-25: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 674 at 21-25: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 715 at 21-25: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 736 at 21-25: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 752 at 21-25: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 767 at 21-25: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 784 at 21-25: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 802 at 21-25: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -181,6 +224,19 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Error: line 131 at 21-35: This override of a private method will fail in v61, see Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
     [
+      "Cumulus/force-app/infrastructure/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-mocks/test/classes/fflib_MyList.cls",
+      "Warning: line 21 at 7-10: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 54 at 13-16: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "Cumulus/force-app/infrastructure/apex-mocks/test/classes/mocks/fflib_Mocks.cls",
+      "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls",
       "Warning: line 56:8 to 62:9: Local variable is hiding class field 'householdRecord', see Cumulus/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls: line 39 at 19-55",
       "Warning: line 65:8 to 73:9: Local variable is hiding class field 'contactRecord', see Cumulus/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls: line 38 at 19-41",
@@ -188,6 +244,14 @@ exports[`Check samples Sample: Cumulus 1`] = `
     [
       "Cumulus/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls",
       "Warning: line 54:8 to 61:9: Local variable is hiding class field 'opportunity', see Cumulus/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls: line 43 at 11-35",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/AN_AutoNumberService.cls",
+      "Warning: line 72 at 16-24: 'activate' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "Cumulus/force-app/main/default/classes/BDI_BatchNumberSettingsController.cls",
+      "Warning: line 50 at 23-31: 'activate' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
       "Cumulus/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls",
@@ -279,6 +343,11 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Warning: line 414 at 12-57: Local variable is hiding class field 'percentComplete', see Cumulus/force-app/main/default/classes/UTIL_BatchJobService.cls: line 313 at 15-40",
     ],
     [
+      "Cumulus/force-app/main/default/classes/UTIL_OrderBy.cls",
+      "Warning: line 130 at 25-29: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 149 at 26-30: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/UTIL_OrgTelemetry_BATCH.cls",
       "Error: line 167 at 25-53: The overrides of this private method will fail in v61, see UTIL_OrgTelemetry_Batch_TEST.MockTelemetryBatch (npsp)",
     ],
@@ -333,6 +402,10 @@ exports[`Check samples Sample: CustomMetadataLoader 1`] = `
     [
       "custom_md_loader/classes/MetadataMapperSimple.cls",
       "Warning: line 41 at 6-53: Local variable is hiding class field 'srcFieldNames', see custom_md_loader/classes/MetadataMapperDefault.cls: line 17 at 10-37",
+    ],
+    [
+      "custom_md_loader/classes/MetadataService.cls",
+      "Warning: line 9124 at 43-51: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
       "custom_md_loader/classes/MetadataWrapperApiLoader.cls",
@@ -639,6 +712,10 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
       "Error: line 28 at 37-56: This override of a private method will fail in v61, see fs-core/main/libs/apex-common/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
     ],
     [
+      "fs-core/main/default/classes/FormulaShareMetadataBroker.cls",
+      "Warning: line 24 at 35-43: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "fs-core/main/default/classes/FormulaShareMetadataDMLRules.cls",
       "Error: line 13 at 17-30: The overrides of this private method will fail in v61, see FormulaShareMetadataDMLRulesAccount",
     ],
@@ -736,6 +813,19 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
     [
       "fs-core/main/libs/fflib-apex-mocks/classes/fflib_AnswerTest.cls",
       "Error: line 329 at 3-15: Unreachable block or statement",
+    ],
+    [
+      "fs-core/main/libs/fflib-apex-mocks/classes/fflib_ApexMocks.cls",
+      "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "fs-core/main/libs/fflib-apex-mocks/classes/fflib_MyList.cls",
+      "Warning: line 21 at 7-10: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 54 at 13-16: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "fs-core/main/libs/fflib-apex-mocks/classes/mocks/fflib_Mocks.cls",
+      "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
   "status": 4,
@@ -985,6 +1075,19 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Error: line 131 at 21-35: This override of a private method will fail in v61, see NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
     [
+      "NPSP/force-app/infrastructure/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-mocks/test/classes/fflib_MyList.cls",
+      "Warning: line 21 at 7-10: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 54 at 13-16: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "NPSP/force-app/infrastructure/apex-mocks/test/classes/mocks/fflib_Mocks.cls",
+      "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "NPSP/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls",
       "Warning: line 56:8 to 62:9: Local variable is hiding class field 'householdRecord', see NPSP/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls: line 39 at 19-55",
       "Warning: line 65:8 to 73:9: Local variable is hiding class field 'contactRecord', see NPSP/force-app/main/default/classes/ADDR_CopyAddrHHObjBTN_TEST.cls: line 38 at 19-41",
@@ -992,6 +1095,14 @@ exports[`Check samples Sample: NPSP 1`] = `
     [
       "NPSP/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls",
       "Warning: line 54:8 to 61:9: Local variable is hiding class field 'opportunity', see NPSP/force-app/main/default/classes/ALLO_PaymentSync_TEST.cls: line 43 at 11-35",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/AN_AutoNumberService.cls",
+      "Warning: line 72 at 16-24: 'activate' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/BDI_BatchNumberSettingsController.cls",
+      "Warning: line 50 at 23-31: 'activate' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
       "NPSP/force-app/main/default/classes/BDI_ManageAdvancedMappingCtrl_TEST.cls",
@@ -1081,6 +1192,11 @@ exports[`Check samples Sample: NPSP 1`] = `
       "NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls",
       "Warning: line 357 at 12-30: Local variable is hiding class field 'summary', see NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls: line 316 at 15-34",
       "Warning: line 414 at 12-57: Local variable is hiding class field 'percentComplete', see NPSP/force-app/main/default/classes/UTIL_BatchJobService.cls: line 313 at 15-40",
+    ],
+    [
+      "NPSP/force-app/main/default/classes/UTIL_OrderBy.cls",
+      "Warning: line 130 at 25-29: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 149 at 26-30: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_OrgTelemetry_BATCH.cls",
@@ -1225,9 +1341,17 @@ exports[`Check samples Sample: R-apex 1`] = `
 {
   "logs": [
     [
+      "force-app/main/default/classes/Func.cls",
+      "Warning: line 471 at 26-32: 'export' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 513 at 33-39: 'export' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 533 at 23-29: 'export' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "force-app/main/default/classes/R.cls",
       "Warning: line 10373 at 12-90: Local variable is hiding class field 'length', see force-app/main/default/classes/Func.cls: line 109 at 12-32",
       "Warning: line 10481 at 12-44: Local variable is hiding class field 'length', see force-app/main/default/classes/Func.cls: line 109 at 12-32",
+      "Warning: line 113 at 20-22: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 90 at 29-35: 'export' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
   "status": 0,
@@ -1243,7 +1367,21 @@ exports[`Check samples Sample: SFDCRules 1`] = `
 
 exports[`Check samples Sample: SObjectFabricator 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/sfab_FabricatedSObject.cls",
+      "Warning: line 128 at 34-37: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 142 at 34-37: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 167 at 34-37: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 189 at 34-37: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 80 at 34-37: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 99 at 34-37: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "force-app/main/default/classes/sfab_ParentRelationshipNode.cls",
+      "Warning: line 18 at 34-37: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1342,7 +1480,20 @@ exports[`Check samples Sample: amoss 1`] = `
   "logs": [
     [
       "force-app/amoss_main/default/classes/Amoss_Instance.cls",
+      "Warning: line 1175 at 30-34: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 1446 at 49-52: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 1723 at 49-52: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 2100 at 44-47: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 2374 at 68-71: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 245 at 31-35: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 2669 at 23-27: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 270 at 35-39: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
       "Warning: line 4662 at 12-132: Local variable is hiding class field 'message', see force-app/amoss_main/default/classes/Amoss_Instance.cls: line 4601 at 16-31",
+      "Warning: line 4734 at 47-51: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 5181 at 47-50: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 5315 at 40-44: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 5355 at 40-44: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 627 at 33-35: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
   "status": 0,
@@ -1358,21 +1509,63 @@ exports[`Check samples Sample: apex-dml-manager 1`] = `
 
 exports[`Check samples Sample: apex-domainbuilder 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/DomainBuilder.cls",
+      "Warning: line 106 at 28-31: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 112 at 28-31: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "force-app/main/default/classes/Random.cls",
+      "Warning: line 20 at 16-23: 'decimal' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 25 at 16-23: 'decimal' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 3 at 15-21: 'string' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 30 at 16-23: 'integer' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 35 at 16-23: 'integer' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 40 at 16-23: 'boolean' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 8 at 15-21: 'string' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: apex-lambda 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "sfdx-source/apex-fp/main/classes/collection/SObjectCollection.cls",
+      "Warning: line 6 at 33-35: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "sfdx-source/apex-fp/main/classes/stream/SObjectStream.cls",
+      "Warning: line 5 at 29-31: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "sfdx-source/apex-fp/main/classes/util/OptionalDecimal.cls",
+      "Warning: line 5 at 31-33: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "sfdx-source/apex-fp/main/classes/util/OptionalDouble.cls",
+      "Warning: line 5 at 30-32: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "sfdx-source/apex-fp/main/classes/util/OptionalSObject.cls",
+      "Warning: line 5 at 31-33: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: apex-mdapi 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "apex-mdapi/src/classes/MetadataService.cls",
+      "Warning: line 13342 at 43-51: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1400,6 +1593,14 @@ exports[`Check samples Sample: apex-query-builder 1`] = `
 exports[`Check samples Sample: apex-recipes 1`] = `
 {
   "logs": [
+    [
+      "force-app/main/default/classes/Collection Recipes/SortableAccount.cls",
+      "Warning: line 39 at 23-27: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "force-app/main/default/classes/Shared Code/ListUtils.cls",
+      "Warning: line 15 at 23-27: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
     [
       "force-app/tests/Shared Code/OrgShape_Tests.cls",
       "Warning: line 182 at 8-42: Local variable is hiding class field 'orgShape', see force-app/tests/Shared Code/OrgShape_Tests.cls: line 3 at 19-37",
@@ -1431,8 +1632,18 @@ exports[`Check samples Sample: apex-rollup 1`] = `
     ],
     [
       "rollup/core/classes/RollupCalculator.cls",
+      "Warning: line 1069 at 28-32: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
       "Warning: line 420 at 6-95: Local variable is hiding class field 'defaultVal', see rollup/core/classes/RollupCalculator.cls: line 8 at 18-36",
       "Warning: line 790 at 6-96: Local variable is hiding class field 'defaultVal', see rollup/core/classes/RollupCalculator.cls: line 8 at 18-36",
+      "Warning: line 941 at 27-31: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "rollup/core/classes/RollupComparer.cls",
+      "Warning: line 7 at 14-18: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "rollup/core/classes/RollupFieldInitializer.cls",
+      "Warning: line 142 at 16-20: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
       "rollup/core/classes/RollupLogger.cls",
@@ -1469,6 +1680,11 @@ exports[`Check samples Sample: apex-toolingapi 1`] = `
       "examples/code_coverage_chart/src/classes/CodeCoverageChartCtrl.cls",
       "Error: line 1: Type 'CodeCoverageChartCtrl' is defined, but meta file is missing for 'examples/code_coverage_chart/src/classes/CodeCoverageChartCtrl.cls'",
     ],
+    [
+      "src/classes/ToolingAPI.cls",
+      "Warning: line 122 at 38-46: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 126 at 38-46: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
   ],
   "status": 4,
 }
@@ -1483,7 +1699,12 @@ exports[`Check samples Sample: apex-trigger-actions-framework 1`] = `
 
 exports[`Check samples Sample: apex-unified-logging 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/Log.cls",
+      "Warning: line 93 at 29-33: 'cast' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1554,6 +1775,23 @@ exports[`Check samples Sample: at4dx 1`] = `
       "Error: line 547 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
       "Error: line 554 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/test/classes/fflib_MyList.cls",
+      "Warning: line 21 at 7-10: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 54 at 13-16: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/test/classes/mocks/fflib_Mocks.cls",
+      "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "force-di/force-di/main/classes/di_Binding.cls",
+      "Warning: line 148 at 24-27: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
   ],
   "status": 4,
 }
@@ -1577,6 +1815,19 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
 {
   "logs": [
     [
+      "dlrs/libs/fflib-apexmocks/classes/fflib_ApexMocks.cls",
+      "Warning: line 155 at 33-37: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "dlrs/libs/fflib-apexmocks/classes/fflib_Mocks.cls",
+      "Warning: line 91 at 16-19: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "dlrs/libs/fflib-apexmocks/classes/fflib_MyList.cls",
+      "Warning: line 19 at 9-12: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 45 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
       "dlrs/libs/fflib-common/classes/fflib_ApplicationTest.cls",
       "Error: line 515 at 37-56: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
       "Error: line 519 at 30-44: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
@@ -1596,6 +1847,10 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
       "dlrs/libs/fflib-common/classes/fflib_SObjectSelectorTest.cls",
       "Error: line 333 at 37-56: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 93 at 11-58",
       "Error: line 342 at 30-44: This override of a private method will fail in v61, see dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls: line 88 at 11-46",
+    ],
+    [
+      "dlrs/libs/metadataservice/classes/MetadataService.cls",
+      "Warning: line 37101 at 39-47: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
       "dlrs/main/classes/ApexClassesSelector.cls",
@@ -1794,6 +2049,19 @@ exports[`Check samples Sample: fflib-apex-common 1`] = `
       "Error: line 547 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
       "Error: line 554 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/test/classes/fflib_MyList.cls",
+      "Warning: line 21 at 7-10: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 54 at 13-16: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/test/classes/mocks/fflib_Mocks.cls",
+      "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
   ],
   "status": 4,
 }
@@ -1870,6 +2138,19 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
       "Error: line 547 at 35-54: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 98 at 13-60",
       "Error: line 554 at 28-42: This override of a private method will fail in v61, see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls: line 93 at 13-48",
     ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/test/classes/fflib_MyList.cls",
+      "Warning: line 21 at 7-10: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 54 at 13-16: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "fflib-apex-mocks/sfdx-source/apex-mocks/test/classes/mocks/fflib_Mocks.cls",
+      "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
   ],
   "status": 4,
 }
@@ -1877,21 +2158,45 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
 
 exports[`Check samples Sample: fflib-apex-mocks 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
+      "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "sfdx-source/apex-mocks/test/classes/fflib_MyList.cls",
+      "Warning: line 21 at 7-10: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 54 at 13-16: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "sfdx-source/apex-mocks/test/classes/mocks/fflib_Mocks.cls",
+      "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: flowtoolbelt 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/MetadataService.cls",
+      "Warning: line 11444 at 43-51: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: force-di 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-di/main/classes/di_Binding.cls",
+      "Warning: line 148 at 24-27: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1981,7 +2286,12 @@ exports[`Check samples Sample: processBuilderBlocks 1`] = `
 
 exports[`Check samples Sample: promise 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/Promise.cls",
+      "Warning: line 65 at 17-21: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -1993,6 +2303,10 @@ exports[`Check samples Sample: promiseV3 1`] = `
       "force-app/main/default/classes/Chain.cls",
       "Missing: line 12 at 14-45: No matching method found for 'getAsyncApexJobResult' on 'System.FinalizerContext' taking no arguments",
       "Missing: line 23 at 54-88: No matching method found for 'getAsyncApexJobException' on 'System.FinalizerContext' taking no arguments",
+    ],
+    [
+      "force-app/main/default/classes/Promise.cls",
+      "Warning: line 5 at 17-21: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
   "status": 4,
@@ -2055,7 +2369,16 @@ exports[`Check samples Sample: salesforce-limit-monitor 1`] = `
 
 exports[`Check samples Sample: selector 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/Records.cls",
+      "Warning: line 28 at 25-28: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "src/classes/RecordsTest.cls",
+      "Warning: line 95 at 35-38: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -2118,14 +2441,28 @@ exports[`Check samples Sample: sfdx-simple 1`] = `
 
 exports[`Check samples Sample: sirono-common 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "src/classes/CollectionUtil.cls",
+      "Warning: line 466 at 23-27: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
 
 exports[`Check samples Sample: sobject-work-queue 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/SObjectWork.cls",
+      "Warning: line 76 at 20-23: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "force-app/main/default/classes/SchemaCache.cls",
+      "Warning: line 64 at 37-43: 'object' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -2144,7 +2481,13 @@ exports[`Check samples Sample: soql-secure 1`] = `
 
 exports[`Check samples Sample: survey-force 1`] = `
 {
-  "logs": [],
+  "logs": [
+    [
+      "force-app/main/default/classes/CSUtils.cls",
+      "Warning: line 122 at 22-26: 'join' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 137 at 22-26: 'join' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+  ],
   "status": 0,
 }
 `;
@@ -2152,6 +2495,14 @@ exports[`Check samples Sample: survey-force 1`] = `
 exports[`Check samples Sample: twilio-salesforce 1`] = `
 {
   "logs": [
+    [
+      "src/classes/TwilioAccount.cls",
+      "Warning: line 257 at 25-33: 'activate' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "src/classes/TwilioCapability.cls",
+      "Warning: line 249 at 26-30: 'join' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
     [
       "src/classes/TwilioQueue.cls",
       "Error: line 26 at 8-20: Unreachable block or statement",
@@ -2165,6 +2516,10 @@ exports[`Check samples Sample: twilio-salesforce 1`] = `
       "Warning: line 66 at 8-27: Local variable is hiding class field 'message', see src/classes/TwilioRestException.cls: line 28 at 25-40",
       "Warning: line 67 at 8-30: Local variable is hiding class field 'moreInfo', see src/classes/TwilioRestException.cls: line 31 at 25-41",
       "Warning: line 68 at 8-32: Local variable is hiding class field 'errorCode', see src/classes/TwilioRestException.cls: line 25 at 25-43",
+    ],
+    [
+      "src/classes/TwilioTRCapability.cls",
+      "Warning: line 183 at 26-30: 'join' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
   "status": 4,
@@ -2181,6 +2536,14 @@ exports[`Check samples Sample: user-access-visualization 1`] = `
 exports[`Check samples Sample: visualforce-table-grid 1`] = `
 {
   "logs": [
+    [
+      "src/classes/SchemaCache.cls",
+      "Warning: line 92 at 37-43: 'object' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
+    [
+      "src/classes/SelectOptionSorter.cls",
+      "Warning: line 43 at 23-27: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+    ],
     [
       "src/classes/TableGridController.cls",
       "Warning: line 324 at 5-31: Local variable is hiding class field 'settings', see src/classes/TableGridController.cls: line 78 at 12-39",
