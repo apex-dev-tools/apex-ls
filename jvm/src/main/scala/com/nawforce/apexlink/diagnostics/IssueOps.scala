@@ -39,6 +39,16 @@ object IssueOps {
       Diagnostic(ERROR_CATEGORY, location.location, s"'$name' is a reserved identifier in Apex")
     )
 
+  def reservedMethodIdentifierWarning(location: PathLocation, name: Name): Issue =
+    Issue(
+      location.path,
+      Diagnostic(
+        WARNING_CATEGORY,
+        location.location,
+        s"'$name' is currently a legal method name but is a reserved identifier in Apex so should be avoided"
+      )
+    )
+
   def noTypeDeclaration(location: PathLocation, typeName: TypeName): Issue =
     Issue(
       location.path,

@@ -15,6 +15,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.names.XNames.NameUtils
+import com.nawforce.pkgforce.diagnostics.Issue
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.Positionable
 import com.nawforce.runtime.parsers.{CodeParser, Source}
@@ -43,18 +44,36 @@ object CST {
 }
 
 final case class Id(name: Name) extends CST {
-  def validate(context: VerifyContext, isMethod: Boolean = false): Unit = {
-    if (name.nonEmpty) {
-      val illegalError = name.isLegalIdentifier
-      if (illegalError.nonEmpty)
-        context.log(IssueOps.illegalIdentifier(location, name, illegalError.get))
-      else {
-        val isReserved =
-          if (isMethod) name.isReservedMethodIdentifier else name.isReservedIdentifier
-        if (isReserved)
-          context.log(IssueOps.reservedIdentifier(location, name))
+  def validate(context: VerifyContext): Unit = {
+    validateReserved((n: Name) => n.isReservedIdentifier).foreach(context.log)
+  }
+
+  def validateForMethod(context: VerifyContext): Unit = {
+    validateReserved((n: Name) => n.isReservedMethodIdentifier)
+      .orElse {
+        if (name.isReservedIdentifier) {
+          Some(IssueOps.reservedMethodIdentifierWarning(location, name))
+        } else {
+          None
+        }
       }
-    }
+      .foreach(context.log)
+  }
+
+  private def validateReserved(reserved: Name => Boolean): Option[Issue] = {
+    if (name.isEmpty)
+      None
+    else
+      name.isLegalIdentifier
+        .map(error => {
+          IssueOps.illegalIdentifier(location, name, error)
+        })
+        .orElse {
+          if (reserved(name))
+            Some(IssueOps.reservedIdentifier(location, name))
+          else
+            None
+        }
   }
 }
 
