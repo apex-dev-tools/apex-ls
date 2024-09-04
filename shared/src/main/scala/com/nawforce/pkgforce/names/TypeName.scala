@@ -160,10 +160,11 @@ object TypeName {
 
   private def buildTypeNames(value: String): Either[String, Seq[TypeName]] = {
     val args =
-      safeSplit(value, ',').foldLeft(ArrayBuffer[Either[String, TypeName]]())((acc, arg) => {
-        acc.append(buildTypeName(safeSplit(arg, '.'), None))
-        acc
-      })
+      safeSplit(value, ',')
+        .foldLeft(ArrayBuffer[Either[String, TypeName]]())((acc, arg) => {
+          acc.append(buildTypeName(safeSplit(arg, '.'), None))
+          acc
+        })
 
     args
       .collectFirst { case Left(err) => err }
@@ -179,14 +180,14 @@ object TypeName {
     parts match {
       case Nil => Right(outer.get)
       case hd :: tl if hd.contains('<') =>
-        val argSplit = hd.split("<", 2)
-        if (argSplit.length != 2 || argSplit(1).length < 2 || hd.last != '>')
+        val argSplit = hd.split("<", 2).map(_.trim)
+        if (argSplit.length != 2 || argSplit(1).length < 2 || argSplit(1).last != '>')
           Left(s"Unmatched '<' found in '$hd'")
         else {
           buildTypeNames(argSplit(1).take(argSplit(1).length - 1)) match {
             case Right(argTypes) =>
               val name         = Name(argSplit.head)
-              val illegalError = Identifier.isLegalIdentifier(name)
+              val illegalError = isLegalTypeName(name)
               if (illegalError.nonEmpty)
                 Left(s"Illegal identifier '$name': ${illegalError.get}")
               else
@@ -196,8 +197,8 @@ object TypeName {
           }
         }
       case hd :: tl if hd.nonEmpty =>
-        val name         = Name(hd)
-        val illegalError = Identifier.isLegalIdentifier(name)
+        val name         = Name(hd.trim)
+        val illegalError = isLegalTypeName(name)
         if (illegalError.nonEmpty)
           Left(s"Illegal identifier at '$name': ${illegalError.get}")
         else
@@ -212,15 +213,20 @@ object TypeName {
     var parts: List[String] = Nil
     var current             = new StringBuffer()
     var depth               = 0
-    value.foreach {
+    value.trim.foreach {
       case '<' => depth += 1; current.append('<')
       case '>' => depth -= 1; current.append('>')
       case x if x == separator && depth == 0 =>
         parts = current.toString :: parts; current = new StringBuffer()
       case x => current.append(x)
     }
-    parts = current.toString :: parts
+    parts = current.toString.trim :: parts
     parts.reverse
+  }
+
+  private def isLegalTypeName(name: Name): Option[String] = {
+    val eName = EncodedName(name)
+    Identifier.isLegalIdentifier(eName.name)
   }
 
   // Package private to avoid accidental use in apex-link
