@@ -34,7 +34,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Method call static->instance") {
     typeDeclaration("public class Dummy {void f1(){} static void f2() {f1();} }")
     assert(
-      dummyIssues == "Missing: line 1 at 50-54: No matching method found for 'f1' on 'Dummy' taking no arguments, are you trying to call the instance method 'void f1()' from a static context?\n"
+      dummyIssues == "Missing: line 1 at 50-54: No matching method found for 'f1' on 'Dummy' taking no arguments, are you trying to call the instance method 'private void f1()' from a static context?\n"
     )
   }
 
@@ -46,7 +46,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Method call wrong arguments") {
     typeDeclaration("public class Dummy {static void f1(String a){} void f2() {f1();} }")
     assert(
-      dummyIssues == "Missing: line 1 at 58-62: No matching method found for 'f1' on 'Dummy' taking no arguments, did you mean to call 'static void f1(System.String a)'?\n"
+      dummyIssues == "Missing: line 1 at 58-62: No matching method found for 'f1' on 'Dummy' taking no arguments, did you mean to call 'private static void f1(System.String a)'?\n"
     )
   }
 
@@ -55,7 +55,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
       "public class Dummy { {Dummy d; d.func(null);} void func(List<Integer> a) {} void func(Integer b) {} }"
     )
     assert(
-      dummyIssues == "Missing: line 1 at 31-43: Ambiguous method call for 'func' on 'Dummy' taking arguments 'null', wrong argument types for calling 'void func(System.Integer b)'\n"
+      dummyIssues == "Missing: line 1 at 31-43: Ambiguous method call for 'func' on 'Dummy' taking arguments 'null', wrong argument types for calling 'private void func(System.Integer b)'\n"
     )
   }
 

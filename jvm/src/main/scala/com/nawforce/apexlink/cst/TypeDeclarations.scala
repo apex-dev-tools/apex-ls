@@ -252,8 +252,7 @@ object InterfaceDeclaration {
               MethodModifiers.interfaceMethodModifiers(
                 parser,
                 CodeParser.toScala(method.modifier()),
-                method.id(),
-                outerTypeName.isEmpty
+                method.id()
               ),
               method
             )

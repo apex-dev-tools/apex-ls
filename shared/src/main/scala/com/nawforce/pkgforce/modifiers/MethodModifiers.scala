@@ -30,11 +30,12 @@ sealed abstract class MethodOwnerNature(final val name: String) {
   override def toString: String = name
 }
 
-case object FINAL_METHOD_NATURE     extends MethodOwnerNature("final class")
-case object VIRTUAL_METHOD_NATURE   extends MethodOwnerNature("virtual class")
-case object ABSTRACT_METHOD_NATURE  extends MethodOwnerNature("abstract class")
-case object INTERFACE_METHOD_NATURE extends MethodOwnerNature("interface")
-case object ENUM_METHOD_NATURE      extends MethodOwnerNature("enum")
+case object FINAL_METHOD_NATURE           extends MethodOwnerNature("final class")
+case object VIRTUAL_METHOD_NATURE         extends MethodOwnerNature("virtual class")
+case object ABSTRACT_METHOD_NATURE        extends MethodOwnerNature("abstract class")
+case object GLOBAL_ABSTRACT_METHOD_NATURE extends MethodOwnerNature("global abstract class")
+case object INTERFACE_METHOD_NATURE       extends MethodOwnerNature("interface")
+case object ENUM_METHOD_NATURE            extends MethodOwnerNature("enum")
 
 object MethodModifiers {
 
@@ -90,37 +91,62 @@ object MethodModifiers {
     isOuter: Boolean
   ): ModifierResults = {
 
-    val allowedModifiers =
-      allowableModifiers(modifiers, MethodModifiersAndAnnotations, "methods", logger)
-
-    val mods = ApexModifiers.deduplicateVisibility(
-      asModifiers(allowedModifiers, logger, context),
+    val normalModifiers = ApexModifiers.deduplicateVisibility(
+      asModifiers(
+        allowableModifiers(modifiers, MethodModifiersAndAnnotations, "methods", logger),
+        logger,
+        context
+      ),
       "methods",
       logger,
       context
     )
 
+    val explicitVisibility = normalModifiers
+      .intersect(visibilityModifiers)
+      .headOption
+
+    val extendedModifiers =
+      (if (explicitVisibility.isEmpty) {
+         ArraySeq(
+           if (normalModifiers.contains(WEBSERVICE_MODIFIER))
+             GLOBAL_MODIFIER
+           else PRIVATE_MODIFIER
+         )
+       } else ArraySeq()) ++ normalModifiers
+
+    val visibility = extendedModifiers
+      .intersect(visibilityModifiers)
+      .head
+
     val results = {
-      if (mods.intersect(visibilityModifiers).isEmpty && mods.contains(WEBSERVICE_MODIFIER)) {
-        GLOBAL_MODIFIER +: mods
-      } else if (
-        !mods.intersect(visibilityModifiers).contains(GLOBAL_MODIFIER) && mods.contains(
-          WEBSERVICE_MODIFIER
-        )
-      ) {
+      if (visibility != GLOBAL_MODIFIER && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
         logger.logError(context, s"webservice methods must be global")
-        GLOBAL_MODIFIER +: mods.diff(visibilityModifiers)
-      } else if (isOuter && mods.contains(WEBSERVICE_MODIFIER)) {
+        GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (!isOuter && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
         logger.logError(context, s"webservice methods can only be declared on outer classes")
-        GLOBAL_MODIFIER +: mods.diff(visibilityModifiers)
-      } else if (mods.contains(VIRTUAL_MODIFIER) && mods.contains(ABSTRACT_MODIFIER)) {
+        GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (
+        extendedModifiers
+          .contains(VIRTUAL_MODIFIER) && extendedModifiers.contains(ABSTRACT_MODIFIER)
+      ) {
         logger.logError(context, s"abstract methods are virtual methods")
-        mods.filterNot(_ == VIRTUAL_MODIFIER)
-      } else if (ownerNature != ABSTRACT_METHOD_NATURE && mods.contains(ABSTRACT_MODIFIER)) {
+        extendedModifiers.filterNot(_ == VIRTUAL_MODIFIER)
+      } else if (
+        extendedModifiers.contains(
+          ABSTRACT_MODIFIER
+        ) && !(ownerNature == ABSTRACT_METHOD_NATURE || ownerNature == GLOBAL_ABSTRACT_METHOD_NATURE)
+      ) {
         logger.logError(context, s"abstract methods can only be declared on abstract classes")
-        mods
+        extendedModifiers
+      } else if (
+        ownerNature == GLOBAL_ABSTRACT_METHOD_NATURE && visibility != GLOBAL_MODIFIER &&
+        extendedModifiers.contains(ABSTRACT_MODIFIER)
+      ) {
+        logger.logError(context, s"abstract methods must be global in global abstract classes")
+        GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else {
-        mods
+        extendedModifiers
       }
     }
     ModifierResults(results, logger.issues).intern
@@ -129,19 +155,17 @@ object MethodModifiers {
   def interfaceMethodModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
-    context: ParserRuleContext,
-    isOuter: Boolean
+    context: ParserRuleContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
     val mods   = toModifiers(parser, modifierContexts)
-    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context), isOuter)
+    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context))
   }
 
   def interfaceMethodModifiers(
     logger: ModifierLogger,
     modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
-    context: LogEntryContext,
-    isOuter: Boolean
+    context: LogEntryContext
   ): ModifierResults = {
 
     val allowedModifiers = allowableModifiers(modifiers, Set.empty, "interface methods", logger)
@@ -153,6 +177,6 @@ object MethodModifiers {
       context
     )
 
-    ModifierResults((mods ++ ArraySeq(VIRTUAL_MODIFIER, PUBLIC_MODIFIER)), logger.issues).intern
+    ModifierResults(mods ++ ArraySeq(VIRTUAL_MODIFIER, PUBLIC_MODIFIER), logger.issues).intern
   }
 }

@@ -45,8 +45,12 @@ final case class ModifierResults(modifiers: ArraySeq[Modifier], issues: ArraySeq
   }
 
   def methodOwnerNature: MethodOwnerNature = {
-    if (modifiers.contains(ABSTRACT_MODIFIER)) ABSTRACT_METHOD_NATURE
-    else if (modifiers.contains(VIRTUAL_MODIFIER)) VIRTUAL_METHOD_NATURE
+    if (modifiers.contains(ABSTRACT_MODIFIER)) {
+      if (modifiers.contains(GLOBAL_MODIFIER))
+        GLOBAL_ABSTRACT_METHOD_NATURE
+      else
+        ABSTRACT_METHOD_NATURE
+    } else if (modifiers.contains(VIRTUAL_MODIFIER)) VIRTUAL_METHOD_NATURE
     else FINAL_METHOD_NATURE
   }
 

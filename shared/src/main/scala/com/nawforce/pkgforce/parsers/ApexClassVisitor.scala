@@ -25,7 +25,7 @@ import scala.collection.mutable
 class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
   private val ownerNatureStack = mutable.Stack[MethodOwnerNature]()
 
-  def typeWrap[T](ownerNature: MethodOwnerNature)(op: => T): T = {
+  private def typeWrap[T](ownerNature: MethodOwnerNature)(op: => T): T = {
     ownerNatureStack.push(ownerNature)
     try {
       op
@@ -195,8 +195,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
       MethodModifiers.interfaceMethodModifiers(
         parser,
         ArraySeq.from(CodeParser.toScala(ctx.modifier())),
-        ctx.id(),
-        ownerNatureStack.size == 1
+        ctx.id()
       )
 
     ArraySeq(
@@ -347,7 +346,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
     ctx.parent.asInstanceOf[T]
   }
 
-  case class ModifierContextDetails(
+  private case class ModifierContextDetails(
     enclosing: ParserRuleContext,
     modifiers: ArraySeq[ModifierContext]
   )
