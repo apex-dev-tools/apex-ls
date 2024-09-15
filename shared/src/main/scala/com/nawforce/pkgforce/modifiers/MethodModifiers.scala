@@ -26,19 +26,13 @@ import io.github.apexdevtools.apexparser.ApexParser.ModifierContext
 
 import scala.collection.compat.immutable.ArraySeq
 
-sealed abstract class MethodOwnerNature(final val name: String) {
-  override def toString: String = name
-}
-
-case object FINAL_METHOD_NATURE           extends MethodOwnerNature("final class")
-case object VIRTUAL_METHOD_NATURE         extends MethodOwnerNature("virtual class")
-case object ABSTRACT_METHOD_NATURE        extends MethodOwnerNature("abstract class")
-case object GLOBAL_ABSTRACT_METHOD_NATURE extends MethodOwnerNature("global abstract class")
-case object INTERFACE_METHOD_NATURE       extends MethodOwnerNature("interface")
-case object ENUM_METHOD_NATURE            extends MethodOwnerNature("enum")
+sealed abstract class MethodOwnerInfo
+case object InterfaceOwnerInfo extends MethodOwnerInfo
+case object EnumOwnerInfo      extends MethodOwnerInfo
+case class ClassOwnerInfo(modifiers: ArraySeq[Modifier], isExtending: Boolean)
+    extends MethodOwnerInfo
 
 object MethodModifiers {
-
   private val MethodModifiers: Set[Modifier] = visibilityModifiers.toSet ++ Set(
     ABSTRACT_MODIFIER,
     OVERRIDE_MODIFIER,
@@ -68,26 +62,29 @@ object MethodModifiers {
     REMOTE_ACTION_ANNOTATION
   )
 
-  private val MethodModifiersAndAnnotations: Set[Modifier] = MethodAnnotations ++ MethodModifiers
+  private val MethodModifiersAndAnnotations = MethodAnnotations ++ MethodModifiers
+
+  private val globalAbstractModifiers  = ArraySeq(GLOBAL_MODIFIER, ABSTRACT_MODIFIER)
+  private val virtualAbstractModifiers = ArraySeq(VIRTUAL_MODIFIER, ABSTRACT_MODIFIER)
 
   def classMethodModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
     context: ParserRuleContext,
-    ownerNature: MethodOwnerNature,
+    ownerInfo: ClassOwnerInfo,
     isOuter: Boolean
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
     val mods   = toModifiers(parser, modifierContexts)
-    classMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerNature, isOuter)
+    classMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerInfo, isOuter)
   }
 
   def classMethodModifiers(
     logger: ModifierLogger,
     modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
     context: LogEntryContext,
-    ownerNature: MethodOwnerNature,
+    ownerInfo: ClassOwnerInfo,
     isOuter: Boolean
   ): ModifierResults = {
 
@@ -133,18 +130,31 @@ object MethodModifiers {
         logger.logError(context, s"abstract methods are virtual methods")
         extendedModifiers.filterNot(_ == VIRTUAL_MODIFIER)
       } else if (
-        extendedModifiers.contains(
-          ABSTRACT_MODIFIER
-        ) && !(ownerNature == ABSTRACT_METHOD_NATURE || ownerNature == GLOBAL_ABSTRACT_METHOD_NATURE)
+        extendedModifiers
+          .contains(ABSTRACT_MODIFIER) && !ownerInfo.modifiers.contains(ABSTRACT_MODIFIER)
       ) {
         logger.logError(context, s"abstract methods can only be declared on abstract classes")
         extendedModifiers
       } else if (
-        ownerNature == GLOBAL_ABSTRACT_METHOD_NATURE && visibility != GLOBAL_MODIFIER &&
+        ownerInfo.modifiers
+          .intersect(globalAbstractModifiers)
+          .length == globalAbstractModifiers.length &&
+        visibility != GLOBAL_MODIFIER &&
         extendedModifiers.contains(ABSTRACT_MODIFIER)
       ) {
         logger.logError(context, s"abstract methods must be global in global abstract classes")
         GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (
+        visibility == PROTECTED_MODIFIER &&
+        !extendedModifiers.contains(STATIC_MODIFIER) && // Static error is caught later
+        !ownerInfo.isExtending &&
+        ownerInfo.modifiers.intersect(virtualAbstractModifiers).isEmpty
+      ) {
+        logger.logError(
+          context,
+          s"protected methods can only be used on virtual or abstract classes"
+        )
+        PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else {
         extendedModifiers
       }

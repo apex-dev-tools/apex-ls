@@ -151,7 +151,7 @@ object ClassDeclaration {
                     parser,
                     thisType,
                     typeContext,
-                    modifiers.methodOwnerNature,
+                    ClassOwnerInfo(modifiers.modifiers, extendType != TypeNames.InternalObject),
                     outerTypeName.isEmpty,
                     CodeParser.toScala(cbd.modifier()),
                     x

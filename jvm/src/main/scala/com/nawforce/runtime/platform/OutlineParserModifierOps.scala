@@ -130,7 +130,7 @@ object OutlineParserModifierOps {
     id: OPId,
     annotations: Array[OPAnnotation],
     src: Array[OPModifier],
-    ownerNature: MethodOwnerNature,
+    ownerInfo: ClassOwnerInfo,
     isOuter: Boolean
   ): ModifierResults = {
 
@@ -141,7 +141,7 @@ object OutlineParserModifierOps {
       logger,
       mods,
       OPLogEntryContext(path, id.location),
-      ownerNature,
+      ownerInfo,
       isOuter
     )
   }

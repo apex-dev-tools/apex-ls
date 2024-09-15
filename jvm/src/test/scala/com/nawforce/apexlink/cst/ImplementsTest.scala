@@ -71,7 +71,7 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
     )
     assert(
       dummyIssues ==
-        "Missing: line 1 at 48-52: Method 'void func()' from interface 'A' must be public or global\n"
+        "Error: line 1 at 48-52: protected methods can only be used on virtual or abstract classes\n"
     )
   }
 
