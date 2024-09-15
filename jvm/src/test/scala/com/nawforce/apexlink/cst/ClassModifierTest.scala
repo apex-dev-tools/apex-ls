@@ -248,18 +248,18 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
   }
 
   test("Abstract methods must not have a body") {
-    typeDeclaration("public abstract class Dummy {abstract void func() {}}")
+    typeDeclaration("public abstract class Dummy {public abstract void func() {}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 43-47: Abstract methods can not have an implementation\n"
+        "Error: line 1 at 50-54: Abstract methods can not have an implementation\n"
     )
   }
 
   test("Virtual not needed on abstract method") {
-    typeDeclaration("public abstract class Dummy {abstract virtual void func();}")
+    typeDeclaration("public abstract class Dummy {public abstract virtual void func();}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 51-55: abstract methods are virtual methods\n"
+        "Error: line 1 at 58-62: abstract methods are virtual methods\n"
     )
   }
 }

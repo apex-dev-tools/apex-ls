@@ -13,6 +13,7 @@
  */
 package com.nawforce.pkgforce.modifiers
 
+import com.nawforce.pkgforce.api.SharedOps
 import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
 import com.nawforce.pkgforce.modifiers.ApexModifiers.{
   allowableModifiers,
@@ -153,6 +154,16 @@ object MethodModifiers {
         logger.logError(
           context,
           s"protected methods can only be used on virtual or abstract classes"
+        )
+        PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (
+        visibility == PRIVATE_MODIFIER &&
+        extendedModifiers.intersect(virtualAbstractModifiers).nonEmpty &&
+        !SharedOps.isPrivateOverrideAllowed
+      ) {
+        logger.logError(
+          context,
+          s"private method overrides have inconsistent behaviour, use global, public or protected"
         )
         PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else {
