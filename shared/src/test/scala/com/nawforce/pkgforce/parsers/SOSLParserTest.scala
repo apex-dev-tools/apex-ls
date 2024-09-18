@@ -177,6 +177,18 @@ class SOSLParserTest extends AnyFunSuite with Matchers {
         .isRight
     )
   }
+
+  test("USER mode") {
+    assert(SOSLParser.parse("[FIND 'test' RETURNING Account WITH USER_MODE]").isRight)
+  }
+
+  test("SYSTEM mode") {
+    assert(SOSLParser.parse("[FIND 'test' RETURNING Account WITH SYSTEM_MODE]").isRight)
+  }
+
+  test("toLabel function") {
+    assert(SOSLParser.parse("[FIND 'test' RETURNING Account(Id, toLabel(Name))]").isRight)
+  }
 }
 
 object SOSLParser {
