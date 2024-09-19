@@ -2,21 +2,21 @@ name: Publish
 
 on:
   release:
-    types: [ released ]
+    types: [released]
   workflow_dispatch:
     inputs:
       skip_tests:
-        description: 'Skip tests (force release)'
+        description: "Skip tests (force release)"
         type: boolean
         required: true
         default: false
       pub_sbt:
-        description: 'Publish JARs'
+        description: "Publish JARs"
         type: boolean
         required: true
         default: true
       pub_npm:
-        description: 'Publish NPM (Latest Tag)'
+        description: "Publish NPM (Latest Tag)"
         type: boolean
         required: true
         default: false
@@ -32,13 +32,13 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version: 8
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 16
-          registry-url: 'https://registry.npmjs.org'
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
 
       - name: Build
         run: sbt build
