@@ -165,7 +165,7 @@ object MethodModifiers {
           context,
           s"private method overrides have inconsistent behaviour, use global, public or protected"
         )
-        PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+        extendedModifiers
       } else {
         extendedModifiers
       }
