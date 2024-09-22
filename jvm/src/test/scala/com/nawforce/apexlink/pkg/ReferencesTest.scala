@@ -224,7 +224,7 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
           "Common.cls" -> "public interface Common { Common fn();} ",
           "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
           "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
-          "C.cls"     -> "public virtual class C{ B getB(){return new B();} }",
+          "C.cls"     -> "public virtual class C{ public B getB(){return new B();} }",
           "UsedB.cls" -> usedB._1,
           "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
         )

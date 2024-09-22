@@ -13,6 +13,7 @@
  */
 package com.nawforce.pkgforce.modifiers
 
+import com.nawforce.pkgforce.api.SharedOps
 import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
 import com.nawforce.pkgforce.modifiers.ApexModifiers.{
   allowableModifiers,
@@ -26,18 +27,13 @@ import io.github.apexdevtools.apexparser.ApexParser.ModifierContext
 
 import scala.collection.compat.immutable.ArraySeq
 
-sealed abstract class MethodOwnerNature(final val name: String) {
-  override def toString: String = name
-}
-
-case object FINAL_METHOD_NATURE     extends MethodOwnerNature("final class")
-case object VIRTUAL_METHOD_NATURE   extends MethodOwnerNature("virtual class")
-case object ABSTRACT_METHOD_NATURE  extends MethodOwnerNature("abstract class")
-case object INTERFACE_METHOD_NATURE extends MethodOwnerNature("interface")
-case object ENUM_METHOD_NATURE      extends MethodOwnerNature("enum")
+sealed abstract class MethodOwnerInfo
+case object InterfaceOwnerInfo extends MethodOwnerInfo
+case object EnumOwnerInfo      extends MethodOwnerInfo
+case class ClassOwnerInfo(modifiers: ArraySeq[Modifier], isExtending: Boolean)
+    extends MethodOwnerInfo
 
 object MethodModifiers {
-
   private val MethodModifiers: Set[Modifier] = visibilityModifiers.toSet ++ Set(
     ABSTRACT_MODIFIER,
     OVERRIDE_MODIFIER,
@@ -67,60 +63,111 @@ object MethodModifiers {
     REMOTE_ACTION_ANNOTATION
   )
 
-  private val MethodModifiersAndAnnotations: Set[Modifier] = MethodAnnotations ++ MethodModifiers
+  private val MethodModifiersAndAnnotations = MethodAnnotations ++ MethodModifiers
+
+  private val globalAbstractModifiers  = ArraySeq(GLOBAL_MODIFIER, ABSTRACT_MODIFIER)
+  private val virtualAbstractModifiers = ArraySeq(VIRTUAL_MODIFIER, ABSTRACT_MODIFIER)
 
   def classMethodModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
     context: ParserRuleContext,
-    ownerNature: MethodOwnerNature,
+    ownerInfo: ClassOwnerInfo,
     isOuter: Boolean
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
     val mods   = toModifiers(parser, modifierContexts)
-    classMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerNature, isOuter)
+    classMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerInfo, isOuter)
   }
 
   def classMethodModifiers(
     logger: ModifierLogger,
     modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
     context: LogEntryContext,
-    ownerNature: MethodOwnerNature,
+    ownerInfo: ClassOwnerInfo,
     isOuter: Boolean
   ): ModifierResults = {
 
-    val allowedModifiers =
-      allowableModifiers(modifiers, MethodModifiersAndAnnotations, "methods", logger)
-
-    val mods = ApexModifiers.deduplicateVisibility(
-      asModifiers(allowedModifiers, logger, context),
+    val normalModifiers = ApexModifiers.deduplicateVisibility(
+      asModifiers(
+        allowableModifiers(modifiers, MethodModifiersAndAnnotations, "methods", logger),
+        logger,
+        context
+      ),
       "methods",
       logger,
       context
     )
 
+    val explicitVisibility = normalModifiers
+      .intersect(visibilityModifiers)
+      .headOption
+
+    val extendedModifiers =
+      (if (explicitVisibility.isEmpty) {
+         ArraySeq(
+           if (normalModifiers.contains(WEBSERVICE_MODIFIER))
+             GLOBAL_MODIFIER
+           else PRIVATE_MODIFIER
+         )
+       } else ArraySeq()) ++ normalModifiers
+
+    val visibility = extendedModifiers
+      .intersect(visibilityModifiers)
+      .head
+
     val results = {
-      if (mods.intersect(visibilityModifiers).isEmpty && mods.contains(WEBSERVICE_MODIFIER)) {
-        GLOBAL_MODIFIER +: mods
+      if (visibility != GLOBAL_MODIFIER && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
+        logger.logError(context, "Webservice methods must be global")
+        GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (!isOuter && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
+        logger.logError(context, "Webservice methods can only be declared on outer classes")
+        GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
-        !mods.intersect(visibilityModifiers).contains(GLOBAL_MODIFIER) && mods.contains(
-          WEBSERVICE_MODIFIER
-        )
+        extendedModifiers
+          .contains(VIRTUAL_MODIFIER) && extendedModifiers.contains(ABSTRACT_MODIFIER)
       ) {
-        logger.logError(context, s"webservice methods must be global")
-        GLOBAL_MODIFIER +: mods.diff(visibilityModifiers)
-      } else if (isOuter && mods.contains(WEBSERVICE_MODIFIER)) {
-        logger.logError(context, s"webservice methods can only be declared on outer classes")
-        GLOBAL_MODIFIER +: mods.diff(visibilityModifiers)
-      } else if (mods.contains(VIRTUAL_MODIFIER) && mods.contains(ABSTRACT_MODIFIER)) {
-        logger.logError(context, s"abstract methods are virtual methods")
-        mods.filterNot(_ == VIRTUAL_MODIFIER)
-      } else if (ownerNature != ABSTRACT_METHOD_NATURE && mods.contains(ABSTRACT_MODIFIER)) {
-        logger.logError(context, s"abstract methods can only be declared on abstract classes")
-        mods
+        logger.logError(context, "Abstract methods are virtual methods")
+        extendedModifiers.filterNot(_ == VIRTUAL_MODIFIER)
+      } else if (
+        extendedModifiers
+          .contains(ABSTRACT_MODIFIER) && !ownerInfo.modifiers.contains(ABSTRACT_MODIFIER)
+      ) {
+        logger.logError(context, "Abstract methods can only be declared on abstract classes")
+        extendedModifiers
+      } else if (
+        ownerInfo.modifiers
+          .intersect(globalAbstractModifiers)
+          .length == globalAbstractModifiers.length &&
+        visibility != GLOBAL_MODIFIER &&
+        extendedModifiers.contains(ABSTRACT_MODIFIER)
+      ) {
+        logger.logError(context, "Abstract methods must be global in global abstract classes")
+        GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (
+        visibility == PROTECTED_MODIFIER &&
+        !extendedModifiers.contains(STATIC_MODIFIER) && // Static error is caught later
+        !ownerInfo.isExtending &&
+        ownerInfo.modifiers.intersect(virtualAbstractModifiers).isEmpty
+      ) {
+        logger.logError(
+          context,
+          "Protected methods can only be used on virtual or abstract classes"
+        )
+        PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (
+        visibility == PRIVATE_MODIFIER &&
+        extendedModifiers.intersect(virtualAbstractModifiers).nonEmpty &&
+        !SharedOps.isPrivateOverrideAllowed
+      ) {
+        logger.logError(
+          context,
+          "Private method overrides have inconsistent behaviour, use global, public or protected"
+        )
+        extendedModifiers
       } else {
-        mods
+        extendedModifiers
       }
     }
     ModifierResults(results, logger.issues).intern
@@ -129,19 +176,17 @@ object MethodModifiers {
   def interfaceMethodModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
-    context: ParserRuleContext,
-    isOuter: Boolean
+    context: ParserRuleContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
     val mods   = toModifiers(parser, modifierContexts)
-    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context), isOuter)
+    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context))
   }
 
   def interfaceMethodModifiers(
     logger: ModifierLogger,
     modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
-    context: LogEntryContext,
-    isOuter: Boolean
+    context: LogEntryContext
   ): ModifierResults = {
 
     val allowedModifiers = allowableModifiers(modifiers, Set.empty, "interface methods", logger)
@@ -153,6 +198,6 @@ object MethodModifiers {
       context
     )
 
-    ModifierResults((mods ++ ArraySeq(VIRTUAL_MODIFIER, PUBLIC_MODIFIER)), logger.issues).intern
+    ModifierResults(mods ++ ArraySeq(VIRTUAL_MODIFIER, PUBLIC_MODIFIER), logger.issues).intern
   }
 }

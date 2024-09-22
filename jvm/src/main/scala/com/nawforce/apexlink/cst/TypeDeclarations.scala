@@ -151,7 +151,7 @@ object ClassDeclaration {
                     parser,
                     thisType,
                     typeContext,
-                    modifiers.methodOwnerNature,
+                    ClassOwnerInfo(modifiers.modifiers, extendType != TypeNames.InternalObject),
                     outerTypeName.isEmpty,
                     CodeParser.toScala(cbd.modifier()),
                     x
@@ -252,8 +252,7 @@ object InterfaceDeclaration {
               MethodModifiers.interfaceMethodModifiers(
                 parser,
                 CodeParser.toScala(method.modifier()),
-                method.id(),
-                outerTypeName.isEmpty
+                method.id()
               ),
               method
             )

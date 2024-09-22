@@ -22,11 +22,12 @@ import com.nawforce.apexlink.api.{
   TypeSummary
 }
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
-import com.nawforce.apexlink.plugins.{Plugin, PluginsManager, UnusedPlugin}
+import com.nawforce.apexlink.plugins.{Plugin, PluginsManager}
 import com.nawforce.apexlink.rpc.{LocationLink, TargetLocation}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
+import com.nawforce.pkgforce.api.SharedOps
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
@@ -108,6 +109,15 @@ trait TestHelper {
     val org = emptyOrg()
     OrgInfo.current.withValue(org) {
       op(org)
+    }
+  }
+
+  def withAllowPrivateOverride[T](op: => T): T = {
+    val current = SharedOps.setAllowPrivateOverride(true)
+    try {
+      op
+    } finally {
+      SharedOps.setAllowPrivateOverride(current)
     }
   }
 

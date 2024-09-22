@@ -130,7 +130,7 @@ object OutlineParserModifierOps {
     id: OPId,
     annotations: Array[OPAnnotation],
     src: Array[OPModifier],
-    ownerNature: MethodOwnerNature,
+    ownerInfo: ClassOwnerInfo,
     isOuter: Boolean
   ): ModifierResults = {
 
@@ -141,7 +141,7 @@ object OutlineParserModifierOps {
       logger,
       mods,
       OPLogEntryContext(path, id.location),
-      ownerNature,
+      ownerInfo,
       isOuter
     )
   }
@@ -154,12 +154,7 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
     val logger = new ModifierLogger()
     val mods   = toModifiers(path, id.location, annotations, src)
-    MethodModifiers.interfaceMethodModifiers(
-      logger,
-      mods,
-      OPLogEntryContext(path, id.location),
-      isOuter = false
-    )
+    MethodModifiers.interfaceMethodModifiers(logger, mods, OPLogEntryContext(path, id.location))
   }
 
   def initializerBlockModifiers(isStatic: Boolean): ModifierResults =

@@ -40,7 +40,7 @@ import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.apex.ThisType
-import com.nawforce.pkgforce.modifiers.{FINAL_MODIFIER, MethodOwnerNature, ModifierResults}
+import com.nawforce.pkgforce.modifiers.{ClassOwnerInfo, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
@@ -124,7 +124,7 @@ private[opcst] object OutlineParserClassDeclaration {
         m,
         source,
         typeContext,
-        modifierResults.methodOwnerNature,
+        ClassOwnerInfo(modifierResults.modifiers, extendType != TypeNames.InternalObject),
         outerTypeName.isEmpty,
         thisType
       )
@@ -397,13 +397,13 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     md: OPMethodDeclaration,
     source: Source,
     typeContext: RelativeTypeContext,
-    methodOwnerNature: MethodOwnerNature,
+    ownerInfo: ClassOwnerInfo,
     isOuter: Boolean,
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
     val modifierResults =
-      classMethodModifiers(path, md.id, md.annotations, md.modifiers, methodOwnerNature, isOuter)
+      classMethodModifiers(path, md.id, md.annotations, md.modifiers, ownerInfo, isOuter)
 
     val block =
       if (md.blockLocation.isEmpty) None

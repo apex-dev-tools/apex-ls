@@ -34,7 +34,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Method call static->instance") {
     typeDeclaration("public class Dummy {void f1(){} static void f2() {f1();} }")
     assert(
-      dummyIssues == "Missing: line 1 at 50-54: No matching method found for 'f1' on 'Dummy' taking no arguments, are you trying to call the instance method 'void f1()' from a static context?\n"
+      dummyIssues == "Missing: line 1 at 50-54: No matching method found for 'f1' on 'Dummy' taking no arguments, are you trying to call the instance method 'private void f1()' from a static context?\n"
     )
   }
 
@@ -46,7 +46,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
   test("Method call wrong arguments") {
     typeDeclaration("public class Dummy {static void f1(String a){} void f2() {f1();} }")
     assert(
-      dummyIssues == "Missing: line 1 at 58-62: No matching method found for 'f1' on 'Dummy' taking no arguments, did you mean to call 'static void f1(System.String a)'?\n"
+      dummyIssues == "Missing: line 1 at 58-62: No matching method found for 'f1' on 'Dummy' taking no arguments, did you mean to call 'private static void f1(System.String a)'?\n"
     )
   }
 
@@ -55,7 +55,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
       "public class Dummy { {Dummy d; d.func(null);} void func(List<Integer> a) {} void func(Integer b) {} }"
     )
     assert(
-      dummyIssues == "Missing: line 1 at 31-43: Ambiguous method call for 'func' on 'Dummy' taking arguments 'null', wrong argument types for calling 'void func(System.Integer b)'\n"
+      dummyIssues == "Missing: line 1 at 31-43: Ambiguous method call for 'func' on 'Dummy' taking arguments 'null', wrong argument types for calling 'private void func(System.Integer b)'\n"
     )
   }
 
@@ -168,13 +168,15 @@ class MethodTest extends AnyFunSuite with TestHelper {
   }
 
   test("Static method private override different return") {
-    FileSystemHelper.run(
-      Map(
-        "Base.cls" -> "public virtual class Base { static Base getInstance() {return null;} }",
-        "Extend.cls" -> "public class Extend extends Base { static Extend getInstance() {return null;} { getInstance();} }"
-      )
-    ) { root: PathLike =>
-      createHappyOrg(root)
+    withAllowPrivateOverride {
+      FileSystemHelper.run(
+        Map(
+          "Base.cls" -> "public virtual class Base { static Base getInstance() {return null;} }",
+          "Extend.cls" -> "public class Extend extends Base { static Extend getInstance() {return null;} { getInstance();} }"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+      }
     }
   }
 
@@ -275,24 +277,28 @@ class MethodTest extends AnyFunSuite with TestHelper {
   }
 
   test("Instance method private none-override different return") {
-    FileSystemHelper.run(
-      Map(
-        "Base.cls" -> "public virtual class Base { Base getInstance() {return null;} }",
-        "Dummy.cls" -> "public class Dummy extends Base { Dummy getInstance() {return null;} { this.getInstance();} }"
-      )
-    ) { root: PathLike =>
-      createHappyOrg(root)
+    withAllowPrivateOverride {
+      FileSystemHelper.run(
+        Map(
+          "Base.cls" -> "public virtual class Base { Base getInstance() {return null;} }",
+          "Dummy.cls" -> "public class Dummy extends Base { Dummy getInstance() {return null;} { this.getInstance();} }"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+      }
     }
   }
 
   test("Instance method private none-override same return") {
-    FileSystemHelper.run(
-      Map(
-        "Base.cls" -> "public virtual class Base { void getInstance() {} }",
-        "Dummy.cls" -> "public class Dummy extends Base { void getInstance() {return;} { this.getInstance();} }"
-      )
-    ) { root: PathLike =>
-      createHappyOrg(root)
+    withAllowPrivateOverride {
+      FileSystemHelper.run(
+        Map(
+          "Base.cls" -> "public virtual class Base { void getInstance() {} }",
+          "Dummy.cls" -> "public class Dummy extends Base { void getInstance() {return;} { this.getInstance();} }"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+      }
     }
   }
 
@@ -327,24 +333,28 @@ class MethodTest extends AnyFunSuite with TestHelper {
   }
 
   test("private abstract method implementation") {
-    FileSystemHelper.run(
-      Map(
-        "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
-        "Extend.cls" -> "public class Extend extends Base { void fn() {}}"
-      )
-    ) { root: PathLike =>
-      createHappyOrg(root)
+    withAllowPrivateOverride {
+      FileSystemHelper.run(
+        Map(
+          "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
+          "Extend.cls" -> "public class Extend extends Base { void fn() {}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+      }
     }
   }
 
   test("public method implementing a private abstract method") {
-    FileSystemHelper.run(
-      Map(
-        "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
-        "Extend.cls" -> "public class Extend extends Base { public void fn() {}}"
-      )
-    ) { root: PathLike =>
-      createHappyOrg(root)
+    withAllowPrivateOverride {
+      FileSystemHelper.run(
+        Map(
+          "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
+          "Extend.cls" -> "public class Extend extends Base { public void fn() {}}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+      }
     }
   }
 
@@ -381,29 +391,33 @@ class MethodTest extends AnyFunSuite with TestHelper {
   }
 
   test("private inner abstract method implementation with no override keyword") {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { void fn() {} }}"
-      )
-    ) { root: PathLike =>
-      createHappyOrg(root)
+    withAllowPrivateOverride {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { void fn() {} }}"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+      }
     }
   }
 
   test(
     "private inner abstract method implementation with no override keyword on public implementation"
   ) {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { public void fn(){} }}"
-      )
-    ) { root: PathLike =>
-      createOrg(root)
-      assert(
-        getMessages(
-          root.join("Dummy.cls")
-        ) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
-      )
+    withAllowPrivateOverride {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { public void fn(){} }}"
+        )
+      ) { root: PathLike =>
+        createOrg(root)
+        assert(
+          getMessages(
+            root.join("Dummy.cls")
+          ) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+        )
+      }
     }
   }
 
