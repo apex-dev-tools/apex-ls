@@ -169,7 +169,7 @@ class MethodModifierTest extends AnyFunSuite {
       issues == Seq[Issue](
         Issue(
           Path("Dummy.cls"),
-          Diagnostic(ERROR_CATEGORY, Location(1, 45, 1, 49), "webservice methods must be global")
+          Diagnostic(ERROR_CATEGORY, Location(1, 45, 1, 49), "Webservice methods must be global")
         )
       )
     )
@@ -199,7 +199,7 @@ class MethodModifierTest extends AnyFunSuite {
       issues == Seq[Issue](
         Issue(
           Path("Dummy.cls"),
-          Diagnostic(ERROR_CATEGORY, Location(1, 44, 1, 48), "abstract methods are virtual methods")
+          Diagnostic(ERROR_CATEGORY, Location(1, 44, 1, 48), "Abstract methods are virtual methods")
         )
       )
     )
@@ -214,7 +214,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 36, 1, 40),
-            "abstract methods can only be declared on abstract classes"
+            "Abstract methods can only be declared on abstract classes"
           )
         )
       )
@@ -243,7 +243,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 52, 1, 56),
-            "abstract methods must be global in global abstract classes"
+            "Abstract methods must be global in global abstract classes"
           )
         )
       )
@@ -272,7 +272,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 46, 1, 50),
-            "private method overrides have inconsistent behaviour, use global, public or protected"
+            "Private method overrides have inconsistent behaviour, use global, public or protected"
           )
         )
       )
@@ -288,7 +288,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 38, 1, 42),
-            "private method overrides have inconsistent behaviour, use global, public or protected"
+            "Private method overrides have inconsistent behaviour, use global, public or protected"
           )
         )
       )
@@ -307,7 +307,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 44, 1, 48),
-            "private method overrides have inconsistent behaviour, use global, public or protected"
+            "Private method overrides have inconsistent behaviour, use global, public or protected"
           )
         )
       )
@@ -323,7 +323,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 36, 1, 40),
-            "private method overrides have inconsistent behaviour, use global, public or protected"
+            "Private method overrides have inconsistent behaviour, use global, public or protected"
           )
         )
       )

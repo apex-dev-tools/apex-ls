@@ -119,22 +119,22 @@ object MethodModifiers {
 
     val results = {
       if (visibility != GLOBAL_MODIFIER && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
-        logger.logError(context, s"webservice methods must be global")
+        logger.logError(context, "Webservice methods must be global")
         GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (!isOuter && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
-        logger.logError(context, s"webservice methods can only be declared on outer classes")
+        logger.logError(context, "Webservice methods can only be declared on outer classes")
         GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
         extendedModifiers
           .contains(VIRTUAL_MODIFIER) && extendedModifiers.contains(ABSTRACT_MODIFIER)
       ) {
-        logger.logError(context, s"abstract methods are virtual methods")
+        logger.logError(context, "Abstract methods are virtual methods")
         extendedModifiers.filterNot(_ == VIRTUAL_MODIFIER)
       } else if (
         extendedModifiers
           .contains(ABSTRACT_MODIFIER) && !ownerInfo.modifiers.contains(ABSTRACT_MODIFIER)
       ) {
-        logger.logError(context, s"abstract methods can only be declared on abstract classes")
+        logger.logError(context, "Abstract methods can only be declared on abstract classes")
         extendedModifiers
       } else if (
         ownerInfo.modifiers
@@ -143,7 +143,7 @@ object MethodModifiers {
         visibility != GLOBAL_MODIFIER &&
         extendedModifiers.contains(ABSTRACT_MODIFIER)
       ) {
-        logger.logError(context, s"abstract methods must be global in global abstract classes")
+        logger.logError(context, "Abstract methods must be global in global abstract classes")
         GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
         visibility == PROTECTED_MODIFIER &&
@@ -153,7 +153,7 @@ object MethodModifiers {
       ) {
         logger.logError(
           context,
-          s"protected methods can only be used on virtual or abstract classes"
+          "Protected methods can only be used on virtual or abstract classes"
         )
         PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
@@ -163,7 +163,7 @@ object MethodModifiers {
       ) {
         logger.logError(
           context,
-          s"private method overrides have inconsistent behaviour, use global, public or protected"
+          "Private method overrides have inconsistent behaviour, use global, public or protected"
         )
         extendedModifiers
       } else {

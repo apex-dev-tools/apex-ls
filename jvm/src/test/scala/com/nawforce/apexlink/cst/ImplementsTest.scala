@@ -71,7 +71,7 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
     )
     assert(
       dummyIssues ==
-        "Error: line 1 at 48-52: protected methods can only be used on virtual or abstract classes\n"
+        "Error: line 1 at 48-52: Protected methods can only be used on virtual or abstract classes\n"
     )
   }
 

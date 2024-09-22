@@ -227,7 +227,7 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {abstract void func();}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 34-38: abstract methods can only be declared on abstract classes\n"
+        "Error: line 1 at 34-38: Abstract methods can only be declared on abstract classes\n"
     )
   }
 
@@ -259,7 +259,7 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public abstract class Dummy {public abstract virtual void func();}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 58-62: abstract methods are virtual methods\n"
+        "Error: line 1 at 58-62: Abstract methods are virtual methods\n"
     )
   }
 }
