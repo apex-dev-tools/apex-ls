@@ -57,7 +57,7 @@ class PluginsManager {
 
 object PluginsManager {
   private val defaultPlugins =
-    Seq[Class[_ <: Plugin]](classOf[UnusedPlugin], classOf[OverridePlugin])
+    Seq[Class[_ <: Plugin]](classOf[UnusedPlugin])
   private var plugins            = defaultPlugins
   private var pluginConstructors = defaultPlugins.map(_.getConstructor(classOf[DependentType]))
 
