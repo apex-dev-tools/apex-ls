@@ -17,6 +17,7 @@ import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.rpc.CompletionItemLink
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
+import org.scalatest.Inspectors.forAll
 import org.scalatest.funsuite.AnyFunSuite
 
 class CompletionProviderTest extends AnyFunSuite with TestHelper {
@@ -696,4 +697,75 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
       )
     }
   }
+
+  forAll(
+    Set(
+      ("String", false),
+      ("Dummy", true),
+      ("Dummy2", false),
+      ("Inner", true),
+      ("Inner2", false),
+      ("Other", true),
+      ("Other2", false),
+      ("Other.Inner", true),
+      ("Other2.Inner", false),
+      ("Other.Inner2", false),
+      ("Foo__c", true),
+      ("Bar__c", false),
+      ("List<String>", true),
+      ("List<Dummy>", true),
+      ("List<Dummy2>", false),
+      ("List<Foo__c>", true),
+      ("List<Bar__c>", false),
+      ("Map<Id, String>", true),
+      ("Map<Id, Dummy2>", false)
+    )
+  ) { typeNameAndResult =>
+    test(s"Var Creator completion ${typeNameAndResult._1}") {
+      FileSystemHelper.run(
+        Map(
+          "Other.cls"             -> "public class Other { class Inner {} }",
+          "objects/Foo__c.object" -> customObject("Foo", Seq())
+        )
+      ) { root: PathLike =>
+        val org     = createHappyOrg(root)
+        val testSrc = s"class Dummy { class Inner {} { ${typeNameAndResult._1} a = n"
+        val completions = org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+        if (typeNameAndResult._2)
+          assert(completions.map(_.label) sameElements Array(s"new ${typeNameAndResult._1}();"))
+        else
+          assert(completions.map(_.label) sameElements Array("super", "this", "new"))
+      }
+    }
+
+    test(s"Field Creator completion ${typeNameAndResult._1}") {
+      FileSystemHelper.run(
+        Map(
+          "Other.cls"             -> "public class Other { class Inner {} }",
+          "objects/Foo__c.object" -> customObject("Foo", Seq())
+        )
+      ) { root: PathLike =>
+        val org     = createHappyOrg(root)
+        val testSrc = s"class Dummy { class Inner {} public ${typeNameAndResult._1}  a = n"
+        val completions = org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+        if (typeNameAndResult._2)
+          assert(completions.map(_.label) sameElements Array(s"new ${typeNameAndResult._1}();"))
+        else
+          assert(completions.map(_.label) sameElements Array("super", "this", "new"))
+      }
+    }
+  }
+
 }

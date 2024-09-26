@@ -81,6 +81,7 @@ object ServerOps {
   private var externalAnalysis               = ExternalAnalysisConfiguration(RefreshAnalysis, Map())
   private var currentParser: AvailableParser = ANTLRParser
   private var indexerConfiguration           = IndexerConfiguration(0, 0)
+  private var allowPrivateOverride           = false
 
   def isAutoFlushEnabled: Boolean = {
     autoFlush
@@ -130,4 +131,15 @@ object ServerOps {
     indexerConfiguration = config
     old
   }
+
+  def isPrivateOverrideAllowed: Boolean = {
+    allowPrivateOverride
+  }
+
+  def setAllowPrivateOverride(enable: Boolean): Boolean = {
+    val current = allowPrivateOverride
+    allowPrivateOverride = enable
+    current
+  }
+
 }

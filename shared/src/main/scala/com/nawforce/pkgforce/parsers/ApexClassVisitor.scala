@@ -23,14 +23,14 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
 class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
-  private val ownerNatureStack = mutable.Stack[MethodOwnerNature]()
+  private val parentStack = mutable.Stack[MethodOwnerInfo]()
 
-  def typeWrap[T](ownerNature: MethodOwnerNature)(op: => T): T = {
-    ownerNatureStack.push(ownerNature)
+  private def wrapParentStack[T](ownerInfo: MethodOwnerInfo)(op: => T): T = {
+    parentStack.push(ownerInfo)
     try {
       op
     } finally {
-      ownerNatureStack.pop()
+      parentStack.pop()
     }
   }
 
@@ -38,7 +38,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
     ctx: ClassDeclarationContext,
     visitChildren: VisitChildren
   ): ArraySeq[ApexNode] = {
-    val isOuter         = ownerNatureStack.isEmpty
+    val isOuter         = parentStack.isEmpty
     val modifierContext = getModifierContext(parentContext(ctx))
     val classModifiers =
       ApexModifiers.classModifiers(parser, modifierContext.modifiers, isOuter, ctx.id())
@@ -48,7 +48,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
         ExtendsType(Name(CodeParser.getText(typeRef)), parser.getPathLocation(typeRef).location)
       )
 
-    typeWrap(classModifiers.methodOwnerNature) {
+    wrapParentStack(ClassOwnerInfo(classModifiers.modifiers, extendsType.nonEmpty)) {
       ArraySeq(
         new ApexLightNode(
           parser.getPathLocation(parentContext(ctx)),
@@ -91,9 +91,9 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
     ctx: InterfaceDeclarationContext,
     visitChildren: VisitChildren
   ): ArraySeq[ApexNode] = {
-    val isOuter = ownerNatureStack.isEmpty
+    val isOuter = parentStack.isEmpty
 
-    typeWrap(INTERFACE_METHOD_NATURE) {
+    wrapParentStack(InterfaceOwnerInfo) {
       val modifierContext = getModifierContext(parentContext(ctx))
       val modifiers =
         ApexModifiers.interfaceModifiers(parser, modifierContext.modifiers, isOuter, ctx.id())
@@ -118,9 +118,9 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
     ctx: EnumDeclarationContext,
     visitChildren: VisitChildren
   ): ArraySeq[ApexNode] = {
-    val isOuter = ownerNatureStack.isEmpty
+    val isOuter = parentStack.isEmpty
 
-    typeWrap(ENUM_METHOD_NATURE) {
+    wrapParentStack(EnumOwnerInfo) {
       val modifierContext = getModifierContext(parentContext(ctx))
       val modifiers =
         ApexModifiers.enumModifiers(parser, modifierContext.modifiers, isOuter, ctx.id())
@@ -170,8 +170,8 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
       parser,
       modifierContext.modifiers,
       ctx.id(),
-      ownerNatureStack.head,
-      ownerNatureStack.size == 1
+      parentStack.head.asInstanceOf[ClassOwnerInfo],
+      parentStack.size == 1
     )
     ArraySeq(
       ApexMethodNode(
@@ -195,8 +195,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
       MethodModifiers.interfaceMethodModifiers(
         parser,
         ArraySeq.from(CodeParser.toScala(ctx.modifier())),
-        ctx.id(),
-        ownerNatureStack.size == 1
+        ctx.id()
       )
 
     ArraySeq(
@@ -249,7 +248,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
     val modifiers = FieldModifiers.fieldModifiers(
       parser,
       modifierContext.modifiers,
-      ownerNatureStack.size == 1,
+      parentStack.size == 1,
       variableDeclarators.head.id()
     )
     if (variableDeclarators.size == 1) {
@@ -297,7 +296,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
       FieldModifiers.fieldModifiers(
         parser,
         modifierContext.modifiers,
-        ownerNatureStack.size == 1,
+        parentStack.size == 1,
         ctx.id()
       )
     val fieldType = CodeParser.getText(ctx.typeRef())
@@ -347,7 +346,7 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
     ctx.parent.asInstanceOf[T]
   }
 
-  case class ModifierContextDetails(
+  private case class ModifierContextDetails(
     enclosing: ParserRuleContext,
     modifiers: ArraySeq[ModifierContext]
   )

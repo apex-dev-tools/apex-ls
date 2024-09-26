@@ -82,7 +82,7 @@ object ClassBodyDeclaration {
     parser: CodeParser,
     thisType: ThisType,
     typeContext: RelativeTypeContext,
-    methodOwnerNature: MethodOwnerNature,
+    classOwnerInfo: ClassOwnerInfo,
     isOuter: Boolean,
     modifiers: ArraySeq[ModifierContext],
     memberDeclarationContext: MemberDeclarationContext
@@ -98,7 +98,7 @@ object ClassBodyDeclaration {
               thisType,
               typeContext,
               MethodModifiers
-                .classMethodModifiers(parser, modifiers, x.id(), methodOwnerNature, isOuter),
+                .classMethodModifiers(parser, modifiers, x.id(), classOwnerInfo, isOuter),
               x
             )
           )
@@ -268,7 +268,7 @@ class ApexMethodDeclaration(
     }
 
     returnTypeName.dependOn(id.location, context)
-    id.validate(context, isMethod = true)
+    id.validateForMethod(context)
     parameters.foreach(_.verify(context))
 
     val blockContext =
