@@ -20,6 +20,7 @@ import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
 import com.nawforce.pkgforce.names._
+import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
 import io.github.apexdevtools.apexparser.ApexParser._
 
@@ -27,6 +28,12 @@ import scala.collection.immutable.ArraySeq
 
 /** New expression type name, similar to a typeRef */
 final case class CreatedName(idPairs: List[IdCreatedNamePair]) extends CST {
+  def typeNameLocation: Location = Location(
+    location.location.startLine,
+    location.location.startPosition,
+    location.location.endLine,
+    location.location.startPosition + typeName.name.value.length
+  )
 
   lazy val typeName: TypeName = idPairs.tail.map(_.typeName).foldLeft(idPairs.head.typeName) {
     (acc: TypeName, typeName: TypeName) =>
@@ -55,10 +62,13 @@ object CreatedName {
 final case class IdCreatedNamePair(id: Id, types: ArraySeq[TypeName]) extends CST {
   val typeName: TypeName = {
     val encName = EncodedName(id.name)
-    if (encName.ext.nonEmpty)
-      TypeName(encName.fullName, types, Some(TypeNames.Schema)).intern
-    else
-      TypeName(encName.fullName, types, None).intern
+    if (encName.ext.nonEmpty) {
+      if (types.isEmpty) TypeName(encName.fullName, types, Some(TypeNames.Schema)).intern
+      else TypeName(encName.fullName, types, Some(TypeNames.Schema))
+    } else {
+      if (types.isEmpty) TypeName(encName.fullName, types, None).intern
+      else TypeName(encName.fullName, types, None)
+    }
   }
 }
 
