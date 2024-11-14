@@ -196,7 +196,6 @@ object WhenValue {
         )
       } else {
         WhenSObjectValue(TypeReference.construct(value.typeRef()), Id.construct(value.id()))
-          .withContext(value)
       })
   }
 }
