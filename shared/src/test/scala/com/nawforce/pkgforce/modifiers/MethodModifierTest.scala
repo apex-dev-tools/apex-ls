@@ -57,7 +57,7 @@ class MethodModifierTest extends AnyFunSuite {
     legalInterfaceMethodAccess(use, use)
   }
 
-  def illegalInterfaceMethodAccess(use: Array[Modifier]): ArraySeq[Issue] = {
+  def illegalInterfaceMethodAccess(use: ArraySeq[Modifier]): ArraySeq[Issue] = {
     val modifiers = use.map(_.name).mkString(" ")
     val path      = Path("Dummy.cls")
     val cp     = CodeParser(path, SourceData(s"public interface Dummy {$modifiers String func();}"))
@@ -71,12 +71,52 @@ class MethodModifierTest extends AnyFunSuite {
     }
   }
 
+  def illegalClassMethodAccess(
+    use: ArraySeq[Modifier],
+    classUse: ArraySeq[Modifier] = ArraySeq(PUBLIC_MODIFIER)
+  ): ArraySeq[Issue] = {
+    val modifiers      = use.map(_.name).mkString(" ")
+    val classModifiers = classUse.map(_.name).mkString(" ")
+    val path           = Path("Dummy.cls")
+    val cp =
+      CodeParser(path, SourceData(s"$classModifiers class Dummy {$modifiers String func() {}}"))
+    val result = cp.parseClass()
+    if (result.issues.nonEmpty) {
+      ArraySeq()
+    } else {
+      val root  = ApexNode(cp, result.value).get
+      val field = root.children.head
+      field.parseIssues
+    }
+  }
+
+  def legalClassMethodAccess(
+    use: ArraySeq[Modifier],
+    expected: ArraySeq[Modifier],
+    classUse: ArraySeq[Modifier] = ArraySeq(PUBLIC_MODIFIER)
+  ): Boolean = {
+    val modifiers      = use.map(_.name).mkString(" ")
+    val classModifiers = classUse.map(_.name).mkString(" ")
+    val path           = Path("Dummy.cls")
+    val cp =
+      CodeParser(path, SourceData(s"$classModifiers class Dummy {$modifiers String func() {}}"))
+    val result = cp.parseClass()
+    if (result.issues.nonEmpty) {
+      false
+    } else {
+      val root  = ApexNode(cp, result.value).get
+      val field = root.children.head
+      field.parseIssues.isEmpty &&
+      (field.modifiers == expected)
+    }
+  }
+
   test("Interface method no modifiers is virtual, public") {
     assert(legalInterfaceMethodAccess(ArraySeq(), ArraySeq(VIRTUAL_MODIFIER, PUBLIC_MODIFIER)))
   }
 
   test("Interface method public modifier") {
-    val issues = illegalInterfaceMethodAccess(Array(PUBLIC_MODIFIER))
+    val issues = illegalInterfaceMethodAccess(ArraySeq(PUBLIC_MODIFIER))
     assert(
       issues == Seq[Issue](
         Issue(
@@ -92,7 +132,7 @@ class MethodModifierTest extends AnyFunSuite {
   }
 
   test("Interface method virtual modifier") {
-    val issues = illegalInterfaceMethodAccess(Array(VIRTUAL_MODIFIER))
+    val issues = illegalInterfaceMethodAccess(ArraySeq(VIRTUAL_MODIFIER))
     assert(
       issues == Seq[Issue](
         Issue(
@@ -108,7 +148,7 @@ class MethodModifierTest extends AnyFunSuite {
   }
 
   test("Interface method isTest annotation") {
-    val issues = illegalInterfaceMethodAccess(Array(ISTEST_ANNOTATION))
+    val issues = illegalInterfaceMethodAccess(ArraySeq(ISTEST_ANNOTATION))
     assert(
       issues == Seq[Issue](
         Issue(
@@ -122,4 +162,172 @@ class MethodModifierTest extends AnyFunSuite {
       )
     )
   }
+
+  test("Class method public web service") {
+    val issues = illegalClassMethodAccess(ArraySeq(PUBLIC_MODIFIER, WEBSERVICE_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(ERROR_CATEGORY, Location(1, 45, 1, 49), "Webservice methods must be global")
+        )
+      )
+    )
+  }
+
+  test("Class method default web service is global") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(WEBSERVICE_MODIFIER),
+        ArraySeq(GLOBAL_MODIFIER, WEBSERVICE_MODIFIER)
+      )
+    )
+  }
+
+  test("Class method global web service is global") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(GLOBAL_MODIFIER, WEBSERVICE_MODIFIER),
+        ArraySeq(GLOBAL_MODIFIER, WEBSERVICE_MODIFIER)
+      )
+    )
+  }
+
+  test("Class method virtual/abstract are exclusive") {
+    val issues = illegalClassMethodAccess(ArraySeq(ABSTRACT_MODIFIER, VIRTUAL_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(ERROR_CATEGORY, Location(1, 44, 1, 48), "Abstract methods are virtual methods")
+        )
+      )
+    )
+  }
+
+  test("Class method abstract on non-abstract class") {
+    val issues = illegalClassMethodAccess(ArraySeq(ABSTRACT_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 36, 1, 40),
+            "Abstract methods can only be declared on abstract classes"
+          )
+        )
+      )
+    )
+  }
+
+  test("Class method abstract on abstract class") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(PUBLIC_MODIFIER, ABSTRACT_MODIFIER),
+        ArraySeq(PUBLIC_MODIFIER, ABSTRACT_MODIFIER),
+        ArraySeq(ABSTRACT_MODIFIER)
+      )
+    )
+  }
+
+  test("Class method non-global abstract on global abstract class") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(PUBLIC_MODIFIER, ABSTRACT_MODIFIER),
+      ArraySeq(ABSTRACT_MODIFIER, GLOBAL_MODIFIER)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 52, 1, 56),
+            "Abstract methods must be global in global abstract classes"
+          )
+        )
+      )
+    )
+  }
+
+  test("Class method global abstract on global abstract class") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(GLOBAL_MODIFIER, ABSTRACT_MODIFIER),
+        ArraySeq(GLOBAL_MODIFIER, ABSTRACT_MODIFIER),
+        ArraySeq(GLOBAL_MODIFIER, ABSTRACT_MODIFIER)
+      )
+    )
+  }
+
+  test("Class method private abstract") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(PRIVATE_MODIFIER, ABSTRACT_MODIFIER),
+      ArraySeq(ABSTRACT_MODIFIER)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 46, 1, 50),
+            "Private method overrides have inconsistent behaviour, use global, public or protected"
+          )
+        )
+      )
+    )
+  }
+
+  test("Class method implicit private abstract") {
+    val issues = illegalClassMethodAccess(ArraySeq(ABSTRACT_MODIFIER), ArraySeq(ABSTRACT_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 38, 1, 42),
+            "Private method overrides have inconsistent behaviour, use global, public or protected"
+          )
+        )
+      )
+    )
+  }
+
+  test("Class method private virtual") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(PRIVATE_MODIFIER, VIRTUAL_MODIFIER),
+      ArraySeq(VIRTUAL_MODIFIER)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 44, 1, 48),
+            "Private method overrides have inconsistent behaviour, use global, public or protected"
+          )
+        )
+      )
+    )
+  }
+
+  test("Class method implicit private virtual") {
+    val issues = illegalClassMethodAccess(ArraySeq(VIRTUAL_MODIFIER), ArraySeq(VIRTUAL_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 36, 1, 40),
+            "Private method overrides have inconsistent behaviour, use global, public or protected"
+          )
+        )
+      )
+    )
+  }
+
 }
