@@ -122,13 +122,13 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Enum switch with id id") {
+  test("Enum switch with typeRef id") {
     typeDeclaration(
       "public class Dummy {{ApexPages.Severity a;switch on a {when Account record {}}}}"
     )
     assert(
       dummyIssues ==
-        "Error: line 1 at 60-67: Expecting an enum constant value\n"
+        "Error: line 1 at 68-74: Expecting an enum constant value\n"
     )
   }
 
@@ -193,11 +193,11 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("String switch with id id") {
+  test("String switch with typeRef id") {
     typeDeclaration("public class Dummy {{switch on 'A' {when Account record {}}}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 41-48: A System.String literal is required for this value\n"
+        "Error: line 1 at 49-55: A System.String literal is required for this value\n"
     )
   }
 
@@ -257,11 +257,11 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Integer switch with id id") {
+  test("Integer switch with typeRef id") {
     typeDeclaration("public class Dummy {{switch on 1 {when Account record {}}}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 39-46: A System.Integer literal is required for this value\n"
+        "Error: line 1 at 47-53: A System.Integer literal is required for this value\n"
     )
   }
 
@@ -339,11 +339,11 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Long switch with id id") {
+  test("Long switch with typeRef id") {
     typeDeclaration("public class Dummy {{switch on 1l {when Account record {}}}}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 40-47: A System.Long literal is required for this value\n"
+        "Error: line 1 at 48-54: A System.Long literal is required for this value\n"
     )
   }
 
@@ -391,7 +391,7 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {{SObject a; switch on a {when Foo r {} }}}")
     assert(
       dummyIssues ==
-        "Missing: line 1 at 54-55: No type declaration found for 'Schema.Foo'\n"
+        "Missing: line 1 at 54-55: No type declaration found for 'Foo'\n"
     )
   }
 

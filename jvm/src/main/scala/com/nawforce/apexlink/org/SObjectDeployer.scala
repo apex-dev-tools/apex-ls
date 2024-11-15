@@ -688,6 +688,7 @@ object SObjectDeployer {
   private val standardPlatformEventFields: ArraySeq[FieldDeclaration] = {
     ArraySeq(
       CustomFieldDeclaration(Names.ReplayId, TypeNames.String, None),
+      CustomFieldDeclaration(Names.EventUuid, TypeNames.String, None),
       CustomFieldDeclaration(XNames.CreatedBy, TypeNames.User, None),
       CustomFieldDeclaration(XNames.CreatedById, TypeNames.IdType, None),
       CustomFieldDeclaration(XNames.CreatedDate, TypeNames.Datetime, None)

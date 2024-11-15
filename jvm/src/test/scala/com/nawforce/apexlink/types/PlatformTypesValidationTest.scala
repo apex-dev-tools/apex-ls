@@ -42,7 +42,7 @@ class PlatformTypesValidationTest extends AnyFunSuite with TestHelper {
   )
 
   test("Right number of types (should exclude inners)") {
-    assert(PlatformTypeDeclaration.classNames.size == 4767)
+    assert(PlatformTypeDeclaration.classNames.size == 5254)
   }
 
   test("SObject type is visible") {

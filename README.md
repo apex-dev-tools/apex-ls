@@ -101,6 +101,10 @@ Releases are automated via workflow on publishing a release. Create a `v` prefix
 
 Snapshot releases can also be created at any time by executing the `Publish` workflow on a branch. The versioning will be in the format `X.X.X+Y-yyyy-SNAPSHOT`; the latest tag followed by recent commit info.
 
+### Updating To New API Version
+
+See [doc page](doc/API_Updates.md).
+
 ## License
 
 The source code forked from [apex-link](https://github.com/nawforce/apex-link) & [pkgforce](https://github.com/nawforce/pkgforce) uses a 3-clause BSD licence. Additional contributions:

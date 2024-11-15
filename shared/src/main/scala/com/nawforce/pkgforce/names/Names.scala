@@ -127,6 +127,7 @@ object Names extends CleanableCache {
   lazy val User: Name                    = cache("User")
   lazy val UserRecordAccess: Name        = cache("UserRecordAccess")
   lazy val ReplayId: Name                = cache("ReplayId")
+  lazy val EventUuid: Name               = cache("EventUuid")
   lazy val Fields: Name                  = cache("Fields")
   lazy val FieldSets: Name               = cache("FieldSets")
   lazy val GetSObjectType: Name          = cache("GetSObjectType")
