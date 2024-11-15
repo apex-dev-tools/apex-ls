@@ -1430,10 +1430,6 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Missing: line 155 at 15-50: No type declaration found for 'Cache.Session.SessionCacheException'",
     ],
     [
-      "nebula-logger/core/main/log-management/classes/LogEntryEventHandler.cls",
-      "Missing: line 276 at 23-46: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-    ],
-    [
       "nebula-logger/core/main/log-management/classes/LogEntryHandler.cls",
       "Missing: line 172 at 43-78: Unknown field 'TriggerObjectOrEvent' on SObject 'Schema.FlowDefinitionView'",
     ],
@@ -1457,17 +1453,6 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Warning: line 568 at 21-30: 'exception' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
       "Warning: line 581 at 21-30: 'exception' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
       "Warning: line 594 at 21-30: 'exception' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
-    ],
-    [
-      "nebula-logger/core/tests/log-management/classes/LogEntryEventHandler_Tests.cls",
-      "Missing: line 1283 at 93-126: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 499 at 93-126: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 500 at 25-48: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 523 at 28-59: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 528 at 85-116: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 540 at 67-98: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 807 at 28-51: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 844 at 28-51: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
     ],
     [
       "nebula-logger/core/tests/logger-engine/classes/LoggerDataStore_Tests.cls",
@@ -1494,24 +1479,12 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Error: line 1: Components of type 'Schema.LogEntryEvent__e' are defined, but the required object-meta.xml file is missing",
     ],
     [
-      "nebula-logger/extra-tests/tests/LogEntryEventHandler_Tests_FieldMappings.cls",
-      "Missing: line 90 at 93-126: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-    ],
-    [
       "nebula-logger/extra-tests/tests/LogEntryHandler_Tests_Flow.cls",
       "Missing: line 77 at 27-66: Unknown field 'TriggerObjectOrEvent' on SObject 'Schema.FlowDefinitionView'",
     ],
     [
       "nebula-logger/plugins/big-object-archiving/plugin/classes/LogEntryArchiveBuilder.cls",
       "Missing: line 318 at 34-71: Unknown field 'SObjectType' on SObject 'Schema.LogEntryArchive__b'",
-      "Missing: line 61 at 21-49: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-    ],
-    [
-      "nebula-logger/plugins/big-object-archiving/plugin/classes/LogEntryArchiveBuilder_Tests.cls",
-      "Missing: line 119 at 27-46: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 15 at 85-118: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 31 at 85-118: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
-      "Missing: line 46 at 85-118: Unknown field 'EventUuid' on SObject 'Schema.LogEntryEvent__e'",
     ],
     [
       "nebula-logger/plugins/log-retention-rules/plugin/classes/LogRetentionFilter.cls",
@@ -1853,11 +1826,6 @@ exports[`Check samples Sample: apex-recipes 1`] = `
       "force-app/main/default/classes/Platform Cache Recipes/PlatformCacheRecipes.cls",
       "Error: line 154 at 16-69: Incompatible return type, 'cache.SessionPartition' is not assignable to 'cache.Partition'",
       "Error: line 157 at 16-65: Incompatible return type, 'cache.OrgPartition' is not assignable to 'cache.Partition'",
-    ],
-    [
-      "force-app/main/default/classes/Platform Event Recipes/PlatformEventRecipes.cls",
-      "Missing: line 54 at 12-27: Unknown field 'EventUuid' on SObject 'Schema.Event_Recipes_Demo__e'",
-      "Missing: line 61 at 16-31: Unknown field 'EventUuid' on SObject 'Schema.Event_Recipes_Demo__e'",
     ],
     [
       "force-app/tests/DataWeaveInApex Recipes/BasicDataWeaveInApexRecipes_Tests.cls",

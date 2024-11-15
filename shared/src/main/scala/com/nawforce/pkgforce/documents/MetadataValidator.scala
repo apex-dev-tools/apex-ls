@@ -211,7 +211,7 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped
     if (!isSObject && controllingDocs.isEmpty) {
       logger.log(
         Issue(
-          documents.head,
+          documents.minBy(_.toString), // order not guaranteed, first alphabetically
           Diagnostic(
             ERROR_CATEGORY,
             Location.empty,
