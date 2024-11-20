@@ -306,7 +306,7 @@ object MethodMap {
     val sameFileSuperclassPrivateMethods = findSameFileSuperclassPrivateMethods(td)
     workingMap.foreach(keyAndMethodGroup => {
       val methods = keyAndMethodGroup._2.filterNot(method => {
-        method.visibility == PRIVATE_MODIFIER && !method.isAbstract &&
+        method.visibility.getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER && !method.isAbstract &&
         !(method.isTestVisible || isApexLocalMethod(td, method) || sameFileSuperclassPrivateMethods
           .contains(method))
       })
@@ -458,7 +458,7 @@ object MethodMap {
       val superClass = td.superClassDeclaration
       if (superClass.nonEmpty && superClass.get.paths == td.paths) {
         return superClass.get.methods.filter(method =>
-          method.visibility == PRIVATE_MODIFIER && !method.isStatic
+          method.visibility.getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER && !method.isStatic
         )
       }
     }
@@ -621,10 +621,14 @@ object MethodMap {
         !matchedMethod.hasBlock && !matchedMethod.modifiers.contains(ABSTRACT_MODIFIER)
 
       lazy val reallyPrivateMethod =
-        matchedMethod.visibility == PRIVATE_MODIFIER && !areInSameApexFile(method, matchedMethod)
+        matchedMethod.visibility.getOrElse(
+          PRIVATE_MODIFIER
+        ) == PRIVATE_MODIFIER && !areInSameApexFile(method, matchedMethod)
 
       lazy val areBothPrivate =
-        matchedMethod.visibility == PRIVATE_MODIFIER && method.visibility == PRIVATE_MODIFIER
+        matchedMethod.visibility.getOrElse(
+          PRIVATE_MODIFIER
+        ) == PRIVATE_MODIFIER && method.visibility.getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER
 
       lazy val hasNonPrivateSameVisibilityModifier =
         !areBothPrivate && matchedMethod.visibility == method.visibility
@@ -672,16 +676,15 @@ object MethodMap {
         !isInterfaceMethod && !isSpecial && !isTest && !isPlatformMethod
       ) {
         setMethodError(method, s"Method '${method.name}' must use override keyword", errors)
-      } else if (
-        method.visibility.methodOrder < matchedMethod.visibility.methodOrder && !isSpecial
-      ) {
+      } else if (isVisibilityReduced(method.visibility, matchedMethod.visibility) && !isSpecial) {
         setMethodError(
           method,
           s"Method '${method.name}' can not reduce visibility in override",
           errors
         )
       } else if (
-        method.isOverride && matchedMethod.isVirtualOrAbstract && matchedMethod.visibility == PRIVATE_MODIFIER
+        method.isOverride && matchedMethod.isVirtualOrAbstract && matchedMethod.visibility
+          .getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER
       ) {
         // Some escapes from this being bad, don't ask why, know one knows :-(
         if (
@@ -727,6 +730,15 @@ object MethodMap {
       case None          => workingMap.put(key, method :: methods)
       case Some(matched) => workingMap.put(key, method :: methods.filterNot(_ eq matched))
     }
+  }
+
+  private def isVisibilityReduced(
+    baseVisibility: Option[Modifier],
+    superVisibility: Option[Modifier]
+  ): Boolean = {
+    baseVisibility.getOrElse(PRIVATE_MODIFIER).methodOrder < superVisibility
+      .getOrElse(PRIVATE_MODIFIER)
+      .methodOrder
   }
 
   private def areSameReturnType(matchedTypeName: TypeName, methodTypeName: TypeName): Boolean = {
@@ -849,7 +861,7 @@ object MethodMap {
   }
 
   private def isPublicOrGlobal(method: MethodDeclaration): Boolean = {
-    method.visibility == PUBLIC_MODIFIER || method.visibility == GLOBAL_MODIFIER
+    method.visibility.contains(PUBLIC_MODIFIER) || method.visibility.contains(GLOBAL_MODIFIER)
   }
 
   private def hasGhostedMethods(module: OPM.Module, methods: List[MethodDeclaration]): Boolean = {

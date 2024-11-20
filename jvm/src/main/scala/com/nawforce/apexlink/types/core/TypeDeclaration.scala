@@ -249,8 +249,8 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
 
   def hasBlock: Boolean
 
-  def visibility: Modifier =
-    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
+  def visibility: Option[Modifier] =
+    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
 
   def signature: String = s"$typeName $nameAndParameterTypes"
 
