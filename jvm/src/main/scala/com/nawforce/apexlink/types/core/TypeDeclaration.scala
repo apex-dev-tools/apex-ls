@@ -245,12 +245,12 @@ object ConstructorDeclaration {
 trait MethodDeclaration extends DependencyHolder with Dependent with Parameters {
   val name: Name
   val modifiers: ArraySeq[Modifier]
+  lazy val visibility: Option[Modifier] =
+    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
+
   def typeName: TypeName
 
   def hasBlock: Boolean
-
-  def visibility: Option[Modifier] =
-    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
 
   def signature: String = s"$typeName $nameAndParameterTypes"
 
@@ -334,6 +334,16 @@ object MethodDeclaration {
       HTTP_POST_ANNOTATION,
       HTTP_PUT_ANNOTATION
     )
+}
+
+/** Method wrapper that enforces an Any return type on the provided method */
+class AnyReturnMethodDeclaration(method: MethodDeclaration) extends MethodDeclaration {
+  override val name: Name                                 = method.name
+  override val modifiers: ArraySeq[Modifier]              = method.modifiers
+  override val parameters: ArraySeq[ParameterDeclaration] = method.parameters
+
+  override def typeName: TypeName = TypeName.Any
+  override def hasBlock: Boolean  = method.hasBlock
 }
 
 trait AbstractTypeDeclaration {
