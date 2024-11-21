@@ -155,36 +155,31 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
   }
 }
 
-final case class WhenIdsValue(ids: Seq[Id]) extends WhenValue {
-  override def checkMatchableTo(context: BlockVerifyContext, typeName: TypeName): Seq[String] = {
-    context.logError(ids.head.location, s"A $typeName literal is required for this value")
+final case class WhenSObjectValue(typeName: TypeName, id: Id) extends WhenValue {
+  def checkMatchableTo(context: BlockVerifyContext, typeName: TypeName): Seq[String] = {
+    context.logError(id.location, s"A $typeName literal is required for this value")
     Seq()
   }
 
-  override def checkIsSObject(context: BlockVerifyContext): Seq[String] = {
-    // Check can be deferred to verify()
-    Seq(ids.head.name.value.toLowerCase())
+  def checkIsSObject(context: BlockVerifyContext): Seq[String] = {
+    context.getTypeFor(typeName, context.thisType) match {
+      case Right(td) if td.isSObject => Seq(typeName.name.value.toLowerCase())
+      case Right(_) =>
+        context.logError(id.location, "An SObject type is required for this value")
+        Seq()
+      case Left(_) =>
+        // defer to verify for missing type
+        Seq()
+    }
   }
 
-  override def checkEnumValue(
-    context: BlockVerifyContext,
-    typeDeclaration: TypeDeclaration
-  ): Seq[String] = {
-    ids.headOption.foreach(head => {
-      context.logError(head.location, "Expecting an enum constant value")
-    })
+  def checkEnumValue(context: BlockVerifyContext, typeDeclaration: TypeDeclaration): Seq[String] = {
+    context.logError(id.location, "Expecting an enum constant value")
     Seq()
   }
 
   override def verify(context: BlockVerifyContext): Unit = {
-    if (ids.size > 1) {
-      context.addVar(
-        ids(1).name,
-        ids(1),
-        isReadOnly = false,
-        TypeName(ids.head.name, Nil, Some(TypeNames.Schema))
-      )
-    }
+    context.addVar(id.name, id, isReadOnly = false, typeName)
   }
 }
 
@@ -200,11 +195,7 @@ object WhenValue {
             .flatMap(l => WhenLiteral.construct(l))
         )
       } else {
-        WhenIdsValue(
-          CodeParser
-            .toScala(value.id())
-            .map(id => Id.construct(id).withContext(id))
-        )
+        WhenSObjectValue(TypeReference.construct(value.typeRef()), Id.construct(value.id()))
       })
   }
 }

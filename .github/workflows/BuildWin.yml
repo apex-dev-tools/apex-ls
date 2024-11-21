@@ -8,24 +8,24 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - run: git config --global core.autocrlf false
+      - run: git config --global core.autocrlf false
 
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: 8
-        cache: 'sbt'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: 8
+          cache: "sbt"
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 16
-        cache: 'npm'
-        cache-dependency-path: js/npm/package-lock.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: js/npm/package-lock.json
 
-    - name: Build
-      run: sbt build
+      - name: Build
+        run: sbt build
 
-    - name: Test
-      run: sbt test
+      - name: Test
+        run: sbt test

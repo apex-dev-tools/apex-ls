@@ -100,12 +100,11 @@ class SOQLParserTest extends AnyFunSuite with Matchers {
   }
 
   test("Nested sub-query") {
-    SOQLParser.parse(
-      "Select A, (Select (Select C from Table3) from Table2) from Table1"
-    ) should matchPattern {
-      case Left(Seq(SOQLParser.ParserIssue(1, 18, err)))
-          if err.startsWith("extraneous input '(' expecting {") =>
-    }
+    assert(
+      SOQLParser
+        .parse("Select A, (Select (Select C from Table3) from Table2) from Table1")
+        .isRight
+    )
   }
 
   test("Simple typeof") {
@@ -221,6 +220,10 @@ class SOQLParserTest extends AnyFunSuite with Matchers {
 
   test("Multiple For") {
     assert(SOQLParser.parse("Select A from Table For Update For Reference").isRight)
+  }
+
+  test("Grouping function") {
+    assert(SOQLParser.parse("Select A, B, GROUPING(B) BG from Table GROUP BY BG").isRight)
   }
 }
 
