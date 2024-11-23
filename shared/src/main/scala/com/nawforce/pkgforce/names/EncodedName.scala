@@ -18,11 +18,11 @@ package com.nawforce.pkgforce.names
   * This class is safe to use on non-encoded names which don't contain \_\_, although you can not
   * default the namespace on them.
   *
-  * Where all of namespace, name and suffix are provided the code will assert on a bad suffix. Where
+  * Where namespace, name and suffix are provided the code will assert on a bad suffix. Where
   * we only have two parts of the name then if the last parts is not a valid suffix the handling
   * will assume the first part is a namespace and the second the name, as in Page.pkg1\_\_TestPage.
   *
-  * The code deals with a few exception cases where splitting on \_\_ would gives either a wrong
+  * The code deals with a few exception cases where splitting on \_\_ would give either a wrong
   * name or ext part. For subfields the subfield name is combined with the extension. For supporting
   * SObjects such as MyObject\_\_Feed the 'Feed' is considered an extension in the same way that 'c'
   * would be.
@@ -50,8 +50,6 @@ final case class EncodedName(name: Name, ext: Option[Name], namespace: Option[Na
 
 object EncodedName {
   private final val extensions = Set("c", "r", "e", "b", "mdt", "share", "history", "feed")
-
-  private final val underscoreSplit = "__".r
 
   def apply(name: Name): EncodedName = {
     apply(name.value)
