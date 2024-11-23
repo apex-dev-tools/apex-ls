@@ -74,24 +74,36 @@ object EncodedName {
           EncodedName(Name(parts.head), Some(Name(parts(1))), None)
         else
           EncodedName(Name(parts(1)), None, Some(Name(parts.head)))
-      case 1 => EncodedName(Name(parts.head), None, None)
+      case 0 => EncodedName(Name(name), None, None)
     }
   }
 
+  /** Split a name around leading and trailing pair of underscore separators, e.g. 'ns&#95;&#95;Custom&#95;&#95;c' =>
+    * Seq("ns", "Custom", "c"). Subfields are returned in last segment, e.g. Field&#95;&#95;Subfield&#95;&#95;s =>
+    * Seq("Field", "Subfield&#95;&#95;s")
+    * @return Empty Seq when no separators found or Seq of length 2-3.
+    */
   private def nameSplit(name: String): Seq[String] = {
-    var parts = underscoreSplit.split(name)
+    val headSplit = name.indexOf("__", 0)
+    if (headSplit < 1 || headSplit + 2 == name.length)
+      return Seq.empty
 
-    // Collapse subfield name into the ext
-    if (parts.length > 1 && parts.last.equalsIgnoreCase("s"))
-      parts = parts.take(parts.length - 2) :+ parts.takeRight(2).mkString("__")
+    var tailSplit = 0
+    if (name.endsWith("__s") && name.length >= 4) {
+      tailSplit = name.lastIndexOf("__", name.length() - 4)
+      if (tailSplit == -1)
+        return Seq.empty
+    } else {
+      tailSplit = name.lastIndexOf("__", name.length() - 2)
+    }
 
-    if (parts.exists(_.isEmpty))
-      Seq(name)
-    else if (parts.length > 2)
-      Seq(parts.head, parts.tail.take(parts.length - 2).mkString("__"), parts.last)
-    else if (parts.length == 2)
-      Seq(parts.head, parts.last)
+    if (tailSplit == -1 || tailSplit <= headSplit)
+      Seq(name.substring(0, headSplit), name.substring(headSplit + 2))
     else
-      Seq(name)
+      Seq(
+        name.substring(0, headSplit),
+        name.substring(headSplit + 2, tailSplit),
+        name.substring(tailSplit + 2)
+      )
   }
 }

@@ -15,7 +15,7 @@ package com.nawforce.pkgforce.names
 
 import upickle.default.{macroRW, ReadWriter => RW}
 
-/** Case insensitive string for symbol names.
+/** Case-insensitive string for symbol names.
   *
   * The value of the Name is stored as is but equality and hashing are performed against a
   * normalised lower case value.
@@ -23,7 +23,7 @@ import upickle.default.{macroRW, ReadWriter => RW}
 @upickle.implicits.key("Name")
 final case class Name(value: String) {
 
-  override val hashCode: Int = value.toLowerCase.hashCode
+  override lazy val hashCode: Int = value.toLowerCase.hashCode
 
   def canEqual(that: Any): Boolean = that.isInstanceOf[Name]
 
