@@ -74,8 +74,9 @@ object XNames {
   val Set$ : Name                = XNames("Set")
   val Map$ : Name                = XNames("Map")
   val Iterator: Name             = XNames("Iterator")
-  val Batchable: Name            = XNames("Batchable")
   val Equals: Name               = XNames("equals")
+  val Hashcode: Name             = XNames("hashcode")
+  val Tostring: Name             = XNames("tostring")
   val Start: Name                = XNames("start")
   val QueryLocator: Name         = XNames("QueryLocator")
 

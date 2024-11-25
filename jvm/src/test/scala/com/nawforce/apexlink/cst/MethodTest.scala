@@ -281,10 +281,14 @@ class MethodTest extends AnyFunSuite with TestHelper {
       FileSystemHelper.run(
         Map(
           "Base.cls" -> "public virtual class Base { Base getInstance() {return null;} }",
-          "Dummy.cls" -> "public class Dummy extends Base { Dummy getInstance() {return null;} { this.getInstance();} }"
+          "Extend.cls" -> "public class Extend extends Base { Extend getInstance() {return null;} { this.getInstance();} }"
         )
       ) { root: PathLike =>
-        createHappyOrg(root)
+        createOrg(root)
+        assert(
+          getMessages(root.join("Extend.cls")) ==
+            "Error: line 1 at 42-53: Method 'getInstance' has wrong return type to override, should be 'Base'\n"
+        )
       }
     }
   }
@@ -369,7 +373,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
       assert(
         getMessages(
           root.join("Extend.cls")
-        ) == "Error: line 1 at 47-49: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+        ) == "Error: line 1 at 47-49: Method 'fn' must use the 'override' keyword\n"
       )
     }
   }
@@ -385,7 +389,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
       assert(
         getMessages(
           root.join("Extend.cls")
-        ) == "Error: line 1 at 50-52: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+        ) == "Error: line 1 at 50-52: Method 'fn' must use the 'override' keyword\n"
       )
     }
   }
@@ -415,7 +419,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
         assert(
           getMessages(
             root.join("Dummy.cls")
-          ) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+          ) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword\n"
         )
       }
     }
@@ -431,7 +435,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
       assert(
         getMessages(
           root.join("Dummy.cls")
-        ) == "Error: line 1 at 97-99: Method 'fn' must use the 'override' keyword when implementing an abstract method\n"
+        ) == "Error: line 1 at 97-99: Method 'fn' must use the 'override' keyword\n"
       )
     }
   }

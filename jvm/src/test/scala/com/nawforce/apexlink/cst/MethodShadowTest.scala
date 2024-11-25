@@ -30,7 +30,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Dummy.cls"      -> "public class Dummy extends SuperClass { public void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { public void func() {}}"
       ),
-      "Error: line 1 at 52-56: Method 'func' can not override non-virtual method\n"
+      "Error: line 1 at 52-56: Method 'func' can not override non-virtual/non-abstract method\n"
     )
   }
 
@@ -40,7 +40,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Dummy.cls"      -> "public class Dummy extends SuperClass { public void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { public virtual void func() {}}"
       ),
-      "Error: line 1 at 52-56: Method 'func' must use override keyword\n"
+      "Error: line 1 at 52-56: Method 'func' must use the 'override' keyword\n"
     )
   }
 
