@@ -55,31 +55,27 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   }
 
   test("Override of private virtual") {
-    withAllowPrivateOverride {
-      testMethods(
-        Map(
-          "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
-          "SuperClass.cls" -> "public virtual class SuperClass { private virtual void func() {}}"
-        ),
-        "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
-      )
-    }
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "SuperClass.cls" -> "public virtual class SuperClass { private virtual void func() {}}"
+      ),
+      "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
+    )
   }
 
   test("Override of private virtual (same file bug)") {
-    withAllowPrivateOverride {
-      testMethods(
-        Map(
-          "Dummy.cls" ->
-            """public virtual class Dummy {
+    testMethods(
+      Map(
+        "Dummy.cls" ->
+          """public virtual class Dummy {
               | private virtual void func() {}
               | public class Other extends Dummy {public override void func() {} }
               |}
               |""".stripMargin
-        ),
-        ""
-      )
-    }
+      ),
+      "Warning: line 2 at 22-26: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+    )
   }
 
   test("Override of protected virtual") {
@@ -123,15 +119,13 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   }
 
   test("Override of private abstract") {
-    withAllowPrivateOverride {
-      testMethods(
-        Map(
-          "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
-          "SuperClass.cls" -> "public abstract class SuperClass { private abstract void func();}"
-        ),
-        "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
-      )
-    }
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "SuperClass.cls" -> "public abstract class SuperClass { private abstract void func();}"
+      ),
+      "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
+    )
   }
 
   test("Override of protected abstract") {

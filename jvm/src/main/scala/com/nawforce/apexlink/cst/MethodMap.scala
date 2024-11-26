@@ -608,8 +608,8 @@ object MethodMap {
 
     // Batch allows an Iterable<T> start method instead of usual QueryLocator return
     if (
-      method.typeName.isIterable && matchedMethod.signature
-        .toLowerCase() == "database.querylocator start(database.batchablecontext)" &&
+      isBatchableStartWithListOrIterable(method) &&
+      isBatchableStartWithQueryLocator(matchedMethod) &&
       td.implements(TypeName(Seq(Names.Batchable, Names.Database)), ignoreGenerics = true)
     ) {
       return Some(matchedMethod)
@@ -779,8 +779,8 @@ object MethodMap {
 
   /** Determine if two methods are considered the same without looking at the return type. For
     * 'equals' we consider them the same if they both have a single parameter even if that parameter
-    * differs. This is because defining equals in a class will hide the Object equals method if the
-    * arguments don't match.
+    * differs. This is because defining equals in a class will hide the Object equals method even when
+    * the arguments don't match.
     */
   private def areSameMethodsIgnoringReturn(
     method: MethodDeclaration,
@@ -813,7 +813,11 @@ object MethodMap {
       true
     } else if (isEqualsLike(interfaceMethod) && isEqualsLike(implMethod))
       true
-    else if (isDatabaseBatchableStart(interfaceMethod) && isDatabaseBatchableIterable(implMethod))
+    else if (
+      isBatchableStartWithQueryLocator(interfaceMethod) && isBatchableStartWithListOrIterable(
+        implMethod
+      )
+    )
       true
     else
       false
@@ -841,14 +845,14 @@ object MethodMap {
     method.parameters.length == 1
   }
 
-  private def isDatabaseBatchableStart(method: MethodDeclaration): Boolean = {
+  private def isBatchableStartWithQueryLocator(method: MethodDeclaration): Boolean = {
     method.name == XNames.Start &&
     method.typeName == TypeNames.QueryLocator &&
     !method.isStatic &&
     method.parameters.length == 1 && method.parameters.head.typeName == TypeNames.BatchableContext
   }
 
-  private def isDatabaseBatchableIterable(method: MethodDeclaration): Boolean = {
+  private def isBatchableStartWithListOrIterable(method: MethodDeclaration): Boolean = {
     method.name == XNames.Start &&
     (method.typeName.isIterable || method.typeName.isList) &&
     !method.isStatic &&

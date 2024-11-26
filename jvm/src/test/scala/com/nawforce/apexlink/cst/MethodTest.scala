@@ -168,15 +168,13 @@ class MethodTest extends AnyFunSuite with TestHelper {
   }
 
   test("Static method private override different return") {
-    withAllowPrivateOverride {
-      FileSystemHelper.run(
-        Map(
-          "Base.cls" -> "public virtual class Base { static Base getInstance() {return null;} }",
-          "Extend.cls" -> "public class Extend extends Base { static Extend getInstance() {return null;} { getInstance();} }"
-        )
-      ) { root: PathLike =>
-        createHappyOrg(root)
-      }
+    FileSystemHelper.run(
+      Map(
+        "Base.cls" -> "public virtual class Base { static Base getInstance() {return null;} }",
+        "Extend.cls" -> "public class Extend extends Base { static Extend getInstance() {return null;} { getInstance();} }"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
     }
   }
 
@@ -277,32 +275,28 @@ class MethodTest extends AnyFunSuite with TestHelper {
   }
 
   test("Instance method private none-override different return") {
-    withAllowPrivateOverride {
-      FileSystemHelper.run(
-        Map(
-          "Base.cls" -> "public virtual class Base { Base getInstance() {return null;} }",
-          "Extend.cls" -> "public class Extend extends Base { Extend getInstance() {return null;} { this.getInstance();} }"
-        )
-      ) { root: PathLike =>
-        createOrg(root)
-        assert(
-          getMessages(root.join("Extend.cls")) ==
-            "Error: line 1 at 42-53: Method 'getInstance' has wrong return type to override, should be 'Base'\n"
-        )
-      }
+    FileSystemHelper.run(
+      Map(
+        "Base.cls" -> "public virtual class Base { Base getInstance() {return null;} }",
+        "Extend.cls" -> "public class Extend extends Base { Extend getInstance() {return null;} { this.getInstance();} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(root.join("Extend.cls")) ==
+          "Error: line 1 at 42-53: Method 'getInstance' has wrong return type to override, should be 'Base'\n"
+      )
     }
   }
 
   test("Instance method private none-override same return") {
-    withAllowPrivateOverride {
-      FileSystemHelper.run(
-        Map(
-          "Base.cls" -> "public virtual class Base { void getInstance() {} }",
-          "Dummy.cls" -> "public class Dummy extends Base { void getInstance() {return;} { this.getInstance();} }"
-        )
-      ) { root: PathLike =>
-        createHappyOrg(root)
-      }
+    FileSystemHelper.run(
+      Map(
+        "Base.cls" -> "public virtual class Base { void getInstance() {} }",
+        "Dummy.cls" -> "public class Dummy extends Base { void getInstance() {return;} { this.getInstance();} }"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
     }
   }
 
@@ -337,28 +331,30 @@ class MethodTest extends AnyFunSuite with TestHelper {
   }
 
   test("private abstract method implementation") {
-    withAllowPrivateOverride {
-      FileSystemHelper.run(
-        Map(
-          "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
-          "Extend.cls" -> "public class Extend extends Base { void fn() {}}"
-        )
-      ) { root: PathLike =>
-        createHappyOrg(root)
-      }
+    FileSystemHelper.run(
+      Map(
+        "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
+        "Extend.cls" -> "public class Extend extends Base { void fn() {}}"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages() == "/Base.cls: Warning: line 1 at 43-45: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+      )
     }
   }
 
   test("public method implementing a private abstract method") {
-    withAllowPrivateOverride {
-      FileSystemHelper.run(
-        Map(
-          "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
-          "Extend.cls" -> "public class Extend extends Base { public void fn() {}}"
-        )
-      ) { root: PathLike =>
-        createHappyOrg(root)
-      }
+    FileSystemHelper.run(
+      Map(
+        "Base.cls"   -> "public abstract class Base { abstract void fn(); }",
+        "Extend.cls" -> "public class Extend extends Base { public void fn() {}}"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages() == "/Base.cls: Warning: line 1 at 43-45: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+      )
     }
   }
 
@@ -387,41 +383,39 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages(
-          root.join("Extend.cls")
-        ) == "Error: line 1 at 50-52: Method 'fn' must use the 'override' keyword\n"
+        getMessages() == "/Extend.cls: Error: line 1 at 50-52: Method 'fn' must use the 'override' keyword\n"
       )
     }
   }
 
   test("private inner abstract method implementation with no override keyword") {
-    withAllowPrivateOverride {
-      FileSystemHelper.run(
-        Map(
-          "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { void fn() {} }}"
-        )
-      ) { root: PathLike =>
-        createHappyOrg(root)
-      }
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { void fn() {} }}"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages() == "/Dummy.cls: Warning: line 1 at 44-46: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+      )
     }
   }
 
   test(
     "private inner abstract method implementation with no override keyword on public implementation"
   ) {
-    withAllowPrivateOverride {
-      FileSystemHelper.run(
-        Map(
-          "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { public void fn(){} }}"
-        )
-      ) { root: PathLike =>
-        createOrg(root)
-        assert(
-          getMessages(
-            root.join("Dummy.cls")
-          ) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword\n"
-        )
-      }
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public abstract class Dummy { abstract void fn(); class inner extends Dummy { public void fn(){} }}"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword\n" +
+          "Warning: line 1 at 44-46: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+      )
     }
   }
 
