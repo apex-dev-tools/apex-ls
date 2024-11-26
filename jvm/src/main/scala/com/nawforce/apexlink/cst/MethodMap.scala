@@ -672,16 +672,24 @@ object MethodMap {
       return Some(matchedMethod)
     }
 
-    Some(matchedMethod)
+    if (matchedMethod.visibility.contains(PRIVATE_MODIFIER)) {
+      if (baseModifier.contains(ABSTRACT_MODIFIER))
+        setMethodError(
+          method,
+          s"Overriding a private abstract method can cause a GACK, change to protected, public or global",
+          errors,
+          isWarning = true
+        )
+      else
+        setMethodError(
+          method,
+          s"Overriding a private method may not work, change to protected, public or global",
+          errors,
+          isWarning = true
+        )
+    }
 
-    /* TODO: Add warnings
-      if (baseVisibility == Visibility.EXPLICIT_PRIVATE) {
-        if (baseModifier == BaseModifier.ABSTRACT) return Outcome.OMGACK;
-        else return Outcome.SUPER_OVERRIDE_IGNORED;
-      } else {
-        return Outcome.SUPER_OVERRIDES;
-      }
-     */
+    Some(matchedMethod)
   }
 
   private def isVisibilityReduced(

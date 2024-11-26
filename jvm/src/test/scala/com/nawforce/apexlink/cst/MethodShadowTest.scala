@@ -74,7 +74,8 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
               |}
               |""".stripMargin
       ),
-      "Warning: line 2 at 22-26: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+      "Warning: line 2 at 22-26: Private method overrides have inconsistent behaviour, use global, public or protected\n" +
+        "Warning: line 3 at 56-60: Overriding a private method may not work, change to protected, public or global\n"
     )
   }
 
@@ -164,7 +165,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Dummy.cls" -> "@IsTest public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass {@TestVisible private virtual void func() {}}"
       ),
-      ""
+      "Warning: line 1 at 69-73: Overriding a private method may not work, change to protected, public or global\n"
     )
   }
 
