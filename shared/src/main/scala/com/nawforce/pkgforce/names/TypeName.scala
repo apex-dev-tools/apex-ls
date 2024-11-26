@@ -85,17 +85,12 @@ final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeN
     }
   }
 
-  def rawString: String = {
-    val sb = new StringBuffer()
-    rawString(sb)
-    sb.toString
-  }
-
   def rawStringLower: String = {
     rawString.toLowerCase()
   }
 
-  def rawString(sb: StringBuffer): Unit = {
+  private def rawString: String = {
+    val sb = new StringBuffer()
     outer.foreach(outer => {
       sb.append(outer.toString())
       sb.append('.')
@@ -110,6 +105,7 @@ final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeN
       }
       sb.append('>')
     }
+    sb.toString
   }
 
   def withOuter(newOuter: Option[TypeName]): TypeName = {
