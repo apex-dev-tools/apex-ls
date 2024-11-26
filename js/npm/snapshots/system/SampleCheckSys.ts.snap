@@ -184,7 +184,7 @@ exports[`Check samples Sample: ApexTestKit 1`] = `
     ],
     [
       "apex-test-kit/main/classes/ATKCore.cls",
-      "Error: line 176 at 23-30: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 176 at 23-30: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "apex-test-kit/main/classes/ATKMock.cls",
@@ -263,8 +263,8 @@ exports[`Check samples Sample: Cumulus 1`] = `
     ],
     [
       "Cumulus/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 93 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 98 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 93 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 98 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "Cumulus/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -330,13 +330,13 @@ exports[`Check samples Sample: Cumulus 1`] = `
     ],
     [
       "Cumulus/force-app/main/default/classes/ERR_AsyncErrors.cls",
-      "Error: line 117 at 30-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 122 at 28-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 133 at 39-65: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 142 at 26-44: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 151 at 26-37: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 159 at 26-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 173 at 47-70: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 117 at 30-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 122 at 28-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 133 at 39-65: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 142 at 26-44: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 151 at 26-37: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 159 at 26-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 173 at 47-70: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "Cumulus/force-app/main/default/classes/ElevateBatchCapturer.cls",
@@ -344,7 +344,7 @@ exports[`Check samples Sample: Cumulus 1`] = `
     ],
     [
       "Cumulus/force-app/main/default/classes/ElevateBatchService.cls",
-      "Error: line 59 at 38-59: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 59 at 38-59: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "Cumulus/force-app/main/default/classes/GE_GiftEntryController.cls",
@@ -400,15 +400,15 @@ exports[`Check samples Sample: Cumulus 1`] = `
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_OrgTelemetry_BATCH.cls",
-      "Error: line 167 at 26-53: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 167 at 26-53: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_OrgTelemetry_Batch_TEST.cls",
-      "Error: line 246 at 39-66: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 246 at 39-66: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_RecordTypeSettingsUpdate.cls",
-      "Error: line 214 at 37-60: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 214 at 37-60: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_Where.cls",
@@ -472,28 +472,28 @@ exports[`Check samples Sample: EDA 1`] = `
     ],
     [
       "force-app/main/default/classes/AccountModelHealthCheckVMapper.cls",
-      "Error: line 115 at 44-81: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 189 at 44-88: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 266 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 115 at 44-81: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 189 at 44-88: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 266 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/AccountNamingService.cls",
-      "Error: line 102 at 24-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 78 at 24-52: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 102 at 24-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 78 at 24-52: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls",
-      "Error: line 161 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 293 at 44-88: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 398 at 44-86: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 502 at 44-92: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 572 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 658 at 44-95: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 777 at 44-97: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 161 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 293 at 44-88: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 398 at 44-86: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 502 at 44-92: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 572 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 658 at 44-95: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 777 at 44-97: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/AutoEnrollmentMappingService.cls",
-      "Error: line 220 at 28-72: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 220 at 28-72: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls",
@@ -501,55 +501,55 @@ exports[`Check samples Sample: EDA 1`] = `
     ],
     [
       "force-app/main/default/classes/CourseConSettingHealthCheckVMapper.cls",
-      "Error: line 163 at 44-69: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 234 at 44-69: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 163 at 44-69: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 234 at 44-69: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/ERR_AsyncErrors.cls",
-      "Error: line 108 at 30-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 113 at 28-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 124 at 43-69: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 133 at 26-44: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 142 at 26-37: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 150 at 26-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 164 at 47-70: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 108 at 30-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 113 at 28-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 124 at 43-69: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 133 at 26-44: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 142 at 26-37: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 150 at 26-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 164 at 47-70: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/HealthCheckGroupService.cls",
-      "Error: line 81 at 57-88: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 81 at 57-88: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/SRVC_Contact_PreferredEmail.cls",
-      "Error: line 446 at 24-60: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 446 at 24-60: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/VersionCleanupBatchJobService.cls",
-      "Error: line 121 at 24-55: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 130 at 24-52: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 83 at 24-55: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 121 at 24-55: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 130 at 24-52: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 83 at 24-55: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/educationCloudSettings/classes/settingsProduct/EDASettingsProductInformationAPIService.cls",
-      "Error: line 91 at 58-80: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 91 at 58-80: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService.cls",
-      "Error: line 143 at 28-35: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 143 at 28-35: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductVMapper.cls",
-      "Error: line 102 at 56-84: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 102 at 56-84: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/interoperability/classes/ProductRegistryMapper.cls",
-      "Error: line 132 at 49-76: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 132 at 49-76: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/releaseGating/classes/ReleaseGateAPIService.cls",
       "Warning: line 217 at 8-68: Local variable is hiding class field 'callableInstance', see force-app/main/releaseGating/classes/ReleaseGateAPIService.cls: line 52 at 12-38",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -709,8 +709,8 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
     ],
     [
       "fs-core/main/libs/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "fs-core/main/libs/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -731,7 +731,7 @@ exports[`Check samples Sample: FormulaShare-DX 1`] = `
       "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -744,28 +744,28 @@ exports[`Check samples Sample: HEDAP 1`] = `
     ],
     [
       "force-app/main/default/classes/AccountModelHealthCheckVMapper.cls",
-      "Error: line 115 at 44-81: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 189 at 44-88: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 266 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 115 at 44-81: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 189 at 44-88: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 266 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/AccountNamingService.cls",
-      "Error: line 102 at 24-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 78 at 24-52: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 102 at 24-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 78 at 24-52: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/AffiliationMappingsHealthCheckVMapper.cls",
-      "Error: line 161 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 293 at 44-88: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 398 at 44-86: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 502 at 44-92: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 572 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 658 at 44-95: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 777 at 44-97: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 161 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 293 at 44-88: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 398 at 44-86: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 502 at 44-92: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 572 at 44-83: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 658 at 44-95: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 777 at 44-97: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/AutoEnrollmentMappingService.cls",
-      "Error: line 220 at 28-72: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 220 at 28-72: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/CCON_ConnectionBackfill_BATCH.cls",
@@ -773,55 +773,55 @@ exports[`Check samples Sample: HEDAP 1`] = `
     ],
     [
       "force-app/main/default/classes/CourseConSettingHealthCheckVMapper.cls",
-      "Error: line 163 at 44-69: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 234 at 44-69: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 163 at 44-69: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 234 at 44-69: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/ERR_AsyncErrors.cls",
-      "Error: line 108 at 30-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 113 at 28-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 124 at 43-69: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 133 at 26-44: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 142 at 26-37: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 150 at 26-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 164 at 47-70: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 108 at 30-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 113 at 28-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 124 at 43-69: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 133 at 26-44: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 142 at 26-37: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 150 at 26-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 164 at 47-70: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/HealthCheckGroupService.cls",
-      "Error: line 81 at 57-88: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 81 at 57-88: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/SRVC_Contact_PreferredEmail.cls",
-      "Error: line 446 at 24-60: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 446 at 24-60: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/default/classes/VersionCleanupBatchJobService.cls",
-      "Error: line 121 at 24-55: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 130 at 24-52: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 83 at 24-55: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 121 at 24-55: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 130 at 24-52: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 83 at 24-55: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/educationCloudSettings/classes/settingsProduct/EDASettingsProductInformationAPIService.cls",
-      "Error: line 91 at 58-80: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 91 at 58-80: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductAPIService.cls",
-      "Error: line 143 at 28-35: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 143 at 28-35: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/educationCloudSettings/classes/settingsProduct/EDCSettingsProductVMapper.cls",
-      "Error: line 102 at 56-84: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 102 at 56-84: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/interoperability/classes/ProductRegistryMapper.cls",
-      "Error: line 132 at 49-76: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 132 at 49-76: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "force-app/main/releaseGating/classes/ReleaseGateAPIService.cls",
       "Warning: line 217 at 8-68: Local variable is hiding class field 'callableInstance', see force-app/main/releaseGating/classes/ReleaseGateAPIService.cls: line 52 at 12-38",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -895,8 +895,8 @@ exports[`Check samples Sample: NPSP 1`] = `
     ],
     [
       "NPSP/force-app/infrastructure/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 93 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 98 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 93 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 98 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "NPSP/force-app/infrastructure/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -962,13 +962,13 @@ exports[`Check samples Sample: NPSP 1`] = `
     ],
     [
       "NPSP/force-app/main/default/classes/ERR_AsyncErrors.cls",
-      "Error: line 117 at 30-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 122 at 28-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 133 at 39-65: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 142 at 26-44: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 151 at 26-37: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 159 at 26-47: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 173 at 47-70: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 117 at 30-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 122 at 28-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 133 at 39-65: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 142 at 26-44: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 151 at 26-37: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 159 at 26-47: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 173 at 47-70: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "NPSP/force-app/main/default/classes/ElevateBatchCapturer.cls",
@@ -976,7 +976,7 @@ exports[`Check samples Sample: NPSP 1`] = `
     ],
     [
       "NPSP/force-app/main/default/classes/ElevateBatchService.cls",
-      "Error: line 59 at 38-59: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 59 at 38-59: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "NPSP/force-app/main/default/classes/GE_GiftEntryController.cls",
@@ -1032,15 +1032,15 @@ exports[`Check samples Sample: NPSP 1`] = `
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_OrgTelemetry_BATCH.cls",
-      "Error: line 167 at 26-53: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 167 at 26-53: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_OrgTelemetry_Batch_TEST.cls",
-      "Error: line 246 at 39-66: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 246 at 39-66: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_RecordTypeSettingsUpdate.cls",
-      "Error: line 214 at 37-60: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 214 at 37-60: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_Where.cls",
@@ -1760,7 +1760,7 @@ exports[`Check samples Sample: apex-trigger-actions-framework 1`] = `
     ],
     [
       "trigger-actions-framework/main/default/classes/TriggerBase.cls",
-      "Error: line 293 at 26-35: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 293 at 26-35: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
   ],
   "status": 4,
@@ -1784,8 +1784,8 @@ exports[`Check samples Sample: at4dx 1`] = `
   "logs": [
     [
       "at4dx/sfdx-source/core/main/classes/framework-application-factory/ApplicationSObjectSelector.cls",
-      "Error: line 100 at 40-68: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 98 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 100 at 40-68: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 98 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "at4dx/sfdx-source/core/test/classes/framework-application-factory/ApplicationSObjectSelectorTest.cls",
@@ -1805,8 +1805,8 @@ exports[`Check samples Sample: at4dx 1`] = `
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -1831,7 +1831,7 @@ exports[`Check samples Sample: at4dx 1`] = `
       "Warning: line 148 at 24-27: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -1871,8 +1871,8 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
     ],
     [
       "dlrs/libs/fflib-common/classes/fflib_SObjectSelector.cls",
-      "Error: line 88 at 31-44: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 93 at 38-56: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 88 at 31-44: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 93 at 38-56: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "dlrs/libs/metadataservice/classes/MetadataService.cls",
@@ -1883,7 +1883,7 @@ exports[`Check samples Sample: declarative-lookup-rollup-summaries 1`] = `
       "Warning: line 71 at 4-46: Local variable is hiding class field 'lup', see dlrs/main/classes/RollupEditorControllerTest.cls: line 3:9 to 28:4",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -1892,11 +1892,11 @@ exports[`Check samples Sample: df12-apex-enterprise-patterns 1`] = `
   "logs": [
     [
       "df12/src/classes/SObjectSelector.cls",
-      "Error: line 36 at 37-55: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 38 at 30-43: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 36 at 37-55: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 38 at 30-43: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -1926,16 +1926,16 @@ exports[`Check samples Sample: esapi 1`] = `
   "logs": [
     [
       "force-app/main/default/classes/SFDCAccessController.cls",
-      "Error: line 757 at 40-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 758 at 31-38: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 759 at 48-55: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 760 at 31-38: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 761 at 48-55: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 762 at 31-38: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 763 at 50-57: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 757 at 40-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 758 at 31-38: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 759 at 48-55: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 760 at 31-38: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 761 at 48-55: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 762 at 31-38: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 763 at 50-57: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -1971,8 +1971,8 @@ exports[`Check samples Sample: fflib-apex-common 1`] = `
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -1993,7 +1993,7 @@ exports[`Check samples Sample: fflib-apex-common 1`] = `
       "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -2006,8 +2006,8 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Error: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
     [
       "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
@@ -2028,7 +2028,7 @@ exports[`Check samples Sample: fflib-apex-common-samplecode 1`] = `
       "Warning: line 54 at 14-17: 'set' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -2082,11 +2082,11 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
   "logs": [
     [
       "src/classes/fflib_SObjectSelector.cls",
-      "Error: line 72 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Error: line 77 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 72 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 77 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 

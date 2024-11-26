@@ -447,7 +447,7 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               Location(1, 64, 1, 77),
               Location(1, 69, 1, 72),
               "bar",
-              ArraySeq(PRIVATE_MODIFIER),
+              ArraySeq(),
               TypeNames.Void,
               ArraySeq(),
               hasBlock = true,
