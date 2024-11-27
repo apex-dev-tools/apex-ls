@@ -639,7 +639,7 @@ object MethodMap {
           errors
         )
         return Some(matchedMethod)
-      } else if (!superOverrideModifier) {
+      } else if (!superOverrideModifier && !matchedMethod.isAbstract) {
         setMethodError(method, s"Method '${method.name}' must use the 'override' keyword", errors)
         return Some(matchedMethod)
       }
@@ -677,15 +677,13 @@ object MethodMap {
         setMethodError(
           method,
           s"Overriding a private abstract method can cause a GACK, change to protected, public or global",
-          errors,
-          isWarning = true
+          errors
         )
       else
         setMethodError(
           method,
           s"Overriding a private method may not work, change to protected, public or global",
-          errors,
-          isWarning = true
+          errors
         )
     }
 
