@@ -639,7 +639,7 @@ object MethodMap {
           errors
         )
         return Some(matchedMethod)
-      } else if (!superOverrideModifier && !matchedMethod.isAbstract) {
+      } else if (!superOverrideModifier && !method.isAbstract) {
         setMethodError(method, s"Method '${method.name}' must use the 'override' keyword", errors)
         return Some(matchedMethod)
       }
