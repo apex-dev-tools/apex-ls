@@ -18,24 +18,17 @@ import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexMethodLike}
-import com.nawforce.apexlink.types.core.MethodDeclaration.{
-  emptyMethodDeclarations,
-  emptyMethodDeclarationsSet
+import com.nawforce.apexlink.types.core.MethodDeclaration.emptyMethodDeclarations
+import com.nawforce.apexlink.types.core.{
+  AnyReturnMethodDeclaration,
+  MethodDeclaration,
+  TypeDeclaration
 }
-import com.nawforce.apexlink.types.core.{MethodDeclaration, ParameterDeclaration, TypeDeclaration}
-import com.nawforce.apexlink.types.platform.{GenericPlatformMethod, PlatformMethod}
+import com.nawforce.apexlink.types.platform.PlatformMethod
 import com.nawforce.apexlink.types.synthetic.CustomMethodDeclaration
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.pkgforce.diagnostics._
-import com.nawforce.pkgforce.modifiers.{
-  ABSTRACT_MODIFIER,
-  AURA_ENABLED_ANNOTATION,
-  GLOBAL_MODIFIER,
-  Modifier,
-  PRIVATE_MODIFIER,
-  PROTECTED_MODIFIER,
-  PUBLIC_MODIFIER
-}
+import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE}
 import com.nawforce.pkgforce.path.{Location, PathLocation}
@@ -49,14 +42,12 @@ case object NO_MATCH_ERROR extends MethodCallError("No matching method found")
 
 case object AMBIGUOUS_ERROR extends MethodCallError("Ambiguous method call")
 
-final case class MethodMap(
+final case class MethodMap private (
   typeName: Option[TypeName],
   td: Option[ApexClassDeclaration],
   methodsByName: Map[(Name, Int), Array[MethodDeclaration]],
-  testVisiblePrivateMethods: Set[MethodDeclaration],
   errors: List[Issue]
 ) {
-  val deepHash: Int = td.map(_.deepHash).getOrElse(0)
 
   /** Return all available methods */
   def allMethods: ArraySeq[MethodDeclaration] = {
@@ -127,17 +118,11 @@ final case class MethodMap(
       case Some(x) => matches.filter(m => m.isStatic == x)
     }
 
-    val testMatches =
-      if (!context.thisType.inTest && testVisiblePrivateMethods.nonEmpty) {
-        // If not in test code, filter out inherited private test visible methods that we allowed in
-        staticContextMatches.filterNot(testVisiblePrivateMethods.contains)
-      } else {
-        staticContextMatches
-      }
-
     // Try for an exact match first
     val exactMatches =
-      testMatches.filter(_.hasCompatibleParameters(params, allowPlatformGenericEquivalence = true))
+      staticContextMatches.filter(
+        _.hasCompatibleParameters(params, allowPlatformGenericEquivalence = true)
+      )
     if (exactMatches.length == 1)
       return Right(exactMatches.head)
     else if (exactMatches.length > 1)
@@ -146,9 +131,9 @@ final case class MethodMap(
     // If no exact we need to search for possible in two stages, either using strict assignment or lax if
     // we are still short of a possible match
     var found =
-      mostSpecificMatch(strict = true, testMatches, params, context)
+      mostSpecificMatch(strict = true, staticContextMatches, params, context)
         .getOrElse(
-          mostSpecificMatch(strict = false, testMatches, params, context)
+          mostSpecificMatch(strict = false, staticContextMatches, params, context)
             .getOrElse(Left(NO_MATCH_ERROR))
         )
 
@@ -225,41 +210,21 @@ final case class MethodMap(
   }
 }
 
-/* Method wrapper that enforces an Any return type on the method */
-class AnyReturnMethodDeclaration(method: MethodDeclaration) extends MethodDeclaration {
-  override val name: Name                                 = method.name
-  override val modifiers: ArraySeq[Modifier]              = method.modifiers
-  override val parameters: ArraySeq[ParameterDeclaration] = method.parameters
-
-  override def typeName: TypeName = TypeName.Any
-  override def hasBlock: Boolean  = method.hasBlock
-}
-
 object MethodMap {
   type WorkingMap = mutable.HashMap[(Name, Int), List[MethodDeclaration]]
 
   private val DISALLOWED_TYPES_FOR_AURAENABLED = List(TypeNames.Set$)
 
-  private val specialOverrideMethodSignatures = Set[String](
-    "system.boolean equals(object)",
-    "system.integer hashcode()",
-    "system.string tostring(),"
-  )
-
-  private val batchOverrideMethodSignature =
-    "database.querylocator start(database.batchablecontext)"
-
   def empty(): MethodMap = {
-    new MethodMap(None, None, Map(), Set(), Nil)
+    new MethodMap(None, None, Map(), Nil)
   }
 
   private def toMap(workingMap: WorkingMap): Map[(Name, Int), Array[MethodDeclaration]] = {
     workingMap.map(kv => (kv._1, kv._2.toArray)).toMap
   }
 
-  /** Construct for an arbitrary type declaration, for Apex classes used the other apply function
-    * which builds up a proper MethodMap. This is just for other type declarations with non-complex
-    * needs.
+  /** Construct for an arbitrary type declaration. This is just for simple type
+    * declarations with non-complex needs.
     */
   def apply(td: TypeDeclaration): MethodMap = {
     val workingMap = new WorkingMap()
@@ -267,9 +232,11 @@ object MethodMap {
       val key = (method.name, method.parameters.length)
       workingMap.put(key, method :: workingMap.getOrElse(key, Nil))
     })
-    new MethodMap(Some(td.typeName), None, toMap(workingMap), Set(), Nil)
+    new MethodMap(Some(td.typeName), None, toMap(workingMap), Nil)
   }
 
+  /** Construct for a complex type declaration from a super class map.
+    */
   def apply(
     td: TypeDeclaration,
     location: Option[PathLocation],
@@ -277,28 +244,27 @@ object MethodMap {
     newMethods: ArraySeq[MethodDeclaration],
     interfaces: ArraySeq[TypeDeclaration]
   ): MethodMap = {
-
-    // Create a starting working map from super class map, just removing statics initially
-    var workingMap         = new WorkingMap()
-    val testVisiblePrivate = mutable.Set[MethodDeclaration]()
-    superClassMap.methodsByName.foreach(superMethodGroup => {
-      val superMethods = superMethodGroup._2.filterNot(_.isStatic)
-      workingMap.put(superMethodGroup._1, superMethods.toList)
-    })
-    workingMap = workingMap.filterNot(_._2.isEmpty)
-
-    // Now build the rest of the map with the new methods
     val errors                         = mutable.Buffer[Issue]()
+    var workingMap                     = createStartingWorkingMap(superClassMap)
     val (staticLocals, instanceLocals) = newMethods.partition(_.isStatic)
 
-    // Add instance methods first with validation checks
-    instanceLocals.foreach {
-      case am: ApexMethodLike => am.resetShadows()
-      case _                  =>
-    }
-    instanceLocals.foreach(method =>
-      applyInstanceMethod(workingMap, method, td.inTest, td.isComplete, errors)
-    )
+    // Add instance methods first with validation checks and reset of shadowing
+    instanceLocals.foreach(method => {
+      method match {
+        case am: ApexMethodLike => am.resetShadows()
+        case _                  =>
+      }
+      val errorCount = errors.length
+      applyInstanceMethod(workingMap, td, method, errors).foreach(overriddenMethod => {
+        if (errors.length == errorCount) {
+          method match {
+            case am: ApexMethodLike => am.addShadow(overriddenMethod)
+            case _                  => ()
+          }
+        }
+      })
+
+    })
 
     // Now strip out none test visible/abstract inherited privates excluding when a super class is in the same file as
     // td, in that case the private methods are visible. Yeah, this is very odd behaviour, but might be related to how
@@ -306,7 +272,7 @@ object MethodMap {
     val sameFileSuperclassPrivateMethods = findSameFileSuperclassPrivateMethods(td)
     workingMap.foreach(keyAndMethodGroup => {
       val methods = keyAndMethodGroup._2.filterNot(method => {
-        method.visibility == PRIVATE_MODIFIER && !method.isAbstract &&
+        method.visibility.getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER && !method.isAbstract &&
         !(method.isTestVisible || isApexLocalMethod(td, method) || sameFileSuperclassPrivateMethods
           .contains(method))
       })
@@ -390,9 +356,19 @@ object MethodMap {
     checkAuraEnabledMethods(location, errors, workingMap)
 
     // Finally, construct the actual MethodMap
-    val testVisiblePrivateSet =
-      if (testVisiblePrivate.isEmpty) emptyMethodDeclarationsSet else testVisiblePrivate.toSet
-    new MethodMap(Some(td.typeName), ad, toMap(workingMap), testVisiblePrivateSet, errors.toList)
+    new MethodMap(Some(td.typeName), ad, toMap(workingMap), errors.toList)
+  }
+
+  /** Create a starting working map from super class map, just removing statics initially
+    */
+  private def createStartingWorkingMap(parentMap: MethodMap): WorkingMap = {
+    var workingMap = new WorkingMap()
+    parentMap.methodsByName.foreach(superMethodGroup => {
+      val superMethods = superMethodGroup._2.filterNot(_.isStatic)
+      workingMap.put(superMethodGroup._1, superMethods.toList)
+    })
+    workingMap = workingMap.filterNot(_._2.isEmpty)
+    workingMap
   }
 
   private def checkAuraEnabledMethods(
@@ -458,7 +434,7 @@ object MethodMap {
       val superClass = td.superClassDeclaration
       if (superClass.nonEmpty && superClass.get.paths == td.paths) {
         return superClass.get.methods.filter(method =>
-          method.visibility == PRIVATE_MODIFIER && !method.isStatic
+          method.visibility.getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER && !method.isStatic
         )
       }
     }
@@ -480,7 +456,7 @@ object MethodMap {
       return
 
     // We merge top-down here to make sure shadows is always set up in correct direction, doing it bottom
-    // up can result in an inverted shadowing relationship when both interfaces contains the same method
+    // up can result in an inverted shadowing relationship when both interfaces contain the same method
     interface.methods
       .filterNot(_.isStatic)
       .foreach(method => {
@@ -527,9 +503,7 @@ object MethodMap {
     errors: mutable.Buffer[Issue]
   ): Unit = {
     interface.methods
-      .filterNot(m =>
-        m.isStatic || specialOverrideMethodSignatures.contains(m.signature.toLowerCase())
-      )
+      .filterNot(m => m.isStatic || isObjectMethod(m).contains(true))
       .foreach(method => {
         val key     = (method.name, method.parameters.length)
         val methods = workingMap.getOrElse(key, Nil)
@@ -587,151 +561,201 @@ object MethodMap {
       workingMap.put(key, method :: methods.filterNot(_ eq matched.get))
   }
 
-  /** Add an instance method into the working map. The is littered with very horrible conditional
-    * logic based on what we have been able to work out from testing.
+  /** Add an instance method into the working map.
+    * @return method the passed one is overriding if any
     */
   private def applyInstanceMethod(
     workingMap: WorkingMap,
+    td: TypeDeclaration,
     method: MethodDeclaration,
-    isTest: Boolean,
-    isComplete: Boolean,
     errors: mutable.Buffer[Issue]
-  ): Unit = {
-    val errorCount = errors.length
-    val key        = (method.name, method.parameters.length)
-    val methods    = workingMap.getOrElse(key, Nil)
-    val matched    = methods.find(mapMethod => areSameMethodsIgnoringReturn(mapMethod, method))
+  ): Option[MethodDeclaration] = {
+    val key     = (method.name, method.parameters.length)
+    val methods = workingMap.getOrElse(key, Nil)
+    val matched = methods.find(mapMethod => areSameMethodsIgnoringReturn(mapMethod, method))
 
-    if (matched.nonEmpty) {
-      val matchedMethod = matched.get
-      lazy val isSpecial = {
-        val matchedSignature = matchedMethod.signature.toLowerCase()
-        specialOverrideMethodSignatures.contains(matchedSignature) ||
-        (matchedSignature == batchOverrideMethodSignature &&
-          method.typeName.outer.contains(
-            TypeNames.System
-          ) && method.typeName.name == XNames.Iterable)
-      }
-
-      lazy val isPlatformMethod =
-        matchedMethod.isInstanceOf[PlatformMethod] || matchedMethod
-          .isInstanceOf[GenericPlatformMethod]
-
-      lazy val isInterfaceMethod =
-        !matchedMethod.hasBlock && !matchedMethod.modifiers.contains(ABSTRACT_MODIFIER)
-
-      lazy val reallyPrivateMethod =
-        matchedMethod.visibility == PRIVATE_MODIFIER && !areInSameApexFile(method, matchedMethod)
-
-      lazy val areBothPrivate =
-        matchedMethod.visibility == PRIVATE_MODIFIER && method.visibility == PRIVATE_MODIFIER
-
-      lazy val hasNonPrivateSameVisibilityModifier =
-        !areBothPrivate && matchedMethod.visibility == method.visibility
-      lazy val hasNonPrivateModifierInSameFile =
-        areInSameApexFile(method, matchedMethod) && !areBothPrivate
-
-      if (areInSameApexClass(matchedMethod, method)) {
-        matchedMethod match {
-          case matchedMethod: ApexMethodLike =>
-            if (method.hasSameParameters(matchedMethod, allowPlatformGenericEquivalence = false))
-              setMethodError(
-                method,
-                s"Method '${method.name}' is a duplicate of an existing method at ${matchedMethod.idLocation
-                    .displayPosition()}",
-                errors
-              )
-            else
-              setMethodError(
-                method,
-                s"Method '${method.name}' can not use same platform generic interface as existing method at ${matchedMethod.idLocation
-                    .displayPosition()}",
-                errors
-              )
-          case _ => ()
-        }
-      } else if (
-        !areSameReturnType(
-          matchedMethod.typeName,
-          method.typeName
-        ) && !reallyPrivateMethod && !isSpecial
-      ) {
+    // Not overriding
+    if (matched.isEmpty) {
+      if (method.isOverride && td.isComplete) {
         setMethodError(
           method,
-          s"Method '${method.name}' has wrong return type to override, should be '${matched.get.typeName}'",
-          errors
-        )
-      } else if (!matchedMethod.isVirtualOrAbstract && !reallyPrivateMethod) {
-        setMethodError(
-          method,
-          s"Method '${method.name}' can not override non-virtual method",
-          errors
-        )
-      } else if (
-        !method.isVirtualOrOverride && !reallyPrivateMethod && !matchedMethod.isAbstract &&
-        !isInterfaceMethod && !isSpecial && !isTest && !isPlatformMethod
-      ) {
-        setMethodError(method, s"Method '${method.name}' must use override keyword", errors)
-      } else if (
-        method.visibility.methodOrder < matchedMethod.visibility.methodOrder && !isSpecial
-      ) {
-        setMethodError(
-          method,
-          s"Method '${method.name}' can not reduce visibility in override",
-          errors
-        )
-      } else if (
-        method.isOverride && matchedMethod.isVirtualOrAbstract && matchedMethod.visibility == PRIVATE_MODIFIER
-      ) {
-        // Some escapes from this being bad, don't ask why, know one knows :-(
-        if (
-          !areInSameApexFile(
-            method,
-            matchedMethod
-          ) && !(method.inTest && matchedMethod.isTestVisible)
-        )
-          setMethodError(
-            method,
-            s"Method '${method.name}' can not override a private method",
-            errors
-          )
-      } else if (
-        !method.isOverride &&
-        matchedMethod.isAbstract &&
-        (hasNonPrivateModifierInSameFile || hasNonPrivateSameVisibilityModifier)
-      ) {
-        setMethodError(
-          method,
-          s"Method '${method.name}' must use the 'override' keyword when implementing an abstract method",
+          s"Method '${method.name}' does not override a virtual or abstract method",
           errors
         )
       }
-    } else if (method.isOverride && isComplete) {
+      workingMap.put(key, method :: methods)
+      return None
+    }
+
+    // Error & ignore duplicates
+    val matchedMethod = matched.get
+    if (isDuplicateMethod(matchedMethod, method, errors))
+      return None
+
+    // We have an attempted override, update map with it as probably was meant to be
+    workingMap.put(key, method :: methods.filterNot(_ eq matchedMethod))
+
+    // Is standard object method override
+    isObjectMethod(method) match {
+      case Some(true) => return Some(matchedMethod)
+      case Some(false) =>
+        if (isObjectMethod(matchedMethod).contains(true))
+          return None // Different return means we are hiding, not shadowing
+      case None if isEqualsLike(method) =>
+        return None // Replacing 'equals' with single arg func with non-Object param
+      case None => ()
+    }
+
+    // Batch allows an Iterable<T> start method instead of usual QueryLocator return
+    if (
+      isBatchableStartWithListOrIterable(method) &&
+      isBatchableStartWithQueryLocator(matchedMethod) &&
+      td.implements(TypeName(Seq(Names.Batchable, Names.Database)), ignoreGenerics = true)
+    ) {
+      return Some(matchedMethod)
+    }
+
+    // Return types should match, but allow for Any handling
+    if (!haveCompatibleReturnTypes(matchedMethod.typeName, method.typeName)) {
       setMethodError(
         method,
-        s"Method '${method.name}' does not override a virtual or abstract method",
+        s"Method '${method.name}' has wrong return type to override, should be '${matched.get.typeName}'",
         errors
       )
+      return Some(matchedMethod)
     }
 
-    // Shadow if all looks OK
-    if (errors.length == errorCount) {
-      method match {
-        case am: ApexMethodLike => matched.foreach(am.addShadow)
-        case _                  => ()
+    // See https://github.com/nawforce/override-bench for validation logic
+    val isBasePrivate = matchedMethod.visibility.getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER
+    val baseModifier =
+      matchedMethod.modifiers.intersect(Seq(ABSTRACT_MODIFIER, VIRTUAL_MODIFIER)).headOption
+    val superOverrideModifier =
+      method.modifiers.contains(OVERRIDE_MODIFIER)
+    if (!isBasePrivate) {
+      if (baseModifier.isEmpty) {
+        setMethodError(
+          method,
+          s"Method '${method.name}' can not override non-virtual/non-abstract method",
+          errors
+        )
+        return Some(matchedMethod)
+      } else if (!superOverrideModifier && !method.isAbstract) {
+        setMethodError(method, s"Method '${method.name}' must use the 'override' keyword", errors)
+        return Some(matchedMethod)
       }
+    } else if (
+      !superOverrideModifier &&
+      method.visibility
+        .getOrElse(PRIVATE_MODIFIER) != PRIVATE_MODIFIER && areInSameApexFile(method, matchedMethod)
+    ) {
+      setMethodError(method, s"Method '${method.name}' must use the 'override' keyword", errors)
+      return Some(matchedMethod)
     }
 
-    // Update workingMap with new methods, regardless of if we error on it as probably was meant to be
-    matched match {
-      case None          => workingMap.put(key, method :: methods)
-      case Some(matched) => workingMap.put(key, method :: methods.filterNot(_ eq matched))
+    if (isVisibilityReduced(matchedMethod.visibility, method.visibility)) {
+      setMethodError(
+        method,
+        s"Method '${method.name}' can not reduce visibility in override",
+        errors
+      )
+      return Some(matchedMethod)
+    }
+
+    if (
+      isBasePrivate &&
+      baseModifier.nonEmpty &&
+      superOverrideModifier &&
+      !areInSameApexFile(matchedMethod, method) &&
+      !(method.inTest && matchedMethod.isTestVisible)
+    ) {
+      setMethodError(method, s"Method '${method.name}' can not override a private method", errors)
+      return Some(matchedMethod)
+    }
+
+    if (matchedMethod.visibility.contains(PRIVATE_MODIFIER)) {
+      if (baseModifier.contains(ABSTRACT_MODIFIER))
+        setMethodError(
+          method,
+          s"Overriding a private abstract method can cause a GACK, change to protected, public or global",
+          errors
+        )
+      else
+        setMethodError(
+          method,
+          s"Overriding a private method may not work, change to protected, public or global",
+          errors
+        )
+    }
+
+    Some(matchedMethod)
+  }
+
+  private def isVisibilityReduced(
+    baseVisibility: Option[Modifier],
+    superVisibility: Option[Modifier]
+  ): Boolean = {
+    baseVisibility.getOrElse(PRIVATE_MODIFIER).methodOrder > superVisibility
+      .getOrElse(PRIVATE_MODIFIER)
+      .methodOrder
+  }
+
+  private def isDuplicateMethod(
+    existingMethod: MethodDeclaration,
+    newMethod: MethodDeclaration,
+    errors: mutable.Buffer[Issue]
+  ): Boolean = {
+    val sameClass = (existingMethod, newMethod) match {
+      case (am1: ApexMethodLike, am2: ApexMethodLike) => am1.thisTypeId == am2.thisTypeId
+      case (pm1: PlatformMethod, pm2: PlatformMethod) => pm1.typeDeclaration eq pm2.typeDeclaration
+      case _                                          => false
+    }
+    if (!sameClass)
+      return false
+
+    existingMethod match {
+      case matchedMethod: ApexMethodLike =>
+        if (newMethod.hasSameParameters(matchedMethod, allowPlatformGenericEquivalence = false))
+          setMethodError(
+            newMethod,
+            s"Method '${newMethod.name}' is a duplicate of an existing method at ${matchedMethod.idLocation
+                .displayPosition()}",
+            errors
+          )
+        else
+          setMethodError(
+            newMethod,
+            s"Method '${newMethod.name}' can not use same platform generic interface as existing method at ${matchedMethod.idLocation
+                .displayPosition()}",
+            errors
+          )
+      case _ => ()
+    }
+    true
+  }
+
+  /** Is this an Object style method.
+    * @return None if not, Some(true) is exact, Some(false) if only name & parameters match
+    */
+  private def isObjectMethod(method: MethodDeclaration): Option[Boolean] = {
+    method.name match {
+      case XNames.Equals
+          if method.parameters.length == 1
+            && method.parameters.head.typeName == TypeNames.InternalObject =>
+        Some(method.typeName == TypeNames.Boolean)
+      case XNames.Hashcode if method.parameters.isEmpty =>
+        Some(method.typeName == TypeNames.Integer)
+      case XNames.Tostring if method.parameters.isEmpty =>
+        Some(method.typeName == TypeNames.String)
+      case _ => None
     }
   }
 
-  private def areSameReturnType(matchedTypeName: TypeName, methodTypeName: TypeName): Boolean = {
-    (matchedTypeName == methodTypeName) ||
-    (matchedTypeName.isAnyIterator && methodTypeName.isIterator)
+  private def haveCompatibleReturnTypes(
+    baseTypeName: TypeName,
+    overrideTypeName: TypeName
+  ): Boolean = {
+    (baseTypeName == overrideTypeName) ||
+    (baseTypeName.isAnyIterator && overrideTypeName.isIterator)
   }
 
   private def setMethodError(
@@ -759,21 +783,10 @@ object MethodMap {
     }
   }
 
-  /** Determine if two methods are declared in the same Apex class. The implementation is a bit
-    * awkward due to how apex defined and platform methods diff in representation.
-    */
-  private def areInSameApexClass(m1: MethodDeclaration, m2: MethodDeclaration): Boolean = {
-    (m1, m2) match {
-      case (am1: ApexMethodLike, am2: ApexMethodLike) => am1.thisTypeId == am2.thisTypeId
-      case (pm1: PlatformMethod, pm2: PlatformMethod) => pm1.typeDeclaration eq pm2.typeDeclaration
-      case _                                          => false
-    }
-  }
-
   /** Determine if two methods are considered the same without looking at the return type. For
     * 'equals' we consider them the same if they both have a single parameter even if that parameter
-    * differs. This is because defining equals in a class will hide the Object equals method if the
-    * arguments don't match.
+    * differs. This is because defining equals in a class will hide the Object equals method even when
+    * the arguments don't match.
     */
   private def areSameMethodsIgnoringReturn(
     method: MethodDeclaration,
@@ -806,7 +819,11 @@ object MethodMap {
       true
     } else if (isEqualsLike(interfaceMethod) && isEqualsLike(implMethod))
       true
-    else if (isDatabaseBatchableStart(interfaceMethod) && isDatabaseBatchableIterable(implMethod))
+    else if (
+      isBatchableStartWithQueryLocator(interfaceMethod) && isBatchableStartWithListOrIterable(
+        implMethod
+      )
+    )
       true
     else
       false
@@ -834,14 +851,14 @@ object MethodMap {
     method.parameters.length == 1
   }
 
-  private def isDatabaseBatchableStart(method: MethodDeclaration): Boolean = {
+  private def isBatchableStartWithQueryLocator(method: MethodDeclaration): Boolean = {
     method.name == XNames.Start &&
     method.typeName == TypeNames.QueryLocator &&
     !method.isStatic &&
     method.parameters.length == 1 && method.parameters.head.typeName == TypeNames.BatchableContext
   }
 
-  private def isDatabaseBatchableIterable(method: MethodDeclaration): Boolean = {
+  private def isBatchableStartWithListOrIterable(method: MethodDeclaration): Boolean = {
     method.name == XNames.Start &&
     (method.typeName.isIterable || method.typeName.isList) &&
     !method.isStatic &&
@@ -849,7 +866,7 @@ object MethodMap {
   }
 
   private def isPublicOrGlobal(method: MethodDeclaration): Boolean = {
-    method.visibility == PUBLIC_MODIFIER || method.visibility == GLOBAL_MODIFIER
+    method.visibility.contains(PUBLIC_MODIFIER) || method.visibility.contains(GLOBAL_MODIFIER)
   }
 
   private def hasGhostedMethods(module: OPM.Module, methods: List[MethodDeclaration]): Boolean = {

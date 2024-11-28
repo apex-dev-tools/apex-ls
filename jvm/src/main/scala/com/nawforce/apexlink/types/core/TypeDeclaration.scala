@@ -155,7 +155,7 @@ trait Parameters {
 
   /** Determine if this params is a more specific version of the passed params. For this to be true
     * all the parameters of this parameters must be assignable to the corresponding parameter of the
-    * other method. However when dealing with RecordSets (SOQL results) we also prioritise degrees
+    * other method. However, when dealing with RecordSets (SOQL results) we also prioritise degrees
     * of specificness and use those to select as well.
     */
   def hasMoreSpecificParams(
@@ -181,7 +181,7 @@ trait Parameters {
 
   /** Determine if parameter type names are considered the same. During method and constructor calls
     * some platform generics are considered equivalent regardless of the type parameters used. Yeah,
-    * its a mess of a language.
+    * it's a mess of a language.
     */
   private def areSameGenericTypes(param: TypeName, other: TypeName): Boolean = {
     param.equalsIgnoreParamTypes(other) &&
@@ -192,7 +192,7 @@ trait Parameters {
     )
   }
 
-  /** Create a score for toType reflecting it's priority (low is high) when matching against a
+  /** Create a score for toType reflecting its priority (low is high) when matching against a
     * RecordSet of sObjectType. The ordering here was empirically derived, having all of these
     * available as possible matches does not create an ambiguity error, although the single record
     * conversion may fail at runtime.
@@ -245,25 +245,24 @@ object ConstructorDeclaration {
 trait MethodDeclaration extends DependencyHolder with Dependent with Parameters {
   val name: Name
   val modifiers: ArraySeq[Modifier]
+  lazy val visibility: Option[Modifier] =
+    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
+
   def typeName: TypeName
 
   def hasBlock: Boolean
-
-  def visibility: Modifier =
-    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
 
   def signature: String = s"$typeName $nameAndParameterTypes"
 
   def nameAndParameterTypes: String = s"$name($parameterTypes)"
   def parameterTypes: String        = parameters.map(_.typeName).mkString(", ")
 
-  def isStatic: Boolean            = modifiers.contains(STATIC_MODIFIER)
-  def isAbstract: Boolean          = modifiers.contains(ABSTRACT_MODIFIER)
-  def isVirtual: Boolean           = modifiers.contains(VIRTUAL_MODIFIER)
-  def isOverride: Boolean          = modifiers.contains(OVERRIDE_MODIFIER)
-  def isTestVisible: Boolean       = modifiers.contains(TEST_VISIBLE_ANNOTATION)
-  def isVirtualOrOverride: Boolean = isVirtual || isOverride
-  def isVirtualOrAbstract: Boolean = isVirtual || isAbstract
+  def isStatic: Boolean      = modifiers.contains(STATIC_MODIFIER)
+  def isAbstract: Boolean    = modifiers.contains(ABSTRACT_MODIFIER)
+  def isVirtual: Boolean     = modifiers.contains(VIRTUAL_MODIFIER)
+  def isOverride: Boolean    = modifiers.contains(OVERRIDE_MODIFIER)
+  def isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
+
   lazy val isExternallyVisible: Boolean =
     modifiers.exists(MethodDeclaration.externalMethodModifiers.contains)
 
@@ -321,7 +320,6 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
 
 object MethodDeclaration {
   val emptyMethodDeclarations: ArraySeq[MethodDeclaration] = ArraySeq()
-  val emptyMethodDeclarationsSet: Set[MethodDeclaration]   = Set()
   private val externalMethodModifiers: Set[Modifier] =
     Set(
       GLOBAL_MODIFIER,
@@ -334,6 +332,16 @@ object MethodDeclaration {
       HTTP_POST_ANNOTATION,
       HTTP_PUT_ANNOTATION
     )
+}
+
+/** Method wrapper that enforces an Any return type on the provided method */
+class AnyReturnMethodDeclaration(method: MethodDeclaration) extends MethodDeclaration {
+  override val name: Name                                 = method.name
+  override val modifiers: ArraySeq[Modifier]              = method.modifiers
+  override val parameters: ArraySeq[ParameterDeclaration] = method.parameters
+
+  override def typeName: TypeName = TypeName.Any
+  override def hasBlock: Boolean  = method.hasBlock
 }
 
 trait AbstractTypeDeclaration {

@@ -30,7 +30,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Dummy.cls"      -> "public class Dummy extends SuperClass { public void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { public void func() {}}"
       ),
-      "Error: line 1 at 52-56: Method 'func' can not override non-virtual method\n"
+      "Error: line 1 at 52-56: Method 'func' can not override non-virtual/non-abstract method\n"
     )
   }
 
@@ -40,7 +40,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Dummy.cls"      -> "public class Dummy extends SuperClass { public void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass { public virtual void func() {}}"
       ),
-      "Error: line 1 at 52-56: Method 'func' must use override keyword\n"
+      "Error: line 1 at 52-56: Method 'func' must use the 'override' keyword\n"
     )
   }
 
@@ -55,31 +55,28 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   }
 
   test("Override of private virtual") {
-    withAllowPrivateOverride {
-      testMethods(
-        Map(
-          "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
-          "SuperClass.cls" -> "public virtual class SuperClass { private virtual void func() {}}"
-        ),
-        "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
-      )
-    }
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "SuperClass.cls" -> "public virtual class SuperClass { private virtual void func() {}}"
+      ),
+      "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
+    )
   }
 
   test("Override of private virtual (same file bug)") {
-    withAllowPrivateOverride {
-      testMethods(
-        Map(
-          "Dummy.cls" ->
-            """public virtual class Dummy {
+    testMethods(
+      Map(
+        "Dummy.cls" ->
+          """public virtual class Dummy {
               | private virtual void func() {}
               | public class Other extends Dummy {public override void func() {} }
               |}
               |""".stripMargin
-        ),
-        ""
-      )
-    }
+      ),
+      "Error: line 3 at 56-60: Overriding a private method may not work, change to protected, public or global\n" +
+        "Warning: line 2 at 22-26: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+    )
   }
 
   test("Override of protected virtual") {
@@ -123,15 +120,23 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
   }
 
   test("Override of private abstract") {
-    withAllowPrivateOverride {
-      testMethods(
-        Map(
-          "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
-          "SuperClass.cls" -> "public abstract class SuperClass { private abstract void func();}"
-        ),
-        "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
-      )
-    }
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "SuperClass.cls" -> "public abstract class SuperClass { private abstract void func();}"
+      ),
+      "Error: line 1 at 61-65: Method 'func' can not override a private method\n"
+    )
+  }
+
+  test("Override of private abstract without override") {
+    testMethods(
+      Map(
+        "Dummy.cls"      -> "public class Dummy extends SuperClass { public void func() {} }",
+        "SuperClass.cls" -> "public abstract class SuperClass { private abstract void func();}"
+      ),
+      "Error: line 1 at 52-56: Overriding a private abstract method can cause a GACK, change to protected, public or global\n"
+    )
   }
 
   test("Override of protected abstract") {
@@ -170,7 +175,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Dummy.cls" -> "@IsTest public class Dummy extends SuperClass { public override void func() {} }",
         "SuperClass.cls" -> "public virtual class SuperClass {@TestVisible private virtual void func() {}}"
       ),
-      ""
+      "Error: line 1 at 69-73: Overriding a private method may not work, change to protected, public or global\n"
     )
   }
 

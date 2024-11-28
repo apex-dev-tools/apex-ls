@@ -13,7 +13,6 @@
  */
 package com.nawforce.pkgforce.modifiers
 
-import com.nawforce.pkgforce.api.SharedOps
 import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
 import com.nawforce.pkgforce.modifiers.ApexModifiers.{
   allowableModifiers,
@@ -100,25 +99,19 @@ object MethodModifiers {
       context
     )
 
-    val explicitVisibility = normalModifiers
+    var visibility = normalModifiers
       .intersect(visibilityModifiers)
       .headOption
 
     val extendedModifiers =
-      (if (explicitVisibility.isEmpty) {
-         ArraySeq(
-           if (normalModifiers.contains(WEBSERVICE_MODIFIER))
-             GLOBAL_MODIFIER
-           else PRIVATE_MODIFIER
-         )
+      (if (visibility.isEmpty && normalModifiers.contains(WEBSERVICE_MODIFIER)) {
+         visibility = Some(GLOBAL_MODIFIER)
+         ArraySeq(GLOBAL_MODIFIER)
        } else ArraySeq()) ++ normalModifiers
 
-    val visibility = extendedModifiers
-      .intersect(visibilityModifiers)
-      .head
-
+    val isGlobal = visibility.contains(GLOBAL_MODIFIER)
     val results = {
-      if (visibility != GLOBAL_MODIFIER && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
+      if (!isGlobal && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
         logger.logError(context, "Webservice methods must be global")
         GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (!isOuter && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
@@ -140,13 +133,13 @@ object MethodModifiers {
         ownerInfo.modifiers
           .intersect(globalAbstractModifiers)
           .length == globalAbstractModifiers.length &&
-        visibility != GLOBAL_MODIFIER &&
+        !isGlobal &&
         extendedModifiers.contains(ABSTRACT_MODIFIER)
       ) {
         logger.logError(context, "Abstract methods must be global in global abstract classes")
         GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
-        visibility == PROTECTED_MODIFIER &&
+        visibility.contains(PROTECTED_MODIFIER) &&
         !extendedModifiers.contains(STATIC_MODIFIER) && // Static error is caught later
         !ownerInfo.isExtending &&
         ownerInfo.modifiers.intersect(virtualAbstractModifiers).isEmpty
@@ -157,11 +150,10 @@ object MethodModifiers {
         )
         PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
-        visibility == PRIVATE_MODIFIER &&
-        extendedModifiers.intersect(virtualAbstractModifiers).nonEmpty &&
-        !SharedOps.isPrivateOverrideAllowed
+        (visibility.isEmpty || visibility.contains(PRIVATE_MODIFIER)) &&
+        extendedModifiers.intersect(virtualAbstractModifiers).nonEmpty
       ) {
-        logger.logError(
+        logger.logWarning(
           context,
           "Private method overrides have inconsistent behaviour, use global, public or protected"
         )

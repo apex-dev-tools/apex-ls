@@ -205,7 +205,7 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
             Diagnostic(
               UNUSED_CATEGORY,
               method.idLocation,
-              s"Unused ${method.visibility.name} method '${method.signature}'$suffix"
+              s"Unused ${method.visibility.getOrElse(PRIVATE_MODIFIER).name} method '${method.signature}'$suffix"
             )
           )
         })

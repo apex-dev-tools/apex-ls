@@ -27,7 +27,7 @@
  */
 package com.nawforce.pkgforce.modifiers
 
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.parsers.ApexNode
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
@@ -270,7 +270,7 @@ class MethodModifierTest extends AnyFunSuite {
         Issue(
           Path("Dummy.cls"),
           Diagnostic(
-            ERROR_CATEGORY,
+            WARNING_CATEGORY,
             Location(1, 46, 1, 50),
             "Private method overrides have inconsistent behaviour, use global, public or protected"
           )
@@ -286,7 +286,7 @@ class MethodModifierTest extends AnyFunSuite {
         Issue(
           Path("Dummy.cls"),
           Diagnostic(
-            ERROR_CATEGORY,
+            WARNING_CATEGORY,
             Location(1, 38, 1, 42),
             "Private method overrides have inconsistent behaviour, use global, public or protected"
           )
@@ -305,7 +305,7 @@ class MethodModifierTest extends AnyFunSuite {
         Issue(
           Path("Dummy.cls"),
           Diagnostic(
-            ERROR_CATEGORY,
+            WARNING_CATEGORY,
             Location(1, 44, 1, 48),
             "Private method overrides have inconsistent behaviour, use global, public or protected"
           )
@@ -321,7 +321,7 @@ class MethodModifierTest extends AnyFunSuite {
         Issue(
           Path("Dummy.cls"),
           Diagnostic(
-            ERROR_CATEGORY,
+            WARNING_CATEGORY,
             Location(1, 36, 1, 40),
             "Private method overrides have inconsistent behaviour, use global, public or protected"
           )
