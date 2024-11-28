@@ -489,6 +489,12 @@ object PlatformTypeDeclaration {
         Name("hashCode"),
         TypeNames.Integer,
         CustomMethodDeclaration.emptyParameters
+      ),
+      CustomMethodDeclaration(
+        Location.empty,
+        Name("toString"),
+        TypeNames.String,
+        CustomMethodDeclaration.emptyParameters
       )
     )
 }
