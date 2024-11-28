@@ -186,11 +186,21 @@ class PlatformTypesValidationTest extends AnyFunSuite with TestHelper {
       })
   }
 
-  test("Enums should have ordinal method (bug)") {
+  test("Enums should have default methods") {
     val td = PlatformTypes.get(TypeName(Name("LoggingLevel")), None).getOrElse(null)
 
     assert(td.fields.exists(_.name == Name("DEBUG")))
-    assert(td.methods.exists(_.name == Name("ordinal")))
+    assert(
+      td.methods.map(_.toString).sorted.mkString("\n") == Seq(
+        "public System.String name()",
+        "public System.Integer ordinal()",
+        "public static System.List<System.LoggingLevel> values()",
+        "public static System.LoggingLevel valueOf(System.String name)",
+        "public System.Boolean equals(Object other)",
+        "public System.Integer hashCode()",
+        "public System.String toString()"
+      ).sorted.mkString("\n")
+    )
   }
 
   test("Extending platform type fulfills base Object interface") {
