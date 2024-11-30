@@ -19,10 +19,8 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.opcst.OutlineParserFullDeclaration
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryApex, TriggerDeclaration}
-import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.apexlink.types.schema.SObjectDeclaration
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
@@ -45,7 +43,7 @@ import scala.util.hashing.MurmurHash3
 class StreamDeployer(
   module: OPM.Module,
   events: Iterator[PackageEvent],
-  types: mutable.Map[TypeName, TypeDeclaration]
+  types: TypeDeclarationCache
 ) {
   load()
 
@@ -84,25 +82,25 @@ class StreamDeployer(
     val labelFileEvents    = labelRelatedEvents.collect { case e: LabelFileEvent => e }
     val labelEvents        = labelRelatedEvents.collect { case e: LabelEvent => e }
     val labels             = LabelDeclaration(module).merge(labelFileEvents, labelEvents)
-    upsertMetadata(labels)
-    upsertMetadata(labels, Some(TypeName(labels.name)))
+    types.put(labels)
+    types.put(labels, Some(TypeName(labels.name)))
   }
 
   private def consumeComponents(events: BufferedIterator[PackageEvent]): ComponentDeclaration = {
     val componentDeclaration =
       ComponentDeclaration(module).merge(bufferEvents[ComponentEvent](events))
-    upsertMetadata(componentDeclaration)
+    types.put(componentDeclaration)
     componentDeclaration
   }
 
   private def consumePages(events: BufferedIterator[PackageEvent]): PageDeclaration = {
     val pageDeclaration = PageDeclaration(module).merge(bufferEvents[PageEvent](events))
-    upsertMetadata(pageDeclaration)
+    types.put(pageDeclaration)
     pageDeclaration
   }
 
   private def consumeFlows(events: BufferedIterator[PackageEvent]): Unit = {
-    upsertMetadata(InterviewDeclaration(module).merge(bufferEvents[FlowEvent](events)))
+    types.put(InterviewDeclaration(module).merge(bufferEvents[FlowEvent](events)))
   }
 
   private def consumeSObjects(events: BufferedIterator[PackageEvent]): Unit = {
@@ -110,7 +108,7 @@ class StreamDeployer(
     val deployer = new SObjectDeployer(module)
     val sobjects = deployer.createSObjects(events)
     sobjects.foreach(sobject => {
-      types.put(sobject.typeName, sobject)
+      types.put(sobject)
       module.schemaSObjectType.add(sobject.typeName.name, hasFieldSets = true)
     })
 
@@ -156,7 +154,7 @@ class StreamDeployer(
                 FullDeclaration
                   .create(module, doc, data, forceConstruct = false)
                   .map(td => {
-                    types.put(td.typeName, td)
+                    types.put(td)
                     td
                   })
               }
@@ -288,7 +286,7 @@ class StreamDeployer(
     ArraySeq.from(failedDocuments.asScala.toSeq)
   }
 
-  /** Consume trigger events, these could be cached but they don't consume much time to for we load
+  /** Consume trigger events, these could be cached, but they don't consume much time to for we load
     * from disk and parse each time.
     */
   private def consumeTriggers(events: BufferedIterator[PackageEvent]): Unit = {
@@ -302,16 +300,11 @@ class StreamDeployer(
               TriggerDeclaration
                 .create(module, doc.path, data)
                 .map(td => {
-                  types.put(td.typeName, td)
+                  types.put(td)
                   td.validate()
                 })
           }
         })
     }
-  }
-
-  // Upsert some metadata to the package
-  def upsertMetadata(td: TypeDeclaration, altTypeName: Option[TypeName] = None): Unit = {
-    types.put(altTypeName.getOrElse(td.typeName), td)
   }
 }

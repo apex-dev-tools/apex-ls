@@ -664,7 +664,7 @@ object OPM extends TriHierarchy {
 
     val isGulped: Boolean = pkg.isGulped
 
-    private[nawforce] var types = mutable.Map[TypeName, TypeDeclaration]()
+    private[nawforce] val types = new TypeDeclarationCache()
     private val schemaManager   = SchemaSObjectType(this)
 
     @unused
@@ -689,25 +689,25 @@ object OPM extends TriHierarchy {
 
     def schemaSObjectType: SchemaSObjectType = schemaManager
 
-    def any: AnyDeclaration = types(TypeNames.Any).asInstanceOf[AnyDeclaration]
+    def any: AnyDeclaration = types.getUnsafe(TypeNames.Any).asInstanceOf[AnyDeclaration]
 
-    def labels: LabelDeclaration = types(TypeNames.Label).asInstanceOf[LabelDeclaration]
+    def labels: LabelDeclaration = types.getUnsafe(TypeNames.Label).asInstanceOf[LabelDeclaration]
 
     def interviews: InterviewDeclaration =
-      types(TypeNames.Interview).asInstanceOf[InterviewDeclaration]
+      types.getUnsafe(TypeNames.Interview).asInstanceOf[InterviewDeclaration]
 
-    def pages: PageDeclaration = types(TypeNames.Page).asInstanceOf[PageDeclaration]
+    def pages: PageDeclaration = types.getUnsafe(TypeNames.Page).asInstanceOf[PageDeclaration]
 
     def components: ComponentDeclaration =
-      types(TypeNames.Component).asInstanceOf[ComponentDeclaration]
+      types.getUnsafe(TypeNames.Component).asInstanceOf[ComponentDeclaration]
 
     def nonTestClasses: Iterable[ApexClassDeclaration] =
-      types.values.collect {
+      types.values().collect {
         case ac: ApexClassDeclaration if !ac.inTest => ac
       }
 
     def testClasses: Iterable[ApexClassDeclaration] =
-      types.values.collect {
+      types.values().collect {
         case ac: ApexClassDeclaration if ac.inTest => ac
       }
 
@@ -717,14 +717,15 @@ object OPM extends TriHierarchy {
 
     /* Iterator over available types */
     def getTypes: Iterable[TypeDeclaration] = {
-      types.values
+      types.values()
     }
 
     /** Iterate metadata defined types, this will include referenced platform SObjects irrespective
       * of if they have been extended or not which is perhaps not quite accurate to the method name.
       */
     def getMetadataDefinedTypeIdentifiers(apexOnly: Boolean): Iterable[TypeIdentifier] = {
-      types.values
+      types
+        .values()
         .collect {
           case x: ApexDeclaration                 => x
           case x: SObjectDeclaration if !apexOnly => x
@@ -780,7 +781,7 @@ object OPM extends TriHierarchy {
     // Add dependencies for Apex types to a map
     def populateDependencies(dependencies: java.util.Map[String, Array[String]]): Unit = {
       val typeCache = new TypeCache()
-      types.values.foreach {
+      types.values().foreach {
         case td: ApexClassDeclaration =>
           val depends = mutable.Set[TypeId]()
           td.gatherDependencies(depends, apexOnly = false, outerTypesOnly = true, typeCache)
