@@ -6,6 +6,7 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.names.TypeName
+import com.nawforce.pkgforce.names.TypeNameFuncs.TypeNameFuncs
 
 import scala.collection.mutable
 
@@ -27,9 +28,9 @@ class TypeDeclarationCache {
   /** Upsert an entry. Beware, assumes the TypeName is fully qualified. */
   def put(typeName: TypeName, td: TypeDeclaration): Unit = {
     allTypes.put(typeName, td)
-    if (typeName.outer.contains(TypeName.Schema)) {
-      schemaTypes.put(typeName.withOuter(None), td)
-    }
+    val stripped = typeName.replaceTail(TypeName.Schema, None)
+    if (stripped ne typeName)
+      schemaTypes.put(stripped, td)
   }
 
   def get(typeName: TypeName): Option[TypeDeclaration] = {
