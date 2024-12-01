@@ -64,9 +64,10 @@ class TypeDeclarationCache {
   }
 
   def remove(typeName: TypeName): Option[TypeDeclaration] = {
-    val result = allTypes.remove(typeName)
-    if (typeName.outer.contains(TypeName.Schema)) {
-      schemaTypes.remove(typeName.withOuter(None))
+    val result   = allTypes.remove(typeName)
+    val stripped = typeName.replaceTail(TypeName.Schema, None)
+    if (stripped != typeName) {
+      schemaTypes.remove(stripped)
     }
     result
   }

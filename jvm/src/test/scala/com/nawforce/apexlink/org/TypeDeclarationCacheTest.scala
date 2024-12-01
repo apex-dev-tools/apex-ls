@@ -22,19 +22,21 @@ class TypeDeclarationCacheTest extends AnyFunSuite with TestHelper {
   private val nestedSchemaTypeName =
     TypeName(Name("Fake"), Nil, Some(TypeName(Name("Account"), Nil, Some(TypeNames.Schema))))
 
-  test("Empty cache has no size") {
-    assert(new TypeDeclarationCache().size == 0)
+  test("Empty cache behaviour") {
+    val cache = new TypeDeclarationCache()
+    assert(cache.size == 0)
+    assert(cache.values().toList == Nil)
+    assert(cache.filter(_ => true).isEmpty)
+    assert(cache.collect { case _ => }.isEmpty)
   }
 
   forAll(
     List(
-      /*
       simpleTypeName,
       scopedTypeName,
       systemTypeName,
       genericTypeName,
       schemaTypeName,
-       */
       nestedSchemaTypeName
     )
   ) { testTypeName =>
@@ -56,6 +58,14 @@ class TypeDeclarationCacheTest extends AnyFunSuite with TestHelper {
 
       assert(cache.remove(testTypeName).contains(null))
       assert(cache.size == 0)
+      assert(!cache.contains(testTypeName))
+      assert(cache.get(testTypeName).isEmpty)
+      assert(cache.getWithSchema(testTypeName).isEmpty)
+      if (stripped != testTypeName)
+        assert(cache.getWithSchema(stripped).isEmpty)
+      assert(cache.values().toList == Nil)
+      assert(cache.filter(_._1 == testTypeName).isEmpty)
+      assert(cache.collect { case (t: TypeName, null) if t == testTypeName => }.isEmpty)
     }
   }
 
