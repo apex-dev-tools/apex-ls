@@ -228,11 +228,25 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   /** Override to handle request to flush the type to passed cache if dirty */
   def flush(pc: ParsedCache, context: PackageContext): Unit
 
-  override def superClassDeclaration: Option[TypeDeclaration] =
-    superClass.flatMap(sc => TypeResolver(sc, this).toOption)
+  private var _superClassDeclaration: Option[TypeDeclaration] = None
 
-  override def interfaceDeclarations: ArraySeq[TypeDeclaration] =
-    interfaces.flatMap(i => TypeResolver(i, this).toOption)
+  override def superClassDeclaration: Option[TypeDeclaration] = {
+    // Don't cache empty as maybe currently missing
+    if (_superClassDeclaration.isEmpty) {
+      _superClassDeclaration = superClass.flatMap(sc => TypeResolver(sc, this).toOption)
+    }
+    _superClassDeclaration
+  }
+
+  private var _interfaceDeclarations: ArraySeq[TypeDeclaration] = ArraySeq.empty
+
+  override def interfaceDeclarations: ArraySeq[TypeDeclaration] = {
+    // Don't cache empty as maybe currently missing
+    if (_interfaceDeclarations.size != interfaces.size) {
+      _interfaceDeclarations = interfaces.flatMap(i => TypeResolver(i, this).toOption)
+    }
+    _interfaceDeclarations
+  }
 
   /** Obtain a source hash for this class and all it's ancestors */
   def deepHash: Int = {
