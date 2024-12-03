@@ -70,7 +70,7 @@ trait SObjectFieldFinder {
   }
 
   private def getRelationshipField(name: Name): Option[FieldDeclaration] = {
-    val encodedName = EncodedName(name).defaultNamespace(module.namespace)
+    val encodedName = EncodedName(name, module.namespace)
     if (encodedName.ext.contains(relationshipExtension)) {
       getRelationshipField(this, encodedName)
         .orElse(
