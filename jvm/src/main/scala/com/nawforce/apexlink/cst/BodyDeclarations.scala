@@ -28,7 +28,7 @@ import com.nawforce.apexlink.types.apex.{
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers._
-import com.nawforce.pkgforce.names.{Name, TypeName}
+import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers._
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
@@ -237,21 +237,38 @@ class ApexMethodDeclaration(
   returnTypeName: RelativeTypeName,
   id: Id,
   override val parameters: ArraySeq[FormalParameter],
-  val block: Option[Block]
+  val block: Option[Block],
+  collectionTypeName: Option[TypeName] = None
 ) extends ClassBodyDeclaration(_modifiers)
     with ApexMethodLike
     with Referenceable {
 
   override def idLocation: Location = id.location.location
 
-  override val name: Name                   = id.name
-  override val thisTypeId: TypeId           = thisType.typeId
-  override val hasBlock: Boolean            = block.nonEmpty
-  override def typeName: TypeName           = returnTypeName.typeName
-  override val nature: Nature               = METHOD_NATURE
-  override val children: ArraySeq[ApexNode] = ArraySeq.empty
-  override lazy val signature: String       = super[ApexMethodLike].signature
-  override val inTest: Boolean              = thisType.inTest
+  override val name: Name         = id.name
+  override val thisTypeId: TypeId = thisType.typeId
+  override val hasBlock: Boolean  = block.nonEmpty
+  override def typeName: TypeName = returnTypeName.typeName
+
+  // This only returns the location of the type correctly if it is a plain type E.g. String.
+  // This Location is WRONG for collections like List, Set and Map.
+  // Instead use the location property on cachedCollectionTypeName which is populated for these collections
+  def returnTypeNameLocation: Location = {
+    Location(
+      idLocation.startLine,
+      idLocation.startPosition - 1 - typeName.name.value.length,
+      idLocation.endLine,
+      idLocation.startPosition - 1
+    )
+  }
+  // need to cache the collection type name for the purpose of accessing the unique location, otherwise the type name
+  // given to the method declaration is pulled from the TypeName cache, which has no location info.
+  // if the return type is not a collection then use returnTypeNameLocation for location.
+  val cachedCollectionTypeName: Option[TypeName] = collectionTypeName
+  override val nature: Nature                    = METHOD_NATURE
+  override val children: ArraySeq[ApexNode]      = ArraySeq.empty
+  override lazy val signature: String            = super[ApexMethodLike].signature
+  override val inTest: Boolean                   = thisType.inTest
 
   // If using a fake block then consider synthetic, we need to use a block to avoid confusion with abstract
   override def isSynthetic: Boolean = block.contains(Block.empty)
@@ -295,14 +312,31 @@ object ApexMethodDeclaration {
       .toScala(from.block())
       .map(b => Block.constructOuterFromANTLR(parser, b))
 
-    new ApexMethodDeclaration(
-      thisType,
-      modifiers,
-      RelativeTypeName(typeContext, TypeReference.construct(from.typeRef())),
-      Id.construct(from.id()),
-      FormalParameters.construct(parser, typeContext, from.formalParameters()),
-      block
-    ).withContext(from)
+    val typeName = TypeReference.construct(from.typeRef())
+
+    if (
+      typeName.name == Names.ListName || typeName.name == Names.MapName || typeName.name == Names.SetName
+    ) {
+      new ApexMethodDeclaration(
+        thisType,
+        modifiers,
+        RelativeTypeName(typeContext, typeName),
+        Id.construct(from.id()),
+        FormalParameters.construct(parser, typeContext, from.formalParameters()),
+        block,
+        Some(typeName)
+      ).withContext(from)
+    } else {
+      new ApexMethodDeclaration(
+        thisType,
+        modifiers,
+        RelativeTypeName(typeContext, typeName),
+        Id.construct(from.id()),
+        FormalParameters.construct(parser, typeContext, from.formalParameters()),
+        block
+      ).withContext(from)
+    }
+
   }
 
   def construct(
@@ -316,14 +350,28 @@ object ApexMethodDeclaration {
       .toScala(from.typeRef())
       .map(tr => TypeReference.construct(tr))
       .getOrElse(TypeNames.Void)
-    new ApexMethodDeclaration(
-      thisType,
-      modifiers,
-      RelativeTypeName(typeContext, typeName),
-      Id.construct(from.id()),
-      FormalParameters.construct(parser, typeContext, from.formalParameters()),
-      None
-    ).withContext(from)
+    if (
+      typeName.name == Names.ListName || typeName.name == Names.MapName || typeName.name == Names.SetName
+    ) {
+      new ApexMethodDeclaration(
+        thisType,
+        modifiers,
+        RelativeTypeName(typeContext, typeName),
+        Id.construct(from.id()),
+        FormalParameters.construct(parser, typeContext, from.formalParameters()),
+        None,
+        Some(typeName)
+      ).withContext(from)
+    } else {
+      new ApexMethodDeclaration(
+        thisType,
+        modifiers,
+        RelativeTypeName(typeContext, typeName),
+        Id.construct(from.id()),
+        FormalParameters.construct(parser, typeContext, from.formalParameters()),
+        None
+      ).withContext(from)
+    }
   }
 }
 
@@ -349,6 +397,16 @@ final case class ApexFieldDeclaration(
   override val nature: Nature               = FIELD_NATURE
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
+
+  // This only returns the location of the type correctly if it is a plain type E.g. String.
+  // This Location is WRONG for collections like List, Set and Map.
+  // Instead use the location property on TypeName which is populated for these collections
+  def typeNameLocation: Location = Location(
+    idLocation.startLine,
+    idLocation.startPosition - 1 - typeName.name.value.length,
+    idLocation.endLine,
+    idLocation.startPosition - 1
+  )
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     // Ignore enum constants so they don't become dependency holders on defining enum type
