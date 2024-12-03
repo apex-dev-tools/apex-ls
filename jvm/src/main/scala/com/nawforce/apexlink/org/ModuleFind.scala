@@ -99,7 +99,7 @@ trait ModuleFind {
       targetType.params.isEmpty &&
       (targetType.outer.isEmpty || targetType.outer.contains(TypeNames.Schema))
     ) {
-      val encName = EncodedName(targetType.name).defaultNamespace(namespace)
+      val encName = EncodedName(targetType.name, namespace)
       if (encName.ext.nonEmpty) {
         return types.getWithSchema(TypeName(encName.fullName, Nil, None))
       }

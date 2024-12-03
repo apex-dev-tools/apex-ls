@@ -461,5 +461,5 @@ final class ExpressionVerifyContext(parentContext: BlockVerifyContext) extends V
     parentContext.getVar(name, markUsed: Boolean)
 
   def defaultNamespace(name: Name): Name =
-    EncodedName(name).defaultNamespace(module.namespace).fullName
+    EncodedName(name, module.namespace).fullName
 }
