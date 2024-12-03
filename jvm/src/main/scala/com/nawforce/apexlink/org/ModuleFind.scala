@@ -91,18 +91,17 @@ trait ModuleFind {
       return declaration
 
     // SObject and alike, we want module specific version of these
-    declaration = types.get(targetType.withTail(TypeNames.Schema))
+    declaration = types.getWithSchema(targetType)
     if (declaration.nonEmpty)
       return declaration
 
     if (
-      targetType.params.isEmpty && (targetType.outer.isEmpty || targetType.outer.contains(
-        TypeNames.Schema
-      ))
+      targetType.params.isEmpty &&
+      (targetType.outer.isEmpty || targetType.outer.contains(TypeNames.Schema))
     ) {
       val encName = EncodedName(targetType.name).defaultNamespace(namespace)
       if (encName.ext.nonEmpty) {
-        return types.get(TypeName(encName.fullName, Nil, Some(TypeNames.Schema)))
+        return types.getWithSchema(TypeName(encName.fullName, Nil, None))
       }
     }
     None

@@ -247,10 +247,12 @@ trait PackageAPI extends Package {
   def flush(pc: ParsedCache): Unit = {
     val context = packageContext
     modules.foreach(module => {
-      module.types.values.foreach({
-        case ad: ApexClassDeclaration => ad.flush(pc, context)
-        case _                        => ()
-      })
+      module.types
+        .values()
+        .foreach({
+          case ad: ApexClassDeclaration => ad.flush(pc, context)
+          case _                        => ()
+        })
     })
   }
 

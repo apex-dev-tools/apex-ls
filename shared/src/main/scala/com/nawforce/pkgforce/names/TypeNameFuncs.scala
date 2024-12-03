@@ -20,5 +20,23 @@ object TypeNameFuncs {
     def outerName: Name =
       typeName.outer.map(_.outerName).getOrElse(typeName.name)
 
+    /** Replace the tail section of a TypeName with something else.
+      * @return an updated TypeName or this if not matched.
+      */
+    def replaceTail(tail: TypeName, replacement: Option[TypeName]): TypeName = {
+      if (typeName.outer.contains(tail))
+        return TypeName(typeName.name, typeName.params, replacement)
+
+      typeName.outer
+        .map(outer => {
+          val dropped = outer.replaceTail(tail, replacement)
+          if (dropped ne outer) {
+            TypeName(typeName.name, typeName.params, Some(dropped))
+          } else {
+            typeName
+          }
+        })
+        .getOrElse(typeName)
+    }
   }
 }
