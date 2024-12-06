@@ -19,7 +19,7 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.modifiers.GLOBAL_MODIFIER
-import com.nawforce.pkgforce.names.{EncodedName, TypeName}
+import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 
 trait ModuleFind {
   self: OPM.Module =>
@@ -59,6 +59,17 @@ trait ModuleFind {
     from: Option[TypeDeclaration],
     inPackage: Boolean = true
   ): Option[TypeDeclaration] = {
+    // Use aliased type name here so we don't mishandle an ambiguous typename when searching
+    val targetType = TypeNames.aliasOrReturn(typeName)
+
+    findPackageTypeInternal(targetType, from, inPackage)
+  }
+
+  private def findPackageTypeInternal(
+    typeName: TypeName,
+    from: Option[TypeDeclaration],
+    inPackage: Boolean
+  ): Option[TypeDeclaration] = {
     // Might be an outer in this module
     var declaration = findModuleType(typeName)
     if (declaration.nonEmpty) {
@@ -70,7 +81,7 @@ trait ModuleFind {
 
     // Or maybe an inner
     if (typeName.outer.nonEmpty) {
-      declaration = findPackageType(typeName.outer.get, from, inPackage = inPackage)
+      declaration = findPackageTypeInternal(typeName.outer.get, from, inPackage = inPackage)
         .flatMap(_.findNestedType(typeName.name).filter(td => td.isExternallyVisible || inPackage))
       if (declaration.nonEmpty)
         return declaration
@@ -82,28 +93,22 @@ trait ModuleFind {
 
   /** Find a type just in this module. */
   def findModuleType(typeName: TypeName): Option[TypeDeclaration] = {
-    // Use aliased type name here so we don't mishandle an ambiguous typename when searching
-    val targetType = TypeNames.aliasOrReturn(typeName)
-
     // Direct hit
-    var declaration = types.get(targetType)
+    val declaration = types.get(typeName)
     if (declaration.nonEmpty)
       return declaration
 
     // SObject and alike, we want module specific version of these
-    declaration = types.getWithSchema(targetType)
-    if (declaration.nonEmpty)
-      return declaration
-
     if (
-      targetType.params.isEmpty &&
-      (targetType.outer.isEmpty || targetType.outer.contains(TypeNames.Schema))
+      typeName.params.isEmpty &&
+      (typeName.outer.isEmpty || typeName.outer.contains(TypeNames.Schema))
     ) {
-      val encName = EncodedName(targetType.name, namespace)
-      if (encName.ext.nonEmpty) {
-        return types.getWithSchema(TypeName(encName.fullName, Nil, None))
-      }
+      if (EncodedName.encodedNeedsNamespace(typeName.name))
+        types.getWithSchema(TypeName(Name(namespacePrefix + typeName.name.value), Nil, None))
+      else
+        types.getWithSchema(typeName)
+    } else {
+      None
     }
-    None
   }
 }

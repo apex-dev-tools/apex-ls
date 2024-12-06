@@ -27,6 +27,7 @@
  */
 package com.nawforce.pkgforce.names
 
+import org.scalatest.Inspectors.forAll
 import org.scalatest.funsuite.AnyFunSuite
 
 class EncodedNameTest extends AnyFunSuite {
@@ -138,4 +139,29 @@ class EncodedNameTest extends AnyFunSuite {
     assert(testName.fullName == Name("ns__Foo__x"))
     assert(testName.asTypeName == TypeName(Name("ns__Foo__x"), Nil, None))
   }
+
+  forAll(List("c", "r", "e", "b", "mdt", "share", "history", "feed")) { ext =>
+    test(s"needs namespace simple extensions $ext") {
+      assert(!EncodedName.encodedNeedsNamespace(Name("")))
+      assert(!EncodedName.encodedNeedsNamespace(Name(s"$ext")))
+      assert(!EncodedName.encodedNeedsNamespace(Name(s"__$ext")))
+      assert(EncodedName.encodedNeedsNamespace(Name(s"a__$ext")))
+      assert(EncodedName.encodedNeedsNamespace(Name(s"abc__$ext")))
+      assert(!EncodedName.encodedNeedsNamespace(Name(s"__abc__$ext")))
+      assert(!EncodedName.encodedNeedsNamespace(Name(s"n__abc__$ext")))
+    }
+  }
+
+  test("needs namespace subfield extension") {
+    assert(!EncodedName.encodedNeedsNamespace(Name("")))
+    assert(!EncodedName.encodedNeedsNamespace(Name("s")))
+    assert(!EncodedName.encodedNeedsNamespace(Name("__s")))
+    assert(EncodedName.encodedNeedsNamespace(Name("a__s")))
+    assert(EncodedName.encodedNeedsNamespace(Name("abc__s")))
+    assert(EncodedName.encodedNeedsNamespace(Name("__abc__s")))
+    assert(EncodedName.encodedNeedsNamespace(Name("a__abc__s")))
+    assert(EncodedName.encodedNeedsNamespace(Name("abc__abc__s")))
+    assert(!EncodedName.encodedNeedsNamespace(Name("n__abc__abc__s")))
+  }
+
 }

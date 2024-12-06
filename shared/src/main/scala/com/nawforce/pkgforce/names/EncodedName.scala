@@ -13,18 +13,17 @@
  */
 package com.nawforce.pkgforce.names
 
-/** A name with optional namespace prefixing & optional type suffix such as foo__field__c. Only a
+/** A name with optional namespace prefixing & optional type suffix such as foo&#95;&#95;field&#95;&#95;c. Only a
   * small set of suffixes are supported. It's not clear what the full list used by Salesforce is.
-  * This class is safe to use on non-encoded names which don't contain \_\_, although you can not
+  * This class is safe to use on non-encoded names which don't contain &#95;&#95;, although you can not
   * default the namespace on them.
   *
-  * Where namespace, name and suffix are provided the code will assert on a bad suffix. Where
-  * we only have two parts of the name then if the last parts is not a valid suffix the handling
-  * will assume the first part is a namespace and the second the name, as in Page.pkg1\_\_TestPage.
+  * Where we only have two parts of the name then if the last parts is not a valid suffix the handling
+  * will assume the first part is a namespace and the second the name, as in Page.pkg1&#95;&#95;TestPage.
   *
-  * The code deals with a few exception cases where splitting on \_\_ would give either a wrong
+  * The code deals with a few exception cases where splitting on &#95;&#95; would give either a wrong
   * name or ext part. For subfields the subfield name is combined with the extension. For supporting
-  * SObjects such as MyObject\_\_Feed the 'Feed' is considered an extension in the same way that 'c'
+  * SObjects such as MyObject&#95;&#95;Feed the 'Feed' is considered an extension in the same way that 'c'
   * would be.
   */
 final case class EncodedName(name: Name, ext: Option[Name], namespace: Option[Name]) {
@@ -49,6 +48,10 @@ final case class EncodedName(name: Name, ext: Option[Name], namespace: Option[Na
 }
 
 object EncodedName {
+
+  /** Standard set of extensions, note that the subfield extension "s" is missing as this
+    * often needs special handling because it does not fit the &lt;ns&#95;&#95;>name&#95;&#95;ext pattern
+    */
   private final val extensions = Set("c", "r", "e", "b", "mdt", "share", "history", "feed")
 
   def apply(name: Name): EncodedName = {
@@ -108,4 +111,47 @@ object EncodedName {
         name.substring(tailSplit + 2)
       )
   }
+
+  /** Test if name contains an encoded name that may need a namespace adding for type
+    * resolving. This is broken out from the EncodedName handling to improve performance.
+    */
+  def encodedNeedsNamespace(name: Name): Boolean = {
+    val value  = name.value
+    val suffix = extractSuffixOrReturn(value)
+    if (suffix eq value)
+      return false
+
+    val firstSeparator = value.indexOf("__")
+    if (firstSeparator == value.length - suffix.length - 2) {
+      true
+    } else {
+      val secondSeparator = value.indexOf("__", firstSeparator + 1)
+      if (secondSeparator == value.length - suffix.length - 2) {
+        suffix == "s"
+      } else {
+        false
+      }
+    }
+  }
+
+  private def extractSuffixOrReturn(name: String): String = {
+    val len = name.length
+    if (len >= 4) {
+      name.charAt(len - 1) match {
+        case 'c' | 'C' if name.charAt(len - 2) == '_' && name.charAt(len - 3) == '_' => "c"
+        case 'r' | 'R' if name.charAt(len - 2) == '_' && name.charAt(len - 3) == '_' => "r"
+        case 'e' | 'E' if name.charAt(len - 2) == '_' && name.charAt(len - 3) == '_' => "e"
+        case 'b' | 'B' if name.charAt(len - 2) == '_' && name.charAt(len - 3) == '_' => "b"
+        case 's' | 'S' if name.charAt(len - 2) == '_' && name.charAt(len - 3) == '_' => "s"
+        case 't' | 'T' if len >= 6 && name.toLowerCase.endsWith("__mdt")             => "mdt"
+        case 'e' | 'E' if len >= 8 && name.toLowerCase.endsWith("__share")           => "share"
+        case 'y' | 'Y' if len >= 10 && name.toLowerCase.endsWith("__history")        => "history"
+        case 'd' | 'D' if len >= 7 && name.toLowerCase.endsWith("__feed")            => "feed"
+        case _                                                                       => name
+      }
+    } else {
+      name
+    }
+  }
+
 }
