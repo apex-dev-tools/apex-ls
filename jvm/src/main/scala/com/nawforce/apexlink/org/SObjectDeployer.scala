@@ -59,7 +59,7 @@ class SObjectDeployer(module: OPM.Module) {
 
     while (objectsEvents.hasNext) {
       val sObjectEvent = objectsEvents.next().asInstanceOf[SObjectEvent]
-      val encodedName  = EncodedName(sObjectEvent.name).defaultNamespace(module.namespace)
+      val encodedName  = EncodedName(sObjectEvent.name, module.namespace)
       val typeName     = TypeName(encodedName.fullName, Nil, Some(TypeNames.Schema))
       val nature       = SObjectNature(sObjectEvent.name, sObjectEvent)
 
@@ -632,7 +632,7 @@ class SObjectDeployer(module: OPM.Module) {
   }
 
   private def defaultNamespace(name: Name): Name = {
-    EncodedName(name).defaultNamespace(module.namespace).fullName
+    EncodedName(name, module.namespace).fullName
   }
 
 }
