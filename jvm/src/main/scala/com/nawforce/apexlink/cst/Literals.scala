@@ -17,10 +17,11 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.names.Name
+import com.nawforce.pkgforce.path.PathLocation
 import com.nawforce.runtime.parsers.CodeParser
 import io.github.apexdevtools.apexparser.ApexParser.LiteralContext
 
-sealed abstract class Literal() {
+sealed abstract class Literal {
   def getType: TypeDeclaration
 
   def verify(context: ExpressionVerifyContext): Unit = {}
@@ -30,8 +31,26 @@ case object IntegerLiteral extends Literal {
   override def getType: TypeDeclaration = PlatformTypes.integerType
 }
 
+case class OversizeIntegerLiteral(location: PathLocation) extends Literal {
+
+  override def getType: TypeDeclaration = PlatformTypes.integerType
+
+  override def verify(context: ExpressionVerifyContext): Unit = {
+    context.logError(location, "Integer literals can only be up to 10 characters")
+  }
+}
+
 case object LongLiteral extends Literal {
   override def getType: TypeDeclaration = PlatformTypes.longType
+}
+
+case class OversizeLongLiteral(location: PathLocation) extends Literal {
+
+  override def getType: TypeDeclaration = PlatformTypes.longType
+
+  override def verify(context: ExpressionVerifyContext): Unit = {
+    context.logError(location, "Long literals can only be up to 19 characters")
+  }
 }
 
 case object DoubleLiteral extends Literal {
@@ -40,6 +59,15 @@ case object DoubleLiteral extends Literal {
 
 case object DecimalLiteral extends Literal {
   override def getType: TypeDeclaration = PlatformTypes.decimalType
+}
+
+case class OversizeDecimalLiteral(location: PathLocation) extends Literal {
+
+  override def getType: TypeDeclaration = PlatformTypes.decimalType
+
+  override def verify(context: ExpressionVerifyContext): Unit = {
+    context.logError(location, "Decimal literals can only be up to 50 characters")
+  }
 }
 
 case object StringLiteral extends Literal {
@@ -83,20 +111,32 @@ case object NullLiteral extends Literal {
 }
 
 object IntegerOrLongLiteral {
-  def apply(value: String): Literal = {
-    if (value.endsWith("l") || value.endsWith("L"))
-      LongLiteral
-    else
-      IntegerLiteral
+  def apply(context: LiteralContext): Literal = {
+    val value = CodeParser.getText(context)
+    if (value.last.toLower == 'l') {
+      if (value.length > 20) // 19 + 1 for 'l'
+        OversizeLongLiteral(CST.sourceContext.value.get.getLocation(context))
+      else
+        LongLiteral
+    } else {
+      if (value.length > 10)
+        OversizeIntegerLiteral(CST.sourceContext.value.get.getLocation(context))
+      else
+        IntegerLiteral
+    }
   }
 }
 
 object DoubleOrDecimalLiteral {
-  def apply(value: String): Literal = {
-    if (value.length() > 50)
+  def apply(context: LiteralContext): Literal = {
+    val value = CodeParser.getText(context)
+    if (value.last.toLower == 'd') {
       DoubleLiteral
-    else
+    } else if (value.length > 50) {
+      OversizeDecimalLiteral(CST.sourceContext.value.get.getLocation(context))
+    } else {
       DecimalLiteral
+    }
   }
 }
 
@@ -104,16 +144,16 @@ object Literal {
   def construct(from: LiteralContext): Literal = {
     CodeParser
       .toScala(from.IntegerLiteral())
-      .map(x => IntegerOrLongLiteral(CodeParser.getText(x)))
+      .map(_ => IntegerOrLongLiteral(from))
       .orElse(
         CodeParser
           .toScala(from.LongLiteral())
-          .map(x => IntegerOrLongLiteral(CodeParser.getText(x)))
+          .map(_ => IntegerOrLongLiteral(from))
       )
       .orElse(
         CodeParser
           .toScala(from.NumberLiteral())
-          .map(x => DoubleOrDecimalLiteral(CodeParser.getText(x)))
+          .map(_ => DoubleOrDecimalLiteral(from))
       )
       .orElse(
         CodeParser

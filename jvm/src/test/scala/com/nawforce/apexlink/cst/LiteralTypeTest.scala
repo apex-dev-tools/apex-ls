@@ -11,9 +11,9 @@
  3. The name of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
  */
-package com.nawforce.apexlink.types
+package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.{BoundStringLiteral, CST, Literal}
+import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
@@ -21,7 +21,7 @@ import com.nawforce.runtime.platform.Path
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-class LiteralTypeTest extends AnyFunSuite with Matchers {
+class LiteralTypeTest extends AnyFunSuite with Matchers with TestHelper {
   def typeLiteral(data: String): Literal = {
     val source = Source(Path("Dummy.cls"), SourceData(""), 0, 0, None)
     CST.sourceContext.withValue(Some(source)) {
@@ -61,10 +61,58 @@ class LiteralTypeTest extends AnyFunSuite with Matchers {
     literal("False", TypeNames.Boolean)
     literal("null", TypeName(Name("Null$"), Nil, Some(TypeName(Names.Internal))))
     literal("0.0", TypeNames.Decimal)
+    literal("0.0d", TypeNames.Double)
     literal(".0", TypeNames.Decimal)
+    literal(".0D", TypeNames.Double)
     literal("0.123", TypeNames.Decimal)
+    literal("0.123D", TypeNames.Double)
     literal("0.123456789012345678901234567890123456789012345678", TypeNames.Decimal)
-    literal("0.1234567890123456789012345678901234567890123456789", TypeNames.Double)
+    literal("0.123456789012345678901234567890123456789012345678d", TypeNames.Double)
+  }
+
+  test("Max Decimal") {
+    typeDeclaration(
+      "public class Dummy { Object a = 0.123456789012345678901234567890123456789012345678; }"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Oversize Decimal") {
+    typeDeclaration(
+      "public class Dummy { Object a = 0.1234567890123456789012345678901234567890123456789; }"
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 32-83: Decimal literals can only be up to 50 characters\n"
+    )
+  }
+
+  test("Long Double") {
+    typeDeclaration(
+      "public class Dummy { Object a = 0.12345678901234567890123456789012345678901234567890123456789d; }"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Max Integer") {
+    typeDeclaration("public class Dummy { Object a = 1234567890; }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Oversize Integer") {
+    typeDeclaration("public class Dummy { Object a = 12345678901; }")
+    assert(
+      dummyIssues == "Error: line 1 at 32-43: Integer literals can only be up to 10 characters\n"
+    )
+  }
+
+  test("Max Long") {
+    typeDeclaration("public class Dummy { Object a = 1234567890123456789l; }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Oversize Long") {
+    typeDeclaration("public class Dummy { Object a = 12345678901234567890l; }")
+    assert(dummyIssues == "Error: line 1 at 32-53: Long literals can only be up to 19 characters\n")
   }
 
   test("Bound string literal") {
@@ -95,4 +143,5 @@ class LiteralTypeTest extends AnyFunSuite with Matchers {
       case BoundStringLiteral(bound) if bound == abcSet =>
     }
   }
+
 }
