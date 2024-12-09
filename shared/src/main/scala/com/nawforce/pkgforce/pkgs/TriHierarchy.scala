@@ -55,13 +55,13 @@ abstract class TriHierarchy {
     /** Is this a ghost package, aka it has no modules. */
     lazy val isGhosted: Boolean = modules.isEmpty
 
-    /* Find first module in search order (may not be in this package) */
-    def firstModule: Option[TModule] = {
+    /** Find first module in search order (may not be in this package) */
+    lazy val firstModule: Option[TModule] = {
       orderedModules.headOption
         .orElse(basePackages.headOption.flatMap(_.firstModule))
     }
 
-    /* Check if a type is ghosted in this package */
+    /** Check if a type is ghosted in this package */
     def isGhostedType(typeName: TypeName): Boolean = {
       if (typeName.outer.contains(TypeName.Schema)) {
         val encName = EncodedName(typeName.name)
@@ -92,8 +92,11 @@ abstract class TriHierarchy {
     /** The modules that this module depends on deploy order */
     val dependents: ArraySeq[TModule]
 
-    /** The module (& owning package namespace) */
+    /** The module (& owning package) namespace */
     lazy val namespace: Option[Name] = pkg.namespace
+
+    /** The module (& owning package) namespace prefix */
+    lazy val namespacePrefix: String = namespace.map(ns => ns.toString + "__").getOrElse("")
 
     /** The package the parent package depends on in reverse deploy order */
     lazy val basePackages: ArraySeq[TPackage] = pkg.basePackages.reverse
@@ -101,25 +104,18 @@ abstract class TriHierarchy {
     /** The modules that this module depends on in reverse deploy order */
     lazy val baseModules: ArraySeq[TModule] = dependents.reverse
 
-    /** Test if a file is visible to this module, i.e. in scope & not ignored */
-    def isVisibleFile(path: PathLike): Boolean
-
-    /* Transitive Modules (dependent modules for this modules & its dependents) */
-    def transitiveModules: Set[TModule] = {
-      namespace
-        .map(_ => dependents.toSet ++ dependents.flatMap(_.transitiveModules))
-        .getOrElse(baseModules.toSet)
-    }
-
-    /* Find next module in search order */
-    def nextModule: Option[TModule] = {
+    /** Find next module in search order */
+    lazy val nextModule: Option[TModule] = {
       baseModules.headOption.orElse(basePackages.headOption.flatMap(_.firstModule))
     }
 
-    /* Check if a type name is ghosted in this module */
+    /** Test if a file is visible to this module, i.e. in scope & not ignored */
+    def isVisibleFile(path: PathLike): Boolean
+
+    /** Check if a type name is ghosted in this module */
     def isGhostedType(typeName: TypeName): Boolean = pkg.isGhostedType(typeName)
 
-    /* Check if a field name is ghosted in this module */
+    /** Check if a field name is ghosted in this module */
     def isGhostedFieldName(name: Name): Boolean = pkg.isGhostedFieldName(name)
   }
 }
