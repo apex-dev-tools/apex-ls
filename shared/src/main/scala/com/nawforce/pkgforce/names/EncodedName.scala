@@ -55,7 +55,11 @@ object EncodedName {
     apply(name.value)
   }
 
-  def apply(name: String): EncodedName = {
+  def apply(name: Name, defaultNamespace: Option[Name]): EncodedName = {
+    apply(name.value, defaultNamespace)
+  }
+
+  def apply(name: String, defaultNamespace: Option[Name] = None): EncodedName = {
     val parts = nameSplit(name)
     parts.size match {
       case 3 =>
@@ -69,7 +73,7 @@ object EncodedName {
       case 2 =>
         val normalExt = parts(1).toLowerCase
         if (extensions.contains(normalExt) || normalExt.endsWith("__s"))
-          EncodedName(Name(parts.head), Some(Name(parts(1))), None)
+          EncodedName(Name(parts.head), Some(Name(parts(1))), defaultNamespace)
         else
           EncodedName(Name(parts(1)), None, Some(Name(parts.head)))
       case 0 => EncodedName(Name(name), None, None)
