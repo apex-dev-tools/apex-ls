@@ -116,7 +116,7 @@ abstract class FullDeclaration(
     }
   }
 
-  override def validate(): Unit = {
+  override protected def validate(): Unit = {
     LoggerOps.debugTime(s"Validated ${location.path}") {
       // Validate inside a parsing context as LazyBlock may call parser
       CST.sourceContext.withValue(Some(source)) {

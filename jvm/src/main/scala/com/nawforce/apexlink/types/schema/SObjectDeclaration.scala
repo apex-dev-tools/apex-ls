@@ -118,7 +118,7 @@ final case class SObjectDeclaration(
   override lazy val superClassDeclaration: Option[TypeDeclaration] =
     TypeResolver(superClass.get, this).toOption
 
-  override def validate(): Unit = {
+  override protected def validate(): Unit = {
     // Check field types, can be ignored for Feed, Share & History synthetic SObjects
     if (isSynthetic) return
 

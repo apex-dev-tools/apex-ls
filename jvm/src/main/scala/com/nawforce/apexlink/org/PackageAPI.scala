@@ -394,7 +394,7 @@ trait PackageAPI extends Package {
       td.paths.foreach(path => org.issues.pop(path))
       td.preReValidate()
     })
-    collectedTypes.foreach(_.validate())
+    collectedTypes.foreach(_.safeValidate())
   }
 
   /* Collect all classes in a super class hierarchy that have an abstract ancestor */

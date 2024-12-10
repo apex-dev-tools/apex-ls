@@ -107,7 +107,7 @@ final case class PageDeclaration(
     new PageDeclaration(sourceInfo, module, newPages)
   }
 
-  override def validate(): Unit = {
+  override protected def validate(): Unit = {
     // We may create multiple Pages for each .page file to handle namespaces
     // We only want to validate one of them to avoid duplicate diagnostics
     val uniquePages = pages.map(page => (page.location.path, page)).toMap.values

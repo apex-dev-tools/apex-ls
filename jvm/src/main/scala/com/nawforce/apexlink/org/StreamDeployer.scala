@@ -61,8 +61,8 @@ class StreamDeployer(
       consumeSObjects(bufferedIterator)
       consumeClasses(bufferedIterator)
       consumeTriggers(bufferedIterator)
-      components.validate()
-      pages.validate()
+      components.safeValidate()
+      pages.safeValidate()
     }
 
     // Run plugins over loaded types DependentTypes
@@ -113,7 +113,7 @@ class StreamDeployer(
     })
 
     // Run custom validation to setup dependencies
-    sobjects.foreach(_.validate())
+    sobjects.foreach(_.safeValidate())
   }
 
   /** Consume Apex class events, this is a bit more involved as we try and load first via cache and
@@ -162,14 +162,7 @@ class StreamDeployer(
         )
 
       // Validate the classes, this must be last due to mutual dependence
-      decls.foreach { decl =>
-        try {
-          decl.validate()
-        } catch {
-          case ex: Throwable =>
-            module.log(decl.paths.head, "Validation failed", ex)
-        }
-      }
+      decls.foreach { _.safeValidate() }
     }
   }
 
@@ -281,7 +274,7 @@ class StreamDeployer(
       localAccum.entrySet.forEach(kv => {
         types.put(kv.getKey, kv.getValue)
       })
-      localAccum.values().asScala.foreach(_.validate())
+      localAccum.values().asScala.foreach(_.safeValidate())
     }
     ArraySeq.from(failedDocuments.asScala.toSeq)
   }
@@ -301,7 +294,7 @@ class StreamDeployer(
                 .create(module, doc.path, data)
                 .map(td => {
                   types.put(td)
-                  td.validate()
+                  td.safeValidate()
                 })
           }
         })

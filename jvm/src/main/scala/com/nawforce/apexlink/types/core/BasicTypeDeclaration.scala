@@ -46,7 +46,7 @@ class BasicTypeDeclaration(
   override def constructors: ArraySeq[ConstructorDeclaration] =
     ConstructorDeclaration.emptyConstructorDeclarations
 
-  override def validate(): Unit = {}
+  override protected def validate(): Unit = {}
 }
 
 class InnerBasicTypeDeclaration(

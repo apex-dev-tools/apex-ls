@@ -393,7 +393,7 @@ class SummaryDeclaration(
     // Nothing to do here
   }
 
-  override def validate(): Unit = {
+  override protected def validate(): Unit = {
     propagateOuterDependencies(new TypeCache())
   }
 
