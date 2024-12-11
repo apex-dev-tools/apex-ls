@@ -268,8 +268,13 @@ trait PackageAPI extends Package {
 
   private[nawforce] def refreshAll(paths: Array[PathLike]): Unit = {
     OrgInfo.current.withValue(org) {
-      val highPriority = paths.length == 1
-      org.queueMetadataRefresh(paths.map(path => RefreshRequest(this, path, highPriority)))
+      if (paths.length == 1) {
+        org.queueMetadataRefresh(RefreshRequest(this, paths.head, highPriority = true))
+      } else {
+        org.queueMetadataRefresh(
+          paths.map(path => RefreshRequest(this, path, highPriority = false))
+        )
+      }
     }
   }
 
