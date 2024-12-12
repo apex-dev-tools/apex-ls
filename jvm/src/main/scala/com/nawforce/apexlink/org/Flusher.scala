@@ -29,8 +29,12 @@ trait RefreshListener {
 case class RefreshRequest(pkg: OPM.PackageImpl, path: PathLike, highPriority: Boolean)
 
 class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
-  protected val refreshQueue = new mutable.Queue[RefreshRequest]()
-  private var expired        = false
+  protected val refreshQueue                    = new mutable.Queue[RefreshRequest]()
+  protected var skippedQueue                    = false
+  private var expired                           = false
+  private var listener: Option[RefreshListener] = None
+
+  def setListener(rl: Option[RefreshListener]): Unit = listener = rl
 
   def isDirty: Boolean = {
     org.refreshLock.synchronized { refreshQueue.nonEmpty }
@@ -41,7 +45,12 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
       refreshQueue.enqueue(request)
     } else {
       org.refreshLock.synchronized {
-        request.pkg.refreshBatched(Seq(request))
+        val updated = request.pkg.refreshBatched(Seq(request))
+        // Notify of updated path
+        if (updated) listener.foreach(_.onRefresh(org.path, request.path))
+
+        // Tell auto flush we skipped the queue
+        skippedQueue |= updated
       }
     }
   }
@@ -53,8 +62,9 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
   def refreshAndFlush(): Boolean = {
     OrgInfo.current.withValue(org) {
       org.refreshLock.synchronized {
-        var updated  = false
-        val packages = org.packages
+        var updated      = false
+        val updatedPaths = mutable.Set[PathLike]()
+        val packages     = org.packages
 
         // Process in chunks, new requests may be queued during processing
         while (refreshQueue.nonEmpty) {
@@ -62,12 +72,33 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
           LoggerOps.debug(s"Batched refresh starting for ${toProcess.length} items")
           packages
             .foreach(pkg => {
-              updated |= pkg.refreshBatched(toProcess.filter(_.pkg == pkg))
+              val reqs = toProcess.filter(_.pkg == pkg)
+              updated |= pkg.refreshBatched(reqs)
+
+              if (updated) updatedPaths.addAll(reqs.map(_.path))
             })
           LoggerOps.debug(s"Batched refresh completed")
         }
 
         // Flush to cache
+        flush()
+
+        // Notify of updated paths
+        if (updated) listener.foreach(_.onRefreshAll(org.path, updatedPaths.toSeq))
+
+        updated
+      }
+    }
+  }
+
+  protected def flush(): Unit = {
+    OrgInfo.current.withValue(org) {
+      org.refreshLock.synchronized {
+        val packages = org.packages
+
+        // Reset skip status to prevent more flushes
+        skippedQueue = false
+
         parsedCache.foreach(pc => {
           packages.foreach(pkg => {
             pkg.flush(pc)
@@ -80,7 +111,6 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
 
         // Clean registered caches to reduce memory
         Cleanable.clean()
-        updated
       }
     }
   }
@@ -97,20 +127,29 @@ class CacheFlusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache])
   t.start()
 
   override def run(): Unit = {
-    def queueSize: Int = org.refreshLock.synchronized { refreshQueue.size }
+    def queueSize: Int   = org.refreshLock.synchronized { refreshQueue.size }
+    def skipped: Boolean = org.refreshLock.synchronized { skippedQueue }
 
     while (true) {
       // Wait for non-zero queue to be stable
+      // Or with an empty queue and a priority/single update
       var stable = false
-      while (!stable) {
+      var skip   = false
+      while (!stable && !skip) {
         val start = queueSize
         Thread.sleep(1000)
         val end = queueSize
         stable = start > 0 && start == end
+        skip = skipped
       }
 
-      // Process refresh requests & flush
-      refreshAndFlush()
+      if (stable) {
+        // Process refresh requests & flush
+        refreshAndFlush()
+      } else if (skip) {
+        // Already refreshed, just flush
+        flush()
+      }
     }
   }
 }
