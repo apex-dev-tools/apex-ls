@@ -38,6 +38,7 @@ import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE, Nature}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation, UnsafeLocatable}
 
 import java.io.{PrintWriter, StringWriter}
+import java.nio.file.Files
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
@@ -431,14 +432,7 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
     try {
       validate()
     } catch {
-      case ex: Throwable =>
-        val writer = new StringWriter
-        writer.append("Validation failed")
-        writer.append(": ")
-        ex.printStackTrace(new PrintWriter(writer))
-        OrgInfo.log(
-          Issue(ERROR_CATEGORY, PathLocation(paths.head, Location.empty), writer.toString)
-        )
+      case ex: Throwable => OrgInfo.logException(ex, paths)
     }
   }
 
