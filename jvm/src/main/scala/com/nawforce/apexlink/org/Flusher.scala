@@ -21,6 +21,11 @@ import com.nawforce.pkgforce.path.PathLike
 
 import scala.collection.mutable
 
+trait RefreshListener {
+  def onRefresh(orgPath: PathLike, updatedPath: PathLike): Unit
+  def onRefreshAll(orgPath: PathLike, updatedPaths: Seq[PathLike]): Unit
+}
+
 case class RefreshRequest(pkg: OPM.PackageImpl, path: PathLike, highPriority: Boolean)
 
 class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {

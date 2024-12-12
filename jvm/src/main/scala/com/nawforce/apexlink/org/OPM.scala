@@ -188,6 +188,10 @@ object OPM extends TriHierarchy {
         false
     }
 
+    def setRefreshListener(rl: Option[RefreshListener]): Unit = {
+      flusher.setListener(rl)
+    }
+
     /** Queue a metadata refresh request */
     def queueMetadataRefresh(request: RefreshRequest): Unit = {
       flusher.queue(request)
