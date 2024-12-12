@@ -22,8 +22,8 @@ import com.nawforce.pkgforce.path.PathLike
 import scala.collection.mutable
 
 trait RefreshListener {
-  def onRefresh(orgPath: PathLike, updatedPath: PathLike): Unit
-  def onRefreshAll(orgPath: PathLike, updatedPaths: Seq[PathLike]): Unit
+  def onRefreshOne(orgPath: PathLike, updatedPath: PathLike): Unit
+  def onRefreshMany(orgPath: PathLike, updatedPaths: Seq[PathLike]): Unit
 }
 
 case class RefreshRequest(pkg: OPM.PackageImpl, path: PathLike, highPriority: Boolean)
@@ -47,7 +47,7 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
       org.refreshLock.synchronized {
         val updated = request.pkg.refreshBatched(Seq(request))
         // Notify of updated path
-        if (updated) listener.foreach(_.onRefresh(org.path, request.path))
+        if (updated) listener.foreach(_.onRefreshOne(org.path, request.path))
 
         // Tell auto flush we skipped the queue
         skippedQueue |= updated
@@ -84,7 +84,7 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
         flush()
 
         // Notify of updated paths
-        if (updated) listener.foreach(_.onRefreshAll(org.path, updatedPaths.toSeq))
+        if (updated) listener.foreach(_.onRefreshMany(org.path, updatedPaths.toSeq))
 
         updated
       }
