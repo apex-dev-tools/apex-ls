@@ -14,12 +14,14 @@
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.{OPM, RefreshListener}
 import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
+
+import scala.collection.mutable
 
 class RefreshTest extends AnyFunSuite with TestHelper {
 
@@ -31,6 +33,17 @@ class RefreshTest extends AnyFunSuite with TestHelper {
   ): Unit = {
     path.write(source)
     pkg.refresh(path, highPriority)
+  }
+
+  private def refreshAll(pkg: OPM.PackageImpl, paths: Map[PathLike, String]): Unit = {
+    paths.foreach(p => p._1.write(p._2))
+    pkg.refreshAll(paths.keys.toArray)
+  }
+
+  class Listener(val capture: mutable.ArrayBuffer[PathLike]) extends RefreshListener {
+    def onRefreshOne(orgPath: PathLike, updatedPath: PathLike): Unit = capture.addOne(updatedPath)
+    def onRefreshMany(orgPath: PathLike, updatedPaths: Seq[PathLike]): Unit =
+      capture.addAll(updatedPaths)
   }
 
   test("Valid refresh") {
@@ -1154,6 +1167,50 @@ class RefreshTest extends AnyFunSuite with TestHelper {
 
           assert(unmanagedType(TypeName(Name("__sfdc_trigger/Foo"))).nonEmpty)
           assert(org.issues.isEmpty)
+      }
+    }
+  }
+
+  test("Refresh listener with refresh") {
+    val capture = mutable.ArrayBuffer[PathLike]()
+
+    withManualFlush {
+      FileSystemHelper.run(Map("pkg/Foo.cls" -> "public class Foo {}")) { root: PathLike =>
+        val org = createOrg(root)
+        org.setRefreshListener(Some(new Listener(capture)))
+        val pkg = org.unmanaged
+        refresh(pkg, root.join("pkg/Foo.cls"), "public class Foo {}")
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+        assert(capture.map(_.toString).toSeq.sorted.equals(Seq("/pkg/Foo.cls")))
+      }
+    }
+  }
+
+  test("Refresh listener with refreshAll") {
+    val capture = mutable.ArrayBuffer[PathLike]()
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "pkg/Foo.cls" -> "public class Foo {}",
+          "pkg/Bar.cls" -> "public class Bar {}",
+          "pkg/Baz.cls" -> "public class Baz {}"
+        )
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        org.setRefreshListener(Some(new Listener(capture)))
+        val pkg = org.unmanaged
+        refreshAll(
+          pkg,
+          Map(
+            root.join("pkg/Foo.cls") -> "public class Foo {}",
+            root.join("pkg/Bar.cls") -> "public class Bar {}"
+          )
+        )
+        assert(org.flush())
+        assert(org.issues.isEmpty)
+        assert(capture.map(_.toString).toSeq.sorted.equals(Seq("/pkg/Bar.cls", "/pkg/Foo.cls")))
       }
     }
   }

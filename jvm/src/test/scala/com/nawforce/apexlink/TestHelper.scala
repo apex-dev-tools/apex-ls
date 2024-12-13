@@ -15,7 +15,7 @@ package com.nawforce.apexlink
 
 import com.nawforce.apexlink.TestHelper.{CURSOR, locToString}
 import com.nawforce.apexlink.api._
-import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.org.{OPM, OrgInfo, RefreshListener}
 import com.nawforce.apexlink.plugins.{Plugin, PluginsManager}
 import com.nawforce.apexlink.rpc.{LocationLink, TargetLocation}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}

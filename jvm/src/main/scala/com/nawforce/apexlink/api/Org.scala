@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.api
 
-import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.org.{OPM, RefreshListener}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.rpc.{
   BombScore,
@@ -74,6 +74,13 @@ trait Org {
     * determine if the queue of changes to be processed is empty.
     */
   def isDirty(): Boolean
+
+  /** Add or remove a listener which is called when all metadata changes have been processed.
+    *
+    * Similar to polling until isDirty = false, though the action will run on the same thread as
+    * the flusher and block it until completed. Use with caution.
+    */
+  def setRefreshListener(rl: Option[RefreshListener]): Unit
 
   /** Collection of all current issues reported against this org.
     */
@@ -242,6 +249,7 @@ trait Org {
     * Class namespaces are NOT included.
     */
   def getTestMethodItems(paths: Array[String]): Array[MethodTestItem]
+
 }
 
 object Org {
