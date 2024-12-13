@@ -174,7 +174,7 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
       .map(c => new PlatformConstructor(c, this))
   }
 
-  override def validate(): Unit = {
+  override protected def validate(): Unit = {
     // Not required
   }
 }

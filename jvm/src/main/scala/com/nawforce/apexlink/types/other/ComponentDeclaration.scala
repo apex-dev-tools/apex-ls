@@ -70,7 +70,7 @@ final case class Component(
   override def dependencies(): Iterable[Dependent] =
     depends.getOrElse(Array[Dependent]())
 
-  override def validate(): Unit = {
+  override protected def validate(): Unit = {
     super.validate()
     vfContainer.foreach(vf => {
       depends = Some(vf.validate())
@@ -122,8 +122,8 @@ final case class ComponentDeclaration(
   // Propagate dependencies to nested
   nestedComponents.foreach(_.addTypeDependencyHolder(typeId))
 
-  override def validate(): Unit = {
-    components.foreach(_.validate())
+  override protected def validate(): Unit = {
+    components.foreach(_.safeValidate())
     propagateOuterDependencies(new TypeCache())
   }
 

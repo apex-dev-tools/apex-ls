@@ -86,7 +86,7 @@ final case class TriggerDeclaration(
   private var depends: Option[SkinnySet[Dependent]] = None
   private val objectTypeName = TypeName(objectNameId.name, Nil, Some(TypeNames.Schema))
 
-  override def validate(): Unit = {
+  override protected def validate(): Unit = {
     LoggerOps.debugTime(s"Validated ${location.path}") {
       val context = new TypeVerifyContext(None, this, None, enablePlugins = true)
       val tdOpt   = context.getTypeAndAddDependency(objectTypeName, this)

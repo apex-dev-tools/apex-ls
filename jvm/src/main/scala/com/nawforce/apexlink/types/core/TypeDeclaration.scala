@@ -31,11 +31,14 @@ import com.nawforce.apexlink.types.synthetic.{
   CustomFieldDeclaration,
   LocatableCustomFieldDeclaration
 }
+import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE, Nature}
-import com.nawforce.pkgforce.path.{PathLike, UnsafeLocatable}
+import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation, UnsafeLocatable}
 
+import java.io.{PrintWriter, StringWriter}
+import java.nio.file.Files
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
@@ -425,7 +428,15 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
       .flatMap(typeName => TypeResolver(typeName, this).toOption)
       .getOrElse(this)
 
-  def validate(): Unit
+  def safeValidate(): Unit = {
+    try {
+      validate()
+    } catch {
+      case ex: Throwable => OrgInfo.logException(ex, paths)
+    }
+  }
+
+  protected def validate(): Unit
 
   override def findNestedType(name: Name): Option[TypeDeclaration] = {
     nestedTypes.find(_.name == name)

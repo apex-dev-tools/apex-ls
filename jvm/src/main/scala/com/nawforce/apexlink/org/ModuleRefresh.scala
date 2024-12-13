@@ -42,7 +42,7 @@ trait ModuleRefresh {
     val holders   = existingLabels.getTypeDependencyHolders
     newLabels.setTypeDependencyHolders(holders)
     replaceType(newLabels.typeName, Some(newLabels))
-    newLabels.validate()
+    newLabels.safeValidate()
     Seq((newLabels.typeId, holders.toSet))
   }
 
@@ -84,7 +84,7 @@ trait ModuleRefresh {
 
               // Update and validate
               replaceType(newType.typeName, Some(newType))
-              newType.validate()
+              newType.safeValidate()
               (typeId, holders.toSet)
             })
           } else {
@@ -153,7 +153,7 @@ trait ModuleRefresh {
         // Hack: we don't need to revalidate here but MetadataValidator wipes out all
         // diagnostics so if we don't validate we can save to cache without important diagnostics,
         // especially the Missing ones which will break invalidation handling.
-        getDependentType(doc.controllingTypeName(namespace)).foreach(_.validate())
+        getDependentType(doc.controllingTypeName(namespace)).foreach(_.safeValidate())
         None
       case _ => Some(createSupportedTypes(doc, source))
     }
