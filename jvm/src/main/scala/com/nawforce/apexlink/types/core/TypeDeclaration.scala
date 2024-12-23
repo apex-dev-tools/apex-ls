@@ -31,14 +31,11 @@ import com.nawforce.apexlink.types.synthetic.{
   CustomFieldDeclaration,
   LocatableCustomFieldDeclaration
 }
-import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, INTERFACE_NATURE, Nature}
-import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation, UnsafeLocatable}
+import com.nawforce.pkgforce.path.{PathLike, UnsafeLocatable}
 
-import java.io.{PrintWriter, StringWriter}
-import java.nio.file.Files
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
@@ -58,13 +55,21 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
   val readAccess: Modifier
   val writeAccess: Modifier
 
-  def isStatic: Boolean  = modifiers.contains(STATIC_MODIFIER)
-  def isPrivate: Boolean = modifiers.contains(PRIVATE_MODIFIER)
-  lazy val isExternallyVisible: Boolean =
+  def visibility: Option[Modifier] =
+    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
+
+  def isExternallyVisible: Boolean =
     modifiers.exists(FieldDeclaration.externalFieldModifiers.contains)
 
-  override def toString: String =
-    modifiers.map(_.toString).mkString(" ") + " " + typeName.toString + " " + name.toString
+  def isStatic: Boolean = modifiers.contains(STATIC_MODIFIER)
+
+  override def toString: String = {
+    (if (modifiers.nonEmpty)
+       modifiers
+         .map(_.toString)
+         .mkString(" ") + " "
+     else "") + typeName.toString + " " + name.toString
+  }
 
   // Create an SObjectField version of this field
   def getSObjectStaticField(
@@ -248,8 +253,6 @@ object ConstructorDeclaration {
 trait MethodDeclaration extends DependencyHolder with Dependent with Parameters {
   val name: Name
   val modifiers: ArraySeq[Modifier]
-  lazy val visibility: Option[Modifier] =
-    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
 
   def typeName: TypeName
 
@@ -266,7 +269,10 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
   def isOverride: Boolean    = modifiers.contains(OVERRIDE_MODIFIER)
   def isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
 
-  lazy val isExternallyVisible: Boolean =
+  def visibility: Option[Modifier] =
+    modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
+
+  def isExternallyVisible: Boolean =
     modifiers.exists(MethodDeclaration.externalMethodModifiers.contains)
 
   override def toString: String = {
@@ -407,15 +413,14 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
 
   def isComplete: Boolean
 
-  lazy val isExternallyVisible: Boolean =
+  def isExternallyVisible: Boolean =
     modifiers.exists(TypeDeclaration.externalTypeModifiers.contains)
-  lazy val visibility: Modifier =
-    // We can have more than one visibility modifier, search in priority order
-    ApexModifiers.visibilityModifiers.find(modifiers.contains).getOrElse(PRIVATE_MODIFIER)
-  lazy val isAbstract: Boolean = modifiers.contains(ABSTRACT_MODIFIER)
-  lazy val isVirtual: Boolean  = modifiers.contains(VIRTUAL_MODIFIER)
-  lazy val isExtensible: Boolean =
+  def visibility: Option[Modifier] = ApexModifiers.visibilityModifiers.find(modifiers.contains)
+  def isAbstract: Boolean          = modifiers.contains(ABSTRACT_MODIFIER)
+  def isVirtual: Boolean           = modifiers.contains(VIRTUAL_MODIFIER)
+  def isExtensible: Boolean =
     nature == INTERFACE_NATURE || (nature == CLASS_NATURE && (isAbstract || isVirtual))
+
   lazy val isFieldConstructed: Boolean           = isSObject || isApexPagesComponent
   lazy val isSObject: Boolean                    = superClass.contains(TypeNames.SObject)
   private lazy val isApexPagesComponent: Boolean = superClass.contains(TypeNames.ApexPagesComponent)

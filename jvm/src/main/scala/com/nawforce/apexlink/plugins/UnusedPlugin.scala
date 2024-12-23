@@ -162,7 +162,7 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
         return false
 
       // Don't promote for global as these are implicitly used
-      if (td.visibility == GLOBAL_MODIFIER)
+      if (td.visibility.getOrElse(PRIVATE_MODIFIER) == GLOBAL_MODIFIER)
         return false
 
       // Exclude reporting on empty outers, that is just a bit harsh

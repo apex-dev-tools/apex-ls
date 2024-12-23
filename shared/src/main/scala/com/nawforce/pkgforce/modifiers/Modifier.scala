@@ -27,8 +27,8 @@ import scala.collection.compat.immutable.ArraySeq
 
 sealed abstract class Modifier(
   final val name: String,
-  val order: Integer = 0,
-  val methodOrder: Integer = 0
+  val order: Int = 0,
+  val methodOrder: Int = 0
 ) {
   override def toString: String = name
 }

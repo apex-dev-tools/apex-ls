@@ -30,8 +30,7 @@ abstract class CustomField(
   override val modifiers: ArraySeq[Modifier] = CustomField.getModifiers(asStatic)
   override val readAccess: Modifier          = PUBLIC_MODIFIER
   override val writeAccess: Modifier         = PUBLIC_MODIFIER
-  override def isStatic: Boolean             = asStatic
-  override def isPrivate: Boolean            = false
+  override val isStatic: Boolean             = asStatic
 }
 
 object CustomField {

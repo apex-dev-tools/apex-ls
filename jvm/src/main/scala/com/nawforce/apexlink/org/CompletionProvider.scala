@@ -21,7 +21,7 @@ import com.nawforce.apexlink.rpc.CompletionItemLink
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
-import com.nawforce.pkgforce.modifiers.PUBLIC_MODIFIER
+import com.nawforce.pkgforce.modifiers.{PRIVATE_MODIFIER, PROTECTED_MODIFIER, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLike
 import com.vmware.antlr4c3.CodeCompletionCore
@@ -55,8 +55,9 @@ trait CompletionProvider {
     if (classDetails._1.isEmpty)
       /* Bail if we did not at least parse the content */
       return emptyCompletions
-    val parserAndCU    = classDetails._1.get
-    val adjustedOffset = terminatedContent._2
+    val parserAndCU     = classDetails._1.get
+    val fromDeclaration = classDetails._2
+    val adjustedOffset  = terminatedContent._2
 
     // Attempt to find a searchTerm for dealing with dot expressions
     lazy val searchTerm =
@@ -64,9 +65,9 @@ trait CompletionProvider {
 
     // Setup to lazy validate the Class block to recover the validationResult for the cursor position
     lazy val validationResult: Option[ValidationResult] = {
-      if (classDetails._2.nonEmpty && searchTerm.nonEmpty) {
+      if (fromDeclaration.nonEmpty && searchTerm.nonEmpty) {
         val searchEnd     = searchTerm.get.location.endPosition
-        val resultMap     = classDetails._2.get.getValidationMap(line, searchEnd)
+        val resultMap     = fromDeclaration.get.getValidationMap(line, searchEnd)
         val exprLocations = resultMap.keys.filter(_.contains(line, searchEnd))
         val targetExpression =
           exprLocations.find(exprLocation => exprLocations.forall(_.contains(exprLocation)))
@@ -94,8 +95,8 @@ trait CompletionProvider {
       .toArray
 
     val creatorCompletions =
-      if (classDetails._2.nonEmpty && keywords.map(_.label).contains("new")) {
-        getEmptyCreatorCompletionItems(classDetails._2.get, terminatedContent._3)
+      if (fromDeclaration.nonEmpty && keywords.map(_.label).contains("new")) {
+        getEmptyCreatorCompletionItems(fromDeclaration.get, terminatedContent._3)
       } else {
         emptyCompletions
       }
@@ -109,6 +110,7 @@ trait CompletionProvider {
           .filter(_.result.declaration.nonEmpty)
           .map(validationResult =>
             getAllCompletionItems(
+              fromDeclaration,
               validationResult.result.declaration.get,
               validationResult.result.isStatic,
               searchTerm.get.residualExpr
@@ -122,8 +124,9 @@ trait CompletionProvider {
     /* Now for rule matches. These are not distinct cases, they might combine to give the correct result. */
     var haveTypes = false
     val rules = candidates.rules.asScala
-      .collect(rule =>
-        rule._1.toInt match {
+      .map(_._1.toInt)
+      .flatMap { id =>
+        id match {
           /* TypeRefs appear in lots of places, e.g. inside Primaries but we just handle once for simplicity. */
           case ApexParser.RULE_typeRef =>
             if (haveTypes) Array[CompletionItemLink]()
@@ -154,14 +157,7 @@ trait CompletionProvider {
                     )
                     .toArray ++
                     classDetails._2
-                      .map(td =>
-                        getAllCompletionItems(
-                          td,
-                          None,
-                          searchTerm.residualExpr,
-                          hasPrivateAccess = true
-                        )
-                      )
+                      .map(td => getAllCompletionItems(Some(td), td, None, searchTerm.residualExpr))
                       .getOrElse(Array()) ++
                     (if (haveTypes) Array[CompletionItemLink]()
                      else {
@@ -180,9 +176,10 @@ trait CompletionProvider {
               .map(m => m.matchTdsForModule(terminatedContent._3, offset))
               .map(_.flatMap(td => getAllCreatorCompletionItems(td, classDetails._2)))
               .getOrElse(emptyCompletions)
+
+          case _ => emptyCompletions
         }
-      )
-      .flatten
+      }
       .toArray
 
     (if (creatorCompletions.nonEmpty)
@@ -296,38 +293,54 @@ trait CompletionProvider {
     buffer.append(";")
   }
 
+  /** Return a list of completion items in targetDeclaration that can be accessed from fromDeclaration.
+    * The fromDeclaration is optional as we may not be able to construct due to parsing errors.
+    */
   private def getAllCompletionItems(
-    td: TypeDeclaration,
+    fromDeclaration: Option[TypeDeclaration],
+    targetDeclaration: TypeDeclaration,
     isStatic: Option[Boolean],
-    filterBy: String,
-    hasPrivateAccess: Boolean = false
+    filterBy: String
   ): Array[CompletionItemLink] = {
     var items = Array[CompletionItemLink]()
 
-    items = items ++ td.methods
+    val minimumVisibility =
+      if (fromDeclaration.contains(targetDeclaration))
+        PRIVATE_MODIFIER.order
+      else if (fromDeclaration.exists(_.extendsOrImplements(targetDeclaration.typeName)))
+        PROTECTED_MODIFIER.order
+      else PUBLIC_MODIFIER.order
+
+    items = items ++ targetDeclaration.methods
       .filter(isStatic.isEmpty || _.isStatic == isStatic.get)
-      .filter(hasPrivateAccess || _.modifiers.contains(PUBLIC_MODIFIER))
+      .filter(_.visibility.map(_.order).getOrElse(0) >= minimumVisibility)
       .map(method => CompletionItemLink(method))
 
-    items = items ++ td.fields
+    items = items ++ targetDeclaration.fields
       .filter(isStatic.isEmpty || _.isStatic == isStatic.get)
-      .filter(hasPrivateAccess || _.modifiers.contains(PUBLIC_MODIFIER))
+      .filter(_.visibility.map(_.order).getOrElse(0) >= minimumVisibility)
       .map(field => CompletionItemLink(field))
 
     if (isStatic.isEmpty || isStatic.contains(true)) {
-      items = items ++ td.nestedTypes
-        .filter(hasPrivateAccess || _.modifiers.contains(PUBLIC_MODIFIER))
+      items = items ++ targetDeclaration.nestedTypes
+        .filter(_.visibility.map(_.order).getOrElse(0) >= minimumVisibility)
         .flatMap(nested => CompletionItemLink(nested))
     }
     if (isStatic.isEmpty) {
-      val superCtors = td.superClassDeclaration
+      val superConstructors = targetDeclaration.superClassDeclaration
         .map(superClass => {
           superClass.constructors
-            .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
-            .map(ctor =>
+            .filter(constructor =>
+              ConstructorMap.isCtorAccessible(
+                constructor,
+                targetDeclaration,
+                targetDeclaration.superClassDeclaration
+              )
+            )
+            .map(constructor =>
               (
-                "super(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")",
-                ctor.toString
+                "super(" + constructor.parameters.map(_.name.toString()).mkString(", ") + ")",
+                constructor.toString
               )
             )
             .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
@@ -335,14 +348,23 @@ trait CompletionProvider {
         })
         .getOrElse(emptyCompletions)
 
-      val thisCtors = td.constructors
-        .filter(ctor => ConstructorMap.isCtorAccessible(ctor, td, td.superClassDeclaration))
-        .map(ctor =>
-          ("this(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")", ctor.toString)
+      val thisConstructors = targetDeclaration.constructors
+        .filter(constructor =>
+          ConstructorMap.isCtorAccessible(
+            constructor,
+            targetDeclaration,
+            targetDeclaration.superClassDeclaration
+          )
+        )
+        .map(constructor =>
+          (
+            "this(" + constructor.parameters.map(_.name.toString()).mkString(", ") + ")",
+            constructor.toString
+          )
         )
         .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
 
-      items = items ++ thisCtors ++ superCtors
+      items = items ++ thisConstructors ++ superConstructors
     }
 
     if (filterBy.nonEmpty)
@@ -358,8 +380,8 @@ trait CompletionProvider {
     callingFrom.map(td => (td, td.superClassDeclaration)) match {
       case Some((thisType, superType)) =>
         itemsFor.constructors
-          .filter(ctor => ConstructorMap.isCtorAccessible(ctor, thisType, superType))
-          .map(ctor => CompletionItemLink(itemsFor.name, ctor))
+          .filter(constructor => ConstructorMap.isCtorAccessible(constructor, thisType, superType))
+          .map(constructor => CompletionItemLink(itemsFor.name, constructor))
           .toArray
       case None => emptyCompletions
     }
@@ -378,7 +400,7 @@ trait CompletionProvider {
     findTrailingTypeName(trimmed)
       .flatMap(typeName => {
         TypeResolver(typeName, td).toOption
-          .filter(td => td.isSObject || td.constructors.exists(ctor => ctor.parameters.isEmpty))
+          .filter(td => td.isSObject || td.constructors.exists(_.parameters.isEmpty))
           .map(_ => new CompletionItemLink(s"new $typeName();", "Constructor", ""))
       })
       .toArray
@@ -395,12 +417,12 @@ trait CompletionProvider {
 object CompletionProvider {
   /* This limits how many states can be traversed during code completion, it provides a safeguard against run away
    * analysis but needs to be large enough for long files. */
-  final val MAX_STATES: Int = 10000000
+  private final val MAX_STATES: Int = 10000000
 
   /* Match trailing 'id = n' as part of field/var creator pattern */
-  final val idAssignPattern: Regex = "\\s*[0-9a-zA-Z_]+\\s*=\\s*n\\s*$".r
+  private final val idAssignPattern: Regex = "\\s*[0-9a-zA-Z_]+\\s*=\\s*n\\s*$".r
 
-  final val emptyCompletions: Array[CompletionItemLink] = Array[CompletionItemLink]()
+  private final val emptyCompletions: Array[CompletionItemLink] = Array[CompletionItemLink]()
 
   final val ignoredTokens: Set[Integer] = Set[Integer](
     ApexLexer.LPAREN,

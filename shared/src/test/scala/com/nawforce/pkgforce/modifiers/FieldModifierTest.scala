@@ -71,8 +71,8 @@ class FieldModifierTest extends AnyFunSuite {
     }
   }
 
-  test("Default field access private") {
-    assert(legalFieldAccess(ArraySeq(), ArraySeq(PRIVATE_MODIFIER)))
+  test("Default field access empty") {
+    assert(legalFieldAccess(ArraySeq(), ArraySeq()))
   }
 
   test("Private field") {
@@ -105,9 +105,7 @@ class FieldModifierTest extends AnyFunSuite {
   }
 
   test("Transient field") {
-    assert(
-      legalFieldAccess(ArraySeq(TRANSIENT_MODIFIER), ArraySeq(PRIVATE_MODIFIER, TRANSIENT_MODIFIER))
-    )
+    assert(legalFieldAccess(ArraySeq(TRANSIENT_MODIFIER), ArraySeq(TRANSIENT_MODIFIER)))
   }
 
   test("Transient public field") {
@@ -120,7 +118,7 @@ class FieldModifierTest extends AnyFunSuite {
   }
 
   test("Static field") {
-    assert(legalFieldAccess(ArraySeq(STATIC_MODIFIER), ArraySeq(PRIVATE_MODIFIER, STATIC_MODIFIER)))
+    assert(legalFieldAccess(ArraySeq(STATIC_MODIFIER), ArraySeq(STATIC_MODIFIER)))
   }
 
   test("Static public field") {
@@ -133,7 +131,7 @@ class FieldModifierTest extends AnyFunSuite {
   }
 
   test("Final field") {
-    assert(legalFieldAccess(ArraySeq(FINAL_MODIFIER), ArraySeq(PRIVATE_MODIFIER, FINAL_MODIFIER)))
+    assert(legalFieldAccess(ArraySeq(FINAL_MODIFIER), ArraySeq(FINAL_MODIFIER)))
   }
 
   test("Final public field") {
@@ -154,46 +152,31 @@ class FieldModifierTest extends AnyFunSuite {
   }
 
   test("AuraEnabled field") {
-    assert(
-      legalFieldAccess(
-        ArraySeq(AURA_ENABLED_ANNOTATION),
-        ArraySeq(PRIVATE_MODIFIER, AURA_ENABLED_ANNOTATION)
-      )
-    )
+    assert(legalFieldAccess(ArraySeq(AURA_ENABLED_ANNOTATION), ArraySeq(AURA_ENABLED_ANNOTATION)))
   }
 
   test("Deprecated field") {
-    assert(
-      legalFieldAccess(
-        ArraySeq(DEPRECATED_ANNOTATION),
-        ArraySeq(PRIVATE_MODIFIER, DEPRECATED_ANNOTATION)
-      )
-    )
+    assert(legalFieldAccess(ArraySeq(DEPRECATED_ANNOTATION), ArraySeq(DEPRECATED_ANNOTATION)))
   }
 
   test("InvocableVariable field") {
     assert(
       legalFieldAccess(
         ArraySeq(INVOCABLE_VARIABLE_ANNOTATION),
-        ArraySeq(PRIVATE_MODIFIER, INVOCABLE_VARIABLE_ANNOTATION)
+        ArraySeq(INVOCABLE_VARIABLE_ANNOTATION)
       )
     )
   }
 
   test("TestVisible field") {
-    assert(
-      legalFieldAccess(
-        ArraySeq(TEST_VISIBLE_ANNOTATION),
-        ArraySeq(PRIVATE_MODIFIER, TEST_VISIBLE_ANNOTATION)
-      )
-    )
+    assert(legalFieldAccess(ArraySeq(TEST_VISIBLE_ANNOTATION), ArraySeq(TEST_VISIBLE_ANNOTATION)))
   }
 
   test("SuppressWarnings PMD field") {
     assert(
       legalFieldAccess(
         ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_PMD),
-        ArraySeq(PRIVATE_MODIFIER, SUPPRESS_WARNINGS_ANNOTATION_PMD)
+        ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_PMD)
       )
     )
   }
@@ -202,7 +185,7 @@ class FieldModifierTest extends AnyFunSuite {
     assert(
       legalFieldAccess(
         ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_UNUSED),
-        ArraySeq(PRIVATE_MODIFIER, SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
+        ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
       )
     )
   }
@@ -296,7 +279,7 @@ class FieldModifierTest extends AnyFunSuite {
   }
 
   test("Inner Default field access private") {
-    assert(innerLegalFieldAccess(ArraySeq(), ArraySeq(PRIVATE_MODIFIER)))
+    assert(innerLegalFieldAccess(ArraySeq(), ArraySeq()))
   }
 
   test("Inner Private field") {
@@ -329,12 +312,7 @@ class FieldModifierTest extends AnyFunSuite {
   }
 
   test("Inner Transient field") {
-    assert(
-      innerLegalFieldAccess(
-        ArraySeq(TRANSIENT_MODIFIER),
-        ArraySeq(PRIVATE_MODIFIER, TRANSIENT_MODIFIER)
-      )
-    )
+    assert(innerLegalFieldAccess(ArraySeq(TRANSIENT_MODIFIER), ArraySeq(TRANSIENT_MODIFIER)))
   }
 
   test("Inner Transient public field") {
@@ -360,13 +338,10 @@ class FieldModifierTest extends AnyFunSuite {
         )
       )
     )
-
   }
 
   test("Inner Final field") {
-    assert(
-      innerLegalFieldAccess(ArraySeq(FINAL_MODIFIER), ArraySeq(PRIVATE_MODIFIER, FINAL_MODIFIER))
-    )
+    assert(innerLegalFieldAccess(ArraySeq(FINAL_MODIFIER), ArraySeq(FINAL_MODIFIER)))
   }
 
   test("Inner Final public field") {
@@ -384,37 +359,26 @@ class FieldModifierTest extends AnyFunSuite {
 
   test("Inner AuraEnabled field") {
     assert(
-      innerLegalFieldAccess(
-        ArraySeq(AURA_ENABLED_ANNOTATION),
-        ArraySeq(PRIVATE_MODIFIER, AURA_ENABLED_ANNOTATION)
-      )
+      innerLegalFieldAccess(ArraySeq(AURA_ENABLED_ANNOTATION), ArraySeq(AURA_ENABLED_ANNOTATION))
     )
   }
 
   test("Inner Deprecated field") {
-    assert(
-      innerLegalFieldAccess(
-        ArraySeq(DEPRECATED_ANNOTATION),
-        ArraySeq(PRIVATE_MODIFIER, DEPRECATED_ANNOTATION)
-      )
-    )
+    assert(innerLegalFieldAccess(ArraySeq(DEPRECATED_ANNOTATION), ArraySeq(DEPRECATED_ANNOTATION)))
   }
 
   test("Inner InvocableVariable field") {
     assert(
       innerLegalFieldAccess(
         ArraySeq(INVOCABLE_VARIABLE_ANNOTATION),
-        ArraySeq(PRIVATE_MODIFIER, INVOCABLE_VARIABLE_ANNOTATION)
+        ArraySeq(INVOCABLE_VARIABLE_ANNOTATION)
       )
     )
   }
 
   test("Inner TestVisible field") {
     assert(
-      innerLegalFieldAccess(
-        ArraySeq(TEST_VISIBLE_ANNOTATION),
-        ArraySeq(PRIVATE_MODIFIER, TEST_VISIBLE_ANNOTATION)
-      )
+      innerLegalFieldAccess(ArraySeq(TEST_VISIBLE_ANNOTATION), ArraySeq(TEST_VISIBLE_ANNOTATION))
     )
   }
 
@@ -422,7 +386,7 @@ class FieldModifierTest extends AnyFunSuite {
     assert(
       innerLegalFieldAccess(
         ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_PMD),
-        ArraySeq(PRIVATE_MODIFIER, SUPPRESS_WARNINGS_ANNOTATION_PMD)
+        ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_PMD)
       )
     )
   }
@@ -431,7 +395,7 @@ class FieldModifierTest extends AnyFunSuite {
     assert(
       innerLegalFieldAccess(
         ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_UNUSED),
-        ArraySeq(PRIVATE_MODIFIER, SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
+        ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
       )
     )
   }

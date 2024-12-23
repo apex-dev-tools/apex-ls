@@ -57,8 +57,6 @@ final case class ApexPropertyDeclaration(
       case _                      => None
     }.headOption
 
-  private val visibility: Option[Modifier] =
-    _modifiers.modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
   override val readAccess: Modifier =
     getter
       .flatMap(_.modifiers.modifiers.headOption)

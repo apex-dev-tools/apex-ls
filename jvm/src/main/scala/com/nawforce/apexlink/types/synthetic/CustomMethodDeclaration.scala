@@ -38,7 +38,7 @@ final case class CustomMethodDeclaration(
 
   override val modifiers: ArraySeq[Modifier] = CustomMethodDeclaration.getModifiers(asStatic)
   override val hasBlock: Boolean             = false
-  override lazy val isStatic: Boolean        = asStatic
+  override val isStatic: Boolean             = asStatic
 
   def summary: MethodSummary = {
     MethodSummary(
