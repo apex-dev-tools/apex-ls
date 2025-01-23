@@ -181,7 +181,7 @@ abstract class FullDeclaration(
         OrgInfo.logError(id.location, s"Parent type '${superClass.get.asDotName}' must be a class")
       } else if (
         !inTest &&
-        superClassDeclaration.visibility == PRIVATE_MODIFIER &&
+        superClassDeclaration.visibility.getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER &&
         superClassDeclaration.outermostTypeDeclaration != outermostTypeDeclaration
       ) {
         // Private is OK with Outer extends Inner, Inner extends Inner or Test classes

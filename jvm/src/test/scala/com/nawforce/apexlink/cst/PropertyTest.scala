@@ -16,7 +16,6 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.types.apex.ApexClassDeclaration
-import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.Name
 import org.scalatest.funsuite.AnyFunSuite
@@ -101,9 +100,9 @@ class PropertyTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Default property access private") {
+  test("Default property access empty") {
     val property = typeDeclaration("public class Dummy {String foo{get; set;}}").fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER))
+    assert(property.modifiers == ArraySeq())
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(!hasIssues)
@@ -237,7 +236,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
 
   test("Static property") {
     val property = typeDeclaration("public class Dummy {static String foo{get; set;}}").fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER, STATIC_MODIFIER))
+    assert(property.modifiers == ArraySeq(STATIC_MODIFIER))
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(!hasIssues)
@@ -245,7 +244,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
 
   test("Final property") {
     val property = typeDeclaration("public class Dummy {final String foo{get; set;}}").fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER, FINAL_MODIFIER))
+    assert(property.modifiers == ArraySeq(FINAL_MODIFIER))
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(!hasIssues)
@@ -295,7 +294,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
   test("AuraEnabled property") {
     val property =
       typeDeclaration("public class Dummy {@AuraEnabled String foo{get; set;}}").fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER, AURA_ENABLED_ANNOTATION))
+    assert(property.modifiers == ArraySeq(AURA_ENABLED_ANNOTATION))
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(!hasIssues)
@@ -304,7 +303,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
   test("Deprecated property") {
     val property =
       typeDeclaration("public class Dummy {@Deprecated String foo{get; set;}}").fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER, DEPRECATED_ANNOTATION))
+    assert(property.modifiers == ArraySeq(DEPRECATED_ANNOTATION))
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(!hasIssues)
@@ -313,7 +312,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
   test("InvocableVariable property") {
     val property =
       typeDeclaration("public class Dummy {@InvocableVariable String foo{get; set;}}").fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER, INVOCABLE_VARIABLE_ANNOTATION))
+    assert(property.modifiers == ArraySeq(INVOCABLE_VARIABLE_ANNOTATION))
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(!hasIssues)
@@ -322,7 +321,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
   test("TestVisible property") {
     val property =
       typeDeclaration("public class Dummy {@TestVisible String foo{get; set;}}").fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER, TEST_VISIBLE_ANNOTATION))
+    assert(property.modifiers == ArraySeq(TEST_VISIBLE_ANNOTATION))
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(!hasIssues)
@@ -333,7 +332,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
       typeDeclaration(
         "public class Dummy {@SuppressWarnings('PMD') String foo{get; set;}}"
       ).fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER, SUPPRESS_WARNINGS_ANNOTATION_PMD))
+    assert(property.modifiers == ArraySeq(SUPPRESS_WARNINGS_ANNOTATION_PMD))
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(!hasIssues)
@@ -342,7 +341,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
   test("Bad annotation property") {
     val property =
       typeDeclaration("public class Dummy {@TestSetup String foo{get; set;}}").fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER))
+    assert(property.modifiers == ArraySeq())
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(
@@ -356,7 +355,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
       typeDeclaration(
         "public class Dummy {@TestVisible @TestVisible String foo{get; set;}}"
       ).fields.head
-    assert(property.modifiers == ArraySeq(PRIVATE_MODIFIER, TEST_VISIBLE_ANNOTATION))
+    assert(property.modifiers == ArraySeq(TEST_VISIBLE_ANNOTATION))
     assert(property.readAccess == PRIVATE_MODIFIER)
     assert(property.writeAccess == property.readAccess)
     assert(

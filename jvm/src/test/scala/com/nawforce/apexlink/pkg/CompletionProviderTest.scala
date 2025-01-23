@@ -22,21 +22,47 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class CompletionProviderTest extends AnyFunSuite with TestHelper {
 
+  private val bodyContent = """
+                          |global void methodGlobal(){}
+                          |public String methodA(){}
+                          |public String methodB(String a, String b){}
+                          |protected void methodProtected(){}
+                          |private String methodPrivate(){}
+                          |Integer methodImplicitPrivate(){}
+                          |
+                          |global static void methodGlobalStatic(){}
+                          |public static String methodStatic(){}
+                          |private static String methodStaticPrivate(){}
+                          |static Integer methodStaticImplicitPrivate(){}
+                          |
+                          |global String myGlobalField;
+                          |public String myField;
+                          |protected String myProtectedField;
+                          |private String myPrivateField;
+                          |String myImplicitPrivateField;
+                          |
+                          |global static String myGlobalStaticField;
+                          |public static String myStaticField;
+                          |private static String myPrivateStaticField;
+                          |static String myImplicitPrivateStaticField;
+                          |
+                          |global class MyGlobalInner{};
+                          |public class MyInner{};
+                          |private interface MyPrivateInner{};
+                          |interface MyImplicitPrivateInner{};
+                          |""".stripMargin.replaceAll("\r\n", "\n")
+
+  private val dummyContent = s"""global virtual class Dummy {
+                           |$bodyContent
+                           |}""".stripMargin.replaceAll("\r\n", "\n")
+
   test("Internal Completion") {
     FileSystemHelper.run(Map()) { root: PathLike =>
       val org  = createOrg(root)
       val path = root.join("Completion.cls")
       val content =
-        """public class Dummy { public void someMethod() {m}
-            |public String methodA(){}
-            |public String methodB(String a, String b){}
-            |public static String methodStatic(){}
-            |private String methodPrivate(){}
-            |public String myField;
-            |public static String myStaticField;
-            |private String myPrivateField;
-            |public class MyInner{};
-            |private interface MyPrivateInner{};
+        s"""public virtual class Dummy { public void someMethod() {m}
+            |$bodyContent
             |}""".stripMargin.replaceAll("\r\n", "\n")
       val offset      = content.split('\n').head.length - 1
       val completions = org.getCompletionItemsInternal(path, line = 1, offset, content)
@@ -46,27 +72,69 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
           .filterNot(_.kind == "Keyword")
           .toSet ==
           Set(
+            CompletionItemLink("methodGlobal()", "Method", "global void methodGlobal()"),
             CompletionItemLink(
               "methodB(a, b)",
               "Method",
               "public System.String methodB(System.String a, System.String b)"
             ),
             CompletionItemLink("methodA()", "Method", "public System.String methodA()"),
+            CompletionItemLink("methodProtected()", "Method", "protected void methodProtected()"),
             CompletionItemLink(
               "methodPrivate()",
               "Method",
               "private System.String methodPrivate()"
             ),
             CompletionItemLink(
+              "methodImplicitPrivate()",
+              "Method",
+              "System.Integer methodImplicitPrivate()"
+            ),
+            CompletionItemLink(
+              "methodGlobalStatic()",
+              "Method",
+              "global static void methodGlobalStatic()"
+            ),
+            CompletionItemLink(
               "methodStatic()",
               "Method",
               "public static System.String methodStatic()"
             ),
+            CompletionItemLink(
+              "methodStaticPrivate()",
+              "Method",
+              "private static System.String methodStaticPrivate()"
+            ),
+            CompletionItemLink(
+              "methodStaticImplicitPrivate()",
+              "Method",
+              "static System.Integer methodStaticImplicitPrivate()"
+            ),
+            CompletionItemLink("myGlobalField", "Field", "global String myGlobalField"),
             CompletionItemLink("myField", "Field", "public String myField"),
-            CompletionItemLink("myStaticField", "Field", "public static String myStaticField"),
+            CompletionItemLink("myProtectedField", "Field", "protected String myProtectedField"),
             CompletionItemLink("myPrivateField", "Field", "private String myPrivateField"),
+            CompletionItemLink("myImplicitPrivateField", "Field", "String myImplicitPrivateField"),
+            CompletionItemLink(
+              "myGlobalStaticField",
+              "Field",
+              "global static String myGlobalStaticField"
+            ),
+            CompletionItemLink("myStaticField", "Field", "public static String myStaticField"),
+            CompletionItemLink(
+              "myPrivateStaticField",
+              "Field",
+              "private static String myPrivateStaticField"
+            ),
+            CompletionItemLink(
+              "myImplicitPrivateStaticField",
+              "Field",
+              "static String myImplicitPrivateStaticField"
+            ),
+            CompletionItemLink("MyGlobalInner", "Class", "global"),
             CompletionItemLink("MyInner", "Class", "public"),
-            CompletionItemLink("MyPrivateInner", "Interface", "private")
+            CompletionItemLink("MyPrivateInner", "Interface", "private"),
+            CompletionItemLink("MyImplicitPrivateInner", "Interface", "")
           )
       )
     }
@@ -77,16 +145,8 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
       val org  = createOrg(root)
       val path = root.join("Completion.cls")
       val content =
-        """public class Dummy { public void someMethod() {m}
-            |public String methodA(){}
-            |public String methodB(String a, String b){}
-            |public static String methodStatic(){}
-            |private String methodPrivate(){}
-            |public String myField;
-            |public static String myStaticField;
-            |private String myPrivateField;
-            |public class MyInner{};
-            |private interface MyPrivateInner{};
+        s"""public virtual class Dummy { public void someMethod() {m}
+            |$bodyContent
             |}""".stripMargin.replaceAll("\r\n", "\n")
       val offset      = content.split('\n').head.length - 1
       val completions = org.getCompletionItemsInternal(path, line = 1, offset, content)
@@ -96,49 +156,76 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
           .filterNot(_.kind == "Keyword")
           .toSet ==
           Set(
+            CompletionItemLink("methodGlobal()", "Method", "global void methodGlobal()"),
             CompletionItemLink(
               "methodB(a, b)",
               "Method",
               "public System.String methodB(System.String a, System.String b)"
             ),
             CompletionItemLink("methodA()", "Method", "public System.String methodA()"),
+            CompletionItemLink("methodProtected()", "Method", "protected void methodProtected()"),
             CompletionItemLink(
               "methodPrivate()",
               "Method",
               "private System.String methodPrivate()"
             ),
             CompletionItemLink(
+              "methodImplicitPrivate()",
+              "Method",
+              "System.Integer methodImplicitPrivate()"
+            ),
+            CompletionItemLink(
+              "methodGlobalStatic()",
+              "Method",
+              "global static void methodGlobalStatic()"
+            ),
+            CompletionItemLink(
               "methodStatic()",
               "Method",
               "public static System.String methodStatic()"
             ),
+            CompletionItemLink(
+              "methodStaticPrivate()",
+              "Method",
+              "private static System.String methodStaticPrivate()"
+            ),
+            CompletionItemLink(
+              "methodStaticImplicitPrivate()",
+              "Method",
+              "static System.Integer methodStaticImplicitPrivate()"
+            ),
+            CompletionItemLink("myGlobalField", "Field", "global String myGlobalField"),
             CompletionItemLink("myField", "Field", "public String myField"),
-            CompletionItemLink("myStaticField", "Field", "public static String myStaticField"),
+            CompletionItemLink("myProtectedField", "Field", "protected String myProtectedField"),
             CompletionItemLink("myPrivateField", "Field", "private String myPrivateField"),
+            CompletionItemLink("myImplicitPrivateField", "Field", "String myImplicitPrivateField"),
+            CompletionItemLink(
+              "myGlobalStaticField",
+              "Field",
+              "global static String myGlobalStaticField"
+            ),
+            CompletionItemLink("myStaticField", "Field", "public static String myStaticField"),
+            CompletionItemLink(
+              "myPrivateStaticField",
+              "Field",
+              "private static String myPrivateStaticField"
+            ),
+            CompletionItemLink(
+              "myImplicitPrivateStaticField",
+              "Field",
+              "static String myImplicitPrivateStaticField"
+            ),
+            CompletionItemLink("MyGlobalInner", "Class", "global"),
             CompletionItemLink("MyInner", "Class", "public"),
-            CompletionItemLink("MyPrivateInner", "Interface", "private")
+            CompletionItemLink("MyPrivateInner", "Interface", "private"),
+            CompletionItemLink("MyImplicitPrivateInner", "Interface", "")
           )
       )
     }
   }
 
   test("Instance Completions") {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" ->
-          """public class Dummy {
-          |public String methodA(){}
-          |public String methodB(String a, String b){}
-          |public static String methodStatic(){}
-          |private String methodPrivate(){}
-          |public String myField;
-          |public static String myStaticField;
-          |private String myPrivateField;
-          |public class MyInner{};
-          |private interface MyPrivateInner{};
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
+    FileSystemHelper.run(Map("Dummy.cls" -> dummyContent)) { root: PathLike =>
       val org     = createOrg(root)
       val path    = root.join("Completion.cls")
       val content = "public class Completion { public Completion() {String a = new Dummy().m"
@@ -147,35 +234,49 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
           .getCompletionItemsInternal(path, line = 1, offset = content.length, content)
           .toSet ==
           Set(
+            CompletionItemLink("methodGlobal()", "Method", "global void methodGlobal()"),
             CompletionItemLink(
               "methodB(a, b)",
               "Method",
               "public System.String methodB(System.String a, System.String b)"
             ),
             CompletionItemLink("methodA()", "Method", "public System.String methodA()"),
+            CompletionItemLink("myGlobalField", "Field", "global String myGlobalField"),
             CompletionItemLink("myField", "Field", "public String myField")
           )
       )
     }
   }
 
-  test("Static Completions") {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" ->
-          """public class Dummy {
-          |public String methodA(){}
-          |public String methodB(String a, String b){}
-          |public static String methodStatic(){}
-          |private String methodPrivate(){}
-          |public String myField;
-          |public static String myStaticField;
-          |private String myPrivateField;
-          |public class MyInner{};
-          |private interface MyPrivateInner{};
-          |}""".stripMargin
+  test("Instance Completions (extending)") {
+    FileSystemHelper.run(Map("Dummy.cls" -> dummyContent)) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Completion.cls")
+      val content =
+        "public class Completion extends Dummy { public Completion() {String a = new Dummy().m"
+      assert(
+        org
+          .getCompletionItemsInternal(path, line = 1, offset = content.length, content)
+          .toSet ==
+          Set(
+            CompletionItemLink("methodGlobal()", "Method", "global void methodGlobal()"),
+            CompletionItemLink(
+              "methodB(a, b)",
+              "Method",
+              "public System.String methodB(System.String a, System.String b)"
+            ),
+            CompletionItemLink("methodA()", "Method", "public System.String methodA()"),
+            CompletionItemLink("methodProtected()", "Method", "protected void methodProtected()"),
+            CompletionItemLink("myGlobalField", "Field", "global String myGlobalField"),
+            CompletionItemLink("myField", "Field", "public String myField"),
+            CompletionItemLink("myProtectedField", "Field", "protected String myProtectedField")
+          )
       )
-    ) { root: PathLike =>
+    }
+  }
+
+  test("Static Completions") {
+    FileSystemHelper.run(Map("Dummy.cls" -> dummyContent)) { root: PathLike =>
       val org     = createOrg(root)
       val path    = root.join("Completion.cls")
       val content = "public class Completion { public Completion() {String a = Dummy.m"
@@ -185,11 +286,22 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
           .toSet ==
           Set(
             CompletionItemLink(
+              "methodGlobalStatic()",
+              "Method",
+              "global static void methodGlobalStatic()"
+            ),
+            CompletionItemLink(
               "methodStatic()",
               "Method",
               "public static System.String methodStatic()"
             ),
+            CompletionItemLink(
+              "myGlobalStaticField",
+              "Field",
+              "global static String myGlobalStaticField"
+            ),
             CompletionItemLink("myStaticField", "Field", "public static String myStaticField"),
+            CompletionItemLink("MyGlobalInner", "Class", "global"),
             CompletionItemLink("MyInner", "Class", "public")
           )
       )
@@ -197,22 +309,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Instance Completions (in statement)") {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" ->
-          """public class Dummy {
-          |public String methodA(){}
-          |public String methodB(String a, String b){}
-          |public static String methodStatic(){}
-          |private String methodPrivate(){}
-          |public String myField;
-          |public static String myStaticField;
-          |private String myPrivateField;
-          |public class MyInner{};
-          |private interface MyPrivateInner{};
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
+    FileSystemHelper.run(Map("Dummy.cls" -> dummyContent)) { root: PathLike =>
       val org     = createOrg(root)
       val path    = root.join("Completion.cls")
       val content = "public class Completion { public Completion() {Dummy a; if ( a.m"
@@ -221,12 +318,14 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
           .getCompletionItemsInternal(path, line = 1, offset = content.length, content)
           .toSet ==
           Set(
+            CompletionItemLink("methodGlobal()", "Method", "global void methodGlobal()"),
             CompletionItemLink(
               "methodB(a, b)",
               "Method",
               "public System.String methodB(System.String a, System.String b)"
             ),
             CompletionItemLink("methodA()", "Method", "public System.String methodA()"),
+            CompletionItemLink("myGlobalField", "Field", "global String myGlobalField"),
             CompletionItemLink("myField", "Field", "public String myField")
           )
       )
@@ -234,22 +333,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Instance Completions (no context)") {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" ->
-          """public class Dummy {
-          |public String methodA(){}
-          |public String methodB(String a, String b){}
-          |public static String methodStatic(){}
-          |private String methodPrivate(){}
-          |public String myField;
-          |public static String myStaticField;
-          |private String myPrivateField;
-          |public class MyInner{};
-          |private interface MyPrivateInner{};
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
+    FileSystemHelper.run(Map("Dummy.cls" -> dummyContent)) { root: PathLike =>
       val org     = createOrg(root)
       val path    = root.join("Completion.cls")
       val content = "public class Completion { public Completion() {String a = new Dummy()."
@@ -258,6 +342,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
           .getCompletionItemsInternal(path, line = 1, offset = content.length, content)
           .toSet ==
           Set(
+            CompletionItemLink("methodGlobal()", "Method", "global void methodGlobal()"),
             CompletionItemLink("methodA()", "Method", "public System.String methodA()"),
             CompletionItemLink(
               "methodB(a, b)",
@@ -272,6 +357,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
               "Method",
               "public virtual System.Boolean equals(Object other)"
             ),
+            CompletionItemLink("myGlobalField", "Field", "global String myGlobalField"),
             CompletionItemLink("myField", "Field", "public String myField")
           )
       )
@@ -662,22 +748,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
   }
 
   test("Triggers Static Completions") {
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" ->
-          """public class Dummy {
-          |public String methodA(){}
-          |public String methodB(String a, String b){}
-          |public static String methodStatic(){}
-          |private String methodPrivate(){}
-          |public String myField;
-          |public static String myStaticField;
-          |private String myPrivateField;
-          |public class MyInner{};
-          |private interface MyPrivateInner{};
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
+    FileSystemHelper.run(Map("Dummy.cls" -> dummyContent)) { root: PathLike =>
       val org     = createOrg(root)
       val path    = root.join("Completion.trigger")
       val content = "trigger Completion on Account(before insert) { Dummy.m"
@@ -687,11 +758,22 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
           .toSet ==
           Set(
             CompletionItemLink(
+              "methodGlobalStatic()",
+              "Method",
+              "global static void methodGlobalStatic()"
+            ),
+            CompletionItemLink(
               "methodStatic()",
               "Method",
               "public static System.String methodStatic()"
             ),
+            CompletionItemLink(
+              "myGlobalStaticField",
+              "Field",
+              "global static String myGlobalStaticField"
+            ),
             CompletionItemLink("myStaticField", "Field", "public static String myStaticField"),
+            CompletionItemLink("MyGlobalInner", "Class", "global"),
             CompletionItemLink("MyInner", "Class", "public")
           )
       )

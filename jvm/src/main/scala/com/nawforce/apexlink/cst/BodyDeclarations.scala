@@ -340,9 +340,7 @@ final case class ApexFieldDeclaration(
 
   override def idLocation: Location = id.location.location
 
-  override val name: Name = id.name
-  private val visibility: Option[Modifier] =
-    _modifiers.modifiers.find(ApexModifiers.visibilityModifiers.contains)
+  override val name: Name                   = id.name
   override val readAccess: Modifier         = visibility.getOrElse(PRIVATE_MODIFIER)
   override val writeAccess: Modifier        = readAccess
   override val children: ArraySeq[ApexNode] = ArraySeq.empty

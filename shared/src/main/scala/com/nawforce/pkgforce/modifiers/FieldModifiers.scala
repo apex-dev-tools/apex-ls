@@ -87,8 +87,6 @@ object FieldModifiers {
       ) {
         logger.logError(idContext, "Webservice fields must be global")
         GLOBAL_MODIFIER +: mods.diff(visibilityModifiers)
-      } else if (mods.intersect(visibilityModifiers).isEmpty) {
-        PRIVATE_MODIFIER +: mods
       } else {
         mods
       }
