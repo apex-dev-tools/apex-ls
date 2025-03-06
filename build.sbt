@@ -2,7 +2,7 @@ import org.scalajs.linker.interface.Report
 
 import scala.sys.process._
 
-ThisBuild / scalaVersion         := "2.13.10"
+ThisBuild / scalaVersion         := "2.13.16"
 ThisBuild / description          := "Salesforce Apex static analysis toolkit"
 ThisBuild / organization         := "io.github.apex-dev-tools"
 ThisBuild / organizationHomepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
