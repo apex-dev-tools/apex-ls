@@ -27,7 +27,7 @@ import com.nawforce.apexlink.types.core.{
 }
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.{CustomFieldDeclaration, CustomMethodDeclaration}
-import com.nawforce.pkgforce.modifiers.{GLOBAL_MODIFIER, Modifier}
+import com.nawforce.pkgforce.modifiers.Modifier
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 
@@ -234,8 +234,11 @@ final case class SObjectTypeFields(sobjectName: Name, module: OPM.Module)
       .get(name)
       .orElse(ghostedSobjectFields.get(name))
       .orElse({
-        val typeName = EncodedName(name).asTypeName
-        if (module.isGhostedType(typeName)) {
+        // sObject or the field is ghosted
+        if (
+          module.isGhostedType(typeName.params.head) || module
+            .isGhostedType(EncodedName(name).asTypeName)
+        ) {
           ghostedSobjectFields
             .put(name, CustomFieldDeclaration(name, TypeNames.DescribeFieldResult, None))
         }
