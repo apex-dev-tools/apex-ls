@@ -317,4 +317,40 @@ class GhostPackageTest extends AnyFunSuite with TestHelper {
       assert(packagedClass("pkg", "Dummy").get.dependencies().isEmpty)
     }
   }
+
+  test("Ghost package with custom object and standard sobjectype field") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"namespace": "pkg",
+            |"packageDirectories": [{"path": "pkg"}],
+            |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
+            |}""".stripMargin,
+        "pkg/Dummy.cls" -> "public class Dummy { void func() { String name = Schema.SObjectType.ghosted__myObject__c.Fields.Name.name; } }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(packagedClass("pkg", "Dummy").get.dependencies().isEmpty)
+      assert(!hasIssues)
+    }
+  }
+
+  test("Ghost package with custom object and standard sobjectfield") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"namespace": "pkg",
+            |"packageDirectories": [{"path": "pkg"}],
+            |"plugins": {"dependencies": [{"namespace": "ghosted"}]}
+            |}""".stripMargin,
+        "pkg/Dummy.cls" -> "public class Dummy { void func() { Schema.ghosted__myObject__c.Fields.Name.getDescribe(); } }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(packagedClass("pkg", "Dummy").get.dependencies().isEmpty)
+      assert(!hasIssues)
+    }
+  }
 }
