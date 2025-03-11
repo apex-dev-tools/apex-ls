@@ -314,8 +314,7 @@ final case class SObjectFields(baseType: TypeName, module: OPM.Module)
       .get(name)
       .orElse(ghostedSobjectFields.get(name))
       .orElse({
-        val typeName = EncodedName(name).asTypeName
-        if (module.isGhostedType(typeName)) {
+        if (module.isGhostedType(baseType) || module.isGhostedType(EncodedName(name).asTypeName)) {
           ghostedSobjectFields.put(name, CustomFieldDeclaration(name, TypeNames.SObjectField, None))
         }
         ghostedSobjectFields.get(name)
