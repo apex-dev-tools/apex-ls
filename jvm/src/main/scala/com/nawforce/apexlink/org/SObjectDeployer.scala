@@ -742,7 +742,8 @@ object SObjectDeployer {
         TypeNames.sObjectFields$(typeName),
         None,
         asStatic = true
-      )
+      ),
+      CustomFieldDeclaration(Names.Parent, typeName, None)
     )
   }
 
@@ -786,7 +787,8 @@ object SObjectDeployer {
         TypeNames.sObjectFields$(typeName),
         None,
         asStatic = true
-      )
+      ),
+      CustomFieldDeclaration(Names.Parent, typeName, None)
     )
 
   private val historyFields: ArraySeq[FieldDeclaration] =
