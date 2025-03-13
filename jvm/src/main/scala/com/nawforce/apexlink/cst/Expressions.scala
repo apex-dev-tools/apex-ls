@@ -459,15 +459,13 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
     }
 
     // Field is missing
-    if (inputType.isSObject || inputType.isInstanceOf[RecordSetDeclaration]) {
-      // For SObject or RecordSet being used as an SObject, ignore if we not have a
-      // complete type or the field is using a ghosted namespace
-      if (inputType.isComplete && !context.module.isGhostedFieldName(name)) {
+    // ignore if we not have a complete type or the field is using a ghosted namespace
+    if (inputType.isComplete && !context.module.isGhostedFieldName(name)) {
+      if (inputType.isSObject || inputType.isInstanceOf[RecordSetDeclaration]) {
         context.log(IssueOps.unknownFieldOnSObject(location, name, inputType.typeName))
+      } else {
+        context.log(IssueOps.unknownFieldOrType(location, name, inputType.typeName))
       }
-    } else if (inputType.isComplete) {
-      // For other types, if complete we should error
-      context.log(IssueOps.unknownFieldOrType(location, name, inputType.typeName))
     }
     ExprContext.empty
   }
