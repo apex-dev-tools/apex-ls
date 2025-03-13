@@ -79,6 +79,7 @@ object Names extends CleanableCache {
   lazy val Address: Name                 = cache("Address")
   lazy val NameName: Name                = cache("Name")
   lazy val AccessLevel: Name             = cache("AccessLevel")
+  lazy val Parent: Name                  = cache("Parent")
   lazy val ParentId: Name                = cache("ParentId")
   lazy val RowCause: Name                = cache("RowCause")
   lazy val UserOrGroupId: Name           = cache("UserOrGroupId")
