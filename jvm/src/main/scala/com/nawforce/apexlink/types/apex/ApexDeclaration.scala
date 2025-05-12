@@ -50,7 +50,7 @@ trait ApexBlockLike extends BlockDeclaration with Locatable {
 }
 
 /** Unifying trait for ApexConstructorLike and CustomConstructorDeclaration. Both need to appear to
-  * be visible from a a type but have little in common beyond allowing for creation of a summary.
+  * be visible from a type but have little in common beyond allowing for creation of a summary.
   */
 trait ApexVisibleConstructorLike extends ConstructorDeclaration {
   def summary: ConstructorSummary
@@ -73,7 +73,7 @@ trait ApexConstructorLike extends ApexVisibleConstructorLike with IdLocatable {
 }
 
 /** Unifying trait for ApexMethodLike and CustomMethodDeclaration. Both need to appear to be visible
-  * from a a type but have little in common beyond allowing for constructions of a summary.
+  * from a type but have little in common beyond allowing for constructions of a summary.
   */
 trait ApexVisibleMethodLike extends MethodDeclaration {
   def summary: MethodSummary
@@ -228,6 +228,13 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   /** Override to handle request to flush the type to passed cache if dirty */
   def flush(pc: ParsedCache, context: PackageContext): Unit
 
+  /** Remove local caches ready for revalidation */
+  override def preReValidate(): Unit = {
+    super.preReValidate()
+    _superClassDeclaration = None
+    _interfaceDeclarations = ArraySeq.empty
+  }
+
   private var _superClassDeclaration: Option[TypeDeclaration] = None
 
   override def superClassDeclaration: Option[TypeDeclaration] = {
@@ -253,20 +260,20 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     deepHash(mutable.Set())
   }
 
-  private def deepHash(accum: mutable.Set[ApexClassDeclaration]): Int = {
-    if (accum.contains(this)) {
+  private def deepHash(accumulator: mutable.Set[ApexClassDeclaration]): Int = {
+    if (accumulator.contains(this)) {
       0
     } else {
-      accum.add(this)
+      accumulator.add(this)
       MurmurHash3.arrayHash(
         Array(this.sourceHash) ++
           superClassDeclaration
             .collect { case td: ApexClassDeclaration => td }
-            .map(_.deepHash(accum))
+            .map(_.deepHash(accumulator))
             .toArray ++
           interfaceDeclarations
             .collect { case td: ApexClassDeclaration => td }
-            .map(_.deepHash(accum))
+            .map(_.deepHash(accumulator))
       )
     }
   }
@@ -342,7 +349,7 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   protected def resetMethodMapIfInvalid(): Unit = {
     // We used to only clear the method map if its cached deep hash did not match the
     // deep hash of the declaration. The deep hash however is not catching non-structural
-    // changes such as method parameter types becoming available so I have disabled
+    // changes such as method parameter types becoming available, so I have disabled
     // but left this in use in case we want to pursue this optimisation again later
     _methodMap = None
   }
