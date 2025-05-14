@@ -22,11 +22,13 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
     )
     FileSystemHelper.run(source) { root: PathLike =>
       val org = createHappyOrg(root)
+      val result = org.unmanaged
+        .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+        .map(LocationLinkString(root, contentAndCursorPos._1, _))
       assert(
-        org.unmanaged
-          .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
-          .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
-          Array(
+        result.length == 2 &&
+          result.toSet ==
+          Set(
             LocationLinkString("goToMethod", path"/Dummy.cls", "void goToMethod(){}", "goToMethod"),
             LocationLinkString(
               "goToMethod",
@@ -54,11 +56,13 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)
+      val result = org.unmanaged
+        .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+        .map(LocationLinkString(root, contentAndCursorPos._1, _))
+      assert(result.length == 2)
       assert(
-        org.unmanaged
-          .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
-          .map(LocationLinkString(root, contentAndCursorPos._1, _))
-          sameElements Array(
+        result.toSet ==
+          Set(
             LocationLinkString("concrete", path"/Dummy.cls", "void concrete(){}", "concrete"),
             LocationLinkString("concrete", path"/Bar.cls", "void concrete(){}", "concrete")
           )
@@ -77,13 +81,14 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
     )
     FileSystemHelper.run(source) { root: PathLike =>
       val org = createHappyOrg(root)
-      val actual = org.unmanaged
+      val result = org.unmanaged
         .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
         .map(LocationLinkString(root, contentAndCursorPos._1, _))
       assert(
-        actual sameElements Array(
-          LocationLinkString("goToMethod", path"/Dummy.cls", "void goToMethod(){}", "goToMethod")
-        )
+        result sameElements
+          Array(
+            LocationLinkString("goToMethod", path"/Dummy.cls", "void goToMethod(){}", "goToMethod")
+          )
       )
     }
   }
@@ -103,11 +108,13 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)
+      val result = org.unmanaged
+        .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+        .map(LocationLinkString(root, contentAndCursorPos._1, _))
+      assert(result.length == 3)
       assert(
-        org.unmanaged
-          .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
-          .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
-          Array(
+        result.toSet ==
+          Set(
             LocationLinkString("Foo", path"/Bar.cls", bar, "Bar"),
             LocationLinkString("Foo", path"/DummyTwo.cls", dummyTwo, "DummyTwo"),
             LocationLinkString("Foo", path"/Dummy.cls", dummy, "Dummy")
@@ -131,14 +138,15 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       val org = createHappyOrg(root)
+      val result = org.unmanaged
+        .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+        .map(LocationLinkString(root, contentAndCursorPos._1, _))
+      assert(result.length == 2)
       assert(
-        org.unmanaged
-          .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
-          .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
-          Array(
-            LocationLinkString("Foo", path"/DummyTwo.cls", dummyTwo, "DummyTwo"),
-            LocationLinkString("Foo", path"/Dummy.cls", dummy, "Dummy")
-          )
+        result.toSet == Set(
+          LocationLinkString("Foo", path"/DummyTwo.cls", dummyTwo, "DummyTwo"),
+          LocationLinkString("Foo", path"/Dummy.cls", dummy, "Dummy")
+        )
       )
     }
   }
@@ -151,23 +159,18 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1, "Dummy.cls" -> dummy)) {
       root: PathLike =>
         val org = createHappyOrg(root)
+        val result = org.unmanaged
+          .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+          .map(LocationLinkString(root, contentAndCursorPos._1, _))
         assert(
-          org.unmanaged
-            .getImplementation(
-              root.join("Foo.cls"),
-              line = 1,
-              offset = contentAndCursorPos._2,
-              None
+          result sameElements Array(
+            LocationLinkString(
+              "Foo",
+              path"/Dummy.cls",
+              "class InnerClass implements Foo { public void goToMethod(){}}",
+              "InnerClass"
             )
-            .map(LocationLinkString(root, contentAndCursorPos._1, _)) sameElements
-            Array(
-              LocationLinkString(
-                "Foo",
-                path"/Dummy.cls",
-                "class InnerClass implements Foo { public void goToMethod(){}}",
-                "InnerClass"
-              )
-            )
+          )
         )
     }
   }
@@ -180,15 +183,11 @@ class ImplementationProviderTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1, "Dummy.cls" -> dummy)) {
       root: PathLike =>
         val org = createHappyOrg(root)
+        val result = org.unmanaged
+          .getImplementation(root.join("Foo.cls"), line = 1, offset = contentAndCursorPos._2, None)
+          .map(LocationLinkString(root, contentAndCursorPos._1, _))
         assert(
-          org.unmanaged
-            .getImplementation(
-              root.join("Foo.cls"),
-              line = 1,
-              offset = contentAndCursorPos._2,
-              None
-            )
-            .map(LocationLinkString(root, contentAndCursorPos._1, _))
+          result
             sameElements
               Array(
                 LocationLinkString(

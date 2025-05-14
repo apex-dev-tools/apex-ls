@@ -21,7 +21,6 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.memory.SkinnyWeakSet
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
-import com.nawforce.apexlink.rpc.TargetLocation
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
@@ -81,7 +80,7 @@ trait ApexVisibleMethodLike extends MethodDeclaration {
 
 /** Apex defined method core features, be they full or summary style */
 trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLocatable {
-  val thisTypeId: TypeId
+  override val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
   // Synthetic methods are generated locally & so can be excluded from issue reporting
@@ -110,38 +109,50 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
     }
   }
 
-  override def getReferenceHolderTypeIds: Set[TypeId] = {
-    collectMethods()
-      .map(_.thisTypeId)
-      .flatMap(id => id.toTypeDeclaration[DependentType])
-      .flatMap(td => {
-        (td.outermostTypeDeclaration match {
-          case d: DependentType => d.getTypeDependencyHolders.toSet
-          case _                => Set.empty[TypeId]
-        }) ++ Set(td.outerTypeId)
+  /** Collects all related `Referenceable` instances, including the current method and
+    * all parent and child methods in the shadow hierarchy.
+    *
+    * @return A set of `Referenceable` instances related to the current method.
+    */
+  override def collectRelatedReferencable(): Set[ApexMethodLike] = {
+    def getShadowMethods(method: ApexMethodLike): Set[ApexMethodLike] = {
+      (method.shadows ++ method.shadowedBy).collect { case am: ApexMethodLike => am }
+    }
+
+    // To use shadows & shadowedBy we need method maps setup for dependency holders, typically
+    // this will have already been done but when cache loading method maps are not generally
+    // needed so better to be sure
+    this.thisTypeId
+      .toTypeDeclaration[ApexClassDeclaration]
+      .foreach(td => {
+        val holders = mutable.Set[ApexClassDeclaration]()
+        val targets = mutable.Queue[ApexClassDeclaration](td)
+        while (targets.nonEmpty) {
+          val target = targets.dequeue()
+          holders.add(target)
+          target.getTypeDependencyHolders.toIterable
+            .flatMap(_.toTypeDeclaration[ApexClassDeclaration])
+            .filterNot(holders.contains)
+            .foreach(targets.enqueue)
+        }
+        holders.foreach(_.methodMap)
       })
-  }
 
-  override def collectReferences(): Set[TargetLocation] = {
-    collectMethods().flatMap(_.getTargetLocations)
-  }
-
-  def collectMethods(): Set[ApexMethodLike] = {
-    def getApexMethod(methods: Set[MethodDeclaration]): Set[ApexMethodLike] = {
-      methods.collect({ case am: ApexMethodLike => am })
+    // Traverse both shadows and shadowedBy recursively to find all related methods, this
+    // is arguably over traversing in that it finds all whereas simply finding base & super
+    // implementations would be sufficient for most use cases
+    val visitedMethods = mutable.Set[ApexMethodLike](this)
+    val queue          = mutable.Queue[ApexMethodLike]()
+    queue.enqueueAll(getShadowMethods(this))
+    while (queue.nonEmpty) {
+      val current = queue.dequeue()
+      visitedMethods.add(current)
+      queue.enqueueAll(
+        getShadowMethods(current)
+          .diff(visitedMethods)
+      )
     }
-
-    val q                        = mutable.Queue[ApexMethodLike]()
-    val parentAndChildrenMethods = mutable.Queue[ApexMethodLike]()
-    q.enqueueAll(getApexMethod(shadows) ++ getApexMethod(shadowedBy))
-    while (q.nonEmpty) {
-      val item = q.dequeue()
-      if (!parentAndChildrenMethods.contains(item)) {
-        parentAndChildrenMethods.append(item)
-        q.enqueueAll(getApexMethod(item.shadows) ++ getApexMethod(item.shadowedBy))
-      }
-    }
-    (parentAndChildrenMethods :+ this).toSet
+    visitedMethods.toSet
   }
 
   def summary: MethodSummary = {
