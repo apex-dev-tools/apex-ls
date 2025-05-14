@@ -131,8 +131,9 @@ abstract class FullDeclaration(
     }
   }
 
+  /* Reset local caches ready for re-validation */
   override def preReValidate(): Unit = {
-    // Method maps, constructor maps & relative type contexts may be invalidated by changes to super classes/interfaces
+    super.preReValidate()
     typeContext.reset()
     resetMethodMapIfInvalid()
     resetConstructorMapIfInvalid()
@@ -288,7 +289,7 @@ abstract class FullDeclaration(
     try {
       getBodyDeclarationFromLocation(line, offset)
         .map(typeAndBody => {
-          // Validate the body declaration for the side-effect of being able to collect a map of expression results
+          // Validate the body declaration for the side effect of being able to collect a map of expression results
           val typeContext = new TypeVerifyContext(None, typeAndBody._1, None, enablePlugins = false)
           val resultMap   = mutable.Map[Location, ValidationResult]()
           val context =
@@ -381,14 +382,14 @@ object FullDeclaration {
     parser: CodeParser,
     module: OPM.Module,
     name: Name,
-    typeDecl: TypeDeclarationContext
+    typeDeclaration: TypeDeclarationContext
   ): Option[FullDeclaration] = {
 
-    val modifiers = ArraySeq.unsafeWrapArray(CodeParser.toScala(typeDecl.modifier()).toArray)
+    val modifiers = ArraySeq.unsafeWrapArray(CodeParser.toScala(typeDeclaration.modifier()).toArray)
     val thisType  = TypeName(name).withNamespace(module.namespace)
 
     val cst: Option[FullDeclaration] = CodeParser
-      .toScala(typeDecl.classDeclaration())
+      .toScala(typeDeclaration.classDeclaration())
       .map(cd => {
         val classModifiers = ApexModifiers.classModifiers(parser, modifiers, outer = true, cd.id())
         ClassDeclaration.construct(
@@ -401,7 +402,7 @@ object FullDeclaration {
       })
       .orElse(
         CodeParser
-          .toScala(typeDecl.interfaceDeclaration())
+          .toScala(typeDeclaration.interfaceDeclaration())
           .map(id =>
             InterfaceDeclaration.construct(
               parser,
@@ -414,7 +415,7 @@ object FullDeclaration {
       )
       .orElse(
         CodeParser
-          .toScala(typeDecl.enumDeclaration())
+          .toScala(typeDeclaration.enumDeclaration())
           .map(ed =>
             EnumDeclaration.construct(
               parser,
@@ -426,6 +427,6 @@ object FullDeclaration {
           )
       )
 
-    cst.map(_.withContext(typeDecl))
+    cst.map(_.withContext(typeDeclaration))
   }
 }
