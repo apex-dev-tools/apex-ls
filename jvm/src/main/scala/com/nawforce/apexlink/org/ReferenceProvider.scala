@@ -11,62 +11,133 @@ import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
   ApexFullDeclaration,
   FullDeclaration,
-  PreReValidatable,
   SummaryDeclaration
 }
-import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration, TypeId}
+import com.nawforce.apexlink.types.core.{Dependent, DependentType, TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 
-import scala.reflect.ClassTag
-import scala.util.hashing.MurmurHash3
+import scala.collection.mutable
 
-trait Referenceable extends PreReValidatable {
+/** This trait is used to mark a class as being referenceable. It is used in conjunction with
+  * ReferenceProvider to find all the locations that reference something in Apex code,
+  * currently only method references (aka method calls) are supported.
+  *
+  * @see ReferenceProvider
+  */
+trait Referenceable {
   this: Dependent =>
-  private var referenceLocations: SkinnySet[PathLocation] = new SkinnySet()
-  private var cache: (Int, Set[TargetLocation])           = (0, Set.empty)
 
-  override def preReValidate(): Unit = {
-    super.preReValidate()
-    referenceLocations = new SkinnySet()
-  }
+  /** Referencable must be able to provide a TypeId for the containing type to support revalidation. */
+  val thisTypeId: TypeId
 
-  def getTargetLocations: Array[TargetLocation] = {
-    referenceLocations.toSet
-      .map(ref => TargetLocation(ref.path.toString, ref.location))
-      .toArray
-  }
+  /** Temporary storage for locations referencing this Referenceable, null default to space save. */
+  private var referenceLocations: SkinnySet[TargetLocation] = _
 
-  def addLocation(pathLocation: PathLocation): Unit = {
-    referenceLocations.add(pathLocation)
-  }
-
-  def findReferences(): Set[TargetLocation] = {
-    val hashCode = hash()
-    if (hashCode != cache._1)
-      cache = (hashCode, collectReferences())
-    cache._2
-  }
-
-  def doesNeedReValidation(): Boolean = {
-    hash() != cache._1
-  }
-
-  /** This represents a high level view of all the types that hold a reference to this object.
-    * Returns the types that needs can be revalidated to build up the more specific reference
-    * locations.
+  /** Add a reference location to the list of references for this specific Referencable. Adding
+    * references is gated so that we can control when references are collected. This must be
+    * called from some part of the validation logic to establish the references.
     */
-  def getReferenceHolderTypeIds: Set[TypeId]
+  def addReferencingLocation(referencingLocation: PathLocation): Unit = {
+    if (Referenceable.allowReferenceCollection) {
+      if (referenceLocations == null) {
+        referenceLocations = new SkinnySet[TargetLocation]()
+      }
+      referenceLocations.add(
+        TargetLocation(referencingLocation.path.toString, referencingLocation.location)
+      )
+      Referenceable.addReference(this)
+    }
+  }
 
-  /** Returns the detailed reference locations
+  /** Collect all the referenceable elements that are related to this class. Override this
+    * to expand the reference search, such as for method overloading.
     */
-  protected def collectReferences(): Set[TargetLocation]
+  def collectRelatedReferencable(): Set[_ <: Referenceable] = Set[Referenceable](this)
 
-  private def hash(): Int = {
-    MurmurHash3.arrayHash(
-      getReferenceHolderTypeIds.toArray
-        .flatMap(id => id.toTypeDeclaration[ApexClassDeclaration])
-        .map(_.deepHash)
-    )
+  /** Collect all reference locations for this Referencable. The basic approach here
+    * is to collect references to things during a revalidation pass. The ReferenceProvider
+    * uses this.
+    */
+  def getCurrentReferences(
+    line: Int,
+    offset: Int,
+    refresh: Seq[PathLike] => Unit
+  ): Set[TargetLocation] = {
+
+    try {
+      Referenceable.allowReferenceCollection = true
+
+      // Re-validate to remove summary types and build up the references
+      // We used to cache here but as we expand the number of Referenceable things that
+      // would cause some memory bloat, this will be slower but hopefully OK
+      refresh(
+        collectHolderTypeIds(collectRelatedReferencable())
+          .flatMap(_.toTypeDeclaration[ApexClassDeclaration])
+          .map(_.paths.head)
+          .toSeq
+      )
+
+      // Find the target Referencable as it may have been replaced during the refresh
+      thisTypeId
+        .toTypeDeclaration[FullDeclaration]
+        .flatMap(_.getBodyDeclarationFromLocation(line, offset))
+        .map(_._2)
+        .flatMap({
+          case newRef: Referenceable =>
+            // Now gather the created references as the result
+            Some(newRef.collectRelatedReferencable().flatMap(_.getReferencingLocations))
+          case _ => Some(Set[TargetLocation]())
+        })
+        .getOrElse(Set.empty)
+
+    } finally {
+      Referenceable.allowReferenceCollection = false
+      Referenceable.clearReferences()
+    }
+  }
+
+  /** Collects all the dependency holder classes for the passed Referencable set */
+  private def collectHolderTypeIds(referenceable: Set[_ <: Referenceable]): Set[TypeId] = {
+    referenceable
+      .map(_.thisTypeId)
+      .flatMap(id => id.toTypeDeclaration[DependentType])
+      .flatMap(td => {
+        (td.outermostTypeDeclaration match {
+          case d: DependentType => d.getTypeDependencyHolders.toSet
+          case _                => Set.empty[TypeId]
+        }) ++ Set(td.outerTypeId)
+      })
+  }
+
+  /** Get all accumulated referencing locations. */
+  private def getReferencingLocations: Set[TargetLocation] = {
+    if (referenceLocations == null) {
+      Set.empty
+    } else {
+      referenceLocations.toSet
+    }
+  }
+}
+
+object Referenceable {
+
+  /** Gate controlling if reference collection is enabled. */
+  private var allowReferenceCollection: Boolean = false
+
+  /** Set of all references that have recorded reference locations so we can
+    * clear them after processing.
+    */
+  private val collectedReferences: mutable.Set[Referenceable] = mutable.Set.empty
+
+  /** Add a Referenceable that has recorded a reference location */
+  private def addReference(ref: Referenceable): Unit = {
+    collectedReferences.add(ref)
+  }
+
+  /** Clear all Referenceable that are known to have some reference locations */
+  private def clearReferences(): Unit = {
+    collectedReferences.foreach(_.referenceLocations = null)
+    collectedReferences.clear()
   }
 }
 
@@ -75,9 +146,9 @@ trait ReferenceProvider extends SourceOps {
 
   def getReferences(path: PathLike, line: Int, offset: Int): Array[TargetLocation] = {
     val sourceTd = loadTypeFromModule(path) match {
-      case Some(sm: SummaryDeclaration) =>
-        reValidate(Set(sm.typeId) ++ sm.getTypeDependencyHolders.toSet)
-        // Reload the source after summary type has been validated so we can get the full type
+      case Some(_: SummaryDeclaration) =>
+        // Refresh the summary type to get the full type
+        refreshBatched(Seq(RefreshRequest(this, path, highPriority = true)))
         loadTypeFromModule(path).getOrElse(return emptyTargetLocations)
       case Some(td) => td
       case None     => return emptyTargetLocations
@@ -88,7 +159,7 @@ trait ReferenceProvider extends SourceOps {
     if (expr.nonEmpty && expr.get.locatable.isEmpty)
       return emptyTargetLocations
 
-    expr
+    val locationOpt = expr
       .flatMap(_.locatable)
       .orElse({
         sourceTd match {
@@ -97,12 +168,22 @@ trait ReferenceProvider extends SourceOps {
               .map(_._2)
         }
       })
+
+    locationOpt
       .flatMap({
         case ref: Referenceable =>
-          // ReValidate any references so that ReferenceLocations can be built up
-          if (ref.doesNeedReValidation())
-            reValidate(ref.getReferenceHolderTypeIds)
-          Some(ref.findReferences().toArray)
+          val targetLocation = locationOpt.get.location.location
+          Some(
+            ref
+              .getCurrentReferences(
+                targetLocation.startLine,
+                targetLocation.startPosition,
+                (paths: Seq[PathLike]) => {
+                  refreshBatched(paths.map(path => RefreshRequest(this, path, highPriority = true)))
+                }
+              )
+              .toArray
+          )
         case _ => None
       })
       .getOrElse(emptyTargetLocations)

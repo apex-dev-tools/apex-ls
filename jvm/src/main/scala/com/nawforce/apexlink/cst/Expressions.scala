@@ -66,7 +66,8 @@ case class ExprContext(
   *
   * @param locatable position of code that generated this context to support introspection
   */
-class VoidExprContext(locatable: Option[Locatable]) extends ExprContext(None, None, locatable) {
+private class VoidExprContext(locatable: Option[Locatable])
+    extends ExprContext(None, None, locatable) {
   override def isVoid = true
 }
 
@@ -86,7 +87,7 @@ object ExprContext {
     new ExprContext(isStatic, Some(declaration))
   }
 
-  /* We allow flex here on the locatable type as it a cross cutting concern of many sorts of things */
+  /* We allow flex here on the locatable type as it a cross-cutting concern of many sorts of things */
   def apply(
     isStatic: Option[Boolean],
     declaration: Option[TypeDeclaration],
@@ -363,7 +364,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
     } else {
       TypeResolver(TypeName(id.name), context.module).toOption match {
         // It might be a static reference to an outer class that failed normal analysis due to class name shadowing
-        // This occurs where say A has an inner of B and in C with an inner of A we reference 'A.B' which is valid.
+        // This occurs where say A has an inner of B and in C with an inner of A, we reference 'A.B' which is valid.
         case Some(td: ApexClassDeclaration) => verifyShadowedStatic(td, context)
         case _                              => None
       }
@@ -497,7 +498,7 @@ final case class DotExpressionWithMethod(
               .getOrElse(ExprContext.empty)
           }
         } else {
-          // When we can't find method we should still verify args for dependency side-effects
+          // When we can't find method we should still verify args for dependency side effects
           target.map(target => target.arguments.map(_.verify(input, context)))
           ExprContext.empty
         }
@@ -603,7 +604,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
         cachedMethod = Some(method)
         context.addDependency(method)
         method match {
-          case ref: Referenceable => ref.addLocation(location)
+          case ref: Referenceable => ref.addReferencingLocation(location)
           case _                  =>
         }
         if (method.typeName != TypeNames.Void) {
