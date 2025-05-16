@@ -146,9 +146,9 @@ trait ReferenceProvider extends SourceOps {
 
   def getReferences(path: PathLike, line: Int, offset: Int): Array[TargetLocation] = {
     val sourceTd = loadTypeFromModule(path) match {
-      case Some(sm: SummaryDeclaration) =>
-        reValidate(Set(sm.typeId) ++ sm.getTypeDependencyHolders.toSet)
-        // Reload the source after summary type has been validated so we can get the full type
+      case Some(_: SummaryDeclaration) =>
+        // Refresh the summary type to get the full type
+        refreshBatched(Seq(RefreshRequest(this, path, highPriority = true)))
         loadTypeFromModule(path).getOrElse(return emptyTargetLocations)
       case Some(td) => td
       case None     => return emptyTargetLocations
