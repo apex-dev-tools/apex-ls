@@ -16,6 +16,7 @@ package com.nawforce.apexlink.cst.stmts
 
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.parsers.ENUM_NATURE
@@ -144,7 +145,13 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
     nonNull.foreach {
       case iv: WhenIdLiteral =>
         val field = typeDeclaration.findField(iv.id.name, Some(true))
-        field.foreach(context.addDependency)
+        field.foreach(field => {
+          field match {
+            case ref: Referenceable => ref.addReferencingLocation(iv.location)
+            case _                  =>
+          }
+          context.addDependency(field)
+        })
         if (field.isEmpty) {
           context.logError(iv.id.location, "Value must be a enum constant")
           return Seq()

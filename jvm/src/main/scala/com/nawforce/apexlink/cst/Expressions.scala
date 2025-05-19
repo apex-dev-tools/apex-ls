@@ -443,6 +443,10 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       DotExpression.findField(name, inputType, context.module, input.isStatic)
     if (field.nonEmpty) {
       context.addDependency(field.get)
+      field.get match {
+        case ref: Referenceable => ref.addReferencingLocation(location)
+        case _                  =>
+      }
       val target = context.getTypeAndAddDependency(field.get.typeName, inputType).toOption
       if (target.isEmpty) {
         context.missingType(location, field.get.typeName)

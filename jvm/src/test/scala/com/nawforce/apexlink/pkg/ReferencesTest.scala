@@ -4,7 +4,7 @@
 package com.nawforce.apexlink.pkg
 
 import com.nawforce.apexlink.TestHelper.CURSOR
-import com.nawforce.apexlink.{TargetLocationString, TestHelper}
+import com.nawforce.apexlink.{TargetLocationString, TargetLocationStringWithLine, TestHelper}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -245,4 +245,289 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
       }
     }
   }
+
+  test("Find references from field declaration") {
+    val foo = withCursorMultiLine(s"""
+         | public class Foo {
+         |   public String m${CURSOR}yField;
+         |   void func1(){List<Account> a=[Select Id from Account where Id = :myField];}
+         |   void func2(){myField = 'test';}
+         | }
+         |""".stripMargin)
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map("Foo.cls" -> foo._1, "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}")
+      ) { root: PathLike =>
+        val org  = createHappyOrg(root)
+        val path = root.join("Foo.cls")
+        val results = org.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results.size == 3)
+        assert(
+          results ==
+            Set(
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
+            )
+        )
+
+        org.flush()
+        val org2 = createOrg(root)
+        val results2 = org2.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results2.size == 3)
+        assert(
+          results2 ==
+            Set(
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
+            )
+        )
+      }
+    }
+  }
+
+  test("Find references from field reference") {
+    val foo = withCursorMultiLine(s"""
+                                     | public class Foo {
+                                     |   public String myField;
+                                     |   void func1(){List<Account> a=[Select Id from Account where Id = :myField];}
+                                     |   void func2(){${CURSOR}myField = 'test';}
+                                     | }
+                                     |""".stripMargin)
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map("Foo.cls" -> foo._1, "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}")
+      ) { root: PathLike =>
+        val org  = createHappyOrg(root)
+        val path = root.join("Foo.cls")
+        val results = org.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results.size == 3)
+        assert(
+          results ==
+            Set(
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
+            )
+        )
+
+        org.flush()
+        val org2 = createOrg(root)
+        val results2 = org2.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results2.size == 3)
+        assert(
+          results2 ==
+            Set(
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
+            )
+        )
+      }
+    }
+  }
+
+  test("Find references from property declaration") {
+    val foo = withCursorMultiLine(s"""
+                                     | public class Foo {
+                                     |   public String m${CURSOR}yField {get; set;}
+                                     |   void func1(){List<Account> a=[Select Id from Account where Id = :myField];}
+                                     |   void func2(){myField = 'test';}
+                                     | }
+                                     |""".stripMargin)
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map("Foo.cls" -> foo._1, "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}")
+      ) { root: PathLike =>
+        val org  = createHappyOrg(root)
+        val path = root.join("Foo.cls")
+        val results = org.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results.size == 3)
+        assert(
+          results ==
+            Set(
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
+            )
+        )
+
+        org.flush()
+        val org2 = createOrg(root)
+        val results2 = org2.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results2.size == 3)
+        assert(
+          results2 ==
+            Set(
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
+            )
+        )
+      }
+    }
+  }
+
+  test("Find references from property reference") {
+    val foo = withCursorMultiLine(s"""
+                                     | public class Foo {
+                                     |   public String myField {get; set;}
+                                     |   void func1(){List<Account> a=[Select Id from Account where Id = :${CURSOR}myField];}
+                                     |   void func2(){myField = 'test';}
+                                     | }
+                                     |""".stripMargin)
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map("Foo.cls" -> foo._1, "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}")
+      ) { root: PathLike =>
+        val org  = createHappyOrg(root)
+        val path = root.join("Foo.cls")
+        val results = org.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results.size == 3)
+        assert(
+          results ==
+            Set(
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
+            )
+        )
+
+        org.flush()
+        val org2 = createOrg(root)
+        val results2 = org2.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results2.size == 3)
+        assert(
+          results2 ==
+            Set(
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
+              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
+            )
+        )
+      }
+    }
+  }
+
+  test("Find references from enum declaration") {
+    val foo = withCursorMultiLine(s"""
+                                     | public enum Foo {
+                                     |   ${CURSOR}Constant1
+                                     | }
+                                     |""".stripMargin)
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Foo.cls" -> foo._1,
+          "Bar.cls" -> "public class Bar { {Foo f = Foo.Constant1;}}",
+          "Baz.cls" -> "public class Baz { {Foo f; switch on f {when Constant1 {} }}}"
+        )
+      ) { root: PathLike =>
+        val org  = createHappyOrg(root)
+        val path = root.join("Foo.cls")
+        val results = org.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results.size == 2)
+        assert(
+          results ==
+            Set(
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "Foo.Constant1", 1),
+              TargetLocationStringWithLine(root.join("Baz.cls").toString, "Constant1", 1)
+            )
+        )
+
+        org.flush()
+        val org2 = createOrg(root)
+        val results2 = org2.unmanaged
+          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results2.size == 2)
+        assert(
+          results2 ==
+            Set(
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "Foo.Constant1", 1),
+              TargetLocationStringWithLine(root.join("Baz.cls").toString, "Constant1", 1)
+            )
+        )
+      }
+    }
+  }
+
+  test("Find references from enum reference") {
+    val bar = withCursorMultiLine(s"public class Bar { {Foo f = Foo.${CURSOR}Constant1;}}")
+
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "Foo.cls" -> "public enum Foo { Constant1 }",
+          "Bar.cls" -> bar._1,
+          "Baz.cls" -> "public class Baz { {Foo f; switch on f {when Constant1 {} }}}"
+        )
+      ) { root: PathLike =>
+        val org  = createHappyOrg(root)
+        val path = root.join("Bar.cls")
+        val results = org.unmanaged
+          .getReferences(path, line = bar._2.line, offset = bar._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results.size == 2)
+        assert(
+          results ==
+            Set(
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "Foo.Constant1", 1),
+              TargetLocationStringWithLine(root.join("Baz.cls").toString, "Constant1", 1)
+            )
+        )
+
+        org.flush()
+        val org2 = createOrg(root)
+        val results2 = org2.unmanaged
+          .getReferences(path, line = bar._2.line, offset = bar._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results2.size == 2)
+        assert(
+          results2 ==
+            Set(
+              TargetLocationStringWithLine(root.join("Bar.cls").toString, "Foo.Constant1", 1),
+              TargetLocationStringWithLine(root.join("Baz.cls").toString, "Constant1", 1)
+            )
+        )
+      }
+    }
+  }
+
 }
