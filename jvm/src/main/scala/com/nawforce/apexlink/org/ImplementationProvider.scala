@@ -89,7 +89,7 @@ trait ImplementationProvider extends SourceOps {
     searchContext match {
       case Some(method: ApexMethodLike) =>
         method
-          .collectMethods()
+          .collectRelatedReferencable()
           .filterNot(_ eq method)
           .map(m =>
             LocationLink(
