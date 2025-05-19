@@ -170,7 +170,7 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
 }
 
 /** Apex defined fields core features, be they full or summary style */
-trait ApexFieldLike extends FieldDeclaration with IdLocatable {
+trait ApexFieldLike extends FieldDeclaration with IdLocatable with Referenceable {
   val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
   val nature: Nature

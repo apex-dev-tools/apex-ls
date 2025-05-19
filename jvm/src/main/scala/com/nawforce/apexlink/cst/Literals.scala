@@ -14,6 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
+import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.names.Name
@@ -24,7 +25,7 @@ import io.github.apexdevtools.apexparser.ApexParser.LiteralContext
 sealed abstract class Literal {
   def getType: TypeDeclaration
 
-  def verify(context: ExpressionVerifyContext): Unit = {}
+  def verify(location: PathLocation, context: ExpressionVerifyContext): Unit = {}
 }
 
 case object IntegerLiteral extends Literal {
@@ -35,7 +36,7 @@ case class OversizeIntegerLiteral(location: PathLocation) extends Literal {
 
   override def getType: TypeDeclaration = PlatformTypes.integerType
 
-  override def verify(context: ExpressionVerifyContext): Unit = {
+  override def verify(location: PathLocation, context: ExpressionVerifyContext): Unit = {
     context.logError(location, "Integer literals can only be up to 10 characters")
   }
 }
@@ -48,7 +49,7 @@ case class OversizeLongLiteral(location: PathLocation) extends Literal {
 
   override def getType: TypeDeclaration = PlatformTypes.longType
 
-  override def verify(context: ExpressionVerifyContext): Unit = {
+  override def verify(location: PathLocation, context: ExpressionVerifyContext): Unit = {
     context.logError(location, "Long literals can only be up to 19 characters")
   }
 }
@@ -65,7 +66,7 @@ case class OversizeDecimalLiteral(location: PathLocation) extends Literal {
 
   override def getType: TypeDeclaration = PlatformTypes.decimalType
 
-  override def verify(context: ExpressionVerifyContext): Unit = {
+  override def verify(location: PathLocation, context: ExpressionVerifyContext): Unit = {
     context.logError(location, "Decimal literals can only be up to 50 characters")
   }
 }
@@ -91,12 +92,18 @@ case object StringLiteral extends Literal {
 final case class BoundStringLiteral(bound: Set[Name]) extends Literal {
   override def getType: TypeDeclaration = PlatformTypes.stringType
 
-  override def verify(context: ExpressionVerifyContext): Unit = {
+  override def verify(location: PathLocation, context: ExpressionVerifyContext): Unit = {
     bound.foreach(bound => {
       if (context.isVar(bound, markUsed = true).isEmpty) {
         context.thisType
           .findField(bound, None)
-          .map(field => context.addDependency(field))
+          .map(field => {
+            field match {
+              case ref: Referenceable => ref.addReferencingLocation(location)
+              case _                  =>
+            }
+            context.addDependency(field)
+          })
       }
     })
   }
