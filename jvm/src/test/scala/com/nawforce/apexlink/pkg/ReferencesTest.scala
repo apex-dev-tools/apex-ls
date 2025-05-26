@@ -7,6 +7,7 @@ import com.nawforce.apexlink.TestHelper.CURSOR
 import com.nawforce.apexlink.{TargetLocationString, TargetLocationStringWithLine, TestHelper}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
+import org.scalatest.Assertion
 import org.scalatest.funsuite.AnyFunSuite
 
 class ReferencesTest extends AnyFunSuite with TestHelper {
@@ -47,29 +48,6 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
           .toSet == Set(
           TargetLocationString(root.join("Dummy.cls").toString, "func()"),
           TargetLocationString(root.join("Bar.cls").toString, "new Dummy().func()")
-        )
-      )
-    }
-  }
-
-  test("Find all references from method call") {
-    val dummy = withCursor(s"public class Dummy { public void method(){Foo.f${CURSOR}unc();}}")
-    FileSystemHelper.run(
-      Map(
-        "Dummy.cls" -> dummy._1,
-        "Foo.cls"   -> "public class Foo { public static void func(){} }",
-        "Bar.cls"   -> "public class Bar {public void method(){Foo.func();}}"
-      )
-    ) { root: PathLike =>
-      val org  = createHappyOrg(root)
-      val path = root.join("Dummy.cls")
-      assert(
-        org.unmanaged
-          .getReferences(path, line = 1, offset = dummy._2)
-          .map(TargetLocationString(root, _))
-          .toSet == Set(
-          TargetLocationString(root.join("Dummy.cls").toString, "Foo.func()"),
-          TargetLocationString(root.join("Bar.cls").toString, "Foo.func()")
         )
       )
     }
@@ -173,81 +151,35 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Reference after change") {
-    val usedB =
-      withCursor(
-        s"public class UsedB { void fun(){ Common a = new B(); a.fn(); C c = new C();c.getB().f${CURSOR}n();}}"
-      )
+  def testReferences(
+    files: Map[String, String],
+    cursor: (String, CursorPos),
+    expected: Array[TargetLocationStringWithLine]
+  ): Assertion = {
     withManualFlush {
-      FileSystemHelper.run(
-        Map(
-          "Common.cls" -> "public interface Common { Common fn();} ",
-          "A.cls"      -> "public class A implements Common { public Common fn(){return this;}}",
-          "B.cls" -> "public virtual class B implements Common {  public Common fn(){return this;}}",
-          "C.cls"     -> "public virtual class C{ public B getB(){return new B();} }",
-          "UsedB.cls" -> usedB._1,
-          "UsedC.cls" -> "public class UsedC {{new B().fn();}}"
-        )
-      ) { root: PathLike =>
-        val path = root.join("UsedB.cls")
-
+      FileSystemHelper.run(files) { root: PathLike =>
         val org = createHappyOrg(root)
-        assert(
-          org.unmanaged
-            .getReferences(path, line = 1, offset = usedB._2)
-            .map(TargetLocationString(root, _))
-            .toSet == Set(
-            TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
-            TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()"),
-            TargetLocationString(root.join("UsedC.cls").toString, "new B().fn()")
-          )
-        )
+        val results = org.unmanaged
+          .getReferences(root.join(cursor._1), line = cursor._2.line, offset = cursor._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results.size == expected.length)
+        assert(results == expected.toSet)
 
-        // Reload from cache
         org.flush()
         val org2 = createOrg(root)
-        assert(
-          org2.unmanaged
-            .getReferences(path, line = 1, offset = usedB._2)
-            .map(TargetLocationString(root, _))
-            .toSet == Set(
-            TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
-            TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()"),
-            TargetLocationString(root.join("UsedC.cls").toString, "new B().fn()")
-          )
-        )
-
-        // Make change
-        root.createFile("UsedC.cls", "public class UsedC {}")
-        val org3 = createOrg(root)
-        assert(
-          org2.unmanaged
-            .getReferences(path, line = 1, offset = usedB._2)
-            .map(TargetLocationString(root, _))
-            .toSet == Set(
-            TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
-            TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()")
-          )
-        )
-
-        // Reload from cache
-        org3.flush()
-        val org4 = createOrg(root)
-        assert(
-          org4.unmanaged
-            .getReferences(path, line = 1, offset = usedB._2)
-            .map(TargetLocationString(root, _))
-            .toSet == Set(
-            TargetLocationString(root.join("UsedB.cls").toString, "a.fn()"),
-            TargetLocationString(root.join("UsedB.cls").toString, "c.getB().fn()")
-          )
-        )
+        val results2 = org2.unmanaged
+          .getReferences(root.join(cursor._1), line = cursor._2.line, offset = cursor._2.offset)
+          .map(TargetLocationStringWithLine(root, _))
+          .toSet
+        assert(results2.size == expected.length)
+        assert(results2 == expected.toSet)
       }
     }
   }
 
   test("Find references from field declaration") {
-    val foo = withCursorMultiLine(s"""
+    val cursor = withCursorMultiLine(s"""
          | public class Foo {
          |   public String m${CURSOR}yField;
          |   void func1(){List<Account> a=[Select Id from Account where Id = :myField];}
@@ -255,95 +187,22 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
          | }
          |""".stripMargin)
 
-    withManualFlush {
-      FileSystemHelper.run(
-        Map("Foo.cls" -> foo._1, "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}")
-      ) { root: PathLike =>
-        val org  = createHappyOrg(root)
-        val path = root.join("Foo.cls")
-        val results = org.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results.size == 3)
-        assert(
-          results ==
-            Set(
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
-            )
-        )
-
-        org.flush()
-        val org2 = createOrg(root)
-        val results2 = org2.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results2.size == 3)
-        assert(
-          results2 ==
-            Set(
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
-            )
-        )
-      }
-    }
-  }
-
-  test("Find references from field reference") {
-    val foo = withCursorMultiLine(s"""
-                                     | public class Foo {
-                                     |   public String myField;
-                                     |   void func1(){List<Account> a=[Select Id from Account where Id = :myField];}
-                                     |   void func2(){${CURSOR}myField = 'test';}
-                                     | }
-                                     |""".stripMargin)
-
-    withManualFlush {
-      FileSystemHelper.run(
-        Map("Foo.cls" -> foo._1, "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}")
-      ) { root: PathLike =>
-        val org  = createHappyOrg(root)
-        val path = root.join("Foo.cls")
-        val results = org.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results.size == 3)
-        assert(
-          results ==
-            Set(
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
-            )
-        )
-
-        org.flush()
-        val org2 = createOrg(root)
-        val results2 = org2.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results2.size == 3)
-        assert(
-          results2 ==
-            Set(
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
-            )
-        )
-      }
-    }
+    testReferences(
+      Map(
+        "Foo.cls" -> cursor._1,
+        "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}"
+      ),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "myField", 4),
+        TargetLocationStringWithLine("/Foo.cls", "myField", 5),
+        TargetLocationStringWithLine("/Bar.cls", "f.myField", 1)
+      )
+    )
   }
 
   test("Find references from property declaration") {
-    val foo = withCursorMultiLine(s"""
+    val cursor = withCursorMultiLine(s"""
                                      | public class Foo {
                                      |   public String m${CURSOR}yField {get; set;}
                                      |   void func1(){List<Account> a=[Select Id from Account where Id = :myField];}
@@ -351,183 +210,272 @@ class ReferencesTest extends AnyFunSuite with TestHelper {
                                      | }
                                      |""".stripMargin)
 
-    withManualFlush {
-      FileSystemHelper.run(
-        Map("Foo.cls" -> foo._1, "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}")
-      ) { root: PathLike =>
-        val org  = createHappyOrg(root)
-        val path = root.join("Foo.cls")
-        val results = org.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results.size == 3)
-        assert(
-          results ==
-            Set(
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
-            )
-        )
-
-        org.flush()
-        val org2 = createOrg(root)
-        val results2 = org2.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results2.size == 3)
-        assert(
-          results2 ==
-            Set(
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
-            )
-        )
-      }
-    }
+    testReferences(
+      Map(
+        "Foo.cls" -> cursor._1,
+        "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}"
+      ),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "myField", 4),
+        TargetLocationStringWithLine("/Foo.cls", "myField", 5),
+        TargetLocationStringWithLine("/Bar.cls", "f.myField", 1)
+      )
+    )
   }
 
-  test("Find references from property reference") {
-    val foo = withCursorMultiLine(s"""
-                                     | public class Foo {
-                                     |   public String myField {get; set;}
-                                     |   void func1(){List<Account> a=[Select Id from Account where Id = :${CURSOR}myField];}
-                                     |   void func2(){myField = 'test';}
-                                     | }
-                                     |""".stripMargin)
-
-    withManualFlush {
-      FileSystemHelper.run(
-        Map("Foo.cls" -> foo._1, "Bar.cls" -> "public class Bar { {Foo f; String a = f.myField;}}")
-      ) { root: PathLike =>
-        val org  = createHappyOrg(root)
-        val path = root.join("Foo.cls")
-        val results = org.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results.size == 3)
-        assert(
-          results ==
-            Set(
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
-            )
-        )
-
-        org.flush()
-        val org2 = createOrg(root)
-        val results2 = org2.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results2.size == 3)
-        assert(
-          results2 ==
-            Set(
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 4),
-              TargetLocationStringWithLine(root.join("Foo.cls").toString, "myField", 5),
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "f.myField", 1)
-            )
-        )
-      }
-    }
-  }
-
-  test("Find references from enum declaration") {
-    val foo = withCursorMultiLine(s"""
+  test("Find references from enum constant declaration") {
+    val cursor = withCursorMultiLine(s"""
                                      | public enum Foo {
                                      |   ${CURSOR}Constant1
                                      | }
                                      |""".stripMargin)
 
-    withManualFlush {
-      FileSystemHelper.run(
-        Map(
-          "Foo.cls" -> foo._1,
-          "Bar.cls" -> "public class Bar { {Foo f = Foo.Constant1;}}",
-          "Baz.cls" -> "public class Baz { {Foo f; switch on f {when Constant1 {} }}}"
-        )
-      ) { root: PathLike =>
-        val org  = createHappyOrg(root)
-        val path = root.join("Foo.cls")
-        val results = org.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results.size == 2)
-        assert(
-          results ==
-            Set(
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "Foo.Constant1", 1),
-              TargetLocationStringWithLine(root.join("Baz.cls").toString, "Constant1", 1)
-            )
-        )
-
-        org.flush()
-        val org2 = createOrg(root)
-        val results2 = org2.unmanaged
-          .getReferences(path, line = foo._2.line, offset = foo._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results2.size == 2)
-        assert(
-          results2 ==
-            Set(
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "Foo.Constant1", 1),
-              TargetLocationStringWithLine(root.join("Baz.cls").toString, "Constant1", 1)
-            )
-        )
-      }
-    }
+    testReferences(
+      Map(
+        "Foo.cls" -> cursor._1,
+        "Bar.cls" -> "public class Bar { {Foo f = Foo.Constant1;}}",
+        "Baz.cls" -> "public class Baz { {Foo f; switch on f {when Constant1 {} }}}"
+      ),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Bar.cls", "Foo.Constant1", 1),
+        TargetLocationStringWithLine("/Baz.cls", "Constant1", 1)
+      )
+    )
   }
 
-  test("Find references from enum reference") {
-    val bar = withCursorMultiLine(s"public class Bar { {Foo f = Foo.${CURSOR}Constant1;}}")
+  test("Find type references from type cast") {
+    val cursor = withCursorMultiLine(s"""
+                                     | public class ${CURSOR}Foo {
+                                     |   { Object f = (Foo) null;}
+                                     | }
+                                     |""".stripMargin)
 
-    withManualFlush {
-      FileSystemHelper.run(
-        Map(
-          "Foo.cls" -> "public enum Foo { Constant1 }",
-          "Bar.cls" -> bar._1,
-          "Baz.cls" -> "public class Baz { {Foo f; switch on f {when Constant1 {} }}}"
-        )
-      ) { root: PathLike =>
-        val org  = createHappyOrg(root)
-        val path = root.join("Bar.cls")
-        val results = org.unmanaged
-          .getReferences(path, line = bar._2.line, offset = bar._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results.size == 2)
-        assert(
-          results ==
-            Set(
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "Foo.Constant1", 1),
-              TargetLocationStringWithLine(root.join("Baz.cls").toString, "Constant1", 1)
-            )
-        )
+    testReferences(
+      Map(
+        "Foo.cls" -> cursor._1,
+        "Bar.cls" -> "public class Bar { {Object f = (Map<String, Foo>) null; } }"
+      ),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "(Foo) null", 3),
+        TargetLocationStringWithLine("/Bar.cls", "(Map<String, Foo>) null", 1)
+      )
+    )
+  }
 
-        org.flush()
-        val org2 = createOrg(root)
-        val results2 = org2.unmanaged
-          .getReferences(path, line = bar._2.line, offset = bar._2.offset)
-          .map(TargetLocationStringWithLine(root, _))
-          .toSet
-        assert(results2.size == 2)
-        assert(
-          results2 ==
-            Set(
-              TargetLocationStringWithLine(root.join("Bar.cls").toString, "Foo.Constant1", 1),
-              TargetLocationStringWithLine(root.join("Baz.cls").toString, "Constant1", 1)
-            )
-        )
-      }
-    }
+  test("Find type references from instanceOf") {
+    val cursor = withCursorMultiLine(s"""
+                                     | public class F${CURSOR}oo {
+                                     |   { Object a; Boolean b = a instanceOf List<Foo>;}
+                                     | }
+                                     |""".stripMargin)
+
+    testReferences(
+      Map(
+        "Foo.cls" -> cursor._1,
+        "Bar.cls" -> "public class Bar { {Object a; Boolean b = a instanceOf Set<Foo>;} }"
+      ),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "a instanceOf List<Foo>", 3),
+        TargetLocationStringWithLine("/Bar.cls", "a instanceOf Set<Foo>", 1)
+      )
+    )
+  }
+
+  test("Find type references from .class") {
+    val cursor = withCursorMultiLine(s"""
+                                     | public class Fo${CURSOR}o {
+                                     |   {Type t  = Foo.class;}
+                                     | }
+                                     |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar { {Type t  = Foo.class;} }"),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "Foo.class", 3),
+        TargetLocationStringWithLine("/Bar.cls", "Foo.class", 1)
+      )
+    )
+  }
+
+  test("Find type references from local var") {
+    val cursor = withCursorMultiLine(s"""
+                                        | public class Fo${CURSOR}o {
+                                        |   {Foo f;}
+                                        | }
+                                        |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar { {Foo f = null;} }"),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "f", 3),
+        TargetLocationStringWithLine("/Bar.cls", "f = null", 1)
+      )
+    )
+  }
+
+  test("Find type references from formal param") {
+    val cursor = withCursorMultiLine(s"""
+                                        | public class Foo$CURSOR {
+                                        |   Foo(Foo f) {}
+                                        | }
+                                        |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar { static void func(Foo f) {} }"),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "f", 3),
+        TargetLocationStringWithLine("/Bar.cls", "f", 1)
+      )
+    )
+  }
+
+  test("Find type references from extends") {
+    val cursor = withCursorMultiLine(s"""
+                                        | public virtual class Foo$CURSOR {
+                                        |   public class Bar extends Foo {}
+                                        | }
+                                        |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar extends Foo { }"),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "Bar", 3),
+        TargetLocationStringWithLine("/Bar.cls", "Bar", 1)
+      )
+    )
+  }
+
+  test("Find type references from implements") {
+    val cursor = withCursorMultiLine(s"""
+                                        | public class FooOuter {
+                                        |   public interface ${CURSOR}Foo {}
+                                        |   public class Bar implements Foo {}
+                                        | }
+                                        |""".stripMargin)
+
+    testReferences(
+      Map("FooOuter.cls" -> cursor._1, "Bar.cls" -> "public class Bar implements FooOuter.Foo { }"),
+      ("FooOuter.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/FooOuter.cls", "Bar", 4),
+        TargetLocationStringWithLine("/Bar.cls", "Bar", 1)
+      )
+    )
+  }
+
+  test("Find type references from new") {
+    val cursor = withCursorMultiLine(s"""
+                                        | public class ${CURSOR}Foo {
+                                        |   Foo() {}
+                                        |   public Foo(String a) {}
+                                        |   {Object f = new Foo();}
+                                        | }
+                                        |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar { {Object f = new Foo('a');} }"),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "Foo", 5),
+        TargetLocationStringWithLine("/Bar.cls", "Foo", 1)
+      )
+    )
+  }
+
+  test("Find type references from instance field reference") {
+    val cursor = withCursorMultiLine(s"""
+                                        | public class ${CURSOR}Foo {
+                                        |   public String a;
+                                        |   {a = null;}
+                                        | }
+                                        |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar { {Foo f; f.a = null;} }"),
+      ("Foo.cls", cursor._2),
+      Array(TargetLocationStringWithLine("/Bar.cls", "f", 1))
+    )
+  }
+
+  test("Find type references from static field reference") {
+    val cursor = withCursorMultiLine(s"""
+                                        | public class ${CURSOR}Foo {
+                                        |   public static String a;
+                                        |   {Foo.a = null;}
+                                        |   static { a = null; }
+                                        | }
+                                        |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar { {Foo.a = null;} }"),
+      ("Foo.cls", cursor._2),
+      Array(TargetLocationStringWithLine("/Bar.cls", "Foo.a", 1))
+    )
+  }
+
+  test("Find type references from constructor reference") {
+    val cursor = withCursorMultiLine(s"""
+         | public virtual class ${CURSOR}Foo {
+         |   public Foo(String a) {};
+         |   {Object a = new Foo('test');}
+         |   public class Baz extends Foo {
+         |    Baz(String a) {super(a);}
+         |   }
+         | }
+         |""".stripMargin)
+
+    testReferences(
+      Map(
+        "Foo.cls" -> cursor._1,
+        "Bar.cls" -> "public class Bar { {Object a = new Foo('test');} }"
+      ),
+      ("Foo.cls", cursor._2),
+      Array(
+        TargetLocationStringWithLine("/Foo.cls", "Foo", 4),
+        TargetLocationStringWithLine("/Foo.cls", "Baz", 5),
+        TargetLocationStringWithLine("/Foo.cls", "super(a)", 6),
+        TargetLocationStringWithLine("/Bar.cls", "Foo", 1)
+      )
+    )
+  }
+
+  test("Find type references from instance method reference") {
+    val cursor = withCursorMultiLine(s"""
+                                          | public class ${CURSOR}Foo {
+                                          |   public void a() {};
+                                          |   {a();}
+                                          | }
+                                          |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar { {Foo f; f.a();} }"),
+      ("Foo.cls", cursor._2),
+      Array(TargetLocationStringWithLine("/Bar.cls", "f", 1))
+    )
+  }
+
+  test("Find type references from static method reference") {
+    val cursor = withCursorMultiLine(s"""
+                                        | public class ${CURSOR}Foo {
+                                        |   public static void a() {};
+                                        |   {Foo.a();}
+                                        |   static { a(); }
+                                        | }
+                                        |""".stripMargin)
+
+    testReferences(
+      Map("Foo.cls" -> cursor._1, "Bar.cls" -> "public class Bar { {Foo.a();} }"),
+      ("Foo.cls", cursor._2),
+      Array(TargetLocationStringWithLine("/Bar.cls", "Foo.a()", 1))
+    )
   }
 
 }

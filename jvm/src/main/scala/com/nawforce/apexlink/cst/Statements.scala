@@ -292,7 +292,7 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
 
   /** Add vars introduced by the control to a context */
   override def addVars(context: BlockVerifyContext): Unit = {
-    context.addVar(id.name, this, isReadOnly = false, typeName)
+    context.addVar(id.name, this, isReadOnly = false, typeName, context.thisType)
   }
 
   override def verify(context: BlockVerifyContext): Unit = {

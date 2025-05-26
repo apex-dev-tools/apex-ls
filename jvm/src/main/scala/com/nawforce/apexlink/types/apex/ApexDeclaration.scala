@@ -56,7 +56,7 @@ trait ApexVisibleConstructorLike extends ConstructorDeclaration {
 }
 
 /** Apex defined constructor core features, be they full or summary style */
-trait ApexConstructorLike extends ApexVisibleConstructorLike with IdLocatable {
+trait ApexConstructorLike extends ApexVisibleConstructorLike with Referenceable {
   val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
@@ -79,7 +79,7 @@ trait ApexVisibleMethodLike extends MethodDeclaration {
 }
 
 /** Apex defined method core features, be they full or summary style */
-trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLocatable {
+trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable {
   override val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
@@ -170,7 +170,7 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
 }
 
 /** Apex defined fields core features, be they full or summary style */
-trait ApexFieldLike extends FieldDeclaration with IdLocatable with Referenceable {
+trait ApexFieldLike extends FieldDeclaration with Referenceable {
   val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
   val nature: Nature
@@ -202,11 +202,30 @@ trait ApexDeclaration extends DependentType with IdLocatable {
   def summary: TypeSummary
 
   override def nestedTypes: ArraySeq[ApexDeclaration]
+
+  /** Get referenceable element at the specified line and offset.
+    * @param line   The 1-based line number within the source file.
+    * @param offset The 0-based character offset within the line.
+    * @return       A map from source locations to their corresponding validation results.
+    */
+  def findReferenceableFromLocation(line: Int, offset: Int): Option[Referenceable] = None
 }
 
 /** Apex defined type for parsed (aka Full) classes, interfaces, enums & triggers */
 trait ApexFullDeclaration extends ApexDeclaration {
+
+  /** Get validation map for the specified line and offset.
+    * @param line   The 1-based line number within the source file.
+    * @param offset The 0-based character offset within the line.
+    * @return       A map from locations to their corresponding validation results.
+    */
   def getValidationMap(line: Int, offset: Int): Map[Location, ValidationResult]
+
+  /** Locate an ApexDeclaration for the passed typeName that was extracted from location..
+    * @param searchTerm The name of the type to search for.
+    * @param location The location of the type in the source code.
+    * @return       An option containing the source reference, if found.
+    */
   def findDeclarationFromSourceReference(
     searchTerm: String,
     location: Location
@@ -219,11 +238,12 @@ trait ApexTriggerDeclaration extends ApexDeclaration {
 }
 
 /** Apex defined classes, interfaces, enum of either full or summary type */
-trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
+trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder with Referenceable {
   val localFields: ArraySeq[ApexFieldLike]
   val localMethods: ArraySeq[ApexMethodLike]
   val localConstructors: ArraySeq[ApexConstructorLike]
 
+  override lazy val thisTypeId: TypeId       = typeId
   override def thisTypeIdOpt: Option[TypeId] = Some(typeId)
 
   override def nestedTypes: ArraySeq[ApexClassDeclaration]
@@ -440,6 +460,28 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     val roundScore =
       BigDecimal(score.toString).setScale(2, BigDecimal.RoundingMode.HALF_UP).doubleValue
     (uses, usedBy, roundScore)
+  }
+
+  override def findReferenceableFromLocation(line: Int, offset: Int): Option[Referenceable] = {
+    if (idLocation.contains(line, offset))
+      Some(this)
+    else
+      localFields
+        .find(_.idLocation.contains(line, offset))
+        .orElse(
+          localMethods
+            .find(_.idLocation.contains(line, offset))
+        )
+        .orElse(
+          localConstructors
+            .find(_.idLocation.contains(line, offset))
+        )
+        .orElse(
+          nestedTypes.view
+            .flatMap(td => td.findReferenceableFromLocation(line, offset))
+            .headOption
+        )
+        .collect { case ref: Referenceable => ref }
   }
 
   override def toString: String = {

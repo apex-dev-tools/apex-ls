@@ -111,29 +111,6 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
     }
   }
 
-  /** Helper for introducing formal parameters into a block context. */
-  def addVar(
-    definition: CST,
-    name: Name,
-    isReadyOnly: Boolean,
-    context: BlockVerifyContext
-  ): Unit = {
-    typeContext.resolve(relativeTypeName) match {
-      case Some(Right(td)) =>
-        context.addVar(name, Some(definition), isReadyOnly, td)
-        context.addDependency(td)
-      case _ =>
-        Option(definition.location)
-          .foreach(location => context.missingType(location, relativeTypeName))
-        context.addVar(
-          name,
-          None,
-          isReadyOnly,
-          typeContext.contextTypeDeclaration.moduleDeclaration.get.any
-        )
-    }
-  }
-
   /** Helper for obtaining the nature of the outer type. */
   def outerNature: Nature = typeContext.contextTypeDeclaration.nature
 }

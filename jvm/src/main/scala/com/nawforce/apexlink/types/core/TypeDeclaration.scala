@@ -222,7 +222,7 @@ trait Parameters {
   }
 }
 
-trait ConstructorDeclaration extends DependencyHolder with Parameters {
+trait ConstructorDeclaration extends DependencyHolder with Dependent with Parameters {
   val modifiers: ArraySeq[Modifier]
 
   def visibility: Modifier =
