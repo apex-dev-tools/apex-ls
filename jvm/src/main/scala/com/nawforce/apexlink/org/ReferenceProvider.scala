@@ -12,6 +12,7 @@ import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.{Dependent, DependentType, TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.path.{IdLocatable, PathLike, PathLocation}
 import com.nawforce.apexlink.types.platform.GenericPlatformTypeDeclaration
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 
 import scala.collection.mutable
 
@@ -38,6 +39,11 @@ trait Referenceable extends IdLocatable {
     if (Referenceable.allowReferenceCollection) {
       if (referenceLocations == null) {
         referenceLocations = new SkinnySet[TargetLocation]()
+      }
+      if (referencingLocation.path == null) {
+        LoggerOps.debug(
+          s"Referenceable.addReferencingLocation: No referencing path provided to $this, location: $referencingLocation"
+        )
       }
       referenceLocations.add(
         TargetLocation(referencingLocation.path.toString, referencingLocation.location)

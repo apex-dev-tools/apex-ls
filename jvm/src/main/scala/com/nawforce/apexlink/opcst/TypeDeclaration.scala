@@ -548,7 +548,10 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     typeName: TypeName,
     isReadOnly: Boolean
   ): VariableDeclarator = {
-    VariableDeclarator(typeName, isReadOnly, OutlineParserId.construct(id, source.path), None)
+    val vd =
+      VariableDeclarator(typeName, isReadOnly, OutlineParserId.construct(id, source.path), None)
+    stampLocation(vd, extendLocation(id.location, startLineOffset = -1), source.path)
+    vd
   }
 
   private def constructVariableDeclarator(
