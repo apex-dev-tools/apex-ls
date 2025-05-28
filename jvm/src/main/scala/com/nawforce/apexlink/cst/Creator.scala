@@ -17,9 +17,11 @@ package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.{couldBeEqual, isAssignableDeclaration}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
+import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.modifiers.ABSTRACT_MODIFIER
 import com.nawforce.pkgforce.names._
+import com.nawforce.pkgforce.path.PathLocation
 import com.nawforce.runtime.parsers.CodeParser
 import io.github.apexdevtools.apexparser.ApexParser._
 
@@ -93,7 +95,7 @@ object Creator {
     val rest: Option[CreatorRest] =
       CodeParser
         .toScala(from.noRest())
-        .map(NoRest.construct)
+        .map(ClassCreatorRest.construct)
         .orElse(CodeParser.toScala(from.classCreatorRest()).map(ClassCreatorRest.construct))
         .orElse(CodeParser.toScala(from.arrayCreatorRest()).map(ArrayCreatorRest.construct))
         .orElse(CodeParser.toScala(from.mapCreatorRest()).map(MapCreatorRest.construct))
@@ -110,23 +112,6 @@ sealed abstract class CreatorRest extends CST {
     input: ExprContext,
     context: ExpressionVerifyContext
   ): ExprContext
-}
-
-/** Object creation without arguments, e.g. new Foo() */
-final class NoRest extends CreatorRest {
-  override def verify(
-    createdName: CreatedName,
-    input: ExprContext,
-    context: ExpressionVerifyContext
-  ): ExprContext = {
-    createdName.verify(context)
-  }
-}
-
-object NoRest {
-  def construct(from: NoRestContext): NoRest = {
-    new NoRest().withContext(from)
-  }
 }
 
 /** Object creation with arguments, e.g. new Foo(a, b)
@@ -160,13 +145,19 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     } else {
       val args = arguments.map(_.verify(input, context))
       if (args.forall(_.isDefined))
-        validateConstructor(creating.declaration, args.map(arg => arg.typeName), context)
+        validateConstructor(
+          createdName.location,
+          creating.declaration,
+          args.map(arg => arg.typeName),
+          context
+        )
       else
         creating
     }
   }
 
   private def validateConstructor(
+    createdNameLocation: PathLocation,
     input: Option[TypeDeclaration],
     arguments: ArraySeq[TypeName],
     context: ExpressionVerifyContext
@@ -181,7 +172,10 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
           case Left(error) =>
             context.logError(location, error)
             ExprContext.empty
-          case Right(ctor) => ExprContext(Some(false), input, ctor)
+          case Right(ctor) =>
+            context.addDependency(ctor)
+            Referenceable.addReferencingLocation(td, ctor, createdNameLocation, td)
+            ExprContext(Some(false), input, ctor)
         }
       case _ => ExprContext.empty
     }
@@ -222,6 +216,10 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
 object ClassCreatorRest {
   private val fieldConstructedExt = Set(Name("c"), Name("e"), Name("b"), Name("mdt"))
 
+  def construct(from: NoRestContext): ClassCreatorRest = {
+    new ClassCreatorRest(ArraySeq.empty).withContext(from)
+  }
+
   def construct(from: ClassCreatorRestContext): ClassCreatorRest = {
     ClassCreatorRest(Arguments.construct(from.arguments())).withContext(from)
   }
@@ -231,7 +229,7 @@ object ClassCreatorRest {
 
 /** Array creation arguments, e.g. either new String[3] or new Account[]{accountA, accountB}
   * @param indexExpression expression for size of array
-  * @param arrayInitializer an list of initializer expressions
+  * @param arrayInitializer a list of initializer expressions
   */
 final case class ArrayCreatorRest(
   indexExpression: Option[Expression],
@@ -249,7 +247,7 @@ final case class ArrayCreatorRest(
       return ExprContext.empty
     }
 
-    // If we a size that must be an integer
+    // If we have a size that must be an integer
     indexExpression.foreach(expr => {
       val indexType = expr.verify(input, context)
       indexType.declaration.foreach(indexType => {

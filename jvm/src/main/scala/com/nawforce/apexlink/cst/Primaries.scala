@@ -15,6 +15,7 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFieldLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformTypes
@@ -60,7 +61,7 @@ final case class SuperPrimary() extends Primary {
 
 final case class LiteralPrimary(literal: Literal) extends Primary {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
-    literal.verify(context)
+    literal.verify(location, context)
     ExprContext(isStatic = Some(false), Some(literal.getType))
   }
 }
@@ -80,6 +81,8 @@ final case class TypeReferencePrimary(typeName: TypeName) extends Primary {
       val td = context.getTypeAndAddDependency(targetTypeName, context.thisType).toOption
       if (td.isEmpty)
         context.missingType(location, typeName)
+      else
+        Referenceable.addReferencingLocation(td.get, location, context.thisType)
     }
     ExprContext(isStatic = Some(false), Some(PlatformTypes.typeType))
   }
@@ -146,6 +149,7 @@ final case class IdPrimary(id: Id) extends Primary {
     cachedClassFieldDeclaration = field
 
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
+      Referenceable.addReferencingLocation(field.get, location, context.thisType)
       context.addDependency(field.get)
       Some(
         context
@@ -345,7 +349,7 @@ object Primary {
         case _: SuperPrimaryContext =>
           SuperPrimary()
         case ctx: LiteralPrimaryContext =>
-          LiteralPrimary(Literal.construct(ctx.literal()))
+          LiteralPrimary(Literal.construct(ctx.literal())).withContext(ctx.literal())
         case ctx: TypeRefPrimaryContext =>
           TypeReferencePrimary(TypeReference.construct(ctx.typeRef()))
         case _: VoidPrimaryContext =>

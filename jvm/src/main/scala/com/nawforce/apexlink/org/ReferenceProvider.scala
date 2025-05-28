@@ -3,18 +3,16 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst.ExprContext
+import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.memory.SkinnySet
+import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.ReferenceProvider.emptyTargetLocations
 import com.nawforce.apexlink.rpc.TargetLocation
-import com.nawforce.apexlink.types.apex.{
-  ApexClassDeclaration,
-  ApexFullDeclaration,
-  FullDeclaration,
-  SummaryDeclaration
-}
+import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, FullDeclaration}
 import com.nawforce.apexlink.types.core.{Dependent, DependentType, TypeDeclaration, TypeId}
-import com.nawforce.pkgforce.path.{PathLike, PathLocation}
+import com.nawforce.pkgforce.path.{IdLocatable, PathLike, PathLocation}
+import com.nawforce.apexlink.types.platform.GenericPlatformTypeDeclaration
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 
 import scala.collection.mutable
 
@@ -24,7 +22,7 @@ import scala.collection.mutable
   *
   * @see ReferenceProvider
   */
-trait Referenceable {
+trait Referenceable extends IdLocatable {
   this: Dependent =>
 
   /** Referencable must be able to provide a TypeId for the containing type to support revalidation. */
@@ -42,6 +40,11 @@ trait Referenceable {
       if (referenceLocations == null) {
         referenceLocations = new SkinnySet[TargetLocation]()
       }
+      if (referencingLocation.path == null) {
+        LoggerOps.debug(
+          s"Referenceable.addReferencingLocation: No referencing path provided to $this, location: $referencingLocation"
+        )
+      }
       referenceLocations.add(
         TargetLocation(referencingLocation.path.toString, referencingLocation.location)
       )
@@ -58,11 +61,7 @@ trait Referenceable {
     * is to collect references to things during a revalidation pass. The ReferenceProvider
     * uses this.
     */
-  def getCurrentReferences(
-    line: Int,
-    offset: Int,
-    refresh: Seq[PathLike] => Unit
-  ): Set[TargetLocation] = {
+  def getCurrentReferences(refresh: Seq[PathLike] => Unit): Set[TargetLocation] = {
 
     try {
       Referenceable.allowReferenceCollection = true
@@ -80,8 +79,13 @@ trait Referenceable {
       // Find the target Referencable as it may have been replaced during the refresh
       thisTypeId
         .toTypeDeclaration[FullDeclaration]
-        .flatMap(_.getBodyDeclarationFromLocation(line, offset))
-        .map(_._2)
+        .flatMap(td => {
+          if (td.idLocation.contains(idLocation.startLine, idLocation.startPosition))
+            Some(td)
+          else
+            td.getBodyDeclarationFromLocation(idLocation.startLine, idLocation.startPosition)
+              .map(_._2)
+        })
         .flatMap({
           case newRef: Referenceable =>
             // Now gather the created references as the result
@@ -129,6 +133,41 @@ object Referenceable {
     */
   private val collectedReferences: mutable.Set[Referenceable] = mutable.Set.empty
 
+  /** Helper to add a reference location for something which may be a Referenceable */
+  def addReferencingLocation(
+    referenceable: Any,
+    location: PathLocation,
+    from: TypeDeclaration
+  ): Unit = {
+
+    referenceable match {
+      case td: GenericPlatformTypeDeclaration if td.typeName.isList || td.typeName.isSet =>
+        TypeResolver(td.typeName.params.head, from).toOption.foreach(td =>
+          Referenceable.addReferencingLocation(td, location, from)
+        )
+      case td: GenericPlatformTypeDeclaration if td.typeName.isMap =>
+        TypeResolver(td.typeName.params.head, from).toOption.foreach(td =>
+          Referenceable.addReferencingLocation(td, location, from)
+        )
+        TypeResolver(td.typeName.params.last, from).toOption.foreach(td =>
+          Referenceable.addReferencingLocation(td, location, from)
+        )
+      case ref: Referenceable => ref.addReferencingLocation(location)
+      case _                  => ()
+    }
+  }
+
+  /** Helper to add a reference location for a pair which may be Referenceable */
+  def addReferencingLocation(
+    referenceDeclaration: TypeDeclaration,
+    referenceable: Any,
+    location: PathLocation,
+    from: TypeDeclaration
+  ): Unit = {
+    addReferencingLocation(referenceDeclaration, location, from)
+    addReferencingLocation(referenceable, location, from)
+  }
+
   /** Add a Referenceable that has recorded a reference location */
   private def addReference(ref: Referenceable): Unit = {
     collectedReferences.add(ref)
@@ -145,64 +184,14 @@ trait ReferenceProvider extends SourceOps {
   this: OPM.PackageImpl =>
 
   def getReferences(path: PathLike, line: Int, offset: Int): Array[TargetLocation] = {
-    val sourceTd = loadTypeFromModule(path) match {
-      case Some(_: SummaryDeclaration) =>
-        // Refresh the summary type to get the full type
-        refreshBatched(Seq(RefreshRequest(this, path, highPriority = true)))
-        loadTypeFromModule(path).getOrElse(return emptyTargetLocations)
-      case Some(td) => td
-      case None     => return emptyTargetLocations
-    }
-
-    val expr = getExpressionFromValidation(sourceTd, line, offset)
-
-    if (expr.nonEmpty && expr.get.locatable.isEmpty)
-      return emptyTargetLocations
-
-    val locationOpt = expr
-      .flatMap(_.locatable)
-      .orElse({
-        sourceTd match {
-          case fd: FullDeclaration =>
-            fd.getBodyDeclarationFromLocation(line, offset)
-              .map(_._2)
-        }
-      })
-
-    locationOpt
-      .flatMap({
-        case ref: Referenceable =>
-          val targetLocation = locationOpt.get.location.location
-          Some(
-            ref
-              .getCurrentReferences(
-                targetLocation.startLine,
-                targetLocation.startPosition,
-                (paths: Seq[PathLike]) => {
-                  refreshBatched(paths.map(path => RefreshRequest(this, path, highPriority = true)))
-                }
-              )
-              .toArray
-          )
-        case _ => None
-      })
+    loadTypeFromModule(path)
+      .collect({ case td: ApexClassDeclaration => td })
+      .flatMap(_.findReferenceableFromLocation(line, offset))
+      .map(_.getCurrentReferences((paths: Seq[PathLike]) => {
+        refreshBatched(paths.map(path => RefreshRequest(this, path, highPriority = true)))
+      }).toArray)
       .getOrElse(emptyTargetLocations)
   }
-
-  private def getExpressionFromValidation(
-    td: TypeDeclaration,
-    line: Int,
-    offset: Int
-  ): Option[ExprContext] = {
-    td match {
-      case td: ApexFullDeclaration =>
-        val result = locateFromValidation(td, line, offset)
-        result._2.map(loc => result._1(loc).result)
-      case _ => None
-    }
-
-  }
-
 }
 
 object ReferenceProvider {
