@@ -72,13 +72,13 @@ trait OrgTestClasses {
 
   private def findTestClasses(paths: Array[String]): Array[ApexDeclaration] = {
     if (paths.isEmpty) {
-      getAllTestClasses()
+      getAllTestClasses
     } else {
       findTestClassesFromPaths(paths)
     }
   }
 
-  private def getAllTestClasses(): Array[ApexDeclaration] = {
+  private def getAllTestClasses: Array[ApexDeclaration] = {
     packages.view.flatMap(_.orderedModules.flatMap(_.testClasses.toSeq)).toArray
   }
 
