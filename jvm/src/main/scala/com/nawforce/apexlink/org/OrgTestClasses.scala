@@ -88,7 +88,8 @@ trait OrgTestClasses {
       .flatMap(path => {
         findPackageIdentifier(path).flatMap(typeId => {
           typeId.module
-            .findPackageType(typeId.typeName, None)
+            .findType(typeId.typeName)
+            .toOption
             .collect { case td: ApexDeclaration if td.inTest => td }
             .filter(_.outerTypeName.isEmpty)
         })
@@ -109,7 +110,8 @@ trait OrgTestClasses {
     val accum = mutable.Set[NodeInfo]()
     startingIds.foreach(typeId => {
       typeId.module
-        .findPackageType(typeId.typeName, None)
+        .findType(typeId.typeName)
+        .toOption
         .collect { case td: ApexDeclaration => td }
         .foreach(td =>
           (td +: td.nestedTypes).foreach(td => sourcesForType(td, primary = true, accum))
