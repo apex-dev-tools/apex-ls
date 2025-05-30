@@ -15,7 +15,7 @@ package com.nawforce.apexlink
 
 import com.nawforce.apexlink.TestHelper.{CURSOR, locToString}
 import com.nawforce.apexlink.api._
-import com.nawforce.apexlink.org.{OPM, OrgInfo, RefreshListener}
+import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.apexlink.plugins.{Plugin, PluginsManager}
 import com.nawforce.apexlink.rpc.{LocationLink, TargetLocation}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration, FullDeclaration}
@@ -363,6 +363,18 @@ object TargetLocationString {
   def apply(root: PathLike, loc: TargetLocation): TargetLocationString = {
     val source = root.join(loc.targetPath).readSourceData().map(_.asString).toOption.get
     TargetLocationString(loc.targetPath, locToString(source, loc.range))
+  }
+}
+
+case class TargetLocationStringWithLine(targetPath: String, target: String, line: Int)
+object TargetLocationStringWithLine {
+  def apply(root: PathLike, loc: TargetLocation): TargetLocationStringWithLine = {
+    val source = root.join(loc.targetPath).readSourceData().map(_.asString).toOption.get
+    TargetLocationStringWithLine(
+      loc.targetPath,
+      locToString(source, loc.range),
+      loc.range.startLine
+    )
   }
 }
 

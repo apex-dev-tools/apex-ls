@@ -61,7 +61,7 @@ final case class TriggerDeclaration(
     with DependencyHolder {
 
   override val idLocation: Location      = nameId.location.location
-  override lazy val sourceHash: Int      = source.hash
+  override lazy val sourceHash: Int      = source.code.hash
   override def paths: ArraySeq[PathLike] = ArraySeq(location.path)
 
   override val moduleDeclaration: Option[OPM.Module] = Some(module)

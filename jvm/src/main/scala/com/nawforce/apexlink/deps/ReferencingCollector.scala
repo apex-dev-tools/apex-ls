@@ -117,7 +117,8 @@ object ReferencingCollector {
       .flatMap(_.thisTypeIdOpt)
       .flatMap(typeId =>
         typeId.module
-          .findPackageType(typeId.typeName, None)
+          .findType(typeId.typeName)
+          .toOption
           .collect { case td: ApexDeclaration => td }
       )
   }

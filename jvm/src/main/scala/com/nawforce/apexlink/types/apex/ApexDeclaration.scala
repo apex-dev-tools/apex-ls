@@ -30,7 +30,6 @@ import com.nawforce.pkgforce.path.{IdLocatable, Locatable, Location, PathLocatio
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.util.hashing.MurmurHash3
 
 trait PreReValidatable {
 
@@ -56,7 +55,7 @@ trait ApexVisibleConstructorLike extends ConstructorDeclaration {
 }
 
 /** Apex defined constructor core features, be they full or summary style */
-trait ApexConstructorLike extends ApexVisibleConstructorLike with IdLocatable {
+trait ApexConstructorLike extends ApexVisibleConstructorLike with Referenceable {
   val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
@@ -79,7 +78,7 @@ trait ApexVisibleMethodLike extends MethodDeclaration {
 }
 
 /** Apex defined method core features, be they full or summary style */
-trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLocatable {
+trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable {
   override val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
@@ -170,7 +169,7 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with IdLoc
 }
 
 /** Apex defined fields core features, be they full or summary style */
-trait ApexFieldLike extends FieldDeclaration with IdLocatable {
+trait ApexFieldLike extends FieldDeclaration with Referenceable {
   val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
   val nature: Nature
@@ -195,18 +194,41 @@ trait ApexFieldLike extends FieldDeclaration with IdLocatable {
 
 /** Apex defined types core features, be they full or summary style */
 trait ApexDeclaration extends DependentType with IdLocatable {
-  val sourceHash: Int
+
   val module: OPM.Module
   val isEntryPoint: Boolean
 
+  /** Calculate a hash for the source code of the declaration */
+  def sourceHash: Int
+
+  /** Create a summary for the of the declaration */
   def summary: TypeSummary
 
   override def nestedTypes: ArraySeq[ApexDeclaration]
+
+  /** Get referenceable element at the specified line and offset.
+    * @param line   The 1-based line number within the source file.
+    * @param offset The 0-based character offset within the line.
+    * @return       A map from source locations to their corresponding validation results.
+    */
+  def findReferenceableFromLocation(line: Int, offset: Int): Option[Referenceable] = None
 }
 
 /** Apex defined type for parsed (aka Full) classes, interfaces, enums & triggers */
 trait ApexFullDeclaration extends ApexDeclaration {
+
+  /** Get validation map for the specified line and offset.
+    * @param line   The 1-based line number within the source file.
+    * @param offset The 0-based character offset within the line.
+    * @return       A map from locations to their corresponding validation results.
+    */
   def getValidationMap(line: Int, offset: Int): Map[Location, ValidationResult]
+
+  /** Locate an ApexDeclaration for the passed typeName that was extracted from location..
+    * @param searchTerm The name of the type to search for.
+    * @param location The location of the type in the source code.
+    * @return       An option containing the source reference, if found.
+    */
   def findDeclarationFromSourceReference(
     searchTerm: String,
     location: Location
@@ -219,11 +241,12 @@ trait ApexTriggerDeclaration extends ApexDeclaration {
 }
 
 /** Apex defined classes, interfaces, enum of either full or summary type */
-trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
+trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder with Referenceable {
   val localFields: ArraySeq[ApexFieldLike]
   val localMethods: ArraySeq[ApexMethodLike]
   val localConstructors: ArraySeq[ApexConstructorLike]
 
+  override lazy val thisTypeId: TypeId       = typeId
   override def thisTypeIdOpt: Option[TypeId] = Some(typeId)
 
   override def nestedTypes: ArraySeq[ApexClassDeclaration]
@@ -239,9 +262,11 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
   /** Override to handle request to flush the type to passed cache if dirty */
   def flush(pc: ParsedCache, context: PackageContext): Unit
 
-  /** Remove local caches ready for revalidation */
+  /** Reset local caches ready for revalidation */
   override def preReValidate(): Unit = {
     super.preReValidate()
+    _methodMap = None
+    _constructorMap = None
     _superClassDeclaration = None
     _interfaceDeclarations = ArraySeq.empty
   }
@@ -264,29 +289,6 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       _interfaceDeclarations = interfaces.flatMap(i => TypeResolver(i, this).toOption)
     }
     _interfaceDeclarations
-  }
-
-  /** Obtain a source hash for this class and all it's ancestors */
-  def deepHash: Int = {
-    deepHash(mutable.Set())
-  }
-
-  private def deepHash(accumulator: mutable.Set[ApexClassDeclaration]): Int = {
-    if (accumulator.contains(this)) {
-      0
-    } else {
-      accumulator.add(this)
-      MurmurHash3.arrayHash(
-        Array(this.sourceHash) ++
-          superClassDeclaration
-            .collect { case td: ApexClassDeclaration => td }
-            .map(_.deepHash(accumulator))
-            .toArray ++
-          interfaceDeclarations
-            .collect { case td: ApexClassDeclaration => td }
-            .map(_.deepHash(accumulator))
-      )
-    }
   }
 
   override lazy val isComplete: Boolean = {
@@ -355,19 +357,6 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
       _constructorMap = Some(createConstructorMap)
     }
     _constructorMap.get
-  }
-
-  protected def resetMethodMapIfInvalid(): Unit = {
-    // We used to only clear the method map if its cached deep hash did not match the
-    // deep hash of the declaration. The deep hash however is not catching non-structural
-    // changes such as method parameter types becoming available, so I have disabled
-    // but left this in use in case we want to pursue this optimisation again later
-    _methodMap = None
-  }
-
-  protected def resetConstructorMapIfInvalid(): Unit = {
-    // See comment in resetMethodMapIfInvalid()
-    _constructorMap = None
   }
 
   private var _methodMap: Option[MethodMap]           = None
@@ -440,6 +429,28 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder {
     val roundScore =
       BigDecimal(score.toString).setScale(2, BigDecimal.RoundingMode.HALF_UP).doubleValue
     (uses, usedBy, roundScore)
+  }
+
+  override def findReferenceableFromLocation(line: Int, offset: Int): Option[Referenceable] = {
+    if (idLocation.contains(line, offset))
+      Some(this)
+    else
+      localFields
+        .find(_.idLocation.contains(line, offset))
+        .orElse(
+          localMethods
+            .find(_.idLocation.contains(line, offset))
+        )
+        .orElse(
+          localConstructors
+            .find(_.idLocation.contains(line, offset))
+        )
+        .orElse(
+          nestedTypes.view
+            .flatMap(td => td.findReferenceableFromLocation(line, offset))
+            .headOption
+        )
+        .collect { case ref: Referenceable => ref }
   }
 
   override def toString: String = {

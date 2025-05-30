@@ -159,7 +159,7 @@ class TypeFindingTest extends AnyFunSuite with TestHelper {
             |"packageDirectories": [{"path": "pkg2"}],
             |"plugins": {"dependencies": [{"namespace": "pkg1", "path": "pkg1"}]}
             |}""".stripMargin,
-        "pkg1/Dummy.cls" -> "global class Dummy {class Inner {}}",
+        "pkg1/Dummy.cls" -> "global class Dummy {global class Inner {}}",
         "pkg2/Use.cls"   -> "global class Use { {pkg1.Dummy.Inner value;}}"
       )
     ) { root: PathLike =>

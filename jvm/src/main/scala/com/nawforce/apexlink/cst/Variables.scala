@@ -15,6 +15,7 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
+import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.TypeName
@@ -33,6 +34,7 @@ final case class VariableDeclarator(
     id.validate(context)
 
     val lhsType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
+    lhsType.foreach(td => Referenceable.addReferencingLocation(td, location, context.thisType))
 
     val exprContext = new ExpressionVerifyContext(context)
     init.foreach(rhs => {
@@ -63,7 +65,7 @@ final case class VariableDeclarator(
   }
 
   def addVars(context: BlockVerifyContext): Unit = {
-    context.addVar(id.name, this, isReadOnly, typeName)
+    context.addVar(id.name, this, isReadOnly, typeName, context.thisType)
   }
 
 }

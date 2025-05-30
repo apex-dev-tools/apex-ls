@@ -20,10 +20,10 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.memory.SkinnySet
 import com.nawforce.apexlink.names.TypeNames
-import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.plugins.Plugin
 import com.nawforce.apexlink.types.apex._
-import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
 import com.nawforce.pkgforce.diagnostics._
@@ -351,7 +351,13 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
   ): Unit =
     vars.put(name, VarTypeAndDefinition(typeDeclaration, definition, isReadOnly))
 
-  def addVar(name: Name, definition: CST, isReadOnly: Boolean, typeName: TypeName): Unit = {
+  def addVar(
+    name: Name,
+    definition: CST,
+    isReadOnly: Boolean,
+    typeName: TypeName,
+    from: TypeDeclaration
+  ): Unit = {
     if (getVar(name, markUsed = false).nonEmpty) {
       logError(definition.location, s"Duplicate variable '$name'")
     }
@@ -359,6 +365,8 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
     val td = getTypeAndAddDependency(typeName, thisType).toOption
     if (td.isEmpty)
       missingType(definition.location, typeName)
+    else
+      Referenceable.addReferencingLocation(td.get, definition.location, from)
 
     vars.put(
       name,
@@ -429,6 +437,8 @@ final class ExpressionVerifyContext(parentContext: BlockVerifyContext) extends V
   override def module: OPM.Module = parentContext.module
 
   override def thisType: TypeDeclaration = parentContext.thisType
+
+  def typeId: TypeId = TypeId(module, thisType.typeName)
 
   override def superType: Option[TypeDeclaration] = parentContext.superType
 
