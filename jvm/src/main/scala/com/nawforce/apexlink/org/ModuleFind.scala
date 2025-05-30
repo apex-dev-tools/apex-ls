@@ -90,22 +90,20 @@ trait ModuleFind {
     */
   private def findPackageType(typeName: TypeName): TypeResponse = {
     // As we may have many modules to search it's best to pre-generate typenames to match against first
-    var searchTypeNamesWithoutNamespace: List[(TypeName, Option[TypeName])] = Nil
-    var searchTypeNamesWithNamespace: List[(TypeName, Option[TypeName])]    = Nil
-    var target: Option[TypeName]                                            = Some(typeName)
-    var residual: Option[TypeName]                                          = None
+    var searchTypeNames: List[(TypeName, Option[TypeName])] = Nil
+    var target: Option[TypeName]                            = Some(typeName)
+    var residual: Option[TypeName]                          = None
     while (target.nonEmpty) {
-      searchTypeNamesWithoutNamespace = (target.get, residual) :: searchTypeNamesWithoutNamespace
       if (namespace.nonEmpty)
-        searchTypeNamesWithNamespace =
-          (target.get.withTail(TypeName(namespace.get)), residual) :: searchTypeNamesWithNamespace
+        searchTypeNames =
+          (target.get.withTail(TypeName(namespace.get)), residual) :: searchTypeNames
+      searchTypeNames = (target.get, residual) :: searchTypeNames
       residual = residual
         .map(_.withTail(target.get.inner()))
         .orElse(Some(TypeName(target.get.name, target.get.params, None)))
       target = target.get.outer
     }
-    val searchTypeNames =
-      searchTypeNamesWithNamespace.reverse ++ searchTypeNamesWithoutNamespace.reverse
+    searchTypeNames = searchTypeNames.reverse
 
     // Search over modules
     var inPackage                        = true
