@@ -147,9 +147,9 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     assert(
       nested.filter(
         _.modifiers.toSet == Set(PUBLIC_MODIFIER, VIRTUAL_MODIFIER, STATIC_MODIFIER)
-      ) sameElements nested
+      ) == nested
     )
-    assert(nested.filter(_.outerTypeName.get == td.get.typeName) sameElements nested)
+    assert(nested.filter(_.outerTypeName.get == td.get.typeName) == nested)
   }
 
   test("Field access") {
@@ -181,8 +181,8 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
           "street"
         )
     )
-    assert(fields.filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) sameElements fields)
-    assert(fields.filter(_.typeName.toString == "System.String") sameElements fields)
+    assert(fields.filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) == fields)
+    assert(fields.filter(_.typeName.toString == "System.String") == fields)
   }
 
   test("Constructor access") {
@@ -203,7 +203,7 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     assert(constructors.length == 4)
     assert(
       constructors
-        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) sameElements constructors
+        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) == constructors
     )
     assert(constructors.head.toString == "public System.DmlException()")
     assert(constructors(1).toString == "public System.DmlException(System.Exception param1)")
@@ -304,7 +304,7 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     )
     assert(
       methods
-        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) sameElements methods
+        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) == methods
     )
   }
 
@@ -433,9 +433,9 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
 
     val td2 =
       PlatformTypeDeclaration.get(TypeName(Names.Id, Nil, Some(TypeNames.System)), Some(dummy))
-    assert(td.isRight)
+    assert(td2.isRight)
     assert(
-      td.getOrElse(throw new NoSuchElementException).methods.exists(_.name.value == "toString")
+      td2.getOrElse(throw new NoSuchElementException).methods.exists(_.name.value == "toString")
     )
 
   }
