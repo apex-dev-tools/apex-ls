@@ -81,6 +81,8 @@ final case class TypeReferencePrimary(typeName: TypeName) extends Primary {
       val td = context.getTypeAndAddDependency(targetTypeName, context.thisType).toOption
       if (td.isEmpty)
         context.missingType(location, typeName)
+      else
+        Referenceable.addReferencingLocation(td.get, location, context.thisType)
     }
     ExprContext(isStatic = Some(false), Some(PlatformTypes.typeType))
   }
@@ -147,10 +149,7 @@ final case class IdPrimary(id: Id) extends Primary {
     cachedClassFieldDeclaration = field
 
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
-      field.get match {
-        case ref: Referenceable => ref.addReferencingLocation(location)
-        case _                  =>
-      }
+      Referenceable.addReferencingLocation(field.get, location, context.thisType)
       context.addDependency(field.get)
       Some(
         context

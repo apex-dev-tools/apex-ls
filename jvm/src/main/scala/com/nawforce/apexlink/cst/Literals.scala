@@ -98,10 +98,8 @@ final case class BoundStringLiteral(bound: Set[Name]) extends Literal {
         context.thisType
           .findField(bound, None)
           .map(field => {
-            field match {
-              case ref: Referenceable => ref.addReferencingLocation(location)
-              case _                  =>
-            }
+            Referenceable
+              .addReferencingLocation(context.thisType, field, location, context.thisType)
             context.addDependency(field)
           })
       }

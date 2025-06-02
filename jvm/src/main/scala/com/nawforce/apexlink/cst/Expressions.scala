@@ -443,10 +443,10 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       DotExpression.findField(name, inputType, context.module, input.isStatic)
     if (field.nonEmpty) {
       context.addDependency(field.get)
-      field.get match {
-        case ref: Referenceable => ref.addReferencingLocation(location)
-        case _                  =>
-      }
+      if (input.isStatic.contains(true) && !field.get.thisTypeIdOpt.contains(context.typeId))
+        Referenceable.addReferencingLocation(inputType, field.get, location, context.thisType)
+      else
+        Referenceable.addReferencingLocation(field.get, location, context.thisType)
       val target = context.getTypeAndAddDependency(field.get.typeName, inputType).toOption
       if (target.isEmpty) {
         context.missingType(location, field.get.typeName)
@@ -607,10 +607,10 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
       case Right(method) =>
         cachedMethod = Some(method)
         context.addDependency(method)
-        method match {
-          case ref: Referenceable => ref.addReferencingLocation(location)
-          case _                  =>
-        }
+        if (staticContext.contains(true) && !method.thisTypeIdOpt.contains(context.typeId))
+          Referenceable.addReferencingLocation(callee, method, location, context.thisType)
+        else
+          Referenceable.addReferencingLocation(method, location, context.thisType)
         if (method.typeName != TypeNames.Void) {
           val td = context.getTypeAndAddDependency(method.typeName, context.thisType)
           td match {
@@ -698,6 +698,7 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
               context.logError(location, error)
               ExprContext.empty
             case Right(ctor: ApexConstructorLike) =>
+              Referenceable.addReferencingLocation(td, ctor, location, context.thisType)
               context.saveResult(this, ctor.idLocation) {
                 ExprContext(Some(false), Some(td), ctor)
               }
@@ -759,6 +760,7 @@ final case class CastExpression(typeName: TypeName, expression: Expression) exte
       context.missingType(location, typeName)
       ExprContext.empty
     } else {
+      Referenceable.addReferencingLocation(castType.get, location, context.thisType)
       ExprContext(isStatic = Some(false), castType.get)
     }
   }
@@ -915,6 +917,8 @@ final case class InstanceOfExpression(expression: Expression, typeName: TypeName
     val instanceOfType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
     if (instanceOfType.isEmpty)
       context.missingType(location, typeName)
+    else
+      Referenceable.addReferencingLocation(instanceOfType.get, location, context.thisType)
     expression.verify(input, context)
     ExprContext(isStatic = Some(false), PlatformTypes.booleanType)
   }

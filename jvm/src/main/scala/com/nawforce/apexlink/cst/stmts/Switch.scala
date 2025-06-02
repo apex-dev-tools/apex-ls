@@ -146,10 +146,12 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
       case iv: WhenIdLiteral =>
         val field = typeDeclaration.findField(iv.id.name, Some(true))
         field.foreach(field => {
-          field match {
-            case ref: Referenceable => ref.addReferencingLocation(iv.location)
-            case _                  =>
-          }
+          Referenceable.addReferencingLocation(
+            typeDeclaration,
+            field,
+            iv.location,
+            context.thisType
+          )
           context.addDependency(field)
         })
         if (field.isEmpty) {
@@ -186,7 +188,7 @@ final case class WhenSObjectValue(typeName: TypeName, id: Id) extends WhenValue 
   }
 
   override def verify(context: BlockVerifyContext): Unit = {
-    context.addVar(id.name, id, isReadOnly = false, typeName)
+    context.addVar(id.name, id, isReadOnly = false, typeName, context.thisType)
   }
 }
 

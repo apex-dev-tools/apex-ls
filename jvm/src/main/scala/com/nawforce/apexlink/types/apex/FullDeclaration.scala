@@ -20,7 +20,7 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.finding.{RelativeTypeContext, TypeResolver}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.documents._
@@ -35,7 +35,23 @@ import upickle.default.writeBinary
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
-/* Apex type declaration, a wrapper around the Apex parser output. This is the base for classes, interfaces & enums*/
+/** Represents a complete Apex type declaration including its source code and all inner components.
+  *
+  * This abstract class serves as the base for all Apex type declarations (classes, interfaces, and enums).
+  * It handles parsing, validation, dependency tracking, and caching of Apex types.
+  *
+  * @param source The source code containing this declaration
+  * @param module The module this declaration belongs to
+  * @param typeContext The context for resolving type references
+  * @param typeName The fully qualified name of this type
+  * @param outerTypeName The name of the enclosing type if this is a nested type
+  * @param id The identifier information for this declaration
+  * @param _modifiers The modifiers applied to this declaration
+  * @param _inTest Whether this declaration is in a test context
+  * @param superClass The parent class if any
+  * @param interfaces The interfaces implemented by this type
+  * @param bodyDeclarations The declarations contained within this type (methods, fields, etc.)
+  */
 abstract class FullDeclaration(
   val source: Source,
   val module: OPM.Module,
@@ -177,6 +193,7 @@ abstract class FullDeclaration(
         context.missingType(id.location, superClass)
     })
     superClassDeclaration.foreach(superClassDeclaration => {
+      Referenceable.addReferencingLocation(superClassDeclaration, id.location, this)
       context.addDependency(superClassDeclaration)
       if (superClassDeclaration.nature != CLASS_NATURE) {
         OrgInfo.logError(id.location, s"Parent type '${superClass.get.asDotName}' must be a class")
@@ -215,8 +232,11 @@ abstract class FullDeclaration(
       if (td.isEmpty) {
         if (!context.module.isGulped && !context.module.isGhostedType(interface))
           context.missingType(id.location, interface)
-      } else if (td.get.nature != INTERFACE_NATURE)
+      } else if (td.get.nature != INTERFACE_NATURE) {
         OrgInfo.logError(id.location, s"Type '${interface.toString}' must be an interface")
+      } else {
+        Referenceable.addReferencingLocation(td.get, id.location, this)
+      }
     })
 
     // Detail check each body declaration
@@ -284,7 +304,19 @@ abstract class FullDeclaration(
     }
   }
 
-  /** Get a validation result map for the body declaration at the specified location. */
+  /** Returns a map of validation results for the body declaration at the specified source location.
+    * <p>
+    * This method locates the innermost body declaration (such as a method, field, or nested type)
+    * that contains the given line and offset. It then validates that declaration, collecting
+    * validation results for each relevant source location within it.
+    * <p>
+    * If no matching body declaration is found, or if an error occurs during validation,
+    * an empty map is returned.
+    *
+    * @param line   The 1-based line number within the source file.
+    * @param offset The 0-based character offset within the line.
+    * @return       A map from source locations to their corresponding validation results.
+    */
   override def getValidationMap(line: Int, offset: Int): Map[Location, ValidationResult] = {
     try {
       getBodyDeclarationFromLocation(line, offset)
@@ -307,6 +339,14 @@ abstract class FullDeclaration(
         Map.empty
     }
   }
+
+  /** Finds the body declaration (such as a method, field, or nested type) at the specified line and offset.
+    * Recursively searches nested types and returns the innermost matching (FullDeclaration, ClassBodyDeclaration) pair.
+    *
+    * @param line   The line number to search (1-based).
+    * @param offset The character offset within the line (0-based).
+    * @return       An Option containing the (FullDeclaration, ClassBodyDeclaration) if found, otherwise None.
+    */
   def getBodyDeclarationFromLocation(
     line: Int,
     offset: Int

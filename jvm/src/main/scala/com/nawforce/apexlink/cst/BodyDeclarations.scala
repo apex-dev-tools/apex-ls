@@ -271,7 +271,15 @@ class ApexMethodDeclaration(
 
     val blockContext =
       new OuterBlockVerifyContext(context, modifiers.contains(STATIC_MODIFIER), typeName)
-    parameters.foreach(param => param.addVar(blockContext))
+    parameters.foreach(param => {
+      blockContext.addVar(
+        param.name,
+        param.id,
+        param.modifiers.modifiers.contains(FINAL_MODIFIER),
+        param.typeName,
+        context.thisType
+      )
+    })
     block.foreach(block => {
       block.verify(blockContext)
     })
@@ -412,7 +420,8 @@ final case class ApexConstructorDeclaration(
         param.name,
         param.id,
         param.modifiers.modifiers.contains(FINAL_MODIFIER),
-        param.typeName
+        param.typeName,
+        context.thisType
       )
     )
     block.verify(blockContext)
@@ -454,10 +463,6 @@ final case class FormalParameter(
   override val name: Name = id.name
 
   override def typeName: TypeName = relativeTypeName.typeName
-
-  def addVar(context: BlockVerifyContext): Unit = {
-    relativeTypeName.addVar(id, id.name, modifiers.modifiers.contains(FINAL_MODIFIER), context)
-  }
 
   def verify(context: BodyDeclarationVerifyContext): Unit = {
     id.validate(context)
