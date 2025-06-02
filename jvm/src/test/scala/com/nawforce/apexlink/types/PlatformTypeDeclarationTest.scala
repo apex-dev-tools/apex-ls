@@ -147,9 +147,9 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     assert(
       nested.filter(
         _.modifiers.toSet == Set(PUBLIC_MODIFIER, VIRTUAL_MODIFIER, STATIC_MODIFIER)
-      ) sameElements nested
+      ) == nested
     )
-    assert(nested.filter(_.outerTypeName.get == td.get.typeName) sameElements nested)
+    assert(nested.filter(_.outerTypeName.get == td.get.typeName) == nested)
   }
 
   test("Field access") {
@@ -181,8 +181,8 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
           "street"
         )
     )
-    assert(fields.filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) sameElements fields)
-    assert(fields.filter(_.typeName.toString == "System.String") sameElements fields)
+    assert(fields.filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) == fields)
+    assert(fields.filter(_.typeName.toString == "System.String") == fields)
   }
 
   test("Constructor access") {
@@ -203,7 +203,7 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     assert(constructors.length == 4)
     assert(
       constructors
-        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) sameElements constructors
+        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER)) == constructors
     )
     assert(constructors.head.toString == "public System.DmlException()")
     assert(constructors(1).toString == "public System.DmlException(System.Exception param1)")
@@ -230,26 +230,25 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     assert(td.get.nestedTypes.isEmpty)
 
     val methods = td.get.methods.sortBy(_.name.toString)
-    assert(methods.length == 11)
+    assert(methods.length == 14)
     assert(
-      methods.map(_.name.toString) sameElements
+      methods.map(m => (m.name.toString, m.modifiers)) sameElements
         Array(
-          "getCity",
-          "getCountry",
-          "getCountryCode",
-          "getDistance",
-          "getGeocodeAccuracy",
-          "getLatitude",
-          "getLongitude",
-          "getPostalCode",
-          "getState",
-          "getStateCode",
-          "getStreet"
+          ("equals", ArraySeq(PUBLIC_MODIFIER)),
+          ("getCity", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getCountry", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getCountryCode", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getDistance", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getGeocodeAccuracy", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getLatitude", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getLongitude", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getPostalCode", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getState", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getStateCode", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("getStreet", ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)),
+          ("hashCode", ArraySeq(PUBLIC_MODIFIER)),
+          ("toString", ArraySeq(PUBLIC_MODIFIER))
         )
-    )
-    assert(
-      methods
-        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) sameElements methods
     )
     assert(
       methods
@@ -261,6 +260,11 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
       methods.filter(_.name.toString == "getDistance").head.toString ==
         "public virtual System.Double getDistance(System.Location other, System.String unit)"
     )
+    assert(
+      methods.filter(_.name.toString == "equals").head.toString ==
+        "public System.Boolean equals(Object other)"
+    )
+
   }
 
   test("Exception") {
@@ -300,7 +304,7 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
     )
     assert(
       methods
-        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) sameElements methods
+        .filter(_.modifiers == ArraySeq(PUBLIC_MODIFIER, VIRTUAL_MODIFIER)) == methods
     )
   }
 
@@ -417,4 +421,23 @@ class PlatformTypeDeclarationTest extends AnyFunSuite with TestHelper {
         .typeName == TypeName(Name("List"), Seq(TypeNames.String), Some(TypeNames.System))
     )
   }
+
+  test("Types with missing object methods are auto-corrected") {
+    val dummy = typeDeclaration("public class Dummy {}")
+    val td =
+      PlatformTypeDeclaration.get(TypeName(Names.SObject, Nil, Some(TypeNames.System)), Some(dummy))
+    assert(td.isRight)
+    assert(
+      td.getOrElse(throw new NoSuchElementException).methods.exists(_.name.value == "hashCode")
+    )
+
+    val td2 =
+      PlatformTypeDeclaration.get(TypeName(Names.Id, Nil, Some(TypeNames.System)), Some(dummy))
+    assert(td2.isRight)
+    assert(
+      td2.getOrElse(throw new NoSuchElementException).methods.exists(_.name.value == "toString")
+    )
+
+  }
+
 }

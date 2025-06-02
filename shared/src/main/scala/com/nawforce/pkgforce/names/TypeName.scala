@@ -225,12 +225,21 @@ object TypeName {
     Identifier.isLegalIdentifier(eName.name)
   }
 
-  // Package private to avoid accidental use in apex-link
-  val Void: TypeName      = TypeName(Names.Void)
-  val ApexPages: TypeName = TypeName(Names.ApexPages)
+  val Void: TypeName = TypeName(Names.Void)
 
-  val System: TypeName   = TypeName(Names.System)
-  val Internal: TypeName = TypeName(Names.Internal)
+  val Internal: TypeName    = TypeName(Names.Internal)
+  val System: TypeName      = TypeName(Names.System)
+  val Database: TypeName    = TypeName(Names.Database)
+  val ApexPages: TypeName   = TypeName(Names.ApexPages)
+  val Approval: TypeName    = TypeName(Names.Approval)
+  val Datacloud: TypeName   = TypeName(Names.Datacloud)
+  val Messaging: TypeName   = TypeName(Names.Messaging)
+  val Package: TypeName     = TypeName(Names.Package)
+  val QuickAction: TypeName = TypeName(Names.QuickAction)
+  val Search: TypeName      = TypeName(Names.Search)
+  val dom: TypeName         = TypeName(Names.dom)
+  val eventbus: TypeName    = TypeName(Names.eventbus)
+  val licensing: TypeName   = TypeName(Names.licensing)
 
   val Null: TypeName   = TypeName(Names.Null$, Nil, Some(TypeName.Internal))
   val Any: TypeName    = TypeName(Names.Any$, Nil, Some(TypeName.Internal))

@@ -21,6 +21,12 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
+import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration.{
+  classesWithObjectMethods,
+  equalsMethod,
+  hashCodeMethod,
+  toStringMethod
+}
 import com.nawforce.apexlink.types.synthetic.{CustomMethodDeclaration, CustomParameterDeclaration}
 import com.nawforce.pkgforce.modifiers.{Modifier, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
@@ -135,7 +141,13 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   override lazy val methods: ArraySeq[MethodDeclaration] = {
     nature match {
       case ENUM_NATURE => PlatformTypeDeclaration.enumMethods(typeName)
-      case _           => getMethods
+      case _ =>
+        val platformMethods = getMethods
+        if (nature == CLASS_NATURE && classesWithObjectMethods.contains(typeName)) {
+          platformMethods ++ additionalObjectMethods(platformMethods)
+        } else {
+          platformMethods
+        }
     }
   }
 
@@ -165,6 +177,19 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
       case _ =>
         ArraySeq.unsafeWrapArray(localMethods.map(m => new PlatformMethod(m, this)))
     }
+  }
+
+  private def additionalObjectMethods(
+    methods: ArraySeq[PlatformMethod]
+  ): Array[CustomMethodDeclaration] = {
+    var additional: List[CustomMethodDeclaration] = Nil
+    if (!methods.exists(_.isHashcode))
+      additional = hashCodeMethod :: additional
+    if (!methods.exists(_.isEquals))
+      additional = equalsMethod :: additional
+    if (!methods.exists(_.isToString))
+      additional = toStringMethod :: additional
+    additional.toArray
   }
 
   protected def getCtors: ArraySeq[PlatformConstructor] = {
@@ -257,6 +282,18 @@ class PlatformMethod(
     else
       name
   }
+
+  def isHashcode: Boolean = {
+    name == Names.hashCode$ && parameters.isEmpty && typeName == TypeNames.Integer
+  }
+
+  def isEquals: Boolean = {
+    name == Names.equals$ && parameters.size == 1 && parameters.head.typeName == TypeNames.InternalObject
+  }
+
+  def isToString: Boolean = {
+    name == Names.toString$ && parameters.isEmpty && typeName == TypeNames.String
+  }
 }
 
 object PlatformTypeDeclaration {
@@ -291,7 +328,7 @@ object PlatformTypeDeclaration {
   }
 
   /* Get a type, in general don't call this direct, use TypeRequest which will delegate here. If needed this will
-   * construct a GenericPlatformTypeDeclaration to specialise a PlatformTypeDeclaration but you must provide from
+   * construct a GenericPlatformTypeDeclaration to specialise a PlatformTypeDeclaration, but you must provide from
    * for that to be possible as this allows discovery of the correct type arguments.
    */
   def get(typeName: TypeName, from: Option[TypeDeclaration]): TypeResponse = {
@@ -348,7 +385,7 @@ object PlatformTypeDeclaration {
     HashMap[DotName, DotName]() ++ names
   }
 
-  /* Index .class files, we have to index to make sure we get natural case sensitive names, but also used
+  /* Index .class files, we have to index to make sure we get natural case-sensitive names, but also used
    * to re-map SObject so they appear in Schema namespace.
    */
   private def indexDir(
@@ -414,7 +451,10 @@ object PlatformTypeDeclaration {
   }
 
   /* Create a TypeName from a Java class */
-  def typeNameFromClass(cls: java.lang.Class[_], contextCls: java.lang.Class[_]): TypeName = {
+  private def typeNameFromClass(
+    cls: java.lang.Class[_],
+    contextCls: java.lang.Class[_]
+  ): TypeName = {
     val cname = if (cls.isArray) cls.getComponentType.getCanonicalName else cls.getCanonicalName
     val typeName =
       if (cname == "java.lang.Object") {
@@ -449,8 +489,32 @@ object PlatformTypeDeclaration {
       typeName
   }
 
+  private val equalsMethod = CustomMethodDeclaration(
+    Location.empty,
+    Name("equals"),
+    TypeNames.Boolean,
+    ArraySeq(CustomParameterDeclaration(Name("other"), TypeNames.InternalObject))
+  )
+
+  private val hashCodeMethod = CustomMethodDeclaration(
+    Location.empty,
+    Name("hashCode"),
+    TypeNames.Integer,
+    CustomMethodDeclaration.emptyParameters
+  )
+
+  private val toStringMethod = CustomMethodDeclaration(
+    Location.empty,
+    Name("toString"),
+    TypeNames.String,
+    CustomMethodDeclaration.emptyParameters
+  )
+
+  private val objectMethods =
+    ArraySeq(equalsMethod, hashCodeMethod, toStringMethod)
+
   /* Standard methods to be exposed on enums */
-  private def enumMethods(typeName: TypeName): ArraySeq[MethodDeclaration] =
+  private def enumMethods(typeName: TypeName): ArraySeq[MethodDeclaration] = {
     ArraySeq(
       CustomMethodDeclaration(
         Location.empty,
@@ -477,24 +541,181 @@ object PlatformTypeDeclaration {
         typeName,
         ArraySeq(CustomParameterDeclaration(Name("name"), TypeNames.String)),
         asStatic = true
-      ),
-      CustomMethodDeclaration(
-        Location.empty,
-        Name("equals"),
-        TypeNames.Boolean,
-        ArraySeq(CustomParameterDeclaration(Name("other"), TypeNames.InternalObject))
-      ),
-      CustomMethodDeclaration(
-        Location.empty,
-        Name("hashCode"),
-        TypeNames.Integer,
-        CustomMethodDeclaration.emptyParameters
-      ),
-      CustomMethodDeclaration(
-        Location.empty,
-        Name("toString"),
-        TypeNames.String,
-        CustomMethodDeclaration.emptyParameters
       )
-    )
+    ) ++ objectMethods
+  }
+
+  val classesWithObjectMethods: Set[TypeName] = Set(
+    TypeName(Name("IdeaStandardController"), Nil, Some(TypeName.ApexPages)),
+    TypeName(Name("IdeaStandardSetController"), Nil, Some(TypeName.ApexPages)),
+    TypeName(Name("KnowledgeArticleVersionStandardController"), Nil, Some(TypeName.ApexPages)),
+    TypeName(Name("Message"), Nil, Some(TypeName.ApexPages)),
+    TypeName(Name("StandardController"), Nil, Some(TypeName.ApexPages)),
+    TypeName(Name("StandardSetController"), Nil, Some(TypeName.ApexPages)),
+    TypeName(Name("LockResult"), Nil, Some(TypeName.Approval)),
+    TypeName(Name("ProcessRequest"), Nil, Some(TypeName.Approval)),
+    TypeName(Name("ProcessResult"), Nil, Some(TypeName.Approval)),
+    TypeName(Name("ProcessSubmitRequest"), Nil, Some(TypeName.Approval)),
+    TypeName(Name("ProcessWorkitemRequest"), Nil, Some(TypeName.Approval)),
+    TypeName(Name("UnlockResult"), Nil, Some(TypeName.Approval)),
+    TypeName(Name("DeleteResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("DeletedRecord"), Nil, Some(TypeName.Database)),
+    TypeName(Name("DuplicateError"), Nil, Some(TypeName.Database)),
+    TypeName(Name("EmptyRecycleBinResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("Error"), Nil, Some(TypeName.Database)),
+    TypeName(Name("GetDeletedResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("GetUpdatedResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("LeadConvert"), Nil, Some(TypeName.Database)),
+    TypeName(Name("LeadConvertResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("MergeRequest"), Nil, Some(TypeName.Database)),
+    TypeName(Name("MergeResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("NestedSaveResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("QueryLocator"), Nil, Some(TypeName.Database)),
+    TypeName(Name("RelationshipSaveResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("SaveResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("UndeleteResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("UpsertResult"), Nil, Some(TypeName.Database)),
+    TypeName(Name("AdditionalInformationMap"), Nil, Some(TypeName.Datacloud)),
+    TypeName(Name("DuplicateResult"), Nil, Some(TypeName.Datacloud)),
+    TypeName(Name("FieldDiff"), Nil, Some(TypeName.Datacloud)),
+    TypeName(Name("FieldDifferenceType"), Nil, Some(TypeName.Datacloud)),
+    TypeName(Name("FindDuplicatesResult"), Nil, Some(TypeName.Datacloud)),
+    TypeName(Name("MatchRecord"), Nil, Some(TypeName.Datacloud)),
+    TypeName(Name("MatchResult"), Nil, Some(TypeName.Datacloud)),
+    TypeName(Name("Email"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("EmailAttachment"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("EmailFileAttachment"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("MassEmailMessage"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("RenderEmailTemplateBodyResult"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("RenderEmailTemplateError"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("SendEmailError"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("SendEmailResult"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("SingleEmailMessage"), Nil, Some(TypeName.Messaging)),
+    TypeName(Name("Version"), Nil, Some(TypeName.Package)),
+    TypeName(Name("Control"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("DescribeAvailableQuickActionResult"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("DescribeLayoutComponent"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("DescribeLayoutItem"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("DescribeLayoutRow"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("DescribeLayoutSection"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("DescribeQuickActionDefaultValue"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("DescribeQuickActionParameter"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("DescribeQuickActionResult"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("EmptySpace"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("ExpandedLookup"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("Field"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("FieldLayoutComponent"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("QuickActionRequest"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("QuickActionResult"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("QuickActionTemplateResult"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("ReportChartComponent"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("SControl"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("Separator"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("VisualforcePage"), Nil, Some(TypeName.QuickAction)),
+    TypeName(Name("ChildRelationship"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DataCategory"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DataCategoryGroupSobjectTypePair"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DescribeColorResult"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DescribeDataCategoryGroupResult"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DescribeDataCategoryGroupStructureResult"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DescribeFieldResult"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DescribeIconResult"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DescribeSObjectResult"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DescribeTabResult"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("DescribeTabSetResult"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("FieldSet"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("FieldSetMember"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("FilteredLookupInfo"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("PicklistEntry"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("RecordTypeInfo"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("SObjectField"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("SObjectType"), Nil, Some(TypeName.Schema)),
+    TypeName(Name("KnowledgeSuggestionFilter"), Nil, Some(TypeName.Search)),
+    TypeName(Name("QuestionSuggestionFilter"), Nil, Some(TypeName.Search)),
+    TypeName(Name("SuggestionOption"), Nil, Some(TypeName.Search)),
+    TypeName(Name("Address"), Nil, Some(TypeName.System)),
+    TypeName(Name("AssertException"), Nil, Some(TypeName.System)),
+    TypeName(Name("AsyncException"), Nil, Some(TypeName.System)),
+    TypeName(Name("BigObjectException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Blob"), Nil, Some(TypeName.System)),
+    TypeName(Name("Boolean"), Nil, Some(TypeName.System)),
+    TypeName(Name("CURRENCY"), Nil, Some(TypeName.System)),
+    TypeName(Name("CalloutException"), Nil, Some(TypeName.System)),
+    TypeName(Name("CanvasException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Cookie"), Nil, Some(TypeName.System)),
+    TypeName(Name("DataWeaveScriptException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Date"), Nil, Some(TypeName.System)),
+    TypeName(Name("Datetime"), Nil, Some(TypeName.System)),
+    TypeName(Name("Decimal"), Nil, Some(TypeName.System)),
+    TypeName(Name("DmlException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Double"), Nil, Some(TypeName.System)),
+    TypeName(Name("DuplicateMessageException"), Nil, Some(TypeName.System)),
+    TypeName(Name("EmailException"), Nil, Some(TypeName.System)),
+    TypeName(Name("EmailTemplateRenderException"), Nil, Some(TypeName.System)),
+    TypeName(Name("EventObjectException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Exception"), Nil, Some(TypeName.System)),
+    TypeName(Name("ExternalObjectException"), Nil, Some(TypeName.System)),
+    TypeName(Name("FatalCursorException"), Nil, Some(TypeName.System)),
+    TypeName(Name("FinalException"), Nil, Some(TypeName.System)),
+    TypeName(Name("FlowException"), Nil, Some(TypeName.System)),
+    TypeName(Name("FormulaEvaluationException"), Nil, Some(TypeName.System)),
+    TypeName(Name("FormulaValidationException"), Nil, Some(TypeName.System)),
+    TypeName(Name("HandledException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Http"), Nil, Some(TypeName.System)),
+    TypeName(Name("HttpRequest"), Nil, Some(TypeName.System)),
+    TypeName(Name("HttpResponse"), Nil, Some(TypeName.System)),
+    TypeName(Name("Id"), Nil, Some(TypeName.System)),
+    TypeName(Name("Integer"), Nil, Some(TypeName.System)),
+    TypeName(Name("InvalidParameterValueException"), Nil, Some(TypeName.System)),
+    TypeName(Name("InvalidReadOnlyUserDmlException"), Nil, Some(TypeName.System)),
+    TypeName(Name("JSONException"), Nil, Some(TypeName.System)),
+    TypeName(Name("LIST"), Nil, Some(TypeName.System)),
+    TypeName(Name("LicenseException"), Nil, Some(TypeName.System)),
+    TypeName(Name("LimitException"), Nil, Some(TypeName.System)),
+    TypeName(Name("ListException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Location"), Nil, Some(TypeName.System)),
+    TypeName(Name("Long"), Nil, Some(TypeName.System)),
+    TypeName(Name("Map"), Nil, Some(TypeName.System)),
+    TypeName(Name("MathException"), Nil, Some(TypeName.System)),
+    TypeName(Name("NoAccessException"), Nil, Some(TypeName.System)),
+    TypeName(Name("NoDataFoundException"), Nil, Some(TypeName.System)),
+    TypeName(Name("NoSuchElementException"), Nil, Some(TypeName.System)),
+    TypeName(Name("NullPointerException"), Nil, Some(TypeName.System)),
+    TypeName(Name("PageReference"), Nil, Some(TypeName.System)),
+    TypeName(Name("PlatformCacheException"), Nil, Some(TypeName.System)),
+    TypeName(Name("PolyglotException"), Nil, Some(TypeName.System)),
+    TypeName(Name("ProcedureException"), Nil, Some(TypeName.System)),
+    TypeName(Name("QueryException"), Nil, Some(TypeName.System)),
+    TypeName(Name("RequiredFeatureMissingException"), Nil, Some(TypeName.System)),
+    TypeName(Name("ResetPasswordResult"), Nil, Some(TypeName.System)),
+    TypeName(Name("SObject"), Nil, Some(TypeName.System)),
+    TypeName(Name("SObjectException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Savepoint"), Nil, Some(TypeName.System)),
+    TypeName(Name("SearchException"), Nil, Some(TypeName.System)),
+    TypeName(Name("SecurityException"), Nil, Some(TypeName.System)),
+    TypeName(Name("SelectOption"), Nil, Some(TypeName.System)),
+    TypeName(Name("SerializationException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Set"), Nil, Some(TypeName.System)),
+    TypeName(Name("String"), Nil, Some(TypeName.System)),
+    TypeName(Name("StringException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Time"), Nil, Some(TypeName.System)),
+    TypeName(Name("TouchHandledException"), Nil, Some(TypeName.System)),
+    TypeName(Name("TransientCursorException"), Nil, Some(TypeName.System)),
+    TypeName(Name("TriggerContext"), Nil, Some(TypeName.System)),
+    TypeName(Name("TypeException"), Nil, Some(TypeName.System)),
+    TypeName(Name("UnexpectedException"), Nil, Some(TypeName.System)),
+    TypeName(Name("Version"), Nil, Some(TypeName.System)),
+    TypeName(Name("VisualforceException"), Nil, Some(TypeName.System)),
+    TypeName(Name("WaveTemplateException"), Nil, Some(TypeName.System)),
+    TypeName(Name("XmlException"), Nil, Some(TypeName.System)),
+    TypeName(Name("XmlStreamReader"), Nil, Some(TypeName.System)),
+    TypeName(Name("XmlStreamWriter"), Nil, Some(TypeName.System)),
+    TypeName(Name("Document"), Nil, Some(TypeName.dom)),
+    TypeName(Name("XmlNode"), Nil, Some(TypeName.dom)),
+    TypeName(Name("ChangeEventHeader"), Nil, Some(TypeName.eventbus)),
+    TypeName(Name("AddonDefinition"), Nil, Some(TypeName.licensing)),
+    TypeName(Name("EditionDefinition"), Nil, Some(TypeName.licensing)),
+    TypeName(Name("PlatformLicenseDefinition"), Nil, Some(TypeName.licensing)),
+    TypeName(Name("UserLicenseDefinition"), Nil, Some(TypeName.licensing))
+  )
 }
