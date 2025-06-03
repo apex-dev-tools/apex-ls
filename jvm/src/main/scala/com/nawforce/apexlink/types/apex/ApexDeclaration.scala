@@ -30,7 +30,6 @@ import com.nawforce.pkgforce.path.{IdLocatable, Locatable, Location, PathLocatio
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.util.hashing.MurmurHash3
 
 trait PreReValidatable {
 
@@ -195,10 +194,14 @@ trait ApexFieldLike extends FieldDeclaration with Referenceable {
 
 /** Apex defined types core features, be they full or summary style */
 trait ApexDeclaration extends DependentType with IdLocatable {
-  val sourceHash: Int
+
   val module: OPM.Module
   val isEntryPoint: Boolean
 
+  /** Calculate a hash for the source code of the declaration */
+  def sourceHash: Int
+
+  /** Create a summary for the of the declaration */
   def summary: TypeSummary
 
   override def nestedTypes: ArraySeq[ApexDeclaration]
@@ -259,9 +262,11 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder with Re
   /** Override to handle request to flush the type to passed cache if dirty */
   def flush(pc: ParsedCache, context: PackageContext): Unit
 
-  /** Remove local caches ready for revalidation */
+  /** Reset local caches ready for revalidation */
   override def preReValidate(): Unit = {
     super.preReValidate()
+    _methodMap = None
+    _constructorMap = None
     _superClassDeclaration = None
     _interfaceDeclarations = ArraySeq.empty
   }
@@ -284,29 +289,6 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder with Re
       _interfaceDeclarations = interfaces.flatMap(i => TypeResolver(i, this).toOption)
     }
     _interfaceDeclarations
-  }
-
-  /** Obtain a source hash for this class and all it's ancestors */
-  def deepHash: Int = {
-    deepHash(mutable.Set())
-  }
-
-  private def deepHash(accumulator: mutable.Set[ApexClassDeclaration]): Int = {
-    if (accumulator.contains(this)) {
-      0
-    } else {
-      accumulator.add(this)
-      MurmurHash3.arrayHash(
-        Array(this.sourceHash) ++
-          superClassDeclaration
-            .collect { case td: ApexClassDeclaration => td }
-            .map(_.deepHash(accumulator))
-            .toArray ++
-          interfaceDeclarations
-            .collect { case td: ApexClassDeclaration => td }
-            .map(_.deepHash(accumulator))
-      )
-    }
   }
 
   override lazy val isComplete: Boolean = {
@@ -375,19 +357,6 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder with Re
       _constructorMap = Some(createConstructorMap)
     }
     _constructorMap.get
-  }
-
-  protected def resetMethodMapIfInvalid(): Unit = {
-    // We used to only clear the method map if its cached deep hash did not match the
-    // deep hash of the declaration. The deep hash however is not catching non-structural
-    // changes such as method parameter types becoming available, so I have disabled
-    // but left this in use in case we want to pursue this optimisation again later
-    _methodMap = None
-  }
-
-  protected def resetConstructorMapIfInvalid(): Unit = {
-    // See comment in resetMethodMapIfInvalid()
-    _constructorMap = None
   }
 
   private var _methodMap: Option[MethodMap]           = None

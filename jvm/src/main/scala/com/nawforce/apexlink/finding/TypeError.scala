@@ -38,6 +38,22 @@ final case class MissingType(_typeName: TypeName) extends TypeError(_typeName) {
   override def toString: String = throw new IllegalArgumentException
 }
 
+final case class InaccessibleType(_typeName: TypeName) extends TypeError(_typeName) {
+  def asIssue(location: PathLocation): Issue = {
+    new Issue(
+      location.path,
+      Diagnostic(
+        MISSING_CATEGORY,
+        location.location,
+        s"Type '$typeName' is not accessible from here"
+      )
+    )
+  }
+
+  // Protect against old way of using this
+  override def toString: String = throw new IllegalArgumentException
+}
+
 final case class WrongTypeArguments(_typeName: TypeName, expected: Integer)
     extends TypeError(_typeName) {
   def asIssue(location: PathLocation): Issue = {
