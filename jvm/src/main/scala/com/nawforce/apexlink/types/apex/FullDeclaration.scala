@@ -68,12 +68,11 @@ abstract class FullDeclaration(
     with ApexClassDeclaration
     with ApexFullDeclaration {
 
-  val sourceHash: Int = source.hash
-  private val contentHash: Int =
-    ParsedCache.classMetaHash(
-      source.path.parent.join(s"${typeName.name.toString}.cls-meta.xml"),
-      sourceHash
-    )
+  lazy val sourceHash: Int = source.code.hash
+  private lazy val contentHash = ParsedCache.classMetaHash(
+    source.path.parent.join(s"${typeName.name.toString}.cls-meta.xml"),
+    sourceHash
+  )
 
   override def paths: ArraySeq[PathLike] = ArraySeq(source.path)
 
@@ -147,12 +146,10 @@ abstract class FullDeclaration(
     }
   }
 
-  /* Reset local caches ready for re-validation */
+  /** Reset local caches ready for re-validation */
   override def preReValidate(): Unit = {
     super.preReValidate()
     typeContext.reset()
-    resetMethodMapIfInvalid()
-    resetConstructorMapIfInvalid()
     bodyDeclarations.collect({ case p: PreReValidatable => p.preReValidate() })
     nestedTypes.foreach(_.preReValidate())
   }

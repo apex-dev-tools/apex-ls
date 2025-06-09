@@ -28,8 +28,6 @@ final case class ConstructorMap(
   superConstructorsByParam: Option[ConstructorMap],
   errors: List[Issue]
 ) {
-  val deepHash: Int = td.map(_.deepHash).getOrElse(0)
-
   def allConstructors: ArraySeq[ConstructorDeclaration] = {
     val buffer = new mutable.ArrayBuffer[ConstructorDeclaration]()
     constructorsByParam.values.foreach(ctor => buffer.addAll(ctor))

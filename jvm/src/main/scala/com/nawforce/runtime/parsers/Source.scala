@@ -38,7 +38,6 @@ case class Source(
   startLine: Option[Int] = None,
   startColumn: Option[Int] = None
 ) {
-  val hash: Int = code.hash
 
   def extractSource(context: ParserRuleContext): Source = {
     val subdata = code.subdata(context.start.getStartIndex, context.stop.getStopIndex + 1)
