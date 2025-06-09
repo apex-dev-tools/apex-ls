@@ -575,7 +575,14 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
             "addError(msg)",
             "Method",
             "public virtual void addError(System.String msg)"
-          )
+          ),
+          CompletionItemLink(
+            "equals(other)",
+            "Method",
+            "public System.Boolean equals(Object other)"
+          ),
+          CompletionItemLink("hashCode()", "Method", "public System.Integer hashCode()"),
+          CompletionItemLink("toString()", "Method", "public System.String toString()")
         )
       )
     }
@@ -613,6 +620,13 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
             "addError(msg)",
             "Method",
             "public virtual void addError(System.String msg)"
+          ),
+          CompletionItemLink("hashCode()", "Method", "public System.Integer hashCode()"),
+          CompletionItemLink("toString()", "Method", "public System.String toString()"),
+          CompletionItemLink(
+            "equals(other)",
+            "Method",
+            "public System.Boolean equals(Object other)"
           )
         )
       )
