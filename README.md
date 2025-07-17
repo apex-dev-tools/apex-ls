@@ -6,14 +6,11 @@ The Apex Language Server library provides a collection of tools to aid developme
 
 ### Installation
 
-Releases are available from [SonaType](https://s01.oss.sonatype.org). You will need to add the repository to your build tool.
+Releases are available from [Maven Central](https://central.sonatype.com/), included as a default resolver in maven and sbt.
 
 Scala:
 
   ```scala
-  // Add if not present
-  ThisBuild / resolvers ++= Resolver.sonatypeOssRepos("releases")
-
   project.settings(
     // Replace %% with %%% to use ScalaJS build
     libraryDependencies += "io.github.apex-dev-tools" %% "apex-ls" % "X.X.X"
@@ -23,15 +20,6 @@ Scala:
 Maven:
 
   ```xml
-  <!-- In <repositories/> -->
-  <repository>
-    <id>oss.sonatype.org</id>
-    <url>https://s01.oss.sonatype.org/content/repositories/releases</url>
-    <releases>
-      <enabled>true</enabled>
-    </releases>
-  </repository>
-
   <!-- In <dependencies/> -->
   <dependency>
     <groupId>io.github.apex-dev-tools</groupId>

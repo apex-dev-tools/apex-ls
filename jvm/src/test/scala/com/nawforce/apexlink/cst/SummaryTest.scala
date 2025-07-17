@@ -191,6 +191,16 @@ class SummaryTest extends AnyFunSuite with TestHelper {
             MethodSummary(
               idLocation,
               idLocation,
+              "toString",
+              ArraySeq(PUBLIC_MODIFIER),
+              TypeNames.String,
+              ArraySeq(),
+              hasBlock = true,
+              Array()
+            ),
+            MethodSummary(
+              idLocation,
+              idLocation,
               "valueOf",
               ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER),
               dummyTypeName,
@@ -604,6 +614,16 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               "ordinal",
               ArraySeq(PUBLIC_MODIFIER),
               TypeNames.Integer,
+              ArraySeq(),
+              hasBlock = true,
+              Array()
+            ),
+            MethodSummary(
+              idLocation,
+              idLocation,
+              "toString",
+              ArraySeq(PUBLIC_MODIFIER),
+              TypeNames.String,
               ArraySeq(),
               hasBlock = true,
               Array()
