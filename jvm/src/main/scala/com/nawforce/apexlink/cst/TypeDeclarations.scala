@@ -375,6 +375,14 @@ final case class EnumDeclaration(
         fakeId("hashCode"),
         FormalParameters.empty,
         Some(Block.empty)
+      ).withLocation(location),
+      new ApexMethodDeclaration(
+        thisType,
+        modifiers,
+        RelativeTypeName(typeContext, TypeNames.String),
+        fakeId("toString"),
+        FormalParameters.empty,
+        Some(Block.empty)
       ).withLocation(location)
     )
   }
