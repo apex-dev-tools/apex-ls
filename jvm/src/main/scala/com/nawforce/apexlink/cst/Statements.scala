@@ -298,17 +298,18 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
   override def verify(context: BlockVerifyContext): Unit = {
     id.validate(context)
 
+    // Check expression first to build dependencies before we can bail out
+    val exprContext = expression.verify(context)
+
     // Check the loop var type is available
     var varTd = context.getTypeAndAddDependency(typeName, context.thisType).toOption
     if (varTd.isEmpty) {
       context.missingType(id.location, typeName)
       return
     }
-
     var varTypeName = varTd.get.typeName
-    val exprContext = expression.verify(context)
-    if (exprContext.isDefined) {
 
+    if (exprContext.isDefined) {
       // Unwrap varTypeName If using grouping query via list loop var,
       // e.g. for(List<Account> a : [Select Id from Account]){..}
       if (varTypeName.isList && exprContext.typeName.isRecordSet) {

@@ -826,6 +826,22 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Used local var for-loop bug") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy { { List<ext__Something__c> myList; for(ext__Something__c a : myList) {} } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
   test("Page controller & extension is used") {
     FileSystemHelper.run(
       Map(
