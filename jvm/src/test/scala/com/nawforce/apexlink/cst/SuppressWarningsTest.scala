@@ -15,11 +15,17 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.plugins.UnusedPlugin
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class SuppressWarningsTest extends AnyFunSuite with TestHelper {
+
+  def createOrgWithUnused(root: PathLike): OPM.OrgImpl = {
+    createOrgWithPlugin(root, classOf[UnusedPlugin])
+  }
 
   test("Suppress disabled") {
     typeDeclaration("public class Dummy {class Inner {Integer b; List<Inner> a; {b = a[null].b;}}}")
@@ -89,7 +95,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -103,7 +109,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -117,7 +123,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -131,7 +137,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -145,7 +151,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -155,7 +161,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
   test("Unused outer class suppress") {
     FileSystemHelper.run(Map("Dummy.cls" -> "@SuppressWarnings('Unused') public class Dummy {}")) {
       root: PathLike =>
-        createOrg(root)
+        createOrgWithUnused(root)
         withOrg(org => {
           assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
         })
@@ -169,7 +175,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -183,7 +189,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -197,7 +203,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -211,7 +217,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -225,7 +231,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      createOrg(root)
+      createOrgWithUnused(root)
       withOrg(org => {
         assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
       })
@@ -235,7 +241,7 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
   test("Unused outer class suppress PMD") {
     FileSystemHelper.run(Map("Dummy.cls" -> "@SuppressWarnings('PMD') public class Dummy {}")) {
       root: PathLike =>
-        createOrg(root)
+        createOrgWithUnused(root)
         withOrg(org => {
           assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
         })
