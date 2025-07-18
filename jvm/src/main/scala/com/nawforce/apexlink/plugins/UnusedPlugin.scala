@@ -76,6 +76,9 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
     isStatic: Boolean,
     context: BlockVerifyContext
   ): Unit = {
+    if (context.modifiers(suppressModifiers.contains))
+      return
+
     context.declaredVars
       .filter(localVar =>
         !context.referencedVars.contains(localVar._1) && localVar._2.definition.nonEmpty
