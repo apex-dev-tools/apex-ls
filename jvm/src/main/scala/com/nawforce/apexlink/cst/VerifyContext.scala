@@ -27,7 +27,7 @@ import com.nawforce.apexlink.types.core.{Dependent, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
 import com.nawforce.pkgforce.diagnostics._
-import com.nawforce.pkgforce.modifiers.SUPPRESS_WARNINGS_ANNOTATION_PMD
+import com.nawforce.pkgforce.modifiers.{Modifier, SUPPRESS_WARNINGS_ANNOTATION_PMD}
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLocation}
 
@@ -72,8 +72,11 @@ trait VerifyContext {
     vars: Option[mutable.Map[Name, VarTypeAndDefinition]]
   )(op: => ExprContext): ExprContext
 
+  /** Test predicate returns true for a modifier on the containing scope */
+  def modifiers(pred: Modifier => Boolean): Boolean = parent().exists(_.modifiers(pred))
+
   /** Test if issues are currently being suppressed */
-  def suppressIssues: Boolean = parent().exists(_.suppressIssues) || disableIssueDepth != 0
+  def suppressIssues: Boolean = disableIssueDepth != 0 || parent().exists(_.suppressIssues)
 
   /** Turn on/off issue suppression */
   private var disableIssueDepth: Integer = 0
@@ -233,6 +236,9 @@ final class TypeVerifyContext(
   override def getTypeFor(typeName: TypeName, from: TypeDeclaration): TypeResponse =
     typeCache.getOrElseUpdate((typeName, from), TypeResolver(typeName, from, Some(module)))
 
+  override def modifiers(pred: Modifier => Boolean): Boolean =
+    typeDeclaration.modifiers.exists(pred) || super.modifiers(pred)
+
   override def suppressIssues: Boolean =
     typeDeclaration.modifiers.contains(SUPPRESS_WARNINGS_ANNOTATION_PMD) || super.suppressIssues
 
@@ -266,6 +272,9 @@ final class BodyDeclarationVerifyContext(
     parentContext.getTypeFor(typeName, from)
 
   override def typePlugin: Option[Plugin] = parentContext.typePlugin
+
+  override def modifiers(pred: Modifier => Boolean): Boolean =
+    classBodyDeclaration.modifiers.exists(pred) || super.modifiers(pred)
 
   override def suppressIssues: Boolean =
     classBodyDeclaration.modifiers.contains(SUPPRESS_WARNINGS_ANNOTATION_PMD) ||
