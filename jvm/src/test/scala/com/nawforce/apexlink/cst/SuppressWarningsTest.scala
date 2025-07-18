@@ -168,6 +168,34 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused local variable suppress") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@SuppressWarnings('Unused') public class Dummy { void foo() { String bar = ''; } }",
+        "Foo.cls" -> "public class Foo { { Dummy d = new Dummy(); d.foo(); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      withOrg(org => {
+        assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
+      })
+    }
+  }
+
+  test("Unused local variable suppress (on method)") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @SuppressWarnings('Unused') void foo() { String bar = ''; } }",
+        "Foo.cls" -> "public class Foo { { Dummy d = new Dummy(); d.foo(); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      withOrg(org => {
+        assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
+      })
+    }
+  }
+
   test("Unused method suppress PMD") {
     FileSystemHelper.run(
       Map(
@@ -245,6 +273,34 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         withOrg(org => {
           assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
         })
+    }
+  }
+
+  test("Unused local variable suppress PMD") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@SuppressWarnings('PMD') public class Dummy { void foo() { String bar = ''; } }",
+        "Foo.cls" -> "public class Foo { { Dummy d = new Dummy(); d.foo(); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      withOrg(org => {
+        assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
+      })
+    }
+  }
+
+  test("Unused local variable suppress (on method) PMD") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @SuppressWarnings('PMD') void foo() { String bar = ''; } }",
+        "Foo.cls" -> "public class Foo { { Dummy d = new Dummy(); d.foo(); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      withOrg(org => {
+        assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
+      })
     }
   }
 
