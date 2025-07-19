@@ -142,25 +142,78 @@ object AssignableSupport {
     }
   }
 
+  /** Check if generic type parameters are assignable between two generic types.
+    *
+    * This method handles special cases for collection types where SObject narrowing
+    * rules differ based on the collection type:
+    * - List/Set: Allow SObject narrowing (e.g., List<SObject> → List<Account>)
+    * - Map: Prohibit SObject narrowing (e.g., Map<Id,SObject> → Map<Id,Account> is illegal)
+    * - Other generics: Use standard parameter-by-parameter assignability checking
+    *
+    * @param toType   the target generic type to assign to
+    * @param fromType the source generic type to assign from
+    * @param context  the verification context for type resolution
+    * @return true if all type parameters are assignable according to collection-specific rules
+    */
   private def hasAssignableParams(
     toType: TypeName,
     fromType: TypeName,
     context: VerifyContext
   ): Boolean = {
-    val toParams   = toType.params
-    val fromParams = fromType.params
+    // Check for special SObject narrowing cases first
+    if (hasSpecialSObjectNarrowing(toType, fromType, context)) {
+      return true
+    }
 
-    (fromType.name match {
+    // Default: check each parameter pair for assignability
+    checkParameterPairAssignability(toType.params, fromType.params, fromType, context)
+  }
+
+  /** Check if this generic type qualifies for special SObject narrowing.
+    * Only Lists and Sets allow SObject narrowing in their element types.
+    */
+  private def hasSpecialSObjectNarrowing(
+    toType: TypeName,
+    fromType: TypeName,
+    context: VerifyContext
+  ): Boolean = {
+    fromType.name match {
       case Names.List$ | Names.Set$ =>
-        canNarrowSObject(toParams.head, fromParams.head, context)
-      case Names.Map$ =>
-        canNarrowSObject(toParams(1), fromParams(1), context)
-      case _ => false
-    }) ||
+        // Lists and Sets allow SObject narrowing: List<SObject> can be assigned to List<Account>
+        canNarrowSObject(toType.params.head, fromType.params.head, context)
+      case _ =>
+        // Maps and other generic types do not get special SObject narrowing treatment
+        false
+    }
+  }
+
+  /** Check parameter-by-parameter assignability with type-specific rules.
+    * Maps get special treatment to prevent SObject narrowing.
+    */
+  private def checkParameterPairAssignability(
+    toParams: Seq[TypeName],
+    fromParams: Seq[TypeName],
+    fromType: TypeName,
+    context: VerifyContext
+  ): Boolean = {
     toParams
       .zip(fromParams)
-      .map(p => isAssignable(p._1, p._2, context))
-      .forall(b => b)
+      .map { case (toParam, fromParam) =>
+        if (fromType.name == Names.Map$) {
+          // For Maps, explicitly disable SObject narrowing to match Salesforce behavior
+          // This prevents Map<Id,SObject> → Map<Id,Account> assignments (Issue #340)
+          isAssignable(
+            toParam,
+            fromParam,
+            context,
+            AssignableOptions(strictConversions = false, narrowSObjects = false)
+          )
+        } else {
+          // For other generic types, use default assignability rules
+          isAssignable(toParam, fromParam, context)
+        }
+      }
+      .forall(identity)
   }
 
   /* Test if an System.SObject can be cast to a specific SObject type. This conversion is generally unsafe but is
