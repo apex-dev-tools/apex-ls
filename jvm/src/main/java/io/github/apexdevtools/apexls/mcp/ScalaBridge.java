@@ -12,13 +12,11 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.apexlink.mcp;
+package io.github.apexdevtools.apexls.mcp;
 
 import com.nawforce.apexlink.rpc.OrgAPI;
 import com.nawforce.apexlink.rpc.OrgAPIImpl;
-import com.nawforce.apexlink.rpc.OpenResult;
 import com.nawforce.apexlink.rpc.GetIssuesResult;
-import com.nawforce.apexlink.rpc.IdentifierRequest;
 import com.nawforce.apexlink.rpc.IdentifierLocationResult;
 import com.nawforce.apexlink.rpc.TargetLocation;
 import scala.concurrent.Future;
@@ -27,19 +25,22 @@ import scala.concurrent.ExecutionContext;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 /**
  * Java bridge to access Scala OrgAPI functionality in a thread-safe manner.
+ * Supports multiple workspaces by creating OrgAPI instances on-demand.
  * Converts Scala Future types to Java CompletableFuture for easier Java interop.
  */
 public class ScalaBridge {
-    
-    private final OrgAPI orgAPI;
+
+    private final Map<String, OrgAPI> workspaceOrgAPIs;
     private final ExecutorService executorService;
     private final ExecutionContext executionContext;
-    
+
     public ScalaBridge() {
-        this.orgAPI = new OrgAPIImpl();
+        this.workspaceOrgAPIs = new ConcurrentHashMap<>();
         this.executorService = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r, "ScalaBridge-Thread");
             t.setDaemon(true);
@@ -47,61 +48,69 @@ public class ScalaBridge {
         });
         this.executionContext = ExecutionContext.fromExecutorService(executorService);
     }
-    
+
     /**
-     * Open an Apex workspace directory for analysis
+     * Get or create an OrgAPI instance for the specified workspace directory
      */
-    public CompletableFuture<OpenResult> openWorkspace(String directory) {
-        return convertScalaFuture(orgAPI.open(directory));
+    private OrgAPI getOrCreateOrgAPI(String workspaceDirectory) {
+        return workspaceOrgAPIs.computeIfAbsent(workspaceDirectory, dir -> {
+            OrgAPI orgAPI = new OrgAPIImpl();
+            // Initialize the workspace asynchronously
+            orgAPI.open(dir);
+            return orgAPI;
+        });
     }
-    
+
     /**
      * Get static analysis issues for the workspace
      */
-    public CompletableFuture<GetIssuesResult> getIssues(boolean includeWarnings, int maxIssuesPerFile) {
+    public CompletableFuture<GetIssuesResult> getIssues(String workspaceDirectory, boolean includeWarnings, int maxIssuesPerFile) {
+        OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
         return convertScalaFuture(orgAPI.getIssues(includeWarnings, maxIssuesPerFile));
     }
-    
+
     /**
      * Get definition location for an identifier at a specific position
      */
-    public CompletableFuture<IdentifierLocationResult> getDefinition(String path, int line, int offset) {
+    public CompletableFuture<IdentifierLocationResult> getDefinition(String workspaceDirectory, String path, int line, int offset) {
         // TODO: Convert path/line/offset to TypeIdentifier
         // For now, return a placeholder result
         CompletableFuture<IdentifierLocationResult> future = new CompletableFuture<>();
         future.completeExceptionally(new UnsupportedOperationException("getDefinition not yet implemented"));
         return future;
     }
-    
+
     /**
      * Find all references to an identifier at a specific position
      */
-    public CompletableFuture<TargetLocation[]> getReferences(String path, int line, int offset) {
+    public CompletableFuture<TargetLocation[]> getReferences(String workspaceDirectory, String path, int line, int offset) {
+        OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
         return convertScalaFuture(orgAPI.getReferences(path, line, offset));
     }
-    
+
     /**
-     * Get the version of the language server
+     * Get the version of the language server for a specific workspace
      */
-    public CompletableFuture<String> getVersion() {
+    public CompletableFuture<String> getVersion(String workspaceDirectory) {
+        OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
         return convertScalaFuture(orgAPI.version());
     }
-    
+
     /**
-     * Refresh analysis for a specific file
+     * Get the version of the language server (uses a default temporary OrgAPI)
      */
-    public CompletableFuture<Void> refresh(String path, boolean highPriority) {
-        // Handle Scala Unit return type
-        return convertScalaFuture(orgAPI.refresh(path, highPriority))
-            .thenApply(unit -> null);
+    public CompletableFuture<String> getVersion() {
+        // For version info, we can use a temporary OrgAPI instance
+        OrgAPI tempOrgAPI = new OrgAPIImpl();
+        return convertScalaFuture(tempOrgAPI.version());
     }
-    
+
     /**
      * Convert a Scala Future to a Java CompletableFuture
      */
     private <T> CompletableFuture<T> convertScalaFuture(Future<T> scalaFuture) {
         CompletableFuture<T> javaFuture = new CompletableFuture<>();
-        
+
         scalaFuture.onComplete(result -> {
             if (result.isSuccess()) {
                 javaFuture.complete(result.get());
@@ -110,14 +119,32 @@ public class ScalaBridge {
             }
             return null;
         }, executionContext);
-        
+
         return javaFuture;
     }
-    
+
     /**
-     * Shutdown the bridge and release resources
+     * Close and remove a specific workspace
+     */
+    public void closeWorkspace(String workspaceDirectory) {
+        workspaceOrgAPIs.remove(workspaceDirectory);
+        // OrgAPI doesn't have an explicit close method, so just remove from map
+        // The GC will handle cleanup when no longer referenced
+    }
+
+    /**
+     * Get all currently managed workspace directories
+     */
+    public String[] getWorkspaceDirectories() {
+        return workspaceOrgAPIs.keySet().toArray(new String[0]);
+    }
+
+    /**
+     * Shutdown the bridge and release all resources
      */
     public void shutdown() {
+        // Clear all workspace OrgAPIs
+        workspaceOrgAPIs.clear();
         executorService.shutdown();
     }
 }

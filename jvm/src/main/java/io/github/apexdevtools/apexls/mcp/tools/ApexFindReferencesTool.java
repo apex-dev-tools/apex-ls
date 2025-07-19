@@ -12,9 +12,9 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.apexlink.mcp.tools;
+package io.github.apexdevtools.apexls.mcp.tools;
 
-import com.nawforce.apexlink.mcp.ScalaBridge;
+import io.github.apexdevtools.apexls.mcp.ScalaBridge;
 
 /**
  * MCP tool for finding all references to an Apex identifier.

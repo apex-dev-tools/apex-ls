@@ -12,9 +12,9 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.apexlink.mcp.resources;
+package io.github.apexdevtools.apexls.mcp.resources;
 
-import com.nawforce.apexlink.mcp.ScalaBridge;
+import io.github.apexdevtools.apexls.mcp.ScalaBridge;
 
 /**
  * MCP resource for accessing workspace information and metadata.

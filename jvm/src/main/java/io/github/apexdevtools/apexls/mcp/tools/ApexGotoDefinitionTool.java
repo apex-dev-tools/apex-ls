@@ -12,19 +12,19 @@
     derived from this software without specific prior written permission.
  */
 
-package com.nawforce.apexlink.mcp.tools;
+package io.github.apexdevtools.apexls.mcp.tools;
 
-import com.nawforce.apexlink.mcp.ScalaBridge;
+import io.github.apexdevtools.apexls.mcp.ScalaBridge;
 
 /**
- * MCP tool for running static analysis on Apex code.
- * Maps to the existing getIssues API operation.
+ * MCP tool for navigating to the definition of an Apex identifier.
+ * Maps to the existing identifierLocation API operation.
  */
-public class ApexStaticAnalysisTool {
+public class ApexGotoDefinitionTool {
     
     private final ScalaBridge scalaBridge;
     
-    public ApexStaticAnalysisTool(ScalaBridge scalaBridge) {
+    public ApexGotoDefinitionTool(ScalaBridge scalaBridge) {
         this.scalaBridge = scalaBridge;
     }
     

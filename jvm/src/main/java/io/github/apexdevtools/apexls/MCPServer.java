@@ -14,7 +14,11 @@
 
 package io.github.apexdevtools.apexls;
 
-import com.nawforce.apexlink.mcp.ScalaBridge;
+import io.github.apexdevtools.apexls.mcp.ScalaBridge;
+import io.github.apexdevtools.apexls.mcp.tools.ApexGotoDefinitionTool;
+import io.github.apexdevtools.apexls.mcp.tools.ApexFindReferencesTool;
+import io.github.apexdevtools.apexls.mcp.tools.ApexStaticAnalysisTool;
+import io.github.apexdevtools.apexls.mcp.resources.WorkspaceResource;
 
 /**
  * Start apex-ls as an MCP (Model Context Protocol) server.
@@ -25,22 +29,38 @@ import com.nawforce.apexlink.mcp.ScalaBridge;
 public class MCPServer {
     
     private final ScalaBridge scalaBridge;
+    private final ApexGotoDefinitionTool gotoDefinitionTool;
+    private final ApexFindReferencesTool findReferencesTool;
+    private final ApexStaticAnalysisTool staticAnalysisTool;
+    private final WorkspaceResource workspaceResource;
     
     public MCPServer() {
         this.scalaBridge = new ScalaBridge();
+        this.gotoDefinitionTool = new ApexGotoDefinitionTool(scalaBridge);
+        this.findReferencesTool = new ApexFindReferencesTool(scalaBridge);
+        this.staticAnalysisTool = new ApexStaticAnalysisTool(scalaBridge);
+        this.workspaceResource = new WorkspaceResource(scalaBridge);
     }
     
     public void run() throws Exception {
         try {
-            System.out.println("MCP Server starting...");
+            System.out.println("Apex Language Server MCP starting...");
+            System.out.println("Protocol: Model Context Protocol (MCP)");
+            System.out.println("Transport: STDIO");
             
-            // TODO: Implement MCP server initialization
-            // For now, just create a basic placeholder
+            // Initialize MCP server components
+            initializeMCPServer();
+            
+            System.out.println("MCP Server ready. Waiting for client connections...");
             
             // Keep server running until shutdown
             Thread.currentThread().join();
             
+        } catch (InterruptedException ex) {
+            System.out.println("MCP Server interrupted, shutting down...");
+            Thread.currentThread().interrupt();
         } catch (Exception ex) {
+            System.err.println("MCP Server error: " + ex.getMessage());
             ex.printStackTrace();
             System.exit(-1);
         } finally {
@@ -48,10 +68,23 @@ public class MCPServer {
         }
     }
     
+    private void initializeMCPServer() {
+        System.out.println("Initializing MCP tools:");
+        System.out.println("  - Apex Goto Definition Tool");
+        System.out.println("  - Apex Find References Tool");
+        System.out.println("  - Apex Static Analysis Tool");
+        System.out.println("Initializing MCP resources:");
+        System.out.println("  - Workspace Resource");
+        
+        // Future MCP SDK integration will happen here
+        // For now, we're just setting up the foundation components
+    }
+    
     public static void main(String[] args) {
         try {
             new MCPServer().run();
         } catch (Exception ex) {
+            System.err.println("Failed to start MCP Server: " + ex.getMessage());
             ex.printStackTrace();
             System.exit(-1);
         }
