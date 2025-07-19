@@ -19,6 +19,9 @@ import io.github.apexdevtools.apexls.mcp.tools.ApexGotoDefinitionTool;
 import io.github.apexdevtools.apexls.mcp.tools.ApexFindReferencesTool;
 import io.github.apexdevtools.apexls.mcp.tools.ApexStaticAnalysisTool;
 import io.github.apexdevtools.apexls.mcp.resources.WorkspaceResource;
+import io.modelcontextprotocol.server.McpServer;
+import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 
 /**
  * Start apex-ls as an MCP (Model Context Protocol) server.
@@ -68,7 +71,7 @@ public class MCPServer {
         }
     }
     
-    private void initializeMCPServer() {
+    private void initializeMCPServer() throws Exception {
         System.out.println("Initializing MCP tools:");
         System.out.println("  - Apex Goto Definition Tool");
         System.out.println("  - Apex Find References Tool");
@@ -76,8 +79,25 @@ public class MCPServer {
         System.out.println("Initializing MCP resources:");
         System.out.println("  - Workspace Resource");
         
-        // Future MCP SDK integration will happen here
-        // For now, we're just setting up the foundation components
+        // Create transport provider
+        var transportProvider = new StdioServerTransportProvider();
+        
+        // Build MCP server with all tools and resources
+        var serverSpec = McpServer.sync(transportProvider)
+            .serverInfo("apex-language-server", "1.0.0")
+            .instructions("Apex Language Server with MCP support for code analysis and navigation")
+            .tools(
+                gotoDefinitionTool.getSpecification(),
+                findReferencesTool.getSpecification(),
+                staticAnalysisTool.getSpecification()
+            )
+            .resources(
+                workspaceResource.getSpecification()
+            );
+        
+        // Build the server - transport provider handles lifecycle
+        var server = serverSpec.build();
+        System.out.println("MCP Server started with STDIO transport");
     }
     
     public static void main(String[] args) {
