@@ -19,6 +19,7 @@ import com.nawforce.apexlink.rpc.OrgAPIImpl;
 import com.nawforce.apexlink.rpc.GetIssuesResult;
 import com.nawforce.apexlink.rpc.IdentifierLocationResult;
 import com.nawforce.apexlink.rpc.TargetLocation;
+import io.github.apexdevtools.api.Issue;
 import scala.concurrent.Future;
 import scala.concurrent.ExecutionContext;
 
@@ -137,6 +138,47 @@ public class ScalaBridge {
      */
     public String[] getWorkspaceDirectories() {
         return workspaceOrgAPIs.keySet().toArray(new String[0]);
+    }
+
+    /**
+     * Run static analysis and return issues for the workspace
+     */
+    public CompletableFuture<Issue[]> checkWorkspace(String workspaceDirectory, boolean includeWarnings, boolean includeUnused) {
+        OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
+        // Convert GetIssuesResult to Issue array
+        return getIssues(workspaceDirectory, includeWarnings, Integer.MAX_VALUE)
+            .thenApply(result -> result.issues());
+    }
+
+    /**
+     * Get workspace information as JSON string
+     */
+    public CompletableFuture<String> getWorkspaceInfo(String workspaceDirectory) {
+        OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
+        
+        CompletableFuture<String> future = new CompletableFuture<>();
+        
+        // Build workspace info JSON
+        StringBuilder json = new StringBuilder();
+        json.append("{\n");
+        json.append("  \"workspace\": \"").append(workspaceDirectory).append("\",\n");
+        json.append("  \"status\": \"active\",\n");
+        json.append("  \"type\": \"apex\",\n");
+        
+        // Get version info and complete the JSON
+        getVersion(workspaceDirectory).thenAccept(version -> {
+            json.append("  \"version\": \"").append(version).append("\"\n");
+            json.append("}");
+            future.complete(json.toString());
+        }).exceptionally(ex -> {
+            json.append("  \"version\": \"unknown\",\n");
+            json.append("  \"error\": \"").append(ex.getMessage()).append("\"\n");
+            json.append("}");
+            future.complete(json.toString());
+            return null;
+        });
+        
+        return future;
     }
 
     /**
