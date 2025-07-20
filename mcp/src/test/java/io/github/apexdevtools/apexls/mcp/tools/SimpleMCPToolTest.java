@@ -149,24 +149,31 @@ class SimpleMCPToolTest {
     @DisplayName("Bridge should cache workspace instances efficiently")
     void bridgeShouldCacheWorkspaceInstancesEfficiently() throws Exception {
         // Make multiple calls - subsequent calls should be faster due to caching
-        long start1 = System.currentTimeMillis();
+        // Use nanoTime for more precise timing measurements
+        long start1 = System.nanoTime();
         CompletableFuture<String> issues1 = bridge.getIssues(testWorkspacePath, false, false);
         String result1 = issues1.get(30, TimeUnit.SECONDS);
-        long time1 = System.currentTimeMillis() - start1;
+        long time1Nanos = System.nanoTime() - start1;
+        long time1 = time1Nanos / 1_000_000; // Convert to milliseconds
         
-        long start2 = System.currentTimeMillis();
+        long start2 = System.nanoTime();
         CompletableFuture<String> issues2 = bridge.getIssues(testWorkspacePath, true, false);
         String result2 = issues2.get(30, TimeUnit.SECONDS);
-        long time2 = System.currentTimeMillis() - start2;
+        long time2Nanos = System.nanoTime() - start2;
+        long time2 = time2Nanos / 1_000_000; // Convert to milliseconds
         
         assertNotNull(result1);
         assertNotNull(result2);
         
-        // Second call should be faster (though this is not guaranteed, it's a good indicator)
-        // At minimum, both should complete successfully
-        assertTrue(time1 > 0);
-        assertTrue(time2 > 0);
+        // Both calls should complete (timing should be positive, but handle sub-millisecond precision)
+        assertTrue(time1Nanos > 0, "First call should take some time");
+        assertTrue(time2Nanos > 0, "Second call should take some time");
         
         System.out.println("First call time: " + time1 + "ms, Second call time: " + time2 + "ms");
+        
+        // The second call should be faster in nanoseconds (more precise than milliseconds)
+        // If caching is working, second call should be significantly faster
+        assertTrue(time2Nanos < time1Nanos * 0.8, 
+                  String.format("Second call (%d ns) should be faster than first call (%d ns)", time2Nanos, time1Nanos));
     }
 }

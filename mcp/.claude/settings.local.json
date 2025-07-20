@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:glaforge.dev)",
+      "Bash(sbt:*)"
+    ],
+    "deny": []
+  }
+}

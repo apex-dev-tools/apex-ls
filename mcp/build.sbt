@@ -51,9 +51,11 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.5.3",
   
   // Testing
-  "org.junit.jupiter" % "junit-jupiter-engine" % "5.10.2" % Test,
-  "org.junit.jupiter" % "junit-jupiter-api" % "5.10.2" % Test,
-  "org.mockito" % "mockito-core" % "5.11.0" % Test
+  "org.mockito" % "mockito-core" % "5.11.0" % Test,
+  "net.aichler" % "jupiter-interface" % "0.11.1" % Test,
+  
+  // HTTP client for MCP system testing
+  "org.apache.httpcomponents" % "httpclient" % "4.5.14" % Test
 )
 
 // Add the main apex-ls JAR to the runtime classpath
