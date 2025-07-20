@@ -4,7 +4,10 @@
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
       "Bash(sbt:*)",
-      "Bash(jar:*)"
+      "Bash(jar:*)",
+      "Bash(javap:*)",
+      "Bash(find:*)",
+      "Bash(java:*)"
     ],
     "deny": []
   }

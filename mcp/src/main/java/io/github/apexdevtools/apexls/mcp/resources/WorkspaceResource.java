@@ -14,7 +14,7 @@
 
 package io.github.apexdevtools.apexls.mcp.resources;
 
-import io.github.apexdevtools.apexls.mcp.ScalaBridge;
+import io.github.apexdevtools.apexls.mcp.bridge.ApexLsBridge;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.Resource;
@@ -22,20 +22,19 @@ import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceResult;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 
-import java.util.Map;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * MCP resource for accessing Apex workspace information and metadata.
- * Provides access to workspace structure and file contents.
+ * Uses the bridge to communicate with the apex-ls core (Java 8) from this Java 17 MCP server.
  */
 public class WorkspaceResource {
     
-    private final ScalaBridge scalaBridge;
+    private final ApexLsBridge bridge;
     
-    public WorkspaceResource(ScalaBridge scalaBridge) {
-        this.scalaBridge = scalaBridge;
+    public WorkspaceResource(ApexLsBridge bridge) {
+        this.bridge = bridge;
     }
     
     public McpServerFeatures.SyncResourceSpecification getSpecification() {
@@ -67,8 +66,8 @@ public class WorkspaceResource {
             
             String workspacePath = uri.substring("workspace://apex/".length());
             
-            // Get workspace information
-            CompletableFuture<String> future = scalaBridge.getWorkspaceInfo(workspacePath);
+            // Get workspace information via bridge
+            CompletableFuture<String> future = bridge.getWorkspaceInfo(workspacePath);
             String workspaceInfo = future.join();
             
             TextResourceContents contents = new TextResourceContents(

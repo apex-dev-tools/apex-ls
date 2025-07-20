@@ -14,25 +14,24 @@
 
 package io.github.apexdevtools.apexls.mcp.tools;
 
-import io.github.apexdevtools.apexls.mcp.ScalaBridge;
+import io.github.apexdevtools.apexls.mcp.bridge.ApexLsBridge;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import com.nawforce.apexlink.rpc.TargetLocation;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * MCP tool for finding all references to an Apex identifier.
- * Maps to the existing getReferences API operation.
+ * MCP tool for navigating to the definition of an Apex identifier.
+ * Uses the bridge to communicate with the apex-ls core (Java 8) from this Java 17 MCP server.
  */
-public class ApexFindReferencesTool {
+public class ApexGotoDefinitionTool {
     
-    private final ScalaBridge scalaBridge;
+    private final ApexLsBridge bridge;
     
-    public ApexFindReferencesTool(ScalaBridge scalaBridge) {
-        this.scalaBridge = scalaBridge;
+    public ApexGotoDefinitionTool(ApexLsBridge bridge) {
+        this.bridge = bridge;
     }
     
     public McpServerFeatures.SyncToolSpecification getSpecification() {
@@ -60,8 +59,8 @@ public class ApexFindReferencesTool {
             "}";
         
         Tool tool = new Tool(
-            "apex_find_references",
-            "Find all references to an Apex identifier at a specific position",
+            "apex_goto_definition",
+            "Navigate to the definition of an Apex identifier at a specific position",
             schema
         );
         
@@ -75,35 +74,20 @@ public class ApexFindReferencesTool {
             int line = ((Number) arguments.get("line")).intValue();
             int offset = ((Number) arguments.get("offset")).intValue();
             
-            // Execute the references lookup
-            CompletableFuture<TargetLocation[]> future = 
-                scalaBridge.getReferences(workspace, path, line, offset);
-            TargetLocation[] references = future.join();
+            // Execute the definition lookup via bridge
+            CompletableFuture<String> future = 
+                bridge.getDefinition(workspace, path, line, offset);
+            String definitionJson = future.join();
             
-            // Format the result for MCP
-            if (references.length > 0) {
-                StringBuilder content = new StringBuilder();
-                content.append("Found ").append(references.length).append(" reference(s):\n");
-                
-                for (int i = 0; i < references.length; i++) {
-                    TargetLocation ref = references[i];
-                    content.append(String.format("%d. %s (Line %d:%d-%d:%d)\n",
-                        i + 1,
-                        ref.targetPath(),
-                        ref.range().startLine(),
-                        ref.range().startPosition(),
-                        ref.range().endLine(),
-                        ref.range().endPosition()
-                    ));
-                }
-                
-                return new CallToolResult(content.toString(), false);
+            // The bridge returns JSON-formatted results
+            if (definitionJson != null && !definitionJson.trim().isEmpty()) {
+                return new CallToolResult(definitionJson, false);
             } else {
-                return new CallToolResult("No references found", false);
+                return new CallToolResult("Definition not found", false);
             }
             
         } catch (Exception ex) {
-            return new CallToolResult("Error finding references: " + ex.getMessage(), true);
+            return new CallToolResult("Error finding definition: " + ex.getMessage(), true);
         }
     }
 }

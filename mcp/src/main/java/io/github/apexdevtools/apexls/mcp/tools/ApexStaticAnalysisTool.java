@@ -14,25 +14,24 @@
 
 package io.github.apexdevtools.apexls.mcp.tools;
 
-import io.github.apexdevtools.apexls.mcp.ScalaBridge;
+import io.github.apexdevtools.apexls.mcp.bridge.ApexLsBridge;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import io.github.apexdevtools.api.Issue;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * MCP tool for performing static analysis on Apex code to find issues.
- * Maps to the existing check API operation.
+ * Uses the bridge to communicate with the apex-ls core (Java 8) from this Java 17 MCP server.
  */
 public class ApexStaticAnalysisTool {
     
-    private final ScalaBridge scalaBridge;
+    private final ApexLsBridge bridge;
     
-    public ApexStaticAnalysisTool(ScalaBridge scalaBridge) {
-        this.scalaBridge = scalaBridge;
+    public ApexStaticAnalysisTool(ApexLsBridge bridge) {
+        this.bridge = bridge;
     }
     
     public McpServerFeatures.SyncToolSpecification getSpecification() {
@@ -74,39 +73,15 @@ public class ApexStaticAnalysisTool {
             boolean includeUnused = arguments.get("includeUnused") != null ? 
                 (Boolean) arguments.get("includeUnused") : false;
             
-            // Execute static analysis
-            CompletableFuture<Issue[]> future = 
-                scalaBridge.checkWorkspace(workspace, includeWarnings, includeUnused);
-            Issue[] issues = future.join();
+            // Execute static analysis via bridge
+            CompletableFuture<String> future = 
+                bridge.getIssues(workspace, includeWarnings, includeUnused);
+            String issuesJson = future.join();
             
-            // Format the results for MCP
-            if (issues.length > 0) {
-                StringBuilder content = new StringBuilder();
-                content.append("Found ").append(issues.length).append(" issue(s):\n\n");
-                
-                for (int i = 0; i < issues.length; i++) {
-                    Issue issue = issues[i];
-                    content.append(String.format("%d. [%s] %s\n",
-                        i + 1,
-                        issue.rule().name(),
-                        issue.message()
-                    ));
-                    
-                    if (issue.fileLocation() != null) {
-                        content.append(String.format("   File: %s\n",
-                            issue.filePath()
-                        ));
-                        content.append(String.format("   Line: %d:%d-%d:%d\n",
-                            issue.fileLocation().startLineNumber(),
-                            issue.fileLocation().startCharOffset(),
-                            issue.fileLocation().endLineNumber(),
-                            issue.fileLocation().endCharOffset()
-                        ));
-                    }
-                    content.append("\n");
-                }
-                
-                return new CallToolResult(content.toString(), false);
+            // The bridge returns JSON, so we can either parse it and reformat,
+            // or return it directly. For now, let's return it directly.
+            if (issuesJson != null && !issuesJson.trim().isEmpty()) {
+                return new CallToolResult(issuesJson, false);
             } else {
                 return new CallToolResult("No issues found - code analysis passed successfully", false);
             }
