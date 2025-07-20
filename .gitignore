@@ -3,6 +3,7 @@
 .bloop/
 .metals/
 .vscode/
+.claude/
 project/.bloop/
 project/project/
 
