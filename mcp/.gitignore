@@ -1,0 +1,4 @@
+.metals/
+project/metals.sbt
+project/.sbtboot/
+project/project/

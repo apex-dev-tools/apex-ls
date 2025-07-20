@@ -68,7 +68,7 @@ Finds all references to an identifier at a specific location.
 - `offset` (required) - Character offset within the line
 
 ### apex_goto_definition
-Gets the definition location for an identifier (placeholder - not yet implemented).
+Gets the definition location for an identifier at a specific position.
 
 **Parameters:**
 - `workspace` (required) - Path to the Apex workspace directory
