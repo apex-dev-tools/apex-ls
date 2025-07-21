@@ -242,10 +242,9 @@ class MCPServerSystemTest {
         Map<String, Object> toolCallRequest = createMCPRequest("tools/call", Map.of(
             "name", "apex_find_references",
             "arguments", Map.of(
-                "workspace", testWorkspacePath,
-                "file", testFilePath,
+                "path", testFilePath,
                 "line", 1,
-                "column", 15
+                "offset", 15
             )
         ));
         
@@ -285,10 +284,9 @@ class MCPServerSystemTest {
         Map<String, Object> toolCallRequest = createMCPRequest("tools/call", Map.of(
             "name", "apex_goto_definition",
             "arguments", Map.of(
-                "workspace", testWorkspacePath,
-                "file", testFilePath,
+                "path", testFilePath,
                 "line", 3,
-                "column", 10
+                "offset", 10
             )
         ));
         

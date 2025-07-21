@@ -60,11 +60,26 @@ public abstract class BaseMCPToolTest {
     }
     
     /**
-     * Helper method to create tool arguments for testing.
+     * Helper method to create tool arguments for testing (with workspace parameter).
      */
     protected Map<String, Object> createArguments(String workspace, Object... keyValuePairs) {
         Map<String, Object> args = new HashMap<>();
         args.put("workspace", workspace);
+        
+        for (int i = 0; i < keyValuePairs.length; i += 2) {
+            if (i + 1 < keyValuePairs.length) {
+                args.put((String) keyValuePairs[i], keyValuePairs[i + 1]);
+            }
+        }
+        
+        return args;
+    }
+
+    /**
+     * Helper method to create tool arguments for testing (without workspace parameter).
+     */
+    protected Map<String, Object> createArgumentsMap(Object... keyValuePairs) {
+        Map<String, Object> args = new HashMap<>();
         
         for (int i = 0; i < keyValuePairs.length; i += 2) {
             if (i + 1 < keyValuePairs.length) {

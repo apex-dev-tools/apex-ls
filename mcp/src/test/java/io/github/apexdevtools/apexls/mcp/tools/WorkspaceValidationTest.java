@@ -141,31 +141,31 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
     }
     
     @Test
-    @DisplayName("ApexFindReferencesTool should validate workspace")
-    void apexFindReferencesToolShouldValidateWorkspace() throws Exception {
-        Map<String, Object> args = createArguments("/non/existent/path", 
-            "path", "/some/file.cls", 
+    @DisplayName("ApexFindReferencesTool should validate workspace from path")
+    void apexFindReferencesToolShouldValidateWorkspaceFromPath() throws Exception {
+        Map<String, Object> args = createArgumentsMap(
+            "path", "/non/existent/path/file.cls", 
             "line", 0, 
             "offset", 10);
         CallToolResult result = executeTool(findReferencesTool, args);
         
         assertNotNull(result);
         assertTrue(result.isError());
-        assertTrue(getContentAsString(result).contains("directory does not exist"));
+        assertTrue(getContentAsString(result).contains("Could not find workspace directory containing sfdx-project.json"));
     }
     
     @Test
-    @DisplayName("ApexGotoDefinitionTool should validate workspace")
-    void apexGotoDefinitionToolShouldValidateWorkspace() throws Exception {
-        Map<String, Object> args = createArguments("", 
-            "path", "/some/file.cls", 
+    @DisplayName("ApexGotoDefinitionTool should validate workspace from path")
+    void apexGotoDefinitionToolShouldValidateWorkspaceFromPath() throws Exception {
+        Map<String, Object> args = createArgumentsMap(
+            "path", "/non/existent/path/file.cls", 
             "line", 0, 
             "offset", 10);
         CallToolResult result = executeTool(gotoDefinitionTool, args);
         
         assertNotNull(result);
         assertTrue(result.isError());
-        assertTrue(getContentAsString(result).contains("workspace argument is required"));
+        assertTrue(getContentAsString(result).contains("Could not find workspace directory containing sfdx-project.json"));
     }
     
     @Test
@@ -184,16 +184,16 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         assertTrue(getContentAsString(staticResult).contains("sfdx-project.json"));
         
         // Test find references tool
-        Map<String, Object> referencesArgs = createArguments(invalidPath, 
-            "path", "/some/file.cls", "line", 0, "offset", 10);
+        Map<String, Object> referencesArgs = createArgumentsMap(
+            "path", invalidPath + "/some/file.cls", "line", 0, "offset", 10);
         CallToolResult referencesResult = executeTool(findReferencesTool, referencesArgs);
         assertNotNull(referencesResult);
         assertTrue(referencesResult.isError());
         assertTrue(getContentAsString(referencesResult).contains("sfdx-project.json"));
         
         // Test goto definition tool
-        Map<String, Object> definitionArgs = createArguments(invalidPath, 
-            "path", "/some/file.cls", "line", 0, "offset", 10);
+        Map<String, Object> definitionArgs = createArgumentsMap(
+            "path", invalidPath + "/some/file.cls", "line", 0, "offset", 10);
         CallToolResult definitionResult = executeTool(gotoDefinitionTool, definitionArgs);
         assertNotNull(definitionResult);
         assertTrue(definitionResult.isError());
@@ -216,7 +216,7 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         assertFalse(getContentAsString(staticResult).contains("sfdx-project.json"));
         
         // Test find references tool (should pass validation but may fail at bridge level)
-        Map<String, Object> referencesArgs = createArguments(validWorkspace, 
+        Map<String, Object> referencesArgs = createArgumentsMap(
             "path", validWorkspace + "/force-app/main/default/classes/TestClass.cls", 
             "line", 0, "offset", 10);
         CallToolResult referencesResult = executeTool(findReferencesTool, referencesArgs);
@@ -224,10 +224,10 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         // Should not have workspace validation errors
         assertFalse(getContentAsString(referencesResult).contains("workspace argument is required"));
         assertFalse(getContentAsString(referencesResult).contains("directory does not exist"));
-        assertFalse(getContentAsString(referencesResult).contains("sfdx-project.json"));
+        assertFalse(getContentAsString(referencesResult).contains("Could not find workspace directory containing sfdx-project.json"));
         
         // Test goto definition tool (should pass validation but may fail at bridge level)
-        Map<String, Object> definitionArgs = createArguments(validWorkspace, 
+        Map<String, Object> definitionArgs = createArgumentsMap(
             "path", validWorkspace + "/force-app/main/default/classes/TestClass.cls", 
             "line", 0, "offset", 10);
         CallToolResult definitionResult = executeTool(gotoDefinitionTool, definitionArgs);
@@ -235,6 +235,6 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         // Should not have workspace validation errors
         assertFalse(getContentAsString(definitionResult).contains("workspace argument is required"));
         assertFalse(getContentAsString(definitionResult).contains("directory does not exist"));
-        assertFalse(getContentAsString(definitionResult).contains("sfdx-project.json"));
+        assertFalse(getContentAsString(definitionResult).contains("Could not find workspace directory containing sfdx-project.json"));
     }
 }

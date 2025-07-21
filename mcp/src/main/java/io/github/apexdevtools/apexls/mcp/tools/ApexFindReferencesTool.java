@@ -38,10 +38,6 @@ public class ApexFindReferencesTool {
         "{\n"
             + "  \"type\": \"object\",\n"
             + "  \"properties\": {\n"
-            + "    \"workspace\": {\n"
-            + "      \"type\": \"string\",\n"
-            + "      \"description\": \"Path to the Apex workspace directory\"\n"
-            + "    },\n"
             + "    \"path\": {\n"
             + "      \"type\": \"string\",\n"
             + "      \"description\": \"Path to the Apex file\"\n"
@@ -55,7 +51,7 @@ public class ApexFindReferencesTool {
             + "      \"description\": \"Character offset within the line\"\n"
             + "    }\n"
             + "  },\n"
-            + "  \"required\": [\"workspace\", \"path\", \"line\", \"offset\"]\n"
+            + "  \"required\": [\"path\", \"line\", \"offset\"]\n"
             + "}";
 
     Tool tool =
@@ -69,19 +65,28 @@ public class ApexFindReferencesTool {
 
   private CallToolResult execute(Object exchange, Map<String, Object> arguments) {
     try {
-      String workspace = (String) arguments.get("workspace");
-      String path = (String) arguments.get("path");
-      int line = ((Number) arguments.get("line")).intValue();
-      int offset = ((Number) arguments.get("offset")).intValue();
-
-      // Validate workspace argument
-      CallToolResult validationResult = WorkspaceValidator.validateWorkspace(workspace);
+      // Validate arguments
+      CallToolResult validationResult = ArgumentValidator.validateApexToolArguments(arguments);
       if (validationResult != null) {
         return validationResult;
       }
 
+      // Extract validated arguments
+      ArgumentValidator.ValidatedArguments args =
+          ArgumentValidator.extractValidatedArguments(arguments);
+
+      // Discover workspace from path
+      String workspace = WorkspaceDiscovery.findWorkspace(args.path);
+      if (workspace == null) {
+        return new CallToolResult(
+            "Error: Could not find workspace directory containing sfdx-project.json for path: "
+                + args.path,
+            true);
+      }
+
       // Execute the references lookup via bridge
-      CompletableFuture<String> future = bridge.findReferences(workspace, path, line, offset);
+      CompletableFuture<String> future =
+          bridge.findReferences(workspace, args.path, args.line, args.offset);
       String referencesJson = future.join();
 
       // The bridge returns JSON-formatted results

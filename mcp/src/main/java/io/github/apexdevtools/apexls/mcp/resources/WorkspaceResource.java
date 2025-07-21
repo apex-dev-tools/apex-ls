@@ -68,12 +68,13 @@ public class WorkspaceResource {
 
       // Handle base URI request - provide usage information
       if (workspacePath.isEmpty()) {
-        String usageInfo = "{\n" +
-            "  \"description\": \"SFDX Workspace Resource\",\n" +
-            "  \"usage\": \"To access workspace information, use URI: workspace://apex/{workspace_path}\",\n" +
-            "  \"example\": \"workspace://apex//Users/name/my-sfdx-project\",\n" +
-            "  \"requirements\": \"Workspace must contain sfdx-project.json file\"\n" +
-            "}";
+        String usageInfo =
+            "{\n"
+                + "  \"description\": \"SFDX Workspace Resource\",\n"
+                + "  \"usage\": \"To access workspace information, use URI: workspace://apex/{workspace_path}\",\n"
+                + "  \"example\": \"workspace://apex//Users/name/my-sfdx-project\",\n"
+                + "  \"requirements\": \"Workspace must contain sfdx-project.json file\"\n"
+                + "}";
         TextResourceContents contents =
             new TextResourceContents(uri, "application/json", usageInfo);
         return new ReadResourceResult(List.of(contents));
