@@ -39,9 +39,9 @@ public class WorkspaceResource {
   public McpServerFeatures.SyncResourceSpecification getSpecification() {
     Resource resource =
         new Resource(
-            "workspace://apex/{workspace_path}",
-            null, // name
-            "Access Apex workspace information and file contents",
+            "workspace://apex/",
+            "SFDX Workspace",
+            "Access Apex workspace information and file contents for any valid workspace path",
             "application/json",
             null // annotations
             );
@@ -65,6 +65,19 @@ public class WorkspaceResource {
       }
 
       String workspacePath = uri.substring("workspace://apex/".length());
+
+      // Handle base URI request - provide usage information
+      if (workspacePath.isEmpty()) {
+        String usageInfo = "{\n" +
+            "  \"description\": \"SFDX Workspace Resource\",\n" +
+            "  \"usage\": \"To access workspace information, use URI: workspace://apex/{workspace_path}\",\n" +
+            "  \"example\": \"workspace://apex//Users/name/my-sfdx-project\",\n" +
+            "  \"requirements\": \"Workspace must contain sfdx-project.json file\"\n" +
+            "}";
+        TextResourceContents contents =
+            new TextResourceContents(uri, "application/json", usageInfo);
+        return new ReadResourceResult(List.of(contents));
+      }
 
       // Get workspace information via bridge
       CompletableFuture<String> future = bridge.getWorkspaceInfo(workspacePath);
