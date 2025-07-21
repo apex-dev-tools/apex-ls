@@ -65,21 +65,21 @@ class SimpleMCPToolTest {
     @DisplayName("Should create all MCP tools successfully")
     void shouldCreateAllMCPToolsSuccessfully() {
         // Test that all tools can be instantiated
-        ApexStaticAnalysisTool staticAnalysisTool = new ApexStaticAnalysisTool(bridge);
+        SfdxCodeDiagnosticsTool sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
         ApexFindReferencesTool findReferencesTool = new ApexFindReferencesTool(bridge);
         ApexGotoDefinitionTool gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
         
-        assertNotNull(staticAnalysisTool);
+        assertNotNull(sfdxDiagnosticsTool);
         assertNotNull(findReferencesTool);
         assertNotNull(gotoDefinitionTool);
         
         // Test that tool specifications can be created
-        assertNotNull(staticAnalysisTool.getSpecification());
+        assertNotNull(sfdxDiagnosticsTool.getSpecification());
         assertNotNull(findReferencesTool.getSpecification());
         assertNotNull(gotoDefinitionTool.getSpecification());
         
         // Verify tool names
-        assertEquals("apex_static_analysis", staticAnalysisTool.getSpecification().tool().name());
+        assertEquals("sfdx_code_diagnostics", sfdxDiagnosticsTool.getSpecification().tool().name());
         assertEquals("apex_find_references", findReferencesTool.getSpecification().tool().name());
         assertEquals("apex_goto_definition", gotoDefinitionTool.getSpecification().tool().name());
     }

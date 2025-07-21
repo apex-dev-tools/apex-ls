@@ -22,14 +22,15 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * MCP tool for performing static analysis on Apex code to find issues. Uses the bridge to
- * communicate with the apex-ls core (Java 8) from this Java 17 MCP server.
+ * MCP tool for analyzing SFDX projects to detect code issues across all Salesforce development
+ * artifacts. Uses the bridge to communicate with the apex-ls core (Java 8) from this Java 17 MCP
+ * server.
  */
-public class ApexStaticAnalysisTool {
+public class SfdxCodeDiagnosticsTool {
 
   private final ApexLsBridge bridge;
 
-  public ApexStaticAnalysisTool(ApexLsBridge bridge) {
+  public SfdxCodeDiagnosticsTool(ApexLsBridge bridge) {
     this.bridge = bridge;
   }
 
@@ -40,7 +41,7 @@ public class ApexStaticAnalysisTool {
             + "  \"properties\": {\n"
             + "    \"workspace\": {\n"
             + "      \"type\": \"string\",\n"
-            + "      \"description\": \"Path to the Apex workspace directory\"\n"
+            + "      \"description\": \"Path to the SFDX workspace directory\"\n"
             + "    },\n"
             + "    \"includeWarnings\": {\n"
             + "      \"type\": \"boolean\",\n"
@@ -59,8 +60,8 @@ public class ApexStaticAnalysisTool {
 
     Tool tool =
         new Tool(
-            "apex_static_analysis",
-            "Perform static analysis on Apex code to find errors, warnings, and unused code",
+            "sfdx_code_diagnostics",
+            "Analyzes SFDX projects for code issues, errors, and warnings. Detects problems across all Salesforce development artifacts including Apex classes, triggers, Lightning Web Components, Aura components, and metadata files. Use this tool when you need to validate code quality, find compilation errors, identify warnings, or perform comprehensive project health checks.",
             schema);
 
     return new McpServerFeatures.SyncToolSpecification(tool, this::execute);
@@ -84,7 +85,7 @@ public class ApexStaticAnalysisTool {
         return validationResult;
       }
 
-      // Execute static analysis via bridge
+      // Execute code diagnostics via bridge
       CompletableFuture<String> future =
           bridge.getIssues(workspace, includeWarnings, maxIssuesPerFile);
       String issuesJson = future.join();
@@ -98,7 +99,7 @@ public class ApexStaticAnalysisTool {
       }
 
     } catch (Exception ex) {
-      return new CallToolResult("Error during static analysis: " + ex.getMessage(), true);
+      return new CallToolResult("Error during code diagnostics: " + ex.getMessage(), true);
     }
   }
 }

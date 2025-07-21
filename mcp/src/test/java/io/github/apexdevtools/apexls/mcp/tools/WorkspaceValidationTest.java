@@ -38,13 +38,13 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
     @TempDir
     Path tempDir;
     
-    private ApexStaticAnalysisTool staticAnalysisTool;
+    private SfdxCodeDiagnosticsTool sfdxDiagnosticsTool;
     private ApexFindReferencesTool findReferencesTool;
     private ApexGotoDefinitionTool gotoDefinitionTool;
     
     @BeforeEach 
     void setUpTools() {
-        staticAnalysisTool = new ApexStaticAnalysisTool(bridge);
+        sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
         findReferencesTool = new ApexFindReferencesTool(bridge);
         gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
     }
@@ -130,10 +130,10 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
     }
     
     @Test
-    @DisplayName("ApexStaticAnalysisTool should validate workspace")
-    void apexStaticAnalysisToolShouldValidateWorkspace() throws Exception {
+    @DisplayName("SfdxCodeDiagnosticsTool should validate workspace")
+    void sfdxCodeDiagnosticsToolShouldValidateWorkspace() throws Exception {
         Map<String, Object> args = createArguments(null);
-        CallToolResult result = executeTool(staticAnalysisTool, args);
+        CallToolResult result = executeTool(sfdxDiagnosticsTool, args);
         
         assertNotNull(result);
         assertTrue(result.isError());
@@ -178,7 +178,7 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         
         // Test static analysis tool
         Map<String, Object> staticArgs = createArguments(invalidPath);
-        CallToolResult staticResult = executeTool(staticAnalysisTool, staticArgs);
+        CallToolResult staticResult = executeTool(sfdxDiagnosticsTool, staticArgs);
         assertNotNull(staticResult);
         assertTrue(staticResult.isError());
         assertTrue(getContentAsString(staticResult).contains("sfdx-project.json"));
@@ -208,7 +208,7 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         
         // Test static analysis tool (should pass validation but may fail at bridge level)
         Map<String, Object> staticArgs = createArguments(validWorkspace);
-        CallToolResult staticResult = executeTool(staticAnalysisTool, staticArgs);
+        CallToolResult staticResult = executeTool(sfdxDiagnosticsTool, staticArgs);
         assertNotNull(staticResult);
         // Should not have workspace validation errors
         assertFalse(getContentAsString(staticResult).contains("workspace argument is required"));

@@ -19,7 +19,7 @@ This is an MCP (Model Context Protocol) Server implementation that provides a br
   - `ApexLsBridge` interface defines communication contract
   - `EmbeddedApexLsBridge` uses reflection to call apex-ls OrgAPI directly
   - Workspace caching to avoid expensive re-initialization
-- **MCP Tools**: `apex_static_analysis`, `apex_find_references`, `apex_goto_definition`
+- **MCP Tools**: `sfdx_code_diagnostics`, `apex_find_references`, `apex_goto_definition`
 - **MCP Resources**: `workspace://apex/{workspace_path}` for workspace metadata
 
 ## Build Commands
@@ -267,7 +267,7 @@ Add all changes to staging, create a commit, and push to remote.
 
 Follow this checklist for writing your commit message:
 - SHOULD use Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0
-- SHOULD NOT refer to Claude or Anthropic in the commit message.
+- MUST NOT refer to Claude or Anthropic in the commit message.
 - SHOULD structure commit message as follows:
 <type>[optional scope]: <description>
 [optional body]

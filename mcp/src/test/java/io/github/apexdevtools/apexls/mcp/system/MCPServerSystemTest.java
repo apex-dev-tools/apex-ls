@@ -144,7 +144,7 @@ class MCPServerSystemTest {
         for (JsonNode tool : tools) {
             String toolName = tool.get("name").asText();
             switch (toolName) {
-                case "apex_static_analysis":
+                case "sfdx_code_diagnostics":
                     hasStaticAnalysis = true;
                     break;
                 case "apex_find_references":
@@ -156,7 +156,7 @@ class MCPServerSystemTest {
             }
         }
         
-        assertTrue(hasStaticAnalysis, "Should have apex_static_analysis tool");
+        assertTrue(hasStaticAnalysis, "Should have sfdx_code_diagnostics tool");
         assertTrue(hasFindReferences, "Should have apex_find_references tool");
         assertTrue(hasGotoDefinition, "Should have apex_goto_definition tool");
         
@@ -190,15 +190,15 @@ class MCPServerSystemTest {
     }
     
     @Test
-    @DisplayName("Should execute apex_static_analysis tool via MCP protocol")
+    @DisplayName("Should execute sfdx_code_diagnostics tool via MCP protocol")
     @Timeout(60)
-    void shouldExecuteApexStaticAnalysisToolViaMCPProtocol() throws Exception {
+    void shouldExecuteSfdxCodeDiagnosticsToolViaMCPProtocol() throws Exception {
         startMCPServer();
         initializeMCPConnection();
         
         // Send tool call request
         Map<String, Object> toolCallRequest = createMCPRequest("tools/call", Map.of(
-            "name", "apex_static_analysis",
+            "name", "sfdx_code_diagnostics",
             "arguments", Map.of(
                 "workspace", testWorkspacePath,
                 "includeWarnings", false,
@@ -226,7 +226,7 @@ class MCPServerSystemTest {
         assertTrue(contentText.contains("analysis") || contentText.contains("issue") || contentText.contains("passed"), 
                   "Response should indicate analysis was performed: " + contentText);
         
-        logger.info("Successfully executed apex_static_analysis tool, response: {}", contentText);
+        logger.info("Successfully executed sfdx_code_diagnostics tool, response: {}", contentText);
     }
     
     @Test
@@ -324,7 +324,7 @@ class MCPServerSystemTest {
         
         // Send tool call request with missing required arguments
         Map<String, Object> toolCallRequest = createMCPRequest("tools/call", Map.of(
-            "name", "apex_static_analysis",
+            "name", "sfdx_code_diagnostics",
             "arguments", Map.of(
                 // Missing workspace argument
                 "includeWarnings", false

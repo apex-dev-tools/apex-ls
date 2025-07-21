@@ -19,7 +19,7 @@ import io.github.apexdevtools.apexls.mcp.bridge.EmbeddedApexLsBridge;
 import io.github.apexdevtools.apexls.mcp.resources.WorkspaceResource;
 import io.github.apexdevtools.apexls.mcp.tools.ApexFindReferencesTool;
 import io.github.apexdevtools.apexls.mcp.tools.ApexGotoDefinitionTool;
-import io.github.apexdevtools.apexls.mcp.tools.ApexStaticAnalysisTool;
+import io.github.apexdevtools.apexls.mcp.tools.SfdxCodeDiagnosticsTool;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class MCPServer {
   private static final Logger logger = LoggerFactory.getLogger(MCPServer.class);
 
   private ApexLsBridge bridge;
-  private ApexStaticAnalysisTool staticAnalysisTool;
+  private SfdxCodeDiagnosticsTool sfdxDiagnosticsTool;
   private ApexFindReferencesTool findReferencesTool;
   private ApexGotoDefinitionTool gotoDefinitionTool;
   private WorkspaceResource workspaceResource;
@@ -100,12 +100,12 @@ public class MCPServer {
     logger.info("Initializing MCP tools and resources...");
 
     // Create tools with bridge
-    staticAnalysisTool = new ApexStaticAnalysisTool(bridge);
+    sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
     findReferencesTool = new ApexFindReferencesTool(bridge);
     gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
     workspaceResource = new WorkspaceResource(bridge);
 
-    logger.info("  - Apex Static Analysis Tool");
+    logger.info("  - SFDX Code Diagnostics Tool");
     logger.info("  - Apex Find References Tool");
     logger.info("  - Apex Goto Definition Tool");
     logger.info("  - Workspace Resource");
@@ -119,7 +119,7 @@ public class MCPServer {
             .serverInfo("apex-language-server", "1.0.0")
             .instructions("Apex Language Server with MCP support for code analysis and navigation")
             .tools(
-                staticAnalysisTool.getSpecification(),
+                sfdxDiagnosticsTool.getSpecification(),
                 findReferencesTool.getSpecification(),
                 gotoDefinitionTool.getSpecification())
             .resources(workspaceResource.getSpecification());
