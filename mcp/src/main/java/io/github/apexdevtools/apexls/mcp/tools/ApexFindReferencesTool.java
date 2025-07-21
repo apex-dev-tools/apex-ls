@@ -74,6 +74,12 @@ public class ApexFindReferencesTool {
             int line = ((Number) arguments.get("line")).intValue();
             int offset = ((Number) arguments.get("offset")).intValue();
             
+            // Validate workspace argument
+            CallToolResult validationResult = WorkspaceValidator.validateWorkspace(workspace);
+            if (validationResult != null) {
+                return validationResult;
+            }
+            
             // Execute the references lookup via bridge
             CompletableFuture<String> future = 
                 bridge.findReferences(workspace, path, line, offset);

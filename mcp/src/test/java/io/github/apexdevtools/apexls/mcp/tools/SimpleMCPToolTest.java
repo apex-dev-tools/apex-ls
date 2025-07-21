@@ -96,7 +96,7 @@ class SimpleMCPToolTest {
         assertFalse(version.trim().isEmpty());
         
         // Test workspace analysis (this will take longer)
-        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, false, false);
+        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, false, 100);
         String issues = issuesFuture.get(30, TimeUnit.SECONDS);
         assertNotNull(issues);
         assertFalse(issues.trim().isEmpty());
@@ -151,13 +151,13 @@ class SimpleMCPToolTest {
         // Make multiple calls - subsequent calls should be faster due to caching
         // Use nanoTime for more precise timing measurements
         long start1 = System.nanoTime();
-        CompletableFuture<String> issues1 = bridge.getIssues(testWorkspacePath, false, false);
+        CompletableFuture<String> issues1 = bridge.getIssues(testWorkspacePath, false, 100);
         String result1 = issues1.get(30, TimeUnit.SECONDS);
         long time1Nanos = System.nanoTime() - start1;
         long time1 = time1Nanos / 1_000_000; // Convert to milliseconds
         
         long start2 = System.nanoTime();
-        CompletableFuture<String> issues2 = bridge.getIssues(testWorkspacePath, true, false);
+        CompletableFuture<String> issues2 = bridge.getIssues(testWorkspacePath, true, 50);
         String result2 = issues2.get(30, TimeUnit.SECONDS);
         long time2Nanos = System.nanoTime() - start2;
         long time2 = time2Nanos / 1_000_000; // Convert to milliseconds

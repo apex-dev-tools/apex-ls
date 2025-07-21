@@ -74,6 +74,12 @@ public class ApexGotoDefinitionTool {
             int line = ((Number) arguments.get("line")).intValue();
             int offset = ((Number) arguments.get("offset")).intValue();
             
+            // Validate workspace argument
+            CallToolResult validationResult = WorkspaceValidator.validateWorkspace(workspace);
+            if (validationResult != null) {
+                return validationResult;
+            }
+            
             // Execute the definition lookup via bridge
             CompletableFuture<String> future = 
                 bridge.getDefinition(workspace, path, line, offset);

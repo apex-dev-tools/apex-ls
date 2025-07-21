@@ -47,10 +47,11 @@ public class ApexStaticAnalysisTool {
             "      \"description\": \"Include warning-level issues in results\",\n" +
             "      \"default\": false\n" +
             "    },\n" +
-            "    \"includeUnused\": {\n" +
-            "      \"type\": \"boolean\",\n" +
-            "      \"description\": \"Include unused code analysis in results\",\n" +
-            "      \"default\": false\n" +
+            "    \"maxIssuesPerFile\": {\n" +
+            "      \"type\": \"integer\",\n" +
+            "      \"description\": \"Maximum number of issues to return per file\",\n" +
+            "      \"default\": 100,\n" +
+            "      \"minimum\": 1\n" +
             "    }\n" +
             "  },\n" +
             "  \"required\": [\"workspace\"]\n" +
@@ -70,12 +71,18 @@ public class ApexStaticAnalysisTool {
             String workspace = (String) arguments.get("workspace");
             boolean includeWarnings = arguments.get("includeWarnings") != null ? 
                 (Boolean) arguments.get("includeWarnings") : false;
-            boolean includeUnused = arguments.get("includeUnused") != null ? 
-                (Boolean) arguments.get("includeUnused") : false;
+            int maxIssuesPerFile = arguments.get("maxIssuesPerFile") != null ? 
+                ((Number) arguments.get("maxIssuesPerFile")).intValue() : 100;
+            
+            // Validate workspace argument
+            CallToolResult validationResult = WorkspaceValidator.validateWorkspace(workspace);
+            if (validationResult != null) {
+                return validationResult;
+            }
             
             // Execute static analysis via bridge
             CompletableFuture<String> future = 
-                bridge.getIssues(workspace, includeWarnings, includeUnused);
+                bridge.getIssues(workspace, includeWarnings, maxIssuesPerFile);
             String issuesJson = future.join();
             
             // The bridge returns JSON, so we can either parse it and reformat,

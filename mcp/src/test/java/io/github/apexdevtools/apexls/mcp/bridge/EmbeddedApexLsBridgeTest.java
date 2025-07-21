@@ -79,7 +79,7 @@ class EmbeddedApexLsBridgeTest {
     @Test
     @DisplayName("Should get issues for workspace")
     void shouldGetIssuesForWorkspace() throws Exception {
-        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, false, false);
+        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, false, 100);
         
         assertNotNull(issuesFuture);
         String issues = issuesFuture.get(30, TimeUnit.SECONDS); // Allow more time for workspace analysis
@@ -93,7 +93,7 @@ class EmbeddedApexLsBridgeTest {
     @Test
     @DisplayName("Should get issues with warnings enabled")
     void shouldGetIssuesWithWarningsEnabled() throws Exception {
-        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, true, false);
+        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, true, 100);
         
         assertNotNull(issuesFuture);
         String issues = issuesFuture.get(30, TimeUnit.SECONDS);
@@ -103,9 +103,9 @@ class EmbeddedApexLsBridgeTest {
     }
     
     @Test
-    @DisplayName("Should get issues with unused analysis enabled")
-    void shouldGetIssuesWithUnusedAnalysisEnabled() throws Exception {
-        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, false, true);
+    @DisplayName("Should get issues with limited max issues per file")
+    void shouldGetIssuesWithLimitedMaxIssuesPerFile() throws Exception {
+        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, false, 50);
         
         assertNotNull(issuesFuture);
         String issues = issuesFuture.get(30, TimeUnit.SECONDS);
@@ -165,7 +165,7 @@ class EmbeddedApexLsBridgeTest {
     @Test
     @DisplayName("Should handle invalid workspace path gracefully")
     void shouldHandleInvalidWorkspacePathGracefully() throws Exception {
-        CompletableFuture<String> issuesFuture = bridge.getIssues("/invalid/workspace/path", false, false);
+        CompletableFuture<String> issuesFuture = bridge.getIssues("/invalid/workspace/path", false, 100);
         
         assertNotNull(issuesFuture);
         
@@ -185,7 +185,7 @@ class EmbeddedApexLsBridgeTest {
     void shouldHandleMultipleConcurrentRequests() throws Exception {
         CompletableFuture<String> versionFuture1 = bridge.getVersion();
         CompletableFuture<String> versionFuture2 = bridge.getVersion();
-        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, false, false);
+        CompletableFuture<String> issuesFuture = bridge.getIssues(testWorkspacePath, false, 100);
         
         // All should complete successfully
         String version1 = versionFuture1.get(10, TimeUnit.SECONDS);
@@ -204,8 +204,8 @@ class EmbeddedApexLsBridgeTest {
     @DisplayName("Should cache workspace instances")
     void shouldCacheWorkspaceInstances() throws Exception {
         // Make multiple calls to the same workspace
-        CompletableFuture<String> issues1 = bridge.getIssues(testWorkspacePath, false, false);
-        CompletableFuture<String> issues2 = bridge.getIssues(testWorkspacePath, true, false);
+        CompletableFuture<String> issues1 = bridge.getIssues(testWorkspacePath, false, 100);
+        CompletableFuture<String> issues2 = bridge.getIssues(testWorkspacePath, true, 50);
         
         String result1 = issues1.get(30, TimeUnit.SECONDS);
         String result2 = issues2.get(30, TimeUnit.SECONDS);

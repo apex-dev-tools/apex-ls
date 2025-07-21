@@ -79,7 +79,7 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
     }
     
     @Override
-    public CompletableFuture<String> getIssues(String workspaceDirectory, boolean includeWarnings, boolean includeUnused) {
+    public CompletableFuture<String> getIssues(String workspaceDirectory, boolean includeWarnings, int maxIssuesPerFile) {
         if (!isReady()) {
             return CompletableFuture.failedFuture(new IllegalStateException("Bridge not initialized"));
         }
@@ -88,8 +88,8 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
             // Get or create OrgAPI instance for this workspace
             OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
             
-            // Call OrgAPI.getIssues() directly
-            Future<GetIssuesResult> scalaFuture = orgAPI.getIssues(includeWarnings, Integer.MAX_VALUE);
+            // Call OrgAPI.getIssues() directly with maxIssuesPerFile parameter
+            Future<GetIssuesResult> scalaFuture = orgAPI.getIssues(includeWarnings, maxIssuesPerFile);
             
             // Convert Scala Future to Java CompletableFuture
             CompletableFuture<GetIssuesResult> future = convertScalaFuture(scalaFuture);

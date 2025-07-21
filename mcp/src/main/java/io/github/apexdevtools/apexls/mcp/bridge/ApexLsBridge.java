@@ -46,10 +46,10 @@ public interface ApexLsBridge extends AutoCloseable {
      * 
      * @param workspaceDirectory path to workspace
      * @param includeWarnings include warning-level issues
-     * @param includeUnused include unused code analysis
+     * @param maxIssuesPerFile maximum number of issues to return per file
      * @return future containing issues in JSON format
      */
-    CompletableFuture<String> getIssues(String workspaceDirectory, boolean includeWarnings, boolean includeUnused);
+    CompletableFuture<String> getIssues(String workspaceDirectory, boolean includeWarnings, int maxIssuesPerFile);
     
     /**
      * Find references to an identifier at a specific position.

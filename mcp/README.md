@@ -39,11 +39,12 @@ This creates:
 
 ## Running
 
-The MCP server communicates via stdin/stdout using the MCP protocol:
+The MCP server communicates via stdin/stdout using the MCP protocol. 
+It can be tested with:
 
 ```bash
 cd mcp/target
-java -jar apex-ls-mcp-0.1.0-SNAPSHOT.jar
+npx @modelcontextprotocol/inspector java -jar apex-ls-mcp-0.1.0-SNAPSHOT.jar
 ```
 
 The JAR includes a proper manifest with all dependencies in the classpath, so no additional setup is required.

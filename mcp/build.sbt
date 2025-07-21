@@ -79,9 +79,17 @@ build := {
   val apexLsTarget = targetDir / apexLsSource.getName
   IO.copyFile(apexLsSource, apexLsTarget)
   
-  // Copy dependencies to lib directory (excluding the apex-ls JAR which goes in root)
-  val deps = (Compile / dependencyClasspath).value.files.filter(_.getName.endsWith(".jar"))
-  deps.foreach { dep =>
+  // Copy apex-ls dependencies from parent project target directory
+  val apexLsTargetDir = apexLsSource.getParentFile
+  val apexLsDeps = (apexLsTargetDir ** "*.jar").get().filter(_ != apexLsSource)
+  apexLsDeps.foreach { dep =>
+    val target = libDir / dep.getName
+    IO.copyFile(dep, target)
+  }
+  
+  // Copy MCP project dependencies to lib directory (excluding the apex-ls JAR which goes in root)
+  val mcpDeps = (Compile / dependencyClasspath).value.files.filter(_.getName.endsWith(".jar"))
+  mcpDeps.foreach { dep =>
     if (dep != apexLsSource) {  // Don't copy apex-ls JAR to lib, it goes in root
       val target = libDir / dep.getName
       IO.copyFile(dep, target)
@@ -90,6 +98,8 @@ build := {
   
   println(s"MCP JAR built: ${finalJar.getAbsolutePath}")
   println(s"Depends on apex-ls JAR: ${apexLsTarget.getAbsolutePath}")
+  println(s"Apex-ls dependencies: ${apexLsDeps.size} JARs")
+  println(s"MCP dependencies: ${mcpDeps.size} JARs") 
   println(s"Dependencies copied to: ${libDir.getAbsolutePath}")
   
   finalJar
@@ -100,10 +110,18 @@ packageOptions += Package.ManifestAttributes(
   "Main-Class" -> "io.github.apexdevtools.apexls.mcp.MCPServer",
   "Class-Path" -> {
     val apexLsJarName = apexLsJar.value.getName
-    val deps = (Compile / dependencyClasspath).value.files.filter(_.getName.endsWith(".jar"))
-    // Only include managed dependencies in lib/, apex-ls JAR is in root
-    val depNames = deps.filter(_ != apexLsJar.value).map(f => s"lib/${f.getName}")
-    (apexLsJarName +: depNames).mkString(" ")
+    
+    // Get apex-ls dependencies from parent project target directory
+    val apexLsTargetDir = apexLsJar.value.getParentFile
+    val apexLsDeps = (apexLsTargetDir ** "*.jar").get().filter(_ != apexLsJar.value)
+    val apexLsDepNames = apexLsDeps.map(f => s"lib/${f.getName}")
+    
+    // Get MCP project dependencies
+    val mcpDeps = (Compile / dependencyClasspath).value.files.filter(_.getName.endsWith(".jar"))
+    val mcpDepNames = mcpDeps.filter(_ != apexLsJar.value).map(f => s"lib/${f.getName}")
+    
+    // Combine all: apex-ls jar in root, then all dependencies in lib/
+    (apexLsJarName +: (apexLsDepNames ++ mcpDepNames)).mkString(" ")
   }
 )
 
