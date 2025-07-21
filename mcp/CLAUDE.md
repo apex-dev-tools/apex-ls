@@ -37,6 +37,8 @@ cd mcp
 sbt build                    # Creates deployable JAR with dependencies
 sbt test                     # Run test suite
 sbt clean                    # Remove build artifacts
+sbt javafmt                  # Format all Java source files
+sbt javafmtCheck             # Check if Java files need formatting
 ```
 
 ### Alternative Test Execution
@@ -177,8 +179,8 @@ When evaluating whether a test you've implemented is good or not, use this check
 4. SHOULD compare results to independent, pre-computed expectations or to properties of the domain, never to the function’s output re-used as the oracle.
 5. SHOULD follow the same lint, type-safety, and style rules as prod code (prettier, ESLint, strict types).
 6. SHOULD express invariants or axioms (e.g., commutativity, idempotence, round-trip) rather than single hard-coded cases whenever practical. Use `fast-check` library e.g.
-10. SHOULD test edge cases, realistic input, unexpected input, and value boundaries.
-11. SHOULD NOT test conditions that are caught by the type checker.
+7. SHOULD test edge cases, realistic input, unexpected input, and value boundaries.
+8. SHOULD NOT test conditions that are caught by the type checker.
 
 ## Remember Shortcuts
 

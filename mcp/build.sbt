@@ -22,6 +22,9 @@ ThisBuild / versionScheme := Some("strict")
 ThisBuild / javacOptions ++= Seq("-source", "17", "-target", "17")
 ThisBuild / javaOptions ++= Seq("--add-opens", "java.base/java.lang=ALL-UNNAMED")
 
+// Java formatting configuration
+javafmtOnCompile := false
+
 lazy val build = taskKey[File]("Build MCP JAR")
 
 name := "apex-ls-mcp"
