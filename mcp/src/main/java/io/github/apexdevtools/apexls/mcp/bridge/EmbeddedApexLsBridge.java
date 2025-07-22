@@ -14,11 +14,15 @@ are met:
 
 package io.github.apexdevtools.apexls.mcp.bridge;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nawforce.apexlink.rpc.GetIssuesResult;
 import com.nawforce.apexlink.rpc.LocationLink;
 import com.nawforce.apexlink.rpc.OrgAPI;
 import com.nawforce.apexlink.rpc.OrgAPIImpl;
 import com.nawforce.apexlink.rpc.TargetLocation;
+import com.nawforce.pkgforce.diagnostics.Issue;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,6 +43,7 @@ import scala.concurrent.Future;
 public class EmbeddedApexLsBridge implements ApexLsBridge {
 
   private static final Logger logger = LoggerFactory.getLogger(EmbeddedApexLsBridge.class);
+  private static final ObjectMapper objectMapper = new ObjectMapper();
 
   private final Map<String, OrgAPI> workspaceCache = new ConcurrentHashMap<>();
   private boolean initialized = false;
@@ -237,10 +242,10 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
     return javaFuture;
   }
 
-  /** Convert GetIssuesResult to JSON string representation. */
+  /** Convert GetIssuesResult to Enhanced JSON format for AI consumption. */
   private String convertGetIssuesResultToJson(GetIssuesResult getIssuesResult) {
     if (getIssuesResult == null) {
-      return "No issues found - code analysis passed successfully";
+      return createSuccessResponse();
     }
 
     try {
@@ -248,19 +253,141 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       Object[] issues = getIssuesResult.issues();
 
       if (issues.length == 0) {
-        return "No issues found - code analysis passed successfully";
+        return createSuccessResponse();
       }
 
-      StringBuilder json = new StringBuilder();
-      json.append("Found ").append(issues.length).append(" issue(s):\\n");
-      for (int i = 0; i < issues.length; i++) {
-        json.append((i + 1)).append(". ").append(issues[i].toString()).append("\\n");
+      // Create enhanced JSON structure
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "sfdx_code_diagnostics");
+      response.put("status", "completed");
+      response.put("summary", "Found " + issues.length + " issue(s) in the codebase");
+
+      // Categorize issues
+      int errors = 0, warnings = 0, info = 0;
+      ArrayNode issueList = objectMapper.createArrayNode();
+
+      for (Object issueObj : issues) {
+        Issue issue = (Issue) issueObj;
+        ObjectNode issueNode = convertIssueToJson(issue);
+        issueList.add(issueNode);
+
+        // Count by severity
+        String severity = issueNode.get("severity").asText().toLowerCase();
+        switch (severity) {
+          case "error":
+            errors++;
+            break;
+          case "warning":
+            warnings++;
+            break;
+          default:
+            info++;
+            break;
+        }
       }
-      return json.toString();
+
+      // Add counts
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total", issues.length);
+      counts.put("errors", errors);
+      counts.put("warnings", warnings);
+      counts.put("info", info);
+      response.set("counts", counts);
+
+      // Add detailed issues
+      response.set("issues", issueList);
+
+      return objectMapper.writeValueAsString(response);
 
     } catch (Exception ex) {
       logger.warn("Error converting GetIssuesResult to JSON", ex);
-      return "Error formatting issues: " + ex.getMessage();
+      return createErrorResponse("Error formatting issues: " + ex.getMessage());
+    }
+  }
+
+  /** Convert Issue instance to structured JSON using direct property access. */
+  private ObjectNode convertIssueToJson(Issue issue) {
+    ObjectNode issueNode = objectMapper.createObjectNode();
+
+    try {
+      // Get severity from diagnostic category
+      String severity = issue.diagnostic().category().toString().toLowerCase();
+      issueNode.put("severity", mapSeverity(severity));
+
+      // Get file path
+      issueNode.put("file", issue.path().toString());
+
+      // Get location information from diagnostic
+      var location = issue.diagnostic().location();
+      issueNode.put("line", location.startLine());
+      issueNode.put("column", location.startPosition());
+
+      // Get message from diagnostic
+      String message = issue.diagnostic().message();
+      issueNode.put("message", message != null ? message : "No message available");
+
+      // Add metadata
+      issueNode.put("source", "apex-ls");
+
+    } catch (Exception ex) {
+      logger.debug("Error accessing Issue properties", ex);
+      // Fallback to string representation
+      issueNode.put("severity", "unknown");
+      issueNode.put("file", "unknown");
+      issueNode.put("line", 0);
+      issueNode.put("column", 0);
+      issueNode.put("message", issue.toString());
+      issueNode.put("source", "apex-ls");
+    }
+
+    return issueNode;
+  }
+
+  /** Map apex-ls category to standard severity levels. */
+  private String mapSeverity(String category) {
+    if (category == null) return "unknown";
+
+    category = category.toLowerCase();
+    if (category.contains("error")) return "error";
+    if (category.contains("warning")) return "warning";
+    if (category.contains("info")) return "info";
+    if (category.contains("unused")) return "info"; // Map unused categories to info level
+    return category; // Return as-is if no mapping found
+  }
+
+  /** Create success response for no issues found. */
+  private String createSuccessResponse() {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "sfdx_code_diagnostics");
+      response.put("status", "success");
+      response.put("summary", "No issues found - code analysis passed successfully");
+
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total", 0);
+      counts.put("errors", 0);
+      counts.put("warnings", 0);
+      counts.put("info", 0);
+      response.set("counts", counts);
+
+      response.set("issues", objectMapper.createArrayNode());
+
+      return objectMapper.writeValueAsString(response);
+    } catch (Exception ex) {
+      return "{\"status\":\"success\",\"summary\":\"No issues found - code analysis passed successfully\"}";
+    }
+  }
+
+  /** Create error response for formatting failures. */
+  private String createErrorResponse(String errorMessage) {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "sfdx_code_diagnostics");
+      response.put("status", "error");
+      response.put("summary", errorMessage);
+      return objectMapper.writeValueAsString(response);
+    } catch (Exception ex) {
+      return "{\"status\":\"error\",\"summary\":\"" + errorMessage + "\"}";
     }
   }
 
