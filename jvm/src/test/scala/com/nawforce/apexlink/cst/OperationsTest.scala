@@ -55,6 +55,14 @@ class OperationsTest extends AnyFunSuite with TestHelper {
     happyTypeDeclaration("public class Dummy {{List<Account> a; a = new List<sObject>(); }}")
   }
 
+  test("SObject Map assignment should fail (Issue #340)") {
+    typeDeclaration("public class Dummy {{Map<Id, SObject> m1; Map<Id, Account> m2 = m1;}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 59-66: Incompatible types in assignment, from 'System.Map<System.Id, System.SObject>' to 'System.Map<System.Id, Schema.Account>'\n"
+    )
+  }
+
   test("Alternative not equal") {
     happyTypeDeclaration("public class Dummy {{Boolean a; a = 1 <> 2; }}")
   }
