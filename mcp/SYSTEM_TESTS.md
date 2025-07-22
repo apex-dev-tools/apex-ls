@@ -86,7 +86,7 @@ Successful system tests should demonstrate:
 2. **Protocol Compliance** - Server properly implements MCP protocol handshake and message formats
 3. **Tool Registration** - All three expected tools are registered:
    - `apex_static_analysis` - For code analysis and issue detection
-   - `apex_find_references` - For finding symbol references
+   - `apex_find_usages` - For finding symbol usages
    - `apex_goto_definition` - For go-to-definition functionality
 4. **Resource Exposure** - Workspace resources are properly exposed for client access
 5. **Functional Tools** - Tools execute successfully and return meaningful results

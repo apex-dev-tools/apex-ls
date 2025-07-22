@@ -119,15 +119,15 @@ class EmbeddedApexLsBridgeTest {
     void shouldFindReferences() throws Exception {
         String testFilePath = testWorkspacePath + "/force-app/main/default/classes/TestClass.cls";
         
-        CompletableFuture<String> referencesFuture = bridge.findReferences(testWorkspacePath, testFilePath, 1, 15);
+        CompletableFuture<String> usagesFuture = bridge.findUsages(testWorkspacePath, testFilePath, 1, 15);
         
-        assertNotNull(referencesFuture);
-        String references = referencesFuture.get(30, TimeUnit.SECONDS);
+        assertNotNull(usagesFuture);
+        String usages = usagesFuture.get(30, TimeUnit.SECONDS);
         
-        assertNotNull(references);
-        assertFalse(references.trim().isEmpty(), "References result should not be empty");
-        assertTrue(references.contains("reference") || references.contains("found"), 
-                  "References result should mention references: " + references);
+        assertNotNull(usages);
+        assertFalse(usages.trim().isEmpty(), "Usages result should not be empty");
+        assertTrue(usages.contains("usage") || usages.contains("found"), 
+                  "Usages result should mention usages: " + usages);
     }
     
     @Test

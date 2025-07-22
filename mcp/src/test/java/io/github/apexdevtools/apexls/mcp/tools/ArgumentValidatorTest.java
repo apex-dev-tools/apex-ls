@@ -132,7 +132,7 @@ class ArgumentValidatorTest {
     
     assertNotNull(result);
     assertTrue(result.isError());
-    assertTrue(getContentAsString(result).contains("'line' argument must be non-negative"));
+    assertTrue(getContentAsString(result).contains("'line' argument must be positive (1-based)"));
   }
 
   @Test
@@ -148,13 +148,18 @@ class ArgumentValidatorTest {
   }
 
   @Test
-  @DisplayName("Should accept zero values for line and offset")
-  void shouldAcceptZeroValuesForLineAndOffset() {
-    Map<String, Object> args = createArguments("/path/to/file.cls", 0, 0);
+  @DisplayName("Should accept zero value for offset but reject zero for line")
+  void shouldAcceptZeroOffsetButRejectZeroLine() {
+    // Test that zero offset is valid
+    Map<String, Object> validArgs = createArguments("/path/to/file.cls", 1, 0);
+    CallToolResult validResult = ArgumentValidator.validateApexToolArguments(validArgs);
+    assertNull(validResult);
     
-    CallToolResult result = ArgumentValidator.validateApexToolArguments(args);
-    
-    assertNull(result);
+    // Test that zero line is invalid
+    Map<String, Object> invalidArgs = createArguments("/path/to/file.cls", 0, 0);
+    CallToolResult invalidResult = ArgumentValidator.validateApexToolArguments(invalidArgs);
+    assertNotNull(invalidResult);
+    assertTrue(getContentAsString(invalidResult).contains("'line' argument must be positive (1-based)"));
   }
 
   @Test

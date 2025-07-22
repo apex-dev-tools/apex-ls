@@ -147,7 +147,7 @@ class MCPServerSystemTest {
                 case "sfdx_code_diagnostics":
                     hasStaticAnalysis = true;
                     break;
-                case "apex_find_references":
+                case "apex_find_usages":
                     hasFindReferences = true;
                     break;
                 case "apex_goto_definition":
@@ -157,7 +157,7 @@ class MCPServerSystemTest {
         }
         
         assertTrue(hasStaticAnalysis, "Should have sfdx_code_diagnostics tool");
-        assertTrue(hasFindReferences, "Should have apex_find_references tool");
+        assertTrue(hasFindReferences, "Should have apex_find_usages tool");
         assertTrue(hasGotoDefinition, "Should have apex_goto_definition tool");
         
         logger.info("Successfully listed {} tools via MCP protocol", tools.size());
@@ -230,9 +230,9 @@ class MCPServerSystemTest {
     }
     
     @Test
-    @DisplayName("Should execute apex_find_references tool via MCP protocol")
+    @DisplayName("Should execute apex_find_usages tool via MCP protocol")
     @Timeout(60)
-    void shouldExecuteApexFindReferencesToolViaMCPProtocol() throws Exception {
+    void shouldExecuteApexFindUsagesToolViaMCPProtocol() throws Exception {
         startMCPServer();
         initializeMCPConnection();
         
@@ -240,7 +240,7 @@ class MCPServerSystemTest {
         
         // Send tool call request
         Map<String, Object> toolCallRequest = createMCPRequest("tools/call", Map.of(
-            "name", "apex_find_references",
+            "name", "apex_find_usages",
             "arguments", Map.of(
                 "path", testFilePath,
                 "line", 1,
@@ -268,7 +268,7 @@ class MCPServerSystemTest {
         assertTrue(contentText.contains("reference") || contentText.contains("found") || contentText.contains("location"), 
                   "Response should indicate references were searched: " + contentText);
         
-        logger.info("Successfully executed apex_find_references tool");
+        logger.info("Successfully executed apex_find_usages tool");
     }
     
     @Test

@@ -59,8 +59,8 @@ Performs static analysis on Apex code to find errors, warnings, and unused code.
 - `includeWarnings` (optional) - Include warning-level issues
 - `includeUnused` (optional) - Include unused code analysis
 
-### apex_find_references
-Finds all references to an identifier at a specific location.
+### apex_find_usages
+Finds all usages of an identifier at a specific location.
 
 **Parameters:**
 - `workspace` (required) - Path to the Apex workspace directory  

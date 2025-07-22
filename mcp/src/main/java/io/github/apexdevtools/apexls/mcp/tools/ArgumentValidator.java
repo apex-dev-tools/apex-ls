@@ -55,8 +55,8 @@ public class ArgumentValidator {
       return new CallToolResult("Error: 'line' and 'offset' arguments must be integers", true);
     }
 
-    if (line < 0) {
-      return new CallToolResult("Error: 'line' argument must be non-negative", true);
+    if (line < 1) {
+      return new CallToolResult("Error: 'line' argument must be positive (1-based)", true);
     }
     if (offset < 0) {
       return new CallToolResult("Error: 'offset' argument must be non-negative", true);

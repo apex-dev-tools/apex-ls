@@ -19,7 +19,7 @@ This is an MCP (Model Context Protocol) Server implementation that provides a br
   - `ApexLsBridge` interface defines communication contract
   - `EmbeddedApexLsBridge` uses reflection to call apex-ls OrgAPI directly
   - Workspace caching to avoid expensive re-initialization
-- **MCP Tools**: `sfdx_code_diagnostics`, `apex_find_references`, `apex_goto_definition`
+- **MCP Tools**: `sfdx_code_diagnostics`, `apex_find_usages`, `apex_goto_definition`
 - **MCP Resources**: `workspace://apex/{workspace_path}` for workspace metadata
 
 ## Build Commands
@@ -221,6 +221,19 @@ When I type "qcheck", this means:
 ```
 You are a SKEPTICAL senior software engineer.
 Perform this analysis for every MAJOR code change you introduced (skip minor changes):
+
+1. CLAUDE.md checklist Writing Functions Best Practices.
+2. CLAUDE.md checklist Writing Tests Best Practices.
+3. CLAUDE.md checklist Implementation Best Practices.
+```
+
+### QCHECK Detail
+
+When I type "qcheck-detail", this means:
+
+```
+You are a SKEPTICAL senior software engineer.
+Perform this analysis for every source file that you added or changed:
 
 1. CLAUDE.md checklist Writing Functions Best Practices.
 2. CLAUDE.md checklist Writing Tests Best Practices.

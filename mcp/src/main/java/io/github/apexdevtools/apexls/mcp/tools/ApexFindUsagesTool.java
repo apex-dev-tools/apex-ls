@@ -25,11 +25,11 @@ import java.util.concurrent.CompletableFuture;
  * MCP tool for finding all references to an Apex identifier. Uses the bridge to communicate with
  * the apex-ls core (Java 8) from this Java 17 MCP server.
  */
-public class ApexFindReferencesTool {
+public class ApexFindUsagesTool {
 
   private final ApexLsBridge bridge;
 
-  public ApexFindReferencesTool(ApexLsBridge bridge) {
+  public ApexFindUsagesTool(ApexLsBridge bridge) {
     this.bridge = bridge;
   }
 
@@ -44,7 +44,7 @@ public class ApexFindReferencesTool {
             + "    },\n"
             + "    \"line\": {\n"
             + "      \"type\": \"integer\",\n"
-            + "      \"description\": \"Line number (0-based)\"\n"
+            + "      \"description\": \"Line number (1-based)\"\n"
             + "    },\n"
             + "    \"offset\": {\n"
             + "      \"type\": \"integer\",\n"
@@ -56,8 +56,8 @@ public class ApexFindReferencesTool {
 
     Tool tool =
         new Tool(
-            "apex_find_references",
-            "Find all references to an Apex identifier at a specific position",
+            "apex_find_usages",
+            "Locate all references to any Apex identifier across the workspace - including classes, interfaces, enums, triggers, methods, constructors, fields, properties, variables, parameters, custom objects, custom fields, SObject types, system types, nested/inner classes, method overrides, interface implementations, inheritance relationships, type declarations, method calls, field access, annotations, and Salesforce platform metadata",
             schema);
 
     return new McpServerFeatures.SyncToolSpecification(tool, this::execute);
@@ -86,7 +86,7 @@ public class ApexFindReferencesTool {
 
       // Execute the references lookup via bridge
       CompletableFuture<String> future =
-          bridge.findReferences(workspace, args.path, args.line, args.offset);
+          bridge.findUsages(workspace, args.path, args.line, args.offset);
       String referencesJson = future.join();
 
       // The bridge returns JSON-formatted results

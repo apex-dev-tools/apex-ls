@@ -66,21 +66,21 @@ class SimpleMCPToolTest {
     void shouldCreateAllMCPToolsSuccessfully() {
         // Test that all tools can be instantiated
         SfdxCodeDiagnosticsTool sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
-        ApexFindReferencesTool findReferencesTool = new ApexFindReferencesTool(bridge);
+        ApexFindUsagesTool findUsagesTool = new ApexFindUsagesTool(bridge);
         ApexGotoDefinitionTool gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
         
         assertNotNull(sfdxDiagnosticsTool);
-        assertNotNull(findReferencesTool);
+        assertNotNull(findUsagesTool);
         assertNotNull(gotoDefinitionTool);
         
         // Test that tool specifications can be created
         assertNotNull(sfdxDiagnosticsTool.getSpecification());
-        assertNotNull(findReferencesTool.getSpecification());
+        assertNotNull(findUsagesTool.getSpecification());
         assertNotNull(gotoDefinitionTool.getSpecification());
         
         // Verify tool names
         assertEquals("sfdx_code_diagnostics", sfdxDiagnosticsTool.getSpecification().tool().name());
-        assertEquals("apex_find_references", findReferencesTool.getSpecification().tool().name());
+        assertEquals("apex_find_usages", findUsagesTool.getSpecification().tool().name());
         assertEquals("apex_goto_definition", gotoDefinitionTool.getSpecification().tool().name());
     }
     
@@ -107,16 +107,16 @@ class SimpleMCPToolTest {
     }
     
     @Test
-    @DisplayName("Bridge should handle find references")
-    void bridgeShouldHandleFindReferences() throws Exception {
+    @DisplayName("Bridge should handle find usages")
+    void bridgeShouldHandleFindUsages() throws Exception {
         String testFilePath = testWorkspacePath + "/force-app/main/default/classes/TestClass.cls";
         
-        CompletableFuture<String> referencesFuture = bridge.findReferences(testWorkspacePath, testFilePath, 1, 15);
-        String references = referencesFuture.get(30, TimeUnit.SECONDS);
+        CompletableFuture<String> usagesFuture = bridge.findUsages(testWorkspacePath, testFilePath, 1, 15);
+        String usages = usagesFuture.get(30, TimeUnit.SECONDS);
         
-        assertNotNull(references);
-        assertFalse(references.trim().isEmpty());
-        assertTrue(references.contains("reference") || references.contains("found"));
+        assertNotNull(usages);
+        assertFalse(usages.trim().isEmpty());
+        assertTrue(usages.contains("usage") || usages.contains("found"));
     }
     
     @Test

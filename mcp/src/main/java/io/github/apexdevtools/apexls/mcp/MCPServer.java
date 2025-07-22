@@ -17,7 +17,7 @@ package io.github.apexdevtools.apexls.mcp;
 import io.github.apexdevtools.apexls.mcp.bridge.ApexLsBridge;
 import io.github.apexdevtools.apexls.mcp.bridge.EmbeddedApexLsBridge;
 import io.github.apexdevtools.apexls.mcp.resources.WorkspaceResource;
-import io.github.apexdevtools.apexls.mcp.tools.ApexFindReferencesTool;
+import io.github.apexdevtools.apexls.mcp.tools.ApexFindUsagesTool;
 import io.github.apexdevtools.apexls.mcp.tools.ApexGotoDefinitionTool;
 import io.github.apexdevtools.apexls.mcp.tools.SfdxCodeDiagnosticsTool;
 import io.modelcontextprotocol.server.McpServer;
@@ -41,7 +41,7 @@ public class MCPServer {
 
   private ApexLsBridge bridge;
   private SfdxCodeDiagnosticsTool sfdxDiagnosticsTool;
-  private ApexFindReferencesTool findReferencesTool;
+  private ApexFindUsagesTool findUsagesTool;
   private ApexGotoDefinitionTool gotoDefinitionTool;
   private WorkspaceResource workspaceResource;
 
@@ -101,12 +101,12 @@ public class MCPServer {
 
     // Create tools with bridge
     sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
-    findReferencesTool = new ApexFindReferencesTool(bridge);
+    findUsagesTool = new ApexFindUsagesTool(bridge);
     gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
     workspaceResource = new WorkspaceResource(bridge);
 
     logger.info("  - SFDX Code Diagnostics Tool");
-    logger.info("  - Apex Find References Tool");
+    logger.info("  - Apex Find Usages Tool");
     logger.info("  - Apex Goto Definition Tool");
     logger.info("  - Workspace Resource");
 
@@ -120,7 +120,7 @@ public class MCPServer {
             .instructions("Apex Language Server with MCP support for code analysis and navigation")
             .tools(
                 sfdxDiagnosticsTool.getSpecification(),
-                findReferencesTool.getSpecification(),
+                findUsagesTool.getSpecification(),
                 gotoDefinitionTool.getSpecification())
             .resources(workspaceResource.getSpecification());
 

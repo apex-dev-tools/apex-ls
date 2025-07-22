@@ -51,15 +51,15 @@ public interface ApexLsBridge extends AutoCloseable {
       String workspaceDirectory, boolean includeWarnings, int maxIssuesPerFile);
 
   /**
-   * Find references to an identifier at a specific position.
+   * Find usages of an identifier at a specific position.
    *
    * @param workspaceDirectory path to workspace
    * @param filePath path to file
    * @param line line number (0-based)
    * @param offset character offset within line
-   * @return future containing references in JSON format
+   * @return future containing usages in JSON format
    */
-  CompletableFuture<String> findReferences(
+  CompletableFuture<String> findUsages(
       String workspaceDirectory, String filePath, int line, int offset);
 
   /**

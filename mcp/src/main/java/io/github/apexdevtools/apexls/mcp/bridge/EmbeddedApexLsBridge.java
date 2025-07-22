@@ -110,7 +110,7 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
   }
 
   @Override
-  public CompletableFuture<String> findReferences(
+  public CompletableFuture<String> findUsages(
       String workspaceDirectory, String filePath, int line, int offset) {
     if (!isReady()) {
       return CompletableFuture.failedFuture(new IllegalStateException("Bridge not initialized"));
@@ -121,6 +121,7 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
 
       // Call OrgAPI.getReferences() directly
+      // Note: Both MCP tools and OrgAPI use 1-based line numbers
       Future<TargetLocation[]> scalaFuture = orgAPI.getReferences(filePath, line, offset);
 
       // Convert Scala Future to Java CompletableFuture
@@ -130,7 +131,7 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       return future.thenApply(this::convertTargetLocationsToJson);
 
     } catch (Exception ex) {
-      logger.error("Error calling findReferences via bridge", ex);
+      logger.error("Error calling findUsages via bridge", ex);
       return CompletableFuture.failedFuture(ex);
     }
   }
@@ -147,6 +148,7 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
 
       // Call OrgAPI.getDefinition() directly
+      // Note: Both MCP tools and OrgAPI use 1-based line numbers
       Future<LocationLink[]> scalaFuture =
           orgAPI.getDefinition(filePath, line, offset, scala.Option.empty());
 
@@ -391,27 +393,109 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
     }
   }
 
-  /** Convert TargetLocation[] array to JSON string representation. */
+  /** Create usages response for empty results. */
+  private String createUsagesResponse(int count, String message) {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "apex_find_usages");
+      response.put("status", "success");
+      response.put("summary", message != null ? message : "No usages found");
+
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total", count);
+      response.set("counts", counts);
+
+      response.set("usages", objectMapper.createArrayNode());
+
+      return objectMapper.writeValueAsString(response);
+    } catch (Exception ex) {
+      return "{\"status\":\"success\",\"summary\":\"No usages found\"}";
+    }
+  }
+
+  /** Create error response for usages formatting failures. */
+  private String createUsagesErrorResponse(String errorMessage) {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "apex_find_usages");
+      response.put("status", "error");
+      response.put("summary", errorMessage);
+      return objectMapper.writeValueAsString(response);
+    } catch (Exception ex) {
+      return "{\"status\":\"error\",\"summary\":\"" + errorMessage + "\"}";
+    }
+  }
+
+  /** Convert TargetLocation instance to structured JSON. */
+  private ObjectNode convertTargetLocationToJson(TargetLocation targetLocation) {
+    ObjectNode refNode = objectMapper.createObjectNode();
+
+    try {
+      // Get file path
+      refNode.put("file", targetLocation.targetPath());
+
+      // Get location information
+      var range = targetLocation.range();
+      refNode.put("line", range.startLine());
+      refNode.put("column", range.startPosition());
+      refNode.put("endLine", range.endLine());
+      refNode.put("endColumn", range.endPosition());
+
+      // Add metadata
+      refNode.put("source", "apex-ls");
+      refNode.put("type", "reference");
+
+    } catch (Exception ex) {
+      logger.debug("Error accessing TargetLocation properties", ex);
+      // Fallback to string representation
+      refNode.put("file", "unknown");
+      refNode.put("line", 0);
+      refNode.put("column", 0);
+      refNode.put("endLine", 0);
+      refNode.put("endColumn", 0);
+      refNode.put("source", "apex-ls");
+      refNode.put("type", "reference");
+      refNode.put("raw", targetLocation.toString());
+    }
+
+    return refNode;
+  }
+
+  /** Convert TargetLocation[] array to Enhanced JSON format for AI consumption. */
   private String convertTargetLocationsToJson(TargetLocation[] targetLocations) {
     if (targetLocations == null) {
-      return "No references found";
+      return createUsagesResponse(0, null);
     }
 
     try {
       if (targetLocations.length == 0) {
-        return "No references found";
+        return createUsagesResponse(0, null);
       }
 
-      StringBuilder json = new StringBuilder();
-      json.append("Found ").append(targetLocations.length).append(" reference(s):\\n");
-      for (int i = 0; i < targetLocations.length; i++) {
-        json.append((i + 1)).append(". ").append(targetLocations[i].toString()).append("\\n");
+      // Create enhanced JSON structure
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "apex_find_usages");
+      response.put("status", "completed");
+      response.put("summary", "Found " + targetLocations.length + " usage(s)");
+
+      // Add counts
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total", targetLocations.length);
+      response.set("counts", counts);
+
+      // Convert each target location to structured JSON
+      ArrayNode referenceList = objectMapper.createArrayNode();
+      for (TargetLocation targetLocation : targetLocations) {
+        ObjectNode refNode = convertTargetLocationToJson(targetLocation);
+        referenceList.add(refNode);
       }
-      return json.toString();
+
+      response.set("usages", referenceList);
+      return objectMapper.writeValueAsString(response);
 
     } catch (Exception ex) {
       logger.warn("Error converting target locations to JSON", ex);
-      return "Error formatting references: " + ex.getMessage();
+      return createUsagesErrorResponse("Error formatting usages: " + ex.getMessage());
     }
   }
 

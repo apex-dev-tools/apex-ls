@@ -44,7 +44,7 @@ public class ApexGotoDefinitionTool {
             + "    },\n"
             + "    \"line\": {\n"
             + "      \"type\": \"integer\",\n"
-            + "      \"description\": \"Line number (0-based)\"\n"
+            + "      \"description\": \"Line number (1-based)\"\n"
             + "    },\n"
             + "    \"offset\": {\n"
             + "      \"type\": \"integer\",\n"

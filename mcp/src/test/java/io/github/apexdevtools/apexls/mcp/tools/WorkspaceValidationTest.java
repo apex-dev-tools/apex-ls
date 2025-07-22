@@ -39,13 +39,13 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
     Path tempDir;
     
     private SfdxCodeDiagnosticsTool sfdxDiagnosticsTool;
-    private ApexFindReferencesTool findReferencesTool;
+    private ApexFindUsagesTool findUsagesTool;
     private ApexGotoDefinitionTool gotoDefinitionTool;
     
     @BeforeEach 
     void setUpTools() {
         sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
-        findReferencesTool = new ApexFindReferencesTool(bridge);
+        findUsagesTool = new ApexFindUsagesTool(bridge);
         gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
     }
     
@@ -141,13 +141,13 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
     }
     
     @Test
-    @DisplayName("ApexFindReferencesTool should validate workspace from path")
+    @DisplayName("ApexFindUsagesTool should validate workspace from path")
     void apexFindReferencesToolShouldValidateWorkspaceFromPath() throws Exception {
         Map<String, Object> args = createArgumentsMap(
             "path", "/non/existent/path/file.cls", 
-            "line", 0, 
+            "line", 1, 
             "offset", 10);
-        CallToolResult result = executeTool(findReferencesTool, args);
+        CallToolResult result = executeTool(findUsagesTool, args);
         
         assertNotNull(result);
         assertTrue(result.isError());
@@ -159,7 +159,7 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
     void apexGotoDefinitionToolShouldValidateWorkspaceFromPath() throws Exception {
         Map<String, Object> args = createArgumentsMap(
             "path", "/non/existent/path/file.cls", 
-            "line", 0, 
+            "line", 1, 
             "offset", 10);
         CallToolResult result = executeTool(gotoDefinitionTool, args);
         
@@ -185,15 +185,15 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         
         // Test find references tool
         Map<String, Object> referencesArgs = createArgumentsMap(
-            "path", invalidPath + "/some/file.cls", "line", 0, "offset", 10);
-        CallToolResult referencesResult = executeTool(findReferencesTool, referencesArgs);
+            "path", invalidPath + "/some/file.cls", "line", 1, "offset", 10);
+        CallToolResult referencesResult = executeTool(findUsagesTool, referencesArgs);
         assertNotNull(referencesResult);
         assertTrue(referencesResult.isError());
         assertTrue(getContentAsString(referencesResult).contains("sfdx-project.json"));
         
         // Test goto definition tool
         Map<String, Object> definitionArgs = createArgumentsMap(
-            "path", invalidPath + "/some/file.cls", "line", 0, "offset", 10);
+            "path", invalidPath + "/some/file.cls", "line", 1, "offset", 10);
         CallToolResult definitionResult = executeTool(gotoDefinitionTool, definitionArgs);
         assertNotNull(definitionResult);
         assertTrue(definitionResult.isError());
@@ -218,8 +218,8 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         // Test find references tool (should pass validation but may fail at bridge level)
         Map<String, Object> referencesArgs = createArgumentsMap(
             "path", validWorkspace + "/force-app/main/default/classes/TestClass.cls", 
-            "line", 0, "offset", 10);
-        CallToolResult referencesResult = executeTool(findReferencesTool, referencesArgs);
+            "line", 1, "offset", 10);
+        CallToolResult referencesResult = executeTool(findUsagesTool, referencesArgs);
         assertNotNull(referencesResult);
         // Should not have workspace validation errors
         assertFalse(getContentAsString(referencesResult).contains("workspace argument is required"));
@@ -229,7 +229,7 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         // Test goto definition tool (should pass validation but may fail at bridge level)
         Map<String, Object> definitionArgs = createArgumentsMap(
             "path", validWorkspace + "/force-app/main/default/classes/TestClass.cls", 
-            "line", 0, "offset", 10);
+            "line", 1, "offset", 10);
         CallToolResult definitionResult = executeTool(gotoDefinitionTool, definitionArgs);
         assertNotNull(definitionResult);
         // Should not have workspace validation errors
