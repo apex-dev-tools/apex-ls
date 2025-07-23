@@ -27,7 +27,7 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.parsers.{ApexNode, CLASS_NATURE, INTERFACE_NATURE, Nature}
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
 import io.github.apexdevtools.apexparser.ApexParser.TypeDeclarationContext
 import upickle.default.writeBinary
@@ -273,11 +273,11 @@ abstract class FullDeclaration(
     bodyDeclarations.foreach(_.collectDependencies(dependsOn))
   }
 
-  /** Locate an ApexDeclaration for the passed typeName that was extracted from location. */
+  /** Locate a TypeDeclaration for the passed typeName that was extracted from location. */
   override def findDeclarationFromSourceReference(
     searchTerm: String,
     location: Location
-  ): Option[ApexDeclaration] = {
+  ): Option[TypeDeclaration with Locatable] = {
 
     /** Find the outer or inner class that contains the passed cursor position */
     def findEnclosingClass(line: Int, offset: Int): Option[FullDeclaration] = {
@@ -295,7 +295,7 @@ abstract class FullDeclaration(
     TypeName(searchTerm).toOption match {
       case Some(typeName: TypeName) =>
         findEnclosingClass(location.startLine, location.startPosition).flatMap(td => {
-          TypeResolver(typeName, td).toOption.collect { case td: ApexDeclaration => td }
+          TypeResolver(typeName, td).toOption.collect { case td: Locatable => td }
         })
       case _ => None
     }
