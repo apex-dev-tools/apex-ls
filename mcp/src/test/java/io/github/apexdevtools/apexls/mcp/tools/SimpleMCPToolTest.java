@@ -67,21 +67,21 @@ class SimpleMCPToolTest {
         // Test that all tools can be instantiated
         SfdxCodeDiagnosticsTool sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
         ApexFindUsagesTool findUsagesTool = new ApexFindUsagesTool(bridge);
-        ApexGotoDefinitionTool gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
+        ApexFindDefinitionTool findDefinitionTool = new ApexFindDefinitionTool(bridge);
         
         assertNotNull(sfdxDiagnosticsTool);
         assertNotNull(findUsagesTool);
-        assertNotNull(gotoDefinitionTool);
+        assertNotNull(findDefinitionTool);
         
         // Test that tool specifications can be created
         assertNotNull(sfdxDiagnosticsTool.getSpecification());
         assertNotNull(findUsagesTool.getSpecification());
-        assertNotNull(gotoDefinitionTool.getSpecification());
+        assertNotNull(findDefinitionTool.getSpecification());
         
         // Verify tool names
         assertEquals("sfdx_code_diagnostics", sfdxDiagnosticsTool.getSpecification().tool().name());
         assertEquals("apex_find_usages", findUsagesTool.getSpecification().tool().name());
-        assertEquals("apex_goto_definition", gotoDefinitionTool.getSpecification().tool().name());
+        assertEquals("apex_find_definition", findDefinitionTool.getSpecification().tool().name());
     }
     
     @Test

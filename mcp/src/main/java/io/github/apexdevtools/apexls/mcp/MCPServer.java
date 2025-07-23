@@ -17,8 +17,8 @@ package io.github.apexdevtools.apexls.mcp;
 import io.github.apexdevtools.apexls.mcp.bridge.ApexLsBridge;
 import io.github.apexdevtools.apexls.mcp.bridge.EmbeddedApexLsBridge;
 import io.github.apexdevtools.apexls.mcp.resources.WorkspaceResource;
+import io.github.apexdevtools.apexls.mcp.tools.ApexFindDefinitionTool;
 import io.github.apexdevtools.apexls.mcp.tools.ApexFindUsagesTool;
-import io.github.apexdevtools.apexls.mcp.tools.ApexGotoDefinitionTool;
 import io.github.apexdevtools.apexls.mcp.tools.SfdxCodeDiagnosticsTool;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
@@ -42,7 +42,7 @@ public class MCPServer {
   private ApexLsBridge bridge;
   private SfdxCodeDiagnosticsTool sfdxDiagnosticsTool;
   private ApexFindUsagesTool findUsagesTool;
-  private ApexGotoDefinitionTool gotoDefinitionTool;
+  private ApexFindDefinitionTool findDefinitionTool;
   private WorkspaceResource workspaceResource;
 
   public MCPServer() {
@@ -102,12 +102,12 @@ public class MCPServer {
     // Create tools with bridge
     sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
     findUsagesTool = new ApexFindUsagesTool(bridge);
-    gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
+    findDefinitionTool = new ApexFindDefinitionTool(bridge);
     workspaceResource = new WorkspaceResource(bridge);
 
     logger.info("  - SFDX Code Diagnostics Tool");
     logger.info("  - Apex Find Usages Tool");
-    logger.info("  - Apex Goto Definition Tool");
+    logger.info("  - Apex Find Definition Tool");
     logger.info("  - Workspace Resource");
 
     // Create transport provider
@@ -121,7 +121,7 @@ public class MCPServer {
             .tools(
                 sfdxDiagnosticsTool.getSpecification(),
                 findUsagesTool.getSpecification(),
-                gotoDefinitionTool.getSpecification())
+                findDefinitionTool.getSpecification())
             .resources(workspaceResource.getSpecification());
 
     // Build the server - transport provider handles lifecycle

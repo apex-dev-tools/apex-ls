@@ -22,14 +22,14 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * MCP tool for navigating to the definition of an Apex identifier. Uses the bridge to communicate
- * with the apex-ls core (Java 8) from this Java 17 MCP server.
+ * MCP tool for finding the definition of an Apex identifier. Uses the bridge to communicate with
+ * the apex-ls core (Java 8) from this Java 17 MCP server.
  */
-public class ApexGotoDefinitionTool {
+public class ApexFindDefinitionTool {
 
   private final ApexLsBridge bridge;
 
-  public ApexGotoDefinitionTool(ApexLsBridge bridge) {
+  public ApexFindDefinitionTool(ApexLsBridge bridge) {
     this.bridge = bridge;
   }
 
@@ -56,8 +56,8 @@ public class ApexGotoDefinitionTool {
 
     Tool tool =
         new Tool(
-            "apex_goto_definition",
-            "Navigate to the definition of an Apex identifier at a specific position",
+            "apex_find_definition",
+            "Find the definition location for Apex types (classes, interfaces, enums, triggers), members (methods, constructors, fields, properties), variables (local, parameters), and platform objects (standard/custom SObjects and fields)",
             schema);
 
     return new McpServerFeatures.SyncToolSpecification(tool, this::execute);

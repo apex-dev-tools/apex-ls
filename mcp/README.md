@@ -68,8 +68,8 @@ Finds all usages of an identifier at a specific location.
 - `line` (required) - Line number (1-based)
 - `offset` (required) - Character offset within the line
 
-### apex_goto_definition
-Gets the definition location for an identifier at a specific position.
+### apex_find_definition
+Finds the definition location for Apex types (classes, interfaces, enums, triggers), members (methods, constructors, fields, properties), variables (local, parameters), and platform objects (standard/custom SObjects and fields).
 
 **Parameters:**
 - `workspace` (required) - Path to the Apex workspace directory

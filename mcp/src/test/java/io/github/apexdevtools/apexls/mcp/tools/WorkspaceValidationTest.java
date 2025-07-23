@@ -40,13 +40,13 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
     
     private SfdxCodeDiagnosticsTool sfdxDiagnosticsTool;
     private ApexFindUsagesTool findUsagesTool;
-    private ApexGotoDefinitionTool gotoDefinitionTool;
+    private ApexFindDefinitionTool findDefinitionTool;
     
     @BeforeEach 
     void setUpTools() {
         sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
         findUsagesTool = new ApexFindUsagesTool(bridge);
-        gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
+        findDefinitionTool = new ApexFindDefinitionTool(bridge);
     }
     
     @Test
@@ -155,13 +155,13 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
     }
     
     @Test
-    @DisplayName("ApexGotoDefinitionTool should validate workspace from path")
-    void apexGotoDefinitionToolShouldValidateWorkspaceFromPath() throws Exception {
+    @DisplayName("ApexFindDefinitionTool should validate workspace from path")
+    void apexFindDefinitionToolShouldValidateWorkspaceFromPath() throws Exception {
         Map<String, Object> args = createArgumentsMap(
             "path", "/non/existent/path/file.cls", 
             "line", 1, 
             "offset", 10);
-        CallToolResult result = executeTool(gotoDefinitionTool, args);
+        CallToolResult result = executeTool(findDefinitionTool, args);
         
         assertNotNull(result);
         assertTrue(result.isError());
@@ -194,7 +194,7 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         // Test goto definition tool
         Map<String, Object> definitionArgs = createArgumentsMap(
             "path", invalidPath + "/some/file.cls", "line", 1, "offset", 10);
-        CallToolResult definitionResult = executeTool(gotoDefinitionTool, definitionArgs);
+        CallToolResult definitionResult = executeTool(findDefinitionTool, definitionArgs);
         assertNotNull(definitionResult);
         assertTrue(definitionResult.isError());
         assertTrue(getContentAsString(definitionResult).contains("sfdx-project.json"));
@@ -230,7 +230,7 @@ class WorkspaceValidationTest extends BaseMCPToolTest {
         Map<String, Object> definitionArgs = createArgumentsMap(
             "path", validWorkspace + "/force-app/main/default/classes/TestClass.cls", 
             "line", 1, "offset", 10);
-        CallToolResult definitionResult = executeTool(gotoDefinitionTool, definitionArgs);
+        CallToolResult definitionResult = executeTool(findDefinitionTool, definitionArgs);
         assertNotNull(definitionResult);
         // Should not have workspace validation errors
         assertFalse(getContentAsString(definitionResult).contains("workspace argument is required"));

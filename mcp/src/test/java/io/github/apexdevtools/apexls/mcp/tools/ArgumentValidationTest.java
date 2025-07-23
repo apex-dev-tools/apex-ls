@@ -29,12 +29,12 @@ import org.junit.jupiter.api.Test;
 class ArgumentValidationTest extends BaseMCPToolTest {
 
   private ApexFindUsagesTool findUsagesTool;
-  private ApexGotoDefinitionTool gotoDefinitionTool;
+  private ApexFindDefinitionTool findDefinitionTool;
 
   @BeforeEach
   void setUpTools() {
     findUsagesTool = new ApexFindUsagesTool(bridge);
-    gotoDefinitionTool = new ApexGotoDefinitionTool(bridge);
+    findDefinitionTool = new ApexFindDefinitionTool(bridge);
   }
 
   @Test
@@ -137,10 +137,10 @@ class ArgumentValidationTest extends BaseMCPToolTest {
   }
 
   @Test
-  @DisplayName("ApexGotoDefinitionTool should reject missing path argument")
-  void gotoDefinitionToolShouldRejectMissingPathArgument() throws Exception {
+  @DisplayName("ApexFindDefinitionTool should reject missing path argument")
+  void findDefinitionToolShouldRejectMissingPathArgument() throws Exception {
     Map<String, Object> args = createArgumentsMap("line", 1, "offset", 10);
-    CallToolResult result = executeTool(gotoDefinitionTool, args);
+    CallToolResult result = executeTool(findDefinitionTool, args);
 
     assertNotNull(result);
     assertTrue(result.isError());
@@ -148,10 +148,10 @@ class ArgumentValidationTest extends BaseMCPToolTest {
   }
 
   @Test
-  @DisplayName("ApexGotoDefinitionTool should reject missing line argument")
-  void gotoDefinitionToolShouldRejectMissingLineArgument() throws Exception {
+  @DisplayName("ApexFindDefinitionTool should reject missing line argument")
+  void findDefinitionToolShouldRejectMissingLineArgument() throws Exception {
     Map<String, Object> args = createArgumentsMap("path", "/some/file.cls", "offset", 10);
-    CallToolResult result = executeTool(gotoDefinitionTool, args);
+    CallToolResult result = executeTool(findDefinitionTool, args);
 
     assertNotNull(result);
     assertTrue(result.isError());
@@ -159,10 +159,10 @@ class ArgumentValidationTest extends BaseMCPToolTest {
   }
 
   @Test
-  @DisplayName("ApexGotoDefinitionTool should reject missing offset argument")
-  void gotoDefinitionToolShouldRejectMissingOffsetArgument() throws Exception {
+  @DisplayName("ApexFindDefinitionTool should reject missing offset argument")
+  void findDefinitionToolShouldRejectMissingOffsetArgument() throws Exception {
     Map<String, Object> args = createArgumentsMap("path", "/some/file.cls", "line", 1);
-    CallToolResult result = executeTool(gotoDefinitionTool, args);
+    CallToolResult result = executeTool(findDefinitionTool, args);
 
     assertNotNull(result);
     assertTrue(result.isError());
@@ -170,10 +170,10 @@ class ArgumentValidationTest extends BaseMCPToolTest {
   }
 
   @Test
-  @DisplayName("ApexGotoDefinitionTool should reject empty path argument")
-  void gotoDefinitionToolShouldRejectEmptyPathArgument() throws Exception {
+  @DisplayName("ApexFindDefinitionTool should reject empty path argument")
+  void findDefinitionToolShouldRejectEmptyPathArgument() throws Exception {
     Map<String, Object> args = createArgumentsMap("path", "", "line", 1, "offset", 10);
-    CallToolResult result = executeTool(gotoDefinitionTool, args);
+    CallToolResult result = executeTool(findDefinitionTool, args);
 
     assertNotNull(result);
     assertTrue(result.isError());
@@ -181,10 +181,10 @@ class ArgumentValidationTest extends BaseMCPToolTest {
   }
 
   @Test
-  @DisplayName("ApexGotoDefinitionTool should reject non-integer line argument")
-  void gotoDefinitionToolShouldRejectNonIntegerLineArgument() throws Exception {
+  @DisplayName("ApexFindDefinitionTool should reject non-integer line argument")
+  void findDefinitionToolShouldRejectNonIntegerLineArgument() throws Exception {
     Map<String, Object> args = createArgumentsMap("path", "/some/file.cls", "line", "invalid", "offset", 10);
-    CallToolResult result = executeTool(gotoDefinitionTool, args);
+    CallToolResult result = executeTool(findDefinitionTool, args);
 
     assertNotNull(result);
     assertTrue(result.isError());
@@ -192,10 +192,10 @@ class ArgumentValidationTest extends BaseMCPToolTest {
   }
 
   @Test
-  @DisplayName("ApexGotoDefinitionTool should reject negative line argument")
-  void gotoDefinitionToolShouldRejectNegativeLineArgument() throws Exception {
+  @DisplayName("ApexFindDefinitionTool should reject negative line argument")
+  void findDefinitionToolShouldRejectNegativeLineArgument() throws Exception {
     Map<String, Object> args = createArgumentsMap("path", "/some/file.cls", "line", -1, "offset", 10);
-    CallToolResult result = executeTool(gotoDefinitionTool, args);
+    CallToolResult result = executeTool(findDefinitionTool, args);
 
     assertNotNull(result);
     assertTrue(result.isError());
@@ -203,10 +203,10 @@ class ArgumentValidationTest extends BaseMCPToolTest {
   }
 
   @Test
-  @DisplayName("ApexGotoDefinitionTool should reject zero line argument")
-  void gotoDefinitionToolShouldRejectZeroLineArgument() throws Exception {
+  @DisplayName("ApexFindDefinitionTool should reject zero line argument")
+  void findDefinitionToolShouldRejectZeroLineArgument() throws Exception {
     Map<String, Object> args = createArgumentsMap("path", "/some/file.cls", "line", 0, "offset", 10);
-    CallToolResult result = executeTool(gotoDefinitionTool, args);
+    CallToolResult result = executeTool(findDefinitionTool, args);
 
     assertNotNull(result);
     assertTrue(result.isError());
@@ -214,10 +214,10 @@ class ArgumentValidationTest extends BaseMCPToolTest {
   }
 
   @Test
-  @DisplayName("ApexGotoDefinitionTool should reject negative offset argument")
-  void gotoDefinitionToolShouldRejectNegativeOffsetArgument() throws Exception {
+  @DisplayName("ApexFindDefinitionTool should reject negative offset argument")
+  void findDefinitionToolShouldRejectNegativeOffsetArgument() throws Exception {
     Map<String, Object> args = createArgumentsMap("path", "/some/file.cls", "line", 1, "offset", -1);
-    CallToolResult result = executeTool(gotoDefinitionTool, args);
+    CallToolResult result = executeTool(findDefinitionTool, args);
 
     assertNotNull(result);
     assertTrue(result.isError());
@@ -239,9 +239,9 @@ class ArgumentValidationTest extends BaseMCPToolTest {
     assertFalse(getContentAsString(referencesResult).contains("must be integers"));
     assertFalse(getContentAsString(referencesResult).contains("must be non-negative"));
 
-    // Test ApexGotoDefinitionTool with valid arguments  
+    // Test ApexFindDefinitionTool with valid arguments  
     Map<String, Object> definitionArgs = createArgumentsMap("path", validPath, "line", 1, "offset", 10);
-    CallToolResult definitionResult = executeTool(gotoDefinitionTool, definitionArgs);
+    CallToolResult definitionResult = executeTool(findDefinitionTool, definitionArgs);
     assertNotNull(definitionResult);
     // Should not have argument validation errors
     assertFalse(getContentAsString(definitionResult).contains("argument is required"));
