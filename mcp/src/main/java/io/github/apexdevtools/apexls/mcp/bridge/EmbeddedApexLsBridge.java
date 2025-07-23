@@ -426,6 +426,39 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
     }
   }
 
+  /** Create definition response for empty results. */
+  private String createDefinitionResponse(int count, String message) {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "apex_find_definition");
+      response.put("status", "success");
+      response.put("summary", message != null ? message : "No definitions found");
+
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total", count);
+      response.set("counts", counts);
+
+      response.set("definitions", objectMapper.createArrayNode());
+
+      return objectMapper.writeValueAsString(response);
+    } catch (Exception ex) {
+      return "{\"status\":\"success\",\"summary\":\"No definitions found\"}";
+    }
+  }
+
+  /** Create error response for definition formatting failures. */
+  private String createDefinitionErrorResponse(String errorMessage) {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "apex_find_definition");
+      response.put("status", "error");
+      response.put("summary", errorMessage);
+      return objectMapper.writeValueAsString(response);
+    } catch (Exception ex) {
+      return "{\"status\":\"error\",\"summary\":\"" + errorMessage + "\"}";
+    }
+  }
+
   /** Convert TargetLocation instance to structured JSON. */
   private ObjectNode convertTargetLocationToJson(TargetLocation targetLocation) {
     ObjectNode refNode = objectMapper.createObjectNode();
@@ -459,6 +492,52 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
     }
 
     return refNode;
+  }
+
+  /** Convert LocationLink instance to structured JSON. */
+  private ObjectNode convertLocationLinkToJson(LocationLink locationLink) {
+    ObjectNode defNode = objectMapper.createObjectNode();
+
+    try {
+      // Get file path
+      defNode.put("file", locationLink.targetPath());
+
+      // Get location information from target range
+      var target = locationLink.target();
+      defNode.put("line", target.startLine());
+      defNode.put("column", target.startPosition());
+      defNode.put("endLine", target.endLine());
+      defNode.put("endColumn", target.endPosition());
+
+      // Get target selection information
+      var targetSelection = locationLink.targetSelection();
+      defNode.put("targetLine", targetSelection.startLine());
+      defNode.put("targetColumn", targetSelection.startPosition());
+      defNode.put("targetEndLine", targetSelection.endLine());
+      defNode.put("targetEndColumn", targetSelection.endPosition());
+
+      // Add metadata
+      defNode.put("source", "apex-ls");
+      defNode.put("type", "definition");
+
+    } catch (Exception ex) {
+      logger.debug("Error accessing LocationLink properties", ex);
+      // Fallback to string representation
+      defNode.put("file", "unknown");
+      defNode.put("line", 0);
+      defNode.put("column", 0);
+      defNode.put("endLine", 0);
+      defNode.put("endColumn", 0);
+      defNode.put("targetLine", 0);
+      defNode.put("targetColumn", 0);
+      defNode.put("targetEndLine", 0);
+      defNode.put("targetEndColumn", 0);
+      defNode.put("source", "apex-ls");
+      defNode.put("type", "definition");
+      defNode.put("raw", locationLink.toString());
+    }
+
+    return defNode;
   }
 
   /** Convert TargetLocation[] array to Enhanced JSON format for AI consumption. */
@@ -499,45 +578,41 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
     }
   }
 
-  /** Convert LocationLink[] array to JSON string representation. */
+  /** Convert LocationLink[] array to Enhanced JSON format for AI consumption. */
   private String convertLocationLinksToJson(LocationLink[] locationLinks) {
-    if (locationLinks == null || locationLinks.length == 0) {
-      return "Definition not found";
+    if (locationLinks == null) {
+      return createDefinitionResponse(0, null);
     }
 
     try {
-      StringBuilder json = new StringBuilder();
-      json.append("Found ").append(locationLinks.length).append(" definition(s):\\n");
-
-      for (int i = 0; i < locationLinks.length; i++) {
-        LocationLink link = locationLinks[i];
-        json.append((i + 1)).append(". ");
-        json.append("File: ").append(link.targetPath()).append("\\n");
-        json.append("   Target: ").append(link.target()).append("\\n");
-        json.append("   Selection: ").append(link.targetSelection()).append("\\n");
-        if (i < locationLinks.length - 1) {
-          json.append("\\n");
-        }
+      if (locationLinks.length == 0) {
+        return createDefinitionResponse(0, null);
       }
-      return json.toString();
+
+      // Create enhanced JSON structure
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "apex_find_definition");
+      response.put("status", "completed");
+      response.put("summary", "Found " + locationLinks.length + " definition(s)");
+
+      // Add counts
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total", locationLinks.length);
+      response.set("counts", counts);
+
+      // Convert each location link to structured JSON
+      ArrayNode definitionList = objectMapper.createArrayNode();
+      for (LocationLink locationLink : locationLinks) {
+        ObjectNode defNode = convertLocationLinkToJson(locationLink);
+        definitionList.add(defNode);
+      }
+
+      response.set("definitions", definitionList);
+      return objectMapper.writeValueAsString(response);
 
     } catch (Exception ex) {
       logger.warn("Error converting location links to JSON", ex);
-      return "Error formatting definitions: " + ex.getMessage();
-    }
-  }
-
-  /** Convert IdentifierLocationResult to JSON string representation. */
-  private String convertIdentifierLocationToJson(Object identifierLocationResult) {
-    if (identifierLocationResult == null) {
-      return "Definition not found";
-    }
-
-    try {
-      return "Definition found: " + identifierLocationResult.toString();
-    } catch (Exception ex) {
-      logger.warn("Error converting identifier location to JSON", ex);
-      return "Error formatting definition: " + ex.getMessage();
+      return createDefinitionErrorResponse("Error formatting definitions: " + ex.getMessage());
     }
   }
 }
