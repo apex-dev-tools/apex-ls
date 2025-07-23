@@ -352,8 +352,11 @@ object TestHelper {
     if (loc.startLine == loc.endLine) {
       return lines(loc.startLine - 1).substring(loc.startCharOffset(), loc.endCharOffset())
     }
+
+    // may be Location.all/Int.MaxValue
+    val endLine = if (loc.endLine > lines.length) lines.length else loc.endLine
     lines(loc.startLine - 1).substring(loc.startPosition, lines(loc.startLine - 1).length) + lines(
-      loc.endLine - 1
+      endLine - 1
     ).substring(0, loc.endPosition)
   }
 }
