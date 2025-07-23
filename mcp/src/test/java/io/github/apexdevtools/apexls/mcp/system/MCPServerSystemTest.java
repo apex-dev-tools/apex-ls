@@ -314,6 +314,64 @@ class MCPServerSystemTest {
     }
     
     @Test
+    @DisplayName("Should execute apex_find_impacted_tests tool via MCP protocol")
+    @Timeout(30)
+    void shouldExecuteApexFindImpactedTestsToolViaMCPProtocol() throws Exception {
+        startMCPServer();
+        initializeMCPConnection();
+        
+        String testFilePath1 = testWorkspacePath + "/force-app/main/default/classes/TestClass.cls";
+        String testFilePath2 = testWorkspacePath + "/force-app/main/default/classes/AnotherClass.cls";
+        
+        // Send tool call request
+        Map<String, Object> toolCallRequest = createMCPRequest("tools/call", Map.of(
+            "name", "apex_find_impacted_tests",
+            "arguments", Map.of(
+                "changed_paths", java.util.List.of(testFilePath1, testFilePath2)
+            )
+        ));
+        
+        sendMCPRequest(toolCallRequest);
+        
+        // Read response
+        JsonNode response = readMCPResponse();
+        assertNotNull(response);
+        assertTrue(response.has("result"), "Tool call should return result");
+        
+        JsonNode result = response.get("result");
+        assertTrue(result.has("content"), "Result should contain content");
+        
+        JsonNode content = result.get("content");
+        assertTrue(content.isArray(), "Content should be an array");
+        assertTrue(content.size() > 0, "Content should not be empty");
+        
+        String contentText = content.get(0).get("text").asText();
+        assertNotNull(contentText);
+        assertFalse(contentText.trim().isEmpty());
+        
+        // Validate JSON structure of response
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode responseJson = mapper.readTree(contentText);
+        
+        assertTrue(responseJson.has("tool"), "Response should contain tool field");
+        assertEquals("apex_find_impacted_tests", responseJson.get("tool").asText());
+        
+        assertTrue(responseJson.has("status"), "Response should contain status field");
+        assertEquals("completed", responseJson.get("status").asText());
+        
+        assertTrue(responseJson.has("impacted_test_files"), "Response should contain impacted_test_files");
+        assertTrue(responseJson.get("impacted_test_files").isArray(), "impacted_test_files should be array");
+        
+        assertTrue(responseJson.has("counts"), "Response should contain counts");
+        JsonNode counts = responseJson.get("counts");
+        assertTrue(counts.has("total_impacted_tests"), "Counts should contain total_impacted_tests");
+        assertTrue(counts.has("changed_files_analyzed"), "Counts should contain changed_files_analyzed");
+        assertTrue(counts.has("workspaces_analyzed"), "Counts should contain workspaces_analyzed");
+        
+        logger.info("Successfully executed apex_find_impacted_tests tool");
+    }
+    
+    @Test
     @DisplayName("Should handle tool call with invalid arguments")
     @Timeout(30)
     void shouldHandleToolCallWithInvalidArguments() throws Exception {

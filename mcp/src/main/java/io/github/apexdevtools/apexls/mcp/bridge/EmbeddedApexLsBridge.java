@@ -17,15 +17,22 @@ package io.github.apexdevtools.apexls.mcp.bridge;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nawforce.apexlink.rpc.ClassTestItem;
 import com.nawforce.apexlink.rpc.GetIssuesResult;
 import com.nawforce.apexlink.rpc.LocationLink;
 import com.nawforce.apexlink.rpc.OrgAPI;
 import com.nawforce.apexlink.rpc.OrgAPIImpl;
 import com.nawforce.apexlink.rpc.TargetLocation;
+import com.nawforce.apexlink.rpc.TestClassItemsResult;
 import com.nawforce.pkgforce.diagnostics.Issue;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.Future;
@@ -213,6 +220,31 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
 
     } catch (Exception ex) {
       logger.error("Error calling getVersion via bridge", ex);
+      return CompletableFuture.failedFuture(ex);
+    }
+  }
+
+  @Override
+  public CompletableFuture<String> getTestClassItemsChanged(
+      String workspaceDirectory, String[] changedPaths) {
+    if (!isReady()) {
+      return CompletableFuture.failedFuture(new IllegalStateException("Bridge not initialized"));
+    }
+
+    try {
+      // Get or create OrgAPI instance for this workspace
+      OrgAPI orgAPI = getOrCreateOrgAPI(workspaceDirectory);
+
+      // Call OrgAPI.getTestClassItemsChanged() with the array of changed paths
+      Future<?> scalaFuture = orgAPI.getTestClassItemsChanged(changedPaths);
+
+      // Convert Scala Future to Java CompletableFuture and then to JSON
+      // Pass the original changed paths for filtering
+      return convertScalaFuture(scalaFuture)
+          .thenApply(result -> convertTestClassItemsResultToJson(result, changedPaths));
+
+    } catch (Exception ex) {
+      logger.error("Error calling getTestClassItemsChanged via bridge", ex);
       return CompletableFuture.failedFuture(ex);
     }
   }
@@ -614,5 +646,122 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       logger.warn("Error converting location links to JSON", ex);
       return createDefinitionErrorResponse("Error formatting definitions: " + ex.getMessage());
     }
+  }
+
+  /** Convert TestClassItemsResult to simplified JSON format for the impacted tests tool. */
+  private String convertTestClassItemsResultToJson(Object result, String[] originalChangedPaths) {
+    if (result == null) {
+      return createImpactedTestsResponse(new String[0]);
+    }
+
+    try {
+      // Cast to TestClassItemsResult - this is the return type from getTestClassItemsChanged
+      TestClassItemsResult testResult = (TestClassItemsResult) result;
+      ClassTestItem[] items = testResult.items();
+
+      if (items == null || items.length == 0) {
+        return createImpactedTestsResponse(new String[0]);
+      }
+
+      // Extract file paths from ClassTestItem objects and filter out original changed files
+      List<String> testFilePaths =
+          Arrays.stream(items)
+              .map(item -> item.targetLocation().targetPath())
+              .collect(Collectors.toList());
+
+      // Filter out test files that correspond to the original changed files
+      // This is a workaround to exclude test classes that were in the original input
+      List<String> filteredTestPaths =
+          filterOutOriginalChangedFiles(testFilePaths, originalChangedPaths);
+
+      return createImpactedTestsResponse(filteredTestPaths.toArray(new String[0]));
+
+    } catch (Exception ex) {
+      logger.warn("Error converting test class items to JSON", ex);
+      return createImpactedTestsErrorResponse(
+          "Error formatting impacted tests: " + ex.getMessage());
+    }
+  }
+
+  /** Create a success response for impacted tests with simplified JSON format. */
+  private String createImpactedTestsResponse(String[] testFilePaths) {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "apex_find_impacted_tests");
+      response.put("status", "completed");
+      response.put("summary", "Found " + testFilePaths.length + " impacted test class(es)");
+
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total_impacted_tests", testFilePaths.length);
+      response.set("counts", counts);
+
+      ArrayNode testFiles = objectMapper.createArrayNode();
+      for (String filePath : testFilePaths) {
+        testFiles.add(filePath);
+      }
+      response.set("impacted_test_files", testFiles);
+
+      return objectMapper.writeValueAsString(response);
+
+    } catch (Exception ex) {
+      logger.warn("Error creating impacted tests response", ex);
+      return createImpactedTestsErrorResponse("Error creating response: " + ex.getMessage());
+    }
+  }
+
+  /** Create an error response for impacted tests. */
+  private String createImpactedTestsErrorResponse(String errorMessage) {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", "apex_find_impacted_tests");
+      response.put("status", "error");
+      response.put("summary", errorMessage);
+
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total_impacted_tests", 0);
+      response.set("counts", counts);
+
+      ArrayNode testFiles = objectMapper.createArrayNode();
+      response.set("impacted_test_files", testFiles);
+
+      return objectMapper.writeValueAsString(response);
+
+    } catch (Exception ex) {
+      logger.error("Error creating impacted tests error response", ex);
+      return "{\"tool\":\"apex_find_impacted_tests\",\"status\":\"error\",\"summary\":\"Internal error\"}";
+    }
+  }
+
+  /**
+   * Filter out test files that correspond to the original changed files. This is a workaround for
+   * the fact that getTestClassItemsChanged returns test classes that were in the original input,
+   * but we only want tests that are impacted by the changes.
+   */
+  private List<String> filterOutOriginalChangedFiles(
+      List<String> testFilePaths, String[] originalChangedPaths) {
+    // Extract class names from original changed paths (remove .cls extension and path)
+    Set<String> originalClassNames =
+        Arrays.stream(originalChangedPaths)
+            .map(
+                path -> {
+                  String fileName = Paths.get(path).getFileName().toString();
+                  return fileName.endsWith(".cls")
+                      ? fileName.substring(0, fileName.length() - 4)
+                      : fileName;
+                })
+            .collect(Collectors.toSet());
+
+    // Filter out test files that have the same class name as the original changed files
+    return testFilePaths.stream()
+        .filter(
+            testPath -> {
+              String testFileName = Paths.get(testPath).getFileName().toString();
+              String testClassName =
+                  testFileName.endsWith(".cls")
+                      ? testFileName.substring(0, testFileName.length() - 4)
+                      : testFileName;
+              return !originalClassNames.contains(testClassName);
+            })
+        .collect(Collectors.toList());
   }
 }

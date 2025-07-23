@@ -18,6 +18,7 @@ import io.github.apexdevtools.apexls.mcp.bridge.ApexLsBridge;
 import io.github.apexdevtools.apexls.mcp.bridge.EmbeddedApexLsBridge;
 import io.github.apexdevtools.apexls.mcp.resources.WorkspaceResource;
 import io.github.apexdevtools.apexls.mcp.tools.ApexFindDefinitionTool;
+import io.github.apexdevtools.apexls.mcp.tools.ApexFindImpactedTestsTool;
 import io.github.apexdevtools.apexls.mcp.tools.ApexFindUsagesTool;
 import io.github.apexdevtools.apexls.mcp.tools.SfdxCodeDiagnosticsTool;
 import io.modelcontextprotocol.server.McpServer;
@@ -43,6 +44,7 @@ public class MCPServer {
   private SfdxCodeDiagnosticsTool sfdxDiagnosticsTool;
   private ApexFindUsagesTool findUsagesTool;
   private ApexFindDefinitionTool findDefinitionTool;
+  private ApexFindImpactedTestsTool findImpactedTestsTool;
   private WorkspaceResource workspaceResource;
 
   public MCPServer() {
@@ -103,11 +105,13 @@ public class MCPServer {
     sfdxDiagnosticsTool = new SfdxCodeDiagnosticsTool(bridge);
     findUsagesTool = new ApexFindUsagesTool(bridge);
     findDefinitionTool = new ApexFindDefinitionTool(bridge);
+    findImpactedTestsTool = new ApexFindImpactedTestsTool(bridge);
     workspaceResource = new WorkspaceResource(bridge);
 
     logger.info("  - SFDX Code Diagnostics Tool");
     logger.info("  - Apex Find Usages Tool");
     logger.info("  - Apex Find Definition Tool");
+    logger.info("  - Apex Find Impacted Tests Tool");
     logger.info("  - Workspace Resource");
 
     // Create transport provider
@@ -121,7 +125,8 @@ public class MCPServer {
             .tools(
                 sfdxDiagnosticsTool.getSpecification(),
                 findUsagesTool.getSpecification(),
-                findDefinitionTool.getSpecification())
+                findDefinitionTool.getSpecification(),
+                findImpactedTestsTool.getSpecification())
             .resources(workspaceResource.getSpecification());
 
     // Build the server - transport provider handles lifecycle

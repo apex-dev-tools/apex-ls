@@ -89,6 +89,16 @@ public interface ApexLsBridge extends AutoCloseable {
    */
   CompletableFuture<String> getVersion();
 
+  /**
+   * Find test classes that should be run based on changes to specific source files.
+   *
+   * @param workspaceDirectory path to workspace
+   * @param changedPaths array of file paths that have been changed
+   * @return future containing impacted test classes in JSON format
+   */
+  CompletableFuture<String> getTestClassItemsChanged(
+      String workspaceDirectory, String[] changedPaths);
+
   /** Shutdown the bridge and release resources. */
   @Override
   void close() throws Exception;
