@@ -16,7 +16,7 @@ package com.nawforce.apexlink.org
 import com.nawforce.apexlink.org.TextOps.TestOpsUtils
 import com.nawforce.apexlink.rpc.LocationLink
 import com.nawforce.apexlink.types.apex.ApexFullDeclaration
-import com.nawforce.pkgforce.path.{IdLocatable, Locatable, PathLike, UnsafeLocatable}
+import com.nawforce.pkgforce.path.{IdLocatable, Locatable, Location, PathLike, UnsafeLocatable}
 
 trait DefinitionProvider extends SourceOps {
   this: OPM.PackageImpl =>
@@ -35,8 +35,8 @@ trait DefinitionProvider extends SourceOps {
     getFromValidation(sourceAndType.get._2, line, offset)
       .orElse({
 
-        val source   = sourceAndType.get._1
-        val sourceTD = sourceAndType.get._2
+        val source     = sourceAndType.get._1
+        val sourceType = sourceAndType.get._2
         val searchTermAndLocation =
           source.extractDotTermInclusive(() => new IdentifierLimiter, line, offset)
         if (searchTermAndLocation.isEmpty)
@@ -44,15 +44,10 @@ trait DefinitionProvider extends SourceOps {
         val searchTerm     = searchTermAndLocation.get._1
         val sourceLocation = searchTermAndLocation.get._2
 
-        sourceTD
+        sourceType
           .findDeclarationFromSourceReference(searchTerm, sourceLocation)
-          .map(ad => {
-            LocationLink(
-              sourceLocation,
-              ad.location.path.toString,
-              ad.location.location,
-              ad.idLocation
-            )
+          .flatMap(targetType => {
+            resolveLocation(sourceLocation, targetType)
           })
       })
       .toArray
@@ -65,21 +60,25 @@ trait DefinitionProvider extends SourceOps {
   ): Option[LocationLink] = {
     val validation = locateFromValidation(td, line, offset)
 
-    validation._2.flatMap(loc => {
-      // If the result has a locatable we can use that as the target, beware the order here matters due
-      // to both inheritance and some objects supporting multiple Locatable traits
-      validation._1(loc).result.locatable match {
-        case Some(l: IdLocatable) =>
-          Some(LocationLink(loc, l.location.path.toString, l.location.location, l.idLocation))
-        case Some(l: UnsafeLocatable) =>
-          Option(l.location).map(l => LocationLink(loc, l.path.toString, l.location, l.location))
-        case Some(l: Locatable) =>
-          Some(
-            LocationLink(loc, l.location.path.toString, l.location.location, l.location.location)
-          )
-        case _ =>
-          None
-      }
+    validation._2.flatMap(source => {
+      validation._1(source).result.locatable.flatMap(target => resolveLocation(source, target))
     })
+  }
+
+  private def resolveLocation(source: Location, target: Locatable): Option[LocationLink] = {
+    // Beware the order here matters due to both inheritance and some objects
+    // supporting multiple Locatable traits
+    target match {
+      case l: IdLocatable =>
+        Some(LocationLink(source, l.location.path.toString, l.location.location, l.idLocation))
+      case l: UnsafeLocatable =>
+        Option(l.location).map(l => LocationLink(source, l.path.toString, l.location, l.location))
+      case l: Locatable =>
+        Some(
+          LocationLink(source, l.location.path.toString, l.location.location, l.location.location)
+        )
+      case _ =>
+        None
+    }
   }
 }
