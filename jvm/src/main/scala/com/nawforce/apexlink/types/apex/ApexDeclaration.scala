@@ -232,7 +232,7 @@ trait ApexFullDeclaration extends ApexDeclaration {
   def findDeclarationFromSourceReference(
     searchTerm: String,
     location: Location
-  ): Option[ApexDeclaration]
+  ): Option[TypeDeclaration with Locatable]
 }
 
 /** Apex defined trigger of either full or summary type */

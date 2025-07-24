@@ -26,7 +26,7 @@ import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.modifiers.{Modifier, ModifierOps}
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{Nature, TRIGGER_NATURE}
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
 import io.github.apexdevtools.apexparser.ApexParser.{
   TriggerBlockMemberContext,
@@ -171,14 +171,14 @@ final case class TriggerDeclaration(
     )
   }
 
-  /** Locate an ApexDeclaration for the passed typeName that was extracted from location. */
+  /** Locate a TypeDeclaration for the passed typeName that was extracted from location. */
   override def findDeclarationFromSourceReference(
     searchTerm: String,
     location: Location
-  ): Option[ApexDeclaration] = {
+  ): Option[TypeDeclaration with Locatable] = {
     TypeName(searchTerm).toOption match {
       case Some(typeName: TypeName) =>
-        TypeResolver(typeName, this).toOption.collect { case td: ApexClassDeclaration => td }
+        TypeResolver(typeName, this).toOption.collect { case td: Locatable => td }
       case _ => None
     }
   }

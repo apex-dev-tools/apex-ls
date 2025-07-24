@@ -545,4 +545,33 @@ class DefinitionProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("SObject variable typename") {
+    val contentAndCursorPos =
+      withCursor(s"public class Bar { { Foo${CURSOR}__c foo; } }")
+
+    FileSystemHelper.run(
+      Map(
+        "Bar.cls"                               -> contentAndCursorPos._1,
+        "objects/Foo__c/Foo__c.object-meta.xml" -> customObject("Foo", Seq())
+      )
+    ) { root: PathLike =>
+      val org = createHappyOrg(root)
+      val definition = org.unmanaged
+        .getDefinition(root.join("Bar.cls"), line = 1, offset = contentAndCursorPos._2, None)
+        .map(LocationLinkString(root, contentAndCursorPos._1, _))
+
+      assert(
+        definition sameElements
+          Array(
+            LocationLinkString(
+              "Foo__c",
+              path"/objects/Foo__c/Foo__c.object-meta.xml",
+              "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
+              "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            )
+          )
+      )
+    }
+  }
+
 }
