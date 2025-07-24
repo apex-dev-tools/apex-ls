@@ -17,7 +17,7 @@ Located in `src/test/java/io/github/apexdevtools/apexls/mcp/system/MCPServerSyst
 1. **Server Startup Test** - Verifies the MCP server process starts successfully and accepts the initial MCP protocol handshake
 2. **Tool Discovery Test** - Validates that all expected MCP tools are discoverable via the `tools/list` protocol method
 3. **Resource Discovery Test** - Confirms that MCP resources are properly exposed via the `resources/list` protocol method  
-4. **Tool Execution Test** - Tests end-to-end execution of the `apex_static_analysis` tool with real workspace data
+4. **Tool Execution Test** - Tests end-to-end execution of the `sfdx_code_diagnostics` tool with real workspace data
 
 ### Test Infrastructure
 
@@ -55,19 +55,17 @@ However, we opted for direct MCP protocol testing because:
 
 ### Execution
 
-**Method 1: Direct JUnit Execution (Recommended)**
+**SBT Test (Recommended)**
 ```bash
-java -cp "$(sbt 'export Test/fullClasspath' | tail -n 1)" org.junit.platform.console.ConsoleLauncher --scan-classpath --include-classname=".*MCPServerSystemTest.*"
-```
-
-**Method 2: SBT (Known Issue)**
-```bash
+# Run all tests
 sbt test
-# or for specific tests:
-sbt "testOnly io.github.apexdevtools.apexls.mcp.system.*"
-```
 
-⚠️ **Note**: There is currently a known issue with SBT/JUnit Jupiter integration where SBT doesn't detect the JUnit 5 tests despite proper configuration with jupiter-interface. The tests themselves work perfectly when run directly (Method 1). This is a common issue with SBT + JUnit Jupiter and doesn't affect the functionality of the tests.
+# Run only system tests
+sbt "testOnly io.github.apexdevtools.apexls.mcp.system.*"
+
+# Run a specific test class
+sbt "testOnly io.github.apexdevtools.apexls.mcp.system.MCPServerSystemTest"
+```
 
 ### Test Workspace
 
@@ -84,10 +82,11 @@ Successful system tests should demonstrate:
 
 1. **Clean Server Startup** - MCP server starts without errors and becomes ready to accept connections
 2. **Protocol Compliance** - Server properly implements MCP protocol handshake and message formats
-3. **Tool Registration** - All three expected tools are registered:
-   - `apex_static_analysis` - For code analysis and issue detection
+3. **Tool Registration** - All four expected tools are registered:
+   - `sfdx_code_diagnostics` - For code analysis and issue detection
    - `apex_find_usages` - For finding symbol usages
    - `apex_find_definition` - For finding symbol definitions
+   - `apex_find_impacted_tests` - For finding tests affected by code changes
 4. **Resource Exposure** - Workspace resources are properly exposed for client access
 5. **Functional Tools** - Tools execute successfully and return meaningful results
 

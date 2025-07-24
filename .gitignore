@@ -9,3 +9,6 @@ project/project/
 
 **/target/
 **/node_modules/
+
+# Property-based testing artifacts
+.jqwik-database

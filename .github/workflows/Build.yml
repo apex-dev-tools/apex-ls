@@ -37,6 +37,23 @@ jobs:
       - name: Test
         run: sbt test
 
+      - name: Build MCP Server (Regular)
+        run: |
+          cd mcp
+          sbt test
+          sbt buildRegular
+
+      - name: Build MCP Server (Standalone)
+        run: |
+          cd mcp
+          sbt buildStandalone
+
+      - name: Upload Standalone JAR as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-ls-mcp-standalone
+          path: mcp/target/scala-2.13/apex-ls-mcp-*-standalone.jar
+
       - name: Checkout samples repo
         uses: actions/checkout@v4
         with:

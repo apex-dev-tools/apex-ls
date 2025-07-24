@@ -15,67 +15,131 @@ The MCP server is built as a separate Java 17 project that depends on the main a
 
 ### Bridge Architecture
 
-The bridge uses reflection to communicate with the apex-ls core:
-- `EmbeddedApexLsBridge` - Embedded bridge that calls OrgAPI directly via reflection
-- `ApexLsBridge` - Interface defining bridge operations
-- Communication is done through JSON strings to avoid class compatibility issues
+The bridge provides a clean separation between the Java 17 MCP server and the Java 8 apex-ls core:
 
-## Building
+- **`ApexLsBridge`** - Interface defining async operations (getIssues, findUsages, getDefinition, etc.)
+- **`EmbeddedApexLsBridge`** - Implementation that accesses OrgAPI directly within the same JVM
+- **Async Communication** - Uses CompletableFuture with Scala Future conversion for non-blocking operations
+- **Workspace Caching** - OrgAPI instances are cached per workspace to avoid expensive initialization
+- **JSON Serialization** - Results are converted to JSON strings for MCP protocol compatibility
+
+**Bridge Operations:**
+- Static analysis (`getIssues`) - Used by SfdxCodeDiagnosticsTool
+- Find usages (`findUsages`) - Used by ApexFindUsagesTool  
+- Go to definition (`getDefinition`) - Used by ApexFindDefinitionTool
+- Test discovery (`getTestClassItemsChanged`) - Used by ApexFindImpactedTestsTool
+- Workspace metadata (`getWorkspaceInfo`) - Used by WorkspaceResource
+
+## Installation
+
+### For End Users (Recommended)
+
+Download the standalone JAR from [GitHub Releases](https://github.com/apex-dev-tools/apex-ls/releases):
+
+```bash
+curl -L -o apex-ls-mcp.jar \
+  "https://github.com/apex-dev-tools/apex-ls/releases/latest/download/apex-ls-mcp-standalone.jar"
+java -jar apex-ls-mcp.jar
+```
+
+### For Developers
+
+Add as Maven dependency:
+
+```xml
+<dependency>
+  <groupId>io.github.apex-dev-tools</groupId>
+  <artifactId>apex-ls-mcp</artifactId>
+  <version>5.9.0</version>
+</dependency>
+```
+
+### IDE Integration
+
+1. Download standalone JAR (Option 1 above)
+2. Configure your IDE:
+
+**VS Code** (`.vscode/mcp.json`):
+```json
+{
+  "apex-ls-mcp": {
+    "command": "java",
+    "args": ["-jar", "/path/to/apex-ls-mcp.jar"]
+  }
+}
+```
+
+**Claude Desktop**:
+```json
+{
+  "mcpServers": {
+    "apex-ls": {
+      "command": "java", 
+      "args": ["-jar", "/path/to/apex-ls-mcp.jar"]
+    }
+  }
+}
+```
+
+## Building from Source
 
 From the apex-ls root directory:
 
 ```bash
 # Build the main apex-ls project first
-sbt apexlsJVM/packageBin
+sbt build
 
-# Build the MCP server
-cd mcp && sbt build
+# Build MCP server (regular JAR for Maven Central)
+cd mcp && sbt buildRegular
+
+# Build standalone JAR for distribution
+cd mcp && sbt buildStandalone
 ```
 
 This creates:
-- `target/apex-ls-mcp-0.1.0-SNAPSHOT.jar` - The MCP server JAR
-- `target/apex-ls_*.jar` - Copy of the apex-ls JAR dependency
-- `target/lib/` - All runtime dependencies
+- `target/scala-2.13/apex-ls-mcp-*-standalone.jar` - Standalone JAR with all dependencies
+- `target/scala-2.13/apex-ls-mcp_*.jar` - Regular JAR for Maven dependencies
 
-## Running
+## Testing
 
 The MCP server communicates via stdin/stdout using the MCP protocol. 
 It can be tested with:
 
 ```bash
-cd mcp/target
-npx @modelcontextprotocol/inspector java -jar apex-ls-mcp-0.1.0-SNAPSHOT.jar
+npx @modelcontextprotocol/inspector java -jar apex-ls-mcp-standalone.jar
 ```
-
-The JAR includes a proper manifest with all dependencies in the classpath, so no additional setup is required.
 
 ## MCP Tools
 
-### apex_static_analysis
-Performs static analysis on Apex code to find errors, warnings, and unused code.
+### sfdx_code_diagnostics
+Analyzes SFDX projects for code issues, errors, and warnings across all Salesforce development artifacts.
 
 **Parameters:**
-- `workspace` (required) - Path to the Apex workspace directory
-- `includeWarnings` (optional) - Include warning-level issues
-- `includeUnused` (optional) - Include unused code analysis
+- `workspace` (required) - Path to the SFDX workspace directory
+- `includeWarnings` (optional) - Include warning-level issues in results (default: false)
+- `maxIssuesPerFile` (optional) - Maximum number of issues to return per file (default: 100, minimum: 1)
 
 ### apex_find_usages
-Finds all usages of an identifier at a specific location.
+Locate all references to any Apex identifier across the workspace.
 
 **Parameters:**
-- `workspace` (required) - Path to the Apex workspace directory  
-- `path` (required) - File path within the workspace
+- `path` (required) - Path to the Apex file
 - `line` (required) - Line number (1-based)
 - `offset` (required) - Character offset within the line
 
 ### apex_find_definition
-Finds the definition location for Apex types (classes, interfaces, enums, triggers), members (methods, constructors, fields, properties), variables (local, parameters), and platform objects (standard/custom SObjects and fields).
+Find the definition location for Apex types, members, variables, and platform objects.
 
 **Parameters:**
-- `workspace` (required) - Path to the Apex workspace directory
-- `path` (required) - File path within the workspace  
+- `path` (required) - Path to the Apex file
 - `line` (required) - Line number (1-based)
 - `offset` (required) - Character offset within the line
+
+### apex_find_impacted_tests
+Find test classes that should be run based on changes to specific Apex source files.
+
+**Parameters:**
+- `changed_paths` (required) - Array of file paths that have been changed
 
 ## MCP Resources
 

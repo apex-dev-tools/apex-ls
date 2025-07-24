@@ -50,6 +50,40 @@ The following arguments are available:
 | `--workspace` / `-w` | Workspace directory path, defaults to current directory. Must contain an `sfdx-project.json` file. | All                |
 | `--detail` / `-d`    | Detail level: `errors (default) \| warnings \| unused`                                             | CheckForIssues     |
 
+## Model Context Protocol (MCP) Support
+
+🧪 **Experimental**: The Apex Language Server now includes experimental support for the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), enabling AI tools and applications to interact with Apex code analysis capabilities.
+
+The MCP server provides standardized access to:
+- **Static Analysis** - Find errors, warnings, and code issues across SFDX projects
+- **Find Usages** - Locate all references to Apex identifiers
+- **Go to Definition** - Navigate to symbol definitions
+- **Test Discovery** - Find test classes impacted by code changes
+
+### Quick Start
+
+Download the standalone MCP server:
+
+```bash
+curl -L -o apex-ls-mcp.jar \
+  "https://github.com/apex-dev-tools/apex-ls/releases/latest/download/apex-ls-mcp-standalone.jar"
+```
+
+Configure with your AI tool (e.g., Claude Desktop):
+
+```json
+{
+  "mcpServers": {
+    "apex-ls": {
+      "command": "java",
+      "args": ["-jar", "/path/to/apex-ls-mcp.jar"]
+    }
+  }
+}
+```
+
+For complete documentation, installation options, and integration guides, see the [MCP README](mcp/README.md).
+
 ## Development
 
 ### Building
