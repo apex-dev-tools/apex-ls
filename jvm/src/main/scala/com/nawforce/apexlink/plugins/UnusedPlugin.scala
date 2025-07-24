@@ -42,7 +42,10 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
   override def onInterfaceValidated(td: InterfaceDeclaration): Seq[DependentType] = reportUnused(td)
 
   private def reportUnused(td: FullDeclaration): Seq[DependentType] = {
-    if (td.outerTypeName.isEmpty) {
+    // Ignore if suppressed, or inner type (handled by unusedIssues)
+    if (td.modifiers.exists(suppressModifiers.contains) || td.outerTypeName.isDefined) {
+      Seq.empty
+    } else {
       // Only update if we don't have errors, to reduce noise
       val existingIssues = td.paths.flatMap(td.module.pkg.org.issues.issuesForFileInternal)
       val hasErrors =
@@ -65,8 +68,6 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
         .map(_.outermostTypeDeclaration)
         .collect { case dt: DependentType => dt }
         .toSeq
-    } else {
-      Seq.empty
     }
   }
 
@@ -75,6 +76,9 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
     isStatic: Boolean,
     context: BlockVerifyContext
   ): Unit = {
+    if (context.modifiers(suppressModifiers.contains))
+      return
+
     context.declaredVars
       .filter(localVar =>
         !context.referencedVars.contains(localVar._1) && localVar._2.definition.nonEmpty
@@ -109,13 +113,11 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
       if (td.isPageController)
         return ArraySeq.empty
 
-      // Ignore if suppressed
-      if (td.modifiers.exists(suppressModifiers.contains))
-        return ArraySeq.empty
-
       // Get body declaration issues, we exclude initializers as they are really part of the type
       val issues =
-        td.nestedTypes.flatMap(ad => ad.unusedIssues) ++
+        td.nestedTypes.flatMap(ad => {
+          if (ad.modifiers.exists(suppressModifiers.contains)) ArraySeq.empty else ad.unusedIssues
+        }) ++
           td.unusedFields ++
           td.unusedMethods
 

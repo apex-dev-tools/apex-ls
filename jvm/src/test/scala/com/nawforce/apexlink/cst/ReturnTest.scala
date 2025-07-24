@@ -93,7 +93,10 @@ class ReturnTest extends AnyFunSuite with TestHelper {
     typeDeclaration(
       "public class Dummy { Map<Id, Account> fn(){ return new Map<Id, SObject>(); } }"
     )
-    assert(dummyIssues.isEmpty)
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 44-74: Incompatible return type, 'System.Map<System.Id, System.SObject>' is not assignable to 'System.Map<System.Id, Schema.Account>'\n"
+    )
   }
 
   test("Return QueryLocator as Iterable") {
