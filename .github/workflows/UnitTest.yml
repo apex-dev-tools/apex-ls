@@ -13,10 +13,17 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: 8
+          java-version: |
+            8
+            17
           cache: "sbt"
 
       - uses: sbt/setup-sbt@v1
+
+      - name: Set Java environment variables
+        run: |
+          echo "JAVA_HOME_8=$JAVA_HOME_8_X64" >> $GITHUB_ENV
+          echo "JAVA_HOME_17=$JAVA_HOME_17_X64" >> $GITHUB_ENV
 
       - uses: actions/setup-node@v4
         with:
@@ -26,6 +33,10 @@ jobs:
 
       - name: Build
         run: sbt build
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_8 }}
 
       - name: Test
         run: sbt test
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_8 }}
