@@ -98,6 +98,61 @@ npx @modelcontextprotocol/inspector java -jar target/apex-ls-mcp-0.1.0-SNAPSHOT.
 ### Relationship to Parent Project
 This MCP server is a separate Java 17 subproject within the larger Apex Language Server ecosystem. It depends on the JVM build artifacts of the main apex-ls project and provides MCP protocol access to the core Scala-based analysis engine.
 
+## MCP Tool Position Parameters
+
+### Line and Character Offset Guidelines
+
+When using MCP tools that require position parameters (`apex_find_definition`, `apex_find_usages`), follow these guidelines for accurate identifier targeting:
+
+#### Line Number (`line` parameter)
+- **Format**: 1-based line numbering (first line = 1)
+- **Purpose**: Specifies which line contains the target identifier
+- **Example**: For code on line 15, use `"line": 15`
+
+#### Character Offset (`offset` parameter)
+- **Format**: 0-based character offset within the specified line
+- **Purpose**: Points to any position within the target identifier
+- **Flexibility**: The offset does not need to be at the start of the identifier - any character position within the identifier will work
+- **Target Types**: Works for all Apex identifiers including:
+  - Class names, interface names, enum names
+  - Method names, constructor names
+  - Field names, property names
+  - Variable names, parameter names
+  - Custom object names, custom field names
+  - Standard platform types and fields
+
+#### Examples
+
+For the following Apex code:
+```apex
+public class MyClass {
+    public String myField;
+    
+    public void myMethod(String param) {
+        MyClass instance = new MyClass();
+        System.debug(instance.myField);
+    }
+}
+```
+
+Valid position parameters for different identifiers:
+- Class name `MyClass` on line 1: `{"line": 1, "offset": 13}` (points to 'M' in MyClass)
+- Class name `MyClass` on line 1: `{"line": 1, "offset": 16}` (points to 'l' in MyClass) - also valid!
+- Field `myField` on line 2: `{"line": 2, "offset": 18}` (anywhere within "myField")
+- Method `myMethod` on line 4: `{"line": 4, "offset": 16}` (anywhere within "myMethod")
+- Parameter `param` on line 4: `{"line": 4, "offset": 34}` (anywhere within "param")
+- Constructor call `MyClass()` on line 5: `{"line": 5, "offset": 31}` (anywhere within "MyClass")
+- Field access `myField` on line 6: `{"line": 6, "offset": 37}` (anywhere within "myField")
+
+#### Best Practices for AI Assistants
+
+1. **Identifier Bounds**: Ensure the offset points within the identifier's character range
+2. **Whitespace Avoidance**: Don't target spaces, tabs, or operators adjacent to identifiers
+3. **Precision Not Required**: Exact start position is not necessary - anywhere within the identifier works
+4. **Validation**: If unsure about character positions, count from the beginning of the line (0-based)
+
+This flexible positioning approach makes the tools more robust and easier to use programmatically while maintaining accuracy for code analysis operations.
+
 
 # Code Guidelines
 See https://www.sabrina.dev/p/ultimate-ai-coding-guide-claude-code
