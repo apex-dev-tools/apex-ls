@@ -1,347 +1,84 @@
-# CLAUDE.md
+# CLAUDE.md - MCP Server
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides MCP-specific guidance for Claude Code when working in the `mcp/` subdirectory of the Apex Language Server project.
 
-## Project Overview
+## Project Context
 
-This is an MCP (Model Context Protocol) Server implementation that provides a bridge between AI tools and the Apex Language Server. It exposes Apex code analysis capabilities through the standardized MCP protocol, enabling AI assistants to perform static analysis, find references, and navigate Apex codebases.
+This is the MCP (Model Context Protocol) server subproject within the broader Apex Language Server. For general project guidance, see [../CLAUDE.md](../CLAUDE.md).
 
-## Architecture
+For coding guidelines and best practices, see [../GUIDELINES.md](../GUIDELINES.md).
 
-### Java Version Split Design
-- **MCP Server**: Java 17 (required by MCP Java SDK)
-- **Apex Language Server Core**: Java 8 (parent dependency)
-- **Communication**: Bridge pattern using reflection to communicate between Java versions
+## Essential Commands
+
+### Building
+- `sbt buildRegular` - Build regular JAR for Maven Central publishing
+- `sbt buildStandalone` - Build standalone JAR with all dependencies for distribution
+- `sbt test` - Run MCP-specific tests including system tests
+- `sbt javafmt` - Format all Java source files (run before commits)
+- `sbt javafmtCheck` - Check if Java files need formatting
+
+### Testing
+- `sbt "testOnly io.github.apexdevtools.apexls.mcp.system.*"` - Run system tests only
+- `sbt "testOnly io.github.apexdevtools.apexls.mcp.bridge.*"` - Run bridge tests only
+- `sbt "testOnly io.github.apexdevtools.apexls.mcp.tools.*"` - Run tool tests only
+
+### Running/Debugging
+- `java -jar target/scala-2.13/apex-ls-mcp-*-standalone.jar` - Run MCP server directly
+- `npx @modelcontextprotocol/inspector java -jar target/scala-2.13/apex-ls-mcp-*-standalone.jar` - Debug with MCP Inspector
+
+## Architecture Quick Reference
 
 ### Key Components
-- **MCPServer**: Main entry point running MCP protocol via STDIN/STDOUT
-- **Bridge Architecture**: 
-  - `ApexLsBridge` interface defines communication contract
-  - `EmbeddedApexLsBridge` uses reflection to call apex-ls OrgAPI directly
-  - Workspace caching to avoid expensive re-initialization
-- **MCP Tools**: `sfdx_code_diagnostics`, `apex_find_usages`, `apex_find_definition`
-- **MCP Resources**: `workspace://apex/{workspace_path}` for workspace metadata
+- **MCPServer.java** - Main entry point and MCP protocol implementation
+- **bridge/** - Java 17 ↔ Java 8 apex-ls communication layer
+- **tools/** - MCP tools (diagnostics, find usages, find definition, impacted tests)
+- **resources/** - MCP resources (workspace access)
 
-## Build Commands
+### Bridge Pattern
+- **ApexLsBridge** - Interface for async operations
+- **EmbeddedApexLsBridge** - Implementation accessing OrgAPI within same JVM
+- Uses CompletableFuture for async operations with Scala Future conversion
 
-### Prerequisites
-Requires parent apex-ls project to be built first:
-```bash
-# From apex-ls root directory:
-sbt apexlsJVM/packageBin
-```
+## Dependencies
 
-### MCP Server Build
-```bash
-cd mcp
-sbt build                    # Creates deployable JAR with dependencies
-sbt test                     # Run test suite
-sbt clean                    # Remove build artifacts
-sbt javafmt                  # Format all Java source files
-sbt javafmtCheck             # Check if Java files need formatting
-```
+### Build Requirements
+- Parent apex-ls project MUST be built first: `cd .. && sbt build`
+- Java 17+ for MCP server (uses MCP Java SDK)
+- Java 8+ for apex-ls core dependency
 
-### Alternative Test Execution
-Due to SBT/JUnit Jupiter integration issues, direct JUnit execution is recommended:
-```bash
-java -cp "$(sbt 'export Test/fullClasspath' | tail -n 1)" org.junit.platform.console.ConsoleLauncher --scan-classpath
-```
+### Test Workspace
+- Test workspace located at `src/test/resources/test-workspace/`
+- Contains sample Apex classes and `sfdx-project.json`
+- Used by system tests for full MCP protocol validation
+
+## MCP-Specific Guidelines
+
+### Adding New Tools
+1. Extend base MCP tool pattern in `tools/` package
+2. Use bridge interface for apex-ls core communication
+3. Return JSON strings for MCP protocol compatibility
+4. Add comprehensive unit tests and system test coverage
+
+### Bridge Operations
+All bridge operations are async and cached per workspace:
+- `getIssues()` - Static analysis for diagnostics
+- `findUsages()` - Reference finding
+- `getDefinition()` - Go-to-definition
+- `getTestClassItemsChanged()` - Impacted test discovery
+- `getWorkspaceInfo()` - Workspace metadata
 
 ## Development Workflow
 
-### Running the MCP Server
-```bash
-# Direct execution:
-java -jar target/apex-ls-mcp-0.1.0-SNAPSHOT.jar
-
-# Debug with MCP Inspector:
-npx @modelcontextprotocol/inspector java -jar target/apex-ls-mcp-0.1.0-SNAPSHOT.jar
-```
-
-### Testing Strategy
-- **System Tests**: Full MCP protocol integration via STDIO (`MCPServerSystemTest`)
-- **Unit Tests**: Component-level testing for bridge and tools
-- **Test Workspace**: Sample Apex project in `src/test/resources/test-workspace/`
-
-### Package Structure
-- `io.github.apexdevtools.apexls.mcp` - Main MCP server implementation
-  - `bridge/` - Java version bridge components
-  - `tools/` - MCP tool implementations (static analysis, references, definitions)
-  - `resources/` - MCP resource implementations
-- Tests follow same package structure in `src/test/java/`
-
-## Key Dependencies
-
-### Runtime Dependencies
-- MCP Java SDK 0.10.0 (official Model Context Protocol implementation)
-- Jackson for JSON processing
-- SLF4J + Logback for logging
-- Parent apex-ls JAR for core Apex analysis
-
-### Build System
-- SBT 1.11.3 with Scala 2.13.16
-- JUnit Jupiter 5.11.4 for testing
-- Assembly plugin for creating fat JARs
-
-## Integration Notes
-
-### Workspace Requirements
-- Must contain valid `sfdx-project.json` file
-- Compatible with same workspace format as parent apex-ls project
-- Supports all Salesforce DX project structures
-
-### Logging Configuration
-- Production: Logs to STDERR (avoids STDOUT MCP protocol interference)
-- Test: Separate `logback-test.xml` configuration
-- Default level: INFO, DEBUG available for troubleshooting
-
-### Relationship to Parent Project
-This MCP server is a separate Java 17 subproject within the larger Apex Language Server ecosystem. It depends on the JVM build artifacts of the main apex-ls project and provides MCP protocol access to the core Scala-based analysis engine.
-
-## MCP Tool Position Parameters
-
-### Line and Character Offset Guidelines
-
-When using MCP tools that require position parameters (`apex_find_definition`, `apex_find_usages`), follow these guidelines for accurate identifier targeting:
-
-#### Line Number (`line` parameter)
-- **Format**: 1-based line numbering (first line = 1)
-- **Purpose**: Specifies which line contains the target identifier
-- **Example**: For code on line 15, use `"line": 15`
-
-#### Character Offset (`offset` parameter)
-- **Format**: 0-based character offset within the specified line
-- **Purpose**: Points to any position within the target identifier
-- **Flexibility**: The offset does not need to be at the start of the identifier - any character position within the identifier will work
-- **Target Types**: Works for all Apex identifiers including:
-  - Class names, interface names, enum names
-  - Method names, constructor names
-  - Field names, property names
-  - Variable names, parameter names
-  - Custom object names, custom field names
-  - Standard platform types and fields
-
-#### Examples
-
-For the following Apex code:
-```apex
-public class MyClass {
-    public String myField;
-    
-    public void myMethod(String param) {
-        MyClass instance = new MyClass();
-        System.debug(instance.myField);
-    }
-}
-```
-
-Valid position parameters for different identifiers:
-- Class name `MyClass` on line 1: `{"line": 1, "offset": 13}` (points to 'M' in MyClass)
-- Class name `MyClass` on line 1: `{"line": 1, "offset": 16}` (points to 'l' in MyClass) - also valid!
-- Field `myField` on line 2: `{"line": 2, "offset": 18}` (anywhere within "myField")
-- Method `myMethod` on line 4: `{"line": 4, "offset": 16}` (anywhere within "myMethod")
-- Parameter `param` on line 4: `{"line": 4, "offset": 34}` (anywhere within "param")
-- Constructor call `MyClass()` on line 5: `{"line": 5, "offset": 31}` (anywhere within "MyClass")
-- Field access `myField` on line 6: `{"line": 6, "offset": 37}` (anywhere within "myField")
-
-#### Best Practices for AI Assistants
-
-1. **Identifier Bounds**: Ensure the offset points within the identifier's character range
-2. **Whitespace Avoidance**: Don't target spaces, tabs, or operators adjacent to identifiers
-3. **Precision Not Required**: Exact start position is not necessary - anywhere within the identifier works
-4. **Validation**: If unsure about character positions, count from the beginning of the line (0-based)
-
-This flexible positioning approach makes the tools more robust and easier to use programmatically while maintaining accuracy for code analysis operations.
-
-
-# Code Guidelines
-See https://www.sabrina.dev/p/ultimate-ai-coding-guide-claude-code
-
-## Implementation Best Practices
-
-### 0 — Purpose
-
-These rules ensure maintainability, safety, and developer velocity.
-**MUST** rules are enforced by CI; **SHOULD** rules are strongly recommended.
-
----
-
-### 1 — Before Coding
-
-- **BP-1 (MUST)** Ask the user clarifying questions.
-- **BP-2 (SHOULD)** Draft and confirm an approach for complex work.
-- **BP-3 (SHOULD)** If ≥ 2 approaches exist, list clear pros and cons.
-
----
-
-### 2 — While Coding
-
-- **C-1 (MUST)** Follow TDD: scaffold stub -> write failing test -> implement.
-- **C-2 (MUST)** Name functions with existing domain vocabulary for consistency.
-- **C-3 (SHOULD NOT)** Introduce classes when small testable functions suffice.
-- **C-4 (SHOULD)** Prefer simple, composable, testable functions.
-- **C-7 (SHOULD NOT)** Add comments except for critical caveats; rely on self‑explanatory code.
-- **C-9 (SHOULD NOT)** Extract a new function unless it will be reused elsewhere, is the only way to unit-test otherwise untestable logic, or drastically improves readability of an opaque block.
-
----
-
-### 3 — Testing
-
-- **T-4 (SHOULD)** Prefer integration tests over heavy mocking.
-- **T-5 (SHOULD)** Unit-test complex algorithms thoroughly.
-- **T-6 (SHOULD)** Test the entire structure in one assertion if possible
-
----
-
-### 6 — Tooling Gates
-
-- **G-1 (MUST)** `prettier --check` passes.
-
----
-
-### 7 - Git
-
-- **GH-1 (MUST**) Use Conventional Commits format when writing commit messages: https://www.conventionalcommits.org/en/v1.0.0
-- **GH-2 (SHOULD NOT**) Refer to Claude or Anthropic in commit messages.
-
----
-
-## Writing Functions Best Practices
-
-When evaluating whether a function you implemented is good or not, use this checklist:
-
-1. Can you read the function and HONESTLY easily follow what it's doing? If yes, then stop here.
-2. Does the function have very high cyclomatic complexity? (number of independent paths, or, in a lot of cases, number of nesting if if-else as a proxy). If it does, then it's probably sketchy.
-3. Are there any common data structures and algorithms that would make this function much easier to follow and more robust? Parsers, trees, stacks / queues, etc.
-4. Are there any unused parameters in the function?
-5. Are there any unnecessary type casts that can be moved to function arguments?
-6. Is the function easily testable without mocking core features? If not, can this function be tested as part of an integration test?
-7. Does it have any hidden untested dependencies or any values that can be factored out into the arguments instead? Only care about non-trivial dependencies that can actually change or affect the function.
-8. Brainstorm 3 better function names and see if the current name is the best, consistent with rest of codebase.
-
-IMPORTANT: you SHOULD NOT refactor out a separate function unless there is a compelling need, such as:
-- the refactored function is used in more than one place
-- the refactored function is easily unit testable while the original function is not AND you can't test it any other way
-- the original function is extremely hard to follow and you resort to putting comments everywhere just to explain it
-
-## Writing Tests Best Practices
-
-When evaluating whether a test you've implemented is good or not, use this checklist:
-
-1. SHOULD parameterize inputs; never embed unexplained literals such as 42 or "foo" directly in the test.
-2. SHOULD NOT add a test unless it can fail for a real defect. Trivial asserts (e.g., expect(2).toBe(2)) are forbidden.
-3. SHOULD ensure the test description states exactly what the final expect verifies. If the wording and assert don’t align, rename or rewrite.
-4. SHOULD compare results to independent, pre-computed expectations or to properties of the domain, never to the function’s output re-used as the oracle.
-5. SHOULD follow the same lint, type-safety, and style rules as prod code (prettier, ESLint, strict types).
-6. SHOULD express invariants or axioms (e.g., commutativity, idempotence, round-trip) rather than single hard-coded cases whenever practical. Use `fast-check` library e.g.
-7. SHOULD test edge cases, realistic input, unexpected input, and value boundaries.
-8. SHOULD NOT test conditions that are caught by the type checker.
-
-## Remember Shortcuts
-
-Remember the following shortcuts which the user may invoke at any time.
-
-### QNEW
-
-When I type "qnew", this means:
-
-```
-Understand all BEST PRACTICES listed in CLAUDE.md.
-Your code SHOULD ALWAYS follow these best practices.
-```
-
-### QPLAN
-When I type "qplan", this means:
-```
-Analyze similar parts of the codebase and determine whether your plan:
-- is consistent with rest of codebase
-- introduces minimal changes
-- reuses existing code
-```
-
-## QCODE
-
-When I type "qcode", this means:
-
-```
-Implement your plan and make sure your new tests pass.
-Always run tests to make sure you didn't break anything else.
-Always run `prettier` on the newly created files to ensure standard formatting.
-```
-
-### QCHECK
-
-When I type "qcheck", this means:
-
-```
-You are a SKEPTICAL senior software engineer.
-Perform this analysis for every MAJOR code change you introduced (skip minor changes):
-
-1. CLAUDE.md checklist Writing Functions Best Practices.
-2. CLAUDE.md checklist Writing Tests Best Practices.
-3. CLAUDE.md checklist Implementation Best Practices.
-```
-
-### QCHECK Detail
-
-When I type "qcheck-detail", this means:
-
-```
-You are a SKEPTICAL senior software engineer.
-Perform this analysis for every source file that you added or changed:
-
-1. CLAUDE.md checklist Writing Functions Best Practices.
-2. CLAUDE.md checklist Writing Tests Best Practices.
-3. CLAUDE.md checklist Implementation Best Practices.
-```
-
-### QCHECKF
-
-When I type "qcheckf", this means:
-
-```
-You are a SKEPTICAL senior software engineer.
-Perform this analysis for every MAJOR function you added or edited (skip minor changes):
-
-1. CLAUDE.md checklist Writing Functions Best Practices.
-```
-
-### QCHECKT
-
-When I type "qcheckt", this means:
-
-```
-You are a SKEPTICAL senior software engineer.
-Perform this analysis for every MAJOR test you added or edited (skip minor changes):
-
-1. CLAUDE.md checklist Writing Tests Best Practices.
-```
-
-### QUX
-
-When I type "qux", this means:
-
-```
-Imagine you are a human UX tester of the feature you implemented. 
-Output a comprehensive list of scenarios you would test, sorted by highest priority.
-```
-
-### QGIT
-
-When I type "qgit", this means:
-
-```
-Add all changes to staging, create a commit, and push to remote. You must not refer to Claude or Anthropic in the commit message.
-
-Follow this checklist for writing your commit message:
-- SHOULD use Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0
-- MUST NOT refer to Claude or Anthropic in the commit message.
-- SHOULD structure commit message as follows:
-<type>[optional scope]: <description>
-[optional body]
-- commit SHOULD contain the following structural elements to communicate intent: 
-fix: a commit of the type fix patches a bug in your codebase (this correlates with PATCH in Semantic Versioning).
-feat: a commit of the type feat introduces a new feature to the codebase (this correlates with MINOR in Semantic Versioning).
-BREAKING CHANGE: a commit that has a footer BREAKING CHANGE:, or appends a ! after the type/scope, introduces a breaking API change (correlating with MAJOR in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
-types other than fix: and feat: are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
-```
+1. **Make changes** in MCP-specific code
+2. **Format code**: `sbt javafmt`
+3. **Run tests**: `sbt test`
+4. **Build artifacts**: `sbt buildStandalone`
+5. **Test with inspector** for MCP protocol validation
+
+## Documentation
+
+For detailed information, see:
+- [README.md](README.md) - Installation, usage, and MCP tools reference
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Build commands and development workflow
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Detailed system design
+- [SYSTEM_TESTS.md](SYSTEM_TESTS.md) - System testing documentation
