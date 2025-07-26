@@ -17,13 +17,9 @@ package io.github.apexdevtools.apexls.mcp.bridge;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nawforce.apexlink.rpc.ClassTestItem;
-import com.nawforce.apexlink.rpc.GetIssuesResult;
-import com.nawforce.apexlink.rpc.LocationLink;
-import com.nawforce.apexlink.rpc.OrgAPI;
-import com.nawforce.apexlink.rpc.OrgAPIImpl;
-import com.nawforce.apexlink.rpc.TargetLocation;
-import com.nawforce.apexlink.rpc.TestClassItemsResult;
+import com.nawforce.apexlink.api.IndexerConfiguration;
+import com.nawforce.apexlink.api.ServerOps;
+import com.nawforce.apexlink.rpc.*;
 import com.nawforce.pkgforce.diagnostics.Issue;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -52,6 +48,9 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
   private static final Logger logger = LoggerFactory.getLogger(EmbeddedApexLsBridge.class);
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
+  // Indexer configuration loaded from environment variables
+  private static final IndexerConfig indexerConfig = new IndexerConfig();
+
   private final Map<String, OrgAPI> workspaceCache = new ConcurrentHashMap<>();
   private boolean initialized = false;
 
@@ -59,6 +58,31 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
   public void initialize() throws Exception {
     try {
       logger.info("Initializing embedded apex-ls bridge...");
+
+      // Validate indexer configuration parameters
+      indexerConfig.validate();
+
+      // Configure global filesystem monitoring to detect changes and auto-refresh
+      // Trigger time: filesystem events closer than this value apart will trigger a rescan
+      // Quiet period: wait time after the last event before rescanning begins
+      try {
+        IndexerConfiguration config =
+            new IndexerConfiguration(
+                indexerConfig.getTriggerMs(), indexerConfig.getQuietPeriodMs());
+        ServerOps.setIndexerConfiguration(config);
+        logger.info(
+            "Configured filesystem monitoring with {}ms trigger, {}ms quiet period",
+            config.rescanTriggerTimeMs(),
+            config.quietPeriodForRescanMs());
+      } catch (Exception configEx) {
+        logger.warn(
+            "Failed to configure filesystem monitoring, falling back to disabled indexer",
+            configEx);
+        // Fallback to disabled indexer (0, 0) if configuration fails
+        IndexerConfiguration fallbackConfig = new IndexerConfiguration(0, 0);
+        ServerOps.setIndexerConfiguration(fallbackConfig);
+        logger.info("Filesystem monitoring disabled due to configuration error");
+      }
 
       // No need to create OrgAPI instances here - they're created on demand
       initialized = true;
@@ -85,6 +109,7 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
         dir -> {
           logger.info("Creating new OrgAPI instance for workspace: {}", dir);
           OrgAPI orgAPI = new OrgAPIImpl();
+
           orgAPI.open(dir);
           return orgAPI;
         });
@@ -187,16 +212,17 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
 
       // Build workspace info JSON
       return versionFuture.thenApply(
-          version -> {
-            StringBuilder json = new StringBuilder();
-            json.append("{\n");
-            json.append("  \"workspace\": \"").append(workspaceDirectory).append("\",\n");
-            json.append("  \"status\": \"active\",\n");
-            json.append("  \"type\": \"apex\",\n");
-            json.append("  \"version\": \"").append(version).append("\"\n");
-            json.append("}");
-            return json.toString();
-          });
+          version ->
+              "{\n"
+                  + "  \"workspace\": \""
+                  + workspaceDirectory
+                  + "\",\n"
+                  + "  \"status\": \"active\",\n"
+                  + "  \"type\": \"apex\",\n"
+                  + "  \"version\": \""
+                  + version
+                  + "\"\n"
+                  + "}");
 
     } catch (Exception ex) {
       logger.error("Error calling getWorkspaceInfo via bridge", ex);
