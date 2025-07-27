@@ -24,6 +24,9 @@ import scala.collection.mutable
 
 /** IssuesCollection implementation, holds Issues for each metadata file and tracks when they change
   * to allow clients to be more selective when pulling issues.
+  *
+  * Note: To support virtual filesystem testing then we need to have *Internal methods that pass
+  * a PathLike, the public API methods use strings for simplicity.
   */
 class IssuesManager extends IssuesCollection with IssueLogger {
   private val log             = mutable.HashMap[PathLike, List[Issue]]() withDefaultValue List()
@@ -106,29 +109,11 @@ class IssuesManager extends IssuesCollection with IssueLogger {
   }
 
   override def issuesForFile(path: String): Array[APIIssue] = {
-    issuesForFileInternal(Path(path)).toArray
+    issuesForFilesInternal(Array(Path(path)), includeWarnings = true, maxIssuesPerFile = 0).toArray
   }
 
   def issuesForFileInternal(path: PathLike): Seq[Issue] = {
-    hasChanged.remove(path)
-    log.getOrElse(path, Nil).sorted(Issue.ordering)
-  }
-
-  override def issuesForFileLocation(path: String, location: IssueLocation): Array[APIIssue] = {
-    issuesForFileLocationInternal(Path(path), location)
-  }
-
-  def issuesForFileLocationInternal(path: PathLike, location: IssueLocation): Array[APIIssue] = {
-    val loc = Location(
-      location.startLineNumber(),
-      location.startCharOffset(),
-      location.endLineNumber(),
-      location.endCharOffset()
-    )
-    log
-      .getOrElse(path, Nil)
-      .filter(issue => loc.contains(issue.diagnostic.location))
-      .toArray[APIIssue]
+    issuesForFilesInternal(Array(path), includeWarnings = true, maxIssuesPerFile = 0)
   }
 
   override def issuesForFiles(
@@ -144,7 +129,8 @@ class IssuesManager extends IssuesCollection with IssueLogger {
   def issuesForFilesInternal(
     paths: Array[PathLike],
     includeWarnings: Boolean,
-    maxIssuesPerFile: Int
+    maxIssuesPerFile: Int,
+    externalPathFilter: Option[PathLike => Boolean] = None
   ): Seq[Issue] = {
     val files =
       if (paths == null || paths.isEmpty)
@@ -156,9 +142,15 @@ class IssuesManager extends IssuesCollection with IssueLogger {
     files.foreach(file => {
       var fileIssues = log
         .getOrElse(file, Nil)
-        .filter(issue =>
-          includeWarnings || DiagnosticCategory.isErrorType(issue.diagnostic.category)
-        )
+        .filter(issue => {
+          val passesWarningFilter =
+            includeWarnings || DiagnosticCategory.isErrorType(issue.diagnostic.category)
+          val passesExternalFilter = externalPathFilter.forall(filter =>
+            !filter(file) || DiagnosticCategory.isErrorType(issue.diagnostic.category)
+          )
+
+          passesWarningFilter && passesExternalFilter
+        })
         .sorted(Issue.ordering)
       if (maxIssuesPerFile > 0)
         fileIssues = fileIssues.take(maxIssuesPerFile)
@@ -166,6 +158,24 @@ class IssuesManager extends IssuesCollection with IssueLogger {
       hasChanged.remove(file)
     })
     buffer.toSeq
+  }
+
+  /** This is specialised accessor to aid PMD integration. */
+  override def issuesForFileLocation(path: String, location: IssueLocation): Array[APIIssue] = {
+    issuesForFileLocationInternal(Path(path), location)
+  }
+
+  def issuesForFileLocationInternal(path: PathLike, location: IssueLocation): Array[APIIssue] = {
+    val loc = Location(
+      location.startLineNumber(),
+      location.startCharOffset(),
+      location.endLineNumber(),
+      location.endCharOffset()
+    )
+    log
+      .getOrElse(path, Nil)
+      .filter(issue => loc.contains(issue.diagnostic.location))
+      .toArray[APIIssue]
   }
 
   def getDiagnostics(path: PathLike): List[Diagnostic] =

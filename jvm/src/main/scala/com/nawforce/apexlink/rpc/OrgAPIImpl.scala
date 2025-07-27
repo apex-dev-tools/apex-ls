@@ -18,6 +18,7 @@ import com.nawforce.apexlink.api.{ExternalAnalysisConfiguration, Org, ServerOps}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
+import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.{Environment, Path}
 
 import java.util.concurrent.LinkedBlockingQueue
@@ -89,7 +90,12 @@ case class GetIssues(
       promise.success(
         GetIssuesResult(
           orgImpl.issueManager
-            .issuesForFilesInternal(null, includeWarnings, maxIssuesPerFile)
+            .issuesForFilesInternal(
+              null,
+              includeWarnings,
+              maxIssuesPerFile,
+              OrgAPIImplHelpers.getExternalPathFilter(orgImpl)
+            )
             .toArray
         )
       )
@@ -147,7 +153,7 @@ case class IssuesForFile(promise: Promise[IssuesResult], path: String) extends A
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
     OrgInfo.current.withValue(orgImpl) {
-      promise.success(IssuesResult(orgImpl.issues.issuesForFileInternal(Path(path)).toArray))
+      promise.success(IssuesResult(orgImpl.issues.issuesForFilesInternal(Array(Path(path)), includeWarnings = true, maxIssuesPerFile = 0, OrgAPIImplHelpers.getExternalPathFilter(orgImpl)).toArray))
     }
   }
 }
@@ -172,7 +178,12 @@ case class IssuesForFiles(
       promise.success(
         IssuesResult(
           orgImpl.issues
-            .issuesForFilesInternal(paths.map(Path(_)), includeWarnings, maxErrorsPerFile)
+            .issuesForFilesInternal(
+              paths.map(Path(_)),
+              includeWarnings,
+              maxErrorsPerFile,
+              OrgAPIImplHelpers.getExternalPathFilter(orgImpl)
+            )
             .toArray
         )
       )
@@ -700,4 +711,14 @@ class OrgAPIImpl extends OrgAPI {
     GetTestMethodItems(OrgQueue.instance(), paths)
   }
 
+}
+
+object OrgAPIImplHelpers {
+  def getExternalPathFilter(orgImpl: OPM.OrgImpl): Option[PathLike => Boolean] = {
+    import com.nawforce.pkgforce.sfdx.SFDXProject
+    import com.nawforce.pkgforce.diagnostics.CatchingLogger
+
+    val catchingLogger = new CatchingLogger()
+    SFDXProject(orgImpl.path, catchingLogger).map(_.isExternalPath)
+  }
 }
