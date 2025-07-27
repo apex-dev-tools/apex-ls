@@ -38,16 +38,10 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: |
-            8
-            17
+          java-version: "17"
 
       - uses: sbt/setup-sbt@v1
 
-      - name: Set Java environment variables
-        run: |
-          echo "JAVA_HOME_8=$JAVA_HOME_8_X64" >> $GITHUB_ENV
-          echo "JAVA_HOME_17=$JAVA_HOME_17_X64" >> $GITHUB_ENV
 
       - uses: actions/setup-node@v4
         with:
@@ -56,20 +50,15 @@ jobs:
 
       - name: Build
         run: sbt build
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME_8 }}
 
       - name: Test
         if: ${{ !inputs.skip_tests }}
         run: sbt test
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME_8 }}
 
       - name: Publish JARs
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_sbt }}
         run: sbt ci-release
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME_8 }}
           PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
@@ -81,7 +70,6 @@ jobs:
           cd mcp
           sbt ci-release
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME_17 }}
           PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
@@ -92,8 +80,6 @@ jobs:
         run: |
           cd mcp
           sbt buildStandalone
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME_17 }}
 
       - name: Upload Standalone JAR to GitHub Release
         if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
@@ -113,6 +99,5 @@ jobs:
           npm version --allow-same-version --no-git-tag-version from-git
           npm publish --access public
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME_8 }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: js/npm

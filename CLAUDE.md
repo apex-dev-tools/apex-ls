@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the Apex Language Server, a Salesforce Apex static analysis toolkit built in Scala that provides error checking, type finding, code completion, and other language server features. The project is a cross-build supporting both JVM and ScalaJS platforms, with an additional MCP (Model Context Protocol) server component.
 
+## Development Requirements
+
+- **Java 17+** for development (uses Java 17 toolchain and language features)
+- **Generated JARs maintain Java 8 runtime compatibility** for end users
+- **MCP server requires Java 17+** for both development and runtime
+
 ## Essential Commands
 
 ### Main Project (apex-ls)
@@ -52,7 +58,7 @@ The MCP server uses a bridge pattern to communicate between Java 17 MCP code and
 
 ### Build Dependencies
 - Main apex-ls must be built before MCP server: `sbt build` then `cd mcp && sbt build`
-- MCP server requires Java 17, core apex-ls requires Java 8
+- Development uses Java 17 toolchain, generated JARs target Java 8 for compatibility
 - Always run `sbt scalafmtAll` before committing changes
 
 ### Workspace Requirements
