@@ -2,6 +2,8 @@
 
 See https://www.sabrina.dev/p/ultimate-ai-coding-guide-claude-code
 
+**Note:** This project includes Claude Code slash commands in `.claude/commands/` that use these guidelines for workflow automation.
+
 ## Implementation Best Practices
 
 ### 0 — Purpose
@@ -40,7 +42,7 @@ These rules ensure maintainability, safety, and developer velocity.
 
 ### 6 — Tooling Gates
 
-- **G-1 (MUST)** `prettier --check` passes.
+- **G-1 (MUST)** code formatting check passes.
 
 ---
 
@@ -82,114 +84,6 @@ When evaluating whether a test you've implemented is good or not, use this check
 7. SHOULD test edge cases, realistic input, unexpected input, and value boundaries.
 8. SHOULD NOT test conditions that are caught by the type checker.
 
-## Remember Shortcuts
-
-Remember the following shortcuts which the user may invoke at any time.
-
-### QNEW
-
-When I type "qnew", this means:
-
-```
-Understand all BEST PRACTICES listed in CLAUDE.md.
-Your code SHOULD ALWAYS follow these best practices.
-```
-
-### QPLAN
-When I type "qplan", this means:
-```
-Analyze similar parts of the codebase and determine whether your plan:
-- is consistent with rest of codebase
-- introduces minimal changes
-- reuses existing code
-```
-
-## QCODE
-
-When I type "qcode", this means:
-
-```
-Implement your plan and make sure your new tests pass.
-Always run tests to make sure you didn't break anything else.
-Always run `prettier` on the newly created files to ensure standard formatting.
-```
-
-### QCHECK
-
-When I type "qcheck", this means:
-
-```
-You are a SKEPTICAL senior software engineer.
-Perform this analysis for every MAJOR code change you introduced (skip minor changes):
-
-1. CLAUDE.md checklist Writing Functions Best Practices.
-2. CLAUDE.md checklist Writing Tests Best Practices.
-3. CLAUDE.md checklist Implementation Best Practices.
-```
-
-### QCHECK Detail
-
-When I type "qcheck-detail", this means:
-
-```
-You are a SKEPTICAL senior software engineer.
-Perform this analysis for every source file that you added or changed:
-
-1. CLAUDE.md checklist Writing Functions Best Practices.
-2. CLAUDE.md checklist Writing Tests Best Practices.
-3. CLAUDE.md checklist Implementation Best Practices.
-```
-
-### QCHECKF
-
-When I type "qcheckf", this means:
-
-```
-You are a SKEPTICAL senior software engineer.
-Perform this analysis for every MAJOR function you added or edited (skip minor changes):
-
-1. CLAUDE.md checklist Writing Functions Best Practices.
-```
-
-### QCHECKT
-
-When I type "qcheckt", this means:
-
-```
-You are a SKEPTICAL senior software engineer.
-Perform this analysis for every MAJOR test you added or edited (skip minor changes):
-
-1. CLAUDE.md checklist Writing Tests Best Practices.
-```
-
-### QUX
-
-When I type "qux", this means:
-
-```
-Imagine you are a human UX tester of the feature you implemented. 
-Output a comprehensive list of scenarios you would test, sorted by highest priority.
-```
-
-### QGIT
-
-When I type "qgit", this means:
-
-```
-Add all changes to staging, create a commit, and push to remote. You must not refer to Claude or Anthropic in the commit message.
-
-Follow this checklist for writing your commit message:
-- SHOULD use Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0
-- MUST NOT refer to Claude or Anthropic in the commit message.
-- SHOULD structure commit message as follows:
-<type>[optional scope]: <description>
-[optional body]
-- commit SHOULD contain the following structural elements to communicate intent: 
-fix: a commit of the type fix patches a bug in your codebase (this correlates with PATCH in Semantic Versioning).
-feat: a commit of the type feat introduces a new feature to the codebase (this correlates with MINOR in Semantic Versioning).
-BREAKING CHANGE: a commit that has a footer BREAKING CHANGE:, or appends a ! after the type/scope, introduces a breaking API change (correlating with MAJOR in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
-types other than fix: and feat: are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
-```
 
 ## MCP-Specific Guidelines
 
