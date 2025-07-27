@@ -18,7 +18,6 @@ import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
-import com.nawforce.runtime.platform.Environment
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -1008,6 +1007,183 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
           )
         )
       )
+    }
+  }
+
+  test("Library flag defaults to false") {
+    FileSystemHelper.run(
+      Map("sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}]}")
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(!project.get.isLibrary)
+    }
+  }
+
+  test("Library flag set to true") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"library\": true}}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.get.isLibrary)
+    }
+  }
+
+  test("Library flag invalid type") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"library\": \"invalid\"}}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty)
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 71), "'library' should be a boolean")
+          )
+        )
+      )
+    }
+  }
+
+  test("External metadata defaults to empty") {
+    FileSystemHelper.run(
+      Map("sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}]}")
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.get.externalMetadata.isEmpty)
+    }
+  }
+
+  test("External metadata with valid paths") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"externalMetadata\": [\"vendor\", \"external\"]}}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.get.externalMetadata == Seq("vendor", "external"))
+    }
+  }
+
+  test("External metadata with invalid absolute path") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"externalMetadata\": [\"/absolute/path\"]}}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty)
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location(1, 81),
+              "External metadata path '/absolute/path' must be a relative path within the project"
+            )
+          )
+        )
+      )
+    }
+  }
+
+  test("External metadata with invalid parent directory reference") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"externalMetadata\": [\"../escape\"]}}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty)
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location(1, 81),
+              "External metadata path '../escape' must be a relative path within the project"
+            )
+          )
+        )
+      )
+    }
+  }
+
+  test("External metadata with non-string entry") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"externalMetadata\": [123]}}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty)
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location(1, 81),
+              "'externalMetadata' entries should be strings"
+            )
+          )
+        )
+      )
+    }
+  }
+
+  test("External metadata with non-array value") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"externalMetadata\": \"invalid\"}}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty)
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 80), "'externalMetadata' should be an array")
+          )
+        )
+      )
+    }
+  }
+
+  test("isExternalPath method") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"externalMetadata\": [\"vendor\", \"external/lib\"]}}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.isDefined)
+
+      val p = project.get
+
+      // Test paths within external metadata directories
+      assert(p.isExternalPath(root.join("vendor/some/file.cls")))
+      assert(p.isExternalPath(root.join("external/lib/other.cls")))
+
+      // Test paths outside external metadata directories
+      assert(!p.isExternalPath(root.join("force-app/main/default/classes/Test.cls")))
+      assert(!p.isExternalPath(root.join("other/path/file.cls")))
+
+      // Test paths outside project
+      val otherRoot = root.parent.join("other-project")
+      assert(!p.isExternalPath(otherRoot.join("some/file.cls")))
     }
   }
 

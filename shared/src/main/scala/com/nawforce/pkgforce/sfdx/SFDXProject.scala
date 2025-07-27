@@ -196,6 +196,56 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   }
 
+  val isLibrary: Boolean = plugins.get("library") match {
+    case Some(ujson.Bool(value)) => value
+    case Some(value) =>
+      config
+        .lineAndOffsetOf(value)
+        .foreach(lineAndOffset =>
+          throw SFDXProjectError(lineAndOffset, "'library' should be a boolean")
+        )
+      false
+    case None => false
+  }
+
+  val externalMetadata: Seq[String] =
+    plugins.getOrElse("externalMetadata", ujson.Arr()) match {
+      case value: ujson.Arr =>
+        value.value.toSeq.flatMap(value => {
+          value match {
+            case ujson.Str(dir) =>
+              validateExternalMetadataPath(dir) match {
+                case Some(error) =>
+                  config
+                    .lineAndOffsetOf(value)
+                    .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, error))
+                  None
+                case None => Some(dir)
+              }
+            case _ =>
+              config
+                .lineAndOffsetOf(value)
+                .map(lineAndOffset =>
+                  throw SFDXProjectError(
+                    lineAndOffset,
+                    "'externalMetadata' entries should be strings"
+                  )
+                )
+              None
+          }
+        })
+      case value =>
+        config
+          .lineAndOffsetOf(value)
+          .map(lineAndOffset =>
+            throw SFDXProjectError(lineAndOffset, "'externalMetadata' should be an array")
+          )
+          .getOrElse(Seq.empty)
+    }
+
+  private val externalMetadataPaths: Seq[String] =
+    externalMetadata.map(extDir => projectPath.join(extDir).toString)
+
   private val gulpPackages = additionalNamespaces.flatMap(ns => {
     createGulpPath(ns) match {
       case Left(err) =>
@@ -386,6 +436,19 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
       (layers._1 + (packageDirectory.name.get -> newLayer), newLayer.packageLayer :: layers._2)
     } else {
       (layers._1, newLayer.packageLayer :: layers._2)
+    }
+  }
+
+  def isExternalPath(path: PathLike): Boolean = {
+    val pathStr = path.toString
+    externalMetadataPaths.exists(extPath => pathStr.startsWith(extPath))
+  }
+
+  private def validateExternalMetadataPath(dir: String): Option[String] = {
+    if (dir.startsWith("/") || dir.startsWith("\\") || dir.contains("..")) {
+      Some(s"External metadata path '$dir' must be a relative path within the project")
+    } else {
+      None
     }
   }
 
