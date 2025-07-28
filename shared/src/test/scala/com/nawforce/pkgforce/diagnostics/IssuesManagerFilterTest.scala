@@ -20,9 +20,9 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
   var issuesManager: IssuesManager = _
-  val testPath: PathLike           = Path("/project/src/classes/TestClass.cls")
-  val externalPath: PathLike       = Path("/project/external/ExternalClass.cls")
-  val location: Location           = Location(1, 0, 1, 10)
+  val testPath: PathLike = Path("/project/src/classes/TestClass.cls")
+  val externalPath: PathLike = Path("/project/external/ExternalClass.cls")
+  val location: Location = Location(1, 0, 1, 10)
 
   before {
     issuesManager = new IssuesManager()
@@ -92,9 +92,7 @@ class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.exists(_.diagnostic.message == "Regular unused"))
   }
 
-  test(
-    "issuesForFilesInternal with external filter and includeWarnings=false preserves errors from external paths"
-  ) {
+  test("issuesForFilesInternal with external filter and includeWarnings=false preserves errors from external paths") {
     issuesManager.add(createErrorIssue(externalPath, "External error"))
     issuesManager.add(createWarningIssue(externalPath, "External warning"))
 
