@@ -66,6 +66,14 @@ libraryDependencies ++= Seq(
 // Add the main apex-ls JAR to the runtime classpath
 Compile / unmanagedJars += apexLsJar.value
 
+// Include all apex-ls dependencies in the assembly by adding them to unmanagedJars
+Compile / unmanagedJars ++= {
+  val apexLsJarFile = apexLsJar.value
+  val apexLsTargetDir = apexLsJarFile.getParentFile
+  val apexLsDeps = (apexLsTargetDir ** "*.jar").get().filter(_ != apexLsJarFile)
+  apexLsDeps
+}
+
 // Custom build task to create the MCP JAR
 build := {
   val originalJar = (Compile / Keys.`package`).value
