@@ -153,7 +153,18 @@ case class IssuesForFile(promise: Promise[IssuesResult], path: String) extends A
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
     OrgInfo.current.withValue(orgImpl) {
-      promise.success(IssuesResult(orgImpl.issues.issuesForFilesInternal(Array(Path(path)), includeWarnings = true, maxIssuesPerFile = 0, OrgAPIImplHelpers.getExternalPathFilter(orgImpl)).toArray))
+      promise.success(
+        IssuesResult(
+          orgImpl.issues
+            .issuesForFilesInternal(
+              Array(Path(path)),
+              includeWarnings = true,
+              maxIssuesPerFile = 0,
+              OrgAPIImplHelpers.getExternalPathFilter(orgImpl)
+            )
+            .toArray
+        )
+      )
     }
   }
 }
