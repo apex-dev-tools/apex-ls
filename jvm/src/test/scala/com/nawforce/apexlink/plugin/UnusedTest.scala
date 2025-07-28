@@ -1288,9 +1288,9 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         "Bar.cls" -> "public class Bar{ {new Dummy().usedMethod(); new Dummy.InnerClass();} }"
       )
     ) { root: PathLike =>
-      val org = createLibraryOrgWithUnused(root)
+      val org    = createLibraryOrgWithUnused(root)
       val issues = orgIssuesFor(org, root.join("Dummy.cls"))
-      // In library projects, public methods should not be flagged as unused (they're part of the API)  
+      // In library projects, public methods should not be flagged as unused (they're part of the API)
       assert(!issues.contains("Unused public method 'void publicMethod()'"))
       // But private methods should still be flagged
       assert(issues.contains("Unused private method 'void privateMethod()'"))
@@ -1304,7 +1304,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         "Bar.cls" -> "public class Bar{ {new Dummy().usedMethod(); new Dummy.InnerClass();} }"
       )
     ) { root: PathLike =>
-      val org = createOrgWithUnused(root)
+      val org    = createOrgWithUnused(root)
       val issues = orgIssuesFor(org, root.join("Dummy.cls"))
       // In non-library projects, public methods in nested classes should be flagged as unused
       assert(issues.contains("Unused public method 'void publicMethod()'"))
