@@ -32,8 +32,9 @@ import scala.collection.mutable
 
 /** Provides plugin for generating unused warnings on a single type
   * @param td type being handled by this plugin
+  * @param isLibrary whether this is a library project (public members are considered used)
   */
-class UnusedPlugin(td: DependentType) extends Plugin(td) {
+class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isLibrary) {
 
   override def onClassValidated(td: ClassDeclaration): Seq[DependentType] = reportUnused(td)
 
@@ -126,7 +127,7 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
       if (issues.isEmpty && childCount > 0)
         return ArraySeq.empty
 
-      // Check if need to promote the used to the type level to reduce noise in output
+      // Check if we need to promote the used to the type level to reduce noise in output
       if (canPromoteUnusedToType(issues.length)) {
         val onlyTestReferenced = td.hasHolders || (issues.nonEmpty && issues
           .forall(_.diagnostic.message.contains(onlyTestCodeReferenceText)))
@@ -217,10 +218,16 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
 
   private implicit class FieldOps(field: ApexFieldLike) {
     def isUsed(inTest: Boolean): Boolean = {
-      if (inTest)
-        field.hasHolders || field.modifiers.exists(excludedTestFieldModifiers)
-      else
-        field.hasNonTestHolders || field.modifiers.exists(excludedFieldModifiers)
+      hasDirectReferences(inTest) || hasExcludedModifiers(inTest)
+    }
+
+    private def hasDirectReferences(inTest: Boolean): Boolean = {
+      if (inTest) field.hasHolders else field.hasNonTestHolders
+    }
+
+    private def hasExcludedModifiers(inTest: Boolean): Boolean = {
+      val excludedModifiers = if (inTest) excludedTestFieldModifiers else getExcludedFieldModifiers
+      field.modifiers.exists(excludedModifiers)
     }
   }
 
@@ -229,18 +236,46 @@ class UnusedPlugin(td: DependentType) extends Plugin(td) {
     /** Is the method in use, NOTE: requires a MethodMap is constructed for shadow support first! */
     def isUsed(module: OPM.Module, inTest: Boolean): Boolean = {
       method.isSynthetic ||
-      (if (inTest)
-         method.hasHolders || method.modifiers.exists(excludedTestMethodModifiers.contains)
-       else
-         method.hasNonTestHolders || method.modifiers.exists(excludedMethodModifiers.contains)) ||
+      hasDirectReferences(inTest) ||
+      hasExcludedModifiers(inTest) ||
+      hasShadowedMethodInUse(module, inTest) ||
+      hasGhostedParameters(module)
+    }
+
+    private def hasDirectReferences(inTest: Boolean): Boolean = {
+      if (inTest) method.hasHolders else method.hasNonTestHolders
+    }
+
+    private def hasExcludedModifiers(inTest: Boolean): Boolean = {
+      val excludedModifiers =
+        if (inTest) excludedTestMethodModifiers else getExcludedMethodModifiers
+      method.modifiers.exists(excludedModifiers.contains)
+    }
+
+    private def hasShadowedMethodInUse(module: OPM.Module, inTest: Boolean): Boolean = {
       method.shadows.exists({
         case am: ApexMethodLike   => am.isUsed(module, inTest)
         case _: MethodDeclaration => true
         case _                    => false
-      }) ||
+      })
+    }
+
+    private def hasGhostedParameters(module: OPM.Module): Boolean = {
       method.parameters.exists(parameter => module.isGhostedType(parameter.typeName))
     }
   }
+
+  /** Get excluded method modifiers based on library flag */
+  private val cachedExcludedMethodModifiers: Set[Modifier] =
+    if (isLibrary) excludedMethodModifiers + PUBLIC_MODIFIER else excludedMethodModifiers
+
+  private def getExcludedMethodModifiers: Set[Modifier] = cachedExcludedMethodModifiers
+
+  /** Get excluded field modifiers based on library flag */
+  private val cachedExcludedFieldModifiers: Set[Modifier] =
+    if (isLibrary) excludedFieldModifiers + PUBLIC_MODIFIER else excludedFieldModifiers
+
+  private def getExcludedFieldModifiers: Set[Modifier] = cachedExcludedFieldModifiers
 }
 
 object UnusedPlugin {

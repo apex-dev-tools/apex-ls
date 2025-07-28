@@ -81,7 +81,9 @@ object OPM extends TriHierarchy {
     val monitorLauncher: Monitor = new Monitor(path)
 
     /** Manager for post validation plugins */
-    private[nawforce] val pluginsManager = new PluginsManager
+    private[nawforce] val pluginsManager = new PluginsManager(
+      workspace.projectConfig.exists(_.isLibrary)
+    )
 
     /** Parsed Apex data cache, the cache holds summary information about Apex types to speed
       * startup

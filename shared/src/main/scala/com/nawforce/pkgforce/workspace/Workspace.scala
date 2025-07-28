@@ -27,7 +27,7 @@ import com.nawforce.pkgforce.stream.{PackageEvent, PackageStream}
 
 /** Contains any config option that can be used by the Org
   */
-case class ProjectConfig(maxDependencyCount: Option[Int])
+case class ProjectConfig(maxDependencyCount: Option[Int], isLibrary: Boolean = false)
 
 /** Metadata workspace, maintains information on available metadata within a project/package.
   *
@@ -91,7 +91,11 @@ object Workspace {
     } else {
       config.map {
         case config: SFDXWorkspaceConfig =>
-          new Workspace(logger, layers, Some(ProjectConfig(config.project.maxDependencyCount)))
+          new Workspace(
+            logger,
+            layers,
+            Some(ProjectConfig(config.project.maxDependencyCount, config.project.isLibrary))
+          )
         case _ => new Workspace(logger, layers)
       }
     }

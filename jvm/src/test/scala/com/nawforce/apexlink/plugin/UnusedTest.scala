@@ -1127,4 +1127,188 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  def createLibraryOrgWithUnused(root: PathLike): OPM.OrgImpl = {
+    // Create sfdx-project.json with library flag
+    val sfdxProjectContent = """{
+      "packageDirectories": [{"path": "."}],
+      "plugins": {
+        "library": true
+      }
+    }"""
+    root.join("sfdx-project.json").write(sfdxProjectContent)
+    createOrgWithUnused(root)
+  }
+
+  test("Library project: public method not flagged as unused") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy { public void publicMethod() {} }")
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
+    }
+  }
+
+  test("Library project: private method still flagged as unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public void publicMethod() {} private void privateMethod() {} }"
+      )
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls"))
+          .contains("Unused private method 'void privateMethod()'")
+      )
+    }
+  }
+
+  test("Library project: public field not flagged as unused") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy { public String publicField; }")) {
+      root: PathLike =>
+        val org = createLibraryOrgWithUnused(root)
+        assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
+    }
+  }
+
+  test("Library project: private field still flagged as unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public String publicField; private String privateField; }"
+      )
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls"))
+          .contains("Unused field 'privateField'")
+      )
+    }
+  }
+
+  test("Non-library project: public method flagged as unused (baseline)") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public void publicMethod() {} }",
+        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls"))
+          .contains("Unused public method 'void publicMethod()'")
+      )
+    }
+  }
+
+  test("Library project: global method still excluded from unused warnings") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "global class Dummy { global void globalMethod() {} }")
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
+    }
+  }
+
+  test("Library project: @TestVisible field excluded from unused warnings") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy { @TestVisible private String testVisibleField; }")
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
+    }
+  }
+
+  test("Library project: global field still excluded from unused warnings") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "global class Dummy { global String globalField; }")) {
+      root: PathLike =>
+        val org = createLibraryOrgWithUnused(root)
+        assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
+    }
+  }
+
+  test("Library project: @AuraEnabled field excluded from unused warnings") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy { @AuraEnabled private String auraField; }")
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
+    }
+  }
+
+  test("Library project: public property not flagged as unused") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy { public String publicProperty { get; set; } }")
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
+    }
+  }
+
+  test("Library project: private property still flagged as unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public String publicProperty { get; set; } private String privateProperty { get; set; } }"
+      )
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls"))
+          .contains("Unused property 'privateProperty'")
+      )
+    }
+  }
+
+  test("Library project: public static field not flagged as unused") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy { public static String publicStaticField; }")
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")) == "")
+    }
+  }
+
+  test("Non-library project: public field flagged as unused (baseline)") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public String publicField; }",
+        "Bar.cls"   -> "public class Bar{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls"))
+          .contains("Unused field 'publicField'")
+      )
+    }
+  }
+
+  test("Library project: nested class public members not flagged as unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public void usedMethod() {} public class InnerClass { public void publicMethod() {} private void privateMethod() {} } }",
+        "Bar.cls" -> "public class Bar{ {new Dummy().usedMethod(); new Dummy.InnerClass();} }"
+      )
+    ) { root: PathLike =>
+      val org = createLibraryOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("Dummy.cls"))
+      // In library projects, public methods should not be flagged as unused (they're part of the API)  
+      assert(!issues.contains("Unused public method 'void publicMethod()'"))
+      // But private methods should still be flagged
+      assert(issues.contains("Unused private method 'void privateMethod()'"))
+    }
+  }
+
+  test("Non-library project: nested class public members flagged as unused (baseline)") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public void usedMethod() {} public class InnerClass { public void publicMethod() {} } }",
+        "Bar.cls" -> "public class Bar{ {new Dummy().usedMethod(); new Dummy.InnerClass();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("Dummy.cls"))
+      // In non-library projects, public methods in nested classes should be flagged as unused
+      assert(issues.contains("Unused public method 'void publicMethod()'"))
+    }
+  }
+
 }
