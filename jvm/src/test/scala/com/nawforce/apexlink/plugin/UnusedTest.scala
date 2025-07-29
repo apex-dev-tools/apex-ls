@@ -1311,4 +1311,47 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Library project: public methods in test classes not flagged as unused") {
+    FileSystemHelper.run(
+      Map(
+        "TestClass.cls" -> "@isTest public class TestClass { public void publicTestMethod() {} private void privateTestMethod() {} }"
+      )
+    ) { root: PathLike =>
+      val org    = createLibraryOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("TestClass.cls"))
+      // In library projects, public methods in test classes should not be flagged as unused
+      assert(!issues.contains("Unused public method 'void publicTestMethod()'"))
+      // But private methods should still be flagged
+      assert(issues.contains("Unused private method 'void privateTestMethod()'"))
+    }
+  }
+
+  test("Library project: public fields in test classes not flagged as unused") {
+    FileSystemHelper.run(
+      Map(
+        "TestClass.cls" -> "@isTest public class TestClass { public String publicTestField; private String privateTestField; }"
+      )
+    ) { root: PathLike =>
+      val org    = createLibraryOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("TestClass.cls"))
+      // In library projects, public fields in test classes should not be flagged as unused
+      assert(!issues.contains("Unused field 'publicTestField'"))
+      // But private fields should still be flagged
+      assert(issues.contains("Unused field 'privateTestField'"))
+    }
+  }
+
+  test("Non-library project: public methods in test classes flagged as unused (baseline)") {
+    FileSystemHelper.run(
+      Map(
+        "TestClass.cls" -> "@isTest public class TestClass { @isTest public void usedTestMethod() {} public void publicTestMethod() {} }"
+      )
+    ) { root: PathLike =>
+      val org    = createOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("TestClass.cls"))
+      // In non-library projects, public methods in test classes should be flagged as unused
+      assert(issues.contains("Unused public method 'void publicTestMethod()'"))
+    }
+  }
+
 }

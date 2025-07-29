@@ -5,6 +5,9 @@
       "default": true
     }
   ],
+  "plugins": {
+    "library": true
+  },
   "name": "MCP Test Workspace",
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
