@@ -20,6 +20,8 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * MCP tool for analyzing SFDX projects to detect code issues across all Salesforce development
@@ -28,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class SfdxCodeDiagnosticsTool {
 
+  private static final Logger logger = LoggerFactory.getLogger(SfdxCodeDiagnosticsTool.class);
   private final ApexLsBridge bridge;
 
   public SfdxCodeDiagnosticsTool(ApexLsBridge bridge) {
@@ -99,6 +102,7 @@ public class SfdxCodeDiagnosticsTool {
       }
 
     } catch (Exception ex) {
+      logger.error("Error during code diagnostics", ex);
       return new CallToolResult("Error during code diagnostics: " + ex.getMessage(), true);
     }
   }
