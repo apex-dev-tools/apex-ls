@@ -21,6 +21,7 @@ import com.nawforce.apexlink.api.IndexerConfiguration;
 import com.nawforce.apexlink.api.ServerOps;
 import com.nawforce.apexlink.rpc.*;
 import com.nawforce.pkgforce.diagnostics.Issue;
+import io.github.apexdevtools.apexls.mcp.MCPServerConfig;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -51,8 +52,14 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
   // Indexer configuration loaded from environment variables
   private static final IndexerConfig indexerConfig = new IndexerConfig();
 
+  private final MCPServerConfig config;
   private final Map<String, OrgAPI> workspaceCache = new ConcurrentHashMap<>();
   private boolean initialized = false;
+
+  public EmbeddedApexLsBridge(MCPServerConfig config) {
+    this.config = config;
+    logger.trace("Bridge created with MCP config: {}", config);
+  }
 
   @Override
   public void initialize() throws Exception {
@@ -107,10 +114,18 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
     return workspaceCache.computeIfAbsent(
         workspaceDirectory,
         dir -> {
-          logger.info("Creating new OrgAPI instance for workspace: {}", dir);
+          logger.debug("Creating OrgAPI for workspace: {}", dir);
+          
           OrgAPI orgAPI = new OrgAPIImpl();
 
-          orgAPI.open(dir);
+          // Build OpenOptions with MCP server configuration
+          OpenOptions options = OpenOptions.create()
+              .withParser("OutlineSingle")
+              .withAutoFlush(config.isCacheEnabled())
+              .withLoggingLevel(config.getLoggingLevel())
+              .withCache(config.isCacheEnabled());
+
+          orgAPI.open(dir, options);
           return orgAPI;
         });
   }
@@ -133,7 +148,13 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       CompletableFuture<GetIssuesResult> future = convertScalaFuture(scalaFuture);
 
       // Convert the result to JSON string
-      return future.thenApply(this::convertGetIssuesResultToJson);
+      return future.thenApply(result -> {
+        String json = convertGetIssuesResultToJson(result);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Found {} issues for workspace {}", result.issues().length, workspaceDirectory);
+        }
+        return json;
+      });
 
     } catch (Exception ex) {
       logger.error("Error calling getIssues via bridge", ex);
@@ -160,7 +181,13 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       CompletableFuture<TargetLocation[]> future = convertScalaFuture(scalaFuture);
 
       // Convert the result to JSON string
-      return future.thenApply(this::convertTargetLocationsToJson);
+      return future.thenApply(result -> {
+        String json = convertTargetLocationsToJson(result);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Found {} usages for {}:{}:{}", result.length, filePath, line, offset);
+        }
+        return json;
+      });
 
     } catch (Exception ex) {
       logger.error("Error calling findUsages via bridge", ex);

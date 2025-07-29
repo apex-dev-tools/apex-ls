@@ -14,6 +14,7 @@
 
 package io.github.apexdevtools.apexls.mcp.tools;
 
+import io.github.apexdevtools.apexls.mcp.MCPServerConfig;
 import io.github.apexdevtools.apexls.mcp.bridge.ApexLsBridge;
 import io.github.apexdevtools.apexls.mcp.bridge.EmbeddedApexLsBridge;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,11 @@ class SimpleMCPToolTest {
     private ApexLsBridge bridge;
     private String testWorkspacePath;
     
+    /** Helper method to create default test configuration. */
+    private MCPServerConfig createTestConfig() {
+        return new MCPServerConfig("none", false);
+    }
+    
     @BeforeEach
     void setUp() throws Exception {
         // Get the test workspace path from resources
@@ -47,7 +53,7 @@ class SimpleMCPToolTest {
         testWorkspacePath = new File(testWorkspaceUrl.toURI()).getAbsolutePath();
         
         // Initialize the bridge
-        bridge = new EmbeddedApexLsBridge();
+        bridge = new EmbeddedApexLsBridge(createTestConfig());
         bridge.initialize();
         
         // Give the bridge a moment to initialize

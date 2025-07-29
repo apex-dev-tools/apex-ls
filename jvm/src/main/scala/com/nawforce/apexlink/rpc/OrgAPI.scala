@@ -242,6 +242,10 @@ object OpenOptions {
   def default(): OpenOptions = {
     new OpenOptions()
   }
+
+  def create(): OpenOptions = {
+    new OpenOptions()
+  }
 }
 
 trait OrgAPI {

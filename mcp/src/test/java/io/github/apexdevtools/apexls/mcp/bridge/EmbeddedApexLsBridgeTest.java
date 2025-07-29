@@ -14,6 +14,7 @@
 
 package io.github.apexdevtools.apexls.mcp.bridge;
 
+import io.github.apexdevtools.apexls.mcp.MCPServerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,11 @@ class EmbeddedApexLsBridgeTest {
 
     private EmbeddedApexLsBridge bridge;
     private String testWorkspacePath;
+    
+    /** Helper method to create default test configuration. */
+    private MCPServerConfig createTestConfig() {
+        return new MCPServerConfig("none", false);
+    }
 
     @BeforeEach
     void setUp() throws Exception {
@@ -51,8 +57,9 @@ class EmbeddedApexLsBridgeTest {
         }
         testWorkspacePath = new File(testWorkspaceUrl.toURI()).getAbsolutePath();
 
-        // Initialize the bridge
-        bridge = new EmbeddedApexLsBridge();
+        // Initialize the bridge with default config
+        MCPServerConfig config = new MCPServerConfig("info", false);
+        bridge = new EmbeddedApexLsBridge(config);
         bridge.initialize();
 
         // Give the bridge a moment to initialize
@@ -228,7 +235,7 @@ class EmbeddedApexLsBridgeTest {
     @DisplayName("Should handle bridge not ready state")
     void shouldHandleBridgeNotReadyState() throws Exception {
         // Create a new bridge without initializing it
-        EmbeddedApexLsBridge uninitializedBridge = new EmbeddedApexLsBridge();
+        EmbeddedApexLsBridge uninitializedBridge = new EmbeddedApexLsBridge(createTestConfig());
         
         assertFalse(uninitializedBridge.isReady());
         
@@ -399,7 +406,7 @@ class EmbeddedApexLsBridgeTest {
         @DisplayName("Should initialize with configuration successfully")
         void shouldInitializeWithConfigurationSuccessfully() throws Exception {
             // Test that bridge initializes with its configuration
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
 
             // Initialization should succeed
             assertDoesNotThrow(testBridge::initialize);
@@ -412,7 +419,7 @@ class EmbeddedApexLsBridgeTest {
         @DisplayName("Should initialize successfully despite configuration failures")
         void shouldInitializeSuccessfullyDespiteConfigFailures() throws Exception {
             // Test that bridge initializes even if indexer configuration fails
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
 
             // Initialization should succeed with fallback configuration
             assertDoesNotThrow(testBridge::initialize);
@@ -430,7 +437,7 @@ class EmbeddedApexLsBridgeTest {
         @Test
         @DisplayName("Should handle bridge initialization errors gracefully")
         void shouldHandleBridgeInitializationErrorsGracefully() {
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
 
             // Test multiple initializations (second should not cause issues)
             assertDoesNotThrow(testBridge::initialize);
@@ -444,7 +451,7 @@ class EmbeddedApexLsBridgeTest {
         @Test
         @DisplayName("Should handle operations on closed bridge gracefully")
         void shouldHandleOperationsOnClosedBridgeGracefully() throws Exception {
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
             testBridge.initialize();
             assertTrue(testBridge.isReady());
 
@@ -468,7 +475,7 @@ class EmbeddedApexLsBridgeTest {
         @Test
         @DisplayName("Should handle concurrent initialization attempts")
         void shouldHandleConcurrentInitializationAttempts() throws Exception {
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
 
             // Start multiple initialization attempts concurrently
             CompletableFuture<Void> init1 = CompletableFuture.runAsync(() -> {
@@ -508,7 +515,7 @@ class EmbeddedApexLsBridgeTest {
             // This test verifies that if initialization fails, we get meaningful error messages
             // Since our current implementation is robust, we'll test the error handling structure
 
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
 
             // Normal initialization should work
             assertDoesNotThrow(testBridge::initialize);
@@ -523,7 +530,7 @@ class EmbeddedApexLsBridgeTest {
         @Test
         @DisplayName("Should handle workspace operations with various error conditions")
         void shouldHandleWorkspaceOperationsWithVariousErrorConditions() throws Exception {
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
             testBridge.initialize();
 
             // Test with null workspace path
@@ -565,7 +572,7 @@ class EmbeddedApexLsBridgeTest {
         @Test
         @DisplayName("Should handle extreme parameter values gracefully")
         void shouldHandleExtremeParameterValuesGracefully() throws Exception {
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
             testBridge.initialize();
 
             // Test with extreme maxIssuesPerFile values
@@ -587,7 +594,7 @@ class EmbeddedApexLsBridgeTest {
         @Test
         @DisplayName("Should handle file operation edge cases")
         void shouldHandleFileOperationEdgeCases() throws Exception {
-            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge();
+            EmbeddedApexLsBridge testBridge = new EmbeddedApexLsBridge(createTestConfig());
             testBridge.initialize();
 
             // Test findUsages with invalid file path

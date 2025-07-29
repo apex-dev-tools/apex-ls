@@ -16,12 +16,16 @@ package io.github.apexdevtools.apexls.mcp.tools;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.io.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper class for validating workspace arguments in MCP tools. Ensures consistent validation
  * across all Apex tools.
  */
 public class WorkspaceValidator {
+
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceValidator.class);
 
   /**
    * Validates that a workspace argument is valid for Apex analysis.

@@ -40,6 +40,7 @@ public class MCPServer {
 
   private static final Logger logger = LoggerFactory.getLogger(MCPServer.class);
 
+  private final MCPServerConfig config;
   private ApexLsBridge bridge;
   private SfdxCodeDiagnosticsTool sfdxDiagnosticsTool;
   private ApexFindUsagesTool findUsagesTool;
@@ -47,8 +48,9 @@ public class MCPServer {
   private ApexFindImpactedTestsTool findImpactedTestsTool;
   private WorkspaceResource workspaceResource;
 
-  public MCPServer() {
-    // Bridge and tools will be initialized in run()
+  public MCPServer(MCPServerConfig config) {
+    this.config = config;
+    logger.trace("MCP Server created with config: {}", config);
   }
 
   /**
@@ -92,7 +94,9 @@ public class MCPServer {
   /** Initialize the bridge to apex-ls core. */
   private void initializeBridge() throws Exception {
     logger.info("Initializing bridge to apex-ls core...");
-    bridge = new EmbeddedApexLsBridge();
+    logger.trace("MCP Server applying config: logging={}, cache={}", 
+        config.getLoggingLevel(), config.isCacheEnabled());
+    bridge = new EmbeddedApexLsBridge(config);
     bridge.initialize();
     logger.info("Bridge initialized successfully");
   }
@@ -141,7 +145,19 @@ public class MCPServer {
    */
   public static void main(String[] args) {
     try {
-      new MCPServer().run();
+      // Parse configuration from command line arguments and environment variables
+      MCPServerConfig config = MCPServerConfig.fromArgs(args);
+      logger.info("MCP Server starting with configuration: {}", config);
+      
+      new MCPServer(config).run();
+    } catch (IllegalArgumentException ex) {
+      if ("HELP_REQUESTED".equals(ex.getMessage())) {
+        System.out.println(MCPServerConfig.getUsage());
+        System.exit(0);
+      } else {
+        logger.error("Invalid configuration: {}", ex.getMessage());
+        System.exit(1);
+      }
     } catch (Exception ex) {
       logger.error("Failed to start MCP Server: {}", ex.getMessage(), ex);
       System.exit(1);

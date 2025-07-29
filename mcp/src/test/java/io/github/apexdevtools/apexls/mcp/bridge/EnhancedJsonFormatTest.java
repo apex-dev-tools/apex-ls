@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.apexdevtools.apexls.mcp.MCPServerConfig;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,10 +30,15 @@ class EnhancedJsonFormatTest {
   private EmbeddedApexLsBridge bridge;
   private ObjectMapper objectMapper;
   private String testWorkspacePath;
+  
+  /** Helper method to create default test configuration. */
+  private MCPServerConfig createTestConfig() {
+      return new MCPServerConfig("none", false);
+  }
 
   @BeforeEach
   void setUp() throws Exception {
-    bridge = new EmbeddedApexLsBridge();
+    bridge = new EmbeddedApexLsBridge(createTestConfig());
     bridge.initialize();
     objectMapper = new ObjectMapper();
 
