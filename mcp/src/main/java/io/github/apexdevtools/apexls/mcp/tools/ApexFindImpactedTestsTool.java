@@ -38,20 +38,7 @@ public class ApexFindImpactedTestsTool {
   }
 
   public McpServerFeatures.SyncToolSpecification getSpecification() {
-    String schema =
-        "{\n"
-            + "  \"type\": \"object\",\n"
-            + "  \"properties\": {\n"
-            + "    \"changed_paths\": {\n"
-            + "      \"type\": \"array\",\n"
-            + "      \"items\": {\n"
-            + "        \"type\": \"string\"\n"
-            + "      },\n"
-            + "      \"description\": \"Array of file paths that have been changed\"\n"
-            + "    }\n"
-            + "  },\n"
-            + "  \"required\": [\"changed_paths\"]\n"
-            + "}";
+    String schema = SchemaBuilder.createImpactedTestsSchema();
 
     Tool tool =
         new Tool(

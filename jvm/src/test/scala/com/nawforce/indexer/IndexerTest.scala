@@ -27,6 +27,7 @@ class IndexerTest extends AnyFunSuite with TestHelper {
       val oldConfig = ServerOps.setIndexerConfiguration(IndexerConfiguration(50, 200))
       val monitor   = new Monitor(root)
       try {
+        nap() // Give monitor time to setup before making changes
         verify(monitor, root)
       } finally {
         monitor.stop()
