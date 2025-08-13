@@ -115,15 +115,16 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
         workspaceDirectory,
         dir -> {
           logger.debug("Creating OrgAPI for workspace: {}", dir);
-          
+
           OrgAPI orgAPI = new OrgAPIImpl();
 
           // Build OpenOptions with MCP server configuration
-          OpenOptions options = OpenOptions.create()
-              .withParser("OutlineSingle")
-              .withAutoFlush(config.isCacheEnabled())
-              .withLoggingLevel(config.getLoggingLevel())
-              .withCache(config.isCacheEnabled());
+          OpenOptions options =
+              OpenOptions.create()
+                  .withParser("OutlineSingle")
+                  .withAutoFlush(config.isCacheEnabled())
+                  .withLoggingLevel(config.getLoggingLevel())
+                  .withCache(config.isCacheEnabled());
 
           orgAPI.open(dir, options);
           return orgAPI;
@@ -148,13 +149,15 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       CompletableFuture<GetIssuesResult> future = convertScalaFuture(scalaFuture);
 
       // Convert the result to JSON string
-      return future.thenApply(result -> {
-        String json = convertGetIssuesResultToJson(result);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Found {} issues for workspace {}", result.issues().length, workspaceDirectory);
-        }
-        return json;
-      });
+      return future.thenApply(
+          result -> {
+            String json = convertGetIssuesResultToJson(result);
+            if (logger.isDebugEnabled()) {
+              logger.debug(
+                  "Found {} issues for workspace {}", result.issues().length, workspaceDirectory);
+            }
+            return json;
+          });
 
     } catch (Exception ex) {
       logger.error("Error calling getIssues via bridge", ex);
@@ -181,13 +184,14 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
       CompletableFuture<TargetLocation[]> future = convertScalaFuture(scalaFuture);
 
       // Convert the result to JSON string
-      return future.thenApply(result -> {
-        String json = convertTargetLocationsToJson(result);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Found {} usages for {}:{}:{}", result.length, filePath, line, offset);
-        }
-        return json;
-      });
+      return future.thenApply(
+          result -> {
+            String json = convertTargetLocationsToJson(result);
+            if (logger.isDebugEnabled()) {
+              logger.debug("Found {} usages for {}:{}:{}", result.length, filePath, line, offset);
+            }
+            return json;
+          });
 
     } catch (Exception ex) {
       logger.error("Error calling findUsages via bridge", ex);
@@ -478,70 +482,54 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
     }
   }
 
-  /** Create usages response for empty results. */
+  /** Create standard success response for tools with optional array data. */
+  private String createToolResponse(
+      String toolName,
+      String status,
+      String summary,
+      int count,
+      String arrayName,
+      ArrayNode arrayData) {
+    try {
+      ObjectNode response = objectMapper.createObjectNode();
+      response.put("tool", toolName);
+      response.put("status", status);
+      response.put("summary", summary);
+
+      ObjectNode counts = objectMapper.createObjectNode();
+      counts.put("total", count);
+      response.set("counts", counts);
+
+      response.set(arrayName, arrayData != null ? arrayData : objectMapper.createArrayNode());
+
+      return objectMapper.writeValueAsString(response);
+    } catch (Exception ex) {
+      return String.format("{\"status\":\"%s\",\"summary\":\"%s\"}", status, summary);
+    }
+  }
+
+  /** Create success response for usages tool. */
   private String createUsagesResponse(int count, String message) {
-    try {
-      ObjectNode response = objectMapper.createObjectNode();
-      response.put("tool", "apex_find_usages");
-      response.put("status", "success");
-      response.put("summary", message != null ? message : "No usages found");
-
-      ObjectNode counts = objectMapper.createObjectNode();
-      counts.put("total", count);
-      response.set("counts", counts);
-
-      response.set("usages", objectMapper.createArrayNode());
-
-      return objectMapper.writeValueAsString(response);
-    } catch (Exception ex) {
-      return "{\"status\":\"success\",\"summary\":\"No usages found\"}";
-    }
+    String summary = message != null ? message : "No usages found";
+    return createToolResponse("apex_find_usages", "success", summary, count, "usages", null);
   }
 
-  /** Create error response for usages formatting failures. */
+  /** Create error response for usages tool. */
   private String createUsagesErrorResponse(String errorMessage) {
-    try {
-      ObjectNode response = objectMapper.createObjectNode();
-      response.put("tool", "apex_find_usages");
-      response.put("status", "error");
-      response.put("summary", errorMessage);
-      return objectMapper.writeValueAsString(response);
-    } catch (Exception ex) {
-      return "{\"status\":\"error\",\"summary\":\"" + errorMessage + "\"}";
-    }
+    return createToolResponse("apex_find_usages", "error", errorMessage, 0, "usages", null);
   }
 
-  /** Create definition response for empty results. */
+  /** Create success response for definitions tool. */
   private String createDefinitionResponse(int count, String message) {
-    try {
-      ObjectNode response = objectMapper.createObjectNode();
-      response.put("tool", "apex_find_definition");
-      response.put("status", "success");
-      response.put("summary", message != null ? message : "No definitions found");
-
-      ObjectNode counts = objectMapper.createObjectNode();
-      counts.put("total", count);
-      response.set("counts", counts);
-
-      response.set("definitions", objectMapper.createArrayNode());
-
-      return objectMapper.writeValueAsString(response);
-    } catch (Exception ex) {
-      return "{\"status\":\"success\",\"summary\":\"No definitions found\"}";
-    }
+    String summary = message != null ? message : "No definitions found";
+    return createToolResponse(
+        "apex_find_definition", "success", summary, count, "definitions", null);
   }
 
-  /** Create error response for definition formatting failures. */
+  /** Create error response for definitions tool. */
   private String createDefinitionErrorResponse(String errorMessage) {
-    try {
-      ObjectNode response = objectMapper.createObjectNode();
-      response.put("tool", "apex_find_definition");
-      response.put("status", "error");
-      response.put("summary", errorMessage);
-      return objectMapper.writeValueAsString(response);
-    } catch (Exception ex) {
-      return "{\"status\":\"error\",\"summary\":\"" + errorMessage + "\"}";
-    }
+    return createToolResponse(
+        "apex_find_definition", "error", errorMessage, 0, "definitions", null);
   }
 
   /** Convert TargetLocation instance to structured JSON. */
@@ -627,26 +615,11 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
 
   /** Convert TargetLocation[] array to Enhanced JSON format for AI consumption. */
   private String convertTargetLocationsToJson(TargetLocation[] targetLocations) {
-    if (targetLocations == null) {
+    if (targetLocations == null || targetLocations.length == 0) {
       return createUsagesResponse(0, null);
     }
 
     try {
-      if (targetLocations.length == 0) {
-        return createUsagesResponse(0, null);
-      }
-
-      // Create enhanced JSON structure
-      ObjectNode response = objectMapper.createObjectNode();
-      response.put("tool", "apex_find_usages");
-      response.put("status", "completed");
-      response.put("summary", "Found " + targetLocations.length + " usage(s)");
-
-      // Add counts
-      ObjectNode counts = objectMapper.createObjectNode();
-      counts.put("total", targetLocations.length);
-      response.set("counts", counts);
-
       // Convert each target location to structured JSON
       ArrayNode referenceList = objectMapper.createArrayNode();
       for (TargetLocation targetLocation : targetLocations) {
@@ -654,8 +627,14 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
         referenceList.add(refNode);
       }
 
-      response.set("usages", referenceList);
-      return objectMapper.writeValueAsString(response);
+      String summary = "Found " + targetLocations.length + " usage(s)";
+      return createToolResponse(
+          "apex_find_usages",
+          "completed",
+          summary,
+          targetLocations.length,
+          "usages",
+          referenceList);
 
     } catch (Exception ex) {
       logger.warn("Error converting target locations to JSON", ex);
@@ -665,26 +644,11 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
 
   /** Convert LocationLink[] array to Enhanced JSON format for AI consumption. */
   private String convertLocationLinksToJson(LocationLink[] locationLinks) {
-    if (locationLinks == null) {
+    if (locationLinks == null || locationLinks.length == 0) {
       return createDefinitionResponse(0, null);
     }
 
     try {
-      if (locationLinks.length == 0) {
-        return createDefinitionResponse(0, null);
-      }
-
-      // Create enhanced JSON structure
-      ObjectNode response = objectMapper.createObjectNode();
-      response.put("tool", "apex_find_definition");
-      response.put("status", "completed");
-      response.put("summary", "Found " + locationLinks.length + " definition(s)");
-
-      // Add counts
-      ObjectNode counts = objectMapper.createObjectNode();
-      counts.put("total", locationLinks.length);
-      response.set("counts", counts);
-
       // Convert each location link to structured JSON
       ArrayNode definitionList = objectMapper.createArrayNode();
       for (LocationLink locationLink : locationLinks) {
@@ -692,8 +656,14 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
         definitionList.add(defNode);
       }
 
-      response.set("definitions", definitionList);
-      return objectMapper.writeValueAsString(response);
+      String summary = "Found " + locationLinks.length + " definition(s)";
+      return createToolResponse(
+          "apex_find_definition",
+          "completed",
+          summary,
+          locationLinks.length,
+          "definitions",
+          definitionList);
 
     } catch (Exception ex) {
       logger.warn("Error converting location links to JSON", ex);
@@ -739,22 +709,13 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
   /** Create a success response for impacted tests with simplified JSON format. */
   private String createImpactedTestsResponse(String[] testFilePaths) {
     try {
-      ObjectNode response = objectMapper.createObjectNode();
-      response.put("tool", "apex_find_impacted_tests");
-      response.put("status", "completed");
-      response.put("summary", "Found " + testFilePaths.length + " impacted test class(es)");
-
-      ObjectNode counts = objectMapper.createObjectNode();
-      counts.put("total_impacted_tests", testFilePaths.length);
-      response.set("counts", counts);
-
       ArrayNode testFiles = objectMapper.createArrayNode();
       for (String filePath : testFilePaths) {
         testFiles.add(filePath);
       }
-      response.set("impacted_test_files", testFiles);
 
-      return objectMapper.writeValueAsString(response);
+      String summary = "Found " + testFilePaths.length + " impacted test class(es)";
+      return createImpactedTestsToolResponse("completed", summary, testFilePaths.length, testFiles);
 
     } catch (Exception ex) {
       logger.warn("Error creating impacted tests response", ex);
@@ -764,23 +725,29 @@ public class EmbeddedApexLsBridge implements ApexLsBridge {
 
   /** Create an error response for impacted tests. */
   private String createImpactedTestsErrorResponse(String errorMessage) {
+    return createImpactedTestsToolResponse(
+        "error", errorMessage, 0, objectMapper.createArrayNode());
+  }
+
+  /** Create standard response for impacted tests tool. */
+  private String createImpactedTestsToolResponse(
+      String status, String summary, int count, ArrayNode testFiles) {
     try {
       ObjectNode response = objectMapper.createObjectNode();
       response.put("tool", "apex_find_impacted_tests");
-      response.put("status", "error");
-      response.put("summary", errorMessage);
+      response.put("status", status);
+      response.put("summary", summary);
 
       ObjectNode counts = objectMapper.createObjectNode();
-      counts.put("total_impacted_tests", 0);
+      counts.put("total_impacted_tests", count);
       response.set("counts", counts);
 
-      ArrayNode testFiles = objectMapper.createArrayNode();
       response.set("impacted_test_files", testFiles);
 
       return objectMapper.writeValueAsString(response);
 
     } catch (Exception ex) {
-      logger.error("Error creating impacted tests error response", ex);
+      logger.error("Error creating impacted tests response", ex);
       return "{\"tool\":\"apex_find_impacted_tests\",\"status\":\"error\",\"summary\":\"Internal error\"}";
     }
   }

@@ -34,25 +34,7 @@ public class ApexFindUsagesTool {
   }
 
   public McpServerFeatures.SyncToolSpecification getSpecification() {
-    String schema =
-        "{\n"
-            + "  \"type\": \"object\",\n"
-            + "  \"properties\": {\n"
-            + "    \"path\": {\n"
-            + "      \"type\": \"string\",\n"
-            + "      \"description\": \"Path to the Apex file\"\n"
-            + "    },\n"
-            + "    \"line\": {\n"
-            + "      \"type\": \"integer\",\n"
-            + "      \"description\": \"Line number (1-based) where the identifier is located\"\n"
-            + "    },\n"
-            + "    \"offset\": {\n"
-            + "      \"type\": \"integer\",\n"
-            + "      \"description\": \"Character offset within the line (0-based) that points to any position within the target identifier (class name, method name, variable name, etc.). The position does not need to be at the start of the identifier - any character within the identifier will work.\"\n"
-            + "    }\n"
-            + "  },\n"
-            + "  \"required\": [\"path\", \"line\", \"offset\"]\n"
-            + "}";
+    String schema = SchemaBuilder.createApexPositionSchema();
 
     Tool tool =
         new Tool(

@@ -94,8 +94,10 @@ public class MCPServer {
   /** Initialize the bridge to apex-ls core. */
   private void initializeBridge() throws Exception {
     logger.info("Initializing bridge to apex-ls core...");
-    logger.trace("MCP Server applying config: logging={}, cache={}", 
-        config.getLoggingLevel(), config.isCacheEnabled());
+    logger.trace(
+        "MCP Server applying config: logging={}, cache={}",
+        config.getLoggingLevel(),
+        config.isCacheEnabled());
     bridge = new EmbeddedApexLsBridge(config);
     bridge.initialize();
     logger.info("Bridge initialized successfully");
@@ -148,7 +150,7 @@ public class MCPServer {
       // Parse configuration from command line arguments and environment variables
       MCPServerConfig config = MCPServerConfig.fromArgs(args);
       logger.info("MCP Server starting with configuration: {}", config);
-      
+
       new MCPServer(config).run();
     } catch (IllegalArgumentException ex) {
       if ("HELP_REQUESTED".equals(ex.getMessage())) {

@@ -113,11 +113,39 @@ object FileSystemHelper {
     try {
       verify(new Path(tempDir))
     } finally {
-      files.foreach(kv => {
-        val path = tempDir.resolve(kv._1)
-        path.toFile.delete()
-      })
-      tempDir.toFile.delete()
+      // Give any file watchers time to clean up before deleting
+      Thread.sleep(100)
+
+      // Use recursive delete that's more robust
+      try {
+        deleteRecursively(tempDir)
+      } catch {
+        case _: Exception =>
+          // If deletion fails, try again after a short delay
+          Thread.sleep(200)
+          try {
+            deleteRecursively(tempDir)
+          } catch {
+            case _: Exception => // Ignore cleanup failures in tests
+          }
+      }
+    }
+  }
+
+  private def deleteRecursively(path: java.nio.file.Path): Unit = {
+    if (Files.exists(path)) {
+      if (Files.isDirectory(path)) {
+        val stream = Files.walk(path)
+        try {
+          stream
+            .sorted(java.util.Comparator.reverseOrder())
+            .forEach(p => Files.deleteIfExists(p))
+        } finally {
+          stream.close()
+        }
+      } else {
+        Files.deleteIfExists(path)
+      }
     }
   }
 

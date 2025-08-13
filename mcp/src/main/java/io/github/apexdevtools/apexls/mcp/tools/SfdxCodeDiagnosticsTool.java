@@ -38,28 +38,7 @@ public class SfdxCodeDiagnosticsTool {
   }
 
   public McpServerFeatures.SyncToolSpecification getSpecification() {
-    String schema =
-        "{\n"
-            + "  \"type\": \"object\",\n"
-            + "  \"properties\": {\n"
-            + "    \"workspace\": {\n"
-            + "      \"type\": \"string\",\n"
-            + "      \"description\": \"Path to the SFDX workspace directory\"\n"
-            + "    },\n"
-            + "    \"includeWarnings\": {\n"
-            + "      \"type\": \"boolean\",\n"
-            + "      \"description\": \"Include warning-level issues in results\",\n"
-            + "      \"default\": false\n"
-            + "    },\n"
-            + "    \"maxIssuesPerFile\": {\n"
-            + "      \"type\": \"integer\",\n"
-            + "      \"description\": \"Maximum number of issues to return per file\",\n"
-            + "      \"default\": 100,\n"
-            + "      \"minimum\": 1\n"
-            + "    }\n"
-            + "  },\n"
-            + "  \"required\": [\"workspace\"]\n"
-            + "}";
+    String schema = SchemaBuilder.createWorkspaceSchema();
 
     Tool tool =
         new Tool(

@@ -50,20 +50,22 @@ public class MCPServerConfig {
   /** Create configuration from arguments with custom environment provider (for testing). */
   public static MCPServerConfig fromArgs(String[] args, Function<String, String> envProvider) {
     ParseResult parseResult = parseArguments(args);
-    
+
     if (parseResult.showHelp) {
       throw new IllegalArgumentException("HELP_REQUESTED");
     }
 
     // Use CLI values or fall back to environment variables
-    String finalLogging = parseResult.loggingLevel != null 
-        ? parseResult.loggingLevel 
-        : getEnvOrDefault(envProvider, LOGGING_ENV_VAR, DEFAULT_LOGGING);
-        
-    boolean finalCache = parseResult.cacheEnabled != null 
-        ? parseResult.cacheEnabled 
-        : Boolean.parseBoolean(getEnvOrDefault(envProvider, CACHE_ENV_VAR, 
-            String.valueOf(DEFAULT_CACHE_ENABLED)));
+    String finalLogging =
+        parseResult.loggingLevel != null
+            ? parseResult.loggingLevel
+            : getEnvOrDefault(envProvider, LOGGING_ENV_VAR, DEFAULT_LOGGING);
+
+    boolean finalCache =
+        parseResult.cacheEnabled != null
+            ? parseResult.cacheEnabled
+            : Boolean.parseBoolean(
+                getEnvOrDefault(envProvider, CACHE_ENV_VAR, String.valueOf(DEFAULT_CACHE_ENABLED)));
 
     return new MCPServerConfig(finalLogging, finalCache);
   }
@@ -71,9 +73,9 @@ public class MCPServerConfig {
   /** Simple data class for parse results. */
   private static class ParseResult {
     final String loggingLevel;
-    final Boolean cacheEnabled; 
+    final Boolean cacheEnabled;
     final boolean showHelp;
-    
+
     ParseResult(String loggingLevel, Boolean cacheEnabled, boolean showHelp) {
       this.loggingLevel = loggingLevel;
       this.cacheEnabled = cacheEnabled;
@@ -105,10 +107,11 @@ public class MCPServerConfig {
   }
 
   /** Get environment variable or return default value. */
-  private static String getEnvOrDefault(Function<String, String> envProvider, String envVar, String defaultValue) {
+  private static String getEnvOrDefault(
+      Function<String, String> envProvider, String envVar, String defaultValue) {
     String envValue = envProvider.apply(envVar);
-    return (envValue != null && !envValue.trim().isEmpty()) 
-        ? envValue.trim().toLowerCase() 
+    return (envValue != null && !envValue.trim().isEmpty())
+        ? envValue.trim().toLowerCase()
         : defaultValue;
   }
 
@@ -128,32 +131,31 @@ public class MCPServerConfig {
               "Invalid logging level '%s'. Valid levels: %s", loggingLevel, VALID_LOGGING_LEVELS));
     }
 
-    logger.trace(
-        "MCP Server config resolved: logging={}, cache={}", loggingLevel, cacheEnabled);
+    logger.trace("MCP Server config resolved: logging={}, cache={}", loggingLevel, cacheEnabled);
   }
 
   /** Generate usage information string. */
   public static String getUsage() {
-    return "Apex Language Server MCP (Model Context Protocol) Server\n" +
-           "\n" +
-           "Usage: java -jar apex-ls-mcp.jar [options]\n" +
-           "\n" +
-           "Options:\n" +
-           "  --logging=LEVEL    Set logging level: none, info, debug, trace\n" +
-           "                     Default: info\n" +
-           "  --cache-enabled    Enable apex-ls caching\n" +
-           "  --cache-disabled   Disable apex-ls caching\n" +
-           "                     Default: disabled\n" +
-           "  --help, -h         Show this help message\n" +
-           "\n" +
-           "Environment Variables:\n" +
-           "  APEX_MCP_LOGGING        Override logging level\n" +
-           "  APEX_MCP_CACHE_ENABLED  Override cache setting (true/false)\n" +
-           "\n" +
-           "Examples:\n" +
-           "  java -jar apex-ls-mcp.jar\n" +
-           "  java -jar apex-ls-mcp.jar --logging=debug --cache-enabled\n" +
-           "  APEX_MCP_LOGGING=trace java -jar apex-ls-mcp.jar";
+    return "Apex Language Server MCP (Model Context Protocol) Server\n"
+        + "\n"
+        + "Usage: java -jar apex-ls-mcp.jar [options]\n"
+        + "\n"
+        + "Options:\n"
+        + "  --logging=LEVEL    Set logging level: none, info, debug, trace\n"
+        + "                     Default: info\n"
+        + "  --cache-enabled    Enable apex-ls caching\n"
+        + "  --cache-disabled   Disable apex-ls caching\n"
+        + "                     Default: disabled\n"
+        + "  --help, -h         Show this help message\n"
+        + "\n"
+        + "Environment Variables:\n"
+        + "  APEX_MCP_LOGGING        Override logging level\n"
+        + "  APEX_MCP_CACHE_ENABLED  Override cache setting (true/false)\n"
+        + "\n"
+        + "Examples:\n"
+        + "  java -jar apex-ls-mcp.jar\n"
+        + "  java -jar apex-ls-mcp.jar --logging=debug --cache-enabled\n"
+        + "  APEX_MCP_LOGGING=trace java -jar apex-ls-mcp.jar";
   }
 
   public String getLoggingLevel() {
@@ -166,7 +168,6 @@ public class MCPServerConfig {
 
   @Override
   public String toString() {
-    return String.format(
-        "MCPServerConfig{logging='%s', cache=%s}", loggingLevel, cacheEnabled);
+    return String.format("MCPServerConfig{logging='%s', cache=%s}", loggingLevel, cacheEnabled);
   }
 }
