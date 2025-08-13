@@ -22,6 +22,9 @@ ThisBuild / versionScheme          := Some("strict")
 ThisBuild / resolvers += Resolver.mavenLocal
 ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
+// Java 17 development with Java 8 runtime compatibility
+ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8")
+
 lazy val build = taskKey[File]("Build artifacts")
 lazy val pack  = inputKey[Unit]("Publish specific local version")
 lazy val Dev   = config("dev") extend Compile

@@ -20,6 +20,11 @@ on:
         type: boolean
         required: true
         default: false
+      pub_mcp:
+        description: "Publish MCP Server"
+        type: boolean
+        required: true
+        default: true
 
 jobs:
   publish:
@@ -33,9 +38,10 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: 8
+          java-version: "17"
 
       - uses: sbt/setup-sbt@v1
+
 
       - uses: actions/setup-node@v4
         with:
@@ -57,6 +63,34 @@ jobs:
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+
+      - name: Publish MCP Server to Maven Central
+        if: ${{ (github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp) && (github.event_name == 'release' && github.event.action == 'released' || inputs.pub_sbt) }}
+        run: |
+          cd mcp
+          sbt ci-release
+        env:
+          PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+          PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
+          SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+
+      - name: Build Standalone JAR for GitHub Release
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp }}
+        run: |
+          cd mcp
+          sbt buildStandalone
+
+      - name: Upload Standalone JAR to GitHub Release
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: mcp/target/scala-2.13/apex-ls-mcp-${{ github.event.release.tag_name }}-standalone.jar
+          asset_name: apex-ls-mcp-${{ github.event.release.tag_name }}-standalone.jar
+          asset_content_type: application/java-archive
 
       # Only publishes full tagged releases to NPM
       - name: Publish NPM

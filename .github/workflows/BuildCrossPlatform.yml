@@ -38,3 +38,10 @@ jobs:
 
       - name: Test
         run: sbt test
+
+      - name: Build MCP Server
+        if: ${{ matrix.java_version >= 17 }}
+        run: |
+          cd mcp
+          sbt test
+          sbt buildRegular

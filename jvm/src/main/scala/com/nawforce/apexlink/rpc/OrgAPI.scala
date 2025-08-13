@@ -242,6 +242,11 @@ object OpenOptions {
   def default(): OpenOptions = {
     new OpenOptions()
   }
+
+  // Java compatibility method - 'default' is a reserved keyword in Java
+  def create(): OpenOptions = {
+    new OpenOptions()
+  }
 }
 
 trait OrgAPI {

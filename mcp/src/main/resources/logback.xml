@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console appender that outputs to STDERR to avoid mixing with MCP JSON protocol on STDOUT -->
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root logger configuration -->
+    <root level="INFO">
+        <appender-ref ref="STDERR" />
+    </root>
+    
+    <!-- MCP specific loggers -->
+    <logger name="io.github.apexdevtools.apexls.mcp" level="INFO" additivity="false">
+        <appender-ref ref="STDERR" />
+    </logger>
+    
+    <!-- Reduce verbosity of some noisy libraries -->
+    <logger name="org.eclipse.jetty" level="WARN" />
+    <logger name="io.netty" level="WARN" />
+    <logger name="reactor" level="WARN" />
+</configuration>

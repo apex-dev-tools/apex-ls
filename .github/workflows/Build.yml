@@ -17,10 +17,11 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: 8
+          java-version: "17"
           cache: "sbt"
 
       - uses: sbt/setup-sbt@v1
+
 
       - uses: actions/setup-node@v4
         with:
@@ -36,6 +37,17 @@ jobs:
 
       - name: Test
         run: sbt test
+
+      - name: Build MCP Server (Regular)
+        run: |
+          cd mcp
+          sbt test
+          sbt buildRegular
+
+      - name: Build MCP Server (Standalone)
+        run: |
+          cd mcp
+          sbt buildStandalone
 
       - name: Checkout samples repo
         uses: actions/checkout@v4
