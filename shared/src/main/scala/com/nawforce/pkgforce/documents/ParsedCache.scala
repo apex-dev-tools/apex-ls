@@ -59,7 +59,9 @@ final case class PackageContext(
   namespace: Option[String],
   ghostedPackages: Array[String],
   analysedPackages: Array[String],
-  additionalNamespaces: Array[String]
+  additionalNamespaces: Array[String],
+  externalMetadataPaths: Array[String],
+  isLibrary: Boolean
 ) {
   override def equals(that: Any): Boolean = {
     that match {
@@ -67,7 +69,9 @@ final case class PackageContext(
         other.namespace == namespace &&
         other.ghostedPackages.sameElements(ghostedPackages) &&
         other.analysedPackages.sameElements(analysedPackages) &&
-        other.additionalNamespaces.sameElements(additionalNamespaces)
+        other.additionalNamespaces.sameElements(additionalNamespaces) &&
+        other.externalMetadataPaths.sameElements(externalMetadataPaths) &&
+        other.isLibrary == isLibrary
       case _ => false
     }
   }

@@ -42,7 +42,8 @@ case class ProjectConfig(maxDependencyCount: Option[Int], isLibrary: Boolean = f
 case class Workspace(
   logger: IssuesManager,
   layers: Seq[NamespaceLayer],
-  projectConfig: Option[ProjectConfig] = None
+  projectConfig: Option[ProjectConfig] = None,
+  externalMetadataPaths: Seq[PathLike] = Seq.empty
 ) {
 
   // Document indexes for each layer of actual metadata
@@ -80,9 +81,11 @@ object Workspace {
           new Workspace(
             issueManager,
             layers,
-            Some(ProjectConfig(config.project.maxDependencyCount, config.project.isLibrary))
+            Some(ProjectConfig(config.project.maxDependencyCount, config.project.isLibrary)),
+            config.externalMetadataPaths
           )
-        case _ => new Workspace(issueManager, layers)
+        case config: WorkspaceConfig =>
+          new Workspace(issueManager, layers, None, config.externalMetadataPaths)
       }
     }
   }
