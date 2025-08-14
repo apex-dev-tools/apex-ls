@@ -243,8 +243,8 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
           .getOrElse(Seq.empty)
     }
 
-  private val externalMetadataPaths: Seq[String] =
-    externalMetadata.map(extDir => projectPath.join(extDir).toString)
+  val externalMetadataPaths: Seq[PathLike] =
+    externalMetadata.map(extDir => projectPath.join(extDir))
 
   private val gulpPackages = additionalNamespaces.flatMap(ns => {
     createGulpPath(ns) match {
@@ -437,11 +437,6 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     } else {
       (layers._1, newLayer.packageLayer :: layers._2)
     }
-  }
-
-  def isExternalPath(path: PathLike): Boolean = {
-    val pathStr = path.toString
-    externalMetadataPaths.exists(extPath => pathStr.startsWith(extPath))
   }
 
   private def validateExternalMetadataPath(dir: String): Option[String] = {

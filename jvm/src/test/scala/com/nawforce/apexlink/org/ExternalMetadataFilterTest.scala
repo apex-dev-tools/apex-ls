@@ -33,7 +33,12 @@ class ExternalMetadataFilterTest extends AnyFunSuite {
         "vendor/lib/External.cls"                 -> "public class External {}"
       )
     ) { root: PathLike =>
-      val issueManager = new IssuesManager()
+      // Create external path filter
+      val externalPathFilter: PathLike => Boolean = { path =>
+        path.toString.contains("vendor")
+      }
+      
+      val issueManager = new IssuesManager(Some(externalPathFilter))
 
       // Add a warning and error for both internal and external files
       val internalFile = root.join("force-app/main/default/classes/Test.cls")
@@ -52,17 +57,11 @@ class ExternalMetadataFilterTest extends AnyFunSuite {
         Issue(externalFile, Diagnostic(ERROR_CATEGORY, Location.empty, "External error"))
       )
 
-      // Create external path filter
-      val externalPathFilter: PathLike => Boolean = { path =>
-        path.toString.contains("vendor")
-      }
-
       // Test with warnings included - should suppress external warnings but keep external errors
       val allIssues = issueManager.issuesForFilesInternal(
         paths = null,
         includeWarnings = true,
-        maxIssuesPerFile = 0,
-        externalPathFilter = Some(externalPathFilter)
+        maxIssuesPerFile = 0
       )
 
       // Should get: internal warning, internal error, external error (external warning suppressed)
@@ -76,8 +75,7 @@ class ExternalMetadataFilterTest extends AnyFunSuite {
       val errorsOnly = issueManager.issuesForFilesInternal(
         paths = null,
         includeWarnings = false,
-        maxIssuesPerFile = 0,
-        externalPathFilter = Some(externalPathFilter)
+        maxIssuesPerFile = 0
       )
 
       // Should get: internal error, external error
@@ -96,7 +94,7 @@ class ExternalMetadataFilterTest extends AnyFunSuite {
         "force-app/main/default/classes/Test.cls" -> "public class Test {}"
       )
     ) { root: PathLike =>
-      val issueManager = new IssuesManager()
+      val issueManager = new IssuesManager(None)
 
       val internalFile = root.join("force-app/main/default/classes/Test.cls")
       issueManager.add(Issue(internalFile, Diagnostic(WARNING_CATEGORY, Location.empty, "Warning")))
@@ -106,8 +104,7 @@ class ExternalMetadataFilterTest extends AnyFunSuite {
       val allIssues = issueManager.issuesForFilesInternal(
         paths = null,
         includeWarnings = true,
-        maxIssuesPerFile = 0,
-        externalPathFilter = None
+        maxIssuesPerFile = 0
       )
 
       assert(allIssues.size == 2)

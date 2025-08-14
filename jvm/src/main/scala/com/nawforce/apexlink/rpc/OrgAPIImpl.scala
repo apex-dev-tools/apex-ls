@@ -90,12 +90,7 @@ case class GetIssues(
       promise.success(
         GetIssuesResult(
           orgImpl.issueManager
-            .issuesForFilesInternal(
-              null,
-              includeWarnings,
-              maxIssuesPerFile,
-              OrgAPIImplHelpers.getExternalPathFilter(orgImpl)
-            )
+            .issuesForFilesInternal(null, includeWarnings, maxIssuesPerFile)
             .toArray
         )
       )
@@ -156,12 +151,7 @@ case class IssuesForFile(promise: Promise[IssuesResult], path: String) extends A
       promise.success(
         IssuesResult(
           orgImpl.issues
-            .issuesForFilesInternal(
-              Array(Path(path)),
-              includeWarnings = true,
-              maxIssuesPerFile = 0,
-              OrgAPIImplHelpers.getExternalPathFilter(orgImpl)
-            )
+            .issuesForFilesInternal(Array(Path(path)), includeWarnings = true, maxIssuesPerFile = 0)
             .toArray
         )
       )
@@ -189,12 +179,7 @@ case class IssuesForFiles(
       promise.success(
         IssuesResult(
           orgImpl.issues
-            .issuesForFilesInternal(
-              paths.map(Path(_)),
-              includeWarnings,
-              maxErrorsPerFile,
-              OrgAPIImplHelpers.getExternalPathFilter(orgImpl)
-            )
+            .issuesForFilesInternal(paths.map(Path(_)), includeWarnings, maxErrorsPerFile)
             .toArray
         )
       )
@@ -722,14 +707,4 @@ class OrgAPIImpl extends OrgAPI {
     GetTestMethodItems(OrgQueue.instance(), paths)
   }
 
-}
-
-object OrgAPIImplHelpers {
-  def getExternalPathFilter(orgImpl: OPM.OrgImpl): Option[PathLike => Boolean] = {
-    import com.nawforce.pkgforce.sfdx.SFDXProject
-    import com.nawforce.pkgforce.diagnostics.CatchingLogger
-
-    val catchingLogger = new CatchingLogger()
-    SFDXProject(orgImpl.path, catchingLogger).map(_.isExternalPath)
-  }
 }

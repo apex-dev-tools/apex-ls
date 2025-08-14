@@ -1161,30 +1161,4 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
-  test("isExternalPath method") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"packageDirectories\": [{\"path\": \"force-app\"}], \"plugins\": {\"externalMetadata\": [\"vendor\", \"external/lib\"]}}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
-      assert(project.isDefined)
-
-      val p = project.get
-
-      // Test paths within external metadata directories
-      assert(p.isExternalPath(root.join("vendor/some/file.cls")))
-      assert(p.isExternalPath(root.join("external/lib/other.cls")))
-
-      // Test paths outside external metadata directories
-      assert(!p.isExternalPath(root.join("force-app/main/default/classes/Test.cls")))
-      assert(!p.isExternalPath(root.join("other/path/file.cls")))
-
-      // Test paths outside project
-      val otherRoot = root.parent.join("other-project")
-      assert(!p.isExternalPath(otherRoot.join("some/file.cls")))
-    }
-  }
-
 }
