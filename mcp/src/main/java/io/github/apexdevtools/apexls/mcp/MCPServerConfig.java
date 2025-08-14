@@ -14,11 +14,11 @@ are met:
 
 package io.github.apexdevtools.apexls.mcp;
 
-import java.util.Arrays;
-import java.util.Set;
-import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Configuration class for MCP server startup parameters. Handles command line argument parsing,
@@ -136,26 +136,27 @@ public class MCPServerConfig {
 
   /** Generate usage information string. */
   public static String getUsage() {
-    return "Apex Language Server MCP (Model Context Protocol) Server\n"
-        + "\n"
-        + "Usage: java -jar apex-ls-mcp.jar [options]\n"
-        + "\n"
-        + "Options:\n"
-        + "  --logging=LEVEL    Set logging level: none, info, debug, trace\n"
-        + "                     Default: info\n"
-        + "  --cache-enabled    Enable apex-ls caching\n"
-        + "  --cache-disabled   Disable apex-ls caching\n"
-        + "                     Default: disabled\n"
-        + "  --help, -h         Show this help message\n"
-        + "\n"
-        + "Environment Variables:\n"
-        + "  APEX_MCP_LOGGING        Override logging level\n"
-        + "  APEX_MCP_CACHE_ENABLED  Override cache setting (true/false)\n"
-        + "\n"
-        + "Examples:\n"
-        + "  java -jar apex-ls-mcp.jar\n"
-        + "  java -jar apex-ls-mcp.jar --logging=debug --cache-enabled\n"
-        + "  APEX_MCP_LOGGING=trace java -jar apex-ls-mcp.jar";
+    return """
+      Apex Language Server MCP (Model Context Protocol) Server
+
+      Usage: java -jar apex-ls-mcp.jar [options]
+
+      Options:
+        --logging=LEVEL    Set logging level: none, info, debug, trace
+                           Default: info
+        --cache-enabled    Enable apex-ls caching
+        --cache-disabled   Disable apex-ls caching
+                           Default: disabled
+        --help, -h         Show this help message
+
+      Environment Variables:
+        APEX_MCP_LOGGING        Override logging level
+        APEX_MCP_CACHE_ENABLED  Override cache setting (true/false)
+
+      Examples:
+        java -jar apex-ls-mcp.jar
+        java -jar apex-ls-mcp.jar --logging=debug --cache-enabled
+        APEX_MCP_LOGGING=trace java -jar apex-ls-mcp.jar""";
   }
 
   public String getLoggingLevel() {
