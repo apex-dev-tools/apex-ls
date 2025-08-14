@@ -20,6 +20,7 @@ import com.nawforce.pkgforce.workspace.{ModuleLayer, NamespaceLayer}
 
 trait WorkspaceConfig {
   def layers(logger: IssueLogger): Seq[NamespaceLayer]
+  def externalMetadataPaths: Seq[PathLike]
 }
 
 class MDAPIWorkspaceConfig(namespace: Option[Name], paths: Seq[PathLike]) extends WorkspaceConfig {
@@ -33,6 +34,8 @@ class MDAPIWorkspaceConfig(namespace: Option[Name], paths: Seq[PathLike]) extend
       )
     )
 
+  override def externalMetadataPaths: Seq[PathLike] = Seq.empty
+
   override def toString: String =
     s"MDAPIWorkspace(namespace=$namespace, paths=${paths.map(_.toString).mkString(", ")})"
 }
@@ -41,6 +44,8 @@ class SFDXWorkspaceConfig(val rootPath: PathLike, val project: SFDXProject)
     extends WorkspaceConfig {
 
   override def layers(logger: IssueLogger): Seq[NamespaceLayer] = project.layers(logger)
+
+  def externalMetadataPaths: Seq[PathLike] = project.externalMetadataPaths
 
   override def toString: String = s"SFDXWorkspace(${project.projectPath})"
 }

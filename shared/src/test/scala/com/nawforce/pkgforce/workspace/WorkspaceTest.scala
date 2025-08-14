@@ -19,26 +19,100 @@ import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path._
 import com.nawforce.pkgforce.stream._
 import com.nawforce.runtime.FileSystemHelper
-import org.scalatest.BeforeAndAfter
+import com.nawforce.runtime.platform.Path
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 import scala.collection.immutable.ArraySeq
 
-class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
-
-  private var logger: IssuesManager = _
-
-  before {
-    logger = new IssuesManager()
-  }
+class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Empty dir has no events") {
     FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       assert(ws.get.events.isEmpty)
+    }
+  }
+
+  test("Non-existent directory returns error") {
+    val nonExistentPath    = Path("/non/existent/directory/path")
+    val (ws, issueManager) = Workspace(nonExistentPath)
+
+    assert(ws.isEmpty)
+    assert(issueManager.nonEmpty)
+    assert(issueManager.hasErrors)
+
+    val diagnostics = issueManager.getDiagnostics(nonExistentPath)
+    assert(diagnostics.nonEmpty)
+    assert(diagnostics.head.message.contains("No directory at"))
+  }
+
+  test("File path instead of directory returns error") {
+    FileSystemHelper.run(Map("testfile.txt" -> "content")) { root: PathLike =>
+      val filePath           = root.join("testfile.txt")
+      val (ws, issueManager) = Workspace(filePath)
+
+      assert(ws.isEmpty)
+      assert(issueManager.nonEmpty)
+      assert(issueManager.hasErrors)
+
+      val diagnostics = issueManager.getDiagnostics(filePath)
+      assert(diagnostics.nonEmpty)
+      assert(diagnostics.head.message.contains("No directory at"))
+    }
+  }
+
+  test("Malformed sfdx-project.json is handled gracefully") {
+    FileSystemHelper.run(Map("sfdx-project.json" -> "{ invalid json content")) { root: PathLike =>
+      val (ws, issueManager) = Workspace(root)
+
+      // Should fall back to creating workspace without SFDX config
+      // The logger should capture any parsing errors
+      assert(issueManager.nonEmpty || ws.nonEmpty) // Either errors logged or workspace created
+    }
+  }
+
+  test("Valid SFDX project with external metadata creates external path filter") {
+    FileSystemHelper.run(Map("sfdx-project.json" -> """{
+        "packageDirectories": [{"path": "force-app"}],
+        "plugins": {
+          "externalMetadata": ["vendor", "external"]
+        }
+      }""")) { root: PathLike =>
+      val (ws, issueManager) = Workspace(root)
+
+      assert(ws.nonEmpty)
+      assert(issueManager.externalPathFilter.nonEmpty)
+
+      // Test that the filter works correctly
+      val filter = issueManager.externalPathFilter.get
+      assert(filter(root.join("vendor/some/file.cls")))
+      assert(filter(root.join("external/lib/class.cls")))
+      assert(!filter(root.join("force-app/main/classes/Test.cls")))
+    }
+  }
+
+  test("SFDX project without external metadata has no external path filter") {
+    FileSystemHelper.run(Map("sfdx-project.json" -> """{
+        "packageDirectories": [{"path": "force-app"}]
+      }""")) { root: PathLike =>
+      val (ws, issueManager) = Workspace(root)
+
+      assert(ws.nonEmpty)
+      assert(issueManager.externalPathFilter.isEmpty)
+    }
+  }
+
+  test("MDAPI workspace (no sfdx-project.json) has no external path filter") {
+    FileSystemHelper.run(Map("classes/TestClass.cls" -> "public class TestClass {}")) {
+      root: PathLike =>
+        val (ws, issueManager) = Workspace(root)
+
+        assert(ws.nonEmpty)
+        assert(issueManager.externalPathFilter.isEmpty)
+        assert(issueManager.isEmpty) // No errors should be logged
     }
   }
 
@@ -48,7 +122,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
         "pkg/CustomLabels.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -61,7 +135,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Label parse error") {
     FileSystemHelper.run(Map[String, String]("pkg/CustomLabels.labels" -> "<CustomLabels")) {
       root: PathLike =>
-        val ws = Workspace(root, logger)
+        val (ws, logger) = Workspace(root)
         assert(logger.isEmpty)
         assert(ws.nonEmpty)
         ws.get.events.toList should matchPattern {
@@ -88,7 +162,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
 
@@ -111,7 +185,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
   test("Page event") {
     FileSystemHelper.run(Map[String, String]("pkg/MyPage.page" -> "<apex:page/>")) {
       root: PathLike =>
-        val ws = Workspace(root, logger)
+        val (ws, logger) = Workspace(root)
         assert(logger.isEmpty)
         assert(ws.nonEmpty)
         ws.get.events.toList should matchPattern {
@@ -125,7 +199,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
     FileSystemHelper.run(
       Map[String, String]("pkg/MyPage.page" -> "<apex:page controller='MyController'/>")
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -148,7 +222,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
         "pkg/MyPage.page" -> "<apex:page controller='MyController' extensions='Ext1, Ext2'/>"
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -175,7 +249,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
         "pkg/MyPage.page" -> "<apex:page a = '{!foo}'><a href='{!bar}' other='{!baz}'/></apex:page>"
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -196,7 +270,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
         "pkg/MyPage.page" -> s"<apex:page>{!foo} xx <a> {!bar} </a>{!baz}</apex:page>"
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -213,7 +287,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   test("Flow event") {
     FileSystemHelper.run(Map[String, String]("pkg/MyFlow.flow" -> "")) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -233,7 +307,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
             |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -259,7 +333,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -283,7 +357,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
         "pkg/MyComponent.component" -> "<apex:component a = '{!foo}'><a href='{!bar}' other='{!baz}'/></apex:component>"
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -311,7 +385,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
         "pkg/MyComponent.component" -> s"<apex:component>{!foo} xx <a> {!bar} </a>{!baz}</apex:component>"
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -341,7 +415,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -372,7 +446,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -402,7 +476,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -421,7 +495,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\""
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -444,7 +518,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -466,7 +540,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -488,7 +562,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -517,7 +591,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -539,7 +613,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -568,7 +642,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -592,7 +666,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -614,7 +688,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val path     = root.join("objects", "MyObject__c.object")
@@ -641,7 +715,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
 
@@ -674,7 +748,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
              |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
 
@@ -708,7 +782,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
              |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
 
@@ -749,7 +823,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
             |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val masterPath     = root.join("objects", "MyMaster__c.object")
@@ -794,7 +868,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
             |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val masterPath     = root.join("sub", "objects", "MyMaster__c.object")
@@ -848,7 +922,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
             |""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       val masterPath     = root.join("objects", "MyMaster__c.object")
@@ -884,7 +958,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   test("Apex event") {
     FileSystemHelper.run(Map[String, String]("pkg/MyClass.cls" -> "")) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -905,7 +979,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
           |</ApexClass>""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       assert(ws.get.events.isEmpty)
@@ -914,7 +988,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
 
   test("Trigger event") {
     FileSystemHelper.run(Map[String, String]("pkg/MyTrigger.trigger" -> "")) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       ws.get.events.toList should matchPattern {
@@ -936,7 +1010,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers with BeforeAndAfter {
             |</ApexClass>""".stripMargin
       )
     ) { root: PathLike =>
-      val ws = Workspace(root, logger)
+      val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
       assert(ws.get.events.isEmpty)
