@@ -37,13 +37,13 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Non-existent directory returns error") {
-    val nonExistentPath = Path("/non/existent/directory/path")
+    val nonExistentPath    = Path("/non/existent/directory/path")
     val (ws, issueManager) = Workspace(nonExistentPath)
-    
+
     assert(ws.isEmpty)
     assert(issueManager.nonEmpty)
     assert(issueManager.hasErrors)
-    
+
     val diagnostics = issueManager.getDiagnostics(nonExistentPath)
     assert(diagnostics.nonEmpty)
     assert(diagnostics.head.message.contains("No directory at"))
@@ -51,13 +51,13 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("File path instead of directory returns error") {
     FileSystemHelper.run(Map("testfile.txt" -> "content")) { root: PathLike =>
-      val filePath = root.join("testfile.txt")
+      val filePath           = root.join("testfile.txt")
       val (ws, issueManager) = Workspace(filePath)
-      
+
       assert(ws.isEmpty)
       assert(issueManager.nonEmpty)
       assert(issueManager.hasErrors)
-      
+
       val diagnostics = issueManager.getDiagnostics(filePath)
       assert(diagnostics.nonEmpty)
       assert(diagnostics.head.message.contains("No directory at"))
@@ -65,11 +65,9 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Malformed sfdx-project.json is handled gracefully") {
-    FileSystemHelper.run(Map(
-      "sfdx-project.json" -> "{ invalid json content"
-    )) { root: PathLike =>
+    FileSystemHelper.run(Map("sfdx-project.json" -> "{ invalid json content")) { root: PathLike =>
       val (ws, issueManager) = Workspace(root)
-      
+
       // Should fall back to creating workspace without SFDX config
       // The logger should capture any parsing errors
       assert(issueManager.nonEmpty || ws.nonEmpty) // Either errors logged or workspace created
@@ -77,19 +75,17 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Valid SFDX project with external metadata creates external path filter") {
-    FileSystemHelper.run(Map(
-      "sfdx-project.json" -> """{
+    FileSystemHelper.run(Map("sfdx-project.json" -> """{
         "packageDirectories": [{"path": "force-app"}],
         "plugins": {
           "externalMetadata": ["vendor", "external"]
         }
-      }"""
-    )) { root: PathLike =>
+      }""")) { root: PathLike =>
       val (ws, issueManager) = Workspace(root)
-      
+
       assert(ws.nonEmpty)
       assert(issueManager.externalPathFilter.nonEmpty)
-      
+
       // Test that the filter works correctly
       val filter = issueManager.externalPathFilter.get
       assert(filter(root.join("vendor/some/file.cls")))
@@ -99,27 +95,24 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("SFDX project without external metadata has no external path filter") {
-    FileSystemHelper.run(Map(
-      "sfdx-project.json" -> """{
+    FileSystemHelper.run(Map("sfdx-project.json" -> """{
         "packageDirectories": [{"path": "force-app"}]
-      }"""
-    )) { root: PathLike =>
+      }""")) { root: PathLike =>
       val (ws, issueManager) = Workspace(root)
-      
+
       assert(ws.nonEmpty)
       assert(issueManager.externalPathFilter.isEmpty)
     }
   }
 
   test("MDAPI workspace (no sfdx-project.json) has no external path filter") {
-    FileSystemHelper.run(Map(
-      "classes/TestClass.cls" -> "public class TestClass {}"
-    )) { root: PathLike =>
-      val (ws, issueManager) = Workspace(root)
-      
-      assert(ws.nonEmpty)
-      assert(issueManager.externalPathFilter.isEmpty)
-      assert(issueManager.isEmpty) // No errors should be logged
+    FileSystemHelper.run(Map("classes/TestClass.cls" -> "public class TestClass {}")) {
+      root: PathLike =>
+        val (ws, issueManager) = Workspace(root)
+
+        assert(ws.nonEmpty)
+        assert(issueManager.externalPathFilter.isEmpty)
+        assert(issueManager.isEmpty) // No errors should be logged
     }
   }
 

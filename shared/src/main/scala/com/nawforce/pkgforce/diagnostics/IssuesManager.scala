@@ -86,7 +86,8 @@ class IssuesManager(val externalPathFilter: Option[PathLike => Boolean] = None)
   def replaceUnusedIssues(path: PathLike, issues: Seq[diagnostics.Issue]): Unit = {
     hasChanged.add(path)
     val filteredNewIssues = issues.filter(shouldStoreIssue)
-    val newIssues = log(path).filterNot(_.diagnostic.category == UNUSED_CATEGORY) ++ filteredNewIssues
+    val newIssues =
+      log(path).filterNot(_.diagnostic.category == UNUSED_CATEGORY) ++ filteredNewIssues
     if (newIssues.isEmpty)
       log.remove(path)
     else

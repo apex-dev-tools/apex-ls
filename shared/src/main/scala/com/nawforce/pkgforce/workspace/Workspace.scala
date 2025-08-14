@@ -89,15 +89,15 @@ object Workspace {
 
   def apply(path: PathLike): (Option[Workspace], IssuesManager) = {
     val logger = new CatchingLogger()
-    
+
     validateWorkspacePath(path, logger) match {
       case Some(error) => error
-      case None => createWorkspaceFromValidPath(path, logger)
+      case None        => createWorkspaceFromValidPath(path, logger)
     }
   }
 
   private def validateWorkspacePath(
-    path: PathLike, 
+    path: PathLike,
     logger: CatchingLogger
   ): Option[(Option[Workspace], IssuesManager)] = {
     if (!path.exists || !path.isDirectory) {
@@ -111,17 +111,20 @@ object Workspace {
   }
 
   private def createWorkspaceFromValidPath(
-    path: PathLike, 
+    path: PathLike,
     logger: CatchingLogger
   ): (Option[Workspace], IssuesManager) = {
-    val config = loadWorkspaceConfig(path, logger)
+    val config             = loadWorkspaceConfig(path, logger)
     val externalPathFilter = createExternalPathFilter(config)
-    val issueManager = new IssuesManager(externalPathFilter)
+    val issueManager       = new IssuesManager(externalPathFilter)
     logger.issues.foreach(issueManager.add)
     (Workspace(config, issueManager), issueManager)
   }
 
-  private def loadWorkspaceConfig(path: PathLike, logger: CatchingLogger): Option[WorkspaceConfig] = {
+  private def loadWorkspaceConfig(
+    path: PathLike,
+    logger: CatchingLogger
+  ): Option[WorkspaceConfig] = {
     if (path.join("sfdx-project.json").exists) {
       SFDXProject(path, logger).map(p => new SFDXWorkspaceConfig(path, p))
     } else {
@@ -129,9 +132,11 @@ object Workspace {
     }
   }
 
-  private def createExternalPathFilter(config: Option[WorkspaceConfig]): Option[PathLike => Boolean] = {
+  private def createExternalPathFilter(
+    config: Option[WorkspaceConfig]
+  ): Option[PathLike => Boolean] = {
     val externalPaths = config.map(_.externalMetadataPaths).getOrElse(Seq.empty).map(_.toString)
-    
+
     if (externalPaths.nonEmpty) {
       Some((path: PathLike) => externalPaths.exists(prefix => path.toString.startsWith(prefix)))
     } else {

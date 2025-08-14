@@ -20,9 +20,9 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
   var issuesManager: IssuesManager = _
-  val testPath: PathLike = Path("/project/src/classes/TestClass.cls")
-  val externalPath: PathLike = Path("/project/external/ExternalClass.cls")
-  val location: Location = Location(1, 0, 1, 10)
+  val testPath: PathLike           = Path("/project/src/classes/TestClass.cls")
+  val externalPath: PathLike       = Path("/project/external/ExternalClass.cls")
+  val location: Location           = Location(1, 0, 1, 10)
 
   before {
     issuesManager = new IssuesManager()
@@ -55,7 +55,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("add method stores issues correctly") {
     issuesManager.add(createErrorIssue(testPath, "Test error"))
-    
+
     assert(!issuesManager.isEmpty)
     assert(issuesManager.nonEmpty)
     assert(issuesManager.hasErrors)
@@ -64,20 +64,21 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("add method with write-time filtering stores only allowed issues") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredManager = new IssuesManager(Some(externalFilter))
-    
+    val filteredManager                     = new IssuesManager(Some(externalFilter))
+
     // Add warning to external path - should be filtered out
     filteredManager.add(createWarningIssue(externalPath, "External warning"))
     assert(filteredManager.isEmpty)
-    
+
     // Add error to external path - should be stored
     filteredManager.add(createErrorIssue(externalPath, "External error"))
     assert(!filteredManager.isEmpty)
     assert(filteredManager.hasErrors)
-    
+
     // Add warning to internal path - should be stored
     filteredManager.add(createWarningIssue(testPath, "Internal warning"))
-    val issues = filteredManager.issuesForFilesInternal(null, includeWarnings = true, maxIssuesPerFile = 0)
+    val issues =
+      filteredManager.issuesForFilesInternal(null, includeWarnings = true, maxIssuesPerFile = 0)
     assert(issues.size == 2)
     assert(issues.exists(_.diagnostic.message == "External error"))
     assert(issues.exists(_.diagnostic.message == "Internal warning"))
@@ -86,11 +87,11 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
   test("clear method removes all issues") {
     issuesManager.add(createErrorIssue(testPath, "Test error"))
     issuesManager.add(createWarningIssue(testPath, "Test warning"))
-    
+
     assert(!issuesManager.isEmpty)
-    
+
     issuesManager.clear()
-    
+
     assert(issuesManager.isEmpty)
     assert(!issuesManager.hasErrors)
     assert(issuesManager.hasUpdatedIssues.isEmpty)
@@ -99,27 +100,33 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
   test("pop method retrieves and removes issues for path") {
     issuesManager.add(createErrorIssue(testPath, "Error 1"))
     issuesManager.add(createWarningIssue(testPath, "Warning 1"))
-    
+
     val issues = issuesManager.pop(testPath)
-    
+
     assert(issues.size == 2)
     assert(issues.exists(_.diagnostic.message == "Error 1"))
     assert(issues.exists(_.diagnostic.message == "Warning 1"))
-    
+
     // Path should be empty after pop
-    val remainingIssues = issuesManager.issuesForFilesInternal(Array(testPath), includeWarnings = true, maxIssuesPerFile = 0)
+    val remainingIssues = issuesManager.issuesForFilesInternal(
+      Array(testPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
     assert(remainingIssues.isEmpty)
   }
 
   test("push method stores filtered issues") {
-    val issues = List(
-      createErrorIssue(testPath, "Error 1"),
-      createWarningIssue(testPath, "Warning 1")
-    )
-    
+    val issues =
+      List(createErrorIssue(testPath, "Error 1"), createWarningIssue(testPath, "Warning 1"))
+
     issuesManager.push(testPath, issues)
-    
-    val retrievedIssues = issuesManager.issuesForFilesInternal(Array(testPath), includeWarnings = true, maxIssuesPerFile = 0)
+
+    val retrievedIssues = issuesManager.issuesForFilesInternal(
+      Array(testPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
     assert(retrievedIssues.size == 2)
     assert(retrievedIssues.exists(_.diagnostic.message == "Error 1"))
     assert(retrievedIssues.exists(_.diagnostic.message == "Warning 1"))
@@ -127,16 +134,20 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("push method with external filter applies write-time filtering") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredManager = new IssuesManager(Some(externalFilter))
-    
+    val filteredManager                     = new IssuesManager(Some(externalFilter))
+
     val issues = List(
       createErrorIssue(externalPath, "External error"),
       createWarningIssue(externalPath, "External warning") // Should be filtered out
     )
-    
+
     filteredManager.push(externalPath, issues)
-    
-    val retrievedIssues = filteredManager.issuesForFilesInternal(Array(externalPath), includeWarnings = true, maxIssuesPerFile = 0)
+
+    val retrievedIssues = filteredManager.issuesForFilesInternal(
+      Array(externalPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
     assert(retrievedIssues.size == 1)
     assert(retrievedIssues.head.diagnostic.message == "External error")
   }
@@ -145,12 +156,16 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
     issuesManager.add(createErrorIssue(testPath, "Error 1"))
     issuesManager.add(createUnusedIssue(testPath, "Unused 1"))
     issuesManager.add(createWarningIssue(testPath, "Warning 1"))
-    
+
     val newUnusedIssues = Seq(createUnusedIssue(testPath, "New Unused 1"))
     issuesManager.replaceUnusedIssues(testPath, newUnusedIssues)
-    
-    val allIssues = issuesManager.issuesForFilesInternal(Array(testPath), includeWarnings = true, maxIssuesPerFile = 0)
-    
+
+    val allIssues = issuesManager.issuesForFilesInternal(
+      Array(testPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
+
     assert(allIssues.size == 3)
     assert(allIssues.exists(_.diagnostic.message == "Error 1"))
     assert(allIssues.exists(_.diagnostic.message == "Warning 1"))
@@ -160,33 +175,41 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("replaceUnusedIssues with external filter applies write-time filtering") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredManager = new IssuesManager(Some(externalFilter))
-    
+    val filteredManager                     = new IssuesManager(Some(externalFilter))
+
     filteredManager.add(createErrorIssue(externalPath, "External error"))
-    
+
     val newUnusedIssues = Seq(
       createUnusedIssue(externalPath, "External unused") // Warning category, should be filtered
     )
-    
+
     filteredManager.replaceUnusedIssues(externalPath, newUnusedIssues)
-    
-    val allIssues = filteredManager.issuesForFilesInternal(Array(externalPath), includeWarnings = true, maxIssuesPerFile = 0)
+
+    val allIssues = filteredManager.issuesForFilesInternal(
+      Array(externalPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
     assert(allIssues.size == 1) // Only the error should remain
     assert(allIssues.head.diagnostic.message == "External error")
   }
 
   test("replaceProviderIssues method replaces issues from specific provider") {
     val customProvider = "custom-provider"
-    
+
     issuesManager.add(createErrorIssue(testPath, "Default error"))
     issuesManager.add(createProviderIssue(testPath, "Custom error 1", customProvider))
     issuesManager.add(createProviderIssue(testPath, "Custom error 2", customProvider))
-    
+
     val newCustomIssues = Seq(createProviderIssue(testPath, "New custom error", customProvider))
     issuesManager.replaceProviderIssues(customProvider, testPath, newCustomIssues)
-    
-    val allIssues = issuesManager.issuesForFilesInternal(Array(testPath), includeWarnings = true, maxIssuesPerFile = 0)
-    
+
+    val allIssues = issuesManager.issuesForFilesInternal(
+      Array(testPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
+
     assert(allIssues.size == 2)
     assert(allIssues.exists(_.diagnostic.message == "Default error"))
     assert(allIssues.exists(_.diagnostic.message == "New custom error"))
@@ -196,19 +219,31 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("replaceProviderIssues with external filter applies write-time filtering") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredManager = new IssuesManager(Some(externalFilter))
-    val customProvider = "custom-provider"
-    
+    val filteredManager                     = new IssuesManager(Some(externalFilter))
+    val customProvider                      = "custom-provider"
+
     filteredManager.add(createErrorIssue(externalPath, "External error"))
-    
+
     val newProviderIssues = Seq(
-      createProviderIssue(externalPath, "Provider error", customProvider), // Error, should be stored
-      Issue(externalPath, Diagnostic(WARNING_CATEGORY, location, "Provider warning"), customProvider) // Warning, should be filtered
+      createProviderIssue(
+        externalPath,
+        "Provider error",
+        customProvider
+      ), // Error, should be stored
+      Issue(
+        externalPath,
+        Diagnostic(WARNING_CATEGORY, location, "Provider warning"),
+        customProvider
+      ) // Warning, should be filtered
     )
-    
+
     filteredManager.replaceProviderIssues(customProvider, externalPath, newProviderIssues)
-    
-    val allIssues = filteredManager.issuesForFilesInternal(Array(externalPath), includeWarnings = true, maxIssuesPerFile = 0)
+
+    val allIssues = filteredManager.issuesForFilesInternal(
+      Array(externalPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
     assert(allIssues.size == 2) // Original error + provider error
     assert(allIssues.exists(_.diagnostic.message == "External error"))
     assert(allIssues.exists(_.diagnostic.message == "Provider error"))
@@ -217,34 +252,38 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("clearProviderIssues method removes issues from specific provider") {
     val customProvider = "custom-provider"
-    
+
     issuesManager.add(createErrorIssue(testPath, "Default error"))
     issuesManager.add(createProviderIssue(testPath, "Custom error", customProvider))
-    
+
     issuesManager.clearProviderIssues(testPath)
-    
-    val allIssues = issuesManager.issuesForFilesInternal(Array(testPath), includeWarnings = true, maxIssuesPerFile = 0)
-    
+
+    val allIssues = issuesManager.issuesForFilesInternal(
+      Array(testPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
+
     assert(allIssues.size == 1)
     assert(allIssues.head.diagnostic.message == "Default error")
   }
 
   test("hasSyntaxIssues method detects syntax issues") {
     assert(!issuesManager.hasSyntaxIssues(testPath))
-    
+
     issuesManager.add(createErrorIssue(testPath, "Regular error"))
     assert(!issuesManager.hasSyntaxIssues(testPath))
-    
+
     issuesManager.add(createSyntaxIssue(testPath, "Syntax error"))
     assert(issuesManager.hasSyntaxIssues(testPath))
   }
 
   test("change tracking works correctly") {
     assert(issuesManager.hasUpdatedIssues.isEmpty)
-    
+
     issuesManager.add(createErrorIssue(testPath, "Error"))
     assert(issuesManager.hasUpdatedIssues.contains(testPath.toString))
-    
+
     issuesManager.ignoreUpdatedIssues(testPath.toString)
     assert(!issuesManager.hasUpdatedIssues.contains(testPath.toString))
   }
@@ -252,33 +291,33 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
   test("getMissing method tracks missing category issues") {
     issuesManager.add(createMissingIssue(testPath, "Missing dependency"))
     issuesManager.add(createErrorIssue(testPath, "Regular error"))
-    
+
     val missing = issuesManager.getMissing
     assert(missing.contains(testPath))
-    
+
     // Should clear missing tracking after retrieval, but only if still missing issues exist
-    val missingAgain = issuesManager.getMissing  
+    val missingAgain = issuesManager.getMissing
     // The behavior depends on whether missing issues still exist - let's just check it works
     assert(missingAgain.contains(testPath))
   }
 
   test("issuesForFileLocation method filters by location") {
-    val location1 = Location(1, 2, 1, 5)  // Small issue location
+    val location1 = Location(1, 2, 1, 5) // Small issue location
     val location2 = Location(2, 0, 2, 10)
-    
+
     issuesManager.add(Issue(testPath, Diagnostic(ERROR_CATEGORY, location1, "Error 1")))
     issuesManager.add(Issue(testPath, Diagnostic(ERROR_CATEGORY, location2, "Error 2")))
-    
+
     // Create a search location that contains location1 (1,2 to 1,5)
     val searchLocation = new io.github.apexdevtools.api.IssueLocation {
       override def startLineNumber(): Int = 1
-      override def startCharOffset(): Int = 0  
-      override def endLineNumber(): Int = 1
-      override def endCharOffset(): Int = 10
+      override def startCharOffset(): Int = 0
+      override def endLineNumber(): Int   = 1
+      override def endCharOffset(): Int   = 10
     }
-    
+
     val matchingIssues = issuesManager.issuesForFileLocationInternal(testPath, searchLocation)
-    
+
     assert(matchingIssues.length == 1)
     assert(matchingIssues.head.message() == "Error 1")
   }
@@ -286,9 +325,9 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
   test("getDiagnostics method returns diagnostics for path") {
     issuesManager.add(createErrorIssue(testPath, "Error 1"))
     issuesManager.add(createWarningIssue(testPath, "Warning 1"))
-    
+
     val diagnostics = issuesManager.getDiagnostics(testPath)
-    
+
     assert(diagnostics.size == 2)
     assert(diagnostics.exists(_.message == "Error 1"))
     assert(diagnostics.exists(_.message == "Warning 1"))
@@ -296,8 +335,12 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("log method delegates to add method") {
     issuesManager.log(createErrorIssue(testPath, "Logged error"))
-    
-    val issues = issuesManager.issuesForFilesInternal(Array(testPath), includeWarnings = true, maxIssuesPerFile = 0)
+
+    val issues = issuesManager.issuesForFilesInternal(
+      Array(testPath),
+      includeWarnings = true,
+      maxIssuesPerFile = 0
+    )
     assert(issues.size == 1)
     assert(issues.head.diagnostic.message == "Logged error")
   }

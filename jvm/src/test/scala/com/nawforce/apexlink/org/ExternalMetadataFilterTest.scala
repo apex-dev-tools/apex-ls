@@ -37,7 +37,7 @@ class ExternalMetadataFilterTest extends AnyFunSuite {
       val externalPathFilter: PathLike => Boolean = { path =>
         path.toString.contains("vendor")
       }
-      
+
       val issueManager = new IssuesManager(Some(externalPathFilter))
 
       // Add a warning and error for both internal and external files
