@@ -69,7 +69,7 @@ object FileSystemHelper {
     } else {
       val defaultSFDXProject = """{
   "packageDirectories": [
-    {"path": "force-app", "default": true}
+    {"path": ".", "default": true}
   ],
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "48.0"
