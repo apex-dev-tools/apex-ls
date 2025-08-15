@@ -43,9 +43,9 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped
       case PageNature          => validatePage(documents)
       case FlowNature          => validateFlow(documents)
       case SObjectNature       => validateSObjectLike(documents)
-      case FieldNature         => ()
-      case FieldSetNature      => ()
-      case SharingReasonNature => ()
+      case FieldNature         => validateCaseSensitivity(documents, "fields")
+      case FieldSetNature      => validateCaseSensitivity(documents, "fieldSets")
+      case SharingReasonNature => validateCaseSensitivity(documents, "sharingReasons")
     }
   }
 
@@ -269,5 +269,32 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped
           )
         })
       })
+  }
+
+  /** Validate case sensitivity for metadata directory names */
+  private def validateCaseSensitivity(
+    documents: List[PathLike],
+    expectedDirectoryName: String
+  ): Unit = {
+    documents.foreach { document =>
+      // Find the parent directory that should match expectedDirectoryName
+      val parentDir = document.parent.basename
+
+      if (
+        parentDir.toLowerCase == expectedDirectoryName.toLowerCase && parentDir != expectedDirectoryName
+      ) {
+        logger.log(
+          Issue(
+            document,
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location.empty,
+              s"Directory name case mismatch: found '$parentDir' but should be '$expectedDirectoryName'. " +
+                s"SFDX metadata directories should follow the correct case convention for consistency and cross-platform compatibility."
+            )
+          )
+        )
+      }
+    }
   }
 }
