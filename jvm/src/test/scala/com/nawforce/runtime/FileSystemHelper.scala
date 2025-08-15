@@ -43,7 +43,8 @@ object FileSystemHelper {
 
     val fs      = Jimfs.newFileSystem(config)
     val rootDir = fs.getRootDirectories.iterator().next()
-    populateMetaFiles(files).foreach(kv => {
+    val filesWithSFDX = populateMetaFiles(ensureSFDXProject(files))
+    filesWithSFDX.foreach(kv => {
       // Allow UNIX style for test files on Windows
       var newPath = kv._1
       if (Environment.isWindows) {
@@ -59,6 +60,22 @@ object FileSystemHelper {
 
     ParsedCache.clear()
     verify(new Path(rootDir))
+  }
+
+  /* Automatically add sfdx-project.json if not provided to support SFDX-only format */
+  private def ensureSFDXProject(files: Map[String, String]): Map[String, String] = {
+    if (files.contains("sfdx-project.json")) {
+      files
+    } else {
+      val defaultSFDXProject = """{
+  "packageDirectories": [
+    {"path": "force-app", "default": true}
+  ],
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "48.0"
+}"""
+      files + ("sfdx-project.json" -> defaultSFDXProject)
+    }
   }
 
   /* Many test were written without providing class/trigger metafiles so we add them in */
@@ -100,7 +117,8 @@ object FileSystemHelper {
     verify: PathLike => T
   ): T = {
     val tempDir = Files.createTempDirectory("apexlinktest")
-    files.foreach(kv => {
+    val filesWithSFDX = populateMetaFiles(ensureSFDXProject(files))
+    filesWithSFDX.foreach(kv => {
       val path = tempDir.resolve(kv._1)
       Files.createDirectories(path.getParent)
       Files.write(path, kv._2.getBytes(StandardCharsets.UTF_8))

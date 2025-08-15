@@ -27,19 +27,6 @@ import scala.collection.immutable.ArraySeq
 
 class WorkspaceTest extends AnyFunSuite with Matchers {
 
-  // Helper to create basic SFDX project structure
-  private def withSFDXProject(files: Map[String, String]): Map[String, String] = {
-    val sfdxProject = """{
-      "packageDirectories": [
-        {"path": "force-app", "default": true}
-      ],
-      "sfdcLoginUrl": "https://login.salesforce.com",
-      "sourceApiVersion": "48.0"
-    }"""
-
-    files + ("sfdx-project.json" -> sfdxProject)
-  }
-
   // Helper to create SFDX project structure with multiple package directories
   private def withMultiPackageSFDXProject(files: Map[String, String]): Map[String, String] = {
     val sfdxProject = """{
@@ -115,7 +102,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Empty dir has no events") {
-    FileSystemHelper.run(withSFDXProject(Map[String, String]())) { root: PathLike =>
+    FileSystemHelper.run(Map[String, String]()) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
@@ -192,27 +179,25 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
     }
   }
 
-  test("Projects without sfdx-project.json are rejected") {
+  test("FileSystemHelper auto-creates sfdx-project.json when missing") {
+    // Test demonstrates that FileSystemHelper now auto-creates sfdx-project.json
     FileSystemHelper.run(Map("classes/TestClass.cls" -> "public class TestClass {}")) {
       root: PathLike =>
+        // Verify sfdx-project.json was automatically created
+        assert(root.join("sfdx-project.json").exists)
+
         val (ws, issueManager) = Workspace(root)
 
-        assert(ws.isEmpty)             // Should fail to create workspace
-        assert(issueManager.hasErrors) // Should have errors
-        assert(issueManager.nonEmpty)
-
-        // Should have a clear error message about missing sfdx-project.json
-        val diagnostics = issueManager.getDiagnostics(root)
-        assert(diagnostics.exists(_.message.contains("sfdx-project.json")))
+        // Should now succeed due to auto-created sfdx-project.json
+        assert(ws.nonEmpty)
+        assert(issueManager.isEmpty)
     }
   }
 
   test("Label file event") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/labels/CustomLabels.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
-        )
+      Map[String, String](
+        "force-app/main/default/labels/CustomLabels.labels" -> "<CustomLabels xmlns=\"http://soap.sforce.com/2006/04/metadata\"/>"
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -232,9 +217,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Label parse error") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String]("force-app/main/default/labels/CustomLabels.labels" -> "<CustomLabels")
-      )
+      Map[String, String]("force-app/main/default/labels/CustomLabels.labels" -> "<CustomLabels")
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
@@ -251,16 +234,14 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Label events") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/labels/CustomLabels.labels" ->
-            """<?xml version="1.0" encoding="UTF-8"?>
+      Map[String, String](
+        "force-app/main/default/labels/CustomLabels.labels" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
           |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
           |    <labels><fullName>TestLabel1</fullName><protected>false</protected></labels>
           |    <labels><fullName>TestLabel2</fullName><protected>true</protected></labels>
           |</CustomLabels>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -285,9 +266,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Page event") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String]("force-app/main/default/pages/MyPage.page" -> "<apex:page/>")
-      )
+      Map[String, String]("force-app/main/default/pages/MyPage.page" -> "<apex:page/>")
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
@@ -301,10 +280,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Page event with controller") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/pages/MyPage.page" -> "<apex:page controller='MyController'/>"
-        )
+      Map[String, String](
+        "force-app/main/default/pages/MyPage.page" -> "<apex:page controller='MyController'/>"
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -326,10 +303,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Page event with controller & extensions") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/pages/MyPage.page" -> "<apex:page controller='MyController' extensions='Ext1, Ext2'/>"
-        )
+      Map[String, String](
+        "force-app/main/default/pages/MyPage.page" -> "<apex:page controller='MyController' extensions='Ext1, Ext2'/>"
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -355,10 +330,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Page event with attribute expressions") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/pages/MyPage.page" -> "<apex:page a = '{!foo}'><a href='{!bar}' other='{!baz}'/></apex:page>"
-        )
+      Map[String, String](
+        "force-app/main/default/pages/MyPage.page" -> "<apex:page a = '{!foo}'><a href='{!bar}' other='{!baz}'/></apex:page>"
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -378,10 +351,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Page event with char data expressions") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/pages/MyPage.page" -> s"<apex:page>{!foo} xx <a> {!bar} </a>{!baz}</apex:page>"
-        )
+      Map[String, String](
+        "force-app/main/default/pages/MyPage.page" -> s"<apex:page>{!foo} xx <a> {!bar} </a>{!baz}</apex:page>"
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -400,29 +371,26 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Flow event") {
-    FileSystemHelper.run(
-      withSFDXProject(Map[String, String]("force-app/main/default/flows/MyFlow.flow" -> ""))
-    ) { root: PathLike =>
-      val (ws, logger) = Workspace(root)
-      assert(logger.isEmpty)
-      assert(ws.nonEmpty)
-      ws.get.events.toList should matchPattern {
-        case List(FlowEvent(SourceInfo(PathLocation(flowPath, Location.all), _)))
-            if flowPath == this.flowPath(root, "MyFlow") =>
-      }
+    FileSystemHelper.run(Map[String, String]("force-app/main/default/flows/MyFlow.flow" -> "")) {
+      root: PathLike =>
+        val (ws, logger) = Workspace(root)
+        assert(logger.isEmpty)
+        assert(ws.nonEmpty)
+        ws.get.events.toList should matchPattern {
+          case List(FlowEvent(SourceInfo(PathLocation(flowPath, Location.all), _)))
+              if flowPath == this.flowPath(root, "MyFlow") =>
+        }
     }
   }
 
   test("Component event") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/components/MyComponent.component" ->
-            """<apex:component>
+      Map[String, String](
+        "force-app/main/default/components/MyComponent.component" ->
+          """<apex:component>
             |  <apex:attribute name="test" type="String"/>
             |</apex:component>
             |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -443,14 +411,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Component event with controller") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/components/MyComponent.component" ->
-            """<apex:component controller='MyController'>
+      Map[String, String](
+        "force-app/main/default/components/MyComponent.component" ->
+          """<apex:component controller='MyController'>
           |  <apex:attribute name="test" type="String"/>
           |</apex:component>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -473,10 +439,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Component event with attribute expressions") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/components/MyComponent.component" -> "<apex:component a = '{!foo}'><a href='{!bar}' other='{!baz}'/></apex:component>"
-        )
+      Map[String, String](
+        "force-app/main/default/components/MyComponent.component" -> "<apex:component a = '{!foo}'><a href='{!bar}' other='{!baz}'/></apex:component>"
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -503,10 +467,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Component event with char data expressions") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/components/MyComponent.component" -> s"<apex:component>{!foo} xx <a> {!bar} </a>{!baz}</apex:component>"
-        )
+      Map[String, String](
+        "force-app/main/default/components/MyComponent.component" -> s"<apex:component>{!foo} xx <a> {!bar} </a>{!baz}</apex:component>"
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -533,12 +495,10 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Component parse error") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/components/MyComponent.component" ->
-            """<apex:component
+      Map[String, String](
+        "force-app/main/default/components/MyComponent.component" ->
+          """<apex:component
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -566,12 +526,10 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Component structure error") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/components/MyComponent.component" ->
-            """<apex:foo/>
+      Map[String, String](
+        "force-app/main/default/components/MyComponent.component" ->
+          """<apex:foo/>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -599,11 +557,9 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Custom Object event") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            emptyCustomObject
-        )
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          emptyCustomObject
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -627,11 +583,9 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Custom Object event parse error") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\""
-        )
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          "<CustomObject xmlns=\"http://soap.sforce.com/2006/04/metadata\""
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -657,14 +611,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("List Custom Setting") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>List</customSettingsType>
           |</CustomObject>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -688,14 +640,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Hierarchical Custom Setting") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>Hierarchy</customSettingsType>
           |</CustomObject>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -719,14 +669,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Bad Custom Setting") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <customSettingsType>Bad</customSettingsType>
           |</CustomObject>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -757,14 +705,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("ReadWrite SharingModel") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <sharingModel>ReadWrite</sharingModel>
           |</CustomObject>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -788,14 +734,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Bad SharingModel") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |   <sharingModel>Something</sharingModel>
           |</CustomObject>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -826,14 +770,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Custom Object with fields") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <fields><fullName>Name__c</fullName><type>Text</type></fields>
           |</CustomObject>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -859,14 +801,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Custom Object with fieldsset") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <fieldSets><fullName>Name</fullName></fieldSets>
           |</CustomObject>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -890,14 +830,12 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Custom Object with sharing reason") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <sharingReasons><fullName>Name</fullName></sharingReasons>
           |</CustomObject>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -923,17 +861,15 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Custom Object with fields (sfdx)") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> emptyCustomObject,
-          "force-app/main/default/objects/MyObject__c/fields/Name__c.field-meta.xml" ->
-            s"""<?xml version="1.0" encoding="UTF-8"?>
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> emptyCustomObject,
+        "force-app/main/default/objects/MyObject__c/fields/Name__c.field-meta.xml" ->
+          s"""<?xml version="1.0" encoding="UTF-8"?>
           |<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
           |    <fullName>Name__c</fullName>
           |    <type>Text</type>
           |</CustomField>
           |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -959,16 +895,14 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Custom Object with fieldSet (sfdx)") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> emptyCustomObject,
-          "force-app/main/default/objects/MyObject__c/fieldSets/Name.fieldSet-meta.xml" ->
-            s"""<?xml version="1.0" encoding="UTF-8"?>
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> emptyCustomObject,
+        "force-app/main/default/objects/MyObject__c/fieldSets/Name.fieldSet-meta.xml" ->
+          s"""<?xml version="1.0" encoding="UTF-8"?>
              |<FieldSet xmlns="http://soap.sforce.com/2006/04/metadata">
              |    <fullName>Name</fullName>
              |</FieldSet>
              |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -994,16 +928,14 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Custom Object with sharingReason (sfdx)") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> emptyCustomObject,
-          "force-app/main/default/objects/MyObject__c/sharingReasons/Name.sharingReason-meta.xml" ->
-            s"""<?xml version="1.0" encoding="UTF-8"?>
+      Map[String, String](
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> emptyCustomObject,
+        "force-app/main/default/objects/MyObject__c/sharingReasons/Name.sharingReason-meta.xml" ->
+          s"""<?xml version="1.0" encoding="UTF-8"?>
              |<SharingReason xmlns="http://soap.sforce.com/2006/04/metadata">
              |    <fullName>Name</fullName>
              |</SharingReason>
              |""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -1029,15 +961,13 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Master/Detail natural ordered") {
     FileSystemHelper.run(
-      withMultiPackageSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" -> customObjectWithMetadata(
-            ""
-          ),
-          "sub/force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
-            customObjectWithMetadata(masterDetailField("MyMaster__c", "Master"))
-        )
-      )
+      withMultiPackageSFDXProject(Map[String, String](
+        "force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" -> customObjectWithMetadata(
+          ""
+        ),
+        "sub/force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
+          customObjectWithMetadata(masterDetailField("MyMaster__c", "Master"))
+      ))
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
@@ -1082,15 +1012,13 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Master/Detail reverse ordered") {
     FileSystemHelper.run(
-      withMultiPackageSFDXProject(
-        Map[String, String](
-          "sub/force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" -> customObjectWithMetadata(
-            ""
-          ),
-          "force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
-            customObjectWithMetadata(masterDetailField("MyMaster__c", "Master"))
-        )
-      )
+      withMultiPackageSFDXProject(Map[String, String](
+        "sub/force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" -> customObjectWithMetadata(
+          ""
+        ),
+        "force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
+          customObjectWithMetadata(masterDetailField("MyMaster__c", "Master"))
+      ))
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
@@ -1135,10 +1063,9 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Master/Detail related field") {
     FileSystemHelper.run(
-      withMultiPackageSFDXProject(
-        Map[String, String](
-          "force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      withMultiPackageSFDXProject(Map[String, String](
+        "force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>MyDetailSummary__c</fullName>
             |     <type>Summary</type>
@@ -1146,8 +1073,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
             |   </fields>
             |</CustomObject>
             |""".stripMargin,
-          "sub/force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
-            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+        "sub/force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
+          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>Lookup__c</fullName>
             |     <type>MasterDetail</type>
@@ -1160,8 +1087,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
             |   </fields>
             |</CustomObject>
             |""".stripMargin
-        )
-      )
+      ))
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
@@ -1198,30 +1124,27 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Apex event") {
-    FileSystemHelper.run(
-      withSFDXProject(Map[String, String]("force-app/main/default/classes/MyClass.cls" -> ""))
-    ) { root: PathLike =>
-      val (ws, logger) = Workspace(root)
-      assert(logger.isEmpty)
-      assert(ws.nonEmpty)
-      ws.get.events.toList should matchPattern {
-        case List(ApexEvent(path)) if path == this.classPath(root, "MyClass") =>
-      }
+    FileSystemHelper.run(Map[String, String]("force-app/main/default/classes/MyClass.cls" -> "")) {
+      root: PathLike =>
+        val (ws, logger) = Workspace(root)
+        assert(logger.isEmpty)
+        assert(ws.nonEmpty)
+        ws.get.events.toList should matchPattern {
+          case List(ApexEvent(path)) if path == this.classPath(root, "MyClass") =>
+        }
     }
   }
 
   test("Deleted apex event ") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/classes/MyClass.cls" -> "",
-          "force-app/main/default/classes/MyClass.cls-meta.xml" ->
-            """<?xml version="1.0" encoding="UTF-8"?>
+      Map[String, String](
+        "force-app/main/default/classes/MyClass.cls" -> "",
+        "force-app/main/default/classes/MyClass.cls-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
           |<ApexClass xmlns="http://soap.sforce.com/2006/04/metadata">
           |  <apiVersion>52.0</apiVersion>
           |  <status>Deleted</status>
           |</ApexClass>""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -1233,9 +1156,7 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Trigger event") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String]("force-app/main/default/triggers/MyTrigger.trigger" -> "")
-      )
+      Map[String, String]("force-app/main/default/triggers/MyTrigger.trigger" -> "")
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
@@ -1249,16 +1170,14 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Deleted trigger event ") {
     FileSystemHelper.run(
-      withSFDXProject(
-        Map[String, String](
-          "force-app/main/default/triggers/MyTrigger.trigger" -> "",
-          "force-app/main/default/triggers/MyTrigger.trigger-meta.xml" ->
-            """<?xml version="1.0" encoding="UTF-8"?>
+      Map[String, String](
+        "force-app/main/default/triggers/MyTrigger.trigger" -> "",
+        "force-app/main/default/triggers/MyTrigger.trigger-meta.xml" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
             |<ApexClass xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <apiVersion>52.0</apiVersion>
             |  <status>Deleted</status>
             |</ApexClass>""".stripMargin
-        )
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)

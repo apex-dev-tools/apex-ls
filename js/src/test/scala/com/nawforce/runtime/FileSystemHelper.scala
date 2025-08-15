@@ -31,7 +31,7 @@ object FileSystemHelper {
 
     // Load files into memfs
     Memfs.vol.fromJSON(
-      populateMetaFiles(files)
+      populateMetaFiles(ensureSFDXProject(files))
         .map(kv => ("/" + kv._1, kv._2))
         .toJSDictionary
         .asInstanceOf[js.Dynamic]
@@ -62,6 +62,22 @@ object FileSystemHelper {
     }
   }
 
+  /* Automatically add sfdx-project.json if not provided to support SFDX-only format */
+  private def ensureSFDXProject(files: Map[String, String]): Map[String, String] = {
+    if (files.contains("sfdx-project.json")) {
+      files
+    } else {
+      val defaultSFDXProject = """{
+  "packageDirectories": [
+    {"path": "force-app", "default": true}
+  ],
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "48.0"
+}"""
+      files + ("sfdx-project.json" -> defaultSFDXProject)
+    }
+  }
+
   /* Many test were written without providing class/trigger metafiles so we add them in */
   private def populateMetaFiles(files: Map[String, String]): Map[String, String] = {
     val classesAndTriggers = files.keys.filter(path =>
@@ -89,7 +105,8 @@ object FileSystemHelper {
     verify: PathLike => T
   ): T = {
     val tempDir = createTmpDir()
-    files.foreach(kv => {
+    val filesWithSFDX = populateMetaFiles(ensureSFDXProject(files))
+    filesWithSFDX.foreach(kv => {
       val path = tempDir.join(kv._1)
       makeDir(path.parent)
       path.write(kv._2)
@@ -102,7 +119,7 @@ object FileSystemHelper {
     try {
       verify(tempDir)
     } finally {
-      files.foreach(kv => {
+      filesWithSFDX.foreach(kv => {
         val path = tempDir.join(kv._1)
         path.delete()
       })
