@@ -116,14 +116,15 @@ object Workspace {
     (Workspace(project, issueManager), issueManager)
   }
 
-  private def loadSFDXProject(
-    path: PathLike,
-    logger: CatchingLogger
-  ): Option[SFDXProject] = {
+  private def loadSFDXProject(path: PathLike, logger: CatchingLogger): Option[SFDXProject] = {
     if (path.join("sfdx-project.json").exists) {
       SFDXProject(path, logger)
     } else {
-      logger.logError(path, Location.empty, s"No sfdx-project.json found at $path. Only SFDX format projects are supported.")
+      logger.logError(
+        path,
+        Location.empty,
+        s"No sfdx-project.json found at $path. Only SFDX format projects are supported."
+      )
       None
     }
   }

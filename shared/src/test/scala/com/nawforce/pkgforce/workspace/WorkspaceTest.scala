@@ -961,13 +961,15 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Master/Detail natural ordered") {
     FileSystemHelper.run(
-      withMultiPackageSFDXProject(Map[String, String](
-        "force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" -> customObjectWithMetadata(
-          ""
-        ),
-        "sub/force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
-          customObjectWithMetadata(masterDetailField("MyMaster__c", "Master"))
-      ))
+      withMultiPackageSFDXProject(
+        Map[String, String](
+          "force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" -> customObjectWithMetadata(
+            ""
+          ),
+          "sub/force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
+            customObjectWithMetadata(masterDetailField("MyMaster__c", "Master"))
+        )
+      )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
@@ -1012,13 +1014,15 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Master/Detail reverse ordered") {
     FileSystemHelper.run(
-      withMultiPackageSFDXProject(Map[String, String](
-        "sub/force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" -> customObjectWithMetadata(
-          ""
-        ),
-        "force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
-          customObjectWithMetadata(masterDetailField("MyMaster__c", "Master"))
-      ))
+      withMultiPackageSFDXProject(
+        Map[String, String](
+          "sub/force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" -> customObjectWithMetadata(
+            ""
+          ),
+          "force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
+            customObjectWithMetadata(masterDetailField("MyMaster__c", "Master"))
+        )
+      )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
@@ -1063,9 +1067,10 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
 
   test("Master/Detail related field") {
     FileSystemHelper.run(
-      withMultiPackageSFDXProject(Map[String, String](
-        "force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" ->
-          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+      withMultiPackageSFDXProject(
+        Map[String, String](
+          "force-app/main/default/objects/MyMaster__c/MyMaster__c.object-meta.xml" ->
+            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>MyDetailSummary__c</fullName>
             |     <type>Summary</type>
@@ -1073,8 +1078,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
             |   </fields>
             |</CustomObject>
             |""".stripMargin,
-        "sub/force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
-          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+          "sub/force-app/main/default/objects/MyDetail__c/MyDetail__c.object-meta.xml" ->
+            """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
             |  <fields>
             |     <fullName>Lookup__c</fullName>
             |     <type>MasterDetail</type>
@@ -1087,7 +1092,8 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
             |   </fields>
             |</CustomObject>
             |""".stripMargin
-      ))
+        )
+      )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)

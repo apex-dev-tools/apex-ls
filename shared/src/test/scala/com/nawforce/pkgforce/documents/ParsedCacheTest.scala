@@ -218,7 +218,7 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
     val packageContext1 = PackageContext(Some("test"), Array(), Array(), Array(), Array(), false)
     val packageContext2 = PackageContext(Some("test"), Array(), Array(), Array(), Array(), true)
     val cache           = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    
+
     cache.upsert(packageContext1, "Foo", 0, "Hello".getBytes())
     assert(cache.get(packageContext1, "Foo", 0).get.sameElements("Hello".getBytes()))
     assert(cache.get(packageContext2, "Foo", 0).isEmpty)
@@ -226,9 +226,10 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
 
   test("cache invalidates when externalMetadataPaths changes") {
     val packageContext1 = PackageContext(Some("test"), Array(), Array(), Array(), Array(), false)
-    val packageContext2 = PackageContext(Some("test"), Array(), Array(), Array(), Array("/path/to/external"), false)
-    val cache           = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    
+    val packageContext2 =
+      PackageContext(Some("test"), Array(), Array(), Array(), Array("/path/to/external"), false)
+    val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
+
     cache.upsert(packageContext1, "Foo", 0, "Hello".getBytes())
     assert(cache.get(packageContext1, "Foo", 0).get.sameElements("Hello".getBytes()))
     assert(cache.get(packageContext2, "Foo", 0).isEmpty)
@@ -236,46 +237,79 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
 
   test("cache invalidates when additionalNamespaces changes") {
     val packageContext1 = PackageContext(Some("test"), Array(), Array(), Array(), Array(), false)
-    val packageContext2 = PackageContext(Some("test"), Array(), Array(), Array("ns1"), Array(), false)
-    val cache           = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    
+    val packageContext2 =
+      PackageContext(Some("test"), Array(), Array(), Array("ns1"), Array(), false)
+    val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
+
     cache.upsert(packageContext1, "Foo", 0, "Hello".getBytes())
     assert(cache.get(packageContext1, "Foo", 0).get.sameElements("Hello".getBytes()))
     assert(cache.get(packageContext2, "Foo", 0).isEmpty)
   }
 
   test("cache handles multiple externalMetadataPaths") {
-    val packageContext1 = PackageContext(Some("test"), Array(), Array(), Array(), Array("/path1", "/path2"), false)
-    val packageContext2 = PackageContext(Some("test"), Array(), Array(), Array(), Array("/path1", "/path3"), false)
-    val cache           = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    
+    val packageContext1 =
+      PackageContext(Some("test"), Array(), Array(), Array(), Array("/path1", "/path2"), false)
+    val packageContext2 =
+      PackageContext(Some("test"), Array(), Array(), Array(), Array("/path1", "/path3"), false)
+    val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
+
     cache.upsert(packageContext1, "Foo", 0, "Hello".getBytes())
     assert(cache.get(packageContext1, "Foo", 0).get.sameElements("Hello".getBytes()))
     assert(cache.get(packageContext2, "Foo", 0).isEmpty)
   }
 
   test("cache with all new fields combined") {
-    val packageContext1 = PackageContext(Some("test"), Array("ghost1"), Array("analysed1"), Array("ns1"), Array("/ext1"), false)
-    val packageContext2 = PackageContext(Some("test"), Array("ghost1"), Array("analysed1"), Array("ns1"), Array("/ext1"), true)
-    val packageContext3 = PackageContext(Some("test"), Array("ghost1"), Array("analysed1"), Array("ns2"), Array("/ext1"), false)
-    val packageContext4 = PackageContext(Some("test"), Array("ghost1"), Array("analysed1"), Array("ns1"), Array("/ext2"), false)
-    val cache           = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    
+    val packageContext1 = PackageContext(
+      Some("test"),
+      Array("ghost1"),
+      Array("analysed1"),
+      Array("ns1"),
+      Array("/ext1"),
+      false
+    )
+    val packageContext2 = PackageContext(
+      Some("test"),
+      Array("ghost1"),
+      Array("analysed1"),
+      Array("ns1"),
+      Array("/ext1"),
+      true
+    )
+    val packageContext3 = PackageContext(
+      Some("test"),
+      Array("ghost1"),
+      Array("analysed1"),
+      Array("ns2"),
+      Array("/ext1"),
+      false
+    )
+    val packageContext4 = PackageContext(
+      Some("test"),
+      Array("ghost1"),
+      Array("analysed1"),
+      Array("ns1"),
+      Array("/ext2"),
+      false
+    )
+    val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
+
     cache.upsert(packageContext1, "Foo", 0, "Hello".getBytes())
     assert(cache.get(packageContext1, "Foo", 0).get.sameElements("Hello".getBytes()))
-    
+
     // Each field change should invalidate cache
     assert(cache.get(packageContext2, "Foo", 0).isEmpty) // isLibrary changed
-    assert(cache.get(packageContext3, "Foo", 0).isEmpty) // additionalNamespaces changed  
+    assert(cache.get(packageContext3, "Foo", 0).isEmpty) // additionalNamespaces changed
     assert(cache.get(packageContext4, "Foo", 0).isEmpty) // externalMetadataPaths changed
   }
 
   test("array ordering consistency for externalMetadataPaths") {
     // Since externalMetadataPaths are sorted in OPM.scala, different orderings should be equivalent
-    val packageContext1 = PackageContext(Some("test"), Array(), Array(), Array(), Array("/path1", "/path2"), false)
-    val packageContext2 = PackageContext(Some("test"), Array(), Array(), Array(), Array("/path2", "/path1"), false)
-    val cache           = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    
+    val packageContext1 =
+      PackageContext(Some("test"), Array(), Array(), Array(), Array("/path1", "/path2"), false)
+    val packageContext2 =
+      PackageContext(Some("test"), Array(), Array(), Array(), Array("/path2", "/path1"), false)
+    val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
+
     cache.upsert(packageContext1, "Foo", 0, "Hello".getBytes())
     // This test verifies current behavior - since arrays use sameElements, order matters for cache equality
     assert(cache.get(packageContext1, "Foo", 0).get.sameElements("Hello".getBytes()))
@@ -283,11 +317,13 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("array ordering consistency for ghostedPackages") {
-    // Since ghostedPackages are sorted in OPM.scala, different orderings should be equivalent  
-    val packageContext1 = PackageContext(Some("test"), Array("ghost1", "ghost2"), Array(), Array(), Array(), false)
-    val packageContext2 = PackageContext(Some("test"), Array("ghost2", "ghost1"), Array(), Array(), Array(), false)
-    val cache           = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
-    
+    // Since ghostedPackages are sorted in OPM.scala, different orderings should be equivalent
+    val packageContext1 =
+      PackageContext(Some("test"), Array("ghost1", "ghost2"), Array(), Array(), Array(), false)
+    val packageContext2 =
+      PackageContext(Some("test"), Array("ghost2", "ghost1"), Array(), Array(), Array(), false)
+    val cache = ParsedCache.create(1).getOrElse(throw new NoSuchElementException())
+
     cache.upsert(packageContext1, "Foo", 0, "Hello".getBytes())
     // This test verifies current behavior - since arrays use sameElements, order matters for cache equality
     assert(cache.get(packageContext1, "Foo", 0).get.sameElements("Hello".getBytes()))

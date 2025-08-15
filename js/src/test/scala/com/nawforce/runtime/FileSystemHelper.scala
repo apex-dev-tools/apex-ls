@@ -104,7 +104,7 @@ object FileSystemHelper {
   def runTempDir[T](files: Map[String, String], setupCache: Boolean = false)(
     verify: PathLike => T
   ): T = {
-    val tempDir = createTmpDir()
+    val tempDir       = createTmpDir()
     val filesWithSFDX = populateMetaFiles(ensureSFDXProject(files))
     filesWithSFDX.foreach(kv => {
       val path = tempDir.join(kv._1)

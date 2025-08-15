@@ -41,8 +41,8 @@ object FileSystemHelper {
         b.build()
       }
 
-    val fs      = Jimfs.newFileSystem(config)
-    val rootDir = fs.getRootDirectories.iterator().next()
+    val fs            = Jimfs.newFileSystem(config)
+    val rootDir       = fs.getRootDirectories.iterator().next()
     val filesWithSFDX = populateMetaFiles(ensureSFDXProject(files))
     filesWithSFDX.foreach(kv => {
       // Allow UNIX style for test files on Windows
@@ -116,7 +116,7 @@ object FileSystemHelper {
   def runTempDir[T](files: Map[String, String], setupCache: Boolean = false)(
     verify: PathLike => T
   ): T = {
-    val tempDir = Files.createTempDirectory("apexlinktest")
+    val tempDir       = Files.createTempDirectory("apexlinktest")
     val filesWithSFDX = populateMetaFiles(ensureSFDXProject(files))
     filesWithSFDX.foreach(kv => {
       val path = tempDir.resolve(kv._1)
