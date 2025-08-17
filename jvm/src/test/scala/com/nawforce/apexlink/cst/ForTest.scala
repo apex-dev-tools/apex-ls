@@ -176,6 +176,16 @@ class ForTest extends AnyFunSuite with TestHelper {
     happyTypeDeclaration("public class Dummy {{ for(List<Account> a : Database.query('')) {} }}")
   }
 
+  test("for-each list getSObjects platform method - GitHub issue #328") {
+    typeDeclaration(
+      "public class Dummy {{ Account parent = new Account(); for(List<SObject> cursorBlock : parent.getSObjects('Contacts')) {} }}"
+    )
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 72-83: Incompatible types in assignment, from 'System.SObject' to 'System.List<System.SObject>'\n"
+    )
+  }
+
   test("for condition empty") {
     happyTypeDeclaration("public class Dummy {{ for(;;) {} }}")
   }
