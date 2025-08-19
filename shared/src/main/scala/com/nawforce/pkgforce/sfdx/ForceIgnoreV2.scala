@@ -22,15 +22,11 @@ import scala.util.matching.Regex
 
 /** ForceIgnoreV2 - node-ignore compatible implementation */
 class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
-  
+
   /** Salesforce CLI default ignore patterns - always applied */
-  private val DEFAULT_PATTERNS = Seq(
-    "**/*.dup",
-    "**/.*", 
-    "**/package2-descriptor.json",
-    "**/package2-manifest.json"
-  )
-  
+  private val DEFAULT_PATTERNS =
+    Seq("**/*.dup", "**/.*", "**/package2-descriptor.json", "**/package2-manifest.json")
+
   private val allRules = DEFAULT_PATTERNS.map(IgnoreRuleV2.fromPattern) ++ rules
 
   def includeDirectory(path: PathLike): Boolean = {
@@ -56,56 +52,56 @@ class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
         val suffix = pathStr.substring(rootStr.length)
         if (suffix.startsWith(Path.separator)) suffix.substring(Path.separator.length) else suffix
       } else {
-        pathStr  // Fallback if not actually a child
+        pathStr // Fallback if not actually a child
       }
       // Normalize path separators to forward slashes for gitignore compatibility
       relative.replace('\\', '/')
     }
-    
+
     // Check parent directories first (node-ignore _t method logic)
     // > It is not possible to re-include a file if a parent directory of that file is excluded
     if (relativePath.contains("/")) {
-      val parts = relativePath.split("/")
+      val parts       = relativePath.split("/")
       var currentPath = ""
-      
+
       // Check each parent directory (except the last part which is the file/dir itself)
       for (i <- 0 until parts.length - 1) {
         currentPath = if (currentPath.isEmpty) parts(i) else currentPath + "/" + parts(i)
-        
+
         // Test if this parent directory is ignored
-        if (!testPath(currentPath + "/", true)) {
+        if (!testPath(currentPath + "/", isDirectory = true)) {
           // Parent directory is ignored, so this path is also ignored
           return false
         }
       }
     }
-    
+
     // Now test the path itself
     testPath(relativePath, isDirectory)
   }
-  
+
   private def testPath(relativePath: String, isDirectory: Boolean): Boolean = {
     // Apply rules using node-ignore 5.3.2 exact logic from _testOne method
-    var ignored = false
-    var unignored = false
-    val checkUnignored = false  // We always call with false like ignores() method
-    
+    var ignored        = false
+    var unignored      = false
+    val checkUnignored = false // We always call with false like ignores() method
+
     allRules.foreach { rule =>
       val negative = rule.negated
-      
+
       // node-ignore optimization logic from _testOne:
       val shouldSkip = (unignored == negative && ignored != unignored) ||
-                       (negative && !ignored && !unignored && !checkUnignored)
-      
+        (negative && !ignored && !unignored && !checkUnignored)
+
       if (!shouldSkip) {
-        val matched = rule.matches(relativePath, isDirectory)
+        val matched = rule.matches(relativePath)
         if (matched) {
           ignored = !negative
           unignored = negative
         }
       }
     }
-    
+
     !ignored
   }
 }
@@ -128,51 +124,49 @@ object ForceIgnoreV2 {
 
 /** Node-ignore compatible rule implementation */
 case class IgnoreRuleV2(pattern: String, negated: Boolean, directoryOnly: Boolean) {
-  
-  private val EMPTY = ""
-  
+
   // Convert gitignore pattern to regex - EXACT port of node-ignore makeRegex
   private lazy val regex: Regex = {
-    val regexPattern = NodeIgnoreExact.makeRegex(pattern, ignoreCase = true)
+    val regexPattern = NodeIgnoreExact.makeRegex(pattern)
     // node-ignore defaults to case-insensitive, which Salesforce CLI uses
     s"(?i)$regexPattern".r // (?i) flag for case-insensitive matching
   }
-  
-  def matches(relativePath: String, isDirectory: Boolean): Boolean = {
+
+  def matches(relativePath: String): Boolean = {
     regex.matches(relativePath)
   }
 }
 
 object IgnoreRuleV2 {
-  
+
   def fromPattern(pattern: String): IgnoreRuleV2 = {
-    var p = pattern
+    var p       = pattern
     val negated = p.startsWith("!")
     if (negated) {
       p = p.substring(1)
     }
-    
+
     // Handle escaped ! and # at the beginning (from node-ignore createRule)
     p = p.replaceFirst("^\\\\!", "!")
     p = p.replaceFirst("^\\\\#", "#")
-    
+
     val directoryOnly = p.endsWith("/")
     // node-ignore doesn't transform directory patterns, it just marks them
     IgnoreRuleV2(p, negated, directoryOnly)
   }
-  
+
   def parseRules(content: String): Seq[IgnoreRuleV2] = {
     // Split on \r?\n like node-ignore REGEX_SPLITALL_CRLF
     // Note: node-ignore does NOT trim lines
     val lines = content.split("\\r?\\n")
-    
+
     lines
       .filter { pattern =>
         // checkPattern logic from node-ignore
         pattern.nonEmpty &&
-        !pattern.matches("^\\s+$") && // REGEX_TEST_BLANK_LINE
+        !pattern.matches("^\\s+$") &&             // REGEX_TEST_BLANK_LINE
         !pattern.matches("(?:[^\\\\]|^)\\\\$") && // REGEX_INVALID_TRAILING_BACKSLASH
-        !pattern.startsWith("#") // Comments
+        !pattern.startsWith("#")                  // Comments
       }
       .map(fromPattern)
       .toIndexedSeq

@@ -13,67 +13,70 @@
  */
 package com.nawforce.pkgforce.sfdx
 
-/**
- * Utility functions to replace node-ignore regex patterns that use lookahead/lookbehind
- * These patterns are not compatible with Java/Scala regex engines on both JVM and ScalaJS
- */
+/** Utility functions to replace node-ignore regex patterns that use lookahead/lookbehind
+  * These patterns are not compatible with Java/Scala regex engines on both JVM and ScalaJS
+  */
 object PatternUtils {
-  
+
   private val ESCAPE = "\\\\"
 
-  /**
-   * Replace question marks with [^/] but not escaped question marks
-   * Replaces node-ignore pattern: /(?!\\)\?/g -> '[^/]'
-   */
+  /** Replace question marks with [^/] but not escaped question marks
+    * Replaces node-ignore pattern: (?!\\)\? with [^/]
+    */
   def replaceQuestionMarks(source: String): String = {
     val result = new StringBuilder()
-    var i = 0
-    
+    var i      = 0
+
     while (i < source.length) {
       val char = source.charAt(i)
-      
-      if (char == '?' && (i == 0 || source.charAt(i - 1) != '\\')) {
-        // Non-escaped ?, replace with [^/]
-        result.append("[^/]")
+
+      if (char == '?') {
+        // Check if immediately preceded by single backslash (escaped in regex terms)
+        if (i > 0 && source.charAt(i - 1) == '\\') {
+          // Already escaped for regex, keep as is (literal ?)
+          result.append(char)
+        } else {
+          // Non-escaped ?, replace with [^/]
+          result.append("[^/]")
+        }
       } else {
         result.append(char)
       }
       i += 1
     }
-    
+
     result.toString
   }
 
-  /**
-   * Add starting anchor based on slash detection
-   * Replaces node-ignore pattern: /^(?=[^^])/ with conditional logic
-   */
+  /** Add starting anchor based on slash detection
+    * Replaces node-ignore lookahead pattern with conditional logic
+    */
   def addStartingAnchor(source: String, originalPattern: String): String = {
     if (source.startsWith("^")) {
       source // Already has anchor
     } else {
       // Check if ORIGINAL pattern has slash not just at the end
       // !/\/(?!$)/.test(this) means: does NOT have slash except possibly at end
-      val hasSlashNotJustAtEnd = originalPattern.contains("/") && 
-                                !originalPattern.matches(".*[^/]/$") &&
-                                !originalPattern.matches("[^/]*$")
-      
+      val hasSlashNotJustAtEnd = originalPattern.contains("/") &&
+        !originalPattern.matches(".*[^/]/$") &&
+        !originalPattern.matches("[^/]*$")
+
       if (!hasSlashNotJustAtEnd) {
-        s"(?:^|\\\\/)$source"
+        // For patterns without slashes, node-ignore uses (?:^|\/)
+        s"^(?:.*\\/)?$source"
       } else {
         s"^$source"
       }
     }
   }
 
-  /**
-   * Replace two globstars /*‍*/ patterns
-   * Replaces node-ignore pattern: /\\\/\\\*\\\*(?=\\\/|$)/g
-   */
+  /** Replace two globstars double-star patterns
+    * Replaces node-ignore globstar pattern with lookahead
+    */
   def replaceTwoGlobstars(source: String): String = {
     // Handle the exact patterns we see from NodeIgnoreExact after metacharacter escaping
     var result = source
-    
+
     // Pattern 1: /** at end -> /.+ (must come before /**/ pattern)
     if (result.contains("\\/\\*\\*") && result.endsWith("\\/\\*\\*")) {
       result = result.replace("\\/\\*\\*", "\\/.+")
@@ -82,35 +85,34 @@ object PatternUtils {
     else if (result.contains("\\/\\*\\*\\/")) {
       result = result.replace("\\/\\*\\*\\/", "(?:\\/[^\\/]+)*\\/")
     }
-    
+
     // Pattern 3: ^\*\*\/ -> ^(?:.*\/)?
     if (result.startsWith("^\\*\\*\\/")) {
       result = result.replace("^\\*\\*\\/", "^(?:.*\\/)?")
     }
-    
+
     result
   }
 
-  /**
-   * Replace intermediate wildcards with lookahead logic
-   * Replaces node-ignore pattern: /(^|[^\\]+)(\\\*)+(?=.+)/g
-   */
+  /** Replace intermediate wildcards with lookahead logic
+    * Replaces node-ignore wildcard pattern with lookahead
+    */
   def replaceIntermediateWildcards(source: String): String = {
     val result = new StringBuilder()
-    var i = 0
-    
+    var i      = 0
+
     while (i < source.length) {
       if (i + 1 < source.length && source.charAt(i) == '\\' && source.charAt(i + 1) == '*') {
         // Found \*, check if more content follows (equivalent to lookahead (?=.+))
         var starCount = 0
-        var j = i
-        
+        var j         = i
+
         // Count consecutive \* patterns
         while (j + 1 < source.length && source.charAt(j) == '\\' && source.charAt(j + 1) == '*') {
           starCount += 1
           j += 2
         }
-        
+
         // Check if there's more content after the stars (lookahead equivalent)
         if (j < source.length) {
           // Replace \* with [^/]*
@@ -128,24 +130,25 @@ object PatternUtils {
         i += 1
       }
     }
-    
+
     result.toString
   }
 
-  /**
-   * Replace unescape pattern with lookahead logic
-   * Replaces node-ignore pattern: /\\\\\\(?=[$.|*+(){^])/g
-   */
+  /** Replace unescape pattern with lookahead logic
+    * Replaces node-ignore backslash escape pattern with lookahead
+    */
   def replaceUnescapePattern(source: String): String = {
-    val result = new StringBuilder()
-    var i = 0
+    val result         = new StringBuilder()
+    var i              = 0
     val metacharacters = Set('$', '.', '|', '*', '+', '(', ')', '{', '^')
-    
+
     while (i < source.length) {
       // Look for \\\\\\  (6 backslashes, which is 3 escaped backslashes)
-      if (i + 5 < source.length && 
-          source.substring(i, i + 6) == "\\\\\\\\\\\\") {
-        
+      if (
+        i + 5 < source.length &&
+        source.substring(i, i + 6) == "\\\\\\\\\\\\"
+      ) {
+
         // Check if followed by metacharacter (lookahead equivalent)
         if (i + 6 < source.length && metacharacters.contains(source.charAt(i + 6))) {
           result.append(ESCAPE)
@@ -160,40 +163,34 @@ object PatternUtils {
         i += 1
       }
     }
-    
+
     result.toString
   }
 
-  /**
-   * Add ending pattern with conditional logic
-   * Replaces node-ignore pattern: /(?:[^*])$/ with replacement function logic
-   */
-  def addEndingPattern(source: String, originalPattern: String): String = {
+  /** Add ending pattern with conditional logic
+    * Replaces node-ignore ending pattern with replacement function logic
+    */
+  def addEndingPattern(source: String): String = {
     if (source.nonEmpty && source.last != '*') {
-      // Check if original pattern ends with /
-      if (originalPattern.endsWith("/")) {
-        source + "$"
-      } else {
-        source + "(?=$|\\\\/)"
-      }
+      // For file patterns, just add end anchor
+      source + "$"
     } else {
       source
     }
   }
 
-  /**
-   * Handle trailing wildcard pattern
-   * Replaces node-ignore pattern: /(\^|\\\/)?\\\*$/
-   */
+  /** Handle trailing wildcard pattern
+    * Replaces node-ignore trailing wildcard pattern
+    */
   def replaceTrailingWildcard(source: String): String = {
     if (source.endsWith("\\*")) {
       val beforeStar = source.dropRight(2) // Remove \*
-      
+
       if (beforeStar.endsWith("^")) {
         // ^* -> ^[^/]+(?=$|\/)
         beforeStar + "[^/]+(?=$|\\/)"
       } else if (beforeStar.endsWith("\\/")) {
-        // /*-> /[^/]+(?=$|\/)  
+        // /*-> /[^/]+(?=$|\/)
         beforeStar + "[^/]+(?=$|\\/)"
       } else {
         // * -> [^/]*(?=$|\/)
