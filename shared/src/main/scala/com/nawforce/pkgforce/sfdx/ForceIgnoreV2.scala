@@ -15,7 +15,7 @@ package com.nawforce.pkgforce.sfdx
 
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.runtime.platform.Path
+import com.nawforce.runtime.platform.{Environment, Path}
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.util.matching.Regex
@@ -29,6 +29,17 @@ class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
 
   private val allRules = DEFAULT_PATTERNS.map(IgnoreRuleV2.fromPattern) ++ rules
 
+  // Cache for parent directory test results to avoid repeated calculations
+  private val parentDirCache = scala.collection.mutable.Map[String, Boolean]()
+  
+  // Cache root path string and length for performance
+  private val rootStr = rootPath.toString
+  private val rootStrLength = rootStr.length
+  
+  // Cache platform-specific constants to avoid repeated lookups
+  private val pathSeparator = Path.separator
+  private val isWindows = Environment.isWindows
+
   def includeDirectory(path: PathLike): Boolean = {
     include(path, isDirectory = true)
   }
@@ -38,40 +49,47 @@ class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
   }
 
   private def include(path: PathLike, isDirectory: Boolean): Boolean = {
-    if (!rootPath.isParentOf(path) && path != rootPath)
-      return true
-
-    // Calculate relative path from root to target
+    // Calculate relative path from root to target and check if path is under root in one step
     val relativePath = if (path == rootPath) {
       ""
     } else {
       // Since PathLike stores normalized absolute paths, we need to compute the relative path
-      val rootStr = rootPath.toString
       val pathStr = path.toString
-      val relative = if (pathStr.startsWith(rootStr)) {
-        val suffix = pathStr.substring(rootStr.length)
-        if (suffix.startsWith(Path.separator)) suffix.substring(Path.separator.length) else suffix
+      if (pathStr.startsWith(rootStr)) {
+        val suffix = pathStr.substring(rootStrLength)
+        val relative =
+          if (suffix.startsWith(pathSeparator)) suffix.substring(pathSeparator.length) else suffix
+        // Normalize path separators to forward slashes for gitignore compatibility (Windows only)
+        if (isWindows) relative.replace('\\', '/') else relative
       } else {
-        pathStr // Fallback if not actually a child
+        // Path is not under root, so include it
+        return true
       }
-      // Normalize path separators to forward slashes for gitignore compatibility
-      relative.replace('\\', '/')
     }
 
     // Check parent directories first (node-ignore _t method logic)
     // > It is not possible to re-include a file if a parent directory of that file is excluded
-    if (relativePath.contains("/")) {
-      val parts       = relativePath.split("/")
-      var currentPath = ""
+    if (relativePath.nonEmpty && relativePath.contains('/')) {
+      val parts = relativePath.split('/')
+      if (parts.length > 1) { // Only proceed if there are actually parent directories
+        var currentPath = ""
 
-      // Check each parent directory (except the last part which is the file/dir itself)
-      for (i <- 0 until parts.length - 1) {
-        currentPath = if (currentPath.isEmpty) parts(i) else currentPath + "/" + parts(i)
+        // Check each parent directory (except the last part which is the file/dir itself)
+        for (i <- 0 until parts.length - 1) {
+          currentPath = if (currentPath.isEmpty) parts(i) else currentPath + "/" + parts(i)
+          val parentDirPath = currentPath + "/"
 
-        // Test if this parent directory is ignored
-        if (!testPath(currentPath + "/", isDirectory = true)) {
-          // Parent directory is ignored, so this path is also ignored
-          return false
+          // Check cache first, then compute and cache result
+          val isParentIgnored = parentDirCache.getOrElseUpdate(
+            parentDirPath, {
+              !testPath(parentDirPath, isDirectory = true)
+            }
+          )
+
+          if (isParentIgnored) {
+            // Parent directory is ignored, so this path is also ignored
+            return false
+          }
         }
       }
     }
@@ -82,16 +100,19 @@ class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
 
   private def testPath(relativePath: String, isDirectory: Boolean): Boolean = {
     // Apply rules using node-ignore 5.3.2 exact logic from _testOne method
-    var ignored        = false
-    var unignored      = false
-    val checkUnignored = false // We always call with false like ignores() method
+    var ignored   = false
+    var unignored = false
+    // checkUnignored = false is constant, so we can inline the optimization
 
-    allRules.foreach { rule =>
+    var i = 0
+    val rulesLength = allRules.length
+    while (i < rulesLength) {
+      val rule = allRules(i)
       val negative = rule.negated
 
-      // node-ignore optimization logic from _testOne:
+      // node-ignore optimization logic from _testOne (with checkUnignored=false inlined):
       val shouldSkip = (unignored == negative && ignored != unignored) ||
-        (negative && !ignored && !unignored && !checkUnignored)
+        (negative && !ignored && !unignored)
 
       if (!shouldSkip) {
         val matched = rule.matches(relativePath)
@@ -100,6 +121,7 @@ class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
           unignored = negative
         }
       }
+      i += 1
     }
 
     !ignored
