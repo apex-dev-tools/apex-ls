@@ -31,14 +31,14 @@ class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
 
   // Cache for parent directory test results to avoid repeated calculations
   private val parentDirCache = scala.collection.mutable.Map[String, Boolean]()
-  
+
   // Cache root path string and length for performance
-  private val rootStr = rootPath.toString
+  private val rootStr       = rootPath.toString
   private val rootStrLength = rootStr.length
-  
+
   // Cache platform-specific constants to avoid repeated lookups
   private val pathSeparator = Path.separator
-  private val isWindows = Environment.isWindows
+  private val isWindows     = Environment.isWindows
 
   def includeDirectory(path: PathLike): Boolean = {
     include(path, isDirectory = true)
@@ -104,10 +104,10 @@ class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
     var unignored = false
     // checkUnignored = false is constant, so we can inline the optimization
 
-    var i = 0
+    var i           = 0
     val rulesLength = allRules.length
     while (i < rulesLength) {
-      val rule = allRules(i)
+      val rule     = allRules(i)
       val negative = rule.negated
 
       // node-ignore optimization logic from _testOne (with checkUnignored=false inlined):

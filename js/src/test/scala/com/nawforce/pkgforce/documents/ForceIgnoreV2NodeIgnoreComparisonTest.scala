@@ -40,7 +40,6 @@ trait NodeIgnoreInstance extends js.Object {
   */
 class ForceIgnoreV2NodeIgnoreComparisonTest extends AnyFunSuite {
 
-
   def compareWithNodeIgnore(patterns: Seq[String], testPaths: Seq[String]): Unit = {
     FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> patterns.mkString("\n"))) {
       root: PathLike =>
