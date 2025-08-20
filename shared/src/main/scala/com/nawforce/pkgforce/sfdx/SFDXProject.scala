@@ -246,6 +246,51 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   val externalMetadataPaths: Seq[PathLike] =
     externalMetadata.map(extDir => projectPath.join(extDir))
 
+  val options: Map[String, String] =
+    plugins.getOrElse("options", ujson.Obj()) match {
+      case value: ujson.Obj =>
+        value.value.map {
+          case (key, ujson.Str(strValue)) => (key, strValue)
+          case (key, nonStringValue) =>
+            config
+              .lineAndOffsetOf(nonStringValue)
+              .foreach(lineAndOffset => {
+                throw SFDXProjectError(lineAndOffset, s"'options.$key' should be a string value")
+              })
+            throw new RuntimeException(s"'options.$key' should be a string value")
+        }.toMap
+      case value =>
+        config
+          .lineAndOffsetOf(value)
+          .foreach(lineAndOffset => {
+            throw SFDXProjectError(lineAndOffset, "'options' should be an object")
+          })
+        throw new RuntimeException("'options' should be an object")
+    }
+
+  val forceIgnoreVersion: ForceIgnoreVersion = {
+    val versionString = options.getOrElse("forceIgnoreVersion", ForceIgnoreVersion.default.value)
+    ForceIgnoreVersion.fromString(versionString) match {
+      case Some(version) => version
+      case None =>
+        val optionsValue   = plugins.get("options")
+        val validValuesStr = ForceIgnoreVersion.validValues.mkString("'", "', '", "'")
+        config
+          .lineAndOffsetOf(optionsValue)
+          .map(lineAndOffset => {
+            throw SFDXProjectError(
+              lineAndOffset,
+              s"'options.forceIgnoreVersion' must be one of $validValuesStr, got '$versionString'"
+            )
+          })
+          .getOrElse(
+            throw new RuntimeException(
+              s"'options.forceIgnoreVersion' must be one of $validValuesStr, got '$versionString'"
+            )
+          )
+    }
+  }
+
   private val gulpPackages = additionalNamespaces.flatMap(ns => {
     createGulpPath(ns) match {
       case Left(err) =>
