@@ -130,11 +130,11 @@ class IssuesManager(val externalPathFilter: Option[PathLike => Boolean] = None)
   }
 
   override def issuesForFile(path: String): Array[APIIssue] = {
-    issuesForFilesInternal(Array(Path(path)), includeWarnings = true, maxIssuesPerFile = 0).toArray
+    issuesForFilesInternal(Array(Path(path))).toArray
   }
 
   def issuesForFileInternal(path: PathLike): Seq[Issue] = {
-    issuesForFilesInternal(Array(path), includeWarnings = true, maxIssuesPerFile = 0)
+    issuesForFilesInternal(Array(path))
   }
 
   override def issuesForFiles(
@@ -149,8 +149,8 @@ class IssuesManager(val externalPathFilter: Option[PathLike => Boolean] = None)
 
   def issuesForFilesInternal(
     paths: Array[PathLike],
-    includeWarnings: Boolean,
-    maxIssuesPerFile: Int
+    includeWarnings: Boolean = true,
+    maxIssuesPerFile: Int = 0
   ): Seq[Issue] = {
     val files =
       if (paths == null || paths.isEmpty)

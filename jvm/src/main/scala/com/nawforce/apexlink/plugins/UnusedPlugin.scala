@@ -227,7 +227,7 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
 
     private def hasExcludedModifiers(inTest: Boolean): Boolean = {
       val excludedModifiers =
-        if (inTest) getExcludedTestFieldModifiers else getExcludedFieldModifiers
+        if (inTest) cachedExcludedTestFieldModifiers else cachedExcludedFieldModifiers
       field.modifiers.exists(excludedModifiers)
     }
   }
@@ -249,7 +249,7 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
 
     private def hasExcludedModifiers(inTest: Boolean): Boolean = {
       val excludedModifiers =
-        if (inTest) getExcludedTestMethodModifiers else getExcludedMethodModifiers
+        if (inTest) cachedExcludedTestMethodModifiers else cachedExcludedMethodModifiers
       method.modifiers.exists(excludedModifiers.contains)
     }
 
@@ -273,10 +273,6 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
   private val cachedExcludedTestMethodModifiers: Set[Modifier] =
     if (isLibrary) excludedTestMethodModifiers + PUBLIC_MODIFIER else excludedTestMethodModifiers
 
-  private def getExcludedMethodModifiers: Set[Modifier] = cachedExcludedMethodModifiers
-
-  private def getExcludedTestMethodModifiers: Set[Modifier] = cachedExcludedTestMethodModifiers
-
   /** Get excluded field modifiers based on library flag */
   private val cachedExcludedFieldModifiers: Set[Modifier] =
     if (isLibrary) excludedFieldModifiers + PUBLIC_MODIFIER else excludedFieldModifiers
@@ -284,9 +280,6 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
   private val cachedExcludedTestFieldModifiers: Set[Modifier] =
     if (isLibrary) excludedTestFieldModifiers + PUBLIC_MODIFIER else excludedTestFieldModifiers
 
-  private def getExcludedFieldModifiers: Set[Modifier] = cachedExcludedFieldModifiers
-
-  private def getExcludedTestFieldModifiers: Set[Modifier] = cachedExcludedTestFieldModifiers
 }
 
 object UnusedPlugin {

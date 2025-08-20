@@ -151,7 +151,7 @@ case class IssuesForFile(promise: Promise[IssuesResult], path: String) extends A
       promise.success(
         IssuesResult(
           orgImpl.issues
-            .issuesForFilesInternal(Array(Path(path)), includeWarnings = true, maxIssuesPerFile = 0)
+            .issuesForFilesInternal(Array(Path(path)))
             .toArray
         )
       )
