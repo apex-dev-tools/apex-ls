@@ -24,8 +24,13 @@ import scala.collection.mutable
 
 /** IssuesCollection implementation, holds Issues for each metadata file and tracks when they change
   * to allow clients to be more selective when pulling issues.
+  *
+  * Note: To support virtual filesystem testing then we need to have *Internal methods that pass
+  * a PathLike, the public API methods use strings for simplicity.
   */
-class IssuesManager extends IssuesCollection with IssueLogger {
+class IssuesManager(val externalPathFilter: Option[PathLike => Boolean] = None)
+    extends IssuesCollection
+    with IssueLogger {
   private val log             = mutable.HashMap[PathLike, List[Issue]]() withDefaultValue List()
   private val possibleMissing = mutable.HashSet[PathLike]()
   private val hasChanged      = mutable.HashSet[PathLike]()
@@ -34,7 +39,20 @@ class IssuesManager extends IssuesCollection with IssueLogger {
 
   def nonEmpty: Boolean = log.nonEmpty
 
+  override def hasErrors: Boolean = log.values.exists(issueList => issueList.exists(_.isError))
+
   override def log(issue: Issue): Unit = add(issue)
+
+  private def shouldStoreIssue(issue: Issue): Boolean = {
+    externalPathFilter match {
+      case Some(filter) if filter(issue.path) =>
+        // For external paths, only store errors
+        DiagnosticCategory.isErrorType(issue.diagnostic.category)
+      case _ =>
+        // For internal paths, store all issues
+        true
+    }
+  }
 
   def clear(): Unit = {
     hasChanged.clear()
@@ -42,10 +60,12 @@ class IssuesManager extends IssuesCollection with IssueLogger {
   }
 
   def add(issue: diagnostics.Issue): Unit = {
-    hasChanged.add(issue.path)
-    log.put(issue.path, issue :: log(issue.path))
-    if (issue.diagnostic.category == MISSING_CATEGORY)
-      possibleMissing.add(issue.path)
+    if (shouldStoreIssue(issue)) {
+      hasChanged.add(issue.path)
+      log.put(issue.path, issue :: log(issue.path))
+      if (issue.diagnostic.category == MISSING_CATEGORY)
+        possibleMissing.add(issue.path)
+    }
   }
 
   def pop(path: PathLike): List[diagnostics.Issue] = {
@@ -58,13 +78,16 @@ class IssuesManager extends IssuesCollection with IssueLogger {
 
   def push(path: PathLike, issues: List[diagnostics.Issue]): Unit = {
     hasChanged.add(path)
-    if (issues.nonEmpty)
-      log.put(path, issues)
+    val filteredIssues = issues.filter(shouldStoreIssue)
+    if (filteredIssues.nonEmpty)
+      log.put(path, filteredIssues)
   }
 
   def replaceUnusedIssues(path: PathLike, issues: Seq[diagnostics.Issue]): Unit = {
     hasChanged.add(path)
-    val newIssues = log(path).filterNot(_.diagnostic.category == UNUSED_CATEGORY) ++ issues
+    val filteredNewIssues = issues.filter(shouldStoreIssue)
+    val newIssues =
+      log(path).filterNot(_.diagnostic.category == UNUSED_CATEGORY) ++ filteredNewIssues
     if (newIssues.isEmpty)
       log.remove(path)
     else
@@ -82,7 +105,8 @@ class IssuesManager extends IssuesCollection with IssueLogger {
     issues: Seq[diagnostics.Issue]
   ): Unit = {
     hasChanged.add(path)
-    log.put(path, log.getOrElse(path, Nil).filterNot(_.provider == providerId) ++ issues)
+    val filteredNewIssues = issues.filter(shouldStoreIssue)
+    log.put(path, log.getOrElse(path, Nil).filterNot(_.provider == providerId) ++ filteredNewIssues)
   }
 
   def hasSyntaxIssues(path: PathLike): Boolean = {
@@ -106,14 +130,52 @@ class IssuesManager extends IssuesCollection with IssueLogger {
   }
 
   override def issuesForFile(path: String): Array[APIIssue] = {
-    issuesForFileInternal(Path(path)).toArray
+    issuesForFilesInternal(Array(Path(path))).toArray
   }
 
   def issuesForFileInternal(path: PathLike): Seq[Issue] = {
-    hasChanged.remove(path)
-    log.getOrElse(path, Nil).sorted(Issue.ordering)
+    issuesForFilesInternal(Array(path))
   }
 
+  override def issuesForFiles(
+    paths: Array[String],
+    includeWarnings: Boolean,
+    maxIssuesPerFile: Int
+  ): Array[APIIssue] = {
+    val internalPaths: Array[PathLike] =
+      Option(paths).map(paths => paths.map(Path.apply(_).asInstanceOf[PathLike])).orNull
+    issuesForFilesInternal(internalPaths, includeWarnings, maxIssuesPerFile).toArray
+  }
+
+  def issuesForFilesInternal(
+    paths: Array[PathLike],
+    includeWarnings: Boolean = true,
+    maxIssuesPerFile: Int = 0
+  ): Seq[Issue] = {
+    val files =
+      if (paths == null || paths.isEmpty)
+        log.keys.toSeq.sortBy(_.toString)
+      else
+        paths.toSeq
+
+    val buffer = mutable.ArrayBuffer[Issue]()
+    files.foreach(file => {
+      var fileIssues = log
+        .getOrElse(file, Nil)
+        .filter(issue => {
+          // Only apply warning filter - external path filtering is now done at write time
+          includeWarnings || DiagnosticCategory.isErrorType(issue.diagnostic.category)
+        })
+        .sorted(Issue.ordering)
+      if (maxIssuesPerFile > 0)
+        fileIssues = fileIssues.take(maxIssuesPerFile)
+      buffer.addAll(fileIssues)
+      hasChanged.remove(file)
+    })
+    buffer.toSeq
+  }
+
+  /** This is specialised accessor to aid PMD integration. */
   override def issuesForFileLocation(path: String, location: IssueLocation): Array[APIIssue] = {
     issuesForFileLocationInternal(Path(path), location)
   }
@@ -129,43 +191,6 @@ class IssuesManager extends IssuesCollection with IssueLogger {
       .getOrElse(path, Nil)
       .filter(issue => loc.contains(issue.diagnostic.location))
       .toArray[APIIssue]
-  }
-
-  override def issuesForFiles(
-    paths: Array[String],
-    includeWarnings: Boolean,
-    maxIssuesPerFile: Int
-  ): Array[APIIssue] = {
-    val internalPaths: Array[PathLike] =
-      Option(paths).map(paths => paths.map(Path.apply(_).asInstanceOf[PathLike])).orNull
-    issuesForFilesInternal(internalPaths, includeWarnings, maxIssuesPerFile).toArray
-  }
-
-  def issuesForFilesInternal(
-    paths: Array[PathLike],
-    includeWarnings: Boolean,
-    maxIssuesPerFile: Int
-  ): Seq[Issue] = {
-    val files =
-      if (paths == null || paths.isEmpty)
-        log.keys.toSeq.sortBy(_.toString)
-      else
-        paths.toSeq
-
-    val buffer = mutable.ArrayBuffer[Issue]()
-    files.foreach(file => {
-      var fileIssues = log
-        .getOrElse(file, Nil)
-        .filter(issue =>
-          includeWarnings || DiagnosticCategory.isErrorType(issue.diagnostic.category)
-        )
-        .sorted(Issue.ordering)
-      if (maxIssuesPerFile > 0)
-        fileIssues = fileIssues.take(maxIssuesPerFile)
-      buffer.addAll(fileIssues)
-      hasChanged.remove(file)
-    })
-    buffer.toSeq
   }
 
   def getDiagnostics(path: PathLike): List[Diagnostic] =

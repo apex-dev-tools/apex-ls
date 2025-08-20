@@ -2,6 +2,24 @@ Unused analysis is a useful way to help minimise redundant code in your codebase
 
 Unused analysis is performed directly after any changes are made. Classes which have errors from the primary analysis are excluded from unused analysis to reduce the number of diagnostics visible. Once a class is clear of errors you may see unused warnings appear. For non-test classes a declaration is considered unused if it is not used by some other non-test code. We exclude Visualforce controllers and those that have class level warning suppression (see later) from analysis. Visualforce controllers are excluded currently due to limitations in our handling of references to Apex code in pages and components.
 
+# Library Project Handling
+When a project is configured as a library project (by setting `"library": true` in the `plugins` section of `sfdx-project.json`), public methods and fields are treated as part of the library's public API and are not flagged as unused. This prevents unnecessary warnings for library code that is intended to be consumed by external projects. Private methods and fields within library projects continue to generate unused warnings when not referenced internally, helping maintain clean internal code.
+
+Example configuration:
+```json
+{
+  "packageDirectories": [{"path": "force-app"}],
+  "plugins": {
+    "library": true
+  }
+}
+```
+
+With this configuration:
+- Public methods and fields will not generate unused warnings (as they're part of the library API)
+- Private methods and fields will still generate unused warnings if not used internally
+- Global methods and fields continue to be excluded from unused warnings (as they already were)
+
 The analysis primarily concerns checking each field & method to see if there are any references to these. Certain types and fields are assumed to have references, such as global methods, even if none are present in the code base directly. When the only caller of a method is within the method these will be flagged as unused but we can’t as yet detect redundant calling loops such as two methods which are only called by each other.
 
 # Class Level Handling

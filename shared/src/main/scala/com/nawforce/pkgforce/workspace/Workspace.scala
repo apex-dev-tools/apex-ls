@@ -27,7 +27,7 @@ import com.nawforce.pkgforce.stream.{PackageEvent, PackageStream}
 
 /** Contains any config option that can be used by the Org
   */
-case class ProjectConfig(maxDependencyCount: Option[Int])
+case class ProjectConfig(maxDependencyCount: Option[Int], isLibrary: Boolean = false)
 
 /** Metadata workspace, maintains information on available metadata within a project/package.
   *
@@ -42,7 +42,8 @@ case class ProjectConfig(maxDependencyCount: Option[Int])
 case class Workspace(
   logger: IssuesManager,
   layers: Seq[NamespaceLayer],
-  projectConfig: Option[ProjectConfig] = None
+  projectConfig: Option[ProjectConfig] = None,
+  externalMetadataPaths: Seq[PathLike] = Seq.empty
 ) {
 
   // Document indexes for each layer of actual metadata
@@ -69,31 +70,80 @@ case class Workspace(
 }
 
 object Workspace {
-  def apply(path: PathLike, logger: IssuesManager): Option[Workspace] = {
-    if (!path.exists || !path.isDirectory) {
-      logger.logError(path, Location.empty, s"No directory at $path")
-      return None
-    }
-
-    val catchingLogger = new CatchingLogger()
-    val config: Option[WorkspaceConfig] =
-      if (path.join("sfdx-project.json").exists) {
-        SFDXProject(path, catchingLogger).map(p => new SFDXWorkspaceConfig(path, p))
-      } else {
-        Some(new MDAPIWorkspaceConfig(None, Seq(path)))
-      }
-    val layers = config.map(_.layers(catchingLogger)).getOrElse(Seq())
-
-    catchingLogger.issues.foreach(logger.log)
-
-    if (catchingLogger.issues.exists(_.isError)) {
+  /* We need to pass an IssueManager here as this may generate a lot of diagnostics */
+  def apply(config: Option[WorkspaceConfig], issueManager: IssuesManager): Option[Workspace] = {
+    val layers = config.map(_.layers(issueManager)).getOrElse(Seq())
+    if (issueManager.hasErrors) {
       None
     } else {
       config.map {
         case config: SFDXWorkspaceConfig =>
-          new Workspace(logger, layers, Some(ProjectConfig(config.project.maxDependencyCount)))
-        case _ => new Workspace(logger, layers)
+          new Workspace(
+            issueManager,
+            layers,
+            Some(ProjectConfig(config.project.maxDependencyCount, config.project.isLibrary)),
+            config.externalMetadataPaths
+          )
+        case config: WorkspaceConfig =>
+          new Workspace(issueManager, layers, None, config.externalMetadataPaths)
       }
+    }
+  }
+
+  def apply(path: PathLike): (Option[Workspace], IssuesManager) = {
+    val logger = new CatchingLogger()
+
+    validateWorkspacePath(path, logger) match {
+      case Some(error) => error
+      case None        => createWorkspaceFromValidPath(path, logger)
+    }
+  }
+
+  private def validateWorkspacePath(
+    path: PathLike,
+    logger: CatchingLogger
+  ): Option[(Option[Workspace], IssuesManager)] = {
+    if (!path.exists || !path.isDirectory) {
+      logger.logError(path, Location.empty, s"No directory at $path")
+      val issueManager = new IssuesManager(None)
+      logger.issues.foreach(issueManager.add)
+      Some((None, issueManager))
+    } else {
+      None
+    }
+  }
+
+  private def createWorkspaceFromValidPath(
+    path: PathLike,
+    logger: CatchingLogger
+  ): (Option[Workspace], IssuesManager) = {
+    val config             = loadWorkspaceConfig(path, logger)
+    val externalPathFilter = createExternalPathFilter(config)
+    val issueManager       = new IssuesManager(externalPathFilter)
+    logger.issues.foreach(issueManager.add)
+    (Workspace(config, issueManager), issueManager)
+  }
+
+  private def loadWorkspaceConfig(
+    path: PathLike,
+    logger: CatchingLogger
+  ): Option[WorkspaceConfig] = {
+    if (path.join("sfdx-project.json").exists) {
+      SFDXProject(path, logger).map(p => new SFDXWorkspaceConfig(path, p))
+    } else {
+      Some(new MDAPIWorkspaceConfig(None, Seq(path)))
+    }
+  }
+
+  private def createExternalPathFilter(
+    config: Option[WorkspaceConfig]
+  ): Option[PathLike => Boolean] = {
+    val externalPaths = config.map(_.externalMetadataPaths).getOrElse(Seq.empty).map(_.toString)
+
+    if (externalPaths.nonEmpty) {
+      Some((path: PathLike) => externalPaths.exists(prefix => path.toString.startsWith(prefix)))
+    } else {
+      None
     }
   }
 }
