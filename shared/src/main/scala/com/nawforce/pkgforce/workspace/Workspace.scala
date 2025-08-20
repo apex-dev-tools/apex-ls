@@ -18,6 +18,7 @@ import com.nawforce.pkgforce.documents.{DocumentIndex, MetadataDocument}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.pkgforce.sfdx.{
+  ForceIgnoreVersion,
   MDAPIWorkspaceConfig,
   SFDXProject,
   SFDXWorkspaceConfig,
@@ -42,12 +43,15 @@ case class ProjectConfig(maxDependencyCount: Option[Int])
 case class Workspace(
   logger: IssuesManager,
   layers: Seq[NamespaceLayer],
-  projectConfig: Option[ProjectConfig] = None
+  projectConfig: Option[ProjectConfig] = None,
+  forceIgnoreVersion: ForceIgnoreVersion = ForceIgnoreVersion.default
 ) {
 
   // Document indexes for each layer of actual metadata
   val indexes: Map[ModuleLayer, DocumentIndex] =
-    layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) => acc ++ layer.indexes(logger))
+    layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
+      acc ++ layer.indexes(logger, forceIgnoreVersion)
+    )
 
   def get(typeName: TypeName): List[MetadataDocument] = {
     val indexes = deployOrderedIndexes.toSeq.reverse
@@ -91,7 +95,12 @@ object Workspace {
     } else {
       config.map {
         case config: SFDXWorkspaceConfig =>
-          new Workspace(logger, layers, Some(ProjectConfig(config.project.maxDependencyCount)))
+          new Workspace(
+            logger,
+            layers,
+            Some(ProjectConfig(config.project.maxDependencyCount)),
+            config.project.forceIgnoreVersion
+          )
         case _ => new Workspace(logger, layers)
       }
     }

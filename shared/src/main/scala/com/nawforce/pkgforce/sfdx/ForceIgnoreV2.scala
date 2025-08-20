@@ -21,7 +21,7 @@ import scala.collection.compat.immutable.ArraySeq
 import scala.util.matching.Regex
 
 /** ForceIgnoreV2 - node-ignore compatible implementation */
-class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
+class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) extends ForceIgnoreInterface {
 
   /** Salesforce CLI default ignore patterns - always applied */
   private val DEFAULT_PATTERNS =
