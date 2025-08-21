@@ -23,7 +23,7 @@ import com.nawforce.apexlink.types.apex._
 import com.nawforce.apexlink.types.core.{DependentType, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other.{LabelDeclaration, Page}
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
-import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.pkgforce.diagnostics.{IssueAnalysis, LoggerOps}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names.{TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
@@ -425,7 +425,7 @@ trait PackageAPI extends Package {
 
   private def typesWithMissingDiagnostics: Seq[TypeId] = {
     val modules = org.packages.reverse.flatMap(_.orderedModules)
-    org.issues.getMissing.flatMap(path => {
+    IssueAnalysis.getMissing(org.issues).flatMap(path => {
       modules
         .find(_.isVisibleFile(path))
         .flatMap(module => {

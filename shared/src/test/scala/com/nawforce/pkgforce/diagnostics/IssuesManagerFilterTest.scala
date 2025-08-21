@@ -18,14 +18,14 @@ import com.nawforce.runtime.platform.Path
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
-class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
-  var issuesManager: IssuesManager = _
+class IssueLoggerFilterTest extends AnyFunSuite with BeforeAndAfter {
+  var issuesManager: IssueLogger = _
   val testPath: PathLike           = Path("/project/src/classes/TestClass.cls")
   val externalPath: PathLike       = Path("/project/external/ExternalClass.cls")
   val location: Location           = Location(1, 0, 1, 10)
 
   before {
-    issuesManager = new IssuesManager()
+    issuesManager = new IssueLogger()
   }
 
   def createErrorIssue(path: PathLike, message: String): Issue =
@@ -56,13 +56,13 @@ class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
 
   test("issuesForFilesInternal with external filter excludes warnings from external paths") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredIssuesManager               = new IssuesManager(Some(externalFilter))
+    val filteredIssueLogger               = new IssueLogger(Some(externalFilter))
 
-    filteredIssuesManager.add(createErrorIssue(externalPath, "External error"))
-    filteredIssuesManager.add(createWarningIssue(externalPath, "External warning"))
-    filteredIssuesManager.add(createUnusedIssue(externalPath, "External unused"))
+    filteredIssueLogger.add(createErrorIssue(externalPath, "External error"))
+    filteredIssueLogger.add(createWarningIssue(externalPath, "External warning"))
+    filteredIssueLogger.add(createUnusedIssue(externalPath, "External unused"))
 
-    val issues = filteredIssuesManager.issuesForFilesInternal(
+    val issues = filteredIssueLogger.issuesForFilesInternal(
       paths = Array(externalPath),
       includeWarnings = true,
       maxIssuesPerFile = 0
@@ -75,13 +75,13 @@ class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
 
   test("issuesForFilesInternal with external filter preserves all issues from non-external paths") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredIssuesManager               = new IssuesManager(Some(externalFilter))
+    val filteredIssueLogger               = new IssueLogger(Some(externalFilter))
 
-    filteredIssuesManager.add(createErrorIssue(testPath, "Regular error"))
-    filteredIssuesManager.add(createWarningIssue(testPath, "Regular warning"))
-    filteredIssuesManager.add(createUnusedIssue(testPath, "Regular unused"))
+    filteredIssueLogger.add(createErrorIssue(testPath, "Regular error"))
+    filteredIssueLogger.add(createWarningIssue(testPath, "Regular warning"))
+    filteredIssueLogger.add(createUnusedIssue(testPath, "Regular unused"))
 
-    val issues = filteredIssuesManager.issuesForFilesInternal(
+    val issues = filteredIssueLogger.issuesForFilesInternal(
       paths = Array(testPath),
       includeWarnings = true,
       maxIssuesPerFile = 0
@@ -97,12 +97,12 @@ class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
     "issuesForFilesInternal with external filter and includeWarnings=false preserves errors from external paths"
   ) {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredIssuesManager               = new IssuesManager(Some(externalFilter))
+    val filteredIssueLogger               = new IssueLogger(Some(externalFilter))
 
-    filteredIssuesManager.add(createErrorIssue(externalPath, "External error"))
-    filteredIssuesManager.add(createWarningIssue(externalPath, "External warning"))
+    filteredIssueLogger.add(createErrorIssue(externalPath, "External error"))
+    filteredIssueLogger.add(createWarningIssue(externalPath, "External warning"))
 
-    val issues = filteredIssuesManager.issuesForFilesInternal(
+    val issues = filteredIssueLogger.issuesForFilesInternal(
       paths = Array(externalPath),
       includeWarnings = false,
       maxIssuesPerFile = 0
@@ -115,14 +115,14 @@ class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
 
   test("issuesForFilesInternal handles mixed paths with external filter") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredIssuesManager               = new IssuesManager(Some(externalFilter))
+    val filteredIssueLogger               = new IssueLogger(Some(externalFilter))
 
-    filteredIssuesManager.add(createErrorIssue(testPath, "Regular error"))
-    filteredIssuesManager.add(createWarningIssue(testPath, "Regular warning"))
-    filteredIssuesManager.add(createErrorIssue(externalPath, "External error"))
-    filteredIssuesManager.add(createWarningIssue(externalPath, "External warning"))
+    filteredIssueLogger.add(createErrorIssue(testPath, "Regular error"))
+    filteredIssueLogger.add(createWarningIssue(testPath, "Regular warning"))
+    filteredIssueLogger.add(createErrorIssue(externalPath, "External error"))
+    filteredIssueLogger.add(createWarningIssue(externalPath, "External warning"))
 
-    val issues = filteredIssuesManager.issuesForFilesInternal(
+    val issues = filteredIssueLogger.issuesForFilesInternal(
       paths = Array(testPath, externalPath),
       includeWarnings = true,
       maxIssuesPerFile = 0
@@ -148,12 +148,12 @@ class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
 
   test("issuesForFileInternal with external filter applied through issuesForFilesInternal") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredIssuesManager               = new IssuesManager(Some(externalFilter))
+    val filteredIssueLogger               = new IssueLogger(Some(externalFilter))
 
-    filteredIssuesManager.add(createErrorIssue(externalPath, "External error"))
-    filteredIssuesManager.add(createWarningIssue(externalPath, "External warning"))
+    filteredIssueLogger.add(createErrorIssue(externalPath, "External error"))
+    filteredIssueLogger.add(createWarningIssue(externalPath, "External warning"))
 
-    val issues = filteredIssuesManager.issuesForFileInternal(externalPath)
+    val issues = filteredIssueLogger.issuesForFileInternal(externalPath)
 
     assert(issues.length == 1)
     assert(issues.head.diagnostic.message == "External error")
@@ -161,14 +161,14 @@ class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
 
   test("maxIssuesPerFile parameter works with external filtering") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredIssuesManager               = new IssuesManager(Some(externalFilter))
+    val filteredIssueLogger               = new IssueLogger(Some(externalFilter))
 
     (1 to 5).foreach(i => {
-      filteredIssuesManager.add(createErrorIssue(externalPath, s"External error $i"))
-      filteredIssuesManager.add(createWarningIssue(externalPath, s"External warning $i"))
+      filteredIssueLogger.add(createErrorIssue(externalPath, s"External error $i"))
+      filteredIssueLogger.add(createWarningIssue(externalPath, s"External warning $i"))
     })
 
-    val issues = filteredIssuesManager.issuesForFilesInternal(
+    val issues = filteredIssueLogger.issuesForFilesInternal(
       paths = Array(externalPath),
       includeWarnings = true,
       maxIssuesPerFile = 3
@@ -181,12 +181,12 @@ class IssuesManagerFilterTest extends AnyFunSuite with BeforeAndAfter {
 
   test("external filter respects null paths parameter") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredIssuesManager               = new IssuesManager(Some(externalFilter))
+    val filteredIssueLogger               = new IssueLogger(Some(externalFilter))
 
-    filteredIssuesManager.add(createErrorIssue(testPath, "Regular error"))
-    filteredIssuesManager.add(createWarningIssue(externalPath, "External warning"))
+    filteredIssueLogger.add(createErrorIssue(testPath, "Regular error"))
+    filteredIssueLogger.add(createWarningIssue(externalPath, "External warning"))
 
-    val issues = filteredIssuesManager.issuesForFilesInternal(
+    val issues = filteredIssueLogger.issuesForFilesInternal(
       paths = null,
       includeWarnings = true,
       maxIssuesPerFile = 0

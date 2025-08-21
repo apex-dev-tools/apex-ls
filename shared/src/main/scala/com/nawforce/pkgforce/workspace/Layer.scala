@@ -13,7 +13,7 @@
  */
 package com.nawforce.pkgforce.workspace
 
-import com.nawforce.pkgforce.diagnostics.{IssueLogger, IssuesManager}
+import com.nawforce.pkgforce.diagnostics.IssueLogger
 import com.nawforce.pkgforce.documents.DocumentIndex
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
@@ -33,7 +33,7 @@ sealed trait Layer
   */
 case class NamespaceLayer(namespace: Option[Name], isGulped: Boolean, layers: Seq[ModuleLayer])
     extends Layer {
-  def indexes(logger: IssuesManager): Map[ModuleLayer, DocumentIndex] =
+  def indexes(logger: IssueLogger): Map[ModuleLayer, DocumentIndex] =
     layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
       acc + (layer -> layer.index(logger, namespace, isGulped))
     )
@@ -55,7 +55,7 @@ case class ModuleLayer(
     path.toString.substring(root.toString.length)
   }
 
-  def index(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean): DocumentIndex = {
+  def index(logger: IssueLogger, namespace: Option[Name], isGulped: Boolean): DocumentIndex = {
     DocumentIndex(logger, namespace, isGulped, projectPath, path)
   }
 }

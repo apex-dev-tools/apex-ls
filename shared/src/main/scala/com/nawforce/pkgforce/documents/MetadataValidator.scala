@@ -18,13 +18,13 @@ import com.nawforce.pkgforce.diagnostics.{
   ERROR_CATEGORY,
   Issue,
   IssueLogger,
-  IssuesManager
+  Logger
 }
 import com.nawforce.pkgforce.names.{EncodedName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 
 /** Basic validation of metadata files from just examining the file name. */
-class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean) {
+class MetadataValidator(logger: IssueLogger, namespace: Option[Name], isGulped: Boolean) {
 
   def validate(nature: MetadataNature, documents: List[PathLike]): Unit = {
     // Clear any previous issues, this is start of a re-validation

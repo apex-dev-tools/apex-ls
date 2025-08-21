@@ -17,7 +17,7 @@ package com.nawforce.apexlink.api
 import com.nawforce.apexlink.org.{OPM, RefreshListener}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.rpc._
-import com.nawforce.pkgforce.diagnostics.{CatchingLogger, IssuesManager, LoggerOps}
+import com.nawforce.pkgforce.diagnostics.{IssueLogger, LoggerOps}
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.pkgforce.sfdx.{MDAPIWorkspaceConfig, SFDXProject, SFDXWorkspaceConfig}
@@ -74,7 +74,7 @@ trait Org {
 
   /** Collection of all current issues reported against this org.
     */
-  def issues: IssuesCollection
+  def issues: IssueLogger
 
   /** Get the package containing the path.
     *

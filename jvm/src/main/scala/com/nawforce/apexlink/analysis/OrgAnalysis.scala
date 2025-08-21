@@ -5,7 +5,7 @@ package com.nawforce.apexlink.analysis
 
 import com.nawforce.apexlink.api.{LoadAndRefreshAnalysis, NoAnalysis, ServerOps}
 import com.nawforce.apexlink.org.OPM.OrgImpl
-import com.nawforce.pkgforce.diagnostics._
+import com.nawforce.pkgforce.diagnostics.{IssueAnalysis, IssueProviderOps, _}
 import com.nawforce.pkgforce.documents.ApexNature
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.platform.Path
@@ -92,11 +92,11 @@ class OrgAnalysis(org: OrgImpl) {
 
   private def runAnalysis(providers: List[AnalysisProvider], files: Set[Path]): Unit = {
     val issueManager = org.issues
-    val syntaxGroups = files.groupBy(file => issueManager.hasSyntaxIssues(file))
+    val syntaxGroups = files.groupBy(file => IssueAnalysis.hasSyntaxIssues(issueManager, file))
     // Clear provider issues for files that already have syntax errors to reduce noise
     syntaxGroups
       .getOrElse(true, Set())
-      .foreach(path => org.issues.clearProviderIssues(path))
+      .foreach(path => IssueProviderOps.clearProviderIssues(org.issues, path))
 
     providers
       .foreach(provider => {
@@ -115,7 +115,7 @@ class OrgAnalysis(org: OrgImpl) {
             .groupBy(issue => Path(issue.filePath))
 
         issuesByFile.foreach(kv =>
-          org.issues.replaceProviderIssues(providerId, kv._1, kv._2.map(toIssue(providerId, _)))
+          IssueProviderOps.replaceProviderIssues(org.issues, providerId, kv._1, kv._2.map(toIssue(providerId, _)))
         )
       })
   }

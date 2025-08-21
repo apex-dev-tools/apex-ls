@@ -18,14 +18,14 @@ import com.nawforce.runtime.platform.Path
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
-class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
-  var issuesManager: IssuesManager = _
+class IssueLoggerTest extends AnyFunSuite with BeforeAndAfter {
+  var issuesManager: IssueLogger = _
   val testPath: PathLike           = Path("/project/src/classes/TestClass.cls")
   val externalPath: PathLike       = Path("/project/external/ExternalClass.cls")
   val location: Location           = Location(1, 0, 1, 10)
 
   before {
-    issuesManager = new IssuesManager()
+    issuesManager = new IssueLogger()
   }
 
   def createErrorIssue(path: PathLike, message: String): Issue =
@@ -46,7 +46,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
   def createProviderIssue(path: PathLike, message: String, provider: String): Issue =
     Issue(path, Diagnostic(ERROR_CATEGORY, location, message), provider)
 
-  test("Empty IssuesManager has correct initial state") {
+  test("Empty IssueLogger has correct initial state") {
     assert(issuesManager.isEmpty)
     assert(!issuesManager.nonEmpty)
     assert(!issuesManager.hasErrors)
@@ -64,7 +64,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("add method with write-time filtering stores only allowed issues") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredManager                     = new IssuesManager(Some(externalFilter))
+    val filteredManager                     = new IssueLogger(Some(externalFilter))
 
     // Add warning to external path - should be filtered out
     filteredManager.add(createWarningIssue(externalPath, "External warning"))
@@ -134,7 +134,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("push method with external filter applies write-time filtering") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredManager                     = new IssuesManager(Some(externalFilter))
+    val filteredManager                     = new IssueLogger(Some(externalFilter))
 
     val issues = List(
       createErrorIssue(externalPath, "External error"),
@@ -158,7 +158,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
     issuesManager.add(createWarningIssue(testPath, "Warning 1"))
 
     val newUnusedIssues = Seq(createUnusedIssue(testPath, "New Unused 1"))
-    issuesManager.replaceUnusedIssues(testPath, newUnusedIssues)
+    IssueProviderOps.replaceUnusedIssues(issuesManager, testPath, newUnusedIssues)
 
     val allIssues = issuesManager.issuesForFilesInternal(
       Array(testPath),
@@ -175,7 +175,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("replaceUnusedIssues with external filter applies write-time filtering") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredManager                     = new IssuesManager(Some(externalFilter))
+    val filteredManager                     = new IssueLogger(Some(externalFilter))
 
     filteredManager.add(createErrorIssue(externalPath, "External error"))
 
@@ -183,7 +183,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
       createUnusedIssue(externalPath, "External unused") // Warning category, should be filtered
     )
 
-    filteredManager.replaceUnusedIssues(externalPath, newUnusedIssues)
+    IssueProviderOps.replaceUnusedIssues(filteredManager, externalPath, newUnusedIssues)
 
     val allIssues = filteredManager.issuesForFilesInternal(
       Array(externalPath),
@@ -202,7 +202,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
     issuesManager.add(createProviderIssue(testPath, "Custom error 2", customProvider))
 
     val newCustomIssues = Seq(createProviderIssue(testPath, "New custom error", customProvider))
-    issuesManager.replaceProviderIssues(customProvider, testPath, newCustomIssues)
+    IssueProviderOps.replaceProviderIssues(issuesManager, customProvider, testPath, newCustomIssues)
 
     val allIssues = issuesManager.issuesForFilesInternal(
       Array(testPath),
@@ -219,7 +219,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
 
   test("replaceProviderIssues with external filter applies write-time filtering") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
-    val filteredManager                     = new IssuesManager(Some(externalFilter))
+    val filteredManager                     = new IssueLogger(Some(externalFilter))
     val customProvider                      = "custom-provider"
 
     filteredManager.add(createErrorIssue(externalPath, "External error"))
@@ -237,7 +237,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
       ) // Warning, should be filtered
     )
 
-    filteredManager.replaceProviderIssues(customProvider, externalPath, newProviderIssues)
+    IssueProviderOps.replaceProviderIssues(filteredManager, customProvider, externalPath, newProviderIssues)
 
     val allIssues = filteredManager.issuesForFilesInternal(
       Array(externalPath),
@@ -256,7 +256,7 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
     issuesManager.add(createErrorIssue(testPath, "Default error"))
     issuesManager.add(createProviderIssue(testPath, "Custom error", customProvider))
 
-    issuesManager.clearProviderIssues(testPath)
+    IssueProviderOps.clearProviderIssues(issuesManager, testPath)
 
     val allIssues = issuesManager.issuesForFilesInternal(
       Array(testPath),
@@ -269,13 +269,13 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("hasSyntaxIssues method detects syntax issues") {
-    assert(!issuesManager.hasSyntaxIssues(testPath))
+    assert(!IssueAnalysis.hasSyntaxIssues(issuesManager, testPath))
 
     issuesManager.add(createErrorIssue(testPath, "Regular error"))
-    assert(!issuesManager.hasSyntaxIssues(testPath))
+    assert(!IssueAnalysis.hasSyntaxIssues(issuesManager, testPath))
 
     issuesManager.add(createSyntaxIssue(testPath, "Syntax error"))
-    assert(issuesManager.hasSyntaxIssues(testPath))
+    assert(IssueAnalysis.hasSyntaxIssues(issuesManager, testPath))
   }
 
   test("change tracking works correctly") {
@@ -292,11 +292,11 @@ class IssuesManagerTest extends AnyFunSuite with BeforeAndAfter {
     issuesManager.add(createMissingIssue(testPath, "Missing dependency"))
     issuesManager.add(createErrorIssue(testPath, "Regular error"))
 
-    val missing = issuesManager.getMissing
+    val missing = IssueAnalysis.getMissing(issuesManager)
     assert(missing.contains(testPath))
 
     // Should clear missing tracking after retrieval, but only if still missing issues exist
-    val missingAgain = issuesManager.getMissing
+    val missingAgain = IssueAnalysis.getMissing(issuesManager)
     // The behavior depends on whether missing issues still exist - let's just check it works
     assert(missingAgain.contains(testPath))
   }

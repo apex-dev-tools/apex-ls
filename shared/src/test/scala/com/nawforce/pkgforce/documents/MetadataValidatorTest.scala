@@ -14,7 +14,7 @@
 package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
-import com.nawforce.pkgforce.diagnostics.IssuesManager
+import com.nawforce.pkgforce.diagnostics.IssueLogger
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.Path
@@ -23,10 +23,10 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
 
-  private var logger: IssuesManager = _
+  private var logger: IssueLogger = _
 
   before {
-    logger = new IssuesManager()
+    logger = new IssueLogger()
   }
 
   test("Single class ok") {

@@ -13,7 +13,6 @@
  */
 package com.nawforce.pkgforce.modifiers
 
-import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
 import com.nawforce.pkgforce.modifiers.ApexModifiers.{
   allowableModifiers,
   asModifiers,

@@ -29,7 +29,7 @@ import scala.collection.mutable
   */
 class DocumentIndex(
   val path: PathLike,
-  logger: IssuesManager,
+  logger: IssueLogger,
   namespace: Option[Name],
   isGulped: Boolean,
   ignore: Option[ForceIgnore]
@@ -159,7 +159,7 @@ object DocumentIndex {
 
   /** Construct a new DocumentIndex over the passed path. */
   def apply(
-    logger: IssuesManager,
+    logger: IssueLogger,
     namespace: Option[Name],
     isGulped: Boolean,
     projectPath: PathLike,
@@ -176,7 +176,7 @@ object DocumentIndex {
 
   /** Simplified construction for MDAPI only projects where projectDir = module path. */
   def apply(
-    logger: IssuesManager,
+    logger: IssueLogger,
     namespace: Option[Name],
     isGulped: Boolean,
     path: PathLike
