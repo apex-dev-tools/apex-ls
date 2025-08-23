@@ -331,7 +331,8 @@ class MethodModifierTest extends AnyFunSuite {
   }
 
   test("TestMethod in non-test class should error") {
-    val issues = illegalClassMethodAccess(ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER))
+    val issues =
+      illegalClassMethodAccess(ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER))
     assert(
       issues == Seq[Issue](
         Issue(
@@ -347,7 +348,8 @@ class MethodModifierTest extends AnyFunSuite {
   }
 
   test("TestSetup in non-test class should error") {
-    val issues = illegalClassMethodAccess(ArraySeq(TEST_SETUP_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER))
+    val issues =
+      illegalClassMethodAccess(ArraySeq(TEST_SETUP_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER))
     assert(
       issues == Seq[Issue](
         Issue(
@@ -382,10 +384,8 @@ class MethodModifierTest extends AnyFunSuite {
   }
 
   test("testMethod modifier without static should error") {
-    val issues = illegalClassMethodAccess(
-      ArraySeq(TEST_METHOD_MODIFIER),
-      ArraySeq(ISTEST_ANNOTATION)
-    )
+    val issues =
+      illegalClassMethodAccess(ArraySeq(TEST_METHOD_MODIFIER), ArraySeq(ISTEST_ANNOTATION))
     assert(
       issues == Seq[Issue](
         Issue(

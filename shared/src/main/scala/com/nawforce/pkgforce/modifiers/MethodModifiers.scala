@@ -159,16 +159,21 @@ object MethodModifiers {
         )
         extendedModifiers
       } else if (
-        (extendedModifiers.contains(ISTEST_ANNOTATION) || extendedModifiers.contains(TEST_METHOD_MODIFIER)) &&
+        (extendedModifiers
+          .contains(ISTEST_ANNOTATION) || extendedModifiers.contains(TEST_METHOD_MODIFIER)) &&
         !extendedModifiers.contains(STATIC_MODIFIER)
       ) {
         logger.logError(context, "testMethod and @IsTest methods must be static")
         STATIC_MODIFIER +: extendedModifiers
       } else if (
-        (extendedModifiers.contains(ISTEST_ANNOTATION) || extendedModifiers.contains(TEST_SETUP_ANNOTATION)) &&
+        (extendedModifiers
+          .contains(ISTEST_ANNOTATION) || extendedModifiers.contains(TEST_SETUP_ANNOTATION)) &&
         !ownerInfo.modifiers.contains(ISTEST_ANNOTATION)
       ) {
-        logger.logError(context, "Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation")
+        logger.logError(
+          context,
+          "Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation"
+        )
         extendedModifiers
       } else {
         extendedModifiers
