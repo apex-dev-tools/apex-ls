@@ -109,20 +109,18 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
     ],
     [
       "force-app/commons/query/Query.cls",
-      "Warning: line 44 at 30-32: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
-      "Warning: line 44 at 30-32: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
-      "Warning: line 52 at 31-33: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
-      "Warning: line 52 at 31-33: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 44 at 31-33: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 44 at 31-33: 'of' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
       "force-app/commons/query/QueryBuilder.cls",
-      "Warning: line 55 at 8-53: Local variable is hiding class field 'fields', see force-app/commons/query/QueryBuilder.cls: line 29 at 12-51",
-      "Warning: line 55 at 8-53: Local variable is hiding class field 'fields', see force-app/commons/query/QueryBuilder.cls: line 29 at 12-51",
+      "Warning: line 50 at 8-53: Local variable is hiding class field 'fields', see force-app/commons/query/QueryBuilder.cls: line 29 at 12-51",
+      "Warning: line 50 at 8-53: Local variable is hiding class field 'fields', see force-app/commons/query/QueryBuilder.cls: line 29 at 12-51",
     ],
     [
       "force-app/commons/query/QueryObject.cls",
-      "Warning: line 664 at 8-99: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
-      "Warning: line 664 at 8-99: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
+      "Warning: line 667 at 8-66: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
+      "Warning: line 667 at 8-66: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
     ],
     [
       "force-app/commons/query/QueryResults.cls",
@@ -130,6 +128,8 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
       "Warning: line 109 at 8-61: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
       "Warning: line 117 at 8-38: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
       "Warning: line 117 at 8-38: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
+      "Warning: line 137 at 8-38: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
+      "Warning: line 137 at 8-38: Local variable is hiding class field 'result', see force-app/commons/query/QueryResults.cls: line 34 at 14-28",
     ],
     [
       "force-app/commons/query/cache/objects/QueryCache__mdt/QueryCache__mdt.object-meta.xml",
@@ -152,10 +152,12 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
     ],
     [
       "sfdx-project.json",
+      "Warning: line 107 at 8: Dependency version '2.1.0.LATEST' for 'DatabaseService' is not compatible with '2.2.0.NEXT'",
       "Warning: line 23 at 8: Dependency version '1.0.0.LATEST' for 'Trigger Handler' is not compatible with '1.0.2.NEXT'",
       "Warning: line 45 at 8: Dependency version '1.0.0.LATEST' for 'Libra Shared' is not compatible with '1.0.1.NEXT'",
       "Warning: line 59 at 8: Dependency version '1.0.0.LATEST' for 'Libra Shared' is not compatible with '1.0.1.NEXT'",
-      "Warning: line 97 at 8: Dependency version '2.1.0.LATEST' for 'DatabaseService' is not compatible with '2.3.1.NEXT'",
+      "Warning: line 73 at 8: Dependency version '1.0.0.LATEST' for 'Libra Shared' is not compatible with '1.0.1.NEXT'",
+      "Warning: line 77 at 8: Dependency 'DatabaseService' must be defined in project before being referenced",
     ],
   ],
   "status": 4,
@@ -1279,7 +1281,7 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
     ],
     [
       "nebula-logger/core/main/logger-engine/classes/LogEntryEventBuilder.cls",
-      "Warning: line 1192 at 4-44: Local variable is hiding class field 'cachedOrganizationEnvironmentType', see nebula-logger/core/main/logger-engine/classes/LogEntryEventBuilder.cls: line 23 at 17-58",
+      "Warning: line 1195 at 4-44: Local variable is hiding class field 'cachedOrganizationEnvironmentType', see nebula-logger/core/main/logger-engine/classes/LogEntryEventBuilder.cls: line 23 at 17-58",
     ],
     [
       "nebula-logger/core/main/logger-engine/classes/Logger.cls",
@@ -1293,28 +1295,28 @@ exports[`Check samples Sample: NebulaLogger 1`] = `
       "Warning: line 595 at 21-30: 'exception' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
-      "nebula-logger/extra-tests/custom-field-mappings/objects/LogEntryEvent__e/fields/SomeLogEntryField__c.field-meta.xml",
-      "Error: line 1: Components of type 'Schema.LogEntryEvent__e' are defined, but the required object-meta.xml file is missing",
-    ],
-    [
-      "nebula-logger/extra-tests/integration-tests/classes/LogEntryHandler_Tests_Flow.cls",
-      "Missing: line 77 at 27-66: Unknown field 'TriggerObjectOrEvent' on SObject 'Schema.FlowDefinitionView'",
-    ],
-    [
-      "nebula-logger/extra-tests/name-shadowing/System/AuraHandledException.cls",
+      "nebula-logger/extra-tests/classes/name-shadowing/System/AuraHandledException.cls",
       "Error: line 9 at 17-37: Exception class 'AuraHandledException' must extend another Exception class",
     ],
     [
-      "nebula-logger/extra-tests/name-shadowing/System/CalloutException.cls",
+      "nebula-logger/extra-tests/classes/name-shadowing/System/CalloutException.cls",
       "Error: line 9 at 17-33: Exception class 'CalloutException' must extend another Exception class",
     ],
     [
-      "nebula-logger/extra-tests/name-shadowing/System/DmlException.cls",
+      "nebula-logger/extra-tests/classes/name-shadowing/System/DmlException.cls",
       "Error: line 9 at 17-29: Exception class 'DmlException' must extend another Exception class",
     ],
     [
-      "nebula-logger/extra-tests/name-shadowing/System/IllegalArgumentException.cls",
+      "nebula-logger/extra-tests/classes/name-shadowing/System/IllegalArgumentException.cls",
       "Error: line 9 at 17-41: Exception class 'IllegalArgumentException' must extend another Exception class",
+    ],
+    [
+      "nebula-logger/extra-tests/objects/LogEntryEvent__e/fields/SomeLogEntryField__c.field-meta.xml",
+      "Error: line 1: Components of type 'Schema.LogEntryEvent__e' are defined, but the required object-meta.xml file is missing",
+    ],
+    [
+      "nebula-logger/extra-tests/tests/LogEntryHandler_Tests_Flow.cls",
+      "Missing: line 77 at 27-66: Unknown field 'TriggerObjectOrEvent' on SObject 'Schema.FlowDefinitionView'",
     ],
     [
       "nebula-logger/plugins/big-object-archiving/plugin/classes/LogEntryArchiveBuilder.cls",
@@ -1456,8 +1458,13 @@ exports[`Check samples Sample: TestDataFactory 1`] = `
 
 exports[`Check samples Sample: TriggerX 1`] = `
 {
-  "logs": [],
-  "status": 0,
+  "logs": [
+    [
+      "TriggerX/src/classes/AccountSampleHandler.cls",
+      "Error: line 89 at 25-34: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+    ],
+  ],
+  "status": 4,
 }
 `;
 
@@ -1709,17 +1716,17 @@ exports[`Check samples Sample: apex-rollup 1`] = `
     [
       "rollup/core/classes/RollupAsyncProcessor.cls",
       "Error: line 391 at 23-41: Constructor is not visible: Rollup.<constructor>(Rollup.InvocationPoint)",
-      "Warning: line 622 at 6-56: Local variable is hiding class field 'recordIds', see rollup/core/classes/RollupAsyncProcessor.cls: line 27 at 18-40",
+      "Warning: line 621 at 6-56: Local variable is hiding class field 'recordIds', see rollup/core/classes/RollupAsyncProcessor.cls: line 27 at 18-40",
     ],
     [
       "rollup/core/classes/RollupCalcItemReplacer.cls",
-      "Warning: line 294 at 4-98: Local variable is hiding class field 'parentQueryFields', see rollup/core/classes/RollupCalcItemReplacer.cls: line 13 at 16-92",
+      "Warning: line 285 at 4-98: Local variable is hiding class field 'parentQueryFields', see rollup/core/classes/RollupCalcItemReplacer.cls: line 13 at 16-92",
     ],
     [
       "rollup/core/classes/RollupCalculator.cls",
       "Warning: line 1036 at 27-31: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
-      "Warning: line 1153 at 28-32: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
-      "Warning: line 1398 at 6-73: Local variable is hiding class field 'fieldNames', see rollup/core/classes/RollupCalculator.cls: line 1337 at 18-63",
+      "Warning: line 1152 at 28-32: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
+      "Warning: line 1397 at 6-73: Local variable is hiding class field 'fieldNames', see rollup/core/classes/RollupCalculator.cls: line 1336 at 18-63",
       "Warning: line 486 at 6-95: Local variable is hiding class field 'defaultVal', see rollup/core/classes/RollupCalculator.cls: line 13 at 18-36",
       "Warning: line 868 at 6-96: Local variable is hiding class field 'defaultVal', see rollup/core/classes/RollupCalculator.cls: line 13 at 18-36",
     ],
@@ -1920,12 +1927,37 @@ exports[`Check samples Sample: df12-apex-enterprise-patterns 1`] = `
 {
   "logs": [
     [
+      "df12/src/classes/OpportunitiesTest.cls",
+      "Error: line 33 at 22-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 43 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 54 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 66 at 22-58: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 75 at 22-61: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 93 at 22-59: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+    ],
+    [
+      "df12/src/classes/SObjectDomain.cls",
+      "Error: line 387 at 22-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 397 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 410 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 428 at 22-49: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 442 at 22-39: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 484 at 21-36: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 499 at 21-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+    ],
+    [
       "df12/src/classes/SObjectSelector.cls",
       "Warning: line 36 at 37-55: Private method overrides have inconsistent behaviour, use global, public or protected",
       "Warning: line 38 at 30-43: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
+    [
+      "df12/src/classes/SObjectUnitOfWork.cls",
+      "Error: line 235 at 21-48: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 333 at 21-41: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 438 at 21-42: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+    ],
   ],
-  "status": 0,
+  "status": 4,
 }
 `;
 
@@ -2121,6 +2153,13 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
 }
 `;
 
+exports[`Check samples Sample: forcelog 1`] = `
+{
+  "logs": [],
+  "status": 0,
+}
+`;
+
 exports[`Check samples Sample: grid 1`] = `
 {
   "logs": [],
@@ -2201,7 +2240,7 @@ exports[`Check samples Sample: rflib 1`] = `
     ],
     [
       "rflib/main/default/classes/rflib_DefaultLogger.cls",
-      "Warning: line 340 at 8-109: Local variable is hiding class field 'logMessages', see rflib/main/default/classes/rflib_DefaultLogger.cls: line 54 at 18-43",
+      "Warning: line 328 at 8-109: Local variable is hiding class field 'logMessages', see rflib/main/default/classes/rflib_DefaultLogger.cls: line 52 at 18-43",
     ],
     [
       "rflib/main/default/classes/rflib_LogArchiveCleanup.cls",
@@ -2238,10 +2277,9 @@ exports[`Check samples Sample: rflib 1`] = `
     ],
     [
       "sfdx-project.json",
-      "Warning: line 23 at 8: Package dependency for 'RFLIB@4.1.0-1' ignored as metadata is not available for analysis.",
-      "Warning: line 38 at 8: Package dependency for 'RFLIB@4.1.0-1' ignored as metadata is not available for analysis.",
-      "Warning: line 41 at 8: Package dependency for 'RFLIB-FS@2.0.0-1' ignored as metadata is not available for analysis.",
-      "Warning: line 56 at 8: Package dependency for 'RFLIB@10.0.0-1' ignored as metadata is not available for analysis.",
+      "Warning: line 21 at 8: Package dependency for 'RFLIB@4.1.0-1' ignored as metadata is not available for analysis.",
+      "Warning: line 35 at 8: Package dependency for 'RFLIB@4.1.0-1' ignored as metadata is not available for analysis.",
+      "Warning: line 38 at 8: Package dependency for 'RFLIB-FS@2.0.0-1' ignored as metadata is not available for analysis.",
     ],
   ],
   "status": 4,
