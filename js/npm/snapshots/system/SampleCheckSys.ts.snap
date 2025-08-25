@@ -2151,13 +2151,6 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
 }
 `;
 
-exports[`Check samples Sample: forcelog 1`] = `
-{
-  "logs": [],
-  "status": 0,
-}
-`;
-
 exports[`Check samples Sample: grid 1`] = `
 {
   "logs": [],
