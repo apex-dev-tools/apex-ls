@@ -330,4 +330,54 @@ class MethodModifierTest extends AnyFunSuite {
     )
   }
 
+  test("Class method private AuraEnabled") {
+    val issues = illegalClassMethodAccess(ArraySeq(PRIVATE_MODIFIER, AURA_ENABLED_ANNOTATION))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 48, 1, 52),
+            "AuraEnabled methods must be global or public"
+          )
+        )
+      )
+    )
+  }
+
+  test("Class method default AuraEnabled") {
+    val issues = illegalClassMethodAccess(ArraySeq(AURA_ENABLED_ANNOTATION))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 40, 1, 44),
+            "AuraEnabled methods must be global or public"
+          )
+        )
+      )
+    )
+  }
+
+  test("Class method public AuraEnabled is legal") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(PUBLIC_MODIFIER, AURA_ENABLED_ANNOTATION),
+        ArraySeq(PUBLIC_MODIFIER, AURA_ENABLED_ANNOTATION)
+      )
+    )
+  }
+
+  test("Class method global AuraEnabled is legal") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(GLOBAL_MODIFIER, AURA_ENABLED_ANNOTATION),
+        ArraySeq(GLOBAL_MODIFIER, AURA_ENABLED_ANNOTATION)
+      )
+    )
+  }
+
 }
