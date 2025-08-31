@@ -98,7 +98,7 @@ object Workspace {
           new Workspace(
             logger,
             layers,
-            Some(ProjectConfig(config.project.maxDependencyCount)),
+            Some(ProjectConfig(config.project.apexConfig.maxDependencyCount)),
             config.project.forceIgnoreVersion
           )
         case _ => new Workspace(logger, layers)

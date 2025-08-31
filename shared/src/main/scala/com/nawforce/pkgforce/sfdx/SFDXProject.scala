@@ -18,11 +18,9 @@ import com.nawforce.pkgforce.documents.MetadataDocument
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.pkgforce.workspace.{ModuleLayer, NamespaceLayer}
-import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import ujson.Value
 
 import scala.annotation.tailrec
-import scala.util.{Failure, Success, Try}
 
 class SFDXProjectError(val line: Int, val offset: Int, message: String) extends Throwable(message)
 
@@ -78,152 +76,15 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
 
   val namespace: Option[Name] = config.root.optIdentifier(config, "namespace")
 
-  val plugins: Map[String, Value.Value] =
-    try {
-      config.root("plugins") match {
-        case value: ujson.Obj => value.value.toMap
-        case value =>
-          config
-            .lineAndOffsetOf(value)
-            .map(lineAndOffset => {
-              throw SFDXProjectError(lineAndOffset, "'plugins' should be an object")
-            })
-            .getOrElse(Map.empty)
-      }
-    } catch {
-      case _: NoSuchElementException => Map()
-    }
-
-  val dependencies: Seq[PackageDependent] =
-    plugins.getOrElse("dependencies", ujson.Arr()) match {
-      case value: ujson.Arr =>
-        value.value.toSeq.zipWithIndex.map(dp => PackageDependent(projectPath, config, dp._1))
-      case value =>
-        config
-          .lineAndOffsetOf(value)
-          .map(lineAndOffset => {
-            throw SFDXProjectError(lineAndOffset, "'dependencies' should be an array")
-          })
-          .getOrElse(Seq.empty)
-    }
-
-  val unpackagedMetadata: Seq[PackageDirectory] =
-    plugins.getOrElse("unpackagedMetadata", ujson.Arr()) match {
-      case value: ujson.Arr =>
-        value.value.toSeq.map(value =>
-          PackageDirectory.fromUnpackagedMetadata(projectPath, config, value)
-        )
-      case value =>
-        config
-          .lineAndOffsetOf(value)
-          .map(lineAndOffset => {
-            throw SFDXProjectError(lineAndOffset, "'unpackagedMetadata' should be an array")
-          })
-          .getOrElse(Seq.empty)
-    }
-
-  val additionalNamespaces: Array[Option[Name]] =
-    plugins.getOrElse("additionalNamespaces", ujson.Arr()) match {
-      case value: ujson.Arr =>
-        val namespaces = value.value.toSeq
-          .flatMap(value => {
-            value match {
-              case ujson.Str(value) => Some(value)
-              case _ =>
-                config
-                  .lineAndOffsetOf(value)
-                  .map(lineAndOffset =>
-                    throw SFDXProjectError(
-                      lineAndOffset,
-                      "'additionalNamespaces' entries should all be strings"
-                    )
-                  )
-                None
-            }
-          })
-          .map {
-            case "unmanaged" => None
-            case ns          => Some(Name(ns))
-          }
-        val dups = namespaces.duplicates(_.getOrElse("unmanaged"))
-        if (dups.nonEmpty) {
-          config
-            .lineAndOffsetOf(value)
-            .map(lineAndOffset =>
-              throw SFDXProjectError(
-                lineAndOffset,
-                s"namespace '${dups.head._1.getOrElse("unmanaged")}' is duplicated in additionalNamespaces'"
-              )
-            )
-        }
-        namespaces.toArray
-      case value =>
-        config
-          .lineAndOffsetOf(value)
-          .map(lineAndOffset => {
-            throw SFDXProjectError(lineAndOffset, "'additionalNamespaces' should be an array")
-          })
-          .getOrElse(Array.empty)
-    }
-
-  val maxDependencyCount: Option[Int] = {
-    plugins.get("maxDependencyCount") match {
-      case None => None
-      case Some(value: ujson.Num) if value.toString.matches("[0-9]+") =>
-        Try(value.toString().toInt) match {
-          case Success(value) => Some(value)
-          case Failure(_) =>
-            config
-              .lineAndOffsetOf(value)
-              .map(lineAndOffset => {
-                throw SFDXProjectError(
-                  lineAndOffset,
-                  s"'maxDependencyCount' value '${value.toString}' is not an integer"
-                )
-              })
-              .getOrElse(None)
-        }
-      case Some(value) =>
-        config
-          .lineAndOffsetOf(value)
-          .map(lineAndOffset => {
-            throw SFDXProjectError(
-              lineAndOffset,
-              s"'maxDependencyCount' value '${value.toString}' should be a positive integer"
-            )
-          })
-          .getOrElse(None)
-    }
-  }
-
-  val options: Map[String, String] =
-    plugins.getOrElse("options", ujson.Obj()) match {
-      case value: ujson.Obj =>
-        value.value.map {
-          case (key, ujson.Str(strValue)) => (key, strValue)
-          case (key, nonStringValue) =>
-            config
-              .lineAndOffsetOf(nonStringValue)
-              .foreach(lineAndOffset => {
-                throw SFDXProjectError(lineAndOffset, s"'options.$key' should be a string value")
-              })
-            throw new RuntimeException(s"'options.$key' should be a string value")
-        }.toMap
-      case value =>
-        config
-          .lineAndOffsetOf(value)
-          .foreach(lineAndOffset => {
-            throw SFDXProjectError(lineAndOffset, "'options' should be an object")
-          })
-        throw new RuntimeException("'options' should be an object")
-    }
+  val apexConfig: ApexConfig = ApexConfig.fromConfig(projectPath, config)
 
   val forceIgnoreVersion: ForceIgnoreVersion = {
-    val versionString = options.getOrElse("forceIgnoreVersion", ForceIgnoreVersion.default.value)
+    val versionString =
+      apexConfig.options.getOrElse("forceIgnoreVersion", ForceIgnoreVersion.default.value)
     ForceIgnoreVersion.fromString(versionString) match {
       case Some(version) => version
       case None =>
-        val optionsValue   = plugins.get("options")
+        val optionsValue   = apexConfig.plugins.get("options")
         val validValuesStr = ForceIgnoreVersion.validValues.mkString("'", "', '", "'")
         config
           .lineAndOffsetOf(optionsValue)
@@ -241,11 +102,11 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   }
 
-  private val gulpPackages = additionalNamespaces.flatMap(ns => {
+  private val gulpPackages = apexConfig.additionalNamespaces.flatMap(ns => {
     createGulpPath(ns) match {
       case Left(err) =>
         config
-          .lineAndOffsetOf(plugins.get("additionalNamespaces"))
+          .lineAndOffsetOf(apexConfig.plugins.get("additionalNamespaces"))
           .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, err))
           .getOrElse(None)
         None
@@ -255,16 +116,16 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   })
 
-  private val extendedPackageDirectories = packageDirectories ++ unpackagedMetadata
+  private val extendedPackageDirectories = packageDirectories ++ apexConfig.unpackagedMetadata
 
   private val externalPackages =
-    dependencies.flatMap(dependent => packageDependentLayers(localLogger, dependent))
+    apexConfig.dependencies.flatMap(dependent => packageDependentLayers(localLogger, dependent))
 
   def metadataGlobs: Seq[String] = {
     val glob = MetadataDocument.extensionsGlob
     (extendedPackageDirectories.map(packageDirectory => packageDirectory.relativePath) ++
       externalPackages.flatMap(_.layers.map(layer => layer.pathRelativeTo(projectPath))) ++
-      additionalNamespaces.map(gulpPath).map(pathParts => pathParts.mkString("/")))
+      apexConfig.additionalNamespaces.map(gulpPath).map(pathParts => pathParts.mkString("/")))
       .map(prefix => s"$prefix/**/*.$glob")
   }
 
@@ -297,7 +158,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
       .reverse
 
     val gulpLocalModule =
-      if (additionalNamespaces.contains(namespace))
+      if (apexConfig.additionalNamespaces.contains(namespace))
         Seq(ModuleLayer(projectPath, gulpPath(namespace).mkString("/"), Seq()))
       else
         Seq()
@@ -315,7 +176,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
           projectFile,
           Diagnostic(
             ERROR_CATEGORY,
-            dependencies.head.location,
+            apexConfig.dependencies.head.location,
             s"plugin additionalNamespaces/dependencies must use unique namespaces"
           )
         )

@@ -54,7 +54,9 @@ The following arguments are available:
 
 ### sfdx-project.json Options
 
-The Apex Language Server can be configured through the `sfdx-project.json` file using the `plugins.options` section:
+The Apex Language Server can be configured through the `sfdx-project.json` file using the `plugins` section. Two configuration styles are supported:
+
+#### Legacy Configuration (Backward Compatible)
 
 ```json
 {
@@ -69,6 +71,28 @@ The Apex Language Server can be configured through the `sfdx-project.json` file 
   }
 }
 ```
+
+#### Recommended Configuration (apex-ls namespaced)
+
+To avoid potential name clashes with other plugins, it's recommended to place apex-ls configuration under the `apex-ls` key:
+
+```json
+{
+  "packageDirectories": [...],
+  "namespace": "...",
+  "plugins": {
+    "apex-ls": {
+      "dependencies": [...],
+      "additionalNamespaces": [...],
+      "options": {
+        "forceIgnoreVersion": "v2"
+      }
+    }
+  }
+}
+```
+
+**Note:** If both styles are present, the `apex-ls` configuration takes precedence. You should use one style or the other, not mix them.
 
 #### Available Options
 

@@ -449,7 +449,7 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
         val project = SFDXProject(root, logger)
         assert(logger.issues.isEmpty)
         assert(project.nonEmpty)
-        assert(project.get.plugins.isEmpty)
+        assert(project.get.apexConfig.plugins.isEmpty)
     }
   }
 
@@ -476,7 +476,7 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
-      assert(project.get.plugins.isEmpty)
+      assert(project.get.apexConfig.plugins.isEmpty)
     }
   }
 
@@ -488,10 +488,10 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
-      assert(project.get.plugins.size == 2)
-      assert(project.get.plugins.contains("foo"))
-      assert(project.get.plugins.contains("bar"))
-      assert(project.get.dependencies.isEmpty)
+      assert(project.get.apexConfig.plugins.size == 2)
+      assert(project.get.apexConfig.plugins.contains("foo"))
+      assert(project.get.apexConfig.plugins.contains("bar"))
+      assert(project.get.apexConfig.dependencies.isEmpty)
     }
   }
 
@@ -503,9 +503,9 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
-      assert(project.get.plugins.size == 1)
-      assert(project.get.plugins.contains("dependencies"))
-      assert(project.get.dependencies.isEmpty)
+      assert(project.get.apexConfig.plugins.size == 1)
+      assert(project.get.apexConfig.plugins.contains("dependencies"))
+      assert(project.get.apexConfig.dependencies.isEmpty)
     }
   }
 
@@ -544,9 +544,9 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
-      assert(project.get.dependencies.nonEmpty)
-      assert(project.get.dependencies.size == 1)
-      assert(project.get.dependencies.exists(_.namespace.contains(Name("foo"))))
+      assert(project.get.apexConfig.dependencies.nonEmpty)
+      assert(project.get.apexConfig.dependencies.size == 1)
+      assert(project.get.apexConfig.dependencies.exists(_.namespace.contains(Name("foo"))))
     }
   }
 
@@ -558,10 +558,10 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
-      assert(project.get.dependencies.nonEmpty)
-      assert(project.get.dependencies.size == 1)
-      assert(project.get.dependencies.exists(_.namespace.contains(Name("foo"))))
-      assert(project.get.dependencies.exists(_.relativePath.contains("bar")))
+      assert(project.get.apexConfig.dependencies.nonEmpty)
+      assert(project.get.apexConfig.dependencies.size == 1)
+      assert(project.get.apexConfig.dependencies.exists(_.namespace.contains(Name("foo"))))
+      assert(project.get.apexConfig.dependencies.exists(_.relativePath.contains("bar")))
     }
   }
 
@@ -609,11 +609,11 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
-      assert(project.get.dependencies.nonEmpty)
-      assert(project.get.dependencies.size == 3)
-      assert(project.get.dependencies.head.relativePath.contains("patha"))
-      assert(project.get.dependencies(1).relativePath.isEmpty)
-      assert(project.get.dependencies(2).relativePath.contains("pathc"))
+      assert(project.get.apexConfig.dependencies.nonEmpty)
+      assert(project.get.apexConfig.dependencies.size == 3)
+      assert(project.get.apexConfig.dependencies.head.relativePath.contains("patha"))
+      assert(project.get.apexConfig.dependencies(1).relativePath.isEmpty)
+      assert(project.get.apexConfig.dependencies(2).relativePath.contains("pathc"))
     }
   }
 
@@ -656,128 +656,6 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
-  test("max dependency count valid") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" ->
-          """{
-          | "packageDirectories": [],
-          | "plugins": {
-          |   "maxDependencyCount": 123
-          | }
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.get.maxDependencyCount.contains(123))
-    }
-  }
-
-  test("max dependency count zero valid") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" ->
-          """{
-          | "packageDirectories": [],
-          | "plugins": {
-          |   "maxDependencyCount": 0
-          | }
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.get.maxDependencyCount.contains(0))
-    }
-  }
-
-  test("max dependency count negative invalid") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" ->
-          """{
-          | "packageDirectories": [],
-          | "plugins": {
-          |   "maxDependencyCount": -2
-          | }
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isEmpty)
-      assert(
-        logger.issues == ArraySeq(
-          Issue(
-            root.join("sfdx-project.json"),
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location(4, 25),
-              "'maxDependencyCount' value '-2' should be a positive integer"
-            )
-          )
-        )
-      )
-
-    }
-  }
-
-  test("max dependency count too big invalid") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" ->
-          """{
-          | "packageDirectories": [],
-          | "plugins": {
-          |   "maxDependencyCount": 2147483648
-          | }
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isEmpty)
-      assert(
-        logger.issues == ArraySeq(
-          Issue(
-            root.join("sfdx-project.json"),
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location(4, 25),
-              "'maxDependencyCount' value '2147483648' is not an integer"
-            )
-          )
-        )
-      )
-    }
-  }
-
-  test("max dependency count not number") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" ->
-          """{
-          | "packageDirectories": [],
-          | "plugins": {
-          |   "maxDependencyCount": "foo"
-          | }
-          |}""".stripMargin
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isEmpty)
-      assert(
-        logger.issues == ArraySeq(
-          Issue(
-            root.join("sfdx-project.json"),
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location(4, 25),
-              "'maxDependencyCount' value '\"foo\"' should be a positive integer"
-            )
-          )
-        )
-      )
-    }
-  }
-
   test("Empty unpackagedMetadata") {
     FileSystemHelper.run(
       Map(
@@ -786,9 +664,9 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
-      assert(project.get.plugins.size == 1)
-      assert(project.get.plugins.contains("unpackagedMetadata"))
-      assert(project.get.unpackagedMetadata.isEmpty)
+      assert(project.get.apexConfig.plugins.size == 1)
+      assert(project.get.apexConfig.plugins.contains("unpackagedMetadata"))
+      assert(project.get.apexConfig.unpackagedMetadata.isEmpty)
     }
   }
 
@@ -821,8 +699,8 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
 
-      assert(project.get.unpackagedMetadata.size == 1)
-      val pd = project.get.unpackagedMetadata.head
+      assert(project.get.apexConfig.unpackagedMetadata.size == 1)
+      val pd = project.get.apexConfig.unpackagedMetadata.head
       assert(pd.relativePath == "path")
       assert(pd.name.isEmpty)
       assert(pd.version.isEmpty)
@@ -839,10 +717,10 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
 
-      assert(project.get.unpackagedMetadata.size == 2)
-      val pd1 = project.get.unpackagedMetadata.head
+      assert(project.get.apexConfig.unpackagedMetadata.size == 2)
+      val pd1 = project.get.apexConfig.unpackagedMetadata.head
       assert(pd1.relativePath == "path1")
-      val pd2 = project.get.unpackagedMetadata(1)
+      val pd2 = project.get.apexConfig.unpackagedMetadata(1)
       assert(pd2.relativePath == "path2")
     }
   }
@@ -868,251 +746,6 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
           )
         )
       )
-    }
-  }
-
-  test("Empty additionalNamespaces") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"additionalNamespaces\": []}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
-      assert(project.get.plugins.size == 1)
-      assert(project.get.plugins.contains("additionalNamespaces"))
-      assert(project.get.additionalNamespaces.isEmpty)
-    }
-  }
-
-  test("additionalNamespaces not an array") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"additionalNamespaces\": 42}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-
-      assert(project.isEmpty)
-      assert(
-        logger.issues == ArraySeq(
-          Issue(
-            root.join("sfdx-project.json"),
-            Diagnostic(ERROR_CATEGORY, Location(1, 37), "'additionalNamespaces' should be an array")
-          )
-        )
-      )
-    }
-  }
-
-  test("additionalNamespaces single ns") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"additionalNamespaces\": [\"ns\"]}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
-
-      assert(project.get.additionalNamespaces sameElements Array(Some(Name("ns"))))
-      val globs = project.get.metadataGlobs
-      assert(globs.length == 1)
-      assert(globs.exists(_.startsWith(".apexlink/gulp/ns/**/")))
-    }
-  }
-
-  test("additionalNamespaces multiple ns") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"additionalNamespaces\": [\"ns1\", \"unmanaged\"]}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
-
-      assert(project.get.additionalNamespaces sameElements Array(Some(Name("ns1")), None))
-      val globs = project.get.metadataGlobs
-      assert(globs.length == 2)
-      assert(globs.exists(_.startsWith(".apexlink/gulp/ns1/**/")))
-      assert(globs.exists(_.startsWith(".apexlink/gulp/unmanaged/**/")))
-    }
-  }
-
-  test("additionalNamespaces bad path element") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"additionalNamespaces\": [\"ns\", 10]}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-
-      assert(project.isEmpty)
-      assert(
-        logger.issues == ArraySeq(
-          Issue(
-            root.join("sfdx-project.json"),
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location(1, 44),
-              "'additionalNamespaces' entries should all be strings"
-            )
-          )
-        )
-      )
-    }
-  }
-
-  test("additionalNamespaces duplicate") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"additionalNamespaces\": [\"other\", \"ns\", \"another\", \"ns\"]}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-
-      assert(project.isEmpty)
-      assert(
-        logger.issues == ArraySeq(
-          Issue(
-            root.join("sfdx-project.json"),
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location(1, 37),
-              "namespace 'ns' is duplicated in additionalNamespaces'"
-            )
-          )
-        )
-      )
-    }
-  }
-
-  test("additionalNamespaces duplicate (unmanaged)") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"additionalNamespaces\": [\"other\", \"unmanaged\", \"another\", \"unmanaged\"]}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-
-      assert(project.isEmpty)
-      assert(
-        logger.issues == ArraySeq(
-          Issue(
-            root.join("sfdx-project.json"),
-            Diagnostic(
-              ERROR_CATEGORY,
-              Location(1, 37),
-              "namespace 'unmanaged' is duplicated in additionalNamespaces'"
-            )
-          )
-        )
-      )
-    }
-  }
-
-  test("options parsing - empty object") {
-    FileSystemHelper.run(
-      Map("sfdx-project.json" -> "{\"plugins\": {\"options\": {}}, \"packageDirectories\": []}")
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isDefined)
-      assert(project.get.options.isEmpty)
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // Default value
-    }
-  }
-
-  test("options parsing - with forceIgnoreVersion v1") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v1\"}}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isDefined)
-      assert(project.get.options == Map("forceIgnoreVersion" -> "v1"))
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V1)
-    }
-  }
-
-  test("options parsing - with forceIgnoreVersion v2") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v2\"}}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isDefined)
-      assert(project.get.options == Map("forceIgnoreVersion" -> "v2"))
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2)
-    }
-  }
-
-  test("options parsing - with multiple options") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v1\", \"customOption\": \"value\"}}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isDefined)
-      assert(project.get.options == Map("forceIgnoreVersion" -> "v1", "customOption" -> "value"))
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V1)
-    }
-  }
-
-  test("options parsing - invalid forceIgnoreVersion") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v3\"}}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isEmpty) // Should fail due to invalid version
-      assert(
-        logger.issues.exists(
-          _.diagnostic.message
-            .contains("'options.forceIgnoreVersion' must be one of 'v1', 'v2', got 'v3'")
-        )
-      )
-    }
-  }
-
-  test("options parsing - non-string value") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": 123}}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isEmpty) // Should fail due to non-string value
-      assert(
-        logger.issues.exists(
-          _.diagnostic.message.contains("'options.forceIgnoreVersion' should be a string value")
-        )
-      )
-    }
-  }
-
-  test("options parsing - non-object options") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": \"invalid\"}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isEmpty) // Should fail
-      assert(logger.issues.exists(_.diagnostic.message.contains("'options' should be an object")))
-    }
-  }
-
-  test("options parsing - missing options") {
-    FileSystemHelper.run(
-      Map("sfdx-project.json" -> "{\"plugins\": {}, \"packageDirectories\": []}")
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isDefined)
-      assert(project.get.options.isEmpty)
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // Default value
     }
   }
 
