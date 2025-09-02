@@ -118,6 +118,8 @@ object Workspace {
 
   private def loadSFDXProject(path: PathLike, logger: CatchingLogger): Option[SFDXProject] = {
     if (path.join("sfdx-project.json").exists) {
+      // SFDXProject.apply already logs detailed errors for all failure cases
+      // (parsing errors, read failures, etc.) so no additional logging is needed here
       SFDXProject(path, logger)
     } else {
       logger.logError(

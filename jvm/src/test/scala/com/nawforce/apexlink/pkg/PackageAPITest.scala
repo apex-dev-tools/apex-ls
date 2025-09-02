@@ -29,16 +29,12 @@ import scala.collection.immutable.ArraySeq
 class PackageAPITest extends AnyFunSuite with TestHelper {
 
   test("Is package file") {
-    FileSystemHelper.run(Map(
-      "pkg/Dummy.cls" -> "public class Dummy {}",
-      "pkg/sfdx-project.json" -> """{
-  "packageDirectories": [
-    {"path": ".", "default": true}
-  ],
-  "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "48.0"
-}"""
-    )) { root: PathLike =>
+    FileSystemHelper.run(
+      Map(
+        "pkg/Dummy.cls"         -> "public class Dummy {}",
+        "pkg/sfdx-project.json" -> FileSystemHelper.defaultSFDXProject
+      )
+    ) { root: PathLike =>
       val org    = createOrg(root.join("pkg"))
       val pkg    = org.unmanaged
       val pkgDir = root.join("pkg")

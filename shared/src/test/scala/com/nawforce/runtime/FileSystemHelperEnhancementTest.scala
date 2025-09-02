@@ -41,7 +41,10 @@ class FileSystemHelperEnhancementTest extends AnyFunSuite with Matchers {
         // Verify the content is valid JSON with expected structure
         val content = sfdxProjectPath.read().getOrElse("")
         assert(content.contains("packageDirectories"), "Should contain packageDirectories")
-        assert(content.contains("\"path\": \".\""), "Should reference current directory as package path")
+        assert(
+          content.contains("\"path\": \".\""),
+          "Should reference current directory as package path"
+        )
         assert(content.contains("sourceApiVersion"), "Should contain sourceApiVersion")
 
         // Verify workspace can be created successfully

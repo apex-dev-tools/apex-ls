@@ -23,6 +23,14 @@ import java.nio.charset.StandardCharsets
 
 object FileSystemHelper {
 
+  val defaultSFDXProject = """{
+  "packageDirectories": [
+    {"path": ".", "default": true}
+  ],
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "48.0"
+}"""
+
   // Abstract virtual filesystem for testing
   def run[T](files: Map[String, String])(verify: Path => T): T = {
     val os = System.getProperty("os.name")
@@ -67,13 +75,6 @@ object FileSystemHelper {
     if (files.contains("sfdx-project.json")) {
       files
     } else {
-      val defaultSFDXProject = """{
-  "packageDirectories": [
-    {"path": ".", "default": true}
-  ],
-  "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "48.0"
-}"""
       files + ("sfdx-project.json" -> defaultSFDXProject)
     }
   }

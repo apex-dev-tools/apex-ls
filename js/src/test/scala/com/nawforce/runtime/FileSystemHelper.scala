@@ -19,12 +19,21 @@ import com.nawforce.runtime.imports.{FSMonkey, Memfs}
 import com.nawforce.runtime.platform.{Environment, Path}
 import io.scalajs.nodejs.os.OS
 
+import scala.annotation.tailrec
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 
 object FileSystemHelper {
 
   private var directoryId = 0
+
+  val defaultSFDXProject = """{
+  "packageDirectories": [
+    {"path": ".", "default": true}
+  ],
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "48.0"
+}"""
 
   // Abstract virtual filesystem for testing
   def run[T](files: Map[String, String], setupCache: Boolean = false)(verify: PathLike => T): T = {
@@ -67,13 +76,6 @@ object FileSystemHelper {
     if (files.contains("sfdx-project.json")) {
       files
     } else {
-      val defaultSFDXProject = """{
-  "packageDirectories": [
-    {"path": ".", "default": true}
-  ],
-  "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "48.0"
-}"""
       files + ("sfdx-project.json" -> defaultSFDXProject)
     }
   }
@@ -88,8 +90,9 @@ object FileSystemHelper {
     missingMetaFiles.map(path => (path, "")).toMap ++ files
   }
 
+  @tailrec
   def createTmpDir(): Path = {
-    val dirName = s"apexlinktest${directoryId}"
+    val dirName = s"apexlinktest$directoryId"
     directoryId += 1
     val tempDir = Path(OS.tmpdir()).join(dirName)
     if (tempDir.exists)

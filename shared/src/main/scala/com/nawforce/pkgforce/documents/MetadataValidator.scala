@@ -280,9 +280,7 @@ class MetadataValidator(logger: IssuesManager, namespace: Option[Name], isGulped
       // Find the parent directory that should match expectedDirectoryName
       val parentDir = document.parent.basename
 
-      if (
-        parentDir.toLowerCase == expectedDirectoryName.toLowerCase && parentDir != expectedDirectoryName
-      ) {
+      if (parentDir.equalsIgnoreCase(expectedDirectoryName) && parentDir != expectedDirectoryName) {
         logger.log(
           Issue(
             document,
