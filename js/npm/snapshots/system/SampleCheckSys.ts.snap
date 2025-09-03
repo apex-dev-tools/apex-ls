@@ -1456,8 +1456,13 @@ exports[`Check samples Sample: TestDataFactory 1`] = `
 
 exports[`Check samples Sample: TriggerX 1`] = `
 {
-  "logs": [],
-  "status": 0,
+  "logs": [
+    [
+      "TriggerX/TriggerX/src/classes/AccountSampleHandler.cls",
+      "Error: line 89 at 25-34: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+    ],
+  ],
+  "status": 4,
 }
 `;
 
@@ -1920,12 +1925,37 @@ exports[`Check samples Sample: df12-apex-enterprise-patterns 1`] = `
 {
   "logs": [
     [
+      "df12-apex-enterprise-patterns/df12/src/classes/OpportunitiesTest.cls",
+      "Error: line 33 at 22-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 43 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 54 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 66 at 22-58: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 75 at 22-61: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 93 at 22-59: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+    ],
+    [
+      "df12-apex-enterprise-patterns/df12/src/classes/SObjectDomain.cls",
+      "Error: line 387 at 22-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 397 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 410 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 428 at 22-49: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 442 at 22-39: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 484 at 21-36: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 499 at 21-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+    ],
+    [
       "df12-apex-enterprise-patterns/df12/src/classes/SObjectSelector.cls",
       "Warning: line 36 at 37-55: Private method overrides have inconsistent behaviour, use global, public or protected",
       "Warning: line 38 at 30-43: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
+    [
+      "df12-apex-enterprise-patterns/df12/src/classes/SObjectUnitOfWork.cls",
+      "Error: line 235 at 21-48: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 333 at 21-41: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+      "Error: line 438 at 21-42: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
+    ],
   ],
-  "status": 0,
+  "status": 4,
 }
 `;
 
@@ -2008,6 +2038,20 @@ exports[`Check samples Sample: ffhttp-core 1`] = `
 exports[`Check samples Sample: fflib-apex-common 1`] = `
 {
   "logs": [
+    [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls",
+      "Warning: line 470 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
+    ],
+    [
+      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls",
+      "Warning: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
+      "Warning: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
+    ],
+    [
+      "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
+      "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
+      "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
+    ],
     [
       "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
       "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
