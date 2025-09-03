@@ -53,8 +53,8 @@ exports[`Check samples Sample: Angular 1`] = `
 {
   "logs": [
     [
-      "AngularJSDemoController.cls",
-      "Error: line 1: Type 'AngularJSDemoController' is defined, but meta file is missing for 'AngularJSDemoController.cls'",
+      "Angular/AngularJSDemoController.cls",
+      "Error: line 1: Type 'AngularJSDemoController' is defined, but meta file is missing for 'Angular/AngularJSDemoController.cls'",
     ],
   ],
   "status": 4,
@@ -244,7 +244,7 @@ exports[`Check samples Sample: Centralized-Salesforce-Dev-Framework 1`] = `
 {
   "logs": [
     [
-      "src/classes/DateService.cls",
+      "Centralized-Salesforce-Dev-Framework/src/classes/DateService.cls",
       "Error: line 291 at 2-14: Unreachable block or statement",
     ],
   ],
@@ -463,19 +463,19 @@ exports[`Check samples Sample: CustomMetadataLoader 1`] = `
 {
   "logs": [
     [
-      "custom_md_loader/classes/MetadataMapperCustom.cls",
-      "Warning: line 48 at 8-55: Local variable is hiding class field 'srcFieldNames', see custom_md_loader/classes/MetadataMapperDefault.cls: line 17 at 10-37",
+      "CustomMetadataLoader/custom_md_loader/classes/MetadataMapperCustom.cls",
+      "Warning: line 48 at 8-55: Local variable is hiding class field 'srcFieldNames', see CustomMetadataLoader/custom_md_loader/classes/MetadataMapperDefault.cls: line 17 at 10-37",
     ],
     [
-      "custom_md_loader/classes/MetadataMapperSimple.cls",
-      "Warning: line 41 at 6-53: Local variable is hiding class field 'srcFieldNames', see custom_md_loader/classes/MetadataMapperDefault.cls: line 17 at 10-37",
+      "CustomMetadataLoader/custom_md_loader/classes/MetadataMapperSimple.cls",
+      "Warning: line 41 at 6-53: Local variable is hiding class field 'srcFieldNames', see CustomMetadataLoader/custom_md_loader/classes/MetadataMapperDefault.cls: line 17 at 10-37",
     ],
     [
-      "custom_md_loader/classes/MetadataService.cls",
+      "CustomMetadataLoader/custom_md_loader/classes/MetadataService.cls",
       "Warning: line 9124 at 43-51: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
-      "custom_md_loader/classes/MetadataWrapperApiLoader.cls",
+      "CustomMetadataLoader/custom_md_loader/classes/MetadataWrapperApiLoader.cls",
       "Error: line 27 at 8-15: Unreachable block or statement",
     ],
   ],
@@ -651,8 +651,8 @@ exports[`Check samples Sample: EnhancedLightningGrid 1`] = `
 {
   "logs": [
     [
-      "classes/sdgPathParser.cls",
-      "Warning: line 22 at 8-26: Local variable is hiding class field 'newpath', see classes/sdgPathParser.cls: line 10 at 12-54",
+      "EnhancedLightningGrid/classes/sdgPathParser.cls",
+      "Warning: line 22 at 8-26: Local variable is hiding class field 'newpath', see EnhancedLightningGrid/classes/sdgPathParser.cls: line 10 at 12-54",
     ],
   ],
   "status": 0,
@@ -706,44 +706,44 @@ exports[`Check samples Sample: Force.com-Helper-Classes 1`] = `
 {
   "logs": [
     [
-      "src/classes/Async.cls",
-      "Error: line 1: Type 'Async' is defined, but meta file is missing for 'src/classes/Async.cls'",
+      "Force.com-Helper-Classes/src/classes/Async.cls",
+      "Error: line 1: Type 'Async' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/Async.cls'",
     ],
     [
-      "src/classes/Async_Test.cls",
-      "Error: line 1: Type 'Async_Test' is defined, but meta file is missing for 'src/classes/Async_Test.cls'",
+      "Force.com-Helper-Classes/src/classes/Async_Test.cls",
+      "Error: line 1: Type 'Async_Test' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/Async_Test.cls'",
     ],
     [
-      "src/classes/InvokeUpdateTriggerBatch.cls",
-      "Error: line 1: Type 'InvokeUpdateTriggerBatch' is defined, but meta file is missing for 'src/classes/InvokeUpdateTriggerBatch.cls'",
+      "Force.com-Helper-Classes/src/classes/InvokeUpdateTriggerBatch.cls",
+      "Error: line 1: Type 'InvokeUpdateTriggerBatch' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/InvokeUpdateTriggerBatch.cls'",
     ],
     [
-      "src/classes/InvokeUpdateTriggerBatch_Test.cls",
-      "Error: line 1: Type 'InvokeUpdateTriggerBatch_Test' is defined, but meta file is missing for 'src/classes/InvokeUpdateTriggerBatch_Test.cls'",
+      "Force.com-Helper-Classes/src/classes/InvokeUpdateTriggerBatch_Test.cls",
+      "Error: line 1: Type 'InvokeUpdateTriggerBatch_Test' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/InvokeUpdateTriggerBatch_Test.cls'",
     ],
     [
-      "src/classes/SearchHelper.cls",
-      "Error: line 1: Type 'SearchHelper' is defined, but meta file is missing for 'src/classes/SearchHelper.cls'",
+      "Force.com-Helper-Classes/src/classes/SearchHelper.cls",
+      "Error: line 1: Type 'SearchHelper' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/SearchHelper.cls'",
     ],
     [
-      "src/classes/SearchHelper_Test.cls",
-      "Error: line 1: Type 'SearchHelper_Test' is defined, but meta file is missing for 'src/classes/SearchHelper_Test.cls'",
+      "Force.com-Helper-Classes/src/classes/SearchHelper_Test.cls",
+      "Error: line 1: Type 'SearchHelper_Test' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/SearchHelper_Test.cls'",
     ],
     [
-      "src/classes/StateFormatter.cls",
-      "Error: line 1: Type 'StateFormatter' is defined, but meta file is missing for 'src/classes/StateFormatter.cls'",
+      "Force.com-Helper-Classes/src/classes/StateFormatter.cls",
+      "Error: line 1: Type 'StateFormatter' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/StateFormatter.cls'",
     ],
     [
-      "src/classes/StateFormatter_Test.cls",
-      "Error: line 1: Type 'StateFormatter_Test' is defined, but meta file is missing for 'src/classes/StateFormatter_Test.cls'",
+      "Force.com-Helper-Classes/src/classes/StateFormatter_Test.cls",
+      "Error: line 1: Type 'StateFormatter_Test' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/StateFormatter_Test.cls'",
     ],
     [
-      "src/classes/SuperMap.cls",
-      "Error: line 1: Type 'SuperMap' is defined, but meta file is missing for 'src/classes/SuperMap.cls'",
+      "Force.com-Helper-Classes/src/classes/SuperMap.cls",
+      "Error: line 1: Type 'SuperMap' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/SuperMap.cls'",
     ],
     [
-      "src/classes/SuperMap_Test.cls",
-      "Error: line 1: Type 'SuperMap_Test' is defined, but meta file is missing for 'src/classes/SuperMap_Test.cls'",
+      "Force.com-Helper-Classes/src/classes/SuperMap_Test.cls",
+      "Error: line 1: Type 'SuperMap_Test' is defined, but meta file is missing for 'Force.com-Helper-Classes/src/classes/SuperMap_Test.cls'",
     ],
   ],
   "status": 4,
@@ -768,12 +768,12 @@ exports[`Check samples Sample: Forceea-data-factory 1`] = `
 {
   "logs": [
     [
-      "force-app/main/forceea/classes/Main/FObject.cls",
-      "Warning: line 2625 at 8-59: Local variable is hiding class field 'permutationValues', see force-app/main/forceea/classes/Main/FObject.cls: line 501 at 11-75",
+      "Forceea-data-factory/force-app/main/forceea/classes/Main/FObject.cls",
+      "Warning: line 2625 at 8-59: Local variable is hiding class field 'permutationValues', see Forceea-data-factory/force-app/main/forceea/classes/Main/FObject.cls: line 501 at 11-75",
     ],
     [
-      "force-app/main/forceea/classes/Main/ForceeaService.cls",
-      "Warning: line 551 at 8-77: Local variable is hiding class field 'info', see force-app/main/forceea/classes/Main/ForceeaService.cls: line 34 at 24-45",
+      "Forceea-data-factory/force-app/main/forceea/classes/Main/ForceeaService.cls",
+      "Warning: line 551 at 8-77: Local variable is hiding class field 'info', see Forceea-data-factory/force-app/main/forceea/classes/Main/ForceeaService.cls: line 34 at 24-45",
     ],
   ],
   "status": 0,
@@ -1022,12 +1022,12 @@ exports[`Check samples Sample: Milestones-PM 1`] = `
 {
   "logs": [
     [
-      "src/classes/Milestone1_Summary2.cls",
+      "Milestones-PM/src/classes/Milestone1_Summary2.cls",
       "Error: line 98 at 20-32: Unreachable block or statement",
     ],
     [
-      "src/classes/Milestone1_XML_Export_Utility.cls",
-      "Warning: line 51 at 8-37: Local variable is hiding class field 'project', see src/classes/Milestone1_XML_Export_Utility.cls: line 31 at 12-42",
+      "Milestones-PM/src/classes/Milestone1_XML_Export_Utility.cls",
+      "Warning: line 51 at 8-37: Local variable is hiding class field 'project', see Milestones-PM/src/classes/Milestone1_XML_Export_Utility.cls: line 31 at 12-42",
     ],
   ],
   "status": 4,
@@ -1345,13 +1345,13 @@ exports[`Check samples Sample: ObjectMerge 1`] = `
 {
   "logs": [
     [
-      "src/classes/ObjectMergeHandleUsers.cls",
-      "Warning: line 158 at 8-62: Local variable is hiding class field 'userIdsToDeactivate', see src/classes/ObjectMergeHandleUsers.cls: line 35 at 12-40",
+      "ObjectMerge/src/classes/ObjectMergeHandleUsers.cls",
+      "Warning: line 158 at 8-62: Local variable is hiding class field 'userIdsToDeactivate', see ObjectMerge/src/classes/ObjectMergeHandleUsers.cls: line 35 at 12-40",
     ],
     [
-      "src/classes/ObjectMergeUtility.cls",
-      "Warning: line 229 at 16-60: Local variable is hiding class field 'fieldNames', see src/classes/ObjectMergeUtility.cls: line 215 at 16-34",
-      "Warning: line 230 at 16-53: Local variable is hiding class field 'ids', see src/classes/ObjectMergeUtility.cls: line 216 at 16-27",
+      "ObjectMerge/src/classes/ObjectMergeUtility.cls",
+      "Warning: line 229 at 16-60: Local variable is hiding class field 'fieldNames', see ObjectMerge/src/classes/ObjectMergeUtility.cls: line 215 at 16-34",
+      "Warning: line 230 at 16-53: Local variable is hiding class field 'ids', see ObjectMerge/src/classes/ObjectMergeUtility.cls: line 216 at 16-27",
     ],
   ],
   "status": 0,
@@ -1362,8 +1362,8 @@ exports[`Check samples Sample: Query.apex 1`] = `
 {
   "logs": [
     [
-      "src/classes/Query.cls",
-      "Warning: line 2206 at 8-25: Local variable is hiding class field 'count', see src/classes/Query.cls: line 1736 at 18-41",
+      "Query.apex/src/classes/Query.cls",
+      "Warning: line 2206 at 8-25: Local variable is hiding class field 'count', see Query.apex/src/classes/Query.cls: line 1736 at 18-41",
     ],
   ],
   "status": 0,
@@ -1456,13 +1456,8 @@ exports[`Check samples Sample: TestDataFactory 1`] = `
 
 exports[`Check samples Sample: TriggerX 1`] = `
 {
-  "logs": [
-    [
-      "TriggerX/src/classes/AccountSampleHandler.cls",
-      "Error: line 89 at 25-34: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-    ],
-  ],
-  "status": 4,
+  "logs": [],
+  "status": 0,
 }
 `;
 
@@ -1493,13 +1488,13 @@ exports[`Check samples Sample: Zippex 1`] = `
 {
   "logs": [
     [
-      "classes/Puff.cls",
-      "Warning: line 594 at 8-49: Local variable is hiding class field 'lencnt', see classes/Puff.cls: line 460 at 12-54",
-      "Warning: line 595 at 8-49: Local variable is hiding class field 'lensym', see classes/Puff.cls: line 460 at 12-87",
-      "Warning: line 596 at 8-50: Local variable is hiding class field 'distcnt', see classes/Puff.cls: line 461 at 12-55",
-      "Warning: line 597 at 8-50: Local variable is hiding class field 'distsym', see classes/Puff.cls: line 461 at 12-89",
-      "Warning: line 598 at 8-39: Local variable is hiding class field 'lencode', see classes/Puff.cls: line 462 at 12-44",
-      "Warning: line 599 at 8-40: Local variable is hiding class field 'distcode', see classes/Puff.cls: line 462 at 12-70",
+      "Zippex/classes/Puff.cls",
+      "Warning: line 594 at 8-49: Local variable is hiding class field 'lencnt', see Zippex/classes/Puff.cls: line 460 at 12-54",
+      "Warning: line 595 at 8-49: Local variable is hiding class field 'lensym', see Zippex/classes/Puff.cls: line 460 at 12-87",
+      "Warning: line 596 at 8-50: Local variable is hiding class field 'distcnt', see Zippex/classes/Puff.cls: line 461 at 12-55",
+      "Warning: line 597 at 8-50: Local variable is hiding class field 'distsym', see Zippex/classes/Puff.cls: line 461 at 12-89",
+      "Warning: line 598 at 8-39: Local variable is hiding class field 'lencode', see Zippex/classes/Puff.cls: line 462 at 12-44",
+      "Warning: line 599 at 8-40: Local variable is hiding class field 'distcode', see Zippex/classes/Puff.cls: line 462 at 12-70",
     ],
   ],
   "status": 0,
@@ -1595,7 +1590,7 @@ exports[`Check samples Sample: apex-mdapi 1`] = `
 {
   "logs": [
     [
-      "apex-mdapi/src/classes/MetadataService.cls",
+      "apex-mdapi/apex-mdapi/src/classes/MetadataService.cls",
       "Warning: line 13342 at 43-51: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
@@ -1607,16 +1602,16 @@ exports[`Check samples Sample: apex-query-builder 1`] = `
 {
   "logs": [
     [
-      "src/classes/QueryBuilder.cls",
-      "Warning: line 1481 at 8-33: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
-      "Warning: line 1547 at 8-33: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
-      "Warning: line 1586 at 12-66: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
-      "Warning: line 1632 at 8-44: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
-      "Warning: line 1665 at 8-38: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
-      "Warning: line 1684 at 8-48: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
-      "Warning: line 1699 at 8-48: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
-      "Warning: line 1721 at 8-64: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
-      "Warning: line 780 at 8-46: Local variable is hiding class field 'result', see src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "apex-query-builder/src/classes/QueryBuilder.cls",
+      "Warning: line 1481 at 8-33: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 1547 at 8-33: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 1586 at 12-66: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 1632 at 8-44: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 1665 at 8-38: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 1684 at 8-48: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 1699 at 8-48: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 1721 at 8-64: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
+      "Warning: line 780 at 8-46: Local variable is hiding class field 'result', see apex-query-builder/src/classes/QueryBuilder.cls: line 61 at 12-33",
     ],
   ],
   "status": 0,
@@ -1776,11 +1771,11 @@ exports[`Check samples Sample: apex-toolingapi 1`] = `
 {
   "logs": [
     [
-      "examples/code_coverage_chart/src/classes/CodeCoverageChartCtrl.cls",
-      "Error: line 1: Type 'CodeCoverageChartCtrl' is defined, but meta file is missing for 'examples/code_coverage_chart/src/classes/CodeCoverageChartCtrl.cls'",
+      "apex-toolingapi/examples/code_coverage_chart/src/classes/CodeCoverageChartCtrl.cls",
+      "Error: line 1: Type 'CodeCoverageChartCtrl' is defined, but meta file is missing for 'apex-toolingapi/examples/code_coverage_chart/src/classes/CodeCoverageChartCtrl.cls'",
     ],
     [
-      "src/classes/ToolingAPI.cls",
+      "apex-toolingapi/src/classes/ToolingAPI.cls",
       "Warning: line 122 at 38-46: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
       "Warning: line 126 at 38-46: 'retrieve' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
@@ -1925,37 +1920,12 @@ exports[`Check samples Sample: df12-apex-enterprise-patterns 1`] = `
 {
   "logs": [
     [
-      "df12/src/classes/OpportunitiesTest.cls",
-      "Error: line 33 at 22-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 43 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 54 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 66 at 22-58: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 75 at 22-61: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 93 at 22-59: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-    ],
-    [
-      "df12/src/classes/SObjectDomain.cls",
-      "Error: line 387 at 22-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 397 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 410 at 22-57: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 428 at 22-49: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 442 at 22-39: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 484 at 21-36: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 499 at 21-45: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-    ],
-    [
-      "df12/src/classes/SObjectSelector.cls",
+      "df12-apex-enterprise-patterns/df12/src/classes/SObjectSelector.cls",
       "Warning: line 36 at 37-55: Private method overrides have inconsistent behaviour, use global, public or protected",
       "Warning: line 38 at 30-43: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
-    [
-      "df12/src/classes/SObjectUnitOfWork.cls",
-      "Error: line 235 at 21-48: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 333 at 21-41: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-      "Error: line 438 at 21-42: Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation",
-    ],
   ],
-  "status": 4,
+  "status": 0,
 }
 `;
 
@@ -2016,11 +1986,11 @@ exports[`Check samples Sample: eventlogging 1`] = `
 {
   "logs": [
     [
-      "src/classes/Log.cls",
-      "Warning: line 137 at 20-105: Local variable is hiding class field 'limits', see src/classes/Log.cls: line 123 at 15-36",
+      "eventlogging/src/classes/Log.cls",
+      "Warning: line 137 at 20-105: Local variable is hiding class field 'limits', see eventlogging/src/classes/Log.cls: line 123 at 15-36",
     ],
     [
-      "src/classes/LogTest.cls",
+      "eventlogging/src/classes/LogTest.cls",
       "Missing: line 19 at 16-39: Unknown field 'Insertion_Statistics__c' on SObject 'Schema.Log__e'",
     ],
   ],
@@ -2038,20 +2008,6 @@ exports[`Check samples Sample: ffhttp-core 1`] = `
 exports[`Check samples Sample: fflib-apex-common 1`] = `
 {
   "logs": [
-    [
-      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls",
-      "Warning: line 470 at 2-80: Local variable is hiding class field 'relationship', see fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_QueryFactory.cls: line 85 at 9-47",
-    ],
-    [
-      "fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_SObjectSelector.cls",
-      "Warning: line 102 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
-      "Warning: line 97 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
-    ],
-    [
-      "fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls",
-      "Warning: line 382 at 2-73: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
-      "Warning: line 416:2 to 419:3: Local variable is hiding class field 'unitOfWork', see fflib-apex-common/sfdx-source/apex-common/test/classes/fflib_ApplicationTest.cls: line 482:21 to 487:40",
-    ],
     [
       "fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/fflib_ApexMocks.cls",
       "Warning: line 159 at 32-36: 'when' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
@@ -2142,7 +2098,7 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
 {
   "logs": [
     [
-      "src/classes/fflib_SObjectSelector.cls",
+      "forcedotcom-enterprise-architecture/src/classes/fflib_SObjectSelector.cls",
       "Warning: line 72 at 33-46: Private method overrides have inconsistent behaviour, use global, public or protected",
       "Warning: line 77 at 40-58: Private method overrides have inconsistent behaviour, use global, public or protected",
     ],
@@ -2183,7 +2139,7 @@ exports[`Check samples Sample: promise 1`] = `
 {
   "logs": [
     [
-      "src/classes/Promise.cls",
+      "promise/src/classes/Promise.cls",
       "Warning: line 65 at 17-21: 'then' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
@@ -2303,11 +2259,11 @@ exports[`Check samples Sample: selector 1`] = `
 {
   "logs": [
     [
-      "src/classes/Records.cls",
+      "selector/src/classes/Records.cls",
       "Warning: line 28 at 25-28: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
-      "src/classes/RecordsTest.cls",
+      "selector/src/classes/RecordsTest.cls",
       "Warning: line 95 at 35-38: 'any' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
@@ -2450,7 +2406,7 @@ exports[`Check samples Sample: soql-secure 1`] = `
 {
   "logs": [
     [
-      "src/classes/ConditionBuilder.cls",
+      "soql-secure/src/classes/ConditionBuilder.cls",
       "Error: line 13 at 2-14: Unreachable block or statement",
     ],
   ],
@@ -2475,29 +2431,29 @@ exports[`Check samples Sample: twilio-salesforce 1`] = `
 {
   "logs": [
     [
-      "src/classes/TwilioAccount.cls",
+      "twilio-salesforce/src/classes/TwilioAccount.cls",
       "Warning: line 257 at 25-33: 'activate' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
-      "src/classes/TwilioCapability.cls",
+      "twilio-salesforce/src/classes/TwilioCapability.cls",
       "Warning: line 249 at 26-30: 'join' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
-      "src/classes/TwilioQueue.cls",
+      "twilio-salesforce/src/classes/TwilioQueue.cls",
       "Error: line 26 at 8-20: Unreachable block or statement",
     ],
     [
-      "src/classes/TwilioResource.cls",
-      "Warning: line 290 at 3-52: Local variable is hiding class field 'properties', see src/classes/TwilioResource.cls: line 132 at 10-41",
+      "twilio-salesforce/src/classes/TwilioResource.cls",
+      "Warning: line 290 at 3-52: Local variable is hiding class field 'properties', see twilio-salesforce/src/classes/TwilioResource.cls: line 132 at 10-41",
     ],
     [
-      "src/classes/TwilioRestException.cls",
-      "Warning: line 66 at 8-27: Local variable is hiding class field 'message', see src/classes/TwilioRestException.cls: line 28 at 25-40",
-      "Warning: line 67 at 8-30: Local variable is hiding class field 'moreInfo', see src/classes/TwilioRestException.cls: line 31 at 25-41",
-      "Warning: line 68 at 8-32: Local variable is hiding class field 'errorCode', see src/classes/TwilioRestException.cls: line 25 at 25-43",
+      "twilio-salesforce/src/classes/TwilioRestException.cls",
+      "Warning: line 66 at 8-27: Local variable is hiding class field 'message', see twilio-salesforce/src/classes/TwilioRestException.cls: line 28 at 25-40",
+      "Warning: line 67 at 8-30: Local variable is hiding class field 'moreInfo', see twilio-salesforce/src/classes/TwilioRestException.cls: line 31 at 25-41",
+      "Warning: line 68 at 8-32: Local variable is hiding class field 'errorCode', see twilio-salesforce/src/classes/TwilioRestException.cls: line 25 at 25-43",
     ],
     [
-      "src/classes/TwilioTRCapability.cls",
+      "twilio-salesforce/src/classes/TwilioTRCapability.cls",
       "Warning: line 183 at 26-30: 'join' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
   ],
@@ -2516,16 +2472,16 @@ exports[`Check samples Sample: visualforce-table-grid 1`] = `
 {
   "logs": [
     [
-      "src/classes/SchemaCache.cls",
+      "visualforce-table-grid/src/classes/SchemaCache.cls",
       "Warning: line 92 at 37-43: 'object' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
-      "src/classes/SelectOptionSorter.cls",
+      "visualforce-table-grid/src/classes/SelectOptionSorter.cls",
       "Warning: line 43 at 23-27: 'sort' is currently a legal method name but is a reserved identifier in Apex so should be avoided",
     ],
     [
-      "src/classes/TableGridController.cls",
-      "Warning: line 324 at 5-31: Local variable is hiding class field 'settings', see src/classes/TableGridController.cls: line 78 at 12-39",
+      "visualforce-table-grid/src/classes/TableGridController.cls",
+      "Warning: line 324 at 5-31: Local variable is hiding class field 'settings', see visualforce-table-grid/src/classes/TableGridController.cls: line 78 at 12-39",
     ],
   ],
   "status": 0,
