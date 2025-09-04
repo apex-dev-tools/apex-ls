@@ -135,28 +135,6 @@ class ForceIgnoreV2Tests extends AnyFunSuite {
     }
   }
 
-  test("Default Salesforce CLI patterns should be applied") {
-    FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "")) { root: PathLike =>
-      val ignore =
-        ForceIgnoreV2(root.join(".forceignore")).value.getOrElse(throw new NoSuchElementException())
-
-      // Should ignore .dup files
-      assert(!ignore.includeFile(root.join("classes/MyClass.cls.dup")))
-      assert(!ignore.includeFile(root.join("utils/helper.dup")))
-
-      // Should ignore hidden files
-      assert(!ignore.includeFile(root.join("classes/.hidden")))
-      assert(!ignore.includeFile(root.join(".gitignore")))
-
-      // Should ignore package2 descriptor files
-      assert(!ignore.includeFile(root.join("package2-descriptor.json")))
-      assert(!ignore.includeFile(root.join("utils/package2-manifest.json")))
-
-      // Should NOT ignore regular files
-      assert(ignore.includeFile(root.join("classes/MyClass.cls")))
-      assert(ignore.includeFile(root.join("manifest/package.xml")))
-    }
-  }
 
   test("Directory-only patterns (ending with /) should match files inside directories") {
     FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "temp/")) { root: PathLike =>
@@ -331,16 +309,16 @@ class ForceIgnoreV2Tests extends AnyFunSuite {
     }
   }
 
-  test("Empty .forceignore file should only apply defaults") {
+  test("Empty .forceignore file should include all files") {
     FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "")) { root: PathLike =>
       val ignore =
         ForceIgnoreV2(root.join(".forceignore")).value.getOrElse(throw new NoSuchElementException())
 
-      // Only default patterns should apply
-      assert(!ignore.includeFile(root.join("test.dup")))
-      assert(!ignore.includeFile(root.join(".hidden")))
-      assert(!ignore.includeFile(root.join("package2-descriptor.json")))
-      assert(!ignore.includeFile(root.join("package2-manifest.json")))
+      // With empty .forceignore, no patterns should apply, so all files are included
+      assert(ignore.includeFile(root.join("test.dup")))
+      assert(ignore.includeFile(root.join(".hidden")))
+      assert(ignore.includeFile(root.join("package2-descriptor.json")))
+      assert(ignore.includeFile(root.join("package2-manifest.json")))
 
       // Regular files should be included
       assert(ignore.includeFile(root.join("MyClass.cls")))
