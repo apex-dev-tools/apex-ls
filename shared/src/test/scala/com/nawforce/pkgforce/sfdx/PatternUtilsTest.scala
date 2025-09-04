@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020 Kevin Jones, All rights reserved.
+ Copyright (c) 2025 Kevin Jones, All rights reserved.
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -13,248 +13,243 @@
  */
 package com.nawforce.pkgforce.sfdx
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.funsuite.AnyFunSuite
 
-class PatternUtilsTest extends AnyFlatSpec with Matchers {
+class PatternUtilsTest extends AnyFunSuite {
 
-  "replaceQuestionMarks" should "convert unescaped ? to [^/]" in {
-    PatternUtils.replaceQuestionMarks("file?.txt") shouldBe "file[^/].txt"
-    PatternUtils.replaceQuestionMarks("?") shouldBe "[^/]"
-    PatternUtils.replaceQuestionMarks("a?b?c") shouldBe "a[^/]b[^/]c"
+  test("replaceQuestionMarks - convert unescaped ? to [^/]") {
+    assert(PatternUtils.replaceQuestionMarks("file?.txt") == "file[^/].txt")
+    assert(PatternUtils.replaceQuestionMarks("?") == "[^/]")
+    assert(PatternUtils.replaceQuestionMarks("a?b?c") == "a[^/]b[^/]c")
   }
 
-  it should "not convert escaped ?" in {
-    PatternUtils.replaceQuestionMarks("file\\?.txt") shouldBe "file\\?.txt"
-    PatternUtils.replaceQuestionMarks("\\?") shouldBe "\\?"
-    PatternUtils.replaceQuestionMarks("a\\?b?c") shouldBe "a\\?b[^/]c"
+  test("replaceQuestionMarks - not convert escaped ?") {
+    assert(PatternUtils.replaceQuestionMarks("file\\?.txt") == "file\\?.txt")
+    assert(PatternUtils.replaceQuestionMarks("\\?") == "\\?")
+    assert(PatternUtils.replaceQuestionMarks("a\\?b?c") == "a\\?b[^/]c")
   }
 
-  it should "handle empty and edge cases" in {
-    PatternUtils.replaceQuestionMarks("") shouldBe ""
-    PatternUtils.replaceQuestionMarks("nomarks") shouldBe "nomarks"
-    PatternUtils.replaceQuestionMarks("???") shouldBe "[^/][^/][^/]"
+  test("replaceQuestionMarks - handle empty and edge cases") {
+    assert(PatternUtils.replaceQuestionMarks("") == "")
+    assert(PatternUtils.replaceQuestionMarks("nomarks") == "nomarks")
+    assert(PatternUtils.replaceQuestionMarks("???") == "[^/][^/][^/]")
   }
 
-  "addStartingAnchor" should "not modify patterns that already start with ^" in {
-    PatternUtils.addStartingAnchor("^pattern", "original") shouldBe "^pattern"
-    PatternUtils.addStartingAnchor("^/test", "/test") shouldBe "^/test"
+  test("addStartingAnchor - not modify patterns that already start with ^") {
+    assert(PatternUtils.addStartingAnchor("^pattern", "original") == "^pattern")
+    assert(PatternUtils.addStartingAnchor("^/test", "/test") == "^/test")
   }
 
-  it should "add ^(?:.*\\/)? for patterns without slashes" in {
-    PatternUtils.addStartingAnchor("*.js", "*.js") shouldBe "^(?:.*\\/)?*.js"
-    PatternUtils.addStartingAnchor("test", "test") shouldBe "^(?:.*\\/)?test"
+  test("addStartingAnchor - add ^(?:.*\\/)? for patterns without slashes") {
+    assert(PatternUtils.addStartingAnchor("*.js", "*.js") == "^(?:.*\\/)?*.js")
+    assert(PatternUtils.addStartingAnchor("test", "test") == "^(?:.*\\/)?test")
   }
 
-  it should "add ^ for patterns with slashes in middle" in {
-    PatternUtils.addStartingAnchor("path\\/file", "path/file") shouldBe "^path\\/file"
-    PatternUtils.addStartingAnchor("a\\/b\\/c", "a/b/c") shouldBe "^a\\/b\\/c"
+  test("addStartingAnchor - add ^ for patterns with slashes in middle") {
+    assert(PatternUtils.addStartingAnchor("path\\/file", "path/file") == "^path\\/file")
+    assert(PatternUtils.addStartingAnchor("a\\/b\\/c", "a/b/c") == "^a\\/b\\/c")
   }
 
-  it should "handle trailing slash patterns correctly" in {
-    PatternUtils.addStartingAnchor("temp", "temp/") shouldBe "^(?:.*\\/)?temp"
+  test("addStartingAnchor - handle trailing slash patterns correctly") {
+    assert(PatternUtils.addStartingAnchor("temp", "temp/") == "^(?:.*\\/)?temp")
   }
 
-  "replaceTwoGlobstars" should "replace /**/ patterns" in {
-    val input  = "prefix\\/\\*\\*\\/suffix"
+  test("replaceTwoGlobstars - replace /**/ patterns") {
+    val input = "prefix\\/\\*\\*\\/suffix"
     val result = PatternUtils.replaceTwoGlobstars(input)
-    result shouldBe "prefix(?:\\/[^\\/]+)*\\/suffix"
+    assert(result == "prefix(?:\\/[^\\/]+)*\\/suffix")
   }
 
-  it should "replace /** at end patterns" in {
-    val input  = "prefix\\/\\*\\*"
+  test("replaceTwoGlobstars - replace /** at end patterns") {
+    val input = "prefix\\/\\*\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
-    result shouldBe "prefix\\/.+"
+    assert(result == "prefix\\/.+")
   }
 
-  it should "replace **/ at start patterns" in {
-    val input  = "^\\*\\*\\/suffix"
+  test("replaceTwoGlobstars - replace **/ at start patterns") {
+    val input = "^\\*\\*\\/suffix"
     val result = PatternUtils.replaceTwoGlobstars(input)
-    result shouldBe "^(?:.*\\/)?suffix"
+    assert(result == "^(?:.*\\/)?suffix")
   }
 
-  it should "handle real patterns from NodeIgnoreExact - classes/**" in {
-    val input  = "^classes\\/\\*\\*"
+  test("replaceTwoGlobstars - handle real patterns from NodeIgnoreExact - classes/**") {
+    val input = "^classes\\/\\*\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
-    result shouldBe "^classes\\/.+"
+    assert(result == "^classes\\/.+")
   }
 
-  it should "handle real patterns from NodeIgnoreExact - **/*_template" in {
-    val input  = "^\\*\\*\\/\\*_template"
+  test("replaceTwoGlobstars - handle real patterns from NodeIgnoreExact - **/*_template") {
+    val input = "^\\*\\*\\/\\*_template"
     val result = PatternUtils.replaceTwoGlobstars(input)
-    result shouldBe "^(?:.*\\/)?\\*_template"
+    assert(result == "^(?:.*\\/)?\\*_template")
   }
 
-  it should "handle real patterns from NodeIgnoreExact - **/.*" in {
-    val input  = "^\\*\\*\\/\\.\\*"
+  test("replaceTwoGlobstars - handle real patterns from NodeIgnoreExact - **/.*") {
+    val input = "^\\*\\*\\/\\.\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
-    result shouldBe "^(?:.*\\/)?\\.\\*"
+    assert(result == "^(?:.*\\/)?\\.\\*")
   }
 
-  it should "not modify other patterns" in {
-    PatternUtils.replaceTwoGlobstars("normal\\*pattern") shouldBe "normal\\*pattern"
-    PatternUtils.replaceTwoGlobstars("") shouldBe ""
-    PatternUtils.replaceTwoGlobstars("\\*") shouldBe "\\*"
+  test("replaceTwoGlobstars - not modify other patterns") {
+    assert(PatternUtils.replaceTwoGlobstars("normal\\*pattern") == "normal\\*pattern")
+    assert(PatternUtils.replaceTwoGlobstars("") == "")
+    assert(PatternUtils.replaceTwoGlobstars("\\*") == "\\*")
   }
 
-  "replaceIntermediateWildcards" should "replace \\* when followed by more content" in {
-    PatternUtils.replaceIntermediateWildcards("\\*abc") shouldBe "[^\\/]*abc"
-    PatternUtils.replaceIntermediateWildcards("prefix\\*suffix") shouldBe "prefix[^\\/]*suffix"
+  test("replaceIntermediateWildcards - replace \\* when followed by more content") {
+    assert(PatternUtils.replaceIntermediateWildcards("\\*abc") == "[^\\/]*abc")
+    assert(PatternUtils.replaceIntermediateWildcards("prefix\\*suffix") == "prefix[^\\/]*suffix")
   }
 
-  it should "handle multiple consecutive \\* patterns" in {
-    PatternUtils.replaceIntermediateWildcards("\\*\\*abc") shouldBe "[^\\/]*[^\\/]*abc"
+  test("replaceIntermediateWildcards - handle multiple consecutive \\* patterns") {
+    assert(PatternUtils.replaceIntermediateWildcards("\\*\\*abc") == "[^\\/]*[^\\/]*abc")
   }
 
-  it should "not replace \\* at end of string" in {
-    PatternUtils.replaceIntermediateWildcards("pattern\\*") shouldBe "pattern\\*"
-    PatternUtils.replaceIntermediateWildcards("\\*") shouldBe "\\*"
+  test("replaceIntermediateWildcards - not replace \\* at end of string") {
+    assert(PatternUtils.replaceIntermediateWildcards("pattern\\*") == "pattern\\*")
+    assert(PatternUtils.replaceIntermediateWildcards("\\*") == "\\*")
   }
 
-  it should "handle mixed patterns" in {
-    PatternUtils.replaceIntermediateWildcards("a\\*b\\*c\\*") shouldBe "a[^\\/]*b[^\\/]*c\\*"
+  test("replaceIntermediateWildcards - handle mixed patterns") {
+    assert(PatternUtils.replaceIntermediateWildcards("a\\*b\\*c\\*") == "a[^\\/]*b[^\\/]*c\\*")
   }
 
-  "replaceUnescapePattern" should "replace \\\\\\\\ before metacharacters" in {
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\$") shouldBe "\\\\$"
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\*") shouldBe "\\\\*"
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\+") shouldBe "\\\\+"
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\(") shouldBe "\\\\("
+  test("replaceUnescapePattern - replace \\\\\\\\ before metacharacters") {
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\$") == "\\\\$")
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\*") == "\\\\*")
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\+") == "\\\\+")
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\(") == "\\\\(")
   }
 
-  it should "replace \\\\\\\\ before all metacharacters from node-ignore" in {
+  test("replaceUnescapePattern - replace \\\\\\\\ before all metacharacters from node-ignore") {
     // Test all metacharacters from node-ignore regex: [$.|*+(){^]
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\.") shouldBe "\\\\."
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\|") shouldBe "\\\\|"
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\)") shouldBe "\\\\)"
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\{") shouldBe "\\\\{"
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\^") shouldBe "\\\\^"
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\.") == "\\\\.")
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\|") == "\\\\|")
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\)") == "\\\\)")
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\{") == "\\\\{")
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\^") == "\\\\^")
   }
 
-  it should "not replace \\\\\\\\ before non-metacharacters" in {
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\a") shouldBe "\\\\\\\\\\\\a"
-    PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\1") shouldBe "\\\\\\\\\\\\1"
+  test("replaceUnescapePattern - not replace \\\\\\\\ before non-metacharacters") {
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\a") == "\\\\\\\\\\\\a")
+    assert(PatternUtils.replaceUnescapePattern("\\\\\\\\\\\\1") == "\\\\\\\\\\\\1")
   }
 
-  it should "handle multiple patterns in string" in {
-    val input  = "\\\\\\\\\\\\$test\\\\\\\\\\\\*end"
+  test("replaceUnescapePattern - handle multiple patterns in string") {
+    val input = "\\\\\\\\\\\\$test\\\\\\\\\\\\*end"
     val result = PatternUtils.replaceUnescapePattern(input)
-    result shouldBe "\\\\$test\\\\*end"
+    assert(result == "\\\\$test\\\\*end")
   }
 
-  "addEndingPattern" should "add $ for patterns ending with /" in {
-    PatternUtils.addEndingPattern("pattern") shouldBe "pattern$"
+  test("addEndingPattern - add $ for patterns ending with /") {
+    assert(PatternUtils.addEndingPattern("pattern") == "pattern$")
   }
 
-  it should "add $ for other patterns not ending with *" in {
-    PatternUtils.addEndingPattern("pattern") shouldBe "pattern$"
-    PatternUtils.addEndingPattern("test") shouldBe "test$"
+  test("addEndingPattern - add $ for other patterns not ending with *") {
+    assert(PatternUtils.addEndingPattern("pattern") == "pattern$")
+    assert(PatternUtils.addEndingPattern("test") == "test$")
   }
 
-  it should "not modify patterns ending with *" in {
-    PatternUtils.addEndingPattern("pattern*") shouldBe "pattern*"
-    PatternUtils.addEndingPattern("*") shouldBe "*"
+  test("addEndingPattern - not modify patterns ending with *") {
+    assert(PatternUtils.addEndingPattern("pattern*") == "pattern*")
+    assert(PatternUtils.addEndingPattern("*") == "*")
   }
 
-  it should "handle empty patterns" in {
-    PatternUtils.addEndingPattern("") shouldBe ""
+  test("addEndingPattern - handle empty patterns") {
+    assert(PatternUtils.addEndingPattern("") == "")
   }
 
-  "replaceTrailingWildcard" should "replace trailing \\* with [^/]*(?=$|\\/)" in {
-    PatternUtils.replaceTrailingWildcard("pattern\\*") shouldBe "pattern[^/]*(?=$|\\/)"
+  test("replaceTrailingWildcard - replace trailing \\* with [^/]*(?=$|\\/)")  {
+    assert(PatternUtils.replaceTrailingWildcard("pattern\\*") == "pattern[^/]*(?=$|\\/)")
   }
 
-  it should "handle ^ prefix correctly" in {
+  test("replaceTrailingWildcard - handle ^ prefix correctly") {
     val result = PatternUtils.replaceTrailingWildcard("^\\*")
-    result shouldBe "^[^/]+(?=$|\\/)"
+    assert(result == "^[^/]+(?=$|\\/)")
   }
 
-  it should "handle \\/ prefix correctly" in {
+  test("replaceTrailingWildcard - handle \\/ prefix correctly") {
     val result = PatternUtils.replaceTrailingWildcard("prefix\\/\\*")
-    result shouldBe "prefix\\/[^/]+(?=$|\\/)"
+    assert(result == "prefix\\/[^/]+(?=$|\\/)")
   }
 
-  it should "not modify patterns not ending with \\*" in {
-    PatternUtils.replaceTrailingWildcard("pattern") shouldBe "pattern"
-    PatternUtils.replaceTrailingWildcard("test.txt") shouldBe "test.txt"
-    PatternUtils.replaceTrailingWildcard("") shouldBe ""
+  test("replaceTrailingWildcard - not modify patterns not ending with \\*") {
+    assert(PatternUtils.replaceTrailingWildcard("pattern") == "pattern")
+    assert(PatternUtils.replaceTrailingWildcard("test.txt") == "test.txt")
+    assert(PatternUtils.replaceTrailingWildcard("") == "")
   }
 
-  // Integration tests combining multiple functions
-  "PatternUtils functions" should "work together for complex patterns" in {
+  test("PatternUtils functions - work together for complex patterns") {
     // Test a pattern that would use multiple transformations
     var result = "file?.js"
     result = PatternUtils.replaceQuestionMarks(result)
-    result shouldBe "file[^/].js"
+    assert(result == "file[^/].js")
 
     result = PatternUtils.addStartingAnchor(result, "file?.js")
-    result should include("^(?:.*\\/)?")
+    assert(result.contains("^(?:.*\\/)?"))
 
     result = PatternUtils.addEndingPattern(result)
-    result should include("$")
+    assert(result.contains("$"))
   }
 
-  it should "handle escaped characters correctly throughout pipeline" in {
+  test("PatternUtils functions - handle escaped characters correctly throughout pipeline") {
     var result = "test\\?.\\*"
     result = PatternUtils.replaceQuestionMarks(result)
-    result shouldBe "test\\?.\\*" // ? should remain escaped
+    assert(result == "test\\?.\\*") // ? should remain escaped
 
     result = PatternUtils.replaceIntermediateWildcards(result)
-    result shouldBe "test\\?.\\*" // * should not be replaced (escaped)
+    assert(result == "test\\?.\\*") // * should not be replaced (escaped)
   }
 
-  // Tests for complex negation pattern from issue #323
-  "PatternUtils complex negation patterns" should "handle classes/** pattern correctly" in {
-    val input  = "^classes\\/\\*\\*"
+  test("PatternUtils complex negation patterns - handle classes/** pattern correctly") {
+    val input = "^classes\\/\\*\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
-    result shouldBe "^classes\\/.+"
+    assert(result == "^classes\\/.+")
   }
 
-  it should "handle !classes/utils/** negation pattern correctly" in {
-    val input  = "^classes\\/utils\\/\\*\\*"
+  test("PatternUtils complex negation patterns - handle !classes/utils/** negation pattern correctly") {
+    val input = "^classes\\/utils\\/\\*\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
-    result shouldBe "^classes\\/utils\\/.+"
+    assert(result == "^classes\\/utils\\/.+")
   }
 
-  it should "handle classes/utils/**/*Test.cls pattern correctly" in {
-    val input  = "^classes\\/utils\\/\\*\\*\\/\\*Test\\.cls"
+  test("PatternUtils complex negation patterns - handle classes/utils/**/*Test.cls pattern correctly") {
+    val input = "^classes\\/utils\\/\\*\\*\\/\\*Test\\.cls"
     val result = PatternUtils.replaceTwoGlobstars(input)
     // The /** in middle should be replaced with (?:\/[^\/]+)* per node-ignore logic
-    result shouldBe "^classes\\/utils(?:\\/[^\\/]+)*\\/\\*Test\\.cls"
+    assert(result == "^classes\\/utils(?:\\/[^\\/]+)*\\/\\*Test\\.cls")
   }
 
-  // Edge case and boundary tests
-  "PatternUtils edge cases" should "handle very long patterns" in {
+  test("PatternUtils edge cases - handle very long patterns") {
     val longPattern = "a" * 1000 + "\\*" + "b" * 1000
-    val result      = PatternUtils.replaceIntermediateWildcards(longPattern)
-    result shouldBe ("a" * 1000 + "[^\\/]*" + "b" * 1000)
+    val result = PatternUtils.replaceIntermediateWildcards(longPattern)
+    assert(result == ("a" * 1000 + "[^\\/]*" + "b" * 1000))
   }
 
-  it should "handle empty and whitespace patterns" in {
-    PatternUtils.replaceQuestionMarks("   ") shouldBe "   "
-    PatternUtils.replaceTwoGlobstars("\\t\\n") shouldBe "\\t\\n"
-    PatternUtils.addStartingAnchor("\\s+", "\\s+") should include("^(?:.*\\/)?")
+  test("PatternUtils edge cases - handle empty and whitespace patterns") {
+    assert(PatternUtils.replaceQuestionMarks("   ") == "   ")
+    assert(PatternUtils.replaceTwoGlobstars("\\t\\n") == "\\t\\n")
+    assert(PatternUtils.addStartingAnchor("\\s+", "\\s+").contains("^(?:.*\\/)?"))
   }
 
-  it should "handle patterns with no transformations needed" in {
+  test("PatternUtils edge cases - handle patterns with no transformations needed") {
     val simplePattern = "simple/path/file.txt"
-    PatternUtils.replaceQuestionMarks(simplePattern) shouldBe simplePattern
-    PatternUtils.replaceTwoGlobstars(simplePattern) shouldBe simplePattern
-    PatternUtils.replaceIntermediateWildcards(simplePattern) shouldBe simplePattern
-    PatternUtils.replaceUnescapePattern(simplePattern) shouldBe simplePattern
-    PatternUtils.replaceTrailingWildcard(simplePattern) shouldBe simplePattern
+    assert(PatternUtils.replaceQuestionMarks(simplePattern) == simplePattern)
+    assert(PatternUtils.replaceTwoGlobstars(simplePattern) == simplePattern)
+    assert(PatternUtils.replaceIntermediateWildcards(simplePattern) == simplePattern)
+    assert(PatternUtils.replaceUnescapePattern(simplePattern) == simplePattern)
+    assert(PatternUtils.replaceTrailingWildcard(simplePattern) == simplePattern)
   }
 
-  // Debug test for node-ignore behavior mismatch
-  "addStartingAnchor for patterns without slashes" should "match node-ignore behavior" in {
-    val pattern         = "*.txt"
+  test("addStartingAnchor for patterns without slashes - match node-ignore behavior") {
+    val pattern = "*.txt"
     val processedSource = "[^/]*\\.txt" // After metachar escaping and wildcard replacement
 
     val result = PatternUtils.addStartingAnchor(processedSource, pattern)
 
     // Based on node-ignore behavior, *.txt should match at any level
     // We use ^(?:.*\/)? which is equivalent and works better in Java/Scala
-    result should startWith("^(?:.*\\/)?")
+    assert(result.startsWith("^(?:.*\\/)?"))
 
     // Debug step-by-step transformation
     println(s"\\nDebugging transformation of '$pattern':")
@@ -278,7 +273,7 @@ class PatternUtilsTest extends AnyFlatSpec with Matchers {
     println(s"6. Full NodeIgnoreExact result: $fullRegex")
 
     val regexString = s"(?i)$fullRegex"
-    val regex       = regexString.r
+    val regex = regexString.r
     println(s"Full regex string: '$regexString'")
 
     // Test the exact string manually for comparison
@@ -296,16 +291,16 @@ class PatternUtilsTest extends AnyFlatSpec with Matchers {
     testCases.foreach { case (path, shouldMatch) =>
       val matches = regex.matches(path)
       println(s"'$path' matches: $matches (expected: $shouldMatch)")
-      matches shouldBe shouldMatch
+      assert(matches == shouldMatch)
     }
   }
 
-  "escaped question mark handling" should "match node-ignore behavior for test\\?.js pattern" in {
-    val pattern      = "test\\?.js"
+  test("escaped question mark handling - match node-ignore behavior for test\\?.js pattern") {
+    val pattern = "test\\?.js"
     val regexPattern = NodeIgnoreExact.makeRegex(pattern)
-    val regex        = s"(?i)$regexPattern".r
-    val testPath     = "test?.js"
-    val matches      = regex.matches(testPath)
+    val regex = s"(?i)$regexPattern".r
+    val testPath = "test?.js"
+    val matches = regex.matches(testPath)
 
     // Key requirement: should NOT match test?.js (this matches node-ignore behavior)
     // The exact regex internals don't matter as long as the behavior is correct
