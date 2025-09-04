@@ -316,6 +316,8 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
     extends VerifyContext
     with ControlFlowContext {
 
+  private var inLoop: Boolean = false
+
   private val vars     = mutable.Map[Name, VarTypeAndDefinition]()
   private val usedVars = mutable.Set[Name]()
 
@@ -387,6 +389,23 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
   def isStatic: Boolean
 
   def returnType: TypeName
+
+  /** Check if this context or any parent context is within a loop */
+  def isInLoop: Boolean = inLoop || parent().flatMap {
+    case bvc: BlockVerifyContext => Some(bvc.isInLoop)
+    case _                       => None
+  }.getOrElse(false)
+
+  /** Temporarily set the loop flag for the duration of an operation */
+  def withInLoop[T](op: => T): T = {
+    val previousInLoop = inLoop
+    this.inLoop = true
+    try {
+      op
+    } finally {
+      this.inLoop = previousInLoop
+    }
+  }
 
   override def isSaving: Boolean = parentContext.isSaving
 
