@@ -391,10 +391,12 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
   def returnType: TypeName
 
   /** Check if this context or any parent context is within a loop */
-  def isInLoop: Boolean = inLoop || parent().flatMap {
-    case bvc: BlockVerifyContext => Some(bvc.isInLoop)
-    case _                       => None
-  }.getOrElse(false)
+  def isInLoop: Boolean = inLoop || parent()
+    .flatMap {
+      case bvc: BlockVerifyContext => Some(bvc.isInLoop)
+      case _                       => None
+    }
+    .getOrElse(false)
 
   /** Temporarily set the loop flag for the duration of an operation */
   def withInLoop[T](op: => T): T = {
