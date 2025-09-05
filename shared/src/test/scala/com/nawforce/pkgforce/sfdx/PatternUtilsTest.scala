@@ -55,37 +55,37 @@ class PatternUtilsTest extends AnyFunSuite {
   }
 
   test("replaceTwoGlobstars - replace /**/ patterns") {
-    val input = "prefix\\/\\*\\*\\/suffix"
+    val input  = "prefix\\/\\*\\*\\/suffix"
     val result = PatternUtils.replaceTwoGlobstars(input)
     assert(result == "prefix(?:\\/[^\\/]+)*\\/suffix")
   }
 
   test("replaceTwoGlobstars - replace /** at end patterns") {
-    val input = "prefix\\/\\*\\*"
+    val input  = "prefix\\/\\*\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
     assert(result == "prefix\\/.+")
   }
 
   test("replaceTwoGlobstars - replace **/ at start patterns") {
-    val input = "^\\*\\*\\/suffix"
+    val input  = "^\\*\\*\\/suffix"
     val result = PatternUtils.replaceTwoGlobstars(input)
     assert(result == "^(?:.*\\/)?suffix")
   }
 
   test("replaceTwoGlobstars - handle real patterns from NodeIgnoreExact - classes/**") {
-    val input = "^classes\\/\\*\\*"
+    val input  = "^classes\\/\\*\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
     assert(result == "^classes\\/.+")
   }
 
   test("replaceTwoGlobstars - handle real patterns from NodeIgnoreExact - **/*_template") {
-    val input = "^\\*\\*\\/\\*_template"
+    val input  = "^\\*\\*\\/\\*_template"
     val result = PatternUtils.replaceTwoGlobstars(input)
     assert(result == "^(?:.*\\/)?\\*_template")
   }
 
   test("replaceTwoGlobstars - handle real patterns from NodeIgnoreExact - **/.*") {
-    val input = "^\\*\\*\\/\\.\\*"
+    val input  = "^\\*\\*\\/\\.\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
     assert(result == "^(?:.*\\/)?\\.\\*")
   }
@@ -136,7 +136,7 @@ class PatternUtilsTest extends AnyFunSuite {
   }
 
   test("replaceUnescapePattern - handle multiple patterns in string") {
-    val input = "\\\\\\\\\\\\$test\\\\\\\\\\\\*end"
+    val input  = "\\\\\\\\\\\\$test\\\\\\\\\\\\*end"
     val result = PatternUtils.replaceUnescapePattern(input)
     assert(result == "\\\\$test\\\\*end")
   }
@@ -159,7 +159,7 @@ class PatternUtilsTest extends AnyFunSuite {
     assert(PatternUtils.addEndingPattern("") == "")
   }
 
-  test("replaceTrailingWildcard - replace trailing \\* with [^/]*(?=$|\\/)")  {
+  test("replaceTrailingWildcard - replace trailing \\* with [^/]*(?=$|\\/)") {
     assert(PatternUtils.replaceTrailingWildcard("pattern\\*") == "pattern[^/]*(?=$|\\/)")
   }
 
@@ -202,19 +202,23 @@ class PatternUtilsTest extends AnyFunSuite {
   }
 
   test("PatternUtils complex negation patterns - handle classes/** pattern correctly") {
-    val input = "^classes\\/\\*\\*"
+    val input  = "^classes\\/\\*\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
     assert(result == "^classes\\/.+")
   }
 
-  test("PatternUtils complex negation patterns - handle !classes/utils/** negation pattern correctly") {
-    val input = "^classes\\/utils\\/\\*\\*"
+  test(
+    "PatternUtils complex negation patterns - handle !classes/utils/** negation pattern correctly"
+  ) {
+    val input  = "^classes\\/utils\\/\\*\\*"
     val result = PatternUtils.replaceTwoGlobstars(input)
     assert(result == "^classes\\/utils\\/.+")
   }
 
-  test("PatternUtils complex negation patterns - handle classes/utils/**/*Test.cls pattern correctly") {
-    val input = "^classes\\/utils\\/\\*\\*\\/\\*Test\\.cls"
+  test(
+    "PatternUtils complex negation patterns - handle classes/utils/**/*Test.cls pattern correctly"
+  ) {
+    val input  = "^classes\\/utils\\/\\*\\*\\/\\*Test\\.cls"
     val result = PatternUtils.replaceTwoGlobstars(input)
     // The /** in middle should be replaced with (?:\/[^\/]+)* per node-ignore logic
     assert(result == "^classes\\/utils(?:\\/[^\\/]+)*\\/\\*Test\\.cls")
@@ -222,7 +226,7 @@ class PatternUtilsTest extends AnyFunSuite {
 
   test("PatternUtils edge cases - handle very long patterns") {
     val longPattern = "a" * 1000 + "\\*" + "b" * 1000
-    val result = PatternUtils.replaceIntermediateWildcards(longPattern)
+    val result      = PatternUtils.replaceIntermediateWildcards(longPattern)
     assert(result == ("a" * 1000 + "[^\\/]*" + "b" * 1000))
   }
 
@@ -242,7 +246,7 @@ class PatternUtilsTest extends AnyFunSuite {
   }
 
   test("addStartingAnchor for patterns without slashes - match node-ignore behavior") {
-    val pattern = "*.txt"
+    val pattern         = "*.txt"
     val processedSource = "[^/]*\\.txt" // After metachar escaping and wildcard replacement
 
     val result = PatternUtils.addStartingAnchor(processedSource, pattern)
@@ -252,7 +256,7 @@ class PatternUtilsTest extends AnyFunSuite {
     assert(result.startsWith("^(?:.*\\/)?"))
 
     val fullRegex = NodeIgnoreExact.makeRegex(pattern)
-    val regex = fullRegex.r
+    val regex     = fullRegex.r
 
     val testCases = Seq(
       ("test.txt", true),
@@ -268,11 +272,11 @@ class PatternUtilsTest extends AnyFunSuite {
   }
 
   test("escaped question mark handling - match node-ignore behavior for test\\?.js pattern") {
-    val pattern = "test\\?.js"
+    val pattern      = "test\\?.js"
     val regexPattern = NodeIgnoreExact.makeRegex(pattern)
-    val regex = regexPattern.r
-    val testPath = "test?.js"
-    val matches = regex.matches(testPath)
+    val regex        = regexPattern.r
+    val testPath     = "test?.js"
+    val matches      = regex.matches(testPath)
 
     // Key requirement: should NOT match test?.js (this matches node-ignore behavior)
     // The exact regex internals don't matter as long as the behavior is correct
