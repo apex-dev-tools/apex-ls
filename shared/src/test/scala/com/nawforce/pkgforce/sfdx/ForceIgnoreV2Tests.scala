@@ -135,7 +135,6 @@ class ForceIgnoreV2Tests extends AnyFunSuite {
     }
   }
 
-
   test("Directory-only patterns (ending with /) should match files inside directories") {
     FileSystemHelper.runTempDir(Map[String, String](".forceignore" -> "temp/")) { root: PathLike =>
       val ignore =
