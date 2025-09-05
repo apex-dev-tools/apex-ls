@@ -179,7 +179,6 @@ object DocumentIndex {
     new DocumentIndex(path, logger, namespace, isGulped, ignore)
   }
 
-
   private def indexPath(
     path: PathLike,
     forceIgnore: Option[ForceIgnoreInterface],
