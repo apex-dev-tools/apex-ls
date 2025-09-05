@@ -179,26 +179,6 @@ object DocumentIndex {
     new DocumentIndex(path, logger, namespace, isGulped, ignore)
   }
 
-  /** Simplified construction for MDAPI only projects where projectDir = module path. */
-  def apply(
-    logger: IssuesManager,
-    namespace: Option[Name],
-    isGulped: Boolean,
-    path: PathLike,
-    forceIgnoreVersion: ForceIgnoreVersion
-  ): DocumentIndex = {
-    DocumentIndex(logger, namespace, isGulped, path, path, forceIgnoreVersion)
-  }
-
-  /** Simplified construction for MDAPI only projects where projectDir = module path with default version. */
-  def apply(
-    logger: IssuesManager,
-    namespace: Option[Name],
-    isGulped: Boolean,
-    path: PathLike
-  ): DocumentIndex = {
-    DocumentIndex(logger, namespace, isGulped, path, path, ForceIgnoreVersion.default)
-  }
 
   private def indexPath(
     path: PathLike,

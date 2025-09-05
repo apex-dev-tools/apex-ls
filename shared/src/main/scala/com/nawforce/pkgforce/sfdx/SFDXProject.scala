@@ -269,25 +269,21 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
 
   val forceIgnoreVersion: ForceIgnoreVersion = {
-    val versionString = options.getOrElse("forceIgnoreVersion", ForceIgnoreVersion.default.value)
-    ForceIgnoreVersion.fromString(versionString) match {
-      case Some(version) => version
-      case None =>
-        val optionsValue   = plugins.get("options")
-        val validValuesStr = ForceIgnoreVersion.validValues.mkString("'", "', '", "'")
-        config
-          .lineAndOffsetOf(optionsValue)
-          .map(lineAndOffset => {
-            throw SFDXProjectError(
-              lineAndOffset,
-              s"'options.forceIgnoreVersion' must be one of $validValuesStr, got '$versionString'"
-            )
-          })
-          .getOrElse(
-            throw new RuntimeException(
-              s"'options.forceIgnoreVersion' must be one of $validValuesStr, got '$versionString'"
-            )
-          )
+    val forceIgnoreVersionValue = plugins.get("options").flatMap {
+      case obj: ujson.Obj => obj.value.get("forceIgnoreVersion")
+      case _ => None
+    }
+    val versionString = forceIgnoreVersionValue match {
+      case Some(ujson.Str(str)) => str
+      case _ => ForceIgnoreVersion.default.value
+    }
+    ForceIgnoreVersion.fromString(versionString).getOrElse {
+      val validValuesStr = ForceIgnoreVersion.validValues.mkString("'", "', '", "'")
+      val location = config.lineAndOffsetOf(forceIgnoreVersionValue.get).get
+      throw SFDXProjectError(
+        location,
+        s"'options.forceIgnoreVersion' must be one of $validValuesStr, got '$versionString'"
+      )
     }
   }
 

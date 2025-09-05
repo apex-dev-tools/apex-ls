@@ -1224,9 +1224,11 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
       val project = SFDXProject(root, logger)
       assert(project.isEmpty) // Should fail due to invalid version
       assert(
-        logger.issues.exists(
-          _.diagnostic.message
-            .contains("'options.forceIgnoreVersion' must be one of 'v1', 'v2', got 'v3'")
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 47), "'options.forceIgnoreVersion' must be one of 'v1', 'v2', got 'v3'")
+          )
         )
       )
     }
@@ -1241,8 +1243,11 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
       val project = SFDXProject(root, logger)
       assert(project.isEmpty) // Should fail due to non-string value
       assert(
-        logger.issues.exists(
-          _.diagnostic.message.contains("'options.forceIgnoreVersion' should be a string value")
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 47), "'options.forceIgnoreVersion' should be a string value")
+          )
         )
       )
     }
@@ -1256,7 +1261,14 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(project.isEmpty) // Should fail
-      assert(logger.issues.exists(_.diagnostic.message.contains("'options' should be an object")))
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 24), "'options' should be an object")
+          )
+        )
+      )
     }
   }
 
