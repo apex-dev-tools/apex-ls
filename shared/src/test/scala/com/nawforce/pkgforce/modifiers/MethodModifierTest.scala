@@ -330,52 +330,162 @@ class MethodModifierTest extends AnyFunSuite {
     )
   }
 
-  test("Class method private AuraEnabled") {
-    val issues = illegalClassMethodAccess(ArraySeq(PRIVATE_MODIFIER, AURA_ENABLED_ANNOTATION))
+  test("TestMethod in non-test class should error") {
+    val issues =
+      illegalClassMethodAccess(ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER))
     assert(
       issues == Seq[Issue](
         Issue(
           Path("Dummy.cls"),
           Diagnostic(
             ERROR_CATEGORY,
-            Location(1, 48, 1, 52),
-            "AuraEnabled methods must be global or public"
+            Location(1, 49, 1, 53),
+            "Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation"
           )
         )
       )
     )
   }
 
-  test("Class method default AuraEnabled") {
-    val issues = illegalClassMethodAccess(ArraySeq(AURA_ENABLED_ANNOTATION))
+  test("TestSetup in non-test class should error") {
+    val issues =
+      illegalClassMethodAccess(ArraySeq(TEST_SETUP_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER))
     assert(
       issues == Seq[Issue](
         Issue(
           Path("Dummy.cls"),
           Diagnostic(
             ERROR_CATEGORY,
-            Location(1, 40, 1, 44),
-            "AuraEnabled methods must be global or public"
+            Location(1, 52, 1, 56),
+            "Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation"
           )
         )
       )
     )
   }
 
-  test("Class method public AuraEnabled is legal") {
+  test("TestMethod without static should error") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER),
+      ArraySeq(ISTEST_ANNOTATION)
+    )
     assert(
-      legalClassMethodAccess(
-        ArraySeq(PUBLIC_MODIFIER, AURA_ENABLED_ANNOTATION),
-        ArraySeq(PUBLIC_MODIFIER, AURA_ENABLED_ANNOTATION)
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 43, 1, 47),
+            "testMethod and @IsTest methods must be static"
+          )
+        )
+      )
+    )
+
+    test("Class method private AuraEnabled") {
+      val issues = illegalClassMethodAccess(ArraySeq(PRIVATE_MODIFIER, AURA_ENABLED_ANNOTATION))
+      assert(
+        issues == Seq[Issue](
+          Issue(
+            Path("Dummy.cls"),
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location(1, 48, 1, 52),
+              "AuraEnabled methods must be global or public"
+            )
+          )
+        )
+      )
+    }
+
+    test("Class method default AuraEnabled") {
+      val issues = illegalClassMethodAccess(ArraySeq(AURA_ENABLED_ANNOTATION))
+      assert(
+        issues == Seq[Issue](
+          Issue(
+            Path("Dummy.cls"),
+            Diagnostic(
+              ERROR_CATEGORY,
+              Location(1, 40, 1, 44),
+              "AuraEnabled methods must be global or public"
+            )
+          )
+        )
+      )
+    }
+
+    test("Class method public AuraEnabled is legal") {
+      assert(
+        legalClassMethodAccess(
+          ArraySeq(PUBLIC_MODIFIER, AURA_ENABLED_ANNOTATION),
+          ArraySeq(PUBLIC_MODIFIER, AURA_ENABLED_ANNOTATION)
+        )
+      )
+    }
+
+    test("Class method global AuraEnabled is legal") {
+      assert(
+        legalClassMethodAccess(
+          ArraySeq(GLOBAL_MODIFIER, AURA_ENABLED_ANNOTATION),
+          ArraySeq(GLOBAL_MODIFIER, AURA_ENABLED_ANNOTATION)
+        )
+      )
+    }
+  }
+
+  test("testMethod modifier without static should error") {
+    val issues =
+      illegalClassMethodAccess(ArraySeq(TEST_METHOD_MODIFIER), ArraySeq(ISTEST_ANNOTATION))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 39, 1, 43),
+            "testMethod and @IsTest methods must be static"
+          )
+        )
       )
     )
   }
 
-  test("Class method global AuraEnabled is legal") {
+  test("TestMethod in test class should be ok") {
     assert(
       legalClassMethodAccess(
-        ArraySeq(GLOBAL_MODIFIER, AURA_ENABLED_ANNOTATION),
-        ArraySeq(GLOBAL_MODIFIER, AURA_ENABLED_ANNOTATION)
+        ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(ISTEST_ANNOTATION)
+      )
+    )
+  }
+
+  test("TestSetup in test class should be ok") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(TEST_SETUP_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(TEST_SETUP_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(ISTEST_ANNOTATION)
+      )
+    )
+  }
+
+  test("TestMethod with static should be ok") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(ISTEST_ANNOTATION)
+      )
+    )
+  }
+
+  test("testMethod modifier with static should be ok") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(STATIC_MODIFIER, TEST_METHOD_MODIFIER),
+        ArraySeq(STATIC_MODIFIER, TEST_METHOD_MODIFIER),
+        ArraySeq(ISTEST_ANNOTATION)
       )
     )
   }
