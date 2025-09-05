@@ -17,7 +17,7 @@ import com.nawforce.pkgforce.diagnostics.{CatchingLogger, IssuesManager}
 import com.nawforce.pkgforce.documents.{DocumentIndex, MetadataDocument}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.pkgforce.sfdx.SFDXProject
+import com.nawforce.pkgforce.sfdx.{ForceIgnoreVersion, SFDXProject}
 import com.nawforce.pkgforce.stream.{PackageEvent, PackageStream}
 
 /** Contains any config option that can be used by the Org
@@ -38,12 +38,15 @@ case class Workspace(
   logger: IssuesManager,
   layers: Seq[NamespaceLayer],
   projectConfig: Option[ProjectConfig] = None,
-  externalMetadataPaths: Seq[PathLike] = Seq.empty
+  externalMetadataPaths: Seq[PathLike] = Seq.empty,
+  forceIgnoreVersion: ForceIgnoreVersion = ForceIgnoreVersion.default
 ) {
 
   // Document indexes for each layer of actual metadata
   val indexes: Map[ModuleLayer, DocumentIndex] =
-    layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) => acc ++ layer.indexes(logger))
+    layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
+      acc ++ layer.indexes(logger, forceIgnoreVersion)
+    )
 
   def get(typeName: TypeName): List[MetadataDocument] = {
     val indexes = deployOrderedIndexes.toSeq.reverse
@@ -76,7 +79,8 @@ object Workspace {
           issueManager,
           layers,
           Some(ProjectConfig(proj.maxDependencyCount, proj.isLibrary)),
-          proj.externalMetadataPaths
+          proj.externalMetadataPaths,
+          proj.forceIgnoreVersion
         )
       }
     }

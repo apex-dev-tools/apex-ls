@@ -246,6 +246,47 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   val externalMetadataPaths: Seq[PathLike] =
     externalMetadata.map(extDir => projectPath.join(extDir))
 
+  val options: Map[String, String] =
+    plugins.getOrElse("options", ujson.Obj()) match {
+      case value: ujson.Obj =>
+        value.value.map {
+          case (key, ujson.Str(strValue)) => (key, strValue)
+          case (key, nonStringValue) =>
+            config
+              .lineAndOffsetOf(nonStringValue)
+              .foreach(lineAndOffset => {
+                throw SFDXProjectError(lineAndOffset, s"'options.$key' should be a string value")
+              })
+            throw new RuntimeException(s"'options.$key' should be a string value")
+        }.toMap
+      case value =>
+        config
+          .lineAndOffsetOf(value)
+          .foreach(lineAndOffset => {
+            throw SFDXProjectError(lineAndOffset, "'options' should be an object")
+          })
+        throw new RuntimeException("'options' should be an object")
+    }
+
+  val forceIgnoreVersion: ForceIgnoreVersion = {
+    val forceIgnoreVersionValue = plugins.get("options").flatMap {
+      case obj: ujson.Obj => obj.value.get("forceIgnoreVersion")
+      case _              => None
+    }
+    val versionString = forceIgnoreVersionValue match {
+      case Some(ujson.Str(str)) => str
+      case _                    => ForceIgnoreVersion.default.value
+    }
+    ForceIgnoreVersion.fromString(versionString).getOrElse {
+      val validValuesStr = ForceIgnoreVersion.validValues.mkString("'", "', '", "'")
+      val location       = config.lineAndOffsetOf(forceIgnoreVersionValue.get).get
+      throw SFDXProjectError(
+        location,
+        s"'options.forceIgnoreVersion' must be one of $validValuesStr, got '$versionString'"
+      )
+    }
+  }
+
   private val gulpPackages = additionalNamespaces.flatMap(ns => {
     createGulpPath(ns) match {
       case Left(err) =>

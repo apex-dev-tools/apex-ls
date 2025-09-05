@@ -50,6 +50,34 @@ The following arguments are available:
 | `--workspace` / `-w` | Workspace directory path, defaults to current directory. Must contain an `sfdx-project.json` file. | All                |
 | `--detail` / `-d`    | Detail level: `errors (default) \| warnings \| unused`                                             | CheckForIssues     |
 
+## Configuration
+
+### sfdx-project.json Options
+
+The Apex Language Server can be configured through the `sfdx-project.json` file using the `plugins.options` section:
+
+```json
+{
+  "packageDirectories": [...],
+  "namespace": "...",
+  "plugins": {
+    "dependencies": [...],
+    "additionalNamespaces": [...],
+    "options": {
+      "forceIgnoreVersion": "v2"
+    }
+  }
+}
+```
+
+#### Available Options
+
+| Option              | Values        | Default | Description                                                                                    |
+|---------------------|---------------|---------|------------------------------------------------------------------------------------------------|
+| `forceIgnoreVersion` | `"v1"`, `"v2"` | `"v2"`  | Controls which `.forceignore` implementation to use. `v2` provides exact node-ignore 5.3.2 compatibility, `v1` uses the legacy implementation. |
+
+The `options` section supports additional configuration options that may be added in future releases.
+
 ## Model Context Protocol (MCP) Support
 
 🧪 **Experimental**: The Apex Language Server now includes experimental support for the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), enabling AI tools and applications to interact with Apex code analysis capabilities.
