@@ -164,4 +164,22 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
     )
     assert(dummyIssues == "")
   }
+
+  test("Interface method overload validation - GitHub issue #329") {
+    typeDeclarations(
+      Map(
+        "TestInterface.cls" -> "public interface TestInterface { Boolean isEnabled(String param); }",
+        "Implementation.cls" ->
+          """
+          |public class Implementation implements TestInterface {
+          |  public Boolean isEnabled(String param) { return true; }
+          |  private Boolean isEnabled(List<String> params) { return false; }
+          |  private Boolean isEnabled(Integer count) { return false; }
+          |}
+          |""".stripMargin
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
 }

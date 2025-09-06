@@ -33,6 +33,10 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
 
   test("Missing project file") {
     FileSystemHelper.run(Map()) { root: PathLike =>
+      // Delete the auto-created sfdx-project.json to test missing file scenario
+      val sfdxProjectFile = root.join("sfdx-project.json")
+      sfdxProjectFile.delete()
+
       val project = SFDXProject(root, logger)
       assert(project.isEmpty)
       assert(
