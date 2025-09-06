@@ -54,7 +54,7 @@ jobs:
         if: ${{ matrix.java_version >= 17 }}
         run: |
           cd mcp-npm
-          npm ci
+          npm ci --ignore-scripts
           npm run build
           npm run lint
 
