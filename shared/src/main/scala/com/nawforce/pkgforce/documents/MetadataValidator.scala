@@ -13,13 +13,7 @@
  */
 package com.nawforce.pkgforce.documents
 
-import com.nawforce.pkgforce.diagnostics.{
-  Diagnostic,
-  ERROR_CATEGORY,
-  Issue,
-  IssueLogger,
-  Logger
-}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, IssueLogger, Logger}
 import com.nawforce.pkgforce.names.{EncodedName, Name}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 

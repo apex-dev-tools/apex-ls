@@ -20,9 +20,9 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class IssueLoggerTest extends AnyFunSuite with BeforeAndAfter {
   var issuesManager: IssueLogger = _
-  val testPath: PathLike           = Path("/project/src/classes/TestClass.cls")
-  val externalPath: PathLike       = Path("/project/external/ExternalClass.cls")
-  val location: Location           = Location(1, 0, 1, 10)
+  val testPath: PathLike         = Path("/project/src/classes/TestClass.cls")
+  val externalPath: PathLike     = Path("/project/external/ExternalClass.cls")
+  val location: Location         = Location(1, 0, 1, 10)
 
   before {
     issuesManager = new IssueLogger()
@@ -237,7 +237,12 @@ class IssueLoggerTest extends AnyFunSuite with BeforeAndAfter {
       ) // Warning, should be filtered
     )
 
-    IssueProviderOps.replaceProviderIssues(filteredManager, customProvider, externalPath, newProviderIssues)
+    IssueProviderOps.replaceProviderIssues(
+      filteredManager,
+      customProvider,
+      externalPath,
+      newProviderIssues
+    )
 
     val allIssues = filteredManager.issuesForFilesInternal(
       Array(externalPath),

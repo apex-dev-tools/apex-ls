@@ -65,18 +65,16 @@ object OPM extends TriHierarchy {
   type TPackage = PackageImpl
   type TModule  = Module
 
-  class OrgImpl(
-    val path: PathLike,
-    val issueManager: IssueLogger,
-    initWorkspace: Option[Workspace]
-  ) extends TriOrg
+  class OrgImpl(val path: PathLike, val issueManager: IssueLogger, initWorkspace: Option[Workspace])
+      extends TriOrg
       with Org
       with OrgTestClasses {
     // Acquire lock for all operations that may be impacted by refresh
     val refreshLock = new ReentrantLock(true)
 
     // The workspace loaded into this Org
-    val workspace: Workspace = initWorkspace.getOrElse(Workspace(None, issueManager).get)
+    val workspace: Workspace =
+      initWorkspace.getOrElse(Workspace(issueManager, Seq.empty, None, Seq.empty))
 
     // Indexer monitor launcher that manages workspace watching
     val monitorLauncher: Monitor = new Monitor(path)

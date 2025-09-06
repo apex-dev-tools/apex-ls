@@ -115,7 +115,12 @@ class OrgAnalysis(org: OrgImpl) {
             .groupBy(issue => Path(issue.filePath))
 
         issuesByFile.foreach(kv =>
-          IssueProviderOps.replaceProviderIssues(org.issues, providerId, kv._1, kv._2.map(toIssue(providerId, _)))
+          IssueProviderOps.replaceProviderIssues(
+            org.issues,
+            providerId,
+            kv._1,
+            kv._2.map(toIssue(providerId, _))
+          )
         )
       })
   }

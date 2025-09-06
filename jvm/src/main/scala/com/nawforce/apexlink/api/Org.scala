@@ -17,7 +17,7 @@ package com.nawforce.apexlink.api
 import com.nawforce.apexlink.org.{OPM, RefreshListener}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.rpc._
-import com.nawforce.pkgforce.diagnostics.{IssueLogger, LoggerOps}
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.pkgforce.workspace.{ProjectConfig, Workspace}

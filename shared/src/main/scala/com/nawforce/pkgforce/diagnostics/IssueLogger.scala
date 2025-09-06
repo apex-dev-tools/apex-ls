@@ -50,12 +50,12 @@ class IssueLogger(val externalPathFilter: Option[PathLike => Boolean] = None)
     extends IssuesCollection {
 
   // === CORE STATE ===
-  private[diagnostics] val log             = mutable.HashMap[PathLike, List[Issue]]() withDefaultValue List()
+  private[diagnostics] val log = mutable.HashMap[PathLike, List[Issue]]() withDefaultValue List()
   private[diagnostics] val possibleMissing = mutable.HashSet[PathLike]()
   private[diagnostics] val hasChanged      = mutable.HashSet[PathLike]()
 
   // === CORE ISSUE LOGGING METHODS ===
-  
+
   def isEmpty: Boolean = log.isEmpty
 
   def nonEmpty: Boolean = log.nonEmpty
@@ -211,9 +211,7 @@ class IssueLogger(val externalPathFilter: Option[PathLike => Boolean] = None)
     }
   }
 
-
 }
-
 
 /** Helper methods for specialized issue analysis operations */
 object IssueAnalysis {
@@ -231,7 +229,8 @@ object IssueAnalysis {
   def getMissing(logger: IssueLogger): Seq[PathLike] = {
     val missing = new mutable.ArrayBuffer[PathLike]()
     logger.possibleMissing.foreach(possible => {
-      val issues = logger.log.getOrElse(possible, Nil).filter(_.diagnostic.category == MISSING_CATEGORY)
+      val issues =
+        logger.log.getOrElse(possible, Nil).filter(_.diagnostic.category == MISSING_CATEGORY)
       if (issues.nonEmpty) {
         missing.append(possible)
       }
@@ -248,7 +247,10 @@ object IssueProviderOps {
   /** Clear all issues except those from apex-ls provider */
   def clearProviderIssues(logger: IssueLogger, path: PathLike): Unit = {
     logger.hasChanged.add(path)
-    logger.log.put(path, logger.log.getOrElse(path, Nil).filter(_.provider == Issue.APEX_LS_PROVIDER))
+    logger.log.put(
+      path,
+      logger.log.getOrElse(path, Nil).filter(_.provider == Issue.APEX_LS_PROVIDER)
+    )
   }
 
   /** Replace issues from a specific provider */
@@ -260,7 +262,10 @@ object IssueProviderOps {
   ): Unit = {
     logger.hasChanged.add(path)
     val filteredNewIssues = issues.filter(logger.shouldStoreIssue)
-    logger.log.put(path, logger.log.getOrElse(path, Nil).filterNot(_.provider == providerId) ++ filteredNewIssues)
+    logger.log.put(
+      path,
+      logger.log.getOrElse(path, Nil).filterNot(_.provider == providerId) ++ filteredNewIssues
+    )
   }
 
   /** Replace unused issues while preserving other issue types */

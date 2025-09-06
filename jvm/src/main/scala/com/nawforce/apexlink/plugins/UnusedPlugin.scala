@@ -23,7 +23,13 @@ import com.nawforce.apexlink.types.core.{
   MethodDeclaration,
   TypeDeclaration
 }
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticCategory, Issue, IssueProviderOps, UNUSED_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.{
+  Diagnostic,
+  DiagnosticCategory,
+  Issue,
+  IssueProviderOps,
+  UNUSED_CATEGORY
+}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, FIELD_NATURE, PROPERTY_NATURE}
 
@@ -58,7 +64,11 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
         // via onBlockValidate. They need to be handled that way for local suppression to work.
         val localUnused =
           existingIssues.filter(_.diagnostic.message.startsWith("Unused local variable"))
-        IssueProviderOps.replaceUnusedIssues(td.module.pkg.org.issues, td.paths.head, td.unusedIssues ++ localUnused)
+        IssueProviderOps.replaceUnusedIssues(
+          td.module.pkg.org.issues,
+          td.paths.head,
+          td.unusedIssues ++ localUnused
+        )
       }
 
       // Return all our dependents so they are re-validated for unused as well
