@@ -246,7 +246,9 @@ final case class ForStatement(control: Option[ForControl], statement: Option[Sta
 
       val loopContext = new InnerBlockVerifyContext(forContext).setControlRoot(forContext)
       control.addVars(loopContext)
-      statement.foreach(_.verify(loopContext))
+      loopContext.withInLoop {
+        statement.foreach(_.verify(loopContext))
+      }
       verifyControlPath(forContext, BlockControlPattern())
     })
   }
@@ -472,7 +474,9 @@ final case class WhileStatement(expression: Expression, statement: Option[Statem
     extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
-    statement.foreach(_.verify(context))
+    context.withInLoop {
+      statement.foreach(_.verify(context))
+    }
   }
 }
 
@@ -488,7 +492,9 @@ object WhileStatement {
 final case class DoWhileStatement(block: Block, expression: Expression) extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
     expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
-    block.verify(context)
+    context.withInLoop {
+      block.verify(context)
+    }
   }
 }
 
@@ -654,6 +660,9 @@ object ThrowStatement {
 
 final case class BreakStatement() extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
+    if (!context.isInLoop) {
+      context.log(Issue(ERROR_CATEGORY, location, "Break statement must be in loop"))
+    }
     verifyControlPath(context, ExitControlPattern(exitsMethod = false, exitsBlock = true))
   }
 }
@@ -666,6 +675,9 @@ object BreakStatement {
 
 final case class ContinueStatement() extends Statement {
   override def verify(context: BlockVerifyContext): Unit = {
+    if (!context.isInLoop) {
+      context.log(Issue(ERROR_CATEGORY, location, "Continue statement must be in loop"))
+    }
     verifyControlPath(context, ExitControlPattern(exitsMethod = false, exitsBlock = true))
   }
 }
