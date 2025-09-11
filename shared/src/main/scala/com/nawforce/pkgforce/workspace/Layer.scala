@@ -17,6 +17,7 @@ import com.nawforce.pkgforce.diagnostics.{IssueLogger, IssuesManager}
 import com.nawforce.pkgforce.documents.DocumentIndex
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.sfdx.ForceIgnoreVersion
 
 /** Project metadata is modeled as an ordered sequence of namespace layers which contain an ordered
   * sequence of module layers. The layers should be ordered by deploy order, this means external
@@ -33,9 +34,12 @@ sealed trait Layer
   */
 case class NamespaceLayer(namespace: Option[Name], isGulped: Boolean, layers: Seq[ModuleLayer])
     extends Layer {
-  def indexes(logger: IssuesManager): Map[ModuleLayer, DocumentIndex] =
+  def indexes(
+    logger: IssuesManager,
+    forceIgnoreVersion: ForceIgnoreVersion = ForceIgnoreVersion.default
+  ): Map[ModuleLayer, DocumentIndex] =
     layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
-      acc + (layer -> layer.index(logger, namespace, isGulped))
+      acc + (layer -> layer.index(logger, namespace, isGulped, forceIgnoreVersion))
     )
 }
 
@@ -55,7 +59,12 @@ case class ModuleLayer(
     path.toString.substring(root.toString.length)
   }
 
-  def index(logger: IssuesManager, namespace: Option[Name], isGulped: Boolean): DocumentIndex = {
-    DocumentIndex(logger, namespace, isGulped, projectPath, path)
+  def index(
+    logger: IssuesManager,
+    namespace: Option[Name],
+    isGulped: Boolean,
+    forceIgnoreVersion: ForceIgnoreVersion = ForceIgnoreVersion.default
+  ): DocumentIndex = {
+    DocumentIndex(logger, namespace, isGulped, projectPath, path, forceIgnoreVersion)
   }
 }

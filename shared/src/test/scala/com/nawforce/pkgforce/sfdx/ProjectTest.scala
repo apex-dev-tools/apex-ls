@@ -1165,4 +1165,122 @@ class ProjectTest extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
+  test("options parsing - empty object") {
+    FileSystemHelper.run(
+      Map("sfdx-project.json" -> "{\"plugins\": {\"options\": {}}, \"packageDirectories\": []}")
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isDefined)
+      assert(project.get.options.isEmpty)
+      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // Default value
+    }
+  }
+
+  test("options parsing - with forceIgnoreVersion v1") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v1\"}}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isDefined)
+      assert(project.get.options == Map("forceIgnoreVersion" -> "v1"))
+      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V1)
+    }
+  }
+
+  test("options parsing - with forceIgnoreVersion v2") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v2\"}}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isDefined)
+      assert(project.get.options == Map("forceIgnoreVersion" -> "v2"))
+      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2)
+    }
+  }
+
+  test("options parsing - with multiple options") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v1\", \"customOption\": \"value\"}}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isDefined)
+      assert(project.get.options == Map("forceIgnoreVersion" -> "v1", "customOption" -> "value"))
+      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V1)
+    }
+  }
+
+  test("options parsing - invalid forceIgnoreVersion") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v3\"}}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty) // Should fail due to invalid version
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 47), "'options.forceIgnoreVersion' must be one of 'v1', 'v2', got 'v3'")
+          )
+        )
+      )
+    }
+  }
+
+  test("options parsing - non-string value") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": 123}}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty) // Should fail due to non-string value
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 47), "'options.forceIgnoreVersion' should be a string value")
+          )
+        )
+      )
+    }
+  }
+
+  test("options parsing - non-object options") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"options\": \"invalid\"}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty) // Should fail
+      assert(
+        logger.issues == ArraySeq(
+          Issue(
+            root.join("sfdx-project.json"),
+            Diagnostic(ERROR_CATEGORY, Location(1, 24), "'options' should be an object")
+          )
+        )
+      )
+    }
+  }
+
+  test("options parsing - missing options") {
+    FileSystemHelper.run(
+      Map("sfdx-project.json" -> "{\"plugins\": {}, \"packageDirectories\": []}")
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isDefined)
+      assert(project.get.options.isEmpty)
+      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // Default value
+    }
+  }
+
 }
