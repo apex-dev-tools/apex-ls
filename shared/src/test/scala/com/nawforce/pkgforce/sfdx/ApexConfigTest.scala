@@ -31,16 +31,17 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("Legacy configuration - empty plugins") {
-    FileSystemHelper.run(Map("sfdx-project.json" -> "{\"plugins\": {}, \"packageDirectories\": []}")) {
-      root: PathLike =>
-        val project = SFDXProject(root, logger)
-        assert(logger.issues.isEmpty)
-        assert(project.nonEmpty)
-        assert(project.get.apexConfig.plugins.isEmpty)
-        assert(project.get.apexConfig.dependencies.isEmpty)
-        assert(project.get.apexConfig.additionalNamespaces.isEmpty)
-        assert(project.get.apexConfig.maxDependencyCount.isEmpty)
-        assert(project.get.apexConfig.options.isEmpty)
+    FileSystemHelper.run(
+      Map("sfdx-project.json" -> "{\"plugins\": {}, \"packageDirectories\": []}")
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.nonEmpty)
+      assert(project.get.apexConfig.plugins.isEmpty)
+      assert(project.get.apexConfig.dependencies.isEmpty)
+      assert(project.get.apexConfig.additionalNamespaces.isEmpty)
+      assert(project.get.apexConfig.maxDependencyCount.isEmpty)
+      assert(project.get.apexConfig.options.isEmpty)
     }
   }
 
@@ -139,7 +140,9 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
       assert(project.get.apexConfig.dependencies.length == 1)
-      assert(project.get.apexConfig.dependencies.head.namespace.contains(Name("namespaced"))) // apex-ls value wins
+      assert(
+        project.get.apexConfig.dependencies.head.namespace.contains(Name("namespaced"))
+      ) // apex-ls value wins
     }
   }
 
@@ -162,7 +165,9 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
       // apex-ls options completely replace legacy options (not merged)
-      assert(project.get.apexConfig.options == Map("forceIgnoreVersion" -> "v2", "newOption" -> "new"))
+      assert(
+        project.get.apexConfig.options == Map("forceIgnoreVersion" -> "v2", "newOption" -> "new")
+      )
     }
   }
 
@@ -174,7 +179,9 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(project.isEmpty) // Should fail
-      assert(logger.issues.exists(_.diagnostic.message.contains("'plugins.apex-ls' should be an object")))
+      assert(
+        logger.issues.exists(_.diagnostic.message.contains("'plugins.apex-ls' should be an object"))
+      )
     }
   }
 
@@ -186,7 +193,9 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(project.isEmpty) // Should fail
-      assert(logger.issues.exists(_.diagnostic.message.contains("'dependencies' should be an array")))
+      assert(
+        logger.issues.exists(_.diagnostic.message.contains("'dependencies' should be an array"))
+      )
     }
   }
 
@@ -237,7 +246,7 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       assert(project.get.apexConfig.dependencies.length == 1)
       assert(project.get.apexConfig.dependencies.head.namespace.contains(Name("test")))
       assert(project.get.apexConfig.maxDependencyCount.isEmpty) // Not in apex-ls config
-      assert(project.get.apexConfig.options.isEmpty) // Not in apex-ls config
+      assert(project.get.apexConfig.options.isEmpty)            // Not in apex-ls config
     }
   }
 
@@ -290,7 +299,9 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
       assert(project.get.apexConfig.additionalNamespaces.length == 1)
-      assert(project.get.apexConfig.additionalNamespaces(0).contains(Name("namespaced"))) // apex-ls wins
+      assert(
+        project.get.apexConfig.additionalNamespaces(0).contains(Name("namespaced"))
+      ) // apex-ls wins
     }
   }
 
@@ -340,20 +351,21 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
       assert(project.get.apexConfig.unpackagedMetadata.length == 1)
-      assert(project.get.apexConfig.unpackagedMetadata(0).relativePath == "namespaced") // apex-ls wins
+      assert(
+        project.get.apexConfig.unpackagedMetadata(0).relativePath == "namespaced"
+      ) // apex-ls wins
     }
   }
 
   // ForceIgnoreVersion integration tests - verify end-to-end functionality works
   test("ForceIgnoreVersion - default behavior") {
-    FileSystemHelper.run(
-      Map("sfdx-project.json" -> "{\"packageDirectories\": []}")
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
-      assert(project.nonEmpty)
-      assert(project.get.apexConfig.options.isEmpty)
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // Default value
+    FileSystemHelper.run(Map("sfdx-project.json" -> "{\"packageDirectories\": []}")) {
+      root: PathLike =>
+        val project = SFDXProject(root, logger)
+        assert(logger.issues.isEmpty)
+        assert(project.nonEmpty)
+        assert(project.get.apexConfig.options.isEmpty)
+        assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // Default value
     }
   }
 
@@ -406,7 +418,12 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
-      assert(project.get.apexConfig.options == Map("forceIgnoreVersion" -> "v1", "customOption" -> "value"))
+      assert(
+        project.get.apexConfig.options == Map(
+          "forceIgnoreVersion" -> "v1",
+          "customOption"       -> "value"
+        )
+      )
       assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V1) // End-to-end functionality
     }
   }
@@ -421,7 +438,8 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       assert(project.isEmpty) // Should fail due to invalid version
       assert(
         logger.issues.exists(
-          _.diagnostic.message.contains("'options.forceIgnoreVersion' must be one of 'v1', 'v2', got 'v3'")
+          _.diagnostic.message
+            .contains("'options.forceIgnoreVersion' must be one of 'v1', 'v2', got 'v3'")
         )
       )
     }
