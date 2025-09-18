@@ -18,7 +18,7 @@ import com.nawforce.apexlink.plugins.Plugin.emptyTypes
 import com.nawforce.apexlink.types.apex.{SummaryDeclaration, TriggerDeclaration}
 import com.nawforce.apexlink.types.core.DependentType
 
-class Plugin(td: DependentType, isLibrary: Boolean) {
+class Plugin(td: DependentType) {
 
   def onTypeValidated(): Seq[DependentType] = {
     td match {

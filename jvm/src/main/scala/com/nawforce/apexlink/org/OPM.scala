@@ -81,9 +81,7 @@ object OPM extends TriHierarchy {
     val monitorLauncher: Monitor = new Monitor(path)
 
     /** Manager for post validation plugins */
-    private[nawforce] val pluginsManager = new PluginsManager(
-      workspace.projectConfig.exists(_.isLibrary)
-    )
+    private[nawforce] val pluginsManager = new PluginsManager
 
     /** Parsed Apex data cache, the cache holds summary information about Apex types to speed
       * startup
@@ -580,15 +578,11 @@ object OPM extends TriHierarchy {
         .map(kv => (kv._1, kv._2.map(pkg => toNSString(pkg.namespace)).sorted.toArray))
       val additionalNamespaces =
         basePackages.filter(_.isGulped).map(pkg => toNSString(pkg.namespace)).toArray
-      val externalMetadataPaths = workspace.externalMetadataPaths.map(_.toString).sorted.toArray
-      val isLibrary             = workspace.projectConfig.exists(_.isLibrary)
       PackageContext(
         namespace.map(_.value),
         ghostedPackages.getOrElse(true, Array.empty),
         ghostedPackages.getOrElse(false, Array.empty),
-        additionalNamespaces,
-        externalMetadataPaths,
-        isLibrary
+        additionalNamespaces
       )
     }
 

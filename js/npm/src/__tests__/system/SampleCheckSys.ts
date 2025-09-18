@@ -3,7 +3,7 @@
  */
 import chalk from "chalk";
 import { spawnSync } from "child_process";
-import { readdirSync, lstatSync, writeFileSync, unlinkSync, existsSync } from "fs";
+import { readdirSync, lstatSync } from "fs";
 import { basename, resolve, sep } from "path";
 
 const isCategory =
@@ -15,7 +15,7 @@ const isWarnCat = isCategory("Warning", "Unused");
 const isSyntaxCat = isCategory("Syntax");
 
 // .each runs first before any hooks like beforeAll
-function getSamples(): [string, string, string | null][] {
+function getSamples(): string[][] {
   if (!process.env.SAMPLES) {
     throw new Error(
       "Missing environment variable 'SAMPLES' with path to samples."
@@ -29,62 +29,13 @@ function getSamples(): [string, string, string | null][] {
     .map((d) => findProjectDir(d));
 }
 
-function findProjectDir(wd: string): [string, string, string | null] {
-  // Returns [project name, directory to test, temporary file path or null]
+function findProjectDir(wd: string): [string, string] {
+  // Detects override sfdx-project or descends 1 level into sample
   const projName = basename(wd);
-  const parentDir = wd;
-  const nestedDir = resolve(wd, projName);
-  
-  // Check if parent has sfdx-project.json
-  if (existsSync(resolve(parentDir, "sfdx-project.json"))) {
-    return [projName, parentDir, null];
-  }
-  
-  // Check if nested has sfdx-project.json  
-  if (existsSync(resolve(nestedDir, "sfdx-project.json"))) {
-    return [projName, nestedDir, null];
-  }
-  
-  // No sfdx-project.json found - create temporary one in parent
-  const tempSfdxProject = createTemporarySfdxProject(parentDir, projName);
-  return [projName, tempSfdxProject ? parentDir : nestedDir, tempSfdxProject];
-}
-
-function createTemporarySfdxProject(parentDir: string, packageDirName: string): string | null {
-  const sfdxProjectPath = resolve(parentDir, "sfdx-project.json");
-  
-  // Don't create if already exists
-  if (existsSync(sfdxProjectPath)) {
-    return null;
-  }
-  
-  const sfdxProjectContent = {
-    packageDirectories: [
-      {
-        path: packageDirName,
-        default: true
-      }
-    ],
-    sourceApiVersion: "60.0"
-  };
-  
-  try {
-    writeFileSync(sfdxProjectPath, JSON.stringify(sfdxProjectContent, null, 2));
-    return sfdxProjectPath;
-  } catch (error) {
-    console.warn(`Failed to create temporary sfdx-project.json at ${sfdxProjectPath}: ${error}`);
-    return null;
-  }
-}
-
-function cleanupTemporaryFile(filePath: string | null): void {
-  if (filePath && existsSync(filePath)) {
-    try {
-      unlinkSync(filePath);
-    } catch (error) {
-      console.warn(`Failed to cleanup temporary file ${filePath}: ${error}`);
-    }
-  }
+  return [
+    projName,
+    readdirSync(wd).includes("sfdx-project.json") ? wd : resolve(wd, projName),
+  ];
 }
 
 function printLogs(
@@ -181,53 +132,48 @@ describe("Check samples", () => {
 
   test.each(getSamples())(
     "Sample: %s",
-    async (name, path, tempSfdxProject) => {
-      try {
-        const jvmCheck = spawnSync(
-          "java",
-          [
-            "-cp",
-            "jvm/target/scala-2.13/*:jvm/target/scala-2.13/apex-ls_2.13-*.jar",
-            "io.github.apexdevtools.apexls.CheckForIssues",
-            "-d", "warnings",
-            "-n",
-            "-w",
-            path,
-          ],
-          {
-            // can only be run from npm dir
-            cwd: resolve(process.cwd(), "../.."),
-            timeout: 30000,
-          }
-        );
+    async (name, path) => {
+      const jvmCheck = spawnSync(
+        "java",
+        [
+          "-cp",
+          "jvm/target/scala-2.13/*:jvm/target/scala-2.13/apex-ls_2.13-*.jar",
+          "io.github.apexdevtools.apexls.CheckForIssues",
+          "-d", "warnings",
+          "-n",
+          "-w",
+          path,
+        ],
+        {
+          // can only be run from npm dir
+          cwd: resolve(process.cwd(), "../.."),
+          timeout: 30000,
+        }
+      );
 
-        // Check it was not cancelled due to timeout
-        expect(jvmCheck.signal).toBeNull();
+      // Check it was not cancelled due to timeout
+      expect(jvmCheck.signal).toBeNull();
 
-        const status = jvmCheck.status;
-        const logs: string[] = jvmCheck.stdout
-          .toString("utf8")
-          .split("\n")
-          .filter((l) => l);
+      const status = jvmCheck.status;
+      const logs: string[] = jvmCheck.stdout
+        .toString("utf8")
+        .split("\n")
+        .filter((l) => l);
 
-        // only print exceptions, do not snapshot
-        const errLogs = jvmCheck.stderr
-          .toString("utf8")
-          .split("\n")
-          .filter((l) => l);
+      // only print exceptions, do not snapshot
+      const errLogs = jvmCheck.stderr
+        .toString("utf8")
+        .split("\n")
+        .filter((l) => l);
 
-        printLogs(logs, errLogs, name, status);
+      printLogs(logs, errLogs, name, status);
 
-        const result = {
-          status,
-          logs: prepareSnapshotLogs(logs, path),
-        };
+      const result = {
+        status,
+        logs: prepareSnapshotLogs(logs, path),
+      };
 
-        expect(result).toMatchSnapshot();
-      } finally {
-        // Always cleanup temporary file
-        cleanupTemporaryFile(tempSfdxProject);
-      }
+      expect(result).toMatchSnapshot();
     },
     40000
   );

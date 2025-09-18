@@ -32,9 +32,8 @@ import scala.collection.mutable
 
 /** Provides plugin for generating unused warnings on a single type
   * @param td type being handled by this plugin
-  * @param isLibrary whether this is a library project (public members are considered used)
   */
-class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isLibrary) {
+class UnusedPlugin(td: DependentType) extends Plugin(td) {
 
   override def onClassValidated(td: ClassDeclaration): Seq[DependentType] = reportUnused(td)
 
@@ -127,7 +126,7 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
       if (issues.isEmpty && childCount > 0)
         return ArraySeq.empty
 
-      // Check if we need to promote the used to the type level to reduce noise in output
+      // Check if need to promote the used to the type level to reduce noise in output
       if (canPromoteUnusedToType(issues.length)) {
         val onlyTestReferenced = td.hasHolders || (issues.nonEmpty && issues
           .forall(_.diagnostic.message.contains(onlyTestCodeReferenceText)))
@@ -218,17 +217,10 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
 
   private implicit class FieldOps(field: ApexFieldLike) {
     def isUsed(inTest: Boolean): Boolean = {
-      hasDirectReferences(inTest) || hasExcludedModifiers(inTest)
-    }
-
-    private def hasDirectReferences(inTest: Boolean): Boolean = {
-      if (inTest) field.hasHolders else field.hasNonTestHolders
-    }
-
-    private def hasExcludedModifiers(inTest: Boolean): Boolean = {
-      val excludedModifiers =
-        if (inTest) cachedExcludedTestFieldModifiers else cachedExcludedFieldModifiers
-      field.modifiers.exists(excludedModifiers)
+      if (inTest)
+        field.hasHolders || field.modifiers.exists(excludedTestFieldModifiers)
+      else
+        field.hasNonTestHolders || field.modifiers.exists(excludedFieldModifiers)
     }
   }
 
@@ -237,49 +229,18 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
     /** Is the method in use, NOTE: requires a MethodMap is constructed for shadow support first! */
     def isUsed(module: OPM.Module, inTest: Boolean): Boolean = {
       method.isSynthetic ||
-      hasDirectReferences(inTest) ||
-      hasExcludedModifiers(inTest) ||
-      hasShadowedMethodInUse(module, inTest) ||
-      hasGhostedParameters(module)
-    }
-
-    private def hasDirectReferences(inTest: Boolean): Boolean = {
-      if (inTest) method.hasHolders else method.hasNonTestHolders
-    }
-
-    private def hasExcludedModifiers(inTest: Boolean): Boolean = {
-      val excludedModifiers =
-        if (inTest) cachedExcludedTestMethodModifiers else cachedExcludedMethodModifiers
-      method.modifiers.exists(excludedModifiers.contains)
-    }
-
-    private def hasShadowedMethodInUse(module: OPM.Module, inTest: Boolean): Boolean = {
+      (if (inTest)
+         method.hasHolders || method.modifiers.exists(excludedTestMethodModifiers.contains)
+       else
+         method.hasNonTestHolders || method.modifiers.exists(excludedMethodModifiers.contains)) ||
       method.shadows.exists({
         case am: ApexMethodLike   => am.isUsed(module, inTest)
         case _: MethodDeclaration => true
         case _                    => false
-      })
-    }
-
-    private def hasGhostedParameters(module: OPM.Module): Boolean = {
+      }) ||
       method.parameters.exists(parameter => module.isGhostedType(parameter.typeName))
     }
   }
-
-  /** Get excluded method modifiers based on library flag */
-  private val cachedExcludedMethodModifiers: Set[Modifier] =
-    if (isLibrary) excludedMethodModifiers + PUBLIC_MODIFIER else excludedMethodModifiers
-
-  private val cachedExcludedTestMethodModifiers: Set[Modifier] =
-    if (isLibrary) excludedTestMethodModifiers + PUBLIC_MODIFIER else excludedTestMethodModifiers
-
-  /** Get excluded field modifiers based on library flag */
-  private val cachedExcludedFieldModifiers: Set[Modifier] =
-    if (isLibrary) excludedFieldModifiers + PUBLIC_MODIFIER else excludedFieldModifiers
-
-  private val cachedExcludedTestFieldModifiers: Set[Modifier] =
-    if (isLibrary) excludedTestFieldModifiers + PUBLIC_MODIFIER else excludedTestFieldModifiers
-
 }
 
 object UnusedPlugin {

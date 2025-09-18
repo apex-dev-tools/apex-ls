@@ -13,7 +13,7 @@
  */
 package com.nawforce.pkgforce.workspace
 
-import com.nawforce.pkgforce.diagnostics.{IssueLogger, IssuesManager}
+import com.nawforce.pkgforce.diagnostics.IssuesManager
 import com.nawforce.pkgforce.documents.DocumentIndex
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike

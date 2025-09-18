@@ -28,11 +28,8 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       val tree    = DirectoryTree(Path(root), changed)
       assert(tree.path == root)
       assert(tree.directories.isEmpty)
-      // Filter out auto-created sfdx-project.json from FileSystemHelper
-      val userFiles = tree.fileModificationTimes.filterNot(_._1.endsWith("sfdx-project.json"))
-      assert(userFiles.isEmpty)
-      val userChanges = changed.filterNot(_.endsWith("sfdx-project.json"))
-      assert(userChanges.isEmpty)
+      assert(tree.fileModificationTimes.isEmpty)
+      assert(changed.isEmpty)
     }
   }
 
@@ -48,10 +45,8 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       val bFilePath = root.join("b.txt").toString
       val cFilePath = root.join("dir1/c.txt").toString
       val dFilePath = root.join("dir1/dir2/d.txt").toString
-      // Filter out auto-created sfdx-project.json from FileSystemHelper
-      val userFiles = tree.fileModificationTimes.filterNot(_._1.endsWith("sfdx-project.json"))
-      assert(userFiles.keys.toSet == Set(aFilePath, bFilePath))
-      assert(!userFiles.exists(_._2 == 0))
+      assert(tree.fileModificationTimes.keys.toSet == Set(aFilePath, bFilePath))
+      assert(!tree.fileModificationTimes.exists(_._2 == 0))
 
       assert(tree.directories.length == 1)
       val dir1 = tree.directories(0)
@@ -64,8 +59,7 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       assert(dir2.fileModificationTimes.keys.toSet == Set(dFilePath))
       assert(!dir2.fileModificationTimes.exists(_._2 == 0))
 
-      val userChanges = changed.filterNot(_.endsWith("sfdx-project.json"))
-      assert(userChanges.toSet == Set(aFilePath, bFilePath, cFilePath, dFilePath))
+      assert(changed.toSet == Set(aFilePath, bFilePath, cFilePath, dFilePath))
     }
   }
 
@@ -81,15 +75,14 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       val changed = mutable.ArrayBuffer[String]()
       val newTree = tree.refresh(changed)
 
-      val userChanges = changed.filterNot(_.endsWith("sfdx-project.json"))
-      assert(userChanges.toSet == Set(eFilePath.toString))
+      assert(changed.toSet == Set(eFilePath.toString))
 
       val aFilePath = root.join("a.txt").toString
       val bFilePath = root.join("b.txt").toString
-      // Filter out auto-created sfdx-project.json from FileSystemHelper
-      val userFiles = newTree.fileModificationTimes.filterNot(_._1.endsWith("sfdx-project.json"))
-      assert(userFiles.keys.toSet == Set(aFilePath, bFilePath, eFilePath.toString))
-      assert(!userFiles.exists(_._2 == 0))
+      assert(
+        newTree.fileModificationTimes.keys.toSet == Set(aFilePath, bFilePath, eFilePath.toString)
+      )
+      assert(!newTree.fileModificationTimes.exists(_._2 == 0))
     }
   }
 
@@ -108,14 +101,11 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       val changed = mutable.ArrayBuffer[String]()
       val newTree = tree.refresh(changed)
 
-      val userChanges = changed.filterNot(_.endsWith("sfdx-project.json"))
-      assert(userChanges.toSet == Set(bFilePath.toString))
+      assert(changed.toSet == Set(bFilePath.toString))
 
       val aFilePath = root.join("a.txt").toString
-      // Filter out auto-created sfdx-project.json from FileSystemHelper
-      val userFiles = newTree.fileModificationTimes.filterNot(_._1.endsWith("sfdx-project.json"))
-      assert(userFiles.keys.toSet == Set(aFilePath, bFilePath.toString))
-      assert(!userFiles.exists(_._2 == 0))
+      assert(newTree.fileModificationTimes.keys.toSet == Set(aFilePath, bFilePath.toString))
+      assert(!newTree.fileModificationTimes.exists(_._2 == 0))
     }
   }
 
@@ -131,14 +121,11 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       val changed = mutable.ArrayBuffer[String]()
       val newTree = tree.refresh(changed)
 
-      val userChanges = changed.filterNot(_.endsWith("sfdx-project.json"))
-      assert(userChanges.toSet == Set(bFilePath.toString))
+      assert(changed.toSet == Set(bFilePath.toString))
 
       val aFilePath = root.join("a.txt").toString
-      // Filter out auto-created sfdx-project.json from FileSystemHelper
-      val userFiles = newTree.fileModificationTimes.filterNot(_._1.endsWith("sfdx-project.json"))
-      assert(userFiles.keys.toSet == Set(aFilePath))
-      assert(!userFiles.exists(_._2 == 0))
+      assert(newTree.fileModificationTimes.keys.toSet == Set(aFilePath))
+      assert(!newTree.fileModificationTimes.exists(_._2 == 0))
 
     }
   }
@@ -225,11 +212,8 @@ class DirectoryTreeTest extends AnyFunSuite with BeforeAndAfter {
       val changed = mutable.ArrayBuffer[String]()
       val newTree = tree.refresh(changed)
 
-      val userChanges = changed.filterNot(_.endsWith("sfdx-project.json"))
-      assert(userChanges.toSet == Set(cPath.toString, dPath.toString))
-      // Filter out auto-created sfdx-project.json from FileSystemHelper (expect a.txt, b.txt + sfdx-project.json = 3, but filter to 2)
-      val userFiles = newTree.fileModificationTimes.filterNot(_._1.endsWith("sfdx-project.json"))
-      assert(userFiles.size == 2)
+      assert(changed.toSet == Set(cPath.toString, dPath.toString))
+      assert(newTree.fileModificationTimes.size == 2)
       assert(newTree.directories.isEmpty)
     }
   }

@@ -295,14 +295,6 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
     }
   }
 
-  private def validateExternalMetadataPath(dir: String): Option[String] = {
-    if (dir.startsWith("/") || dir.startsWith("\\") || dir.contains("..")) {
-      Some(s"External metadata path '$dir' must be a relative path within the project")
-    } else {
-      None
-    }
-  }
-
   private def validateDependency(
     current: Map[String, VersionedPackageLayer],
     dependency: ModuleDependent,

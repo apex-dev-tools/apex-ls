@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2025 Kevin Jones, All rights reserved.
+ Copyright (c) 2020 Kevin Jones, All rights reserved.
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -23,7 +23,11 @@ import scala.util.matching.Regex
 /** ForceIgnoreV2 - node-ignore compatible implementation */
 class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) extends ForceIgnoreInterface {
 
-  private val allRules = rules
+  /** Salesforce CLI default ignore patterns - always applied */
+  private val DEFAULT_PATTERNS =
+    Seq("**/*.dup", "**/.*", "**/package2-descriptor.json", "**/package2-manifest.json")
+
+  private val allRules = DEFAULT_PATTERNS.map(IgnoreRuleV2.fromPattern) ++ rules
 
   // Cache for parent directory test results to avoid repeated calculations
   private val parentDirCache = scala.collection.mutable.Map[String, Boolean]()
@@ -98,6 +102,7 @@ class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) extends ForceI
     // Apply rules using node-ignore 5.3.2 exact logic from _testOne method
     var ignored   = false
     var unignored = false
+    // checkUnignored = false is constant, so we can inline the optimization
 
     var i           = 0
     val rulesLength = allRules.length
@@ -144,8 +149,9 @@ case class IgnoreRuleV2(pattern: String, negated: Boolean, directoryOnly: Boolea
 
   // Convert gitignore pattern to regex - EXACT port of node-ignore makeRegex
   private lazy val regex: Regex = {
-    // NodeIgnoreExact.makeRegex returns pattern with (?i) flag included for case-insensitive matching
-    NodeIgnoreExact.makeRegex(pattern).r
+    val regexPattern = NodeIgnoreExact.makeRegex(pattern)
+    // node-ignore defaults to case-insensitive, which Salesforce CLI uses
+    s"(?i)$regexPattern".r // (?i) flag for case-insensitive matching
   }
 
   def matches(relativePath: String): Boolean = {

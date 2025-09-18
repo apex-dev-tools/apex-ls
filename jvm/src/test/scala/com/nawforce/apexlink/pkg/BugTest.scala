@@ -314,7 +314,7 @@ class BugTest extends AnyFunSuite with TestHelper {
       Map(
         "Dummy.cls" ->
           s"""
-           |@isTest public class Dummy {
+           |public class Dummy {
            |@testSetup
            |static void setup() {
            |  Account a = new Account(Name='foo');

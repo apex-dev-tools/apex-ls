@@ -19,7 +19,6 @@ import com.nawforce.runtime.imports.{FSMonkey, Memfs}
 import com.nawforce.runtime.platform.{Environment, Path}
 import io.scalajs.nodejs.os.OS
 
-import scala.annotation.tailrec
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 
@@ -27,20 +26,12 @@ object FileSystemHelper {
 
   private var directoryId = 0
 
-  val defaultSFDXProject = """{
-  "packageDirectories": [
-    {"path": ".", "default": true}
-  ],
-  "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "48.0"
-}"""
-
   // Abstract virtual filesystem for testing
   def run[T](files: Map[String, String], setupCache: Boolean = false)(verify: PathLike => T): T = {
 
     // Load files into memfs
     Memfs.vol.fromJSON(
-      populateMetaFiles(ensureSFDXProject(files))
+      populateMetaFiles(files)
         .map(kv => ("/" + kv._1, kv._2))
         .toJSDictionary
         .asInstanceOf[js.Dynamic]
@@ -71,15 +62,6 @@ object FileSystemHelper {
     }
   }
 
-  /* Automatically add sfdx-project.json if not provided to support SFDX-only format */
-  private def ensureSFDXProject(files: Map[String, String]): Map[String, String] = {
-    if (files.contains("sfdx-project.json")) {
-      files
-    } else {
-      files + ("sfdx-project.json" -> defaultSFDXProject)
-    }
-  }
-
   /* Many test were written without providing class/trigger metafiles so we add them in */
   private def populateMetaFiles(files: Map[String, String]): Map[String, String] = {
     val classesAndTriggers = files.keys.filter(path =>
@@ -90,9 +72,8 @@ object FileSystemHelper {
     missingMetaFiles.map(path => (path, "")).toMap ++ files
   }
 
-  @tailrec
   def createTmpDir(): Path = {
-    val dirName = s"apexlinktest$directoryId"
+    val dirName = s"apexlinktest${directoryId}"
     directoryId += 1
     val tempDir = Path(OS.tmpdir()).join(dirName)
     if (tempDir.exists)
@@ -107,9 +88,8 @@ object FileSystemHelper {
   def runTempDir[T](files: Map[String, String], setupCache: Boolean = false)(
     verify: PathLike => T
   ): T = {
-    val tempDir       = createTmpDir()
-    val filesWithSFDX = populateMetaFiles(ensureSFDXProject(files))
-    filesWithSFDX.foreach(kv => {
+    val tempDir = createTmpDir()
+    files.foreach(kv => {
       val path = tempDir.join(kv._1)
       makeDir(path.parent)
       path.write(kv._2)
@@ -122,7 +102,7 @@ object FileSystemHelper {
     try {
       verify(tempDir)
     } finally {
-      filesWithSFDX.foreach(kv => {
+      files.foreach(kv => {
         val path = tempDir.join(kv._1)
         path.delete()
       })

@@ -28,7 +28,7 @@
 
 package com.nawforce.pkgforce.diagnostics
 
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
 
@@ -38,11 +38,6 @@ import scala.collection.mutable.ArrayBuffer
 
 /** Trait to assist with logging in a context specific way */
 trait IssueLogger {
-
-  def isEmpty: Boolean
-
-  def hasErrors: Boolean
-
   def log(issue: Issue): Unit
 
   def logAll(issues: ArraySeq[Issue]): Unit = issues.foreach(log)
@@ -63,10 +58,6 @@ trait IssueLogger {
 
 class CatchingLogger extends IssueLogger {
   private var _issues: mutable.ArrayBuffer[Issue] = _
-
-  override def isEmpty: Boolean = _issues.isEmpty
-
-  override def hasErrors: Boolean = _issues.exists(_.isError)
 
   override def log(issue: Issue): Unit = {
     if (_issues == null)
@@ -94,9 +85,7 @@ object LogEntryContext {
 class ModifierLogger extends IssueLogger {
   private var issueLog: ArrayBuffer[Issue] = _
 
-  override def isEmpty: Boolean = issueLog == null
-
-  override def hasErrors: Boolean = issueLog.exists(_.isError)
+  def isEmpty: Boolean = issueLog == null
 
   override def log(issue: Issue): Unit = {
     if (issueLog == null)
@@ -116,6 +105,7 @@ class ModifierLogger extends IssueLogger {
   }
 
   def logWarning(context: LogEntryContext, message: String): Unit = {
+    val l = context.location
     log(Issue(context.path, Diagnostic(WARNING_CATEGORY, context.location, message)))
   }
 }

@@ -205,10 +205,8 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
   test("Missing error is not cached") {
     FileSystemHelper.run(
       Map(
-        "pkg1/Foo.cls"           -> "public class Foo extends Bar {}",
-        "pkg1/sfdx-project.json" -> FileSystemHelper.defaultSFDXProject,
-        "pkg2/Foo.cls"           -> "public class Foo extends Bar {}",
-        "pkg2/sfdx-project.json" -> FileSystemHelper.defaultSFDXProject
+        "pkg1/Foo.cls" -> "public class Foo extends Bar {}",
+        "pkg2/Foo.cls" -> "public class Foo extends Bar {}"
       )
     ) { root: PathLike =>
       // Setup as cached
@@ -235,10 +233,8 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
   test("General error is cached") {
     FileSystemHelper.run(
       Map(
-        "pkg1/Foo.cls"           -> "public class Foo {{String a=1;}}",
-        "pkg1/sfdx-project.json" -> FileSystemHelper.defaultSFDXProject,
-        "pkg2/Foo.cls"           -> "public class Foo {{String a=1;}}",
-        "pkg2/sfdx-project.json" -> FileSystemHelper.defaultSFDXProject
+        "pkg1/Foo.cls" -> "public class Foo {{String a=1;}}",
+        "pkg2/Foo.cls" -> "public class Foo {{String a=1;}}"
       )
     ) { root: PathLike =>
       // Setup as cached

@@ -25,10 +25,10 @@ object IPM extends TriHierarchy {
 
   class Index(val path: PathLike) extends TriOrg {
 
-    val (_workspace, issues) = Workspace(path)
+    val issues: IssuesManager = new IssuesManager
 
     val workspace: Workspace = {
-      _workspace.getOrElse(new Workspace(issues, Seq()))
+      Workspace(path, issues).getOrElse(new Workspace(issues, Seq()))
     }
 
     override val packages: ArraySeq[Package] = {

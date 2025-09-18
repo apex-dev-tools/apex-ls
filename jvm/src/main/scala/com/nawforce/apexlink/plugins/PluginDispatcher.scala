@@ -19,8 +19,7 @@ import com.nawforce.apexlink.types.core.DependentType
 
 import java.lang.reflect.Constructor
 
-class PluginDispatcher(td: DependentType, plugins: Seq[Plugin], isLibrary: Boolean = false)
-    extends Plugin(td, isLibrary) {
+class PluginDispatcher(td: DependentType, plugins: Seq[Plugin]) extends Plugin(td) {
 
   override def onTypeValidated(): Seq[DependentType] = {
     plugins.flatMap(_.onTypeValidated())
@@ -36,25 +35,12 @@ class PluginDispatcher(td: DependentType, plugins: Seq[Plugin], isLibrary: Boole
 }
 
 object PluginDispatcher {
-  def apply(
-    plugins: Seq[Constructor[_ <: Plugin]],
-    td: DependentType,
-    isLibrary: Boolean
-  ): PluginDispatcher = {
+  def apply(td: DependentType, plugins: Seq[Constructor[_ <: Plugin]]): PluginDispatcher = {
     new PluginDispatcher(
       td,
       plugins.map(plugin => {
-        try {
-          plugin.newInstance(td, isLibrary)
-        } catch {
-          case e: Exception =>
-            throw new RuntimeException(
-              s"Failed to instantiate plugin ${plugin.getDeclaringClass.getSimpleName} with library flag $isLibrary",
-              e
-            )
-        }
-      }),
-      isLibrary
+        plugin.newInstance(td)
+      })
     )
   }
 }

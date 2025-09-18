@@ -14,6 +14,7 @@
 
 package io.github.apexdevtools.apexls.api
 
+import com.nawforce.pkgforce.diagnostics.IssuesManager
 import com.nawforce.pkgforce.names.DotName
 import com.nawforce.pkgforce.workspace.{Workspace => SWorkspace}
 import com.nawforce.runtime.platform.Path
@@ -46,8 +47,9 @@ object Workspaces {
     if (ws.nonEmpty)
       return ws.get
 
-    val (workspace, issuesManager) = SWorkspace(Path(wsPath))
-    val issues                     = issuesManager.hasUpdatedIssues
+    val issuesManager = new IssuesManager
+    val workspace     = SWorkspace(Path(wsPath), issuesManager)
+    val issues        = issuesManager.hasUpdatedIssues
     if (issues.nonEmpty && !ignoreIssues) {
       throw new WorkspaceException(issues.head)
     }

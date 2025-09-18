@@ -18,7 +18,6 @@ import com.nawforce.apexlink.api.{ExternalAnalysisConfiguration, Org, ServerOps}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
-import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.{Environment, Path}
 
 import java.util.concurrent.LinkedBlockingQueue
@@ -148,13 +147,7 @@ case class IssuesForFile(promise: Promise[IssuesResult], path: String) extends A
   override def process(queue: OrgQueue): Unit = {
     val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
     OrgInfo.current.withValue(orgImpl) {
-      promise.success(
-        IssuesResult(
-          orgImpl.issues
-            .issuesForFilesInternal(Array(Path(path)))
-            .toArray
-        )
-      )
+      promise.success(IssuesResult(orgImpl.issues.issuesForFileInternal(Path(path)).toArray))
     }
   }
 }
