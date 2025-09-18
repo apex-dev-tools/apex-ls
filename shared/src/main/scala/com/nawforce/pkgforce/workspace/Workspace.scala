@@ -17,13 +17,7 @@ import com.nawforce.pkgforce.diagnostics.{CatchingLogger, IssuesManager}
 import com.nawforce.pkgforce.documents.{DocumentIndex, MetadataDocument}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.pkgforce.sfdx.{
-  ForceIgnoreVersion,
-  MDAPIWorkspaceConfig,
-  SFDXProject,
-  SFDXWorkspaceConfig,
-  WorkspaceConfig
-}
+import com.nawforce.pkgforce.sfdx.{ForceIgnoreVersion, SFDXProject}
 import com.nawforce.pkgforce.stream.{PackageEvent, PackageStream}
 
 /** Contains any config option that can be used by the Org
@@ -73,36 +67,76 @@ case class Workspace(
 }
 
 object Workspace {
-  def apply(path: PathLike, logger: IssuesManager): Option[Workspace] = {
-    if (!path.exists || !path.isDirectory) {
-      logger.logError(path, Location.empty, s"No directory at $path")
-      return None
-    }
-
-    val catchingLogger = new CatchingLogger()
-    val config: Option[WorkspaceConfig] =
-      if (path.join("sfdx-project.json").exists) {
-        SFDXProject(path, catchingLogger).map(p => new SFDXWorkspaceConfig(path, p))
-      } else {
-        Some(new MDAPIWorkspaceConfig(None, Seq(path)))
-      }
-    val layers = config.map(_.layers(catchingLogger)).getOrElse(Seq())
-
-    catchingLogger.issues.foreach(logger.log)
-
-    if (catchingLogger.issues.exists(_.isError)) {
+  /* We need to pass an IssueManager here as this may generate a lot of diagnostics */
+  def apply(project: Option[SFDXProject], issueManager: IssuesManager): Option[Workspace] = {
+    val layers = project.map(_.layers(issueManager)).getOrElse(Seq())
+    if (issueManager.hasErrors) {
       None
     } else {
-      config.map {
-        case config: SFDXWorkspaceConfig =>
-          new Workspace(
-            logger,
-            layers,
-            Some(ProjectConfig(config.project.apexConfig.maxDependencyCount)),
-            config.project.forceIgnoreVersion
-          )
-        case _ => new Workspace(logger, layers)
+      project.map { proj =>
+        new Workspace(
+          issueManager,
+          layers,
+          Some(ProjectConfig(proj.apexConfig.maxDependencyCount)),
+          proj.forceIgnoreVersion
+        )
       }
     }
+  }
+
+  def apply(path: PathLike): (Option[Workspace], IssuesManager) = {
+    val logger = new CatchingLogger()
+
+    validateWorkspacePath(path, logger) match {
+      case Some(error) => error
+      case None        => createWorkspaceFromValidPath(path, logger)
+    }
+  }
+
+  private def validateWorkspacePath(
+    path: PathLike,
+    logger: CatchingLogger
+  ): Option[(Option[Workspace], IssuesManager)] = {
+    if (!path.exists || !path.isDirectory) {
+      logger.logError(path, Location.empty, s"No directory at $path")
+      val issueManager = new IssuesManager(None)
+      logger.issues.foreach(issueManager.add)
+      Some((None, issueManager))
+    } else {
+      None
+    }
+  }
+
+  private def createWorkspaceFromValidPath(
+    path: PathLike,
+    logger: CatchingLogger
+  ): (Option[Workspace], IssuesManager) = {
+    val project            = loadSFDXProject(path, logger)
+    val externalPathFilter = createExternalPathFilter(project)
+    val issueManager       = new IssuesManager(externalPathFilter)
+    logger.issues.foreach(issueManager.add)
+    (Workspace(project, issueManager), issueManager)
+  }
+
+  private def loadSFDXProject(path: PathLike, logger: CatchingLogger): Option[SFDXProject] = {
+    if (path.join("sfdx-project.json").exists) {
+      // SFDXProject.apply already logs detailed errors for all failure cases
+      // (parsing errors, read failures, etc.) so no additional logging is needed here
+      SFDXProject(path, logger)
+    } else {
+      logger.logError(
+        path,
+        Location.empty,
+        s"No sfdx-project.json found at $path. Only SFDX format projects are supported."
+      )
+      None
+    }
+  }
+
+  private def createExternalPathFilter(
+    project: Option[SFDXProject]
+  ): Option[PathLike => Boolean] = {
+    // External metadata filtering was removed - return None
+    None
   }
 }

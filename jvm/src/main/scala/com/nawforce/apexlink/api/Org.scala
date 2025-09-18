@@ -16,24 +16,13 @@ package com.nawforce.apexlink.api
 
 import com.nawforce.apexlink.org.{OPM, RefreshListener}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
-import com.nawforce.apexlink.rpc.{
-  BombScore,
-  ClassTestItem,
-  CompletionItemLink,
-  DependencyGraph,
-  HoverItem,
-  LocationLink,
-  MethodTestItem,
-  OpenOptions,
-  Rename,
-  TargetLocation
-}
-import io.github.apexdevtools.apexls.api.IssuesCollection
-import com.nawforce.pkgforce.diagnostics.{IssuesManager, LoggerOps}
+import com.nawforce.apexlink.rpc._
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.pkgforce.workspace.{ProjectConfig, Workspace}
 import com.nawforce.runtime.platform.{Environment, Path}
+import io.github.apexdevtools.apexls.api.IssuesCollection
 
 /** A virtual Org used to present the analysis functionality in a familiar way.
   *
@@ -302,10 +291,8 @@ object Org {
       show = true,
       s" with autoFlush = ${ServerOps.isAutoFlushEnabled}, build = ${BuildInfo.implementationBuild}"
     ) {
-      val issueManager = new IssuesManager()
-      val ws           = Workspace(path, issueManager)
-      val org          = new OPM.OrgImpl(path, issueManager, ws)
-      org
+      val (workspace, issueManager) = Workspace(path)
+      new OPM.OrgImpl(path, issueManager, workspace)
     }
   }
 }

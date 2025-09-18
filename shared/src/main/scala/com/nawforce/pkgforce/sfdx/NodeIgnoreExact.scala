@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020 Kevin Jones, All rights reserved.
+ Copyright (c) 2025 Kevin Jones, All rights reserved.
  */
 package com.nawforce.pkgforce.sfdx
 
@@ -144,7 +144,10 @@ object NodeIgnoreExact {
     // REPLACER 16: Trailing wildcard (CUSTOM IMPLEMENTATION)
     source = PatternUtils.replaceTrailingWildcard(source)
 
-    source
+    // node-ignore defaults to case-insensitive matching (like git ignore)
+    // Scala doesn't support JavaScript-style regex literals like /pattern/gi,
+    // so we use (?i) inline flag for case-insensitive matching
+    s"(?i)$source"
   }
 
   private def cleanRangeBackSlash(endEscape: String): String = {
