@@ -28,7 +28,7 @@ import com.nawforce.pkgforce.stream.{PackageEvent, PackageStream}
 
 /** Contains any config option that can be used by the Org
   */
-case class ProjectConfig(maxDependencyCount: Option[Int])
+case class ProjectConfig(maxDependencyCount: Option[Int], isLibrary: Boolean = false)
 
 /** Metadata workspace, maintains information on available metadata within a project/package.
   *
@@ -44,6 +44,7 @@ case class Workspace(
   logger: IssuesManager,
   layers: Seq[NamespaceLayer],
   projectConfig: Option[ProjectConfig] = None,
+  externalMetadataPaths: Seq[PathLike] = Seq.empty,
   forceIgnoreVersion: ForceIgnoreVersion = ForceIgnoreVersion.default
 ) {
 
@@ -98,7 +99,8 @@ object Workspace {
           new Workspace(
             logger,
             layers,
-            Some(ProjectConfig(config.project.apexConfig.maxDependencyCount)),
+            Some(ProjectConfig(config.project.apexConfig.maxDependencyCount, config.project.isLibrary)),
+            config.project.externalMetadataPaths,
             config.project.forceIgnoreVersion
           )
         case _ => new Workspace(logger, layers)

@@ -33,6 +33,9 @@ case class ApexConfig(
   val additionalNamespaces: Array[Option[Name]] = computeAdditionalNamespaces()
   val maxDependencyCount: Option[Int]           = computeMaxDependencyCount()
   val options: Map[String, String]              = computeOptions()
+  val isLibrary: Boolean                        = computeIsLibrary()
+  val externalMetadata: Seq[String]             = computeExternalMetadata()
+  val externalMetadataPaths: Seq[PathLike]      = externalMetadata.map(extDir => projectPath.join(extDir))
 
   private def computeDependencies(): Seq[PackageDependent] = {
     configSource.getOrElse("dependencies", ujson.Arr()) match {
@@ -198,6 +201,66 @@ case class ApexConfig(
             Left(SFDXProjectError(lineAndOffset, "'options' should be an object"))
           })
           .getOrElse(Left(new SFDXProjectError(0, 0, "'options' should be an object")))
+    }
+  }
+
+  private def computeIsLibrary(): Boolean = {
+    configSource.get("library") match {
+      case Some(ujson.Bool(value)) => value
+      case Some(value) =>
+        config
+          .lineAndOffsetOf(value)
+          .foreach(lineAndOffset =>
+            throw SFDXProjectError(lineAndOffset, "'library' should be a boolean")
+          )
+        false
+      case None => false
+    }
+  }
+
+  private def computeExternalMetadata(): Seq[String] = {
+    configSource.getOrElse("externalMetadata", ujson.Arr()) match {
+      case value: ujson.Arr =>
+        value.value.toSeq.flatMap(value => {
+          value match {
+            case ujson.Str(dir) =>
+              validateExternalMetadataPath(dir) match {
+                case Some(error) =>
+                  config
+                    .lineAndOffsetOf(value)
+                    .map(lineAndOffset => throw SFDXProjectError(lineAndOffset, error))
+                  None
+                case None => Some(dir)
+              }
+            case _ =>
+              config
+                .lineAndOffsetOf(value)
+                .map(lineAndOffset =>
+                  throw SFDXProjectError(
+                    lineAndOffset,
+                    "'externalMetadata' entries should be strings"
+                  )
+                )
+              None
+          }
+        })
+      case value =>
+        config
+          .lineAndOffsetOf(value)
+          .map(lineAndOffset =>
+            throw SFDXProjectError(lineAndOffset, "'externalMetadata' should be an array")
+          )
+          .getOrElse(Seq.empty)
+    }
+  }
+
+  private def validateExternalMetadataPath(path: String): Option[String] = {
+    if (path.startsWith("/") || path.startsWith("\\")) {
+      Some(s"External metadata path '$path' must be a relative path within the project")
+    } else if (path.contains("..")) {
+      Some(s"External metadata path '$path' must be a relative path within the project")
+    } else {
+      None
     }
   }
 }

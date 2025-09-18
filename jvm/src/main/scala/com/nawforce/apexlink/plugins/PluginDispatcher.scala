@@ -35,11 +35,23 @@ class PluginDispatcher(td: DependentType, plugins: Seq[Plugin]) extends Plugin(t
 }
 
 object PluginDispatcher {
-  def apply(td: DependentType, plugins: Seq[Constructor[_ <: Plugin]]): PluginDispatcher = {
+  def apply(
+    plugins: Seq[Constructor[_ <: Plugin]],
+    td: DependentType,
+    isLibrary: Boolean
+  ): PluginDispatcher = {
     new PluginDispatcher(
       td,
       plugins.map(plugin => {
-        plugin.newInstance(td)
+        try {
+          plugin.newInstance(td, isLibrary)
+        } catch {
+          case e: Exception =>
+            throw new RuntimeException(
+              s"Failed to instantiate plugin ${plugin.getDeclaringClass.getSimpleName} with library flag $isLibrary",
+              e
+            )
+        }
       })
     )
   }

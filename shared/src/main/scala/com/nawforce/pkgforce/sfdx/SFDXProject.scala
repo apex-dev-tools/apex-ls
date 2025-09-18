@@ -78,6 +78,11 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
 
   val apexConfig: ApexConfig = ApexConfig.fromConfig(projectPath, config)
 
+  // Convenience accessors for commonly used apexConfig properties
+  val isLibrary: Boolean = apexConfig.isLibrary
+  val externalMetadata: Seq[String] = apexConfig.externalMetadata
+  val externalMetadataPaths: Seq[PathLike] = apexConfig.externalMetadataPaths
+
   val forceIgnoreVersion: ForceIgnoreVersion = {
     val versionString =
       apexConfig.options.getOrElse("forceIgnoreVersion", ForceIgnoreVersion.default.value)
