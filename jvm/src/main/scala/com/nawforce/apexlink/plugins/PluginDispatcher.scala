@@ -19,7 +19,8 @@ import com.nawforce.apexlink.types.core.DependentType
 
 import java.lang.reflect.Constructor
 
-class PluginDispatcher(td: DependentType, plugins: Seq[Plugin]) extends Plugin(td) {
+class PluginDispatcher(td: DependentType, plugins: Seq[Plugin], isLibrary: Boolean)
+    extends Plugin(td, isLibrary) {
 
   override def onTypeValidated(): Seq[DependentType] = {
     plugins.flatMap(_.onTypeValidated())
@@ -52,7 +53,8 @@ object PluginDispatcher {
               e
             )
         }
-      })
+      }),
+      isLibrary
     )
   }
 }

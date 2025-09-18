@@ -58,8 +58,9 @@ class PluginsManager(isLibrary: Boolean = false) {
 object PluginsManager {
   private val defaultPlugins =
     Seq[Class[_ <: Plugin]](classOf[UnusedPlugin])
-  private var plugins            = defaultPlugins
-  private var pluginConstructors = defaultPlugins.map(_.getConstructor(classOf[DependentType]))
+  private var plugins = defaultPlugins
+  private var pluginConstructors =
+    defaultPlugins.map(_.getConstructor(classOf[DependentType], classOf[Boolean]))
 
   def activePlugins(): Seq[Constructor[_ <: Plugin]] = pluginConstructors
 
@@ -77,7 +78,7 @@ object PluginsManager {
 
   private def setPlugins(newPlugins: Seq[Class[_ <: Plugin]]): Unit = {
     plugins = newPlugins
-    pluginConstructors = plugins.map(_.getConstructor(classOf[DependentType]))
+    pluginConstructors = plugins.map(_.getConstructor(classOf[DependentType], classOf[Boolean]))
   }
 
 }

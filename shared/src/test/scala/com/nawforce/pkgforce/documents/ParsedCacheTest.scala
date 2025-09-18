@@ -146,7 +146,14 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
     assert(
       cache
         .get(
-          PackageContext(Some("test"), Array("ghosted1"), Array("analysed1", "analysed2"), Array(), Array(), false),
+          PackageContext(
+            Some("test"),
+            Array("ghosted1"),
+            Array("analysed1", "analysed2"),
+            Array(),
+            Array(),
+            false
+          ),
           "Foo",
           0
         )
@@ -171,7 +178,14 @@ class ParsedCacheTest extends AnyFunSuite with BeforeAndAfter {
     assert(
       cache
         .get(
-          PackageContext(Some("test"), Array("ghosted2", "ghosted1"), Array("analysed2"), Array(), Array(), false),
+          PackageContext(
+            Some("test"),
+            Array("ghosted2", "ghosted1"),
+            Array("analysed2"),
+            Array(),
+            Array(),
+            false
+          ),
           "Foo",
           0
         )

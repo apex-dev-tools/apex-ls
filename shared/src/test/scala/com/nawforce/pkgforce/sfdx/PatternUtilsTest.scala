@@ -256,35 +256,9 @@ class PatternUtilsTest extends AnyFlatSpec with Matchers {
     // We use ^(?:.*\/)? which is equivalent and works better in Java/Scala
     result should startWith("^(?:.*\\/)?")
 
-    // Debug step-by-step transformation
-    println(s"\\nDebugging transformation of '$pattern':")
-    var step = pattern
-    println(s"1. Original: $step")
-
-    // Simulate the NodeIgnoreExact steps
-    step = step.replaceAll("[\\\\$.\\|*+(){^]", "\\\\\\\\$0") // REPLACER 4: Escape metacharacters
-    println(s"2. After metachar escape: $step")
-
-    step = PatternUtils.replaceIntermediateWildcards(step) // REPLACER 11
-    println(s"3. After intermediate wildcards: $step")
-
-    step = PatternUtils.addStartingAnchor(step, pattern) // REPLACER 9
-    println(s"4. After starting anchor: $step")
-
-    step = PatternUtils.addEndingPattern(step) // REPLACER 15
-    println(s"5. After ending pattern: $step")
-
-    val fullRegex = NodeIgnoreExact.makeRegex(pattern)
-    println(s"6. Full NodeIgnoreExact result: $fullRegex")
-
+    val fullRegex   = NodeIgnoreExact.makeRegex(pattern)
     val regexString = s"(?i)$fullRegex"
     val regex       = regexString.r
-    println(s"Full regex string: '$regexString'")
-
-    // Test the exact string manually for comparison
-    val manualTest = raw"(?i)^(?:.*\/)?[^/]*\.txt(?=$$|\/)".r
-    println(s"Manual test string: '(?i)^(?:.*\\/)?[^/]*\\.txt(?=$$|\\/)'")
-    println(s"Manual test matches 'sub/test.txt': ${manualTest.matches("sub/test.txt")}")
 
     val testCases = Seq(
       ("test.txt", true),
@@ -295,7 +269,6 @@ class PatternUtilsTest extends AnyFlatSpec with Matchers {
 
     testCases.foreach { case (path, shouldMatch) =>
       val matches = regex.matches(path)
-      println(s"'$path' matches: $matches (expected: $shouldMatch)")
       matches shouldBe shouldMatch
     }
   }

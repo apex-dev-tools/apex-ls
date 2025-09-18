@@ -99,7 +99,9 @@ object Workspace {
           new Workspace(
             logger,
             layers,
-            Some(ProjectConfig(config.project.apexConfig.maxDependencyCount, config.project.isLibrary)),
+            Some(
+              ProjectConfig(config.project.apexConfig.maxDependencyCount, config.project.isLibrary)
+            ),
             config.project.externalMetadataPaths,
             config.project.forceIgnoreVersion
           )

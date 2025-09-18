@@ -35,7 +35,8 @@ case class ApexConfig(
   val options: Map[String, String]              = computeOptions()
   val isLibrary: Boolean                        = computeIsLibrary()
   val externalMetadata: Seq[String]             = computeExternalMetadata()
-  val externalMetadataPaths: Seq[PathLike]      = externalMetadata.map(extDir => projectPath.join(extDir))
+  val externalMetadataPaths: Seq[PathLike] =
+    externalMetadata.map(extDir => projectPath.join(extDir))
 
   private def computeDependencies(): Seq[PackageDependent] = {
     configSource.getOrElse("dependencies", ujson.Arr()) match {
