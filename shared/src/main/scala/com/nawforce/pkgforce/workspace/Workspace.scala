@@ -17,12 +17,7 @@ import com.nawforce.pkgforce.diagnostics.{CatchingLogger, IssuesManager}
 import com.nawforce.pkgforce.documents.{DocumentIndex, MetadataDocument}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.pkgforce.sfdx.{
-  MDAPIWorkspaceConfig,
-  SFDXProject,
-  SFDXWorkspaceConfig,
-  WorkspaceConfig
-}
+import com.nawforce.pkgforce.sfdx.{ForceIgnoreVersion, SFDXProject}
 import com.nawforce.pkgforce.stream.{PackageEvent, PackageStream}
 
 /** Contains any config option that can be used by the Org
@@ -43,12 +38,15 @@ case class Workspace(
   logger: IssuesManager,
   layers: Seq[NamespaceLayer],
   projectConfig: Option[ProjectConfig] = None,
-  externalMetadataPaths: Seq[PathLike] = Seq.empty
+  externalMetadataPaths: Seq[PathLike] = Seq.empty,
+  forceIgnoreVersion: ForceIgnoreVersion = ForceIgnoreVersion.default
 ) {
 
   // Document indexes for each layer of actual metadata
   val indexes: Map[ModuleLayer, DocumentIndex] =
-    layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) => acc ++ layer.indexes(logger))
+    layers.foldLeft(Map[ModuleLayer, DocumentIndex]())((acc, layer) =>
+      acc ++ layer.indexes(logger, forceIgnoreVersion)
+    )
 
   def get(typeName: TypeName): List[MetadataDocument] = {
     val indexes = deployOrderedIndexes.toSeq.reverse
@@ -71,21 +69,19 @@ case class Workspace(
 
 object Workspace {
   /* We need to pass an IssueManager here as this may generate a lot of diagnostics */
-  def apply(config: Option[WorkspaceConfig], issueManager: IssuesManager): Option[Workspace] = {
-    val layers = config.map(_.layers(issueManager)).getOrElse(Seq())
+  def apply(project: Option[SFDXProject], issueManager: IssuesManager): Option[Workspace] = {
+    val layers = project.map(_.layers(issueManager)).getOrElse(Seq())
     if (issueManager.hasErrors) {
       None
     } else {
-      config.map {
-        case config: SFDXWorkspaceConfig =>
-          new Workspace(
-            issueManager,
-            layers,
-            Some(ProjectConfig(config.project.maxDependencyCount, config.project.isLibrary)),
-            config.externalMetadataPaths
-          )
-        case config: WorkspaceConfig =>
-          new Workspace(issueManager, layers, None, config.externalMetadataPaths)
+      project.map { proj =>
+        new Workspace(
+          issueManager,
+          layers,
+          Some(ProjectConfig(proj.maxDependencyCount, proj.isLibrary)),
+          proj.externalMetadataPaths,
+          proj.forceIgnoreVersion
+        )
       }
     }
   }
@@ -117,28 +113,32 @@ object Workspace {
     path: PathLike,
     logger: CatchingLogger
   ): (Option[Workspace], IssuesManager) = {
-    val config             = loadWorkspaceConfig(path, logger)
-    val externalPathFilter = createExternalPathFilter(config)
+    val project            = loadSFDXProject(path, logger)
+    val externalPathFilter = createExternalPathFilter(project)
     val issueManager       = new IssuesManager(externalPathFilter)
     logger.issues.foreach(issueManager.add)
-    (Workspace(config, issueManager), issueManager)
+    (Workspace(project, issueManager), issueManager)
   }
 
-  private def loadWorkspaceConfig(
-    path: PathLike,
-    logger: CatchingLogger
-  ): Option[WorkspaceConfig] = {
+  private def loadSFDXProject(path: PathLike, logger: CatchingLogger): Option[SFDXProject] = {
     if (path.join("sfdx-project.json").exists) {
-      SFDXProject(path, logger).map(p => new SFDXWorkspaceConfig(path, p))
+      // SFDXProject.apply already logs detailed errors for all failure cases
+      // (parsing errors, read failures, etc.) so no additional logging is needed here
+      SFDXProject(path, logger)
     } else {
-      Some(new MDAPIWorkspaceConfig(None, Seq(path)))
+      logger.logError(
+        path,
+        Location.empty,
+        s"No sfdx-project.json found at $path. Only SFDX format projects are supported."
+      )
+      None
     }
   }
 
   private def createExternalPathFilter(
-    config: Option[WorkspaceConfig]
+    project: Option[SFDXProject]
   ): Option[PathLike => Boolean] = {
-    val externalPaths = config.map(_.externalMetadataPaths).getOrElse(Seq.empty).map(_.toString)
+    val externalPaths = project.map(_.externalMetadataPaths).getOrElse(Seq.empty).map(_.toString)
 
     if (externalPaths.nonEmpty) {
       Some((path: PathLike) => externalPaths.exists(prefix => path.toString.startsWith(prefix)))

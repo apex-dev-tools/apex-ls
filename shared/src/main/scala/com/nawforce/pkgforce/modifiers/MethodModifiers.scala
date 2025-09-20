@@ -118,6 +118,12 @@ object MethodModifiers {
         logger.logError(context, "Webservice methods can only be declared on outer classes")
         GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
+        extendedModifiers.contains(AURA_ENABLED_ANNOTATION) &&
+        !visibility.contains(PUBLIC_MODIFIER) && !visibility.contains(GLOBAL_MODIFIER)
+      ) {
+        logger.logError(context, "AuraEnabled methods must be global or public")
+        PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (
         extendedModifiers
           .contains(VIRTUAL_MODIFIER) && extendedModifiers.contains(ABSTRACT_MODIFIER)
       ) {
@@ -156,6 +162,23 @@ object MethodModifiers {
         logger.logWarning(
           context,
           "Private method overrides have inconsistent behaviour, use global, public or protected"
+        )
+        extendedModifiers
+      } else if (
+        (extendedModifiers
+          .contains(ISTEST_ANNOTATION) || extendedModifiers.contains(TEST_METHOD_MODIFIER)) &&
+        !extendedModifiers.contains(STATIC_MODIFIER)
+      ) {
+        logger.logError(context, "testMethod and @IsTest methods must be static")
+        STATIC_MODIFIER +: extendedModifiers
+      } else if (
+        (extendedModifiers
+          .contains(ISTEST_ANNOTATION) || extendedModifiers.contains(TEST_SETUP_ANNOTATION)) &&
+        !ownerInfo.modifiers.contains(ISTEST_ANNOTATION)
+      ) {
+        logger.logError(
+          context,
+          "Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation"
         )
         extendedModifiers
       } else {

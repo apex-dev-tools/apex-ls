@@ -357,13 +357,18 @@ object MetadataDocument {
     }
 
     // Used to test correct structuring of SObjects & components of
+    // "objects" directory is strict (strictDirectoryName: true in SFDX registry)
     lazy val isObjectsChild           = path.parent.basename == "objects"
     lazy val isObjectsGrandChild      = path.parent.parent.basename == "objects"
     lazy val isObjectsGrandGrandChild = path.parent.parent.parent.basename == "objects"
-    lazy val isFieldsChild            = isObjectsGrandGrandChild && path.parent.basename == "fields"
-    lazy val isFieldSetChild = isObjectsGrandGrandChild && path.parent.basename == "fieldSets"
+
+    // Child directories are more flexible but should warn on incorrect case
+    lazy val isFieldsChild =
+      isObjectsGrandGrandChild && path.parent.basename.toLowerCase == "fields"
+    lazy val isFieldSetChild =
+      isObjectsGrandGrandChild && path.parent.basename.toLowerCase == "fieldsets"
     lazy val isSharingReasonChild =
-      isObjectsGrandGrandChild && path.parent.basename == "sharingReasons"
+      isObjectsGrandGrandChild && path.parent.basename.toLowerCase == "sharingreasons"
 
     // For some docs the name just comes from the filename, for SObjects we use enclosing directory name so
     // we can detect errors between that, the filename and the fullName in the doc itself.

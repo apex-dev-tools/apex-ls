@@ -1314,7 +1314,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
   test("Library project: public methods in test classes not flagged as unused") {
     FileSystemHelper.run(
       Map(
-        "TestClass.cls" -> "@isTest public class TestClass { public void publicTestMethod() {} private void privateTestMethod() {} }"
+        "TestClass.cls" -> "@isTest public class TestClass { public static void publicTestMethod() {} private static void privateTestMethod() {} }"
       )
     ) { root: PathLike =>
       val org    = createLibraryOrgWithUnused(root)
@@ -1344,7 +1344,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
   test("Non-library project: public methods in test classes flagged as unused (baseline)") {
     FileSystemHelper.run(
       Map(
-        "TestClass.cls" -> "@isTest public class TestClass { @isTest public void usedTestMethod() {} public void publicTestMethod() {} }"
+        "TestClass.cls" -> "@isTest public class TestClass { @isTest public static void usedTestMethod() {} public static void publicTestMethod() {} }"
       )
     ) { root: PathLike =>
       val org    = createOrgWithUnused(root)

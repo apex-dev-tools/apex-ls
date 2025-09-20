@@ -540,4 +540,116 @@ class MetadataDocumentTest extends AnyFunSuite {
     }
   }
 
+  // Case sensitivity tests
+  test("objects directory case sensitivity - correct case") {
+    val objectXml = """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+                      |</CustomObject>""".stripMargin
+
+    FileSystemHelper.run(
+      Map("force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> objectXml)
+    ) { root: PathLike =>
+      val path = root.join("force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml")
+      val result = MetadataDocument(path)
+
+      assert(result.nonEmpty)
+      assert(result.get.isInstanceOf[SObjectDocument])
+      assert(result.get.name == Name("MyObject__c"))
+    }
+  }
+
+  test("objects directory case sensitivity - incorrect case (Objects)") {
+    val objectXml = """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+                      |</CustomObject>""".stripMargin
+
+    FileSystemHelper.run(
+      Map("force-app/main/default/Objects/MyObject__c/MyObject__c.object-meta.xml" -> objectXml)
+    ) { root: PathLike =>
+      val path = root.join("force-app/main/default/Objects/MyObject__c/MyObject__c.object-meta.xml")
+      val result = MetadataDocument(path)
+
+      // Should NOT be recognized due to wrong case in "Objects" vs "objects"
+      assert(result.isEmpty)
+    }
+  }
+
+  test("fields directory case sensitivity - correct case") {
+    val fieldXml = """<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+                     |  <fullName>Name__c</fullName>
+                     |  <type>Text</type>
+                     |</CustomField>""".stripMargin
+
+    FileSystemHelper.run(
+      Map("force-app/main/default/objects/MyObject__c/fields/Name__c.field-meta.xml" -> fieldXml)
+    ) { root: PathLike =>
+      val path =
+        root.join("force-app/main/default/objects/MyObject__c/fields/Name__c.field-meta.xml")
+      val result = MetadataDocument(path)
+
+      assert(result.nonEmpty)
+      assert(result.get.isInstanceOf[SObjectFieldDocument])
+      assert(result.get.name == Name("Name__c"))
+    }
+  }
+
+  test("fields directory case sensitivity - incorrect case (Fields)") {
+    val fieldXml = """<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+                     |  <fullName>Name__c</fullName>
+                     |  <type>Text</type>
+                     |</CustomField>""".stripMargin
+
+    FileSystemHelper.run(
+      Map("force-app/main/default/objects/MyObject__c/Fields/Name__c.field-meta.xml" -> fieldXml)
+    ) { root: PathLike =>
+      val path =
+        root.join("force-app/main/default/objects/MyObject__c/Fields/Name__c.field-meta.xml")
+      val result = MetadataDocument(path)
+
+      // Now accepts incorrect case but validator should warn
+      assert(result.nonEmpty)
+      assert(result.get.isInstanceOf[SObjectFieldDocument])
+      assert(result.get.name == Name("Name__c"))
+    }
+  }
+
+  test("fieldSets directory case sensitivity - correct case") {
+    val fieldSetXml = """<FieldSet xmlns="http://soap.sforce.com/2006/04/metadata">
+                        |  <fullName>TestSet</fullName>
+                        |</FieldSet>""".stripMargin
+
+    FileSystemHelper.run(
+      Map(
+        "force-app/main/default/objects/MyObject__c/fieldSets/TestSet.fieldSet-meta.xml" -> fieldSetXml
+      )
+    ) { root: PathLike =>
+      val path =
+        root.join("force-app/main/default/objects/MyObject__c/fieldSets/TestSet.fieldSet-meta.xml")
+      val result = MetadataDocument(path)
+
+      assert(result.nonEmpty)
+      assert(result.get.isInstanceOf[SObjectFieldSetDocument])
+      assert(result.get.name == Name("TestSet"))
+    }
+  }
+
+  test("fieldSets directory case sensitivity - incorrect case (FieldSets)") {
+    val fieldSetXml = """<FieldSet xmlns="http://soap.sforce.com/2006/04/metadata">
+                        |  <fullName>TestSet</fullName>
+                        |</FieldSet>""".stripMargin
+
+    FileSystemHelper.run(
+      Map(
+        "force-app/main/default/objects/MyObject__c/FieldSets/TestSet.fieldSet-meta.xml" -> fieldSetXml
+      )
+    ) { root: PathLike =>
+      val path =
+        root.join("force-app/main/default/objects/MyObject__c/FieldSets/TestSet.fieldSet-meta.xml")
+      val result = MetadataDocument(path)
+
+      // Now accepts incorrect case but validator should warn
+      assert(result.nonEmpty)
+      assert(result.get.isInstanceOf[SObjectFieldSetDocument])
+      assert(result.get.name == Name("TestSet"))
+    }
+  }
+
 }
