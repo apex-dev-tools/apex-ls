@@ -117,6 +117,12 @@ object MethodModifiers {
         logger.logError(context, "Webservice methods can only be declared on outer classes")
         GLOBAL_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
+        extendedModifiers.contains(AURA_ENABLED_ANNOTATION) &&
+        !visibility.contains(PUBLIC_MODIFIER) && !visibility.contains(GLOBAL_MODIFIER)
+      ) {
+        logger.logError(context, "AuraEnabled methods must be global or public")
+        PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
+      } else if (
         extendedModifiers
           .contains(VIRTUAL_MODIFIER) && extendedModifiers.contains(ABSTRACT_MODIFIER)
       ) {

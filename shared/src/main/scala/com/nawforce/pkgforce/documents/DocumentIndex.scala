@@ -16,7 +16,12 @@ package com.nawforce.pkgforce.documents
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
-import com.nawforce.pkgforce.sfdx.ForceIgnoreV2
+import com.nawforce.pkgforce.sfdx.{
+  ForceIgnore,
+  ForceIgnoreInterface,
+  ForceIgnoreV2,
+  ForceIgnoreVersion
+}
 import com.nawforce.runtime.platform.Path
 
 import scala.collection.mutable
@@ -32,7 +37,7 @@ class DocumentIndex(
   logger: IssueLogger,
   namespace: Option[Name],
   isGulped: Boolean,
-  ignore: Option[ForceIgnoreV2]
+  ignore: Option[ForceIgnoreInterface]
 ) {
 
   /** Store Nature->Type name (lowercase)->Path string */
@@ -163,30 +168,20 @@ object DocumentIndex {
     namespace: Option[Name],
     isGulped: Boolean,
     projectPath: PathLike,
-    path: PathLike
+    path: PathLike,
+    forceIgnoreVersion: ForceIgnoreVersion = ForceIgnoreVersion.default
   ): DocumentIndex = {
-    new DocumentIndex(
-      path,
-      logger,
-      namespace,
-      isGulped,
-      logger.logAndGet(ForceIgnoreV2(projectPath.join(".forceignore")))
-    )
-  }
-
-  /** Simplified construction for MDAPI only projects where projectDir = module path. */
-  def apply(
-    logger: IssueLogger,
-    namespace: Option[Name],
-    isGulped: Boolean,
-    path: PathLike
-  ): DocumentIndex = {
-    DocumentIndex(logger, namespace, isGulped, path, path)
+    val ignore = forceIgnoreVersion match {
+      case ForceIgnoreVersion.V1 => logger.logAndGet(ForceIgnore(projectPath.join(".forceignore")))
+      case ForceIgnoreVersion.V2 =>
+        logger.logAndGet(ForceIgnoreV2(projectPath.join(".forceignore")))
+    }
+    new DocumentIndex(path, logger, namespace, isGulped, ignore)
   }
 
   private def indexPath(
     path: PathLike,
-    forceIgnore: Option[ForceIgnoreV2],
+    forceIgnore: Option[ForceIgnoreInterface],
     index: DocumentIndex
   ): Unit = {
 
@@ -208,7 +203,7 @@ object DocumentIndex {
 
   private def addPath(
     path: PathLike,
-    forceIgnore: Option[ForceIgnoreV2],
+    forceIgnore: Option[ForceIgnoreInterface],
     index: DocumentIndex
   ): Unit = {
     // Not testing if this is a regular file to improve scan performance, will fail later on read
