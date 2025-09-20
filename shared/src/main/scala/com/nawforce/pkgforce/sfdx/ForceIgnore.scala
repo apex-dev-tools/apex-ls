@@ -21,7 +21,13 @@ import java.util.regex.{Matcher, Pattern}
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 
-class ForceIgnore(rootPath: PathLike, ignoreRules: Seq[IgnoreRule]) {
+/** Common interface for ForceIgnore implementations */
+trait ForceIgnoreInterface {
+  def includeDirectory(path: PathLike): Boolean
+  def includeFile(path: PathLike): Boolean
+}
+
+class ForceIgnore(rootPath: PathLike, ignoreRules: Seq[IgnoreRule]) extends ForceIgnoreInterface {
   private val rootPathNative = rootPath.toString
   private val rootPathLength = {
     rootPathNative.length + (if (rootPathNative.endsWith(Path.separator)) 0 else 1)
@@ -134,7 +140,7 @@ case class IgnoreRule(dirOnly: Boolean, negation: Boolean, pattern: String) {
 }
 
 object IgnoreRule {
-  val nonSep: String = "[^" + escape(Path.separator) + "]"
+  private val nonSep: String = "[^" + escape(Path.separator) + "]"
 
   /*
    * Read rules from ignore file
@@ -170,7 +176,7 @@ object IgnoreRule {
       .toIndexedSeq
   }
 
-  def escape(s: String): String = {
+  private def escape(s: String): String = {
     s.map(escapeChar).mkString
   }
 
