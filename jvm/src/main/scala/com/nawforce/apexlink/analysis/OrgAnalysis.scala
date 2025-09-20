@@ -96,7 +96,7 @@ class OrgAnalysis(org: OrgImpl) {
     // Clear provider issues for files that already have syntax errors to reduce noise
     syntaxGroups
       .getOrElse(true, Set())
-      .foreach(path => IssueProviderOps.clearProviderIssues(org.issues, path))
+      .foreach(path => IssueProviderOps.clearProviderIssues(issueManager, path))
 
     providers
       .foreach(provider => {
@@ -116,7 +116,7 @@ class OrgAnalysis(org: OrgImpl) {
 
         issuesByFile.foreach(kv =>
           IssueProviderOps.replaceProviderIssues(
-            org.issues,
+            issueManager,
             providerId,
             kv._1,
             kv._2.map(toIssue(providerId, _))
