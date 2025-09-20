@@ -10,10 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - CHANGELOG.md to track project changes (#375)
 - @AuraEnabled method validation - ensures methods are public or global (#333)
+- Test modifier validation for @IsTest and @TestSetup annotations (#333)
+  - Classes must be annotated with @IsTest if methods are
+  - @IsTest and testMethod methods must be static
 - Library project support in sfdx-project.json (#363)
   - Suppresses unused warnings for public entities in library projects
-  - Filters warnings from external metadata paths
+  - Support for external metadata paths configuration
+  - Plugin system refactoring to handle library-specific behavior
+- Break/continue statement validation outside loops (#378)
+- ForceIgnore version configuration in sfdx-project.json (#371)
+- ForceIgnoreV2 with exact node-ignore 5.3.2 compatibility (#369)
+  - Now the default ignore handler for improved pattern matching
+- Interface method overload validation (#368)
 - MCP (Model Context Protocol) server for AI tool integration (#356)
+
+### Removed
+- MDAPI workspace support (#366)
+  - All projects now require sfdx-project.json configuration
+
+### Fixed
+- Improved forceIgnoreVersion validation and cleanup of legacy code
+- Enhanced pattern matching optimization in ForceIgnoreV2
 
 
 ## [5.10.0] - 2025-07-24
