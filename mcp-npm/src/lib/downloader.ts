@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { pipeline } from 'stream/promises';
-import fetch from 'node-fetch';
 
 export async function downloadJar(url: string, destinationPath: string): Promise<string> {
   try {

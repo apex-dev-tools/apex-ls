@@ -4,9 +4,9 @@ import { downloadJar } from '../../dist/lib/downloader';
 import { createTestCacheDir } from '../helpers/test-utils';
 import { Readable } from 'stream';
 
-// Mock node-fetch
-jest.mock('node-fetch');
-const mockFetch = require('node-fetch') as jest.MockedFunction<typeof import('node-fetch').default>;
+// Mock global fetch
+const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+global.fetch = mockFetch;
 
 // Helper function to create a readable stream from buffer
 function createReadableStream(buffer: Buffer): Readable {

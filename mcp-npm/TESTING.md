@@ -65,13 +65,62 @@ Use manual testing when:
 
 ## Testing Strategy
 
-The testing approach combines automated and manual testing:
+The testing approach is designed to handle the unique challenges of testing an NPM package that downloads versioned JAR files:
 
-- **Automated tests** provide fast feedback and catch regressions
-- **Manual tests** verify real-world scenarios and integration points
-- **Unit tests** ensure individual components work correctly
-- **Integration tests** verify component interactions
-- **System tests** test error handling and edge cases
-- **Manual tests** validate end-to-end user experience
+### CI/CD Strategy
+- **GitHub Actions runs ONLY unit tests** (`npm run test:unit`)
+- **Integration and system tests are excluded from CI** to avoid version dependency issues
+- **CI uses `npm ci --ignore-scripts`** to skip JAR downloads during build
 
-This comprehensive approach ensures both development velocity and production reliability.
+### Development Workflow
+- **Unit tests** - Always safe to run, no external dependencies
+- **Integration tests** - May fail during development when target JAR version doesn't exist yet
+- **System tests** - Require actual released JARs, used for pre-release validation
+- **Manual tests** - Full end-to-end verification with real network calls
+
+### Version Dependency Handling
+The package faces a chicken-and-egg problem: tests often run against JAR versions that haven't been released yet. Our solution:
+
+- **Unit tests**: Test core logic without network dependencies (CI-safe)
+- **Integration tests**: Use version patterns instead of hardcoded versions
+- **System tests**: Accept that they may fail during development
+- **Manual tests**: Use actual releases for final validation
+
+### Version Override for Testing
+
+To test against a known released version instead of the development version in package.json:
+
+```bash
+# Test integration tests against version 5.10.0
+npm run test:with-version 5.10.0 integration
+
+# Test system tests against version 5.10.0
+npm run test:with-version 5.10.0 system
+
+# Test both integration and system tests
+npm run test:with-version 5.10.0
+
+# Or set environment variable directly
+export APEX_LS_MCP_VERSION=5.10.0
+npm run test:integration
+```
+
+This allows testing against released versions while keeping the next development version in package.json.
+
+### When Tests May Fail
+- **Integration/System tests will fail** when package.json references a JAR version that doesn't exist yet
+- **This is expected behavior** during development cycles
+- **Use version override** to test against known released versions
+- **Tests become valid** once the corresponding JAR version is released
+
+### Testing Best Practices
+- **Always run unit tests** before commits (no version dependencies)
+- **Use version override** to test integration/system tests against released versions
+- **Run integration tests** after JAR releases to verify compatibility
+- **Use manual tests** for comprehensive pre-release validation
+- **Don't block development** on integration test failures for unreleased versions
+
+### Environment Variables
+- `APEX_LS_MCP_VERSION` - Override the JAR version for testing (e.g., "5.10.0")
+
+This strategy ensures development velocity while maintaining comprehensive test coverage when it matters most.

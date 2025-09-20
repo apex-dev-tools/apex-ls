@@ -82,13 +82,20 @@ describe('Simple Integration Tests', () => {
 
   test('config module functions work', () => {
     const config = require('../../dist/lib/config');
-    
+
     // Test that functions return reasonable values
     expect(config.getCacheDir()).toBeTruthy();
     expect(config.getJarPath()).toBeTruthy();
     expect(config.getCurrentVersion()).toBeTruthy();
     expect(config.getDownloadUrl()).toContain('github.com');
-    expect(config.getDownloadUrl()).toContain('5.9.0'); // Should contain the actual version
+    expect(config.getCurrentVersion()).toMatch(/^\d+\.\d+\.\d+$/); // Should match semantic version pattern
+    expect(config.getDownloadUrl()).toContain(config.getCurrentVersion()); // Should contain the actual version
+
+    // Test path construction logic without actual network calls
+    expect(config.getCacheDir()).toContain('.apex-ls-mcp');
+    expect(config.getJarPath()).toEndWith('apex-ls-mcp.jar');
+    expect(config.getVersionFilePath()).toEndWith('version.txt');
+    expect(typeof config.isJarCached()).toBe('boolean');
   });
 
   test('install module can be loaded without errors', () => {

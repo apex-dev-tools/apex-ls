@@ -30,6 +30,12 @@ export function getVersionFilePath(): string {
 }
 
 export function getCurrentVersion(): string {
+  // Allow override via environment variable for testing
+  const envVersion = process.env.APEX_LS_MCP_VERSION;
+  if (envVersion) {
+    return envVersion;
+  }
+
   const config = getPackageConfig();
   return config.jarVersion;
 }

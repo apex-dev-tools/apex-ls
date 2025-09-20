@@ -5,9 +5,9 @@
   "main": "dist/cli.js",
   "bin": {
     "apex-ls-mcp": "./bin/apex-ls-mcp"
-  },  
+  },
   "config": {
-    "jarVersion": "5.9.0",
+    "jarVersion": "5.11.0",
     "downloadUrl": "https://github.com/apex-dev-tools/apex-ls/releases/download/v{jarVersion}/apex-ls-mcp-{jarVersion}-standalone.jar"
   },
   "scripts": {
@@ -17,23 +17,21 @@
     "build:watch": "tsc --watch",
     "test": "jest",
     "test:unit": "jest test/unit",
-    "test:integration": "jest test/integration", 
+    "test:integration": "jest test/integration",
     "test:system": "jest test/system",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:manual": "scripts/manual-test.sh",
+    "test:with-version": "scripts/test-with-version.sh",
     "lint": "tsc --noEmit",
     "pretest": "npm run build",
     "prepublishOnly": "npm run build"
   },
-  "dependencies": {
-    "node-fetch": "^2.7.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "jest": "^29.7.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
-    "@types/node-fetch": "^2.6.0",
     "typescript": "^5.0.0",
     "ts-jest": "^29.2.0",
     "ts-node": "^10.9.0"
@@ -54,7 +52,7 @@
   },
   "homepage": "https://github.com/apex-dev-tools/apex-ls#readme",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "os": [
     "darwin",
