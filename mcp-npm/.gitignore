@@ -1,0 +1,49 @@
+node_modules/
+*.log
+.DS_Store
+.npm
+*.tgz
+
+# Build output
+dist/
+bin/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Output of 'npm pack'
+*.tgz
+
+# JAR files (except test fixtures)
+*.jar
+!test/fixtures/*.jar
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
