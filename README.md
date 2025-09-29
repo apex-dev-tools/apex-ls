@@ -54,7 +54,35 @@ The following arguments are available:
 
 ### sfdx-project.json Options
 
-The Apex Language Server can be configured through the `sfdx-project.json` file using the `plugins.options` section:
+The Apex Language Server can be configured through the `sfdx-project.json` file. There are two supported configuration styles:
+
+#### Recommended: Namespaced Configuration
+
+The recommended approach is to configure apex-ls settings under the `plugins.apex-ls` section:
+
+```json
+{
+  "packageDirectories": [...],
+  "namespace": "...",
+  "plugins": {
+    "apex-ls": {
+      "dependencies": [...],
+      "additionalNamespaces": [...],
+      "unpackagedMetadata": [...],
+      "externalMetadata": [...],
+      "library": true,
+      "maxDependencyCount": 10,
+      "options": {
+        "forceIgnoreVersion": "v2"
+      }
+    }
+  }
+}
+```
+
+#### Legacy Configuration (Backward Compatible)
+
+For backward compatibility, the legacy configuration style is still supported:
 
 ```json
 {
@@ -63,6 +91,10 @@ The Apex Language Server can be configured through the `sfdx-project.json` file 
   "plugins": {
     "dependencies": [...],
     "additionalNamespaces": [...],
+    "unpackagedMetadata": [...],
+    "externalMetadata": [...],
+    "library": true,
+    "maxDependencyCount": 10,
     "options": {
       "forceIgnoreVersion": "v2"
     }
@@ -70,11 +102,19 @@ The Apex Language Server can be configured through the `sfdx-project.json` file 
 }
 ```
 
+**Configuration Precedence**: When both styles are present, the namespaced `plugins.apex-ls` configuration takes precedence over the legacy `plugins` configuration.
+
 #### Available Options
 
 | Option              | Values        | Default | Description                                                                                    |
 |---------------------|---------------|---------|------------------------------------------------------------------------------------------------|
 | `forceIgnoreVersion` | `"v1"`, `"v2"` | `"v2"`  | Controls which `.forceignore` implementation to use. `v2` provides exact node-ignore 5.3.2 compatibility, `v1` uses the legacy implementation. |
+| `dependencies`      | Array         | `[]`    | List of package dependencies for the project. |
+| `additionalNamespaces` | Array      | `[]`    | Additional namespaces to include in analysis. |
+| `unpackagedMetadata` | Array        | `[]`    | Unpackaged metadata directories to include. |
+| `externalMetadata`  | Array         | `[]`    | External metadata directories to include in analysis. |
+| `library`           | Boolean       | `false` | Whether this project should be treated as a library. |
+| `maxDependencyCount` | Integer      | None    | Maximum number of dependencies allowed. |
 
 The `options` section supports additional configuration options that may be added in future releases.
 
