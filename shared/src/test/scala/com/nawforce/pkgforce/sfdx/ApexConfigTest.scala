@@ -24,10 +24,10 @@ import scala.collection.compat.immutable.ArraySeq
 
 class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
 
-  private var logger: CatchingLogger = _
+  private var logger: IssueLogger = _
 
   before {
-    logger = new CatchingLogger
+    logger = new IssueLogger
   }
 
   test("Legacy configuration - empty plugins") {

@@ -9,8 +9,7 @@ import com.financialforce.types.base.{
   Location => OPLocation,
   Modifier => OPModifier
 }
-import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
-import com.nawforce.pkgforce.modifiers._
+import com.nawforce.pkgforce.modifiers.{LogEntryContext, ModifierLogger, _}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.OutlineParserLocationOps.extendLocation
 

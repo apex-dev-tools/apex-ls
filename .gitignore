@@ -6,6 +6,7 @@
 .claude/
 project/.bloop/
 project/project/
+project/metals.sbt
 
 **/target/
 **/node_modules/

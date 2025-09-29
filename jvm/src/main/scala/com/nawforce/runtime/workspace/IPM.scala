@@ -5,7 +5,7 @@ package com.nawforce.runtime.workspace
 
 import com.financialforce.types._
 import com.financialforce.types.base.{TypeNameSegment, TypeRef, UnresolvedTypeRef}
-import com.nawforce.pkgforce.diagnostics._
+import com.nawforce.pkgforce.diagnostics.{IssueLogger, _}
 import com.nawforce.pkgforce.documents.{ApexNature, DocumentIndex, SObjectNature}
 import com.nawforce.pkgforce.names.TypeName.ambiguousAliasMap
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
@@ -28,7 +28,7 @@ object IPM extends TriHierarchy {
     val (_workspace, issues) = Workspace(path)
 
     val workspace: Workspace = {
-      _workspace.getOrElse(new Workspace(issues, Seq()))
+      _workspace.getOrElse(Workspace(None, issues).get)
     }
 
     override val packages: ArraySeq[Package] = {
@@ -43,7 +43,7 @@ object IPM extends TriHierarchy {
         new MetadataModule(pkg, dependencies, index, loadingPool)
       }
 
-      val logger = new CatchingLogger
+      val logger = new IssueLogger()
 
       // Fold over platform namespaces to create packages for each, these form a chain
       val platform =

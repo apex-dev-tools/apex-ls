@@ -4,7 +4,7 @@
 
 package io.github.apexdevtools.apexls.api;
 
-import com.nawforce.pkgforce.diagnostics.IssuesManager;
+import com.nawforce.pkgforce.diagnostics.IssueLogger;
 import com.nawforce.pkgforce.path.PathLike;
 import io.github.apexdevtools.apexls.types.ApexTypeAdapter;
 import com.nawforce.runtime.platform.Path;
@@ -133,7 +133,7 @@ public class MDIndex implements IssuesCollection {
         return uriFilename;
     }
 
-    private IssuesManager issues() {
+    private IssueLogger issues() {
         return index.issues();
     }
 

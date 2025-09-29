@@ -23,7 +23,7 @@ import com.nawforce.apexlink.types.apex._
 import com.nawforce.apexlink.types.core.{DependentType, TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other.{LabelDeclaration, Page}
 import com.nawforce.apexlink.types.schema.SObjectDeclaration
-import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.pkgforce.diagnostics.{IssueAnalysis, LoggerOps}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names.{TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.PathLike
@@ -425,26 +425,28 @@ trait PackageAPI extends Package {
 
   private def typesWithMissingDiagnostics: Seq[TypeId] = {
     val modules = org.packages.reverse.flatMap(_.orderedModules)
-    org.issues.getMissing.flatMap(path => {
-      modules
-        .find(_.isVisibleFile(path))
-        .flatMap(module => {
-          MetadataDocument(path) match {
-            case Some(_: PageDocument) =>
-              // For any pages we need to return the 'Page' declaration as pages are not types but fields
-              Some(TypeId(module, module.pages.typeName))
-            case Some(_: ComponentDocument) =>
-              // Components are types, but they are nested which complicates things so return the 'Component' declaration
-              Some(TypeId(module, module.components.typeName))
-            case Some(mdDoc: MetadataDocument) =>
-              // For everything else, just do a type lookup
-              module
-                .moduleType(mdDoc.controllingTypeName(module.namespace))
-                .map(td => TypeId(module, td.typeName))
+    IssueAnalysis
+      .getMissing(org.issues)
+      .flatMap(path => {
+        modules
+          .find(_.isVisibleFile(path))
+          .flatMap(module => {
+            MetadataDocument(path) match {
+              case Some(_: PageDocument) =>
+                // For any pages we need to return the 'Page' declaration as pages are not types but fields
+                Some(TypeId(module, module.pages.typeName))
+              case Some(_: ComponentDocument) =>
+                // Components are types, but they are nested which complicates things so return the 'Component' declaration
+                Some(TypeId(module, module.components.typeName))
+              case Some(mdDoc: MetadataDocument) =>
+                // For everything else, just do a type lookup
+                module
+                  .moduleType(mdDoc.controllingTypeName(module.namespace))
+                  .map(td => TypeId(module, td.typeName))
 
-            case _ => None
-          }
-        })
-    })
+              case _ => None
+            }
+          })
+      })
   }
 }

@@ -38,7 +38,7 @@ class ExternalMetadataFilterTest extends AnyFunSuite {
         path.toString.contains("vendor")
       }
 
-      val issueManager = new IssuesManager(Some(externalPathFilter))
+      val issueManager = new IssueLogger(Some(externalPathFilter))
 
       // Add a warning and error for both internal and external files
       val internalFile = root.join("force-app/main/default/classes/Test.cls")
@@ -94,7 +94,7 @@ class ExternalMetadataFilterTest extends AnyFunSuite {
         "force-app/main/default/classes/Test.cls" -> "public class Test {}"
       )
     ) { root: PathLike =>
-      val issueManager = new IssuesManager(None)
+      val issueManager = new IssueLogger(None)
 
       val internalFile = root.join("force-app/main/default/classes/Test.cls")
       issueManager.add(Issue(internalFile, Diagnostic(WARNING_CATEGORY, Location.empty, "Warning")))
