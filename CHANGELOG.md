@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved forceIgnoreVersion validation and cleanup of legacy code
 - Enhanced pattern matching optimization in ForceIgnoreV2
 
+### Changed
+- Refactored logger architecture for improved modularity, extensibility, and plugin support
+
 
 ## [5.10.0] - 2025-07-24
 
