@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now the default ignore handler for improved pattern matching
 - Interface method overload validation (#368)
 - MCP (Model Context Protocol) server for AI tool integration (#356)
+- npm wrapper package for MCP server deployment and related CI/test improvements (#379)
 
 ### Removed
 - MDAPI workspace support (#366)
