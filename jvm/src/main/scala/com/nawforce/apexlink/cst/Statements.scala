@@ -218,9 +218,7 @@ final case class IfStatement(expression: Expression, statements: Seq[Statement])
       }
       stmt.verify(stmtContext)
       if (isBlock)
-        context.typePlugin.foreach(
-          _.onScopeValidated(context.isStatic, stmtContext)
-        )
+        context.typePlugin.foreach(_.onScopeValidated(context.isStatic, stmtContext))
     })
 
     verifyControlPath(stmtRootContext, BranchControlPattern(Some(exprResult._2), 2))

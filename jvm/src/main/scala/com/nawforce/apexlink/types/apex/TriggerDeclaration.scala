@@ -114,9 +114,7 @@ final case class TriggerDeclaration(
               val triggerContext = new OuterScopeVerifyContext(context, isStaticContext = false)
               triggerContext.addVar(Names.Trigger, None, isReadOnly = true, tc)
               block.verify(triggerContext)
-              context.typePlugin.foreach(
-                _.onScopeValidated(isStatic = false, triggerContext)
-              )
+              context.typePlugin.foreach(_.onScopeValidated(isStatic = false, triggerContext))
             } finally {
               module.removeMetadata(tc)
             }

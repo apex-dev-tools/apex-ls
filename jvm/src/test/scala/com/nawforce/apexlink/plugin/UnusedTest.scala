@@ -1366,7 +1366,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         "Foo.cls" -> "public class Foo{ {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      val org = createOrgWithUnused(root)
+      val org    = createOrgWithUnused(root)
       val issues = orgIssuesFor(org, root.join("Dummy.cls"))
       // makeFoo() should NOT be marked as unused since it's called from createFooList
       assert(!issues.contains("Unused private method 'Foo__c makeFoo()'"))
@@ -1380,7 +1380,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         "Foo.cls" -> "public class Foo{ {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
-      val org = createOrgWithUnused(root)
+      val org    = createOrgWithUnused(root)
       val issues = orgIssuesFor(org, root.join("Dummy.cls"))
       // Both methods should NOT be marked as unused since they're called from static initializer
       assert(!issues.contains("Unused private method 'void createFooList()'"))
@@ -1395,7 +1395,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         "Foo.cls" -> "public class Foo{ {new Dummy().loopMethod();} }"
       )
     ) { root: PathLike =>
-      val org = createOrgWithUnused(root)
+      val org    = createOrgWithUnused(root)
       val issues = orgIssuesFor(org, root.join("Dummy.cls"))
       // Fixed behavior: loop variables that are only used in condition/increment
       // but not in loop body are now correctly detected as unused
@@ -1410,7 +1410,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         "Foo.cls" -> "public class Foo{ {new Dummy().loopMethod();} }"
       )
     ) { root: PathLike =>
-      val org = createOrgWithUnused(root)
+      val org    = createOrgWithUnused(root)
       val issues = orgIssuesFor(org, root.join("Dummy.cls"))
       // Variable 'i' should NOT be marked as unused since it's used in the loop body
       assert(!issues.contains("Unused local variable 'i'"))
@@ -1424,7 +1424,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
         "Foo.cls" -> "public class Foo{ {Type t = BatchClass.class;} }"
       )
     ) { root: PathLike =>
-      val org = createOrgWithUnused(root)
+      val org    = createOrgWithUnused(root)
       val issues = orgIssuesFor(org, root.join("BatchClass.cls"))
       // Batch interface methods should NOT be marked as unused
       assert(!issues.contains("Unused public method"))

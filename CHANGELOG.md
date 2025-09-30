@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interface method overload validation (#368)
 - MCP (Model Context Protocol) server for AI tool integration (#356)
 
+### Fixed
+- Loop variable unused detection now correctly flags variables only used in for-loop conditions/increments (#330)
+
 ### Removed
 - MDAPI workspace support (#366)
   - All projects now require sfdx-project.json configuration

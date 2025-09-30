@@ -82,10 +82,7 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
     }
   }
 
-  override def onScopeValidated(
-    isStatic: Boolean,
-    context: ScopeVerifyContext
-  ): Unit = {
+  override def onScopeValidated(isStatic: Boolean, context: ScopeVerifyContext): Unit = {
     if (context.modifiers(suppressModifiers.contains))
       return
 

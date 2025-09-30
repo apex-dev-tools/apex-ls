@@ -26,10 +26,7 @@ class PluginDispatcher(td: DependentType, plugins: Seq[Plugin], isLibrary: Boole
     plugins.flatMap(_.onTypeValidated())
   }
 
-  override def onScopeValidated(
-    isStatic: Boolean,
-    context: ScopeVerifyContext
-  ): Unit = {
+  override def onScopeValidated(isStatic: Boolean, context: ScopeVerifyContext): Unit = {
     plugins.foreach(_.onScopeValidated(isStatic, context))
   }
 }
