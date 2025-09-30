@@ -111,11 +111,11 @@ final case class TriggerDeclaration(
 
           block.foreach(block => {
             try {
-              val triggerContext = new OuterBlockVerifyContext(context, isStaticContext = false)
+              val triggerContext = new OuterScopeVerifyContext(context, isStaticContext = false)
               triggerContext.addVar(Names.Trigger, None, isReadOnly = true, tc)
               block.verify(triggerContext)
               context.typePlugin.foreach(
-                _.onBlockValidated(block, isStatic = false, triggerContext)
+                _.onScopeValidated(isStatic = false, triggerContext)
               )
             } finally {
               module.removeMetadata(tc)
@@ -186,7 +186,7 @@ final case class TriggerDeclaration(
   override def getValidationMap(line: Int, offset: Int): Map[Location, ValidationResult] = {
     val resultMap   = mutable.Map[Location, ValidationResult]()
     val typeContext = new TypeVerifyContext(None, this, Some(resultMap), enablePlugins = false)
-    val context     = new OuterBlockVerifyContext(typeContext, isStaticContext = false)
+    val context     = new OuterScopeVerifyContext(typeContext, isStaticContext = false)
     context.disableIssueReporting() {
       block.foreach(block => {
         block.verify(context)

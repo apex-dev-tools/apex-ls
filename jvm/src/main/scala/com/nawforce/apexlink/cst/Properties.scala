@@ -131,10 +131,10 @@ final case class GetterPropertyBlock(modifiers: ModifierResults, block: Option[B
     propertyType: TypeDeclaration
   ): Unit = {
     block.foreach(block => {
-      val blockContext = new OuterBlockVerifyContext(context, isStatic, propertyType.typeName)
+      val blockContext = new OuterScopeVerifyContext(context, isStatic, propertyType.typeName)
       block.verify(blockContext)
       blockContext.logControlFlowIssues()
-      context.typePlugin.foreach(_.onBlockValidated(block, isStatic, blockContext))
+      context.typePlugin.foreach(_.onScopeValidated(isStatic, blockContext))
     })
   }
 }
@@ -150,7 +150,7 @@ final case class SetterPropertyBlock(
     propertyType: TypeDeclaration
   ): Unit = {
     block.foreach(block => {
-      val blockContext = new OuterBlockVerifyContext(context, isStatic)
+      val blockContext = new OuterScopeVerifyContext(context, isStatic)
       blockContext.addVar(
         Name("value"),
         None,
@@ -158,7 +158,7 @@ final case class SetterPropertyBlock(
         propertyType
       )
       block.verify(blockContext)
-      context.typePlugin.foreach(_.onBlockValidated(block, isStatic, blockContext))
+      context.typePlugin.foreach(_.onScopeValidated(isStatic, blockContext))
     })
   }
 }

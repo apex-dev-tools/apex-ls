@@ -312,7 +312,7 @@ case class VarTypeAndDefinition(
   isReadOnly: Boolean
 )
 
-abstract class BlockVerifyContext(parentContext: VerifyContext)
+abstract class ScopeVerifyContext(parentContext: VerifyContext)
     extends VerifyContext
     with ControlFlowContext {
 
@@ -393,7 +393,7 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
   /** Check if this context or any parent context is within a loop */
   def isInLoop: Boolean = inLoop || parent()
     .flatMap {
-      case bvc: BlockVerifyContext => Some(bvc.isInLoop)
+      case svc: ScopeVerifyContext => Some(svc.isInLoop)
       case _                       => None
     }
     .getOrElse(false)
@@ -430,22 +430,22 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
   }
 }
 
-final class OuterBlockVerifyContext(
+final class OuterScopeVerifyContext(
   parentContext: VerifyContext,
   isStaticContext: Boolean,
   returnTypeName: TypeName = TypeNames.Void
-) extends BlockVerifyContext(parentContext)
+) extends ScopeVerifyContext(parentContext)
     with OuterControlFlowContext {
 
-  assert(!parentContext.isInstanceOf[BlockVerifyContext])
+  assert(!parentContext.isInstanceOf[ScopeVerifyContext])
 
   override val isStatic: Boolean = isStaticContext
 
   override def returnType: TypeName = returnTypeName
 }
 
-final class InnerBlockVerifyContext(parentContext: BlockVerifyContext)
-    extends BlockVerifyContext(parentContext) {
+final class InnerScopeVerifyContext(parentContext: ScopeVerifyContext)
+    extends ScopeVerifyContext(parentContext) {
 
   override def isStatic: Boolean = parentContext.isStatic
 
@@ -460,7 +460,31 @@ final class InnerBlockVerifyContext(parentContext: BlockVerifyContext)
     super.getVar(name, markUsed).orElse(parentContext.getVar(name, markUsed))
 }
 
-final class ExpressionVerifyContext(parentContext: BlockVerifyContext) extends VerifyContext {
+final class ForControlScopeVerifyContext(parentContext: ScopeVerifyContext)
+    extends ScopeVerifyContext(parentContext) {
+
+  private var allowUsageTracking: Boolean = false
+
+  override def isStatic: Boolean = parentContext.isStatic
+
+  override def returnType: TypeName = parentContext.returnType
+
+  def setUsageTracking(enabled: Boolean): Unit = {
+    allowUsageTracking = enabled
+  }
+
+  override def getVar(name: Name, markUsed: Boolean): Option[VarTypeAndDefinition] = {
+    val shouldMarkUsed = markUsed && allowUsageTracking
+    super.getVar(name, shouldMarkUsed).orElse(parentContext.getVar(name, shouldMarkUsed))
+  }
+
+  override def collectVars(accum: mutable.Map[Name, VarTypeAndDefinition]): Unit = {
+    parentContext.collectVars(accum)
+    super.collectVars(accum)
+  }
+}
+
+final class ExpressionVerifyContext(parentContext: ScopeVerifyContext) extends VerifyContext {
 
   override def parent(): Option[VerifyContext] = Some(parentContext)
 
