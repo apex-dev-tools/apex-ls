@@ -1354,4 +1354,78 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  // Tests for GitHub issue #330 - Unused problems
+
+  test("Static initializer method usage should be detected") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { private static void createFooList() { insert new List<Foo__c>{ makeFoo() }; } private static Foo__c makeFoo() { return new Foo__c(); } }",
+        "Foo.cls" -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("Dummy.cls"))
+      // makeFoo() should NOT be marked as unused since it's called from createFooList
+      assert(!issues.contains("Unused private method 'Foo__c makeFoo()'"))
+    }
+  }
+
+  test("Method only used in static initializer block should not be marked unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { static { createFooList(); } private static void createFooList() { insert new List<Foo__c>{ makeFoo() }; } private static Foo__c makeFoo() { return new Foo__c(); } }",
+        "Foo.cls" -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("Dummy.cls"))
+      // Both methods should NOT be marked as unused since they're called from static initializer
+      assert(!issues.contains("Unused private method 'void createFooList()'"))
+      assert(!issues.contains("Unused private method 'Foo__c makeFoo()'"))
+    }
+  }
+
+  test("Loop variable now correctly detected as unused (issue #330 fixed)") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public void loopMethod() { for (Integer i = 0; i < 2; i++) { System.debug('iteration'); } } }",
+        "Foo.cls" -> "public class Foo{ {new Dummy().loopMethod();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("Dummy.cls"))
+      // Fixed behavior: loop variables that are only used in condition/increment
+      // but not in loop body are now correctly detected as unused
+      assert(issues.contains("Unused local variable 'i'"))
+    }
+  }
+
+  test("Used loop variable should not be detected as unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public void loopMethod() { for (Integer i = 0; i < 2; i++) { System.debug('iteration ' + i); } } }",
+        "Foo.cls" -> "public class Foo{ {new Dummy().loopMethod();} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("Dummy.cls"))
+      // Variable 'i' should NOT be marked as unused since it's used in the loop body
+      assert(!issues.contains("Unused local variable 'i'"))
+    }
+  }
+
+  test("Batch class methods should not be marked unused") {
+    FileSystemHelper.run(
+      Map(
+        "BatchClass.cls" -> "public class BatchClass implements Database.Batchable<SObject> { public Database.QueryLocator start(Database.BatchableContext context) { return Database.getQueryLocator('SELECT Id FROM Account'); } public void execute(Database.BatchableContext context, List<SObject> scope) { } public void finish(Database.BatchableContext context) { } }",
+        "Foo.cls" -> "public class Foo{ {Type t = BatchClass.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      val issues = orgIssuesFor(org, root.join("BatchClass.cls"))
+      // Batch interface methods should NOT be marked as unused
+      assert(!issues.contains("Unused public method"))
+    }
+  }
+
 }
