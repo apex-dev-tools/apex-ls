@@ -1387,7 +1387,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       createOrgWithUnused(root)
       assert(
         getMessages(root.join("Dummy.cls")) ==
-          "Unused: line 1 at 38-43: Unused local variable 'i'\n"
+          "Unused: line 1 at 36-41: Unused local variable 'i'\n"
       )
     }
   }
