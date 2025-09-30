@@ -826,7 +826,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Used local var for-loop bug") {
+  test("Loop var only used in for condition is now correctly flagged as unused") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" ->
@@ -838,7 +838,10 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
-      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+      assert(
+        getMessages(root.join("force-app/Dummy.cls")) ==
+          "Unused: line 1 at 47-53: Unused local variable 'myList'\n"
+      )
     }
   }
 

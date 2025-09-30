@@ -316,8 +316,6 @@ abstract class ScopeVerifyContext(parentContext: VerifyContext)
     extends VerifyContext
     with ControlFlowContext {
 
-  private var inLoop: Boolean = false
-
   private val vars     = mutable.Map[Name, VarTypeAndDefinition]()
   private val usedVars = mutable.Set[Name]()
 
@@ -391,23 +389,13 @@ abstract class ScopeVerifyContext(parentContext: VerifyContext)
   def returnType: TypeName
 
   /** Check if this context or any parent context is within a loop */
-  def isInLoop: Boolean = inLoop || parent()
-    .flatMap {
-      case svc: ScopeVerifyContext => Some(svc.isInLoop)
-      case _                       => None
-    }
-    .getOrElse(false)
-
-  /** Temporarily set the loop flag for the duration of an operation */
-  def withInLoop[T](op: => T): T = {
-    val previousInLoop = inLoop
-    this.inLoop = true
-    try {
-      op
-    } finally {
-      this.inLoop = previousInLoop
-    }
-  }
+  def isInLoop: Boolean =
+    this.isInstanceOf[LoopScopeVerifyContext] || parent()
+      .flatMap {
+        case svc: ScopeVerifyContext => Some(svc.isInLoop)
+        case _                       => None
+      }
+      .getOrElse(false)
 
   override def isSaving: Boolean = parentContext.isSaving
 
@@ -460,17 +448,24 @@ final class InnerScopeVerifyContext(parentContext: ScopeVerifyContext)
     super.getVar(name, markUsed).orElse(parentContext.getVar(name, markUsed))
 }
 
-final class ForControlScopeVerifyContext(parentContext: ScopeVerifyContext)
+final class LoopScopeVerifyContext(parentContext: ScopeVerifyContext)
     extends ScopeVerifyContext(parentContext) {
 
-  private var allowUsageTracking: Boolean = false
+  private var allowUsageTracking: Boolean = true
 
   override def isStatic: Boolean = parentContext.isStatic
 
   override def returnType: TypeName = parentContext.returnType
 
-  def setUsageTracking(enabled: Boolean): Unit = {
+  /** Temporarily set usage tracking for the duration of an operation */
+  def withUsageTracking[T](enabled: Boolean)(op: => T): T = {
+    val previousTracking = allowUsageTracking
     allowUsageTracking = enabled
+    try {
+      op
+    } finally {
+      allowUsageTracking = previousTracking
+    }
   }
 
   override def getVar(name: Name, markUsed: Boolean): Option[VarTypeAndDefinition] = {

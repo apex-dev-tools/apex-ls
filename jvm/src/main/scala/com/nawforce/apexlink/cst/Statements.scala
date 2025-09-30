@@ -241,21 +241,13 @@ final case class ForStatement(control: Option[ForControl], statement: Option[Sta
     extends Statement {
   override def verify(context: ScopeVerifyContext): Unit = {
     control.foreach(control => {
-      val forContext = new ForControlScopeVerifyContext(context)
-
-      // Phase 1: Validate for-init, condition, increment with usage tracking OFF
-      forContext.setUsageTracking(false)
-      control.verify(forContext)
-
-      // Phase 2: Loop body with usage tracking ON
-      forContext.setUsageTracking(true)
+      val forContext = new LoopScopeVerifyContext(context)
+      forContext.withUsageTracking(false) {
+        control.verify(forContext)
+      }
       val loopContext = new InnerScopeVerifyContext(forContext).setControlRoot(forContext)
       control.addVars(loopContext)
-      loopContext.withInLoop {
-        statement.foreach(_.verify(loopContext))
-      }
-
-      // Enable unused detection for loop variables
+      statement.foreach(_.verify(loopContext))
       context.typePlugin.foreach(_.onScopeValidated(context.isStatic, forContext))
 
       verifyControlPath(forContext, BlockControlPattern())
@@ -483,9 +475,9 @@ final case class WhileStatement(expression: Expression, statement: Option[Statem
     extends Statement {
   override def verify(context: ScopeVerifyContext): Unit = {
     expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
-    context.withInLoop {
-      statement.foreach(_.verify(context))
-    }
+    val loopContext = new LoopScopeVerifyContext(context)
+    statement.foreach(_.verify(loopContext))
+    verifyControlPath(loopContext, BlockControlPattern())
   }
 }
 
@@ -501,9 +493,9 @@ object WhileStatement {
 final case class DoWhileStatement(block: Block, expression: Expression) extends Statement {
   override def verify(context: ScopeVerifyContext): Unit = {
     expression.verifyIs(context, Set(TypeNames.Boolean), isStatic = false, "While")
-    context.withInLoop {
-      block.verify(context)
-    }
+    val loopContext = new LoopScopeVerifyContext(context)
+    block.verify(loopContext)
+    verifyControlPath(loopContext, BlockControlPattern())
   }
 }
 
