@@ -470,7 +470,7 @@ final class LoopScopeVerifyContext(parentContext: ScopeVerifyContext)
 
   override def getVar(name: Name, markUsed: Boolean): Option[VarTypeAndDefinition] = {
     val shouldMarkUsed = markUsed && allowUsageTracking
-    super.getVar(name, shouldMarkUsed).orElse(parentContext.getVar(name, shouldMarkUsed))
+    super.getVar(name, shouldMarkUsed).orElse(parentContext.getVar(name, markUsed))
   }
 
   override def collectVars(accum: mutable.Map[Name, VarTypeAndDefinition]): Unit = {
