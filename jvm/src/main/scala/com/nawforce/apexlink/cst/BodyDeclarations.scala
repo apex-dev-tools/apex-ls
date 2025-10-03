@@ -210,9 +210,9 @@ final case class ApexInitializerBlock(_modifiers: ModifierResults, block: Block,
   override val inTest: Boolean              = thisType.inTest
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
-    val blockContext = new OuterBlockVerifyContext(context, isStatic)
+    val blockContext = new OuterScopeVerifyContext(context, isStatic)
     block.verify(blockContext)
-    context.typePlugin.foreach(_.onBlockValidated(block, isStatic, blockContext))
+    context.typePlugin.foreach(_.onScopeValidated(isStatic, blockContext))
 
     setDepends(context.dependencies)
   }
@@ -270,7 +270,7 @@ class ApexMethodDeclaration(
     parameters.foreach(_.verify(context))
 
     val blockContext =
-      new OuterBlockVerifyContext(context, modifiers.contains(STATIC_MODIFIER), typeName)
+      new OuterScopeVerifyContext(context, modifiers.contains(STATIC_MODIFIER), typeName)
     parameters.foreach(param => {
       blockContext.addVar(
         param.name,
@@ -368,7 +368,7 @@ final case class ApexFieldDeclaration(
 
     variableDeclarator.verify(
       ExprContext(staticContext, context.thisType),
-      new OuterBlockVerifyContext(context, modifiers.contains(STATIC_MODIFIER))
+      new OuterScopeVerifyContext(context, modifiers.contains(STATIC_MODIFIER))
     )
     setDepends(context.dependencies)
   }
@@ -414,7 +414,7 @@ final case class ApexConstructorDeclaration(
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     parameters.foreach(_.verify(context))
 
-    val blockContext = new OuterBlockVerifyContext(context, isStaticContext = false)
+    val blockContext = new OuterScopeVerifyContext(context, isStaticContext = false)
     parameters.foreach(param =>
       blockContext.addVar(
         param.name,
@@ -425,7 +425,7 @@ final case class ApexConstructorDeclaration(
       )
     )
     block.verify(blockContext)
-    context.typePlugin.foreach(_.onBlockValidated(block, isStatic = false, blockContext))
+    context.typePlugin.foreach(_.onScopeValidated(isStatic = false, blockContext))
 
     setDepends(context.dependencies)
   }

@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.plugins
 
-import com.nawforce.apexlink.cst.{Block, BlockVerifyContext}
+import com.nawforce.apexlink.cst.{Block, ScopeVerifyContext}
 import com.nawforce.apexlink.types.core.DependentType
 
 import java.lang.reflect.Constructor
@@ -26,12 +26,8 @@ class PluginDispatcher(td: DependentType, plugins: Seq[Plugin], isLibrary: Boole
     plugins.flatMap(_.onTypeValidated())
   }
 
-  override def onBlockValidated(
-    block: Block,
-    isStatic: Boolean,
-    context: BlockVerifyContext
-  ): Unit = {
-    plugins.foreach(_.onBlockValidated(block, isStatic, context))
+  override def onScopeValidated(isStatic: Boolean, context: ScopeVerifyContext): Unit = {
+    plugins.foreach(_.onScopeValidated(isStatic, context))
   }
 }
 
