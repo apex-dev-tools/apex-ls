@@ -31,6 +31,7 @@ class ValidationMapFallbackTest extends AnyFunSuite with TestHelper {
 
     assert(validationMap.isEmpty)
     assert(throwingBlock.verifyCount == 1)
+    assert(throwingBlock.lastThrown.exists(_.isInstanceOf[RuntimeException]))
   }
 
   test("Full declaration validation map returns empty when body validation fails") {
@@ -45,6 +46,7 @@ class ValidationMapFallbackTest extends AnyFunSuite with TestHelper {
 
     assert(validationMap.isEmpty)
     assert(throwingBody.verifyCount == 1)
+    assert(throwingBody.lastThrown.exists(_.isInstanceOf[RuntimeException]))
   }
 
   private final class ThrowingBlock extends Block {
@@ -54,15 +56,21 @@ class ValidationMapFallbackTest extends AnyFunSuite with TestHelper {
 
     override def verify(context: ScopeVerifyContext): Unit = {
       _verifyCount += 1
-      throw new RuntimeException("boom")
+      val error = new RuntimeException("boom")
+      _lastThrown = Some(error)
+      throw error
     }
 
-    def verifyCount: Int = _verifyCount
+    private var _lastThrown: Option[RuntimeException] = None
+
+    def verifyCount: Int                     = _verifyCount
+    def lastThrown: Option[RuntimeException] = _lastThrown
   }
 
   private final class ThrowingBodyDeclaration
       extends ClassBodyDeclaration(ModifierResults(ArraySeq.empty, ArraySeq.empty)) {
-    private var _verifyCount: Int = 0
+    private var _verifyCount: Int                     = 0
+    private var _lastThrown: Option[RuntimeException] = None
 
     override val children: scala.collection.compat.immutable.ArraySeq[ApexNode] =
       scala.collection.compat.immutable.ArraySeq.empty
@@ -72,9 +80,12 @@ class ValidationMapFallbackTest extends AnyFunSuite with TestHelper {
 
     override protected def verify(context: BodyDeclarationVerifyContext): Unit = {
       _verifyCount += 1
-      throw new RuntimeException("boom")
+      val error = new RuntimeException("boom")
+      _lastThrown = Some(error)
+      throw error
     }
 
-    def verifyCount: Int = _verifyCount
+    def verifyCount: Int                     = _verifyCount
+    def lastThrown: Option[RuntimeException] = _lastThrown
   }
 }
