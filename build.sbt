@@ -101,8 +101,6 @@ lazy val buildJVM = Def.task {
 }
 
 def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = Def.task {
-  def exec: (String, File) => Unit = run(streams.value.log)(_, _)
-
   // Depends on scalaJS fast/full linker output
   jsTask.value
 
@@ -110,25 +108,10 @@ def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = D
   val targetFile = (jsTask / scalaJSLinkerOutputDirectory).value / "main.js"
   val npmDir     = baseDirectory.value / "npm"
 
-  val files: Map[File, File] = Map(
-    // Update target with NPM modules (for testing)
-    npmDir / "package.json" -> targetDir / "package.json",
-    // Add source to NPM
-    targetFile -> npmDir / "lib/apex-ls.js"
-  )
+  IO.createDirectory(npmDir / "lib")
+  IO.copyFile(targetFile, npmDir / "lib/apex-ls.js")
 
-  IO.copy(files, CopyOptions().withOverwrite(true))
-
-  // Install modules in NPM
-  exec("npm ci", npmDir)
-
-  // Update target with NPM modules (for testing)
-  IO.delete(targetDir / "node_modules")
-  IO.copyDirectory(
-    npmDir / "node_modules",
-    targetDir / "node_modules",
-    CopyOptions().withOverwrite(true)
-  )
+  syncNodeModules.value
 
   targetFile
 }
