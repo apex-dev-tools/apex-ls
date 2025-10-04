@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Loop variable unused detection now correctly flags variables only used in for-loop conditions/increments (#330)
+- Prevent validation map generation failures when trigger or class validation throws (#312)
 
 ### Removed
 - MDAPI workspace support (#366)

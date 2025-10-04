@@ -182,15 +182,22 @@ final case class TriggerDeclaration(
   }
 
   override def getValidationMap(line: Int, offset: Int): Map[Location, ValidationResult] = {
-    val resultMap   = mutable.Map[Location, ValidationResult]()
-    val typeContext = new TypeVerifyContext(None, this, Some(resultMap), enablePlugins = false)
-    val context     = new OuterScopeVerifyContext(typeContext, isStaticContext = false)
-    context.disableIssueReporting() {
-      block.foreach(block => {
-        block.verify(context)
-      })
+    try {
+      val resultMap   = mutable.Map[Location, ValidationResult]()
+      val typeContext = new TypeVerifyContext(None, this, Some(resultMap), enablePlugins = false)
+      val context     = new OuterScopeVerifyContext(typeContext, isStaticContext = false)
+      context.disableIssueReporting() {
+        block.foreach(block => {
+          block.verify(context)
+        })
+      }
+      resultMap.toMap
+    } catch {
+      case ex: Throwable =>
+        val at = ex.getStackTrace.headOption.getOrElse("Unknown")
+        LoggerOps.debug(s"Trigger body validation failure: ${ex.toString} $at")
+        Map.empty
     }
-    resultMap.toMap
   }
 }
 
