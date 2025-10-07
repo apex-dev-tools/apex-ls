@@ -3,7 +3,7 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.TestHelper.{CURSOR, CursorPos}
+import com.nawforce.apexlink.TestHelper.CURSOR
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite

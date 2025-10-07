@@ -3,6 +3,7 @@
  */
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.hover.ApexDocFormatter
 import com.nawforce.apexlink.rpc.HoverItem
 import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
@@ -20,7 +21,9 @@ trait HoverProvider extends SourceOps {
     if (sourceAndType.isEmpty)
       return HoverItem(None, None)
 
-    toHoverItem(getFromValidationLocatable(sourceAndType.get._2, line, offset))
+    val (source, declaration) = sourceAndType.get
+
+    toHoverItem(getFromValidationLocatable(declaration, line, offset), source)
   }
 
   private def getFromValidationLocatable(
@@ -44,10 +47,21 @@ trait HoverProvider extends SourceOps {
     })
   }
 
-  private def toHoverItem(l: Option[(Locatable, Location)]): HoverItem = {
+  private def toHoverItem(l: Option[(Locatable, Location)], source: String): HoverItem = {
     l match {
-      case Some((td, loc)) => HoverItem(Some(td.toString), Some(loc))
-      case _               => HoverItem(None, None)
+      case Some((td, loc)) =>
+        val signature = td.toString
+        val declarationPath     = td.location.path
+        val declarationLocation = td.location.location
+        val docSource           = loadSource(declarationPath, None).getOrElse(source)
+        val doc                 = ApexDocFormatter.format(docSource, declarationLocation)
+        val content = doc match {
+          case Some(markdown) if markdown.nonEmpty => s"$signature\n$markdown"
+          case _                                    => signature
+        }
+        HoverItem(Some(content), Some(loc))
+      case _ =>
+        HoverItem(None, None)
     }
   }
 }
