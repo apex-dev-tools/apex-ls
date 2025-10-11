@@ -30,7 +30,10 @@ export async function install(): Promise<void> {
         // Validate JAR file integrity (basic check for ZIP/JAR signature)
         try {
           const jarBuffer = fs.readFileSync(jarPath);
-          if (jarBuffer.length > 0 && jarBuffer.subarray(0, 4).equals(Buffer.from([0x50, 0x4B, 0x03, 0x04]))) {
+          const ZIP_SIGNATURE = Buffer.from([0x50, 0x4B, 0x03, 0x04]); // 'PK\x03\x04'
+          const isValidJar = jarBuffer.length > 0 && jarBuffer.subarray(0, 4).equals(ZIP_SIGNATURE);
+
+          if (isValidJar) {
             console.log(`apex-ls-mcp v${jarVersion} already cached`);
             needsDownload = false;
           } else {

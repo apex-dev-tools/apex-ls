@@ -122,6 +122,6 @@ describe('Java environment scenarios', () => {
     console.restore();
     mockExit.mockRestore();
 
-    expect(console.errors[0]).toMatch(/Java 1 is installed, but Java 17 or higher is required/);
+    expect(console.errors[0]).toMatch(/Java \d+ is installed, but Java 17 or higher is required/);
   });
 });

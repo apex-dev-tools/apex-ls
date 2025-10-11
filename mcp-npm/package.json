@@ -4,11 +4,10 @@
   "description": "NPX wrapper for Apex Language Server MCP (Model Context Protocol) server",
   "main": "dist/cli.js",
   "bin": {
-    "apex-ls-mcp": "./bin/apex-ls-mcp"
+    "apex-ls-mcp": "./dist/cli.js"
   },
   "files": [
     "dist/",
-    "bin/",
     "README.md"
   ],
   "config": {
@@ -17,8 +16,7 @@
   },
   "scripts": {
     "postinstall": "node dist/install.js",
-    "build": "tsc && npm run build:bin",
-    "build:bin": "mkdir -p bin && cp src/bin/apex-ls-mcp bin/apex-ls-mcp && chmod +x bin/apex-ls-mcp",
+    "build": "tsc",
     "build:watch": "tsc --watch",
     "test": "jest",
     "test:unit": "jest test/unit",

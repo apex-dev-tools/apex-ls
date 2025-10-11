@@ -93,8 +93,8 @@ describe('Simple Integration Tests', () => {
 
     // Test path construction logic without actual network calls
     expect(config.getCacheDir()).toContain('.apex-ls-mcp');
-    expect(config.getJarPath()).toEndWith('apex-ls-mcp.jar');
-    expect(config.getVersionFilePath()).toEndWith('version.txt');
+    expect(config.getJarPath()).toMatch(/apex-ls-mcp\.jar$/);
+    expect(config.getVersionFilePath()).toMatch(/version\.txt$/);
     expect(typeof config.isJarCached()).toBe('boolean');
   });
 

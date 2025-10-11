@@ -1,9 +1,3 @@
-node_modules/
-*.log
-.DS_Store
-.npm
-*.tgz
-
 # Build output
 dist/
 bin/
@@ -29,6 +23,12 @@ node_modules/
 
 # Output of 'npm pack'
 *.tgz
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
 
 # JAR files (except test fixtures)
 *.jar
