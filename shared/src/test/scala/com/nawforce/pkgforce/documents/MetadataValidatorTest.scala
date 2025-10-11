@@ -14,7 +14,7 @@
 package com.nawforce.pkgforce.documents
 
 import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
-import com.nawforce.pkgforce.diagnostics.IssuesManager
+import com.nawforce.pkgforce.diagnostics.IssueLogger
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import com.nawforce.runtime.platform.Path
@@ -23,10 +23,10 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
 
-  private var logger: IssuesManager = _
+  private var logger: IssueLogger = _
 
   before {
-    logger = new IssuesManager()
+    logger = new IssueLogger()
   }
 
   test("Single class ok") {
@@ -545,7 +545,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     FileSystemHelper.run(
       Map("force-app/main/default/objects/MyObject__c/Fields/Name__c.field-meta.xml" -> fieldXml)
     ) { root: PathLike =>
-      val logger    = new IssuesManager
+      val logger    = new IssueLogger
       val validator = new MetadataValidator(logger, None, false)
       val fieldPath =
         root.join("force-app/main/default/objects/MyObject__c/Fields/Name__c.field-meta.xml")
@@ -569,7 +569,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
         "force-app/main/default/objects/MyObject__c/FieldSets/TestSet.fieldSet-meta.xml" -> fieldSetXml
       )
     ) { root: PathLike =>
-      val logger    = new IssuesManager
+      val logger    = new IssueLogger
       val validator = new MetadataValidator(logger, None, false)
       val fieldSetPath =
         root.join("force-app/main/default/objects/MyObject__c/FieldSets/TestSet.fieldSet-meta.xml")
@@ -593,7 +593,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
         "force-app/main/default/objects/MyObject__c/SharingReasons/TestReason.sharingReason-meta.xml" -> sharingReasonXml
       )
     ) { root: PathLike =>
-      val logger    = new IssuesManager
+      val logger    = new IssueLogger
       val validator = new MetadataValidator(logger, None, false)
       val sharingReasonPath = root.join(
         "force-app/main/default/objects/MyObject__c/SharingReasons/TestReason.sharingReason-meta.xml"
@@ -617,7 +617,7 @@ class MetadataValidatorTest extends AnyFunSuite with BeforeAndAfter {
     FileSystemHelper.run(
       Map("force-app/main/default/objects/MyObject__c/fields/Name__c.field-meta.xml" -> fieldXml)
     ) { root: PathLike =>
-      val logger    = new IssuesManager
+      val logger    = new IssueLogger
       val validator = new MetadataValidator(logger, None, false)
       val fieldPath =
         root.join("force-app/main/default/objects/MyObject__c/fields/Name__c.field-meta.xml")

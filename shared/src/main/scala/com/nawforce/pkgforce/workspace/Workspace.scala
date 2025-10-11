@@ -13,7 +13,7 @@
  */
 package com.nawforce.pkgforce.workspace
 
-import com.nawforce.pkgforce.diagnostics.{CatchingLogger, IssuesManager}
+import com.nawforce.pkgforce.diagnostics.IssueLogger
 import com.nawforce.pkgforce.documents.{DocumentIndex, MetadataDocument}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.{Location, PathLike}
@@ -35,7 +35,7 @@ case class ProjectConfig(maxDependencyCount: Option[Int], isLibrary: Boolean = f
   * maintains an accurate view of the metadata files being used.
   */
 case class Workspace(
-  logger: IssuesManager,
+  logger: IssueLogger,
   layers: Seq[NamespaceLayer],
   projectConfig: Option[ProjectConfig] = None,
   externalMetadataPaths: Seq[PathLike] = Seq.empty,
@@ -69,7 +69,7 @@ case class Workspace(
 
 object Workspace {
   /* We need to pass an IssueManager here as this may generate a lot of diagnostics */
-  def apply(project: Option[SFDXProject], issueManager: IssuesManager): Option[Workspace] = {
+  def apply(project: Option[SFDXProject], issueManager: IssueLogger): Option[Workspace] = {
     val layers = project.map(_.layers(issueManager)).getOrElse(Seq())
     if (issueManager.hasErrors) {
       None
@@ -86,8 +86,8 @@ object Workspace {
     }
   }
 
-  def apply(path: PathLike): (Option[Workspace], IssuesManager) = {
-    val logger = new CatchingLogger()
+  def apply(path: PathLike): (Option[Workspace], IssueLogger) = {
+    val logger = new IssueLogger()
 
     validateWorkspacePath(path, logger) match {
       case Some(error) => error
@@ -97,11 +97,11 @@ object Workspace {
 
   private def validateWorkspacePath(
     path: PathLike,
-    logger: CatchingLogger
-  ): Option[(Option[Workspace], IssuesManager)] = {
+    logger: IssueLogger
+  ): Option[(Option[Workspace], IssueLogger)] = {
     if (!path.exists || !path.isDirectory) {
       logger.logError(path, Location.empty, s"No directory at $path")
-      val issueManager = new IssuesManager(None)
+      val issueManager = new IssueLogger(None)
       logger.issues.foreach(issueManager.add)
       Some((None, issueManager))
     } else {
@@ -111,16 +111,16 @@ object Workspace {
 
   private def createWorkspaceFromValidPath(
     path: PathLike,
-    logger: CatchingLogger
-  ): (Option[Workspace], IssuesManager) = {
+    logger: IssueLogger
+  ): (Option[Workspace], IssueLogger) = {
     val project            = loadSFDXProject(path, logger)
     val externalPathFilter = createExternalPathFilter(project)
-    val issueManager       = new IssuesManager(externalPathFilter)
+    val issueManager       = new IssueLogger(externalPathFilter)
     logger.issues.foreach(issueManager.add)
     (Workspace(project, issueManager), issueManager)
   }
 
-  private def loadSFDXProject(path: PathLike, logger: CatchingLogger): Option[SFDXProject] = {
+  private def loadSFDXProject(path: PathLike, logger: IssueLogger): Option[SFDXProject] = {
     if (path.join("sfdx-project.json").exists) {
       // SFDXProject.apply already logs detailed errors for all failure cases
       // (parsing errors, read failures, etc.) so no additional logging is needed here

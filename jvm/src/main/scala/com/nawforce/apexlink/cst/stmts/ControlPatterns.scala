@@ -4,7 +4,7 @@
 
 package com.nawforce.apexlink.cst.stmts
 
-import com.nawforce.apexlink.cst.{BlockVerifyContext, CST, ExprContext}
+import com.nawforce.apexlink.cst.{ScopeVerifyContext, CST, ExprContext}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.pkgforce.path.PathLocation
 
@@ -34,9 +34,9 @@ sealed case class BlockPath(
 
 sealed trait ControlPattern {
 
-  def addControlPath(context: BlockVerifyContext, cst: CST): ControlPath
+  def addControlPath(context: ScopeVerifyContext, cst: CST): ControlPath
 
-  protected def nextPathUnreachable(context: BlockVerifyContext): Boolean = {
+  protected def nextPathUnreachable(context: ScopeVerifyContext): Boolean = {
     val paths   = context.getPaths
     val nonVoid = context.returnType != TypeNames.Void
     !context.hasBranchingControl && (paths.lastOption.exists(_.unreachable) || paths.exists {
@@ -52,14 +52,14 @@ sealed trait ControlPattern {
 
 // default
 object NoControlPattern extends ControlPattern {
-  def addControlPath(context: BlockVerifyContext, cst: CST): ControlPath = {
+  def addControlPath(context: ScopeVerifyContext, cst: CST): ControlPath = {
     context.addPath(UnknownPath(nextPathUnreachable(context), cst.safeLocation))
   }
 }
 
 // continue, break / return, throw
 class ExitControlPattern(method: Boolean, block: Boolean) extends ControlPattern {
-  def addControlPath(context: BlockVerifyContext, cst: CST): ControlPath = {
+  def addControlPath(context: ScopeVerifyContext, cst: CST): ControlPath = {
     context.addPath(StatementPath(method, nextPathUnreachable(context), cst.safeLocation, block))
   }
 }
@@ -72,7 +72,7 @@ object ExitControlPattern {
 
 // default blocks (methods etc.)
 class BlockControlPattern extends ControlPattern {
-  override def addControlPath(context: BlockVerifyContext, cst: CST): ControlPath = {
+  override def addControlPath(context: ScopeVerifyContext, cst: CST): ControlPath = {
     val paths            = context.getPaths
     val parent           = context.parentFlowContext
     val blockUnreachable = parent.exists(p => nextPathUnreachable(p))
@@ -98,7 +98,7 @@ class BlockControlPattern extends ControlPattern {
   }
 
   protected def collectFailedPaths(
-    context: BlockVerifyContext,
+    context: ScopeVerifyContext,
     paths: Array[ControlPath]
   ): Array[ControlPath] = {
     val path = paths
@@ -113,7 +113,7 @@ class BlockControlPattern extends ControlPattern {
     }
   }
 
-  protected def willEnterBlock(context: BlockVerifyContext): Boolean = false
+  protected def willEnterBlock(context: ScopeVerifyContext): Boolean = false
 
   protected def willBlockReturn(
     paths: Array[ControlPath],
@@ -140,7 +140,7 @@ object BlockControlPattern {
 class BranchControlPattern(requiredBranches: Array[Boolean], exclusive: Boolean)
     extends BlockControlPattern {
   override protected def collectFailedPaths(
-    context: BlockVerifyContext,
+    context: ScopeVerifyContext,
     paths: Array[ControlPath]
   ): Array[ControlPath] = {
     if (paths.length != requiredBranches.length) {
@@ -156,7 +156,7 @@ class BranchControlPattern(requiredBranches: Array[Boolean], exclusive: Boolean)
     }
   }
 
-  override protected def willEnterBlock(context: BlockVerifyContext): Boolean = exclusive
+  override protected def willEnterBlock(context: ScopeVerifyContext): Boolean = exclusive
 
   override protected def willBlockReturn(
     paths: Array[ControlPath],

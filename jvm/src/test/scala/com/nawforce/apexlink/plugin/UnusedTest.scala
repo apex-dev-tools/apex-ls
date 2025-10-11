@@ -826,7 +826,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Used local var for-loop bug") {
+  test("Variable used in for-each loop should not be flagged as unused") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" ->
@@ -1351,6 +1351,66 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val issues = orgIssuesFor(org, root.join("TestClass.cls"))
       // In non-library projects, public methods in test classes should be flagged as unused
       assert(issues.contains("Unused public method 'void publicTestMethod()'"))
+    }
+  }
+
+  // Tests for GitHub issue #330 - Unused problems
+
+  test("Method called from list initializer should not be marked unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { static { insert new List<Account>{ makeFoo() }; } private static Account makeFoo() { return new Account(); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Method called from static initializer block should not be marked unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { static { helper(); } private static void helper() { System.debug('called'); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Loop variable now correctly detected as unused (issue #330 fixed)") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0; i < 2; i++) { System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) ==
+          "Unused: line 1 at 36-41: Unused local variable 'i'\n"
+      )
+    }
+  }
+
+  test("Used loop variable should not be detected as unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0; i < 2; i++) { System.debug('iteration ' + i); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Batch class methods should not be marked unused") {
+    FileSystemHelper.run(
+      Map(
+        "BatchClass.cls" -> "public class BatchClass implements Database.Batchable<SObject> { public Database.QueryLocator start(Database.BatchableContext context) { return Database.getQueryLocator('SELECT Id FROM Account'); } public void execute(Database.BatchableContext context, List<SObject> scope) { } public void finish(Database.BatchableContext context) { } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("BatchClass.cls")).isEmpty)
     }
   }
 

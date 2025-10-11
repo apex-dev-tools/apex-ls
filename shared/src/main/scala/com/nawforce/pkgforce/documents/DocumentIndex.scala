@@ -34,7 +34,7 @@ import scala.collection.mutable
   */
 class DocumentIndex(
   val path: PathLike,
-  logger: IssuesManager,
+  logger: IssueLogger,
   namespace: Option[Name],
   isGulped: Boolean,
   ignore: Option[ForceIgnoreInterface]
@@ -164,7 +164,7 @@ object DocumentIndex {
 
   /** Construct a new DocumentIndex over the passed path. */
   def apply(
-    logger: IssuesManager,
+    logger: IssueLogger,
     namespace: Option[Name],
     isGulped: Boolean,
     projectPath: PathLike,

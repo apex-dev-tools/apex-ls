@@ -13,7 +13,6 @@
  */
 package com.nawforce.pkgforce.modifiers
 
-import com.nawforce.pkgforce.diagnostics.{LogEntryContext, ModifierLogger}
 import com.nawforce.pkgforce.modifiers.ApexModifiers._
 import com.nawforce.runtime.parsers.CodeParser
 import io.github.apexdevtools.apexparser.ApexParser.{IdContext, ModifierContext}

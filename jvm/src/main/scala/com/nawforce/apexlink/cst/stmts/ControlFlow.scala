@@ -4,22 +4,22 @@
 
 package com.nawforce.apexlink.cst.stmts
 
-import com.nawforce.apexlink.cst.{BlockVerifyContext, CST, OuterBlockVerifyContext}
+import com.nawforce.apexlink.cst.{ScopeVerifyContext, CST, OuterScopeVerifyContext}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
 
 import scala.collection.mutable
 
 trait ControlFlowContext {
-  this: BlockVerifyContext =>
+  this: ScopeVerifyContext =>
 
   private lazy val paths               = mutable.ArrayBuffer[ControlPath]()
   private var root: ControlFlowContext = this
   private var branching: Boolean       = false
 
-  def parentFlowContext: Option[BlockVerifyContext] =
+  def parentFlowContext: Option[ScopeVerifyContext] =
     parent().flatMap {
-      case a: BlockVerifyContext with ControlFlowContext => Some(a)
+      case a: ScopeVerifyContext with ControlFlowContext => Some(a)
       case _                                             => None
     }
 
@@ -29,13 +29,13 @@ trait ControlFlowContext {
     path
   }
 
-  def setControlRoot(context: BlockVerifyContext with ControlFlowContext): BlockVerifyContext = {
+  def setControlRoot(context: ScopeVerifyContext with ControlFlowContext): ScopeVerifyContext = {
     root = context
     this
   }
 
   def hasBranchingControl: Boolean = root.branching
-  def withBranchingControl(): BlockVerifyContext = {
+  def withBranchingControl(): ScopeVerifyContext = {
     root.branching = true
     this
   }
@@ -50,7 +50,7 @@ trait ControlFlowContext {
 }
 
 trait OuterControlFlowContext {
-  this: OuterBlockVerifyContext =>
+  this: OuterScopeVerifyContext =>
 
   def logControlFlowIssues(): Unit = {
     // Failed path refs climb to top level
@@ -79,7 +79,7 @@ trait ControlFlow {
   this: CST =>
 
   def verifyControlPath(
-    context: BlockVerifyContext,
+    context: ScopeVerifyContext,
     controlPattern: ControlPattern = NoControlPattern
   ): Unit = {
     val path = controlPattern.addControlPath(context, this)

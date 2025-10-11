@@ -30,7 +30,7 @@ final case class VariableDeclarator(
   id: Id,
   init: Option[Expression]
 ) extends CST {
-  def verify(input: ExprContext, context: BlockVerifyContext): Unit = {
+  def verify(input: ExprContext, context: ScopeVerifyContext): Unit = {
     id.validate(context)
 
     val lhsType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
@@ -64,7 +64,7 @@ final case class VariableDeclarator(
     addVars(context)
   }
 
-  def addVars(context: BlockVerifyContext): Unit = {
+  def addVars(context: ScopeVerifyContext): Unit = {
     context.addVar(id.name, this, isReadOnly, typeName, context.thisType)
   }
 
@@ -83,11 +83,11 @@ object VariableDeclarator {
 }
 
 final case class VariableDeclarators(declarators: Seq[VariableDeclarator]) extends CST {
-  def verify(input: ExprContext, context: BlockVerifyContext): Unit = {
+  def verify(input: ExprContext, context: ScopeVerifyContext): Unit = {
     declarators.foreach(_.verify(input, context))
   }
 
-  def addVars(context: BlockVerifyContext): Unit = {
+  def addVars(context: ScopeVerifyContext): Unit = {
     declarators.foreach(_.addVars(context))
   }
 }
@@ -117,7 +117,7 @@ final case class LocalVariableDeclaration(
   typeName: TypeName,
   variableDeclarators: VariableDeclarators
 ) extends CST {
-  def verify(context: BlockVerifyContext): Unit = {
+  def verify(context: ScopeVerifyContext): Unit = {
 
     variableDeclarators.declarators.foreach(vd => {
       context.thisType.findField(vd.id.name, None).foreach {
@@ -142,7 +142,7 @@ final case class LocalVariableDeclaration(
     variableDeclarators.verify(ExprContext(isStatic = staticContext, context.thisType), context)
   }
 
-  def addVars(context: BlockVerifyContext): Unit = {
+  def addVars(context: ScopeVerifyContext): Unit = {
     variableDeclarators.addVars(context)
   }
 }

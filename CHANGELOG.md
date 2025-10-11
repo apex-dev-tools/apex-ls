@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP (Model Context Protocol) server for AI tool integration (#356)
 - npm wrapper package for MCP server deployment and related CI/test improvements (#379)
 
+### Fixed
+- Loop variable unused detection now correctly flags variables only used in for-loop conditions/increments (#330)
+
 ### Removed
 - MDAPI workspace support (#366)
   - All projects now require sfdx-project.json configuration
@@ -32,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Improved forceIgnoreVersion validation and cleanup of legacy code
 - Enhanced pattern matching optimization in ForceIgnoreV2
+
+### Changed
+- Refactored logger architecture for improved modularity, extensibility, and plugin support
 
 
 ## [5.10.0] - 2025-07-24

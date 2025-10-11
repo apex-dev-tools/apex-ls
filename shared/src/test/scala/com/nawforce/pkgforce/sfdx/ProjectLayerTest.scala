@@ -28,10 +28,10 @@ import scala.collection.immutable.ArraySeq
 
 class ProjectLayerTest extends AnyFunSuite with BeforeAndAfter with Matchers {
 
-  private var logger: CatchingLogger = _
+  private var logger: IssueLogger = _
 
   before {
-    logger = new CatchingLogger
+    logger = new IssueLogger()
   }
 
   test("Empty packageDirectories") {
