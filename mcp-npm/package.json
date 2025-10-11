@@ -6,6 +6,11 @@
   "bin": {
     "apex-ls-mcp": "./bin/apex-ls-mcp"
   },
+  "files": [
+    "dist/",
+    "bin/",
+    "README.md"
+  ],
   "config": {
     "jarVersion": "5.11.0",
     "downloadUrl": "https://github.com/apex-dev-tools/apex-ls/releases/download/v{jarVersion}/apex-ls-mcp-{jarVersion}-standalone.jar"
