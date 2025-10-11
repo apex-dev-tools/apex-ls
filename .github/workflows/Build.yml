@@ -27,7 +27,9 @@ jobs:
         with:
           node-version: 22
           cache: "npm"
-          cache-dependency-path: js/npm/package-lock.json
+          cache-dependency-path: |
+            js/npm/package-lock.json
+            mcp-npm/package-lock.json
 
       - name: FormatCheck
         run: sbt scalafmtCheck # Does not check test files currently
@@ -39,15 +41,25 @@ jobs:
         run: sbt test
 
       - name: Build MCP Server (Regular)
+        working-directory: mcp
         run: |
-          cd mcp
           sbt test
           sbt buildRegular
 
       - name: Build MCP Server (Standalone)
+        working-directory: mcp
+        run: sbt buildStandalone
+
+      - name: Build MCP NPM Package
+        working-directory: mcp-npm
         run: |
-          cd mcp
-          sbt buildStandalone
+          npm ci --ignore-scripts
+          npm run build
+          npm run lint
+
+      - name: Test MCP NPM Package
+        working-directory: mcp-npm
+        run: npm run test:unit
 
       - name: Checkout samples repo
         uses: actions/checkout@v4
