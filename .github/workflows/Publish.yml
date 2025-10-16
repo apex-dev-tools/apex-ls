@@ -107,7 +107,10 @@ jobs:
       # Publishes only the version specified in mcp-npm/package.json
       - name: Publish MCP NPM
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_npm }}
-        run: npm publish --access public
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: mcp-npm
