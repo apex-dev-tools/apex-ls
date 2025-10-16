@@ -167,11 +167,6 @@ buildRegular := (Compile / Keys.`package`).value
 // Standalone JAR build task (GitHub Releases)
 buildStandalone := assembly.value
 
-// Maven Central publishing configuration
-ThisBuild / publishTo := sonatypePublishToBundle.value
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
-
 // Ensure tests can access apex-ls classes
 Test / unmanagedJars += apexLsJar.value
 Test / fork := true
