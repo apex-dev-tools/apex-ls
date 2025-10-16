@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Loop variable unused detection now correctly flags variables only used in for-loop conditions/increments (#330)
 - Prevent validation map generation failures when trigger or class validation throws (#312)
+- For loop iteration over getSObjects() method results now works correctly (#328)
 - Improved forceIgnoreVersion validation and cleanup of legacy code
 - Enhanced pattern matching optimization in ForceIgnoreV2
 
