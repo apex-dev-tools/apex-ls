@@ -123,6 +123,7 @@ The `options` section supports additional configuration options that may be adde
 🧪 **Experimental**: The Apex Language Server now includes experimental support for the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), enabling AI tools and applications to interact with Apex code analysis capabilities.
 
 The MCP server provides standardized access to:
+
 - **Static Analysis** - Find errors, warnings, and code issues across SFDX projects
 - **Find Usages** - Locate all references to Apex identifiers
 - **Go to Definition** - Navigate to symbol definitions
@@ -160,13 +161,13 @@ The build is a cross project for JS and JVM; SBT commands are aggregated, but ca
 
 Available build commands:
 
-* `sbt build` - Creates packaged jar or js bundle for testing and release.
-* `sbt apexlsJS/Dev/build` - Creates fast optimised js bundle for debugging.
-* `sbt pack` / `sbt "pack [version]"` - Do a local published release of the most recent tag or given value.
-  * **WARNING:** This can override the remote releases, clear your `~/.ivy2/local` directory to revert.
-* `sbt test` - Execute full test run.
-* `sbt clean` - Removes most build files and artifacts.
-* `sbt scalafmtAll` - Reformat code files using scalafmt
+- `sbt build` - Creates packaged jar or js bundle for testing and release.
+- `sbt apexlsJS/Dev/build` - Creates fast optimised js bundle for debugging.
+- `sbt pack` / `sbt "pack [version]"` - Do a local published release of the most recent tag or given value.
+  - **WARNING:** This can override the remote releases, clear your `~/.ivy2/local` directory to revert.
+- `sbt test` - Execute full test run.
+- `sbt clean` - Removes most build files and artifacts.
+- `sbt scalafmtAll` - Reformat code files using scalafmt
 
 ### Testing
 
@@ -199,4 +200,4 @@ See [doc page](doc/API_Updates.md).
 
 The source code forked from [apex-link](https://github.com/nawforce/apex-link) & [pkgforce](https://github.com/nawforce/pkgforce) uses a 3-clause BSD licence. Additional contributions:
 
-* The antlr4c3 CodeCompletionCore.java has been embedded under a MIT licence.
+- The antlr4c3 CodeCompletionCore.java has been embedded under a MIT licence.
