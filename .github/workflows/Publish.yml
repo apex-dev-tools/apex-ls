@@ -70,20 +70,18 @@ jobs:
 
       - name: Publish MCP Server to Maven Central
         if: ${{ (github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp) && (github.event_name == 'release' && github.event.action == 'released' || inputs.pub_sbt) }}
-        run: |
-          cd mcp
-          sbt ci-release
+        run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        working-directory: mcp
 
       - name: Build Standalone JAR for GitHub Release
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp }}
-        run: |
-          cd mcp
-          sbt buildStandalone
+        run: sbt buildStandalone
+        working-directory: mcp
 
       - name: Upload Standalone JAR to GitHub Release
         if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
