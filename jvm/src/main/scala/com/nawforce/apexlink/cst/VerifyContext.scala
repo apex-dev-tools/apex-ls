@@ -312,11 +312,9 @@ case class VarTypeAndDefinition(
   isReadOnly: Boolean
 )
 
-abstract class BlockVerifyContext(parentContext: VerifyContext)
+abstract class ScopeVerifyContext(parentContext: VerifyContext)
     extends VerifyContext
     with ControlFlowContext {
-
-  private var inLoop: Boolean = false
 
   private val vars     = mutable.Map[Name, VarTypeAndDefinition]()
   private val usedVars = mutable.Set[Name]()
@@ -391,23 +389,13 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
   def returnType: TypeName
 
   /** Check if this context or any parent context is within a loop */
-  def isInLoop: Boolean = inLoop || parent()
-    .flatMap {
-      case bvc: BlockVerifyContext => Some(bvc.isInLoop)
-      case _                       => None
-    }
-    .getOrElse(false)
-
-  /** Temporarily set the loop flag for the duration of an operation */
-  def withInLoop[T](op: => T): T = {
-    val previousInLoop = inLoop
-    this.inLoop = true
-    try {
-      op
-    } finally {
-      this.inLoop = previousInLoop
-    }
-  }
+  def isInLoop: Boolean =
+    this.isInstanceOf[LoopScopeVerifyContext] || parent()
+      .flatMap {
+        case svc: ScopeVerifyContext => Some(svc.isInLoop)
+        case _                       => None
+      }
+      .getOrElse(false)
 
   override def isSaving: Boolean = parentContext.isSaving
 
@@ -430,22 +418,22 @@ abstract class BlockVerifyContext(parentContext: VerifyContext)
   }
 }
 
-final class OuterBlockVerifyContext(
+final class OuterScopeVerifyContext(
   parentContext: VerifyContext,
   isStaticContext: Boolean,
   returnTypeName: TypeName = TypeNames.Void
-) extends BlockVerifyContext(parentContext)
+) extends ScopeVerifyContext(parentContext)
     with OuterControlFlowContext {
 
-  assert(!parentContext.isInstanceOf[BlockVerifyContext])
+  assert(!parentContext.isInstanceOf[ScopeVerifyContext])
 
   override val isStatic: Boolean = isStaticContext
 
   override def returnType: TypeName = returnTypeName
 }
 
-final class InnerBlockVerifyContext(parentContext: BlockVerifyContext)
-    extends BlockVerifyContext(parentContext) {
+final class InnerScopeVerifyContext(parentContext: ScopeVerifyContext)
+    extends ScopeVerifyContext(parentContext) {
 
   override def isStatic: Boolean = parentContext.isStatic
 
@@ -460,7 +448,38 @@ final class InnerBlockVerifyContext(parentContext: BlockVerifyContext)
     super.getVar(name, markUsed).orElse(parentContext.getVar(name, markUsed))
 }
 
-final class ExpressionVerifyContext(parentContext: BlockVerifyContext) extends VerifyContext {
+final class LoopScopeVerifyContext(parentContext: ScopeVerifyContext)
+    extends ScopeVerifyContext(parentContext) {
+
+  private var allowUsageTracking: Boolean = true
+
+  override def isStatic: Boolean = parentContext.isStatic
+
+  override def returnType: TypeName = parentContext.returnType
+
+  /** Temporarily set usage tracking for the duration of an operation */
+  def withUsageTracking[T](enabled: Boolean)(op: => T): T = {
+    val previousTracking = allowUsageTracking
+    allowUsageTracking = enabled
+    try {
+      op
+    } finally {
+      allowUsageTracking = previousTracking
+    }
+  }
+
+  override def getVar(name: Name, markUsed: Boolean): Option[VarTypeAndDefinition] = {
+    val shouldMarkUsed = markUsed && allowUsageTracking
+    super.getVar(name, shouldMarkUsed).orElse(parentContext.getVar(name, markUsed))
+  }
+
+  override def collectVars(accum: mutable.Map[Name, VarTypeAndDefinition]): Unit = {
+    parentContext.collectVars(accum)
+    super.collectVars(accum)
+  }
+}
+
+final class ExpressionVerifyContext(parentContext: ScopeVerifyContext) extends VerifyContext {
 
   override def parent(): Option[VerifyContext] = Some(parentContext)
 

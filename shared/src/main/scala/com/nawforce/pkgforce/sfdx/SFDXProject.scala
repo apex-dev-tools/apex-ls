@@ -35,7 +35,7 @@ case class VersionedPackageLayer(version: Option[VersionNumber], packageLayer: M
 
 class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   private val projectFile = projectPath.join("sfdx-project.json")
-  private val localLogger = new CatchingLogger
+  private val localLogger = new IssueLogger()
 
   val sourceApiVersion: Option[String] =
     try {

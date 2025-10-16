@@ -25,10 +25,10 @@ import scala.collection.immutable.ArraySeq
 
 class ProjectTest extends AnyFunSuite with BeforeAndAfter {
 
-  private var logger: CatchingLogger = _
+  private var logger: IssueLogger = _
 
   before {
-    logger = new CatchingLogger
+    logger = new IssueLogger()
   }
 
   test("Missing project file") {

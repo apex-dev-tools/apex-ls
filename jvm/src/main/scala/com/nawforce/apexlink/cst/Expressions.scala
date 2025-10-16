@@ -104,7 +104,7 @@ object ExprContext {
 sealed abstract class Expression extends CST {
   def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext
 
-  def verify(context: BlockVerifyContext): ExprContext = {
+  def verify(context: ScopeVerifyContext): ExprContext = {
     val staticContext = if (context.isStatic) Some(true) else None
     verify(ExprContext(staticContext, context.thisType), new ExpressionVerifyContext(context))
   }
@@ -115,7 +115,7 @@ sealed abstract class Expression extends CST {
     * @param prefix     for the log issue
     */
   def verifyIsExceptionInstance(
-    context: BlockVerifyContext,
+    context: ScopeVerifyContext,
     prefix: String
   ): (Boolean, ExprContext) = {
     val verifyResult = verify(context)
@@ -145,7 +145,7 @@ sealed abstract class Expression extends CST {
     * @param prefix     for the log issue
     */
   def verifyIs(
-    context: BlockVerifyContext,
+    context: ScopeVerifyContext,
     typeNames: Set[TypeName],
     isStatic: Boolean,
     prefix: String
@@ -181,7 +181,7 @@ sealed abstract class Expression extends CST {
     * @param prefix    for the log issue
     */
   def verifyIsSObjectOrSObjectList(
-    context: BlockVerifyContext,
+    context: ScopeVerifyContext,
     prefix: String
   ): (Boolean, ExprContext) = {
     val verifyResult = verify(context)
@@ -223,7 +223,7 @@ sealed abstract class Expression extends CST {
     * @param context verify context to use
     * @param prefix  for the log issue
     */
-  def verifyIsMergeableSObject(context: BlockVerifyContext, prefix: String): Option[TypeName] = {
+  def verifyIsMergeableSObject(context: ScopeVerifyContext, prefix: String): Option[TypeName] = {
     val verifyResult = verify(context)
     if (
       verifyResult.isDefined &&
@@ -253,7 +253,7 @@ sealed abstract class Expression extends CST {
     * @param prefix  for the log issue
     */
   def verifyIsMergeableSObjectOrSObjectList(
-    context: BlockVerifyContext,
+    context: ScopeVerifyContext,
     prefix: String
   ): Option[TypeName] = {
     val verifyResult      = verify(context)

@@ -13,7 +13,7 @@
  */
 package com.nawforce.pkgforce.documents
 
-import com.nawforce.pkgforce.diagnostics.IssuesManager
+import com.nawforce.pkgforce.diagnostics.IssueLogger
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.pkgforce.sfdx.ForceIgnoreVersion
@@ -23,10 +23,10 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class DocumentIndexTest extends AnyFunSuite with BeforeAndAfter {
 
-  private var logger: IssuesManager = _
+  private var logger: IssueLogger = _
 
   before {
-    logger = new IssuesManager()
+    logger = new IssueLogger()
   }
 
   test("bad dir has no files") {

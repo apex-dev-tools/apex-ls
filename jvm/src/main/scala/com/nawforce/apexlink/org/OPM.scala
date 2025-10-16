@@ -33,7 +33,8 @@ import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.apexlink.types.other._
 import com.nawforce.apexlink.types.platform.PlatformTypeDeclaration
 import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType}
-import com.nawforce.pkgforce.diagnostics._
+import com.nawforce.pkgforce.diagnostics.{IssueLogger, _}
+import io.github.apexdevtools.apexls.api.IssuesCollection
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
@@ -64,18 +65,16 @@ object OPM extends TriHierarchy {
   type TPackage = PackageImpl
   type TModule  = Module
 
-  class OrgImpl(
-    val path: PathLike,
-    val issueManager: IssuesManager,
-    initWorkspace: Option[Workspace]
-  ) extends TriOrg
+  class OrgImpl(val path: PathLike, val issueManager: IssueLogger, initWorkspace: Option[Workspace])
+      extends TriOrg
       with Org
       with OrgTestClasses {
     // Acquire lock for all operations that may be impacted by refresh
     val refreshLock = new ReentrantLock(true)
 
     // The workspace loaded into this Org
-    val workspace: Workspace = initWorkspace.getOrElse(new Workspace(issueManager, Seq()))
+    val workspace: Workspace =
+      initWorkspace.getOrElse(Workspace(issueManager, Seq.empty, None, Seq.empty))
 
     // Indexer monitor launcher that manages workspace watching
     val monitorLauncher: Monitor = new Monitor(path)
@@ -177,7 +176,7 @@ object OPM extends TriHierarchy {
     }
 
     /** Provide access to IssueManager for org */
-    override def issues: IssuesManager = issueManager
+    override def issues: IssueLogger = issueManager
 
     /** Check to see if cache has been flushed */
     override def isDirty(): Boolean = flusher.isDirty

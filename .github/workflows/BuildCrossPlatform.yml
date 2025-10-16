@@ -32,6 +32,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: "npm"
+          cache-dependency-path: |
+            js/npm/package-lock.json
+            mcp-npm/package-lock.json
 
       - name: Build
         run: sbt build
@@ -45,3 +49,17 @@ jobs:
           cd mcp
           sbt test
           sbt buildRegular
+
+      - name: Build MCP NPM Package
+        if: ${{ matrix.java_version >= 17 }}
+        run: |
+          cd mcp-npm
+          npm ci --ignore-scripts
+          npm run build
+          npm run lint
+
+      - name: Test MCP NPM Package
+        if: ${{ matrix.java_version >= 17 }}
+        run: |
+          cd mcp-npm
+          npm run test:unit

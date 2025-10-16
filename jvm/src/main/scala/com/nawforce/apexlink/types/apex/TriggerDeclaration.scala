@@ -111,12 +111,10 @@ final case class TriggerDeclaration(
 
           block.foreach(block => {
             try {
-              val triggerContext = new OuterBlockVerifyContext(context, isStaticContext = false)
+              val triggerContext = new OuterScopeVerifyContext(context, isStaticContext = false)
               triggerContext.addVar(Names.Trigger, None, isReadOnly = true, tc)
               block.verify(triggerContext)
-              context.typePlugin.foreach(
-                _.onBlockValidated(block, isStatic = false, triggerContext)
-              )
+              context.typePlugin.foreach(_.onScopeValidated(isStatic = false, triggerContext))
             } finally {
               module.removeMetadata(tc)
             }
@@ -184,15 +182,22 @@ final case class TriggerDeclaration(
   }
 
   override def getValidationMap(line: Int, offset: Int): Map[Location, ValidationResult] = {
-    val resultMap   = mutable.Map[Location, ValidationResult]()
-    val typeContext = new TypeVerifyContext(None, this, Some(resultMap), enablePlugins = false)
-    val context     = new OuterBlockVerifyContext(typeContext, isStaticContext = false)
-    context.disableIssueReporting() {
-      block.foreach(block => {
-        block.verify(context)
-      })
+    try {
+      val resultMap   = mutable.Map[Location, ValidationResult]()
+      val typeContext = new TypeVerifyContext(None, this, Some(resultMap), enablePlugins = false)
+      val context     = new OuterScopeVerifyContext(typeContext, isStaticContext = false)
+      context.disableIssueReporting() {
+        block.foreach(block => {
+          block.verify(context)
+        })
+      }
+      resultMap.toMap
+    } catch {
+      case ex: Throwable =>
+        val at = ex.getStackTrace.headOption.getOrElse("Unknown")
+        LoggerOps.debug(s"Trigger body validation failure: ${ex.toString} $at")
+        Map.empty
     }
-    resultMap.toMap
   }
 }
 

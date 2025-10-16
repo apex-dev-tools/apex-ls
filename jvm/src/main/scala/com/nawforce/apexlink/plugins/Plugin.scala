@@ -41,7 +41,7 @@ class Plugin(td: DependentType, isLibrary: Boolean) {
 
   def onSummaryValidated(td: SummaryDeclaration): Seq[DependentType] = emptyTypes
 
-  def onBlockValidated(block: Block, isStatic: Boolean, context: BlockVerifyContext): Unit = {}
+  def onScopeValidated(isStatic: Boolean, context: ScopeVerifyContext): Unit = {}
 }
 
 object Plugin {

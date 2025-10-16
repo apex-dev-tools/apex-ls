@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.finding
 
-import com.nawforce.apexlink.cst.{BlockVerifyContext, CST, VerifyContext}
+import com.nawforce.apexlink.cst.{ScopeVerifyContext, CST, VerifyContext}
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.core.TypeDeclaration
