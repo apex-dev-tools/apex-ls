@@ -24,6 +24,7 @@ The bridge provides a clean separation between the Java 17 MCP server and the Ja
 - **JSON Serialization** - Results are converted to JSON strings for MCP protocol compatibility
 
 **Bridge Operations:**
+
 - Static analysis (`getIssues`) - Used by SfdxCodeDiagnosticsTool
 - Find usages (`findUsages`) - Used by ApexFindUsagesTool  
 - Go to definition (`getDefinition`) - Used by ApexFindDefinitionTool
@@ -60,6 +61,7 @@ Add as Maven dependency:
 2. Configure your IDE:
 
 **VS Code** (`.vscode/mcp.json`):
+
 ```json
 {
   "apex-ls-mcp": {
@@ -70,6 +72,7 @@ Add as Maven dependency:
 ```
 
 **Claude Desktop**:
+
 ```json
 {
   "mcpServers": {
@@ -97,12 +100,13 @@ cd mcp && sbt buildStandalone
 ```
 
 This creates:
+
 - `target/scala-2.13/apex-ls-mcp-*-standalone.jar` - Standalone JAR with all dependencies
 - `target/scala-2.13/apex-ls-mcp_*.jar` - Regular JAR for Maven dependencies
 
 ## Testing
 
-The MCP server communicates via stdin/stdout using the MCP protocol. 
+The MCP server communicates via stdin/stdout using the MCP protocol.
 It can be tested with:
 
 ```bash
@@ -112,38 +116,47 @@ npx @modelcontextprotocol/inspector java -jar apex-ls-mcp-standalone.jar
 ## MCP Tools
 
 ### sfdx_code_diagnostics
+
 Analyzes SFDX projects for code issues, errors, and warnings across all Salesforce development artifacts.
 
 **Parameters:**
+
 - `workspace` (required) - Path to the SFDX workspace directory
 - `includeWarnings` (optional) - Include warning-level issues in results (default: false)
 - `maxIssuesPerFile` (optional) - Maximum number of issues to return per file (default: 100, minimum: 1)
 
 ### apex_find_usages
+
 Locate all references to any Apex identifier across the workspace.
 
 **Parameters:**
+
 - `path` (required) - Path to the Apex file
 - `line` (required) - Line number (1-based)
 - `offset` (required) - Character offset within the line
 
 ### apex_find_definition
+
 Find the definition location for Apex types, members, variables, and platform objects.
 
 **Parameters:**
+
 - `path` (required) - Path to the Apex file
 - `line` (required) - Line number (1-based)
 - `offset` (required) - Character offset within the line
 
 ### apex_find_impacted_tests
+
 Find test classes that should be run based on changes to specific Apex source files.
 
 **Parameters:**
+
 - `changed_paths` (required) - Array of file paths that have been changed
 
 ## MCP Resources
 
 ### workspace://apex/{workspace_path}
+
 Provides access to Apex workspace information and metadata.
 
 Returns JSON with workspace details including version and status information.

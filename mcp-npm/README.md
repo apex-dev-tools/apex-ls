@@ -22,6 +22,7 @@ apex-ls-mcp [arguments]
 ### IDE Integration
 
 **VS Code (.vscode/mcp.json):**
+
 ```json
 {
   "apex-ls-mcp": {
@@ -32,6 +33,7 @@ apex-ls-mcp [arguments]
 ```
 
 **Claude Desktop:**
+
 ```json
 {
   "mcpServers": {
@@ -57,20 +59,24 @@ apex-ls-mcp [arguments]
 
 ## Troubleshooting
 
-**"Java not found"**
+### "Java not found"
+
 - Install Java 17+ and ensure it's in your PATH
 - Run `java -version` to verify
 
-**"JAR not found or version mismatch"**
+### "JAR not found or version mismatch"
+
 - Run `npm install apex-ls-mcp` to re-download
 
-**Network Issues**
+### Network Issues
+
 - Check internet connection
 - Corporate firewalls may block GitHub releases
 
 ## Cache Location
 
 JAR files are cached in `~/.apex-ls-mcp/`:
+
 - `apex-ls-mcp.jar` - The MCP server JAR
 - `version.txt` - Cached version info
 
