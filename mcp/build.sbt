@@ -87,7 +87,7 @@ build := {
   val targetDir = target.value
 
   // Create a final JAR in target root for easier deployment
-  val finalJar = targetDir / s"apex-ls-mcp-${version.value}.jar"
+  val finalJar = targetDir / s"apex-ls-mcp-v${version.value}.jar"
   IO.copyFile(originalJar, finalJar)
 
   // Ensure lib directory exists
@@ -159,7 +159,7 @@ assembly / assemblyMergeStrategy := {
   case x => MergeStrategy.first
 }
 
-assembly / assemblyJarName := s"apex-ls-mcp-${version.value}-standalone.jar"
+assembly / assemblyJarName := s"apex-ls-mcp-v${version.value}-standalone.jar"
 
 // Regular JAR build task (Maven Central)
 buildRegular := (Compile / Keys.`package`).value
