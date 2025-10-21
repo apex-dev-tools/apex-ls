@@ -25,13 +25,13 @@ on:
         type: boolean
         required: true
         default: false
-      pub_mcp_gh:
-        description: "Publish MCP Github Release"
+      pub_mcp_npm:
+        description: "Publish MCP NPM (Latest Tag)"
         type: boolean
         required: true
         default: false
-      pub_mcp_npm:
-        description: "Publish MCP NPM (Latest Tag)"
+      pub_mcp_gh:
+        description: "Save MCP Github Artifact"
         type: boolean
         required: true
         default: false
@@ -88,8 +88,15 @@ jobs:
         run: sbt buildStandalone
         working-directory: mcp
 
+      - name: Upload Standalone JAR as Artifact
+        if: ${{ inputs.pub_mcp_gh }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-ls-mcp-standalone
+          path: mcp/target/scala-2.13/apex-ls-mcp-*-standalone.jar
+
       - name: Upload Standalone JAR to GitHub Release
-        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_gh }}
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
