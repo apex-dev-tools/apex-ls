@@ -11,8 +11,8 @@
     "README.md"
   ],
   "config": {
-    "jarVersion": "6.0.0",
-    "downloadUrl": "https://github.com/apex-dev-tools/apex-ls/releases/download/v{jarVersion}/apex-ls-mcp-{jarVersion}-standalone.jar"
+    "jarVersion": "6.0.1",
+    "downloadUrl": "https://github.com/apex-dev-tools/apex-ls/releases/download/v{jarVersion}/apex-ls-mcp-v{jarVersion}-standalone.jar"
   },
   "scripts": {
     "postinstall": "node dist/install.js",
