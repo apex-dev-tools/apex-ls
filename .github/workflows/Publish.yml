@@ -26,7 +26,7 @@ on:
         required: true
         default: true
       pub_mcp_npm:
-        description: "Publish MCP NPM (Fixed version)"
+        description: "Publish MCP NPM (Latest Tag)"
         type: boolean
         required: true
         default: false
