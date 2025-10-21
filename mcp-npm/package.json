@@ -1,5 +1,5 @@
 {
-  "name": "apex-ls-mcp",
+  "name": "@apexdevtools/apex-ls-mcp",
   "version": "1.0.0",
   "description": "NPX wrapper for Apex Language Server MCP (Model Context Protocol) server",
   "main": "dist/cli.js",

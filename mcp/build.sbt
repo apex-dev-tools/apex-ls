@@ -22,6 +22,10 @@ ThisBuild / versionScheme := Some("strict")
 ThisBuild / javacOptions ++= Seq("-source", "17", "-target", "17")
 ThisBuild / javaOptions ++= Seq("--add-opens", "java.base/java.lang=ALL-UNNAMED")
 
+// javadoc runs by default instead of scaladoc (no scala code)
+// Override base options (javadoc doesn't support -target flag)
+Compile / doc / javacOptions := Seq("-source", "17")
+
 // Java formatting configuration
 javafmtOnCompile := false
 
@@ -73,6 +77,9 @@ Compile / unmanagedJars ++= {
   val apexLsDeps = (apexLsTargetDir ** "*.jar").get().filter(_ != apexLsJarFile)
   apexLsDeps
 }
+
+// Add unmanaged jars to javadoc classpath so it can resolve apex-ls types
+Compile / doc / dependencyClasspath ++= (Compile / unmanagedJars).value
 
 // Custom build task to create the MCP JAR
 build := {
@@ -159,11 +166,6 @@ buildRegular := (Compile / Keys.`package`).value
 
 // Standalone JAR build task (GitHub Releases)
 buildStandalone := assembly.value
-
-// Maven Central publishing configuration
-ThisBuild / publishTo := sonatypePublishToBundle.value
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 // Ensure tests can access apex-ls classes
 Test / unmanagedJars += apexLsJar.value

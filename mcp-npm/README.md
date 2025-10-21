@@ -1,4 +1,4 @@
-# apex-ls-mcp
+# @apexdevtools/apex-ls-mcp
 
 NPX wrapper for the Apex Language Server MCP (Model Context Protocol) server.
 
@@ -9,13 +9,13 @@ NPX wrapper for the Apex Language Server MCP (Model Context Protocol) server.
 Run directly without installation:
 
 ```bash
-npx apex-ls-mcp [arguments]
+npx @apexdevtools/apex-ls-mcp [arguments]
 ```
 
 ### Global Installation
 
 ```bash
-npm install -g apex-ls-mcp
+npm install -g @apexdevtools/apex-ls-mcp
 apex-ls-mcp [arguments]
 ```
 
@@ -27,7 +27,7 @@ apex-ls-mcp [arguments]
 {
   "apex-ls-mcp": {
     "command": "npx",
-    "args": ["apex-ls-mcp"]
+    "args": ["@apexdevtools/apex-ls-mcp"]
   }
 }
 ```
@@ -39,7 +39,7 @@ apex-ls-mcp [arguments]
   "mcpServers": {
     "apex-ls": {
       "command": "npx", 
-      "args": ["apex-ls-mcp"]
+      "args": ["@apexdevtools/apex-ls-mcp"]
     }
   }
 }
@@ -66,7 +66,7 @@ apex-ls-mcp [arguments]
 
 ### "JAR not found or version mismatch"
 
-- Run `npm install apex-ls-mcp` to re-download
+- Run `npm install @apexdevtools/apex-ls-mcp` to re-download
 
 ### Network Issues
 

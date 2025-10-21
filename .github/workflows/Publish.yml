@@ -11,7 +11,7 @@ on:
         required: true
         default: false
       pub_sbt:
-        description: "Publish JARs"
+        description: "Publish JAR"
         type: boolean
         required: true
         default: true
@@ -20,11 +20,21 @@ on:
         type: boolean
         required: true
         default: false
-      pub_mcp:
-        description: "Publish MCP Server"
+      pub_mcp_sbt:
+        description: "Publish MCP JAR"
         type: boolean
         required: true
-        default: true
+        default: false
+      pub_mcp_gh:
+        description: "Publish MCP Github Release"
+        type: boolean
+        required: true
+        default: false
+      pub_mcp_npm:
+        description: "Publish MCP NPM (Latest Tag)"
+        type: boolean
+        required: true
+        default: false
 
 jobs:
   publish:
@@ -42,7 +52,6 @@ jobs:
 
       - uses: sbt/setup-sbt@v1
 
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -55,7 +64,7 @@ jobs:
         if: ${{ !inputs.skip_tests }}
         run: sbt test
 
-      - name: Publish JARs
+      - name: Publish JAR
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_sbt }}
         run: sbt ci-release
         env:
@@ -65,24 +74,22 @@ jobs:
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
 
       - name: Publish MCP Server to Maven Central
-        if: ${{ (github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp) && (github.event_name == 'release' && github.event.action == 'released' || inputs.pub_sbt) }}
-        run: |
-          cd mcp
-          sbt ci-release
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_sbt }}
+        run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        working-directory: mcp
 
       - name: Build Standalone JAR for GitHub Release
-        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp }}
-        run: |
-          cd mcp
-          sbt buildStandalone
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_gh }}
+        run: sbt buildStandalone
+        working-directory: mcp
 
       - name: Upload Standalone JAR to GitHub Release
-        if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_gh }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -101,3 +108,14 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: js/npm
+
+      - name: Publish MCP NPM
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_npm }}
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm version --allow-same-version --no-git-tag-version from-git
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: mcp-npm
