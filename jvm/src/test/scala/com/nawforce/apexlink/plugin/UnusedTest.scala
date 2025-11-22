@@ -1477,4 +1477,57 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  // Tests for issue #398 - Variables in ghosted type list initialization
+
+  test("Variable used in ghosted type list initializer should not be flagged (issue #398)") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy { { String msg = 'test'; List<ext__Type__c> items = new List<ext__Type__c>{ new ext__Type__c(Name = msg) }; System.debug(items); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Variable used in multiple ghosted type list elements should not be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy { { String msg1 = 'test1'; String msg2 = 'test2'; List<ext__Type__c> items = new List<ext__Type__c>{ new ext__Type__c(Name = msg1), new ext__Type__c(Name = msg2) }; System.debug(items); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused variable with ghosted type list should still be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy { { String msg1 = 'test'; String unused = 'unused'; List<ext__Type__c> items = new List<ext__Type__c>{ new ext__Type__c(Name = msg1) }; System.debug(items); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(
+        getMessages(root.join("force-app/Dummy.cls")) ==
+          "Unused: line 1 at 52-69: Unused local variable 'unused'\n"
+      )
+    }
+  }
+
 }
