@@ -1530,4 +1530,137 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Public method implementing unknown external interface not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy implements ext.SomeInterface { public void doSomething() {} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Private method implementing unknown external interface is flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy implements ext.SomeInterface { private void doSomething() {} }",
+        "force-app/Foo.cls" -> "public class Foo { { Type t = Dummy.class; } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      val messages = getMessages(root.join("force-app/Dummy.cls"))
+      assert(messages.contains("Unused private method 'void doSomething()'"))
+    }
+  }
+
+  test("Global method implementing unknown external interface not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "global class Dummy implements ext.SomeInterface { global void doSomething() {} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Public unused method implementing known interface can be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "force-app/Dummy.cls" -> "public class Dummy implements MyInterface { public void doSomething() {} public void other() {} }",
+        "force-app/MyInterface.cls" -> "public interface MyInterface { void doSomething(); }",
+        "force-app/Foo.cls"         -> "public class Foo { { Type t = Dummy.class; } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      // The other() method is not part of the interface and is unused, so it gets flagged
+      val messages = getMessages(root.join("force-app/Dummy.cls"))
+      assert(messages.contains("Unused public method 'void other()'"))
+    }
+  }
+
+  test("Public method on class extending class with unknown interface not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy extends ext.BaseClass { public void doSomething() {} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Public method on class extending known class with unknown interface not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy extends Base { public void doSomething() {} }",
+        "force-app/Base.cls"  -> "public virtual class Base implements ext.SomeInterface {}",
+        "force-app/Foo.cls"   -> "public class Foo { { Type t = Dummy.class; } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+      assert(getMessages(root.join("force-app/Base.cls")).isEmpty)
+    }
+  }
+
+  test("Multiple unknown interfaces - public method not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy implements ext.Interface1, ext.Interface2 { public void doSomething() {} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Mix of known and unknown interfaces - public method not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy implements MyInterface, ext.SomeInterface { public void doSomething() {} public void doAnother() {} }",
+        "force-app/MyInterface.cls" -> "public interface MyInterface { void doSomething(); }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
 }
