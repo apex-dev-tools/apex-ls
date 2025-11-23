@@ -411,6 +411,11 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
   def methods: ArraySeq[MethodDeclaration]
   def constructors: ArraySeq[ConstructorDeclaration]
 
+  /** True if we have complete structural information for this type. When false, certain validation
+    * errors are suppressed because members may exist in parts of the type we don't have access to.
+    * For Apex classes: true if superclass hierarchy is fully resolved. For SObjects: true if
+    * extending a known base SObject. Ghost types from external packages return false.
+    */
   def isComplete: Boolean
 
   def isExternallyVisible: Boolean =
