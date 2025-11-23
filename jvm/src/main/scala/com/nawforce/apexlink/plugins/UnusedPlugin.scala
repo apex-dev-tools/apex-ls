@@ -16,7 +16,12 @@ package com.nawforce.apexlink.plugins
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.plugins.UnusedPlugin._
-import com.nawforce.apexlink.types.apex.{ApexFieldLike, ApexMethodLike, FullDeclaration}
+import com.nawforce.apexlink.types.apex.{
+  ApexClassDeclaration,
+  ApexFieldLike,
+  ApexMethodLike,
+  FullDeclaration
+}
 import com.nawforce.apexlink.types.core.{
   Dependent,
   DependentType,
@@ -201,11 +206,24 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
         })
     }
 
+    private def couldBeUnused(method: ApexMethodLike): Boolean = {
+      // If we don't have complete interface information, public/global methods might be
+      // implementing external interfaces that we don't have full type information for
+      td match {
+        case apexClass: ApexClassDeclaration =>
+          apexClass.hasAllInterfaces || !method.visibility.exists(m =>
+            m == PUBLIC_MODIFIER || m == GLOBAL_MODIFIER
+          )
+        case _ => true // Non-Apex types can always be checked for unused methods
+      }
+    }
+
     def unusedMethods: ArraySeq[Issue] = {
       td.localMethods
         .flatMap {
-          case am: ApexMethodLike if !am.isUsed(td.module, td.inTest) => Some(am)
-          case _                                                      => None
+          case am: ApexMethodLike if !am.isUsed(td.module, td.inTest) && couldBeUnused(am) =>
+            Some(am)
+          case _ => None
         }
         .map(method => {
           val suffix = if (method.hasHolders) s", $onlyTestCodeReferenceText" else ""
@@ -295,7 +313,7 @@ object UnusedPlugin {
   val suppressModifiers: Set[Modifier] =
     Set(SUPPRESS_WARNINGS_ANNOTATION_PMD, SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
 
-  val excludedMethodModifiers: Set[Modifier] =
+  private val excludedMethodModifiers: Set[Modifier] =
     Set(
       TEST_VISIBLE_ANNOTATION,
       GLOBAL_MODIFIER,
@@ -303,7 +321,7 @@ object UnusedPlugin {
       SUPPRESS_WARNINGS_ANNOTATION_PMD,
       SUPPRESS_WARNINGS_ANNOTATION_UNUSED
     )
-  val excludedTestMethodModifiers: Set[Modifier] =
+  private val excludedTestMethodModifiers: Set[Modifier] =
     Set(
       ISTEST_ANNOTATION,
       TEST_SETUP_ANNOTATION,
@@ -311,7 +329,7 @@ object UnusedPlugin {
       SUPPRESS_WARNINGS_ANNOTATION_PMD,
       SUPPRESS_WARNINGS_ANNOTATION_UNUSED
     )
-  val excludedFieldModifiers: Set[Modifier] =
+  private val excludedFieldModifiers: Set[Modifier] =
     Set(
       TEST_VISIBLE_ANNOTATION,
       GLOBAL_MODIFIER,
@@ -319,6 +337,6 @@ object UnusedPlugin {
       SUPPRESS_WARNINGS_ANNOTATION_PMD,
       SUPPRESS_WARNINGS_ANNOTATION_UNUSED
     )
-  val excludedTestFieldModifiers: Set[Modifier] =
+  private val excludedTestFieldModifiers: Set[Modifier] =
     Set(SUPPRESS_WARNINGS_ANNOTATION_PMD, SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
 }

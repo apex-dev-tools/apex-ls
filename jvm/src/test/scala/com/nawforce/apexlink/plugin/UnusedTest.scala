@@ -1378,17 +1378,14 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Loop variable now correctly detected as unused (issue #330 fixed)") {
+  test("Loop variable used only in iteration control should not be flagged (issue #397)") {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy { { for (Integer i = 0; i < 2; i++) { System.debug('iteration'); } } }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
-      assert(
-        getMessages(root.join("Dummy.cls")) ==
-          "Unused: line 1 at 36-41: Unused local variable 'i'\n"
-      )
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
     }
   }
 
@@ -1411,6 +1408,258 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrgWithUnused(root)
       assert(getMessages(root.join("BatchClass.cls")).isEmpty)
+    }
+  }
+
+  // Additional tests for issue #397 - for loop variable usage detection
+
+  test("For loop with multiple variables - unused second variable should be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 0; i < 2; i++) { System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) ==
+          "Unused: line 1 at 43-48: Unused local variable 'j'\n"
+      )
+    }
+  }
+
+  test("For loop with multiple variables - second variable read in body should not be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 0; i < 2; i++) { System.debug('iteration ' + j); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test(
+    "For loop with multiple variables - second variable modified in body should not be flagged"
+  ) {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 0; i < 2; i++) { j++; System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test(
+    "For loop with multiple variables - second variable used only in condition should not be flagged"
+  ) {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 10; i < j; i++) { System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test(
+    "For loop with multiple variables - second variable used only in update should not be flagged"
+  ) {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 0; i < 10; i++, j++) { System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  // Tests for issue #398 - Variables in ghosted type list initialization
+
+  test("Variable used in ghosted type list initializer should not be flagged (issue #398)") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy { { String msg = 'test'; List<ext__Type__c> items = new List<ext__Type__c>{ new ext__Type__c(Name = msg) }; System.debug(items); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Variable used in multiple ghosted type list elements should not be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy { { String msg1 = 'test1'; String msg2 = 'test2'; List<ext__Type__c> items = new List<ext__Type__c>{ new ext__Type__c(Name = msg1), new ext__Type__c(Name = msg2) }; System.debug(items); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused variable with ghosted type list should still be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy { { String msg1 = 'test'; String unused = 'unused'; List<ext__Type__c> items = new List<ext__Type__c>{ new ext__Type__c(Name = msg1) }; System.debug(items); } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(
+        getMessages(root.join("force-app/Dummy.cls")) ==
+          "Unused: line 1 at 52-69: Unused local variable 'unused'\n"
+      )
+    }
+  }
+
+  test("Public method implementing unknown external interface not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy implements ext.SomeInterface { public void doSomething() {} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Private method implementing unknown external interface is flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy implements ext.SomeInterface { private void doSomething() {} }",
+        "force-app/Foo.cls" -> "public class Foo { { Type t = Dummy.class; } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      val messages = getMessages(root.join("force-app/Dummy.cls"))
+      assert(messages.contains("Unused private method 'void doSomething()'"))
+    }
+  }
+
+  test("Global method implementing unknown external interface not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "global class Dummy implements ext.SomeInterface { global void doSomething() {} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Public unused method implementing known interface can be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "force-app/Dummy.cls" -> "public class Dummy implements MyInterface { public void doSomething() {} public void other() {} }",
+        "force-app/MyInterface.cls" -> "public interface MyInterface { void doSomething(); }",
+        "force-app/Foo.cls"         -> "public class Foo { { Type t = Dummy.class; } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      // The other() method is not part of the interface and is unused, so it gets flagged
+      val messages = getMessages(root.join("force-app/Dummy.cls"))
+      assert(messages.contains("Unused public method 'void other()'"))
+    }
+  }
+
+  test("Public method on class extending class with unknown interface not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy extends ext.BaseClass { public void doSomething() {} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Public method on class extending known class with unknown interface not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy extends Base { public void doSomething() {} }",
+        "force-app/Base.cls"  -> "public virtual class Base implements ext.SomeInterface {}",
+        "force-app/Foo.cls"   -> "public class Foo { { Type t = Dummy.class; } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+      assert(getMessages(root.join("force-app/Base.cls")).isEmpty)
+    }
+  }
+
+  test("Multiple unknown interfaces - public method not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy implements ext.Interface1, ext.Interface2 { public void doSomething() {} }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Mix of known and unknown interfaces - public method not flagged") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |"packageDirectories": [{"path": "force-app"}],
+            |"plugins": {"dependencies": [{"namespace": "ext"}]}
+            |}""".stripMargin,
+        "force-app/Dummy.cls" -> "public class Dummy implements MyInterface, ext.SomeInterface { public void doSomething() {} public void doAnother() {} }",
+        "force-app/MyInterface.cls" -> "public interface MyInterface { void doSomething(); }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("force-app/Dummy.cls")).isEmpty)
     }
   }
 

@@ -295,6 +295,24 @@ trait ApexClassDeclaration extends ApexDeclaration with DependencyHolder with Re
     (superClassDeclaration.nonEmpty && superClassDeclaration.get.isComplete) || superClass.isEmpty
   }
 
+  /** True if we have full information about all implemented interfaces */
+  lazy val hasAllInterfaces: Boolean = {
+    // isComplete ensures superclass hierarchy is fully resolved
+    isComplete &&
+    // All declared interfaces must be resolved
+    interfaces.length == interfaceDeclarations.length &&
+    // Recursively check superclass has all its interfaces
+    superClassDeclaration.forall {
+      case apexClass: ApexClassDeclaration => apexClass.hasAllInterfaces
+      case _                               => true
+    } &&
+    // Recursively check all interfaces have all their interfaces
+    interfaceDeclarations.forall {
+      case apexClass: ApexClassDeclaration => apexClass.hasAllInterfaces
+      case _                               => true
+    }
+  }
+
   override lazy val fields: ArraySeq[FieldDeclaration] = {
     ArraySeq.unsafeWrapArray(
       localFields

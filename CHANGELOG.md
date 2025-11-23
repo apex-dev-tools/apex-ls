@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Loop variables used only in iteration control (condition/increment) are no longer incorrectly flagged as unused (#397)
+- Variables used in ghosted type list initializers are now correctly tracked (#398)
+- Public/global methods implementing interfaces from external namespaces are no longer incorrectly flagged as unused (#401)
+
 ## [6.0.1] - 2025-10-21
 
 - Functionally identical to 6.0.0, testing release process
