@@ -240,9 +240,7 @@ final case class ForStatement(control: Option[ForControl], statement: Option[Sta
   override def verify(context: ScopeVerifyContext): Unit = {
     control.foreach(control => {
       val forContext = new LoopScopeVerifyContext(context)
-      forContext.withUsageTracking(false) {
-        control.verify(forContext)
-      }
+      control.verify(forContext)
       val loopContext = new InnerScopeVerifyContext(forContext).setControlRoot(forContext)
       control.addVars(loopContext)
       statement.foreach(_.verify(loopContext))
