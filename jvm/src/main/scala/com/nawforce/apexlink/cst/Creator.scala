@@ -433,6 +433,8 @@ final case class SetOrListCreatorRest(parts: ArraySeq[Expression]) extends Creat
       case Left(error) =>
         if (!context.module.isGhostedType(enclosedType.get))
           context.log(error.asIssue(location))
+        // Still verify parts for variable usage tracking, even though we can't type check
+        parts.foreach(_.verify(input, context))
         ExprContext.empty
       case Right(toType) =>
         // For each expression check we can assign to the generic type

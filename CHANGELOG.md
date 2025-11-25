@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Loop variables used only in iteration control (condition/increment) are no longer incorrectly flagged as unused (#397)
+- Variables used in ghosted type list initializers are no longer incorrectly flagged as unused (#398)
 
 ## [6.0.1] - 2025-10-21
 
