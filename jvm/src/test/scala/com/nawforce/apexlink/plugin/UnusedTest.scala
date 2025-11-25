@@ -1378,17 +1378,14 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Loop variable now correctly detected as unused (issue #330 fixed)") {
+  test("Loop variable used only in iteration control should not be flagged (issue #397)") {
     FileSystemHelper.run(
       Map(
         "Dummy.cls" -> "public class Dummy { { for (Integer i = 0; i < 2; i++) { System.debug('iteration'); } } }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
-      assert(
-        getMessages(root.join("Dummy.cls")) ==
-          "Unused: line 1 at 36-41: Unused local variable 'i'\n"
-      )
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
     }
   }
 
@@ -1411,6 +1408,72 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrgWithUnused(root)
       assert(getMessages(root.join("BatchClass.cls")).isEmpty)
+    }
+  }
+
+  // Additional tests for issue #397 - for loop variable usage detection
+
+  test("For loop with multiple variables - unused second variable should be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 0; i < 2; i++) { System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(
+        getMessages(root.join("Dummy.cls")) ==
+          "Unused: line 1 at 43-48: Unused local variable 'j'\n"
+      )
+    }
+  }
+
+  test("For loop with multiple variables - second variable read in body should not be flagged") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 0; i < 2; i++) { System.debug('iteration ' + j); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test(
+    "For loop with multiple variables - second variable modified in body should not be flagged"
+  ) {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 0; i < 2; i++) { j++; System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test(
+    "For loop with multiple variables - second variable used only in condition should not be flagged"
+  ) {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 10; i < j; i++) { System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test(
+    "For loop with multiple variables - second variable used only in update should not be flagged"
+  ) {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { { for (Integer i = 0, j = 0; i < 10; i++, j++) { System.debug('iteration'); } } }"
+      )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      assert(getMessages(root.join("Dummy.cls")).isEmpty)
     }
   }
 
