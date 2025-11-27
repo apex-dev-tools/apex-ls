@@ -68,6 +68,7 @@ jobs:
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_sbt }}
         run: sbt ci-release
         env:
+          CI_CLEAN: "" # Skip clean - MCP build needs apex-ls JAR in target/
           PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
