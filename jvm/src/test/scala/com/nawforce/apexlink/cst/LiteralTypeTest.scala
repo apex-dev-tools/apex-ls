@@ -144,4 +144,179 @@ class LiteralTypeTest extends AnyFunSuite with Matchers with TestHelper {
     }
   }
 
+  test("Invalid string escape sequence") {
+    try {
+      typeDeclaration("public class Dummy { String s = 'test\\stest'; }")
+      assert(dummyIssues.nonEmpty)
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+  }
+
+  test("Valid string escape sequences") {
+    typeDeclaration(
+      "public class Dummy { String s1 = '\\''; String s2 = '\\\"'; String s3 = '\\\\'; }"
+    )
+    assert(dummyIssues.isEmpty)
+    typeDeclaration(
+      "public class Dummy { String s1 = '\\n'; String s2 = '\\r'; String s3 = '\\t'; }"
+    )
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s1 = '\\b'; String s2 = '\\f'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s = '\\u0041'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s = '\\u00FF'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s = '\\uABCD'; }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Invalid single character escape sequences - digits") {
+    val digits = Seq('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
+    val failures = digits.filter { digit =>
+      try {
+        typeDeclaration(s"public class Dummy { String s = 'test\\${digit}test'; }")
+        !dummyIssues.contains("invalid escape") && !dummyIssues.contains("token recognition")
+      } catch {
+        case _: NoSuchElementException => false
+      }
+    }
+    assert(
+      failures.isEmpty,
+      s"Invalid escapes not detected: ${failures.map(c => s"\\$c").mkString(", ")}"
+    )
+  }
+
+  test("Invalid single character escape sequences - letters") {
+    val invalidLetters = Seq('a', 'c', 'd', 'e', 'h', 'i', 'j', 'k', 'l', 'm', 'o', 'p', 'q', 's',
+      'v', 'w', 'x', 'y', 'z')
+    val failures = invalidLetters.filter { char =>
+      try {
+        typeDeclaration(s"public class Dummy { String s = 'test\\${char}test'; }")
+        !dummyIssues.contains("invalid escape") && !dummyIssues.contains("token recognition")
+      } catch {
+        case _: NoSuchElementException => false
+      }
+    }
+    assert(
+      failures.isEmpty,
+      s"Invalid escapes not detected: ${failures.map(c => s"\\$c").mkString(", ")}"
+    )
+  }
+
+  test("Invalid unicode escape - incomplete") {
+    try {
+      typeDeclaration("public class Dummy { String s = '\\u'; }")
+      assert(dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"))
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+    try {
+      typeDeclaration("public class Dummy { String s = '\\u1'; }")
+      assert(dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"))
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+    try {
+      typeDeclaration("public class Dummy { String s = '\\u12'; }")
+      assert(dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"))
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+    try {
+      typeDeclaration("public class Dummy { String s = '\\u123'; }")
+      assert(dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"))
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+  }
+
+  test("Invalid unicode escape - invalid hex digits") {
+    val invalidHex = Seq('g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+      'v', 'w', 'x', 'y', 'z')
+    invalidHex.foreach { invalidHexChar =>
+      try {
+        typeDeclaration(s"public class Dummy { String s = '\\u123${invalidHexChar}'; }")
+        assert(
+          dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"),
+          s"Failed to detect invalid hex digit ${invalidHexChar} in \\u123${invalidHexChar}"
+        )
+      } catch {
+        case _: NoSuchElementException =>
+          assert(true, s"Parser rejected invalid hex digit ${invalidHexChar} (acceptable)")
+      }
+    }
+  }
+
+  test("Invalid unicode escape - invalid hex in first position") {
+    try {
+      typeDeclaration("public class Dummy { String s = '\\ug123'; }")
+      assert(dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"))
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+  }
+
+  test("Trailing backslash") {
+    try {
+      typeDeclaration("public class Dummy { String s = 'test\\'; }")
+      assert(dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"))
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+  }
+
+  test("Multiple invalid escapes in one string") {
+    try {
+      typeDeclaration("public class Dummy { String s = '\\s\\x\\g'; }")
+      assert(dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"))
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+  }
+
+  test("Mixed valid and invalid escapes") {
+    try {
+      typeDeclaration("public class Dummy { String s = '\\n\\s\\t'; }")
+      assert(dummyIssues.contains("invalid escape") || dummyIssues.contains("token recognition"))
+    } catch {
+      case _: NoSuchElementException =>
+        assert(true)
+    }
+  }
+
+  test("Valid unicode escapes with various hex combinations") {
+    typeDeclaration("public class Dummy { String s = '\\u0000'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s = '\\uFFFF'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s = '\\u0123'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s = '\\uABCD'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s = '\\uabcd'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String s = '\\u012F'; }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("String with only valid escapes") {
+    typeDeclaration("public class Dummy { String s = '\\\\\\'\\\"\\n\\r\\t\\b\\f\\u0041'; }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Empty string with valid escapes") {
+    typeDeclaration("public class Dummy { String s = '\\n\\r\\t'; }")
+    assert(dummyIssues.isEmpty)
+  }
+
 }

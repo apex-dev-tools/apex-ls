@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Invalid string escape sequences in string literals are now properly validated and flagged
+- Static methods on inner classes are now properly validated and flagged
+
 ## [6.0.2] - 2025-11-25
 
 ### Fixed
