@@ -89,6 +89,14 @@ case object StringLiteral extends Literal {
   }
 }
 
+case class InvalidStringLiteral(location: PathLocation) extends Literal {
+  override def getType: TypeDeclaration = PlatformTypes.stringType
+
+  override def verify(location: PathLocation, context: ExpressionVerifyContext): Unit = {
+    context.logError(location, "Invalid escape sequence in string literal")
+  }
+}
+
 final case class BoundStringLiteral(bound: Set[Name]) extends Literal {
   override def getType: TypeDeclaration = PlatformTypes.stringType
 
@@ -146,6 +154,44 @@ object DoubleOrDecimalLiteral {
 }
 
 object Literal {
+  private val validEscapes = Set('\\', '\'', '"', 'n', 'r', 't', 'b', 'f', 'u')
+
+  private def hasInvalidEscape(source: String): Boolean = {
+    var i = 0
+    while (i < source.length) {
+      if (source(i) == '\\') {
+        if (i + 1 >= source.length) {
+          return true
+        }
+        val next = source(i + 1)
+        if (next == 'u') {
+          if (i + 5 >= source.length) {
+            return true
+          }
+          val hexStart = i + 2
+          val hexEnd   = hexStart + 4
+          if (
+            !source
+              .substring(hexStart, hexEnd)
+              .forall(c =>
+                (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+              )
+          ) {
+            return true
+          }
+          i = hexEnd
+        } else if (!validEscapes.contains(next)) {
+          return true
+        } else {
+          i += 2
+        }
+      } else {
+        i += 1
+      }
+    }
+    false
+  }
+
   def construct(from: LiteralContext): Literal = {
     CodeParser
       .toScala(from.IntegerLiteral())
@@ -163,7 +209,21 @@ object Literal {
       .orElse(
         CodeParser
           .toScala(from.StringLiteral())
-          .map(x => StringLiteral(CodeParser.getText(x)))
+          .map(x => {
+            val source = CST.sourceContext.value.get.extractSource(from)
+            val text   = source.code.asString
+            val content =
+              if (text.length >= 2 && text(0) == '\'' && text(text.length - 1) == '\'') {
+                text.substring(1, text.length - 1)
+              } else {
+                text
+              }
+            if (hasInvalidEscape(content)) {
+              InvalidStringLiteral(CST.sourceContext.value.get.getLocation(from))
+            } else {
+              StringLiteral(CodeParser.getText(x))
+            }
+          })
       )
       .orElse(CodeParser.toScala(from.BooleanLiteral()).map(_ => BooleanLiteral))
       .getOrElse(NullLiteral)

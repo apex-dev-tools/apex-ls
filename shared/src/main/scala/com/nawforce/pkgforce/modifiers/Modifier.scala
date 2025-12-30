@@ -353,6 +353,78 @@ object ApexModifiers {
     )
   }
 
+  def validateCommentPlacement(
+    parser: CodeParser,
+    modifierContexts: ArraySeq[ModifierContext],
+    idContext: IdContext,
+    logger: ModifierLogger
+  ): Unit = {
+    if (modifierContexts.isEmpty) return
+
+    val fullSource = parser.source.code.asString
+    val lowerSource = fullSource.toLowerCase
+    val lastModifierText = CodeParser.getText(modifierContexts.last).trim
+    val idText           = CodeParser.getText(idContext).trim
+
+    def findPosition(searchText: String, startPos: Int = 0): Int =
+      lowerSource.indexOf(searchText.toLowerCase, startPos)
+
+    def hasComment(text: String): Boolean =
+      text.contains("/*") || text.contains("*/") || text.contains("//")
+
+    def checkCommentsBetween(startPos: Int, endPos: Int): Boolean = {
+      if (endPos > startPos) {
+        val between = fullSource.substring(startPos, endPos)
+        hasComment(between)
+      } else false
+    }
+
+    def logCommentError(context: LogEntryContext): Unit = {
+      logger.logError(context, "Comments are not allowed between annotations/modifiers and their target")
+    }
+
+    // Check for comments between modifiers/annotations and ID
+    val idStartPos = findPosition(idText)
+    if (idStartPos > 0) {
+      val beforeId = fullSource.substring(0, idStartPos)
+      
+      // Check from last @ annotation to ID
+      val atIndex = beforeId.lastIndexOf("@")
+      if (atIndex >= 0 && checkCommentsBetween(atIndex, idStartPos)) {
+        logCommentError(LogEntryContext(parser, idContext))
+        return
+      }
+      
+      // Check from last modifier text to ID (look backwards from ID)
+      val lowerBeforeId = lowerSource.substring(0, idStartPos)
+      val modifierLower = lastModifierText.toLowerCase
+      val modifierStart = lowerBeforeId.lastIndexOf(modifierLower)
+      if (modifierStart >= 0) {
+        val modifierEnd = modifierStart + lastModifierText.length
+        if (checkCommentsBetween(modifierEnd, idStartPos)) {
+          logCommentError(LogEntryContext(parser, idContext))
+          return
+        }
+      }
+    }
+
+    // Check if annotations appear after comments on the same line
+    val firstAtIndex = fullSource.indexOf("@")
+    if (firstAtIndex > 0) {
+      val beforeAt       = fullSource.substring(0, firstAtIndex)
+      val lineStartIndex = if (beforeAt.nonEmpty) beforeAt.lastIndexOf('\n') + 1 else 0
+      if (hasComment(fullSource.substring(lineStartIndex, firstAtIndex))) {
+        val firstModifierWithAnnotation = modifierContexts.find { modifierContext =>
+          CodeParser.toScala(modifierContext.annotation()).nonEmpty
+        }
+        val errorContext = firstModifierWithAnnotation
+          .map(LogEntryContext(parser, _))
+          .getOrElse(LogEntryContext(parser, modifierContexts.head))
+        logger.logError(errorContext, "Annotations cannot appear on the same line as or after comments")
+      }
+    }
+  }
+
   def classModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
@@ -360,7 +432,8 @@ object ApexModifiers {
     idContext: IdContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts)
+    validateCommentPlacement(parser, modifierContexts, idContext, logger)
+    val mods = toModifiers(parser, modifierContexts)
     classModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 
@@ -418,7 +491,8 @@ object ApexModifiers {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts)
+    validateCommentPlacement(parser, modifierContexts, idContext, logger)
+    val mods = toModifiers(parser, modifierContexts)
     interfaceModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 
@@ -467,7 +541,8 @@ object ApexModifiers {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts)
+    validateCommentPlacement(parser, modifierContexts, idContext, logger)
+    val mods = toModifiers(parser, modifierContexts)
     enumModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 
@@ -535,7 +610,23 @@ object ApexModifiers {
     context: ParserRuleContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts)
+    // Extract qualified name from constructor declaration context for validation
+    // The context may be either a ConstructorDeclarationContext or a QualifiedNameContext
+    val qualifiedNameContext = context match {
+      case cdc: io.github.apexdevtools.apexparser.ApexParser.ConstructorDeclarationContext =>
+        cdc.qualifiedName()
+      case qnc: io.github.apexdevtools.apexparser.ApexParser.QualifiedNameContext =>
+        qnc
+      case _ => null
+    }
+    if (qualifiedNameContext != null) {
+      val idContexts = CodeParser.toScala(qualifiedNameContext.id())
+      if (idContexts.nonEmpty) {
+        val firstId = idContexts.head
+        validateCommentPlacement(parser, modifierContexts, firstId, logger)
+      }
+    }
+    val mods = toModifiers(parser, modifierContexts)
     constructorModifiers(logger, mods, LogEntryContext(parser, context))
   }
 

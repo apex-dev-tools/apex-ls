@@ -140,6 +140,88 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Annotation after single block comment on same line should error") {
+    typeDeclaration("/* comment */ @IsTest public class Dummy {}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Annotation after multiple block comments on same line should error") {
+    typeDeclaration("/* comment1 */ /* comment2 */ @Deprecated public class Dummy {}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Multiple annotations after block comment on same line should error") {
+    typeDeclaration("/* comment */ @IsTest @SuppressWarnings('PMD') public class Dummy {}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Block comment between annotation and class should error") {
+    typeDeclaration("@IsTest /* comment */ public class Dummy {}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Single line comment between annotation and class should error") {
+    typeDeclaration("@IsTest // comment\n public class Dummy {}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Annotation after comment on inner class should error") {
+    typeDeclarationInner("public class Dummy {/* comment */ @Deprecated class Inner{}}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Block comment between annotation and inner class should error") {
+    typeDeclarationInner("public class Dummy {@Deprecated /* comment */ class Inner{}}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Single line comment between annotation and inner class should error") {
+    typeDeclarationInner("public class Dummy {@Deprecated // comment\n class Inner{}}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Annotation after comment on method should error") {
+    try {
+      typeDeclaration("public class Dummy {/* comment */ @IsTest static void testMethod() {}}")
+      assert(dummyIssues.nonEmpty || hasIssues)
+    } catch {
+      case _: NoSuchElementException => assert(hasIssues)
+    }
+  }
+
+  test("Block comment between annotation and method should error") {
+    try {
+      typeDeclaration("public class Dummy {@IsTest /* comment */ static void testMethod() {}}")
+      assert(dummyIssues.nonEmpty || hasIssues)
+    } catch {
+      case _: NoSuchElementException => assert(hasIssues)
+    }
+  }
+
+  test("Single line comment between annotation and method should error") {
+    try {
+      typeDeclaration("public class Dummy {@IsTest // comment\n static void testMethod() {}}")
+      assert(dummyIssues.nonEmpty || hasIssues)
+    } catch {
+      case _: NoSuchElementException => assert(hasIssues)
+    }
+  }
+
+  test("Annotation after comment on inner class method should error") {
+    typeDeclaration("public class Dummy {class Inner {/* comment */ @Deprecated void method() {}}}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Block comment between annotation and inner class method should error") {
+    typeDeclaration("public class Dummy {class Inner {@Deprecated /* comment */ void method() {}}}")
+    assert(dummyIssues.nonEmpty)
+  }
+
+  test("Single line comment between annotation and inner class method should error") {
+    typeDeclaration("public class Dummy {class Inner {@Deprecated // comment\n void method() {}}}")
+    assert(dummyIssues.nonEmpty)
+  }
+
   test("Global inner") {
     assert(
       typeDeclarationInner("global class Dummy {global class Inner{}}").modifiers == ArraySeq(

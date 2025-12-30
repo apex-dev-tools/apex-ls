@@ -468,4 +468,9 @@ class MethodTest extends AnyFunSuite with TestHelper {
       createHappyOrg(root)
     }
   }
+
+  test("Static method on inner class") {
+    typeDeclaration("public class Dummy { class Inner { static void m() {} } }")
+    assert(dummyIssues.toLowerCase.contains("static") && dummyIssues.toLowerCase.contains("inner"))
+  }
 }
