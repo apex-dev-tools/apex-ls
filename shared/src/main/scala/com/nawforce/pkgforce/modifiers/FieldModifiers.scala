@@ -51,7 +51,8 @@ object FieldModifiers {
     idContext: IdContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts)
+    ApexModifiers.validateCommentPlacement(parser, modifierContexts, idContext, logger)
+    val mods = toModifiers(parser, modifierContexts)
     fieldModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 

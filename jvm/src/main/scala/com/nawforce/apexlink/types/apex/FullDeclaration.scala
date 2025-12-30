@@ -429,6 +429,15 @@ object FullDeclaration {
       .toScala(typeDeclaration.classDeclaration())
       .map(cd => {
         val classModifiers = ApexModifiers.classModifiers(parser, modifiers, outer = true, cd.id())
+        // Log comment-related issues immediately (validation may not be called in test context)
+        classModifiers.issues.foreach { issue =>
+          if (
+            issue.diagnostic.message.contains("comment") || issue.diagnostic.message
+              .contains("Comment")
+          ) {
+            OrgInfo.log(issue)
+          }
+        }
         ClassDeclaration.construct(
           parser,
           ThisType(module, thisType, classModifiers.modifiers.contains(ISTEST_ANNOTATION)),
@@ -440,28 +449,32 @@ object FullDeclaration {
       .orElse(
         CodeParser
           .toScala(typeDeclaration.interfaceDeclaration())
-          .map(id =>
+          .map(id => {
+            val interfaceModifiers =
+              ApexModifiers.interfaceModifiers(parser, modifiers, outer = true, id.id())
             InterfaceDeclaration.construct(
               parser,
               ThisType(module, thisType, inTest = false),
               None,
-              ApexModifiers.interfaceModifiers(parser, modifiers, outer = true, id.id()),
+              interfaceModifiers,
               id
             )
-          )
+          })
       )
       .orElse(
         CodeParser
           .toScala(typeDeclaration.enumDeclaration())
-          .map(ed =>
+          .map(ed => {
+            val enumModifiers =
+              ApexModifiers.enumModifiers(parser, modifiers, outer = true, ed.id())
             EnumDeclaration.construct(
               parser,
               ThisType(module, thisType, inTest = false),
               None,
-              ApexModifiers.enumModifiers(parser, modifiers, outer = true, ed.id()),
+              enumModifiers,
               ed
             )
-          )
+          })
       )
 
     cst.map(_.withContext(typeDeclaration))

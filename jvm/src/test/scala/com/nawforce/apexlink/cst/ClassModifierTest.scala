@@ -208,23 +208,17 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
   }
 
   test("Annotation after comment on inner class method should error") {
-    typeDeclaration(
-      "public class Dummy {class Inner {/* comment */ @Deprecated void method() {}}}"
-    )
+    typeDeclaration("public class Dummy {class Inner {/* comment */ @Deprecated void method() {}}}")
     assert(dummyIssues.nonEmpty)
   }
 
   test("Block comment between annotation and inner class method should error") {
-    typeDeclaration(
-      "public class Dummy {class Inner {@Deprecated /* comment */ void method() {}}}"
-    )
+    typeDeclaration("public class Dummy {class Inner {@Deprecated /* comment */ void method() {}}}")
     assert(dummyIssues.nonEmpty)
   }
 
   test("Single line comment between annotation and inner class method should error") {
-    typeDeclaration(
-      "public class Dummy {class Inner {@Deprecated // comment\n void method() {}}}"
-    )
+    typeDeclaration("public class Dummy {class Inner {@Deprecated // comment\n void method() {}}}")
     assert(dummyIssues.nonEmpty)
   }
 

@@ -69,14 +69,15 @@ object MethodModifiers {
   def classMethodModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
-    context: ParserRuleContext,
+    idContext: io.github.apexdevtools.apexparser.ApexParser.IdContext,
     ownerInfo: ClassOwnerInfo,
     isOuter: Boolean
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts)
-    classMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerInfo, isOuter)
+    ApexModifiers.validateCommentPlacement(parser, modifierContexts, idContext, logger)
+    val mods = toModifiers(parser, modifierContexts)
+    classMethodModifiers(logger, mods, LogEntryContext(parser, idContext), ownerInfo, isOuter)
   }
 
   def classMethodModifiers(
@@ -190,11 +191,12 @@ object MethodModifiers {
   def interfaceMethodModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
-    context: ParserRuleContext
+    idContext: io.github.apexdevtools.apexparser.ApexParser.IdContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts)
-    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context))
+    ApexModifiers.validateCommentPlacement(parser, modifierContexts, idContext, logger)
+    val mods = toModifiers(parser, modifierContexts)
+    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, idContext))
   }
 
   def interfaceMethodModifiers(
