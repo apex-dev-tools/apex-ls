@@ -325,6 +325,12 @@ object MethodMap {
       .foreach(m => {
         setMethodError(m, s"protected method '${m.name}' cannot be static", errors)
       })
+    // Add errors for any static methods on inner classes
+    if (td.outerTypeName.isDefined && td.nature == CLASS_NATURE) {
+      staticLocals.foreach(m => {
+        setMethodError(m, s"Static methods are not allowed in inner classes", errors)
+      })
+    }
     staticLocals
       .filterNot(ignorableStatics.contains)
       .foreach(method => applyStaticMethod(workingMap, method))
