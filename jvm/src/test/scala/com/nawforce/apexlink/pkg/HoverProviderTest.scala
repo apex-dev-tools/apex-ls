@@ -33,8 +33,8 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
   test("Hover for inner class") {
     val contentAndCursorPos =
       withCursor(
-        s"public virtual class Foo {public void after(){Du${CURSOR}mmy.dummyMethod();}  " +
-          s"private class Dummy {public static void dummyMethod(){} } }"
+        s"public virtual class Foo {public void after(){new Du${CURSOR}mmy();}  " +
+          s"private class Dummy {} }"
       )
     FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1)) { root: PathLike =>
       val org = createHappyOrg(root)
@@ -44,7 +44,7 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
       assert(hoverItem.location.get.startLine == 1)
       assert(hoverItem.location.get.startPosition == 46)
       assert(hoverItem.location.get.endLine == 1)
-      assert(hoverItem.location.get.endPosition == 51)
+      assert(hoverItem.location.get.endPosition == 57)
     }
   }
 

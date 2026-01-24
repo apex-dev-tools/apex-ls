@@ -10,6 +10,7 @@ import com.nawforce.apexlink.types.apex.{
   ApexFullDeclaration,
   ApexMethodLike
 }
+import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
 
 trait HoverProvider extends SourceOps {
@@ -31,13 +32,19 @@ trait HoverProvider extends SourceOps {
     val validation = locateFromValidation(td, line, offset)
 
     validation._2.flatMap(loc => {
-      validation._1(loc).result.locatable match {
+      val result = validation._1(loc).result
+      result.locatable match {
         case Some(l: ApexMethodLike) =>
           Some(l, loc)
         case Some(l: ApexConstructorLike) =>
           Some(l, loc)
         case Some(l: ApexClassDeclaration) =>
           Some(l, loc)
+        case Some(_: CustomConstructorDeclaration) =>
+          result.declaration match {
+            case Some(c: ApexClassDeclaration) => Some(c, loc)
+            case _                             => None
+          }
         case _ =>
           None
       }
