@@ -14,6 +14,10 @@ import _root_.org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
   */
 class IdentifierPropertyTest extends AnyFunSuite with ScalaCheckPropertyChecks {
 
+  // Run 250 cases per property for more thorough coverage
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 250)
+
   // Generator for valid identifier characters (alphanumeric + underscore)
   val validChar: Gen[Char] = Gen.oneOf(Gen.alphaChar, Gen.numChar, Gen.const('_'))
 
@@ -137,6 +141,42 @@ class IdentifierPropertyTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     forAll(Gen.numChar) { c =>
       val result = Identifier.isLegalIdentifier(Name(c.toString))
       assert(result.isDefined, s"Expected rejection for '$c'")
+    }
+  }
+
+  // Regex matching the rules in Identifier.isLegalIdentifier for simple identifiers
+  // (excludes __sfdc_trigger special case)
+  private val validIdentifierPattern = "^[a-zA-Z][a-zA-Z0-9_]*$".r
+
+  private def isValidBySpec(s: String): Boolean = {
+    s.nonEmpty &&
+    validIdentifierPattern.matches(s) &&
+    !s.startsWith("_") &&
+    !s.endsWith("_") &&
+    !s.contains("__")
+  }
+
+  // Fuzzing test: arbitrary strings should be handled consistently
+  // This complements targeted generators by exploring unexpected inputs
+  test("arbitrary strings are handled consistently with spec") {
+    forAll(Gen.asciiStr) { s =>
+      whenever(s.nonEmpty) {
+        val result = Identifier.isLegalIdentifier(Name(s))
+        result match {
+          case None =>
+            // Function says valid - verify it matches our understanding of valid
+            assert(
+              isValidBySpec(s),
+              s"Function accepted '$s' but it doesn't match valid identifier pattern"
+            )
+          case Some(_) =>
+            // Function says invalid - verify something is actually wrong
+            assert(
+              !isValidBySpec(s),
+              s"Function rejected '$s' but it appears to be a valid identifier"
+            )
+        }
+      }
     }
   }
 }
