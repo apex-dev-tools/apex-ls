@@ -121,18 +121,30 @@ class LiteralTypeTest extends AnyFunSuite with Matchers with TestHelper {
     val abcSet      = Set(Name("a"), Name("b"), Name("c"))
     val abJoinedSet = Set(Name("ab"))
     val mixedSet    = Set(Name("1a2b3"))
-    typeLiteral("':a'") should matchPattern { case BoundStringLiteral(bound) if bound == aSet => }
-    typeLiteral("' :a'") should matchPattern { case BoundStringLiteral(bound) if bound == aSet => }
-    typeLiteral("': a'") should matchPattern { case BoundStringLiteral(bound) if bound == aSet => }
-    typeLiteral("':a '") should matchPattern { case BoundStringLiteral(bound) if bound == aSet => }
+    typeLiteral("':a'") should matchPattern {
+      case BoundStringLiteral(bound) if bound == aSet =>
+    }
+    typeLiteral("' :a'") should matchPattern {
+      case BoundStringLiteral(bound) if bound == aSet =>
+    }
+    typeLiteral("': a'") should matchPattern {
+      case BoundStringLiteral(bound) if bound == aSet =>
+    }
+    typeLiteral("':a '") should matchPattern {
+      case BoundStringLiteral(bound) if bound == aSet =>
+    }
     typeLiteral("'  :  a  '") should matchPattern {
       case BoundStringLiteral(bound) if bound == aSet =>
     }
     typeLiteral("':ab'") should matchPattern {
       case BoundStringLiteral(bound) if bound == abJoinedSet =>
     }
-    typeLiteral("':a b'") should matchPattern { case BoundStringLiteral(bound) if bound == aSet => }
-    typeLiteral("'b:a'") should matchPattern { case BoundStringLiteral(bound) if bound == aSet => }
+    typeLiteral("':a b'") should matchPattern {
+      case BoundStringLiteral(bound) if bound == aSet =>
+    }
+    typeLiteral("'b:a'") should matchPattern {
+      case BoundStringLiteral(bound) if bound == aSet =>
+    }
     typeLiteral("':1a2b3'") should matchPattern {
       case BoundStringLiteral(bound) if bound == mixedSet =>
     }
@@ -142,6 +154,58 @@ class LiteralTypeTest extends AnyFunSuite with Matchers with TestHelper {
     typeLiteral("':a :b :c'") should matchPattern {
       case BoundStringLiteral(bound) if bound == abcSet =>
     }
+  }
+
+  test("Valid escape sequences") {
+    // Valid escapes should not produce any issues
+    typeDeclaration("public class Dummy { String a = '\\n'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String a = '\\t'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String a = '\\r'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String a = '\\\\'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String a = '\\''; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String a = '\\\"'; }")
+    assert(dummyIssues.isEmpty)
+    typeDeclaration("public class Dummy { String a = '\\u0041'; }")
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Invalid escape sequence") {
+    // Invalid escape sequences like '\q' cause lexer errors that cascade into parser errors.
+    // Both are reported as SYNTAX_CATEGORY. The lexer error contains the useful diagnostic.
+    val parser =
+      CodeParser(Path("Dummy.cls"), SourceData("public class Dummy { String a = '\\q'; }"))
+    val result       = parser.parseClass()
+    val syntaxErrors = result.issues.filter(_.diagnostic.category.name == "Syntax")
+    assert(syntaxErrors.nonEmpty, "Should have syntax errors for invalid escape")
+    assert(
+      syntaxErrors.exists(_.diagnostic.message.contains("Invalid escape sequence '\\q' in string"))
+    )
+  }
+
+  test("Invalid unicode escape - truncated") {
+    // Truncated unicode escapes cause lexer errors reported as SYNTAX_CATEGORY
+    val parser =
+      CodeParser(Path("Dummy.cls"), SourceData("public class Dummy { String a = '\\u000'; }"))
+    val result       = parser.parseClass()
+    val syntaxErrors = result.issues.filter(_.diagnostic.category.name == "Syntax")
+    assert(syntaxErrors.nonEmpty, "Should have syntax errors for truncated unicode")
+    assert(
+      syntaxErrors.exists(_.diagnostic.message.contains("Invalid escape sequence '\\u' in string"))
+    )
+  }
+
+  test("Trailing backslash in string") {
+    // '\' is interpreted as escaped quote, so string doesn't close - causes syntax error
+    val parser =
+      CodeParser(Path("Dummy.cls"), SourceData("public class Dummy { String a = '\\'; }"))
+    val result       = parser.parseClass()
+    val syntaxErrors = result.issues.filter(_.diagnostic.category.name == "Syntax")
+    assert(syntaxErrors.nonEmpty, "Should have syntax errors for unclosed string")
   }
 
 }

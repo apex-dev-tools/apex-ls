@@ -75,11 +75,15 @@ class CodeParser(val source: Source) {
 
   def parse[T](parse: ApexParser => T): IssuesAnd[T] = {
     lastTokenStream = None
-    val tokenStream = new CommonTokenStream(new ApexLexer(cis))
+    val listener = new CollectingErrorListener(source.path)
+
+    val lexer = new ApexLexer(cis)
+    lexer.removeErrorListeners()
+    lexer.addErrorListener(listener)
+    val tokenStream = new CommonTokenStream(lexer)
     tokenStream.fill()
 
-    val listener = new CollectingErrorListener(source.path)
-    val parser   = new ApexParser(tokenStream)
+    val parser = new ApexParser(tokenStream)
     parser.removeErrorListeners()
     parser.addErrorListener(listener)
 

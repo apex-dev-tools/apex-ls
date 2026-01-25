@@ -132,7 +132,11 @@ private final case class OuterBlock(
         val result = parser.parseBlock()
         context.foreach(c => result.issues.foreach(c.log))
         statementContext = result.value
-        blockContextRef = new WeakReference(statementContext)
+        // Only cache the BlockContext if parsing succeeded without errors,
+        // otherwise we need to re-parse on subsequent validations to re-report the errors
+        if (result.issues.isEmpty) {
+          blockContextRef = new WeakReference(statementContext)
+        }
         reParsed = true
       }
 
