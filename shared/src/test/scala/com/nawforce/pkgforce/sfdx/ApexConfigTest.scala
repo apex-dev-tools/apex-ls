@@ -75,13 +75,13 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
   test("Legacy configuration - with options") {
     FileSystemHelper.run(
       Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v1\"}}, \"packageDirectories\": []}"
+        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"customOption\": \"value\"}}, \"packageDirectories\": []}"
       )
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
       assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
-      assert(project.get.apexConfig.options == Map("forceIgnoreVersion" -> "v1"))
+      assert(project.get.apexConfig.options == Map("customOption" -> "value"))
     }
   }
 
@@ -152,9 +152,9 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
         "sfdx-project.json" ->
           """{
             |  "plugins": {
-            |    "options": {"forceIgnoreVersion": "v1", "legacyOption": "legacy"},
+            |    "options": {"legacyOption": "legacy"},
             |    "apex-ls": {
-            |      "options": {"forceIgnoreVersion": "v2", "newOption": "new"}
+            |      "options": {"newOption": "new"}
             |    }
             |  },
             |  "packageDirectories": []
@@ -165,9 +165,7 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
       // apex-ls options completely replace legacy options (not merged)
-      assert(
-        project.get.apexConfig.options == Map("forceIgnoreVersion" -> "v2", "newOption" -> "new")
-      )
+      assert(project.get.apexConfig.options == Map("newOption" -> "new"))
     }
   }
 
@@ -357,66 +355,63 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
-  // ForceIgnoreVersion integration tests - verify end-to-end functionality works
-  test("ForceIgnoreVersion - default behavior") {
+  // forceIgnoreVersion deprecation tests - option is now deprecated and ignored
+  test("forceIgnoreVersion - no warning when not present") {
     FileSystemHelper.run(Map("sfdx-project.json" -> "{\"packageDirectories\": []}")) {
       root: PathLike =>
         val project = SFDXProject(root, logger)
         assert(logger.issues.isEmpty)
         assert(project.nonEmpty)
         assert(project.get.apexConfig.options.isEmpty)
-        assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // Default value
     }
   }
 
-  test("ForceIgnoreVersion - empty options") {
-    FileSystemHelper.run(
-      Map("sfdx-project.json" -> "{\"plugins\": {\"options\": {}}, \"packageDirectories\": []}")
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
-      assert(project.nonEmpty)
-      assert(project.get.apexConfig.options.isEmpty)
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // Default value
-    }
-  }
-
-  test("ForceIgnoreVersion - v1 setting works end-to-end") {
+  test("forceIgnoreVersion - deprecation warning when set to v1") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v1\"}}, \"packageDirectories\": []}"
       )
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
       assert(project.get.apexConfig.options == Map("forceIgnoreVersion" -> "v1"))
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V1) // End-to-end functionality
+      // Warning is emitted when layers() is called
+      project.get.layers(logger)
+      assert(
+        logger.issues.exists(i =>
+          i.diagnostic.category == WARNING_CATEGORY &&
+            i.diagnostic.message.contains("'options.forceIgnoreVersion' is deprecated")
+        )
+      )
     }
   }
 
-  test("ForceIgnoreVersion - v2 setting works end-to-end") {
+  test("forceIgnoreVersion - deprecation warning when set to v2") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v2\"}}, \"packageDirectories\": []}"
       )
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
-      assert(project.get.apexConfig.options == Map("forceIgnoreVersion" -> "v2"))
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // End-to-end functionality
+      // Warning is emitted when layers() is called
+      project.get.layers(logger)
+      assert(
+        logger.issues.exists(i =>
+          i.diagnostic.category == WARNING_CATEGORY &&
+            i.diagnostic.message.contains("'options.forceIgnoreVersion' is deprecated")
+        )
+      )
     }
   }
 
-  test("ForceIgnoreVersion - with multiple options") {
+  test("forceIgnoreVersion - deprecation warning with other options") {
     FileSystemHelper.run(
       Map(
         "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v1\", \"customOption\": \"value\"}}, \"packageDirectories\": []}"
       )
     ) { root: PathLike =>
       val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
       assert(project.nonEmpty)
       assert(
         project.get.apexConfig.options == Map(
@@ -424,63 +419,14 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
           "customOption"       -> "value"
         )
       )
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V1) // End-to-end functionality
-    }
-  }
-
-  test("ForceIgnoreVersion - invalid value rejected") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": \"v3\"}}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isEmpty) // Should fail due to invalid version
+      // Warning is emitted when layers() is called
+      project.get.layers(logger)
       assert(
-        logger.issues.exists(
-          _.diagnostic.message
-            .contains("'options.forceIgnoreVersion' must be one of 'v1', 'v2', got 'v3'")
+        logger.issues.exists(i =>
+          i.diagnostic.category == WARNING_CATEGORY &&
+            i.diagnostic.message.contains("'options.forceIgnoreVersion' is deprecated")
         )
       )
-    }
-  }
-
-  test("ForceIgnoreVersion - non-string value rejected") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" -> "{\"plugins\": {\"options\": {\"forceIgnoreVersion\": 123}}, \"packageDirectories\": []}"
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(project.isEmpty) // Should fail due to non-string value
-      assert(
-        logger.issues.exists(
-          _.diagnostic.message.contains("'options.forceIgnoreVersion' should be a string value")
-        )
-      )
-    }
-  }
-
-  test("ForceIgnoreVersion - apex-ls precedence") {
-    FileSystemHelper.run(
-      Map(
-        "sfdx-project.json" ->
-          """{
-            |  "plugins": {
-            |    "options": {"forceIgnoreVersion": "v1"},
-            |    "apex-ls": {
-            |      "options": {"forceIgnoreVersion": "v2"}
-            |    }
-            |  },
-            |  "packageDirectories": []
-            |}""".stripMargin
-      )
-    ) { root: PathLike =>
-      val project = SFDXProject(root, logger)
-      assert(logger.issues.isEmpty)
-      assert(project.nonEmpty)
-      assert(project.get.apexConfig.options == Map("forceIgnoreVersion" -> "v2"))
-      assert(project.get.forceIgnoreVersion == ForceIgnoreVersion.V2) // apex-ls wins
     }
   }
 }
