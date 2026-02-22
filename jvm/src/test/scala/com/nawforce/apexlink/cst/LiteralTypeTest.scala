@@ -187,6 +187,20 @@ class LiteralTypeTest extends AnyFunSuite with Matchers with TestHelper {
     )
   }
 
+  test("Invalid escape sequence reports offending escape") {
+    val parser =
+      CodeParser(Path("Dummy.cls"), SourceData("public class Dummy { String a = '\\n\\q'; }"))
+    val result       = parser.parseClass()
+    val syntaxErrors = result.issues.filter(_.diagnostic.category.name == "Syntax")
+    assert(syntaxErrors.nonEmpty, "Should have syntax errors for invalid escape")
+    assert(
+      syntaxErrors.exists(_.diagnostic.message.contains("Invalid escape sequence '\\q' in string"))
+    )
+    assert(
+      !syntaxErrors.exists(_.diagnostic.message.contains("Invalid escape sequence '\\n' in string"))
+    )
+  }
+
   test("Invalid unicode escape - truncated") {
     // Truncated unicode escapes cause lexer errors reported as SYNTAX_CATEGORY
     val parser =

@@ -25,7 +25,7 @@ class CollectingErrorListener(path: PathLike) extends js.Object {
 
   // Pattern to match lexer "token recognition error" messages containing escape sequences
   private val tokenErrorPattern = """token recognition error at: '(.*)'""".r
-  private val escapePattern     = """.*?(\\.).*""".r
+  private val escapePattern     = """.*(\\.).*""".r
 
   def syntaxError(
     recognizer: Any,
