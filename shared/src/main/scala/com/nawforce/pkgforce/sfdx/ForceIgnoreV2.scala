@@ -21,7 +21,7 @@ import scala.collection.compat.immutable.ArraySeq
 import scala.util.matching.Regex
 
 /** ForceIgnoreV2 - node-ignore compatible implementation */
-class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) extends ForceIgnoreInterface {
+class ForceIgnoreV2(rootPath: PathLike, rules: Seq[IgnoreRuleV2]) {
 
   private val allRules = rules
 

@@ -80,27 +80,32 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
 
   val apexConfig: ApexConfig = ApexConfig.fromConfig(projectPath, config)
 
-  val forceIgnoreVersion: ForceIgnoreVersion = {
-    val versionString =
-      apexConfig.options.getOrElse("forceIgnoreVersion", ForceIgnoreVersion.default.value)
-    ForceIgnoreVersion.fromString(versionString) match {
-      case Some(version) => version
-      case None =>
-        val optionsValue   = apexConfig.plugins.get("options")
-        val validValuesStr = ForceIgnoreVersion.validValues.mkString("'", "', '", "'")
-        config
-          .lineAndOffsetOf(optionsValue)
-          .map(lineAndOffset => {
-            throw SFDXProjectError(
-              lineAndOffset,
-              s"'options.forceIgnoreVersion' must be one of $validValuesStr, got '$versionString'"
-            )
-          })
-          .getOrElse(
-            throw new RuntimeException(
-              s"'options.forceIgnoreVersion' must be one of $validValuesStr, got '$versionString'"
+  // Check for deprecated forceIgnoreVersion option and warn if present
+  apexConfig.options.get("forceIgnoreVersion").foreach { _ =>
+    val optionsValue = apexConfig.plugins.get("options")
+    config.lineAndOffsetOf(optionsValue) match {
+      case Some((line, offset)) =>
+        localLogger.log(
+          Issue(
+            projectPath.join("sfdx-project.json"),
+            Diagnostic(
+              WARNING_CATEGORY,
+              Location(line, offset),
+              "'options.forceIgnoreVersion' is deprecated and will be ignored"
             )
           )
+        )
+      case None =>
+        localLogger.log(
+          Issue(
+            projectPath.join("sfdx-project.json"),
+            Diagnostic(
+              WARNING_CATEGORY,
+              Location.empty,
+              "'options.forceIgnoreVersion' is deprecated and will be ignored"
+            )
+          )
+        )
     }
   }
 
