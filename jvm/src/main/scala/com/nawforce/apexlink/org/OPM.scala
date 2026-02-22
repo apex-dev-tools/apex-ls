@@ -37,9 +37,9 @@ import com.nawforce.pkgforce.diagnostics.{IssueLogger, _}
 import io.github.apexdevtools.apexls.api.IssuesCollection
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
-import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
+import com.nawforce.pkgforce.names.TypeNameFuncs.TypeNameFuncs
+import com.nawforce.pkgforce.names.{EncodedName, Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
-import com.nawforce.pkgforce.pkgs.TriHierarchy
 import com.nawforce.pkgforce.stream._
 import com.nawforce.pkgforce.workspace.{ModuleLayer, ProjectConfig, Workspace}
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
@@ -60,10 +60,81 @@ import scala.util.hashing.MurmurHash3
   * features over to pkgforce. The generics force the use of inner classes which is not so
   * desirable,
   */
-object OPM extends TriHierarchy {
+object OPM {
+
   type TOrg     = OrgImpl
   type TPackage = PackageImpl
   type TModule  = Module
+
+  trait TriOrg {
+    self: OrgImpl =>
+
+    val packages: ArraySeq[PackageImpl]
+
+    lazy val packagesByNamespace: Map[Option[Name], PackageImpl] =
+      packages.map(pkg => (pkg.namespace, pkg)).toMap
+
+    lazy val unmanaged: PackageImpl = packages.last
+  }
+
+  trait TriPackage {
+    self: PackageImpl =>
+
+    val org: OrgImpl
+    val namespace: Option[Name]
+    val isGulped: Boolean
+    val basePackages: ArraySeq[PackageImpl]
+    val modules: ArraySeq[Module]
+
+    lazy val orderedModules: ArraySeq[Module] = modules.reverse
+    lazy val isGhosted: Boolean               = modules.isEmpty
+
+    lazy val firstModule: Option[Module] = {
+      orderedModules.headOption
+        .orElse(basePackages.headOption.flatMap(_.firstModule))
+    }
+
+    def isGhostedType(typeName: TypeName): Boolean = {
+      if (typeName.outer.contains(TypeName.Schema)) {
+        val encName = EncodedName(typeName.name)
+        basePackages.filter(_.isGhosted).exists(_.namespace == encName.namespace)
+      } else {
+        basePackages.filter(_.isGhosted).exists(_.namespace.contains(typeName.outerName)) ||
+        typeName.params.exists(isGhostedType)
+      }
+    }
+
+    def isGhostedFieldName(name: Name): Boolean = {
+      EncodedName(name).namespace match {
+        case None     => false
+        case Some(ns) => basePackages.filter(_.isGhosted).exists(_.namespace.contains(ns))
+      }
+    }
+
+    override def toString: String = s"Package(${namespace.map(_.toString).getOrElse("")})"
+  }
+
+  trait TriModule {
+    self: Module =>
+
+    val pkg: PackageImpl
+    val dependents: ArraySeq[Module]
+
+    lazy val namespace: Option[Name] = pkg.namespace
+    lazy val namespacePrefix: String = namespace.map(ns => ns.toString + "__").getOrElse("")
+    lazy val basePackages: ArraySeq[PackageImpl] = pkg.basePackages.reverse
+    lazy val baseModules: ArraySeq[Module]       = dependents.reverse
+
+    lazy val nextModule: Option[Module] = {
+      baseModules.headOption.orElse(basePackages.headOption.flatMap(_.firstModule))
+    }
+
+    def isVisibleFile(path: PathLike): Boolean
+
+    def isGhostedType(typeName: TypeName): Boolean = pkg.isGhostedType(typeName)
+
+    def isGhostedFieldName(name: Name): Boolean = pkg.isGhostedFieldName(name)
+  }
 
   class OrgImpl(val path: PathLike, val issueManager: IssueLogger, initWorkspace: Option[Workspace])
       extends TriOrg

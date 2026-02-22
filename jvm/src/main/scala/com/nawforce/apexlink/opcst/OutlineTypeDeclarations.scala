@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2022 FinancialForce.com, inc. All rights reserved.
  */
-package com.nawforce.runtime.workspace
+package com.nawforce.apexlink.opcst
 
 import com.financialforce.oparser._
 import com.financialforce.types._
@@ -14,24 +14,23 @@ import com.financialforce.types.base.{
   TypeRef
 }
 import com.nawforce.pkgforce.memory.IdentityEquality
+import com.nawforce.apexlink.org.OPM
 
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 trait IModuleTypeDeclaration extends ITypeDeclaration {
-  val module: IPM.Module
+  val module: OPM.Module
 
   override def enclosing: Option[IModuleTypeDeclaration]
   override def innerTypes: ArraySeq[IModuleTypeDeclaration]
 
-  // Helper to save from dealing with Option in Java
-  def namespaceAsString: String = module.namespaceAsString
+  def namespaceAsString: String = Option(module).flatMap(_.namespace).map(_.toString).getOrElse("")
 
-  // Override to include namespace
   override def fullName: String = {
     enclosing
-      .map(_ => super.fullName) // Enclosing will add namespace!
+      .map(_ => super.fullName)
       .getOrElse(
         Option(module)
           .flatMap(_.namespace)
@@ -50,7 +49,7 @@ trait IMutableModuleTypeDeclaration
 }
 
 sealed class TypeDeclaration(
-  val module: IPM.Module,
+  val module: OPM.Module,
   val path: String,
   val nature: TypeNature,
   _enclosing: IMutableModuleTypeDeclaration
@@ -155,7 +154,7 @@ object TypeDeclaration {
 }
 
 class ClassTypeDeclaration(
-  _module: IPM.Module,
+  _module: OPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
 ) extends TypeDeclaration(_module, path, CLASS_NATURE, enclosing) {
@@ -216,7 +215,7 @@ class ClassTypeDeclaration(
 }
 
 class InterfaceTypeDeclaration(
-  _module: IPM.Module,
+  _module: OPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
 ) extends TypeDeclaration(_module, path, INTERFACE_NATURE, enclosing) {
@@ -236,7 +235,7 @@ class InterfaceTypeDeclaration(
 }
 
 class EnumTypeDeclaration(
-  _module: IPM.Module,
+  _module: OPM.Module,
   path: String,
   enclosing: IMutableModuleTypeDeclaration
 ) extends TypeDeclaration(_module, path, ENUM_NATURE, enclosing) {
@@ -254,9 +253,9 @@ class EnumTypeDeclaration(
   }
 }
 
-object ModuleClassFactory extends TypeDeclFactory[IMutableModuleTypeDeclaration, IPM.Module] {
+object ModuleClassFactory extends TypeDeclFactory[IMutableModuleTypeDeclaration, OPM.Module] {
   override def create(
-    module: IPM.Module,
+    module: OPM.Module,
     nature: TypeNature,
     path: String,
     enclosing: Option[IMutableModuleTypeDeclaration]
