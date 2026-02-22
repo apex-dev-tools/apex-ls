@@ -23,6 +23,10 @@ import scala.collection.mutable
 class CollectingErrorListener(path: PathLike) extends BaseErrorListener {
   var _issues: mutable.ArrayBuffer[Issue] = _
 
+  // Pattern to match lexer "token recognition error" messages containing escape sequences
+  private val tokenErrorPattern = """token recognition error at: '(.*)'""".r
+  private val escapePattern     = """.*(\\.).*""".r
+
   override def syntaxError(
     recognizer: Recognizer[_, _],
     offendingSymbol: Any,
@@ -34,8 +38,18 @@ class CollectingErrorListener(path: PathLike) extends BaseErrorListener {
     if (_issues == null)
       _issues = new mutable.ArrayBuffer[Issue]()
 
+    val improvedMsg = msg match {
+      case tokenErrorPattern(content) =>
+        content match {
+          case escapePattern(escape) =>
+            s"Invalid escape sequence '$escape' in string"
+          case _ => msg
+        }
+      case _ => msg
+    }
+
     _issues.addOne(
-      new Issue(path, Diagnostic(SYNTAX_CATEGORY, Location(line, charPositionInLine), msg))
+      new Issue(path, Diagnostic(SYNTAX_CATEGORY, Location(line, charPositionInLine), improvedMsg))
     )
   }
 

@@ -13,9 +13,14 @@
  */
 package io.github.apexdevtools.apexparser
 
+import com.nawforce.runtime.parsers.CollectingErrorListener
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
 @JSImport("@apexdevtools/apex-parser", "ApexLexer")
-class ApexLexer(stream: CaseInsensitiveInputStream) extends js.Object {}
+class ApexLexer(stream: CaseInsensitiveInputStream) extends js.Object {
+  def removeErrorListeners(): Unit                              = js.native
+  def addErrorListener(listener: CollectingErrorListener): Unit = js.native
+}
