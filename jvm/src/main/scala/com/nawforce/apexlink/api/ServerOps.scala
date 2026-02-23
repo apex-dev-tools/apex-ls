@@ -14,6 +14,8 @@
 
 package com.nawforce.apexlink.api
 
+import com.nawforce.pkgforce.diagnostics.LoggerOps
+
 sealed trait AvailableParser { val shortName: String }
 case object ANTLRParser extends AvailableParser {
   val shortName: String = "ANTLR".toLowerCase
@@ -79,7 +81,7 @@ object ExternalAnalysisConfiguration {
 object ServerOps {
   private var autoFlush                      = true
   private var externalAnalysis               = ExternalAnalysisConfiguration(RefreshAnalysis, Map())
-  private var currentParser: AvailableParser = ANTLRParser
+  private var currentParser: AvailableParser = OutlineParserMultithreaded
   private var indexerConfiguration           = IndexerConfiguration(0, 0)
 
   def isAutoFlushEnabled: Boolean = {
@@ -117,7 +119,16 @@ object ServerOps {
 
   def setCurrentParser(newParser: AvailableParser): AvailableParser = {
     val previousParser = currentParser
-    currentParser = newParser
+    newParser match {
+      case ANTLRParser =>
+        LoggerOps.info(
+          "Parser setting 'ANTLR' is deprecated and no longer has any effect. " +
+            "Apex class parsing now always uses OutlineParser. " +
+            "Please remove this setting before 7.0.0."
+        )
+      case _ =>
+        currentParser = newParser
+    }
     previousParser
   }
 

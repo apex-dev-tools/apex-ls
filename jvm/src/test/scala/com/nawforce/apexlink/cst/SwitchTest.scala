@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
-import com.nawforce.apexlink.api.{ANTLRParser, ServerOps}
+
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -26,12 +26,10 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {{switch on 'A' {}}}")) {
       root: PathLike =>
         createOrg(root)
-        val expectedMsg = if (ServerOps.getCurrentParser == ANTLRParser) {
-          "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\nSyntax: line 1 at 38: extraneous input '}' expecting <EOF>\n"
-        } else {
-          "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\n"
-        }
-        assert(getMessages(root.join("Dummy.cls")) == expectedMsg)
+        assert(
+          getMessages(root.join("Dummy.cls")) ==
+            "Syntax: line 1 at 36: mismatched input '}' expecting 'when'\n"
+        )
     }
   }
 

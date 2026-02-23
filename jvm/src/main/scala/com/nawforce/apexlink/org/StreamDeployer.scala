@@ -132,14 +132,9 @@ class StreamDeployer(
       docs.filterNot(doc => types.contains(TypeName(doc.name).withNamespace(module.namespace)))
     LoggerOps.debug(s"${missingClasses.length} of ${docs.length} classes not available from cache")
 
-    module.pkg.org.getParserType match {
-      case ANTLRParser =>
-        parseAndValidateClasses(missingClasses)
-      case OutlineParserSingleThreaded | OutlineParserMultithreaded =>
-        val failures = loadClassesWithOutlineParser(ServerOps.getCurrentParser, missingClasses)
-        if (failures.nonEmpty)
-          parseAndValidateClasses(failures)
-    }
+    val failures = loadClassesWithOutlineParser(module.pkg.org.getParserType, missingClasses)
+    if (failures.nonEmpty)
+      parseAndValidateClasses(failures)
   }
 
   /** Parse a collection of Apex classes, insert them and validate them. */
