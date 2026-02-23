@@ -56,89 +56,12 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.hashing.MurmurHash3
 
-/** Org/Package/Module hierarchy. This is based on generics to maintain consistency while we migrate
-  * features over to pkgforce. The generics force the use of inner classes which is not so
-  * desirable,
+/** Org/Package/Module hierarchy and supporting behaviour.
   */
 object OPM {
 
-  type TOrg     = OrgImpl
-  type TPackage = PackageImpl
-  type TModule  = Module
-
-  trait TriOrg {
-    self: OrgImpl =>
-
-    val packages: ArraySeq[PackageImpl]
-
-    lazy val packagesByNamespace: Map[Option[Name], PackageImpl] =
-      packages.map(pkg => (pkg.namespace, pkg)).toMap
-
-    lazy val unmanaged: PackageImpl = packages.last
-  }
-
-  trait TriPackage {
-    self: PackageImpl =>
-
-    val org: OrgImpl
-    val namespace: Option[Name]
-    val isGulped: Boolean
-    val basePackages: ArraySeq[PackageImpl]
-    val modules: ArraySeq[Module]
-
-    lazy val orderedModules: ArraySeq[Module] = modules.reverse
-    lazy val isGhosted: Boolean               = modules.isEmpty
-
-    lazy val firstModule: Option[Module] = {
-      orderedModules.headOption
-        .orElse(basePackages.headOption.flatMap(_.firstModule))
-    }
-
-    def isGhostedType(typeName: TypeName): Boolean = {
-      if (typeName.outer.contains(TypeName.Schema)) {
-        val encName = EncodedName(typeName.name)
-        basePackages.filter(_.isGhosted).exists(_.namespace == encName.namespace)
-      } else {
-        basePackages.filter(_.isGhosted).exists(_.namespace.contains(typeName.outerName)) ||
-        typeName.params.exists(isGhostedType)
-      }
-    }
-
-    def isGhostedFieldName(name: Name): Boolean = {
-      EncodedName(name).namespace match {
-        case None     => false
-        case Some(ns) => basePackages.filter(_.isGhosted).exists(_.namespace.contains(ns))
-      }
-    }
-
-    override def toString: String = s"Package(${namespace.map(_.toString).getOrElse("")})"
-  }
-
-  trait TriModule {
-    self: Module =>
-
-    val pkg: PackageImpl
-    val dependents: ArraySeq[Module]
-
-    lazy val namespace: Option[Name] = pkg.namespace
-    lazy val namespacePrefix: String = namespace.map(ns => ns.toString + "__").getOrElse("")
-    lazy val basePackages: ArraySeq[PackageImpl] = pkg.basePackages.reverse
-    lazy val baseModules: ArraySeq[Module]       = dependents.reverse
-
-    lazy val nextModule: Option[Module] = {
-      baseModules.headOption.orElse(basePackages.headOption.flatMap(_.firstModule))
-    }
-
-    def isVisibleFile(path: PathLike): Boolean
-
-    def isGhostedType(typeName: TypeName): Boolean = pkg.isGhostedType(typeName)
-
-    def isGhostedFieldName(name: Name): Boolean = pkg.isGhostedFieldName(name)
-  }
-
   class OrgImpl(val path: PathLike, val issueManager: IssueLogger, initWorkspace: Option[Workspace])
-      extends TriOrg
-      with Org
+      extends Org
       with OrgTestClasses {
     // Acquire lock for all operations that may be impacted by refresh
     val refreshLock = new ReentrantLock(true)
@@ -183,7 +106,7 @@ object OPM {
     /** Packages in org in deploy order, the last entry is the unmanaged package identified by
       * namespace = None
       */
-    override val packages: ArraySeq[PackageImpl] = {
+    val packages: ArraySeq[PackageImpl] = {
 
       def createModule(
         pkg: PackageImpl,
@@ -229,6 +152,11 @@ object OPM {
         ArraySeq.unsafeWrapArray((declared ++ unmanaged).toArray)
       }
     }
+
+    lazy val packagesByNamespace: Map[Option[Name], PackageImpl] =
+      packages.map(pkg => (pkg.namespace, pkg)).toMap
+
+    lazy val unmanaged: PackageImpl = packages.last
 
     // After packages/module setup load metadata & flush to cache
     OrgInfo.current.withValue(this) {
@@ -608,15 +536,14 @@ object OPM {
   }
 
   class PackageImpl(
-    override val org: OrgImpl,
-    override val namespace: Option[Name],
-    override val isGulped: Boolean,
-    override val basePackages: ArraySeq[PackageImpl],
+    val org: OrgImpl,
+    val namespace: Option[Name],
+    val isGulped: Boolean,
+    val basePackages: ArraySeq[PackageImpl],
     workspace: Workspace,
     layers: ArraySeq[ModuleLayer],
     mdlFactory: (PackageImpl, ArraySeq[Module], DocumentIndex) => Module
-  ) extends TriPackage
-      with PackageAPI
+  ) extends PackageAPI
       with DefinitionProvider
       with CompletionProvider
       with ImplementationProvider
@@ -629,6 +556,33 @@ object OPM {
         .foldLeft(ArraySeq[Module]())((acc, layer) => {
           acc :+ mdlFactory(this, acc, workspace.indexes(layer))
         })
+
+    lazy val orderedModules: ArraySeq[Module] = modules.reverse
+    lazy val isGhosted: Boolean               = modules.isEmpty
+
+    lazy val firstModule: Option[Module] = {
+      orderedModules.headOption
+        .orElse(basePackages.headOption.flatMap(_.firstModule))
+    }
+
+    def isGhostedType(typeName: TypeName): Boolean = {
+      if (typeName.outer.contains(TypeName.Schema)) {
+        val encName = EncodedName(typeName.name)
+        basePackages.filter(_.isGhosted).exists(_.namespace == encName.namespace)
+      } else {
+        basePackages.filter(_.isGhosted).exists(_.namespace.contains(typeName.outerName)) ||
+        typeName.params.exists(isGhostedType)
+      }
+    }
+
+    def isGhostedFieldName(name: Name): Boolean = {
+      EncodedName(name).namespace match {
+        case None     => false
+        case Some(ns) => basePackages.filter(_.isGhosted).exists(_.namespace.contains(ns))
+      }
+    }
+
+    override def toString: String = s"Package(${namespace.map(_.toString).getOrElse("")})"
 
     /** Is this or any base package of this a ghost package. */
     lazy val hasGhosted: Boolean = isGhosted || basePackages.exists(_.hasGhosted)
@@ -730,15 +684,24 @@ object OPM {
     }
   }
 
-  class Module(
-    override val pkg: PackageImpl,
-    override val dependents: ArraySeq[Module],
-    val index: DocumentIndex
-  ) extends TriModule
-      with ModuleRefresh
+  class Module(val pkg: PackageImpl, val dependents: ArraySeq[Module], val index: DocumentIndex)
+      extends ModuleRefresh
       with ModuleFind
       with TypeFinder
       with ModuleCompletions {
+
+    lazy val namespace: Option[Name] = pkg.namespace
+    lazy val namespacePrefix: String = namespace.map(ns => ns.toString + "__").getOrElse("")
+    lazy val basePackages: ArraySeq[PackageImpl] = pkg.basePackages.reverse
+    lazy val baseModules: ArraySeq[Module]       = dependents.reverse
+
+    lazy val nextModule: Option[Module] = {
+      baseModules.headOption.orElse(basePackages.headOption.flatMap(_.firstModule))
+    }
+
+    def isGhostedType(typeName: TypeName): Boolean = pkg.isGhostedType(typeName)
+
+    def isGhostedFieldName(name: Name): Boolean = pkg.isGhostedFieldName(name)
 
     def namespaces: Set[Name] = pkg.namespaces
 
@@ -791,7 +754,7 @@ object OPM {
         case ac: ApexClassDeclaration if ac.inTest => ac
       }
 
-    override def isVisibleFile(path: PathLike): Boolean = {
+    def isVisibleFile(path: PathLike): Boolean = {
       index.isVisibleFile(path)
     }
 

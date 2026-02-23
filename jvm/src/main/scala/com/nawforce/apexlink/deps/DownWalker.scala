@@ -16,7 +16,6 @@ package com.nawforce.apexlink.deps
 
 import com.nawforce.apexlink.api.Org
 import com.nawforce.apexlink.org.OPM
-import com.nawforce.apexlink.org.OPM.TPackage
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration}
 import com.nawforce.apexlink.types.core.{DependencyHolder, TypeDeclaration}
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -40,7 +39,7 @@ case class NodeData(
 /** Downstream dependency walker. Collects information on the dependencies of a type. */
 class DownWalker(org: Org, apexOnly: Boolean, isSamePackage: Boolean = true) {
   private val hasGulpedPackages =
-    org.getPackages().collect({ case p: TPackage => p }).map(_.isGulped).exists(b => b)
+    org.getPackages().collect({ case p: OPM.PackageImpl => p }).map(_.isGulped).exists(b => b)
   private val transitiveCollector      = new TransitiveCollector(org, !hasGulpedPackages, apexOnly)
   private val maxDependencyCountParser = new MaxDependencyCountParser(org)
 
