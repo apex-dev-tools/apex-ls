@@ -18,12 +18,6 @@ import com.nawforce.runtime.platform.OutlineParserModifierOps.{
   enumModifiers,
   interfaceModifiers
 }
-import com.nawforce.runtime.workspace.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration,
-  ModuleClassFactory
-}
 
 object OutlineParserFullDeclaration {
 

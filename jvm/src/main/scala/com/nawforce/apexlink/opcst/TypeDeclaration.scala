@@ -57,11 +57,6 @@ import com.nawforce.runtime.platform.OutlineParserModifierOps.{
   interfaceModifiers,
   parameterModifiers
 }
-import com.nawforce.runtime.workspace.{
-  ClassTypeDeclaration,
-  EnumTypeDeclaration,
-  InterfaceTypeDeclaration
-}
 
 import scala.collection.immutable.ArraySeq
 import scala.util.chaining.scalaUtilChainingOps
