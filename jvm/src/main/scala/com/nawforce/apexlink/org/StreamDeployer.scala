@@ -245,6 +245,7 @@ class StreamDeployer(
   ): ArraySeq[ClassDocument] = {
 
     val localAccum      = new ConcurrentHashMap[TypeName, FullDeclaration]()
+    val docsByType      = new ConcurrentHashMap[TypeName, ClassDocument]()
     val failedDocuments = new ConcurrentLinkedQueue[ClassDocument]()
 
     val clsItr =
@@ -261,6 +262,7 @@ class StreamDeployer(
                 .toFullDeclaration(cls, srcData, module)
                 .map(td => {
                   localAccum.put(td.typeName, td)
+                  docsByType.put(td.typeName, cls)
                 })
               if (td.isEmpty) failedDocuments.add(cls)
             }
@@ -269,7 +271,15 @@ class StreamDeployer(
       localAccum.entrySet.forEach(kv => {
         types.put(kv.getKey, kv.getValue)
       })
-      localAccum.values().asScala.foreach(_.safeValidate())
+      localAccum
+        .values()
+        .asScala
+        .foreach(td => {
+          if (!td.tryValidate()) {
+            types.remove(td.typeName)
+            Option(docsByType.get(td.typeName)).foreach(failedDocuments.add)
+          }
+        })
     }
     ArraySeq.from(failedDocuments.asScala.toSeq)
   }
