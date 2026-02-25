@@ -20,7 +20,8 @@ import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
   ApexFieldLike,
   ApexMethodLike,
-  FullDeclaration
+  FullDeclaration,
+  TriggerDeclaration
 }
 import com.nawforce.apexlink.types.core.{
   Dependent,
@@ -52,6 +53,18 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
   override def onEnumValidated(td: EnumDeclaration): Seq[DependentType] = reportUnused(td)
 
   override def onInterfaceValidated(td: InterfaceDeclaration): Seq[DependentType] = reportUnused(td)
+
+  override def onTriggerValidated(td: TriggerDeclaration): Seq[DependentType] = {
+    // Return Apex types the trigger depends on so they can be evaluated for unused warnings.
+    // This is needed when dependent types are loaded from cache as SummaryDeclarations and are
+    // not otherwise present in livePlugins for unused analysis.
+    td.dependencies()
+      .collect { case td: TypeDeclaration => td }
+      .map(_.outermostTypeDeclaration)
+      .collect { case dt: DependentType => dt }
+      .toSeq
+      .distinct
+  }
 
   private def reportUnused(td: FullDeclaration): Seq[DependentType] = {
     // Ignore if suppressed, or inner type (handled by unusedIssues)
