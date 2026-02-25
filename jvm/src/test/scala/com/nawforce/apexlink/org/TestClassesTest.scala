@@ -303,6 +303,23 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Indirect via impl of inner interface to test class via service using interface as field") {
+    // Models the pselib_Dependency pattern: ServiceImpl is dynamically loaded via Type.forName
+    // and cast to Service.API. Service uses Service.API as a field type, so changing ServiceImpl
+    // should find ServiceTest (which only references Service, not Service.API directly).
+    run(
+      Map(
+        "ServiceImpl.cls" -> "public class ServiceImpl implements Service.API {}",
+        "Service.cls" -> "public class Service { public interface API {} private static API instance; }",
+        "ServiceTest.cls" -> "@isTest public class ServiceTest { {Service s;} }"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      assert(
+        getTestClassNames(root, Array("ServiceImpl.cls")) == Set(withNamespace(ns, "ServiceTest"))
+      )
+    }
+  }
+
   test("Double indirect via interfaces to test class") {
     run(
       Map(

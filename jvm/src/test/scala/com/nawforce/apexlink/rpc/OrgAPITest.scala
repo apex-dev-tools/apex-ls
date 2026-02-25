@@ -427,8 +427,9 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassesWithPath.length == 1)
-      assert(classes.testClassesWithPath(0)._1 == "ServiceAPITest")
+      // ServiceAPITest directly uses Service.API; ServiceTest uses Service which has a method
+      // returning Service.API, so both are affected when ServiceImpl changes
+      assert(classes.testClassesWithPath.map(_._1).toSet == Set("ServiceAPITest", "ServiceTest"))
     }
   }
 
@@ -461,8 +462,9 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       )
     } yield {
       assert(result.error.isEmpty)
-      assert(classes.testClassesWithPath.length == 1)
-      assert(classes.testClassesWithPath(0)._1 == "ServiceAPITest")
+      // ServiceAPITest directly uses Service.API; ServiceTest uses Service which has a method
+      // returning Service.API, so both are affected when InnerServiceImpl changes
+      assert(classes.testClassesWithPath.map(_._1).toSet == Set("ServiceAPITest", "ServiceTest"))
     }
   }
 

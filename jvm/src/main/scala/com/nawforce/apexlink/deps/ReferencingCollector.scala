@@ -53,16 +53,35 @@ object ReferencingCollector {
 
   /** Determine if the holder is using the dependent as apposed to extending/implementing it. */
   private def doesUse(holder: ApexDeclaration, dependent: ApexDeclaration): Boolean = {
-    // Quick exclude of interfaces
-    if (dependent.nature == INTERFACE_NATURE)
-      return false
-
     // Check if extends in some way, ideally we would use a positive test here but our dependency info can include
     // transitives making that unsound, instead we reverse and detect extends but in a very specific way
     if (doesExtend(holder, dependent))
       return false
 
+    // If the dependent is an interface, only stop the search if the holder directly implements it.
+    // A holder that merely uses the interface as a field/return type is a genuine use relationship
+    // and should allow the search to continue (e.g. a service class that casts a dynamically-loaded
+    // impl via Type.forName to one of its own inner interfaces).
+    if (dependent.nature == INTERFACE_NATURE && doesImplement(holder, dependent))
+      return false
+
     true
+  }
+
+  /** Determine if the holder has some form of implements relationship with the dependent interface.
+    * Mirrors the scope of doesExtend so that both checks are symmetrical.
+    */
+  private def doesImplement(holder: ApexDeclaration, iface: ApexDeclaration): Boolean = {
+    // Direct implementation
+    holder.interfaceDeclarations.exists(_ eq iface) ||
+    // Indirect via superclass
+    holder.superClassDeclaration
+      .collect { case ad: ApexDeclaration => ad }
+      .exists(parent => doesImplement(parent, iface)) ||
+    // Outer class implements
+    holder.outerTypeDeclaration
+      .collect { case ad: ApexDeclaration => ad }
+      .exists(outer => doesImplement(outer, iface))
   }
 
   /** Determine if the holder has some form of extends relationship with the dependent. We include
