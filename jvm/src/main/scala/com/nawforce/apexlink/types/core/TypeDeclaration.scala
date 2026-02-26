@@ -23,6 +23,7 @@ import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.names.{TypeNames, XNames}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
+import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, PreReValidatable}
 import com.nawforce.apexlink.types.other.Component
 import com.nawforce.apexlink.types.platform.PlatformTypes
@@ -443,6 +444,22 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
       validate()
     } catch {
       case ex: Throwable => OrgInfo.logException(ex, paths)
+    }
+  }
+
+  /** Validate this type, returning true on success. Unlike safeValidate(), failures are not logged
+    * as diagnostics, allowing callers to handle them (e.g. retry with a different parser).
+    */
+  def tryValidate(): Boolean = {
+    try {
+      validate()
+      true
+    } catch {
+      case ex: Throwable =>
+        LoggerOps.debug(
+          s"Validation failed for ${paths.headOption.getOrElse("unknown")}: ${ex.getMessage}"
+        )
+        false
     }
   }
 
