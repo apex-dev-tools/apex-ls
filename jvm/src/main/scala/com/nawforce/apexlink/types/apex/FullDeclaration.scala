@@ -218,7 +218,10 @@ abstract class FullDeclaration(
 
     // Check for duplicate nested types
     val duplicateNestedType =
-      (this +: nestedTypes).groupBy(_.name).collect { case (_, Seq(_, y, _*)) => y }
+      (this +: nestedTypes)
+        .sortBy(t => (t.location.location.startLine, t.location.location.startPosition))
+        .groupBy(_.name)
+        .collect { case (_, Seq(_, y, _*)) => y }
     duplicateNestedType.foreach(td =>
       OrgInfo.logError(td.location, s"Duplicate type name '${td.name.toString}'")
     )
