@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
-import com.financialforce.types.base.{Location => OPLocation}
+import io.github.apexdevtools.types.base.{Location => OPLocation}
 import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
@@ -67,10 +67,12 @@ object Block {
     */
   def constructOuterFromOutline(blockSource: Source, location: OPLocation): Block = {
     val block = OuterBlock(blockSource, null)
+    // Outline parser 2.0 reports block location as the content INSIDE the braces; shift the
+    // start back by one column so the block covers the opening '{' to match the ANTLR parser.
     block.setLocation(
       blockSource.path,
       location.startLine,
-      location.startLineOffset,
+      location.startLineOffset - 1,
       location.endLine,
       location.endLineOffset
     )

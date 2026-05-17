@@ -3,13 +3,13 @@
  */
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.types.base.{
+import io.github.apexdevtools.types.base.{
   UnresolvedTypeRef,
   IdWithLocation => OPId,
   Location => OPLocation,
   PropertyBlock => OPPropertyBlock
 }
-import com.financialforce.types.{
+import io.github.apexdevtools.types.{
   IConstructorDeclaration => OPConstructorDeclaration,
   IFieldDeclaration => OPFieldDeclaration,
   IFormalParameter => OPFormalParameter,
@@ -723,7 +723,7 @@ private[opcst] object SourceOps {
       0,
       outer,
       Some(blockLocation.startLine),
-      Some(blockLocation.startLineOffset - 2)
+      Some(blockLocation.startLineOffset - 1)
     )
     f(source)
   }

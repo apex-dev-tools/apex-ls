@@ -29,8 +29,6 @@
 package com.nawforce.pkgforce.diagnostics
 
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.runtime.parsers.CodeParser
-import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
 import io.github.apexdevtools.api.{IssueLocation, Issue => APIIssue}
 import io.github.apexdevtools.apexls.api.IssuesCollection
 import com.nawforce.pkgforce.diagnostics.Issue.APEX_LS_PROVIDER

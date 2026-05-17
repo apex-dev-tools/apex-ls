@@ -3,7 +3,7 @@
  */
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser.OutlineParser
+import io.github.apexdevtools.oparser.OutlineParser
 import com.nawforce.apexlink.cst.{ClassDeclaration, EnumDeclaration, InterfaceDeclaration}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM

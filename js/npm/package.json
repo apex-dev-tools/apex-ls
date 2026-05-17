@@ -8,7 +8,6 @@
   "license": "BSD-3-Clause",
   "main": "lib/apex-ls.js",
   "types": "lib/apex-ls.d.ts",
-  "type": "module",
   "scripts": {
     "prepack": "cp ../../LICENSE .",
     "test": "jest",
@@ -16,10 +15,7 @@
     "test-snapshot": "npm run test-samples -- --updateSnapshot"
   },
   "dependencies": {
-    "@apexdevtools/apex-parser": "5.0.0",
-    "@apexdevtools/vf-parser": "file:../../../vf-parser/npm/apexdevtools-vf-parser-2.0.0-SNAPSHOT.tgz",
-    "@xmldom/xmldom": "0.7.9",
-    "antlr4": "4.13.2"
+    "@xmldom/xmldom": "0.7.9"
   },
   "devDependencies": {
     "@types/jest": "^29.2.0",

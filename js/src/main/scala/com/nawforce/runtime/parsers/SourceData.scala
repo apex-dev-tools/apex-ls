@@ -16,7 +16,6 @@ package com.nawforce.runtime.parsers
 
 import com.nawforce.pkgforce.parsers.UTF8Decode
 import com.nawforce.runtime.SourceBlob
-import com.nawforce.runtime.parsers.antlr.{CharStream, CharStreams}
 
 import java.nio.charset.StandardCharsets
 import scala.util.hashing.MurmurHash3
@@ -44,10 +43,6 @@ final case class SourceData(
       val subLength = endOffset - startOffset
       new SourceData(source, startOffset, subLength, Some(hash), isASCII)
     }
-  }
-
-  def asStream: CharStream = {
-    CharStreams.fromString(new String(source, offset, length))
   }
 
   def asUTF8: Array[Byte] = {

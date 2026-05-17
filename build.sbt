@@ -2,7 +2,7 @@ import org.scalajs.linker.interface.Report
 
 import scala.sys.process._
 
-ThisBuild / scalaVersion         := "2.13.16"
+ThisBuild / scalaVersion         := "2.13.17"
 ThisBuild / description          := "Salesforce Apex static analysis toolkit"
 ThisBuild / organization         := "io.github.apex-dev-tools"
 ThisBuild / organizationHomepage := Some(url("https://github.com/apex-dev-tools/apex-ls"))
@@ -43,7 +43,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     name := "apex-ls",
     scalacOptions += "-deprecation",
     libraryDependencies ++= Seq(
-      "io.github.apex-dev-tools" %%% "outline-parser"                         % "1.3.0",
+      "io.github.apex-dev-tools" %%% "outline-parser"                         % "2.0.0-beta.1",
       "com.github.nawforce"      %%% "scala-json-rpc"                         % "1.1.0",
       "com.github.nawforce"      %%% "scala-json-rpc-upickle-json-serializer" % "1.1.0",
       "com.lihaoyi"              %%% "upickle"                                % "1.2.0",
@@ -60,8 +60,8 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules"  %% "scala-xml"                      % "1.3.0",
       "org.scala-lang.modules"  %% "scala-parallel-collections"     % "1.0.0",
       "org.scala-js"            %% "scalajs-stubs"                  % "1.0.0",
-      "io.github.apex-dev-tools" % "apex-parser"                    % "5.0.0",
-      "io.github.apex-dev-tools" % "vf-parser"                      % "2.0.0-SNAPSHOT",
+      "io.github.apex-dev-tools" % "apex-parser"                    % "5.1.0-beta.1",
+      "io.github.apex-dev-tools" % "vf-parser"                      % "2.0.0-beta.1",
       "io.github.apex-dev-tools" % "sobject-types"                  % "65.0.0",
       "io.github.apex-dev-tools" % "standard-types"                 % "65.0.0",
       "io.methvin"              %% "directory-watcher-better-files" % "0.18.0",
@@ -83,7 +83,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     Test / testQuick         := (Test / testQuick).dependsOn(npmInstall).evaluated,
     libraryDependencies ++= Seq("net.exoego" %%% "scala-js-nodejs-v14" % "0.12.0"),
     scalaJSUseMainModuleInitializer := false,
-    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) }
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
   )
 
 lazy val buildJVM = Def.task {

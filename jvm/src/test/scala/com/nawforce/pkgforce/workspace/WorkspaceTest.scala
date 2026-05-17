@@ -27,6 +27,11 @@ import scala.collection.immutable.ArraySeq
 
 class WorkspaceTest extends AnyFunSuite with Matchers {
 
+  private implicit class WorkspaceEvents(ws: Workspace) {
+    def events: Iterator[PackageEvent] =
+      ws.deployOrderedIndexes.flatMap(PackageStream.eventStream)
+  }
+
   // Helper to create SFDX project structure with multiple package directories
   private def withMultiPackageSFDXProject(files: Map[String, String]): Map[String, String] = {
     val sfdxProject = """{

@@ -83,7 +83,8 @@ object WhenLiteral {
       )
       .orElse(
         CodeParser
-          .toScala(literal.id())
+          .toScala(literal.qualifiedName())
+          .flatMap(qn => CodeParser.toScala(qn.id()).lastOption)
           .map(l => WhenIdLiteral(Id.construct(l)))
       )
       .map(_.withContext(literal))
