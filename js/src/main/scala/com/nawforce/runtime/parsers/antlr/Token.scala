@@ -13,18 +13,15 @@
  */
 package com.nawforce.runtime.parsers.antlr
 
-import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
-
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.annotation.{JSImport, JSName}
 
 @js.native
-@JSImport("antlr4ts", "Token")
+@JSImport("antlr4", "Token")
 class Token extends js.Object {
-  val text: String                            = js.native
-  val line: Int                               = js.native
-  val charPositionInLine: Int                 = js.native
-  val inputStream: CaseInsensitiveInputStream = js.native
-  val startIndex: Int                         = js.native
-  val stopIndex: Int                          = js.native
+  val text: String                              = js.native
+  val line: Int                                 = js.native
+  @JSName("column") val charPositionInLine: Int = js.native
+  @JSName("start") val startIndex: Int          = js.native
+  @JSName("stop") val stopIndex: Int            = js.native
 }

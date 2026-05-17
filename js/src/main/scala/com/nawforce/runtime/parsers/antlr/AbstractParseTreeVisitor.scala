@@ -17,7 +17,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("antlr4ts/tree/AbstractParseTreeVisitor", "AbstractParseTreeVisitor")
+@JSImport("antlr4", "ParseTreeVisitor")
 class AbstractParseTreeVisitor[Result] extends js.Object {
   def visit(tree: ParseTree): Result = js.native
 

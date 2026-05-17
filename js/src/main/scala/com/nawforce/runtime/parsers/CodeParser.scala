@@ -16,8 +16,8 @@ package com.nawforce.runtime.parsers
 import com.nawforce.pkgforce.diagnostics.IssuesAnd
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
-import com.nawforce.runtime.parsers.antlr.CommonTokenStream
-import io.github.apexdevtools.apexparser.{ApexLexer, ApexParser, CaseInsensitiveInputStream}
+import com.nawforce.runtime.parsers.antlr.{CharStream, CommonTokenStream}
+import io.github.apexdevtools.apexparser.{ApexLexer, ApexParser}
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.reflect.ClassTag
@@ -25,7 +25,7 @@ import scala.scalajs.js
 
 class CodeParser(val source: Source) {
   // We would like to extend this but it angers the JavaScript gods
-  val cis: CaseInsensitiveInputStream = source.asInsensitiveStream
+  val stream: CharStream = source.asStream
 
   var lastTokenStream: Option[CommonTokenStream] = None
 
@@ -77,7 +77,7 @@ class CodeParser(val source: Source) {
     lastTokenStream = None
     val listener = new CollectingErrorListener(source.path)
 
-    val lexer = new ApexLexer(cis)
+    val lexer = new ApexLexer(stream)
     lexer.removeErrorListeners()
     lexer.addErrorListener(listener)
     val tokenStream = new CommonTokenStream(lexer)
@@ -107,13 +107,13 @@ object CodeParser {
 
   // Helper for JS Portability
   def getText(context: ParserRuleContext): String = {
-    context.childCount match {
+    context.getChildCount() match {
       case 0 => ""
-      case 1 => context.getChild(0).text
+      case 1 => context.getChild(0).getText()
       case _ =>
         val builder = new StringBuilder
-        for (i <- 0 until context.childCount) {
-          builder.append(context.getChild(i).text)
+        for (i <- 0 until context.getChildCount()) {
+          builder.append(context.getChild(i).getText())
         }
         builder.toString
     }
@@ -121,7 +121,7 @@ object CodeParser {
 
   // Helper for JS Portability
   def getText(node: TerminalNode): String = {
-    node.text
+    node.getText()
   }
 
   // Helper for JS Portability
@@ -134,7 +134,7 @@ object CodeParser {
 
   // Helper for JS Portability
   def toScala[T](value: js.UndefOr[T]): Option[T] = {
-    value.toOption
+    value.toOption.filter(_ != null)
   }
 
   private val emptyArraySeq = ArraySeq()

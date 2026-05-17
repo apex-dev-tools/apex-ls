@@ -17,5 +17,6 @@ import scala.scalajs.js
 
 @js.native
 trait ParseTree extends js.Object {
-  val text: String = js.native
+  def getText(): String                          = js.native
+  def accept[Result](visitor: js.Object): Result = js.native
 }

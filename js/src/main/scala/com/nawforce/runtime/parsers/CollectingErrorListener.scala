@@ -53,6 +53,34 @@ class CollectingErrorListener(path: PathLike) extends js.Object {
     )
   }
 
+  def reportAmbiguity(
+    recognizer: Any,
+    dfa: Any,
+    startIndex: Int,
+    stopIndex: Int,
+    exact: Boolean,
+    ambigAlts: Any,
+    configs: Any
+  ): Unit = ()
+
+  def reportAttemptingFullContext(
+    recognizer: Any,
+    dfa: Any,
+    startIndex: Int,
+    stopIndex: Int,
+    conflictingAlts: Any,
+    configs: Any
+  ): Unit = ()
+
+  def reportContextSensitivity(
+    recognizer: Any,
+    dfa: Any,
+    startIndex: Int,
+    stopIndex: Int,
+    prediction: Int,
+    configs: Any
+  ): Unit = ()
+
   def issues: ArraySeq[Issue] = {
     if (_issues != null)
       ArraySeq.unsafeWrapArray(_issues.toArray)

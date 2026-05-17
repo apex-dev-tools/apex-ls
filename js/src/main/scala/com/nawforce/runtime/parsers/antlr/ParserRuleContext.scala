@@ -14,15 +14,13 @@
 package com.nawforce.runtime.parsers.antlr
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.annotation.{JSImport, JSName}
 
 @js.native
-@JSImport("antlr4ts", "ParserRuleContext")
+@JSImport("antlr4", "ParserRuleContext")
 class ParserRuleContext extends RuleContext {
   val start: Token            = js.native
   val stop: js.UndefOr[Token] = js.native
 
-  def parent: ParserRuleContext   = js.native
-  val childCount: Int             = js.native
-  def getChild(i: Int): ParseTree = js.native
+  @JSName("parentCtx") def parent: ParserRuleContext = js.native
 }

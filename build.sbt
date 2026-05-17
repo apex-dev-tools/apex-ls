@@ -60,8 +60,8 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules"  %% "scala-xml"                      % "1.3.0",
       "org.scala-lang.modules"  %% "scala-parallel-collections"     % "1.0.0",
       "org.scala-js"            %% "scalajs-stubs"                  % "1.0.0",
-      "io.github.apex-dev-tools" % "apex-parser"                    % "4.3.1",
-      "io.github.apex-dev-tools" % "vf-parser"                      % "1.1.0",
+      "io.github.apex-dev-tools" % "apex-parser"                    % "5.0.0",
+      "io.github.apex-dev-tools" % "vf-parser"                      % "2.0.0-SNAPSHOT",
       "io.github.apex-dev-tools" % "sobject-types"                  % "65.0.0",
       "io.github.apex-dev-tools" % "standard-types"                 % "65.0.0",
       "io.methvin"              %% "directory-watcher-better-files" % "0.18.0",
@@ -83,7 +83,7 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     Test / testQuick         := (Test / testQuick).dependsOn(npmInstall).evaluated,
     libraryDependencies ++= Seq("net.exoego" %%% "scala-js-nodejs-v14" % "0.12.0"),
     scalaJSUseMainModuleInitializer := false,
-    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) }
   )
 
 lazy val buildJVM = Def.task {

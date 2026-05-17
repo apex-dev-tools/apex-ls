@@ -17,12 +17,13 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("antlr4ts/CharStream", "CharStream")
-class CharStream extends js.Object {}
+@JSImport("antlr4", "CharStream")
+class CharStream(data: String) extends js.Object {
+  def getText(start: Int, stop: Int): String = js.native
+}
 
 @js.native
-@JSImport("antlr4ts/CharStreams", "CharStreams")
+@JSImport("antlr4", "CharStreams")
 object CharStreams extends js.Object {
-  def fromString(s: String): CharStream                     = js.native
-  def fromString(s: String, sourceName: String): CharStream = js.native
+  def fromString(s: String): CharStream = js.native
 }

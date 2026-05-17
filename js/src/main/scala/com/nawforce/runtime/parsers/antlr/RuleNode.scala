@@ -16,4 +16,7 @@ package com.nawforce.runtime.parsers.antlr
 import scala.scalajs.js
 
 @js.native
-trait RuleNode extends ParseTree
+trait RuleNode extends ParseTree {
+  def getChildCount(): Int        = js.native
+  def getChild(i: Int): ParseTree = js.native
+}

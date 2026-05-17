@@ -74,28 +74,28 @@ object PageParser {
 
   // Helper for JS Portability
   def childCount(context: ParserRuleContext): Int = {
-    context.childCount
+    context.getChildCount()
   }
 
   // Helper for JS Portability
   def getText(context: ParseTree): String = {
-    context.text
+    context.getText()
   }
 
   // Helper for JS Portability
   def getText(context: ParserRuleContext): String = {
-    if (context.childCount == 0) return ""
+    if (context.getChildCount() == 0) return ""
 
     val builder = new StringBuilder
-    for (i <- 0 until context.childCount) {
-      builder.append(context.getChild(i).text)
+    for (i <- 0 until context.getChildCount()) {
+      builder.append(context.getChild(i).getText())
     }
     builder.toString
   }
 
   // Helper for JS Portability
   def getText(node: TerminalNode): String = {
-    node.text
+    node.getText()
   }
 
   // Helper for JS Portability
@@ -108,7 +108,7 @@ object PageParser {
 
   // Helper for JS Portability
   def toScala[T](value: js.UndefOr[T]): Option[T] = {
-    value.toOption
+    value.toOption.filter(_ != null)
   }
 
   private val emptyArraySeq = ArraySeq()

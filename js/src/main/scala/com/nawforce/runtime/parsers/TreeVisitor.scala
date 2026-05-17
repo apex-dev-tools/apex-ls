@@ -14,7 +14,13 @@
 
 package com.nawforce.runtime.parsers
 
-import com.nawforce.runtime.parsers.antlr.{AbstractParseTreeVisitor, ApexParserVisitor, RuleNode}
+import com.nawforce.runtime.parsers.antlr.{
+  AbstractParseTreeVisitor,
+  ApexParserVisitor,
+  ErrorNode,
+  RuleNode,
+  TerminalNode
+}
 import io.github.apexdevtools.apexparser.ApexParser._
 
 import scala.collection.compat.immutable.ArraySeq
@@ -26,51 +32,63 @@ abstract class TreeVisitor[T: ClassTag]
     with ApexParserVisitor[ArraySeq[T]] {
   type VisitChildren = RuleNode => ArraySeq[T]
 
-  override def defaultResult(): ArraySeq[T] = ArraySeq[T]()
-
-  override protected def aggregateResult(
-    aggregate: ArraySeq[T],
-    nextResult: ArraySeq[T]
-  ): ArraySeq[T] = {
-    aggregate ++ nextResult
+  // antlr4's ParseTreeVisitor.visitChildren returns a JS Array of per-child results
+  // (and has no defaultResult/aggregateResult hooks). Override to flatten back into
+  // the ArraySeq[T] shape our visitX overrides emit, treating null/undefined returns
+  // (terminal/error nodes) as empty.
+  override def visitChildren(node: RuleNode): ArraySeq[T] = {
+    var result = ArraySeq.empty[T]
+    val n      = node.getChildCount()
+    var i      = 0
+    while (i < n) {
+      val childResult = node.getChild(i).accept[js.Any](this)
+      if (childResult != null && !js.isUndefined(childResult)) {
+        result ++= childResult.asInstanceOf[ArraySeq[T]]
+      }
+      i += 1
+    }
+    result
   }
+
+  override def visitTerminal(node: TerminalNode): ArraySeq[T] = ArraySeq.empty[T]
+  override def visitErrorNode(node: ErrorNode): ArraySeq[T]   = ArraySeq.empty[T]
 
   override val visitClassDeclaration
     : js.UndefOr[js.Function1[ClassDeclarationContext, ArraySeq[T]]] =
-    js.defined(ctx => classDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => classDeclaration(ctx, this.visitChildren _))
 
   override val visitTriggerUnit: js.UndefOr[js.Function1[TriggerUnitContext, ArraySeq[T]]] =
-    js.defined(ctx => triggerDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => triggerDeclaration(ctx, this.visitChildren _))
 
   override val visitInterfaceDeclaration
     : js.UndefOr[js.Function1[InterfaceDeclarationContext, ArraySeq[T]]] =
-    js.defined(ctx => interfaceDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => interfaceDeclaration(ctx, this.visitChildren _))
 
   override val visitEnumDeclaration: js.UndefOr[js.Function1[EnumDeclarationContext, ArraySeq[T]]] =
-    js.defined(ctx => enumDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => enumDeclaration(ctx, this.visitChildren _))
 
   override val visitConstructorDeclaration
     : js.UndefOr[js.Function1[ConstructorDeclarationContext, ArraySeq[T]]] =
-    js.defined(ctx => constructorDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => constructorDeclaration(ctx, this.visitChildren _))
 
   override val visitMethodDeclaration
     : js.UndefOr[js.Function1[MethodDeclarationContext, ArraySeq[T]]] =
-    js.defined(ctx => methodDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => methodDeclaration(ctx, this.visitChildren _))
 
   override val visitInterfaceMethodDeclaration
     : js.UndefOr[js.Function1[InterfaceMethodDeclarationContext, ArraySeq[T]]] =
-    js.defined(ctx => interfaceMethodDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => interfaceMethodDeclaration(ctx, this.visitChildren _))
 
   override val visitFieldDeclaration
     : js.UndefOr[js.Function1[FieldDeclarationContext, ArraySeq[T]]] =
-    js.defined(ctx => fieldDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => fieldDeclaration(ctx, this.visitChildren _))
 
   override val visitPropertyDeclaration
     : js.UndefOr[js.Function1[PropertyDeclarationContext, ArraySeq[T]]] =
-    js.defined(ctx => propertyDeclaration(ctx, super.visitChildren))
+    js.defined(ctx => propertyDeclaration(ctx, this.visitChildren _))
 
   override val visitEnumConstants: js.UndefOr[js.Function1[EnumConstantsContext, ArraySeq[T]]] =
-    js.defined(ctx => enumConstants(ctx, super.visitChildren))
+    js.defined(ctx => enumConstants(ctx, this.visitChildren _))
 
   def classDeclaration(ctx: ClassDeclarationContext, visitChildren: VisitChildren): ArraySeq[T]
   def triggerDeclaration(ctx: TriggerUnitContext, visitChildren: VisitChildren): ArraySeq[T]

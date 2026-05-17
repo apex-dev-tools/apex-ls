@@ -17,7 +17,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("antlr4ts", "CommonTokenStream")
+@JSImport("antlr4", "CommonTokenStream")
 class CommonTokenStream(lexer: js.Any) extends BufferedTokenStream {
   def fill(): Unit = js.native
 }

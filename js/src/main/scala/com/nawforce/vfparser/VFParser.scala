@@ -19,7 +19,7 @@ import com.nawforce.runtime.parsers.antlr.{CommonTokenStream, ParserRuleContext}
 import com.nawforce.runtime.parsers.CollectingErrorListener
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.annotation.{JSImport, JSName}
 
 @js.native
 @JSImport("@apexdevtools/vf-parser", "VFParser")
@@ -38,30 +38,32 @@ object VFParser {
   class VfUnitContext extends ParserRuleContext {
     def element(): ElementContext = js.native
 
-    def COMMENT(): js.Array[TerminalNode] = js.native
-    def COMMENT(i: Int): TerminalNode     = js.native
+    @JSName("COMMENT_list") def COMMENT(): js.Array[TerminalNode] = js.native
+    def COMMENT(i: Int): TerminalNode                             = js.native
 
-    def processingInstruction(): js.Array[ProcessingInstructionContext] = js.native
-    def processingInstruction(i: Int): ProcessingInstructionContext     = js.native
+    @JSName("processingInstruction_list") def processingInstruction()
+      : js.Array[ProcessingInstructionContext] = js.native
+    def processingInstruction(i: Int): ProcessingInstructionContext = js.native
   }
 
   @js.native
   @JSImport("@apexdevtools/vf-parser", "ElementContext")
   class ElementContext extends ParserRuleContext {
-    def Name(): js.Array[TerminalNode]          = js.native
-    def Name(i: Int): TerminalNode              = js.native
-    def attribute(): js.Array[AttributeContext] = js.native
-    def attribute(i: Int): AttributeContext     = js.native
-    def content(): js.UndefOr[ContentContext]   = js.native
-    def scriptChardata(): ScriptChardataContext = js.native
+    @JSName("Name_list") def Name(): js.Array[TerminalNode]               = js.native
+    def Name(i: Int): TerminalNode                                        = js.native
+    @JSName("attribute_list") def attribute(): js.Array[AttributeContext] = js.native
+    def attribute(i: Int): AttributeContext                               = js.native
+    def content(): js.UndefOr[ContentContext]                             = js.native
+    def scriptChardata(): ScriptChardataContext                           = js.native
   }
 
   @js.native
   @JSImport("@apexdevtools/vf-parser", "AttributeContext")
   class AttributeContext extends ParserRuleContext {
-    def attributeName(): AttributeNameContext               = js.native
-    def attributeValues(): js.Array[AttributeValuesContext] = js.native
-    def attributeValues(i: Int): AttributeValuesContext     = js.native
+    def attributeName(): AttributeNameContext = js.native
+    @JSName("attributeValues_list") def attributeValues(): js.Array[AttributeValuesContext] =
+      js.native
+    def attributeValues(i: Int): AttributeValuesContext = js.native
   }
 
   @js.native
@@ -76,34 +78,35 @@ object VFParser {
   @JSImport("@apexdevtools/vf-parser", "AttributeValuesContext")
   class ContentContext extends ParserRuleContext {
 
-    def element(): js.Array[ElementContext] = js.native
-    def element(i: Int): ElementContext     = js.native
+    @JSName("element_list") def element(): js.Array[ElementContext] = js.native
+    def element(i: Int): ElementContext                             = js.native
 
-    def chardata(): js.Array[ChardataContext] = js.native
-    def chardata(i: Int): ChardataContext     = js.native
+    @JSName("chardata_list") def chardata(): js.Array[ChardataContext] = js.native
+    def chardata(i: Int): ChardataContext                              = js.native
 
-    def COMMENT(): js.Array[TerminalNode] = js.native
-    def COMMENT(i: Int): TerminalNode     = js.native
+    @JSName("COMMENT_list") def COMMENT(): js.Array[TerminalNode] = js.native
+    def COMMENT(i: Int): TerminalNode                             = js.native
 
-    def processingInstruction(): js.Array[ProcessingInstructionContext] = js.native
-    def processingInstruction(i: Int): ProcessingInstructionContext     = js.native
+    @JSName("processingInstruction_list") def processingInstruction()
+      : js.Array[ProcessingInstructionContext] = js.native
+    def processingInstruction(i: Int): ProcessingInstructionContext = js.native
   }
 
   @js.native
   @JSImport("@apexdevtools/vf-parser", "ChardataContext")
   class ChardataContext extends ParserRuleContext {
-    def CDATA_TEXT(): js.Array[TerminalNode] = js.native
-    def CDATA_TEXT(i: Int): TerminalNode     = js.native
+    @JSName("CDATA_TEXT_list") def CDATA_TEXT(): js.Array[TerminalNode] = js.native
+    def CDATA_TEXT(i: Int): TerminalNode                                = js.native
 
-    def EL_BODY(): js.Array[TerminalNode] = js.native
-    def EL_BODY(i: Int): TerminalNode     = js.native
+    @JSName("EL_BODY_list") def EL_BODY(): js.Array[TerminalNode] = js.native
+    def EL_BODY(i: Int): TerminalNode                             = js.native
   }
 
   @js.native
   @JSImport("vf-parser", "ScriptChardataContext")
   class ScriptChardataContext extends ParserRuleContext {
-    def SCRIPT_TEXT(): js.Array[TerminalNode] = js.native
-    def SCRIPT_TEXT(i: Int): TerminalNode     = js.native
+    @JSName("SCRIPT_TEXT_list") def SCRIPT_TEXT(): js.Array[TerminalNode] = js.native
+    def SCRIPT_TEXT(i: Int): TerminalNode                                 = js.native
   }
 
   @js.native

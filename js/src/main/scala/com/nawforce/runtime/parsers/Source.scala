@@ -16,7 +16,7 @@ package com.nawforce.runtime.parsers
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.runtime.SourceBlob
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
-import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
+import com.nawforce.runtime.parsers.antlr.CharStream
 
 trait Locatable {
   var locationPath: PathLike
@@ -52,8 +52,8 @@ case class Source(
     )
   }
 
-  def asInsensitiveStream: CaseInsensitiveInputStream = {
-    code.asInsensitiveStream
+  def asStream: CharStream = {
+    code.asStream
   }
 
   def asString: String = {
