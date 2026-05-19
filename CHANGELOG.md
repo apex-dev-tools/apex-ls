@@ -7,10 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Acceptance of Summer '26 multi-line string literals (`'''...'''`) in expressions and `switch` when clauses (#447)
+- Qualified enum constants are now permitted in `switch` when clauses (e.g. `when MyEnum.A`) (#441)
+- Distinct exit codes from `CheckForIssues` to separate warnings-only and unused-only outcomes (#440)
+- Improved lexer error messages for invalid escape sequences, including the offending sequence
+
 ### Fixed
 
 - Static methods on inner classes are now properly validated and flagged (@metalshark)
 - Public/global methods implementing interfaces from external namespaces are no longer incorrectly flagged as unused (#401)
+- Methods invoked only from triggers are no longer flagged as unused
+- Test class discovery now follows interface use relationships, so test classes referenced via interfaces are correctly included
+- Outline parser column offsets aligned with outline-parser 2.0 0-based half-open columns, removing off-by-one diagnostics
+- Outline parser validation failures now retry via an ANTLR fallback to preserve diagnostics
+
+### Changed
+
+- Removed the ANTLR-first parsing mode; OutlineParser is now the sole parser path. The `--antlr` / ANTLR parser option is deprecated and a no-op (#433)
+- Upgraded to apex-parser 5.1.0 and the antlr4 4.13 runtime
+- Slimmed the JS module surface to the published apex-ls facades
+
+### Removed
+
+- v1 ForceIgnore implementation (V2 has been the default since 6.0.0)
 
 ## [6.0.2] - 2025-11-25
 

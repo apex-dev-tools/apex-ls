@@ -70,6 +70,20 @@ class LiteralTypeTest extends AnyFunSuite with Matchers with TestHelper {
     literal("0.123456789012345678901234567890123456789012345678d", TypeNames.Double)
   }
 
+  test("Multi-line string literal") {
+    literal("'''\n'''", TypeNames.String)
+    literal("'''\nabc'''", TypeNames.String)
+    literal("'''\nabc\ndef'''", TypeNames.String)
+    literal("'''\n'a'\n'''", TypeNames.String)
+  }
+
+  test("Multi-line bound string literal") {
+    val aSet = Set(Name("a"))
+    typeLiteral("'''\n:a\n'''") should matchPattern {
+      case BoundStringLiteral(bound) if bound == aSet =>
+    }
+  }
+
   test("Max Decimal") {
     typeDeclaration(
       "public class Dummy { Object a = 0.123456789012345678901234567890123456789012345678; }"

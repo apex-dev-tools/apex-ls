@@ -219,6 +219,21 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues == "Error: line 1 at 31-34: Duplicate when case for 'A'\n")
   }
 
+  test("Multi-line string single control") {
+    typeDeclaration("public class Dummy {{switch on 'A' {when '''\nA''' {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("Multi-line string control on multi-line expression") {
+    typeDeclaration("public class Dummy {{switch on '''\nA''' {when '''\nA''' {} }}}")
+    assert(!hasIssues)
+  }
+
+  test("Multi-line string mixed control") {
+    typeDeclaration("public class Dummy {{switch on 'A' {when 'A', '''\nB''' {} }}}")
+    assert(!hasIssues)
+  }
+
   test("String switch with Null") {
     typeDeclaration("public class Dummy {{switch on 'A' {when null {} when else {}}}}")
     assert(!hasIssues)

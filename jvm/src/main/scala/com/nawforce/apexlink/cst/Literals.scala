@@ -165,6 +165,11 @@ object Literal {
           .toScala(from.StringLiteral())
           .map(x => StringLiteral(CodeParser.getText(x)))
       )
+      .orElse(
+        CodeParser
+          .toScala(from.MultilineStringLiteral())
+          .map(x => StringLiteral(CodeParser.getText(x)))
+      )
       .orElse(CodeParser.toScala(from.BooleanLiteral()).map(_ => BooleanLiteral))
       .getOrElse(NullLiteral)
   }
