@@ -138,6 +138,52 @@ class SwitchTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Enum qualified control (same enum)") {
+    typeDeclaration("public class Dummy {enum E {A,B} {E e;switch on e {when E.A {}}}}")
+    assert(!hasIssues)
+  }
+
+  test("Enum qualified control (outer qualified)") {
+    typeDeclaration("public class Dummy {enum E {A,B} {E e;switch on e {when Dummy.E.A {}}}}")
+    assert(!hasIssues)
+  }
+
+  test("Enum qualified control (bad value)") {
+    typeDeclaration("public class Dummy {enum E {A,B} {E e;switch on e {when E.BAD {}}}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 58-61: Value must be a enum constant\n"
+    )
+  }
+
+  test("Enum qualified control (wrong enum)") {
+    typeDeclaration(
+      "public class Dummy {enum E {A,B} enum F {A,B} {E e;switch on e {when F.A {}}}}"
+    )
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 69-70: Qualifier 'F' does not match switch expression type 'Dummy.E'\n"
+    )
+  }
+
+  test("Enum qualified control (unknown qualifier)") {
+    typeDeclaration("public class Dummy {enum E {A,B} {E e;switch on e {when Missing.A {}}}}")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 56-63: No type declaration found for 'Missing'\n"
+    )
+  }
+
+  test("Enum qualified multi control") {
+    typeDeclaration("public class Dummy {enum E {A,B} {E e;switch on e {when E.A, E.B {}}}}")
+    assert(!hasIssues)
+  }
+
+  test("Enum qualified mixed unqualified") {
+    typeDeclaration("public class Dummy {enum E {A,B} {E e;switch on e {when A, E.B {}}}}")
+    assert(!hasIssues)
+  }
+
   test("String single control") {
     typeDeclaration("public class Dummy {{switch on 'A' {when 'A' {} }}}")
     assert(!hasIssues)
