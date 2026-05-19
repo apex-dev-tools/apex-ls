@@ -169,7 +169,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
     } yield {
       assert(result.error.isEmpty)
       assert(LoggerOps.getLoggingLevel == NO_LOGGING)
-      assert(ServerOps.getCurrentParser == ANTLRParser)
+      assert(ServerOps.getCurrentParser == OutlineParserMultithreaded)
       assert(ServerOps.getExternalAnalysis.mode == RefreshAnalysis)
       assert(ServerOps.isAutoFlushEnabled)
       assert(Environment.getCacheDirOverride.isEmpty)
@@ -207,7 +207,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
 
       LoggerOps.setLoggingLevel(NO_LOGGING)
       LoggerOps.setLogger(oldLogger)
-      ServerOps.setCurrentParser(ANTLRParser)
+      ServerOps.setCurrentParser(OutlineParserMultithreaded)
       ServerOps.setIndexerConfiguration(IndexerConfiguration(0, 0))
       Environment.setCacheDirOverride(None)
       deleteDir(cacheDir)

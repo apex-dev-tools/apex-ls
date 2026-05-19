@@ -132,14 +132,9 @@ class StreamDeployer(
       docs.filterNot(doc => types.contains(TypeName(doc.name).withNamespace(module.namespace)))
     LoggerOps.debug(s"${missingClasses.length} of ${docs.length} classes not available from cache")
 
-    module.pkg.org.getParserType match {
-      case ANTLRParser =>
-        parseAndValidateClasses(missingClasses)
-      case OutlineParserSingleThreaded | OutlineParserMultithreaded =>
-        val failures = loadClassesWithOutlineParser(ServerOps.getCurrentParser, missingClasses)
-        if (failures.nonEmpty)
-          parseAndValidateClasses(failures)
-    }
+    val failures = loadClassesWithOutlineParser(module.pkg.org.getParserType, missingClasses)
+    if (failures.nonEmpty)
+      parseAndValidateClasses(failures)
   }
 
   /** Parse a collection of Apex classes, insert them and validate them. */
@@ -250,6 +245,7 @@ class StreamDeployer(
   ): ArraySeq[ClassDocument] = {
 
     val localAccum      = new ConcurrentHashMap[TypeName, FullDeclaration]()
+    val docsByType      = new ConcurrentHashMap[TypeName, ClassDocument]()
     val failedDocuments = new ConcurrentLinkedQueue[ClassDocument]()
 
     val clsItr =
@@ -266,6 +262,7 @@ class StreamDeployer(
                 .toFullDeclaration(cls, srcData, module)
                 .map(td => {
                   localAccum.put(td.typeName, td)
+                  docsByType.put(td.typeName, cls)
                 })
               if (td.isEmpty) failedDocuments.add(cls)
             }
@@ -274,7 +271,15 @@ class StreamDeployer(
       localAccum.entrySet.forEach(kv => {
         types.put(kv.getKey, kv.getValue)
       })
-      localAccum.values().asScala.foreach(_.safeValidate())
+      localAccum
+        .values()
+        .asScala
+        .foreach(td => {
+          if (!td.tryValidate()) {
+            types.remove(td.typeName)
+            Option(docsByType.get(td.typeName)).foreach(failedDocuments.add)
+          }
+        })
     }
     ArraySeq.from(failedDocuments.asScala.toSeq)
   }

@@ -426,7 +426,15 @@ trait RenameProvider extends SourceOps {
         Rename(currentClassPath.toString, methodRenameLocations.toArray)
     }.toArray
 
-    calloutLocations :+ Rename(cbd.location.path.toString, Array(cbd.idLocation))
+    val orderedCallouts = calloutLocations.sortBy(rename =>
+      (
+        rename.path,
+        rename.edits.headOption.map(_.startLine).getOrElse(0),
+        rename.edits.headOption.map(_.startPosition).getOrElse(0)
+      )
+    )
+
+    orderedCallouts :+ Rename(cbd.location.path.toString, Array(cbd.idLocation))
   }
 
   private def getDependencyHolders(cbd: ClassBodyDeclaration): Option[Set[DependencyHolder]] = {

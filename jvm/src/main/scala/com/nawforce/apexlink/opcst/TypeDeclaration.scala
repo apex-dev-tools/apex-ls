@@ -186,7 +186,7 @@ private[opcst] object OutlineParserClassDeclaration {
   ): Option[ClassDeclaration] = {
 
     val modifierResults =
-      classModifiers(path, ic.id, ic.annotations, ic.modifiers, outer = false)
+      classModifiers(path, ic.id, ic.location, ic.annotations, ic.modifiers, outer = false)
     val thisType = outerType.asInner(ic.id.name)
     val rv = OutlineParserClassDeclaration.construct(
       path,
@@ -211,7 +211,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
 
     val thisType = outerType.asInner(ii.id.name)
     val modifierResults =
-      interfaceModifiers(path, ii.id, ii.annotations, ii.modifiers, outer = false)
+      interfaceModifiers(path, ii.id, ii.location, ii.annotations, ii.modifiers, outer = false)
     val rv =
       construct(path, ii, source, thisType, Some(outerType.typeName), modifierResults)
     Some(rv)
@@ -273,7 +273,7 @@ private[opcst] object OutlineParserEnumDeclaration {
     outerType: ThisType
   ): Option[EnumDeclaration] = {
     val modifierResults =
-      enumModifiers(path, ie.id, ie.annotations, ie.modifiers, outer = false)
+      enumModifiers(path, ie.id, ie.location, ie.annotations, ie.modifiers, outer = false)
     val thisType = outerType.asInner(ie.id.name)
     val rv       = construct(ie, source, thisType, Some(outerType.typeName), modifierResults)
     Some(rv)
@@ -332,7 +332,8 @@ private[opcst] object OutlineParserEnumDeclaration {
         isReadOnly = true
       )
 
-    val declaration = ApexFieldDeclaration(thisType, modifierResults, thisType.typeName, vd)
+    val declaration =
+      ApexFieldDeclaration(thisType, modifierResults, thisType.typeName, vd, isEnumConstant = true)
     stampLocation(
       declaration,
       id.location.copy(startLineOffset = id.location.startLineOffset),
