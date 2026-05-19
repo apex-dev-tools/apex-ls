@@ -35,7 +35,7 @@ sealed abstract class WhenLiteral extends CST {
 final class WhenNullLiteral extends WhenLiteral {
   override def isComparableTo(typeName: TypeName): Boolean = true
 }
-final case class WhenIdLiteral(id: Id) extends WhenLiteral {
+final case class WhenIdLiteral(qualifier: Seq[Id], id: Id) extends WhenLiteral {
   override def isComparableTo(typeName: TypeName): Boolean = false // Not used
   override def toString: String                            = id.name.value.toLowerCase
 }
@@ -84,8 +84,10 @@ object WhenLiteral {
       .orElse(
         CodeParser
           .toScala(literal.qualifiedName())
-          .flatMap(qn => CodeParser.toScala(qn.id()).lastOption)
-          .map(l => WhenIdLiteral(Id.construct(l)))
+          .flatMap(qn => {
+            val ids = CodeParser.toScala(qn.id()).map(Id.construct)
+            ids.lastOption.map(last => WhenIdLiteral(ids.dropRight(1), last))
+          })
       )
       .map(_.withContext(literal))
   }
@@ -145,19 +147,34 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
 
     nonNull.foreach {
       case iv: WhenIdLiteral =>
+        if (iv.qualifier.nonEmpty) {
+          val qualifierTypeName = TypeName(iv.qualifier.map(_.name).reverse)
+          context.getTypeFor(qualifierTypeName, context.thisType) match {
+            case Right(qualifierType) =>
+              if (qualifierType.typeName != typeDeclaration.typeName) {
+                context.logError(
+                  iv.qualifier.head.location,
+                  s"Qualifier '$qualifierTypeName' does not match switch expression type '${typeDeclaration.typeName}'"
+                )
+                return Seq()
+              }
+              context.addDependency(qualifierType)
+            case Left(_) =>
+              context.logError(
+                iv.qualifier.head.location,
+                s"No type declaration found for '$qualifierTypeName'"
+              )
+              return Seq()
+          }
+        }
         val field = typeDeclaration.findField(iv.id.name, Some(true))
-        field.foreach(field => {
-          Referenceable.addReferencingLocation(
-            typeDeclaration,
-            field,
-            iv.location,
-            context.thisType
-          )
-          context.addDependency(field)
-        })
-        if (field.isEmpty) {
-          context.logError(iv.id.location, "Value must be a enum constant")
-          return Seq()
+        field match {
+          case Some(f) =>
+            Referenceable.addReferencingLocation(typeDeclaration, f, iv.location, context.thisType)
+            context.addDependency(f)
+          case None =>
+            context.logError(iv.id.location, "Value must be a enum constant")
+            return Seq()
         }
       case _ =>
     }
