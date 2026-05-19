@@ -3,9 +3,9 @@
  */
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.oparser._
-import com.financialforce.types._
-import com.financialforce.types.base.{
+import io.github.apexdevtools.oparser._
+import io.github.apexdevtools.types._
+import io.github.apexdevtools.types.base.{
   Annotation,
   IdWithLocation,
   Location,
@@ -102,9 +102,9 @@ sealed class TypeDeclaration(
   override def setExtends(typeRef: TypeRef): Unit               = _extendsTypeRef = typeRef
   override def setImplements(typeList: ArraySeq[TypeRef]): Unit = _implementsTypeList = typeList
   override def setModifiers(modifiers: Array[Modifier]): Unit =
-    _modifiers = Modifier.intern(modifiers)
+    _modifiers = modifiers
   override def setAnnotations(annotations: Array[Annotation]): Unit =
-    _annotations = Annotation.intern(annotations)
+    _annotations = annotations
 
   override def appendInitializer(init: Initializer): Unit            = _bodyDecls.append(init)
   override def appendInnerType(inner: IMutableTypeDeclaration): Unit = _bodyDecls.append(inner)

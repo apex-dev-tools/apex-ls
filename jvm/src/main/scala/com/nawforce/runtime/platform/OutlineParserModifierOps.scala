@@ -3,7 +3,7 @@
  */
 package com.nawforce.runtime.platform
 
-import com.financialforce.types.base.{
+import io.github.apexdevtools.types.base.{
   Annotation => OPAnnotation,
   IdWithLocation => OPId,
   Location => OPLocation,

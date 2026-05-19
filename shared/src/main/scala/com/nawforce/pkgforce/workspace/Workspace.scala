@@ -18,7 +18,6 @@ import com.nawforce.pkgforce.documents.{DocumentIndex, MetadataDocument}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.pkgforce.sfdx.SFDXProject
-import com.nawforce.pkgforce.stream.{PackageEvent, PackageStream}
 
 /** Contains any config option that can be used by the Org
   */
@@ -55,11 +54,7 @@ case class Workspace(
       .getOrElse(List())
   }
 
-  def events: Iterator[PackageEvent] = {
-    deployOrderedIndexes.flatMap(index => PackageStream.eventStream(index))
-  }
-
-  private def deployOrderedIndexes: Iterator[DocumentIndex] = {
+  def deployOrderedIndexes: Iterator[DocumentIndex] = {
     layers.iterator.flatMap(layer => layer.layers).flatMap(indexes.get)
   }
 }

@@ -1669,7 +1669,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     FileSystemHelper.run(
       Map(
         "TriggerHandler.cls" -> "public class TriggerHandler { public void handleTrigger() { System.debug('handling'); } }",
-        "MyTrigger.trigger"  -> "trigger MyTrigger on Account (after insert) { (new TriggerHandler()).handleTrigger(); }"
+        "MyTrigger.trigger" -> "trigger MyTrigger on Account (after insert) { (new TriggerHandler()).handleTrigger(); }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)
@@ -1687,8 +1687,8 @@ class UnusedTest extends AnyFunSuite with TestHelper {
             |"sourceApiVersion": "60.0"
             |}""".stripMargin,
         "force-app/ITriggerHandler.cls" -> "public interface ITriggerHandler { void handleTrigger(); }",
-        "force-app/TriggerHandler.cls"  -> "public class TriggerHandler implements ITriggerHandler { public void handleTrigger() { System.debug('handling'); } }",
-        "force-app/MyTrigger.trigger"   -> "trigger MyTrigger on Account (after insert) { (new TriggerHandler()).handleTrigger(); }"
+        "force-app/TriggerHandler.cls" -> "public class TriggerHandler implements ITriggerHandler { public void handleTrigger() { System.debug('handling'); } }",
+        "force-app/MyTrigger.trigger" -> "trigger MyTrigger on Account (after insert) { (new TriggerHandler()).handleTrigger(); }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)

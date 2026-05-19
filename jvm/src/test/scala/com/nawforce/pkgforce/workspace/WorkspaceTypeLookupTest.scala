@@ -16,6 +16,7 @@ package com.nawforce.pkgforce.workspace
 
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.stream.{PackageEvent, PackageStream}
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -29,6 +30,11 @@ import org.scalatest.matchers.should.Matchers
   * - Complex multi-package scenarios
   */
 class WorkspaceTypeLookupTest extends AnyFunSuite with Matchers {
+
+  private implicit class WorkspaceEvents(ws: Workspace) {
+    def events: Iterator[PackageEvent] =
+      ws.deployOrderedIndexes.flatMap(PackageStream.eventStream)
+  }
 
   // Helper to create basic SFDX project structure
   private def withSFDXProject(files: Map[String, String]): Map[String, String] = {

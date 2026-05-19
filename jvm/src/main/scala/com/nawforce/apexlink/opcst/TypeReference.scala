@@ -3,7 +3,7 @@
  */
 package com.nawforce.apexlink.opcst
 
-import com.financialforce.types.base.{
+import io.github.apexdevtools.types.base.{
   UnresolvedTypeRef,
   TypeNameSegment => OPTypeName,
   TypeRef => OPTypeRef
