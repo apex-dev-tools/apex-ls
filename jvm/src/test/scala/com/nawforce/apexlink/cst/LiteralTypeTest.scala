@@ -236,4 +236,53 @@ class LiteralTypeTest extends AnyFunSuite with Matchers with TestHelper {
     assert(syntaxErrors.nonEmpty, "Should have syntax errors for unclosed string")
   }
 
+  test("Malformed multi-line string with body") {
+    val parser =
+      CodeParser(Path("Dummy.cls"), SourceData("public class Dummy { String a = '''abc'''; }"))
+    val result       = parser.parseClass()
+    val syntaxErrors = result.issues.filter(_.diagnostic.category.name == "Syntax")
+    assert(syntaxErrors.nonEmpty)
+    assert(
+      syntaxErrors.exists(
+        _.diagnostic.message.contains(
+          "Malformed multi-line string literal, the body of '''...''' must start on a new line"
+        )
+      )
+    )
+  }
+
+  test("Malformed multi-line string six quotes") {
+    val parser =
+      CodeParser(Path("Dummy.cls"), SourceData("public class Dummy { String a = ''''''; }"))
+    val result       = parser.parseClass()
+    val syntaxErrors = result.issues.filter(_.diagnostic.category.name == "Syntax")
+    assert(syntaxErrors.nonEmpty)
+    assert(
+      syntaxErrors.exists(
+        _.diagnostic.message.contains(
+          "Malformed multi-line string literal, the body of '''...''' must start on a new line"
+        )
+      )
+    )
+  }
+
+  test("Adjacent string literals with whitespace are not flagged as multi-line") {
+    // '' 'abc' '' is three legitimate string literals — still a syntax error
+    // (Apex has no string concatenation) but it should NOT trigger the
+    // multi-line diagnostic because there is whitespace between the tokens.
+    val parser =
+      CodeParser(Path("Dummy.cls"), SourceData("public class Dummy { String a = '' 'abc' ''; }"))
+    val result       = parser.parseClass()
+    val syntaxErrors = result.issues.filter(_.diagnostic.category.name == "Syntax")
+    assert(syntaxErrors.nonEmpty)
+    assert(
+      !syntaxErrors.exists(_.diagnostic.message.contains("Malformed multi-line string literal"))
+    )
+  }
+
+  test("Well-formed multi-line string is not flagged") {
+    typeDeclaration("public class Dummy { String a = '''\nabc\n'''; }")
+    assert(dummyIssues.isEmpty)
+  }
+
 }
