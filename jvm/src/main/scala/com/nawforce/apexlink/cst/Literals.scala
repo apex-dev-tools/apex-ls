@@ -19,7 +19,6 @@ import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLocation
-import com.nawforce.runtime.parsers.CodeParser
 import io.github.apexdevtools.apexparser.ApexParser.LiteralContext
 
 sealed abstract class Literal {
@@ -146,26 +145,26 @@ object DoubleOrDecimalLiteral {
 }
 
 object Literal {
-  def construct(from: LiteralContext): Literal = {
-    Option(from.IntegerLiteral())
-      .map(_ => IntegerOrLongLiteral(from))
-      .orElse(
-        Option(from.LongLiteral())
-          .map(_ => IntegerOrLongLiteral(from))
-      )
-      .orElse(
-        Option(from.NumberLiteral())
-          .map(_ => DoubleOrDecimalLiteral(from))
-      )
-      .orElse(
-        Option(from.StringLiteral())
-          .map(x => StringLiteral(Option(x).map(_.getText).getOrElse("")))
-      )
-      .orElse(
-        Option(from.MultilineStringLiteral())
-          .map(x => StringLiteral(Option(x).map(_.getText).getOrElse("")))
-      )
-      .orElse(Option(from.BooleanLiteral()).map(_ => BooleanLiteral))
-      .getOrElse(NullLiteral)
+  private object Lit {
+    object Int    { def unapply(c: LiteralContext): Boolean = c.IntegerLiteral() != null }
+    object Long   { def unapply(c: LiteralContext): Boolean = c.LongLiteral() != null    }
+    object Number { def unapply(c: LiteralContext): Boolean = c.NumberLiteral() != null  }
+    object Str {
+      def unapply(c: LiteralContext): Option[String] = Option(c.StringLiteral()).map(_.getText)
+    }
+    object MultiStr {
+      def unapply(c: LiteralContext): Option[String] =
+        Option(c.MultilineStringLiteral()).map(_.getText)
+    }
+    object Bool { def unapply(c: LiteralContext): Boolean = c.BooleanLiteral() != null }
+  }
+
+  def construct(from: LiteralContext): Literal = from match {
+    case Lit.Int() | Lit.Long() => IntegerOrLongLiteral(from)
+    case Lit.Number()           => DoubleOrDecimalLiteral(from)
+    case Lit.Str(s)             => StringLiteral(s)
+    case Lit.MultiStr(s)        => StringLiteral(s)
+    case Lit.Bool()             => BooleanLiteral
+    case _                      => NullLiteral
   }
 }

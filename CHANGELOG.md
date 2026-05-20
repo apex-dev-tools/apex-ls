@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded to apex-parser 5.1.0 and the antlr4 4.13 runtime
 - Slimmed the JS module surface to the published apex-ls facades
 - Removed JS-portability shims `CodeParser.toScala(value)` and `CodeParser.getText(...)` from the CST construction layer; call sites now use `Option(...)` directly (#449)
+- Replaced cascading `Option(...).orElse(...)` chains in `Literal.construct` and `ClassBodyDeclaration.construct` with extractor-based pattern matching (#449)
 
 ### Removed
 
