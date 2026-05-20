@@ -63,16 +63,17 @@ private[cst] object ANTLRCST {
 
   private class ANTLRTypeName(typeName: TypeNameContext) extends CSTTypeName {
     override def typeArguments(): CSTTypeArguments =
-      new ANTLRTypeArguments(CodeParser.toScala(typeName.typeArguments()))
-    override def isList: Boolean           = CodeParser.toScala(typeName.LIST()).nonEmpty
-    override def isSet: Boolean            = CodeParser.toScala(typeName.SET()).nonEmpty
-    override def isMap: Boolean            = CodeParser.toScala(typeName.MAP()).nonEmpty
-    override def getIdText: Option[String] = Option(typeName.id()).map(id => CodeParser.getText(id))
+      new ANTLRTypeArguments(Option(typeName.typeArguments()))
+    override def isList: Boolean = Option(typeName.LIST()).nonEmpty
+    override def isSet: Boolean  = Option(typeName.SET()).nonEmpty
+    override def isMap: Boolean  = Option(typeName.MAP()).nonEmpty
+    override def getIdText: Option[String] =
+      Option(typeName.id()).map(id => Option(id).map(_.getText).getOrElse(""))
   }
 
   private[cst] class ANTLRTypeReference(typeRef: TypeRefContext) extends CSTTypeReference {
     override def arraySubscriptsCount(): Int =
-      CodeParser.getText(typeRef.arraySubscripts()).count(_ == '[')
+      Option(typeRef.arraySubscripts()).map(_.getText).getOrElse("").count(_ == '[')
     override def typeNames(): ArraySeq[CSTTypeName] =
       CodeParser.toScala(typeRef.typeName()).map(new ANTLRTypeName(_))
   }
@@ -85,7 +86,7 @@ object TypeReference {
   }
 
   def construct(typeRef: TypeRefContext): TypeName = {
-    construct(CodeParser.toScala(typeRef).map(new ANTLRCST.ANTLRTypeReference(_)))
+    construct(Option(typeRef).map(new ANTLRCST.ANTLRTypeReference(_)))
   }
 
   def construct(typeRefOpt: Option[CSTTypeReference]): TypeName = {

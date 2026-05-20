@@ -94,7 +94,7 @@ object IssueOps {
       Diagnostic(
         ERROR_CATEGORY,
         location.location,
-        s"Unexpected annotation '${CodeParser.getText(context)}' on class declaration"
+        s"Unexpected annotation '${Option(context).map(_.getText).getOrElse("")}' on class declaration"
       )
     )
 

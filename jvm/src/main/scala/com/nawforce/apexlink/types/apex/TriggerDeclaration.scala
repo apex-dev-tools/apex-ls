@@ -235,8 +235,7 @@ object TriggerDeclaration {
         return None
       }
 
-      CodeParser
-        .toScala(trigger.triggerBlock())
+      Option(trigger.triggerBlock())
         .map(triggerBlock => {
           val statementsAndDeclarations = splitStatementsAndDeclarations(
             parser,
@@ -263,8 +262,8 @@ object TriggerDeclaration {
     /* TODO: Ignoring most declarations types here, e.g. methods, to fix the declaration hierarchy needs to change. */
     val statements = mutable.ArrayBuffer[Statement]()
     members.foreach(member => {
-      val statementContext   = CodeParser.toScala(member.statement())
-      val declarationContext = CodeParser.toScala(member.triggerMemberDeclaration())
+      val statementContext   = Option(member.statement())
+      val declarationContext = Option(member.triggerMemberDeclaration())
       if (statementContext.nonEmpty) {
         Statement
           .construct(parser, statementContext.get)
@@ -273,8 +272,7 @@ object TriggerDeclaration {
         // Field & Property syntax is allowed in triggers but they are scoped as statements so we need to treat
         // them as local variable declarations
         val modifiers = CodeParser.toScala(member.modifier())
-        CodeParser
-          .toScala(declarationContext.get.fieldDeclaration())
+        Option(declarationContext.get.fieldDeclaration())
           .foreach(field =>
             statements.append(
               LocalVariableDeclarationStatement
@@ -295,21 +293,21 @@ object TriggerDeclaration {
   }
 
   private def constructCase(triggerCase: TriggerCaseContext): TriggerCase = {
-    if (CodeParser.toScala(triggerCase.BEFORE()).nonEmpty) {
-      if (CodeParser.toScala(triggerCase.INSERT()).nonEmpty)
+    if (Option(triggerCase.BEFORE()).nonEmpty) {
+      if (Option(triggerCase.INSERT()).nonEmpty)
         BEFORE_INSERT
-      else if (CodeParser.toScala(triggerCase.UPDATE()).nonEmpty)
+      else if (Option(triggerCase.UPDATE()).nonEmpty)
         BEFORE_UPDATE
-      else if (CodeParser.toScala(triggerCase.DELETE()).nonEmpty)
+      else if (Option(triggerCase.DELETE()).nonEmpty)
         BEFORE_DELETE
       else
         BEFORE_UNDELETE
     } else {
-      if (CodeParser.toScala(triggerCase.INSERT()).nonEmpty)
+      if (Option(triggerCase.INSERT()).nonEmpty)
         AFTER_INSERT
-      else if (CodeParser.toScala(triggerCase.UPDATE()).nonEmpty)
+      else if (Option(triggerCase.UPDATE()).nonEmpty)
         AFTER_UPDATE
-      else if (CodeParser.toScala(triggerCase.DELETE()).nonEmpty)
+      else if (Option(triggerCase.DELETE()).nonEmpty)
         AFTER_DELETE
       else
         AFTER_UNDELETE

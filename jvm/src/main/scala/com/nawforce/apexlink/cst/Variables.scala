@@ -76,7 +76,7 @@ object VariableDeclarator {
     isReadOnly: Boolean,
     variableDeclarator: VariableDeclaratorContext
   ): VariableDeclarator = {
-    val init = CodeParser.toScala(variableDeclarator.expression()).map(Expression.construct)
+    val init = Option(variableDeclarator.expression()).map(Expression.construct)
     VariableDeclarator(typeName, isReadOnly, Id.construct(variableDeclarator.id()), init)
       .withContext(variableDeclarator)
   }

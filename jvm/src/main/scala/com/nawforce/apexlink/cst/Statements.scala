@@ -260,9 +260,8 @@ final case class ForStatement(control: Option[ForControl], statement: Option[Sta
 object ForStatement {
   def construct(parser: CodeParser, statement: ForStatementContext): ForStatement = {
     ForStatement(
-      CodeParser.toScala(statement.forControl()).map(fc => ForControl.construct(parser, fc)),
-      CodeParser
-        .toScala(statement.statement())
+      Option(statement.forControl()).map(fc => ForControl.construct(parser, fc)),
+      Option(statement.statement())
         .flatMap(stmt => Statement.construct(parser, stmt))
     ).withContext(statement)
   }
@@ -279,8 +278,7 @@ sealed abstract class ForControl extends CST {
 object ForControl {
   def construct(parser: CodeParser, from: ForControlContext): ForControl = {
     val cst =
-      CodeParser
-        .toScala(from.enhancedForControl())
+      Option(from.enhancedForControl())
         .map(efc => EnhancedForControl.construct(efc))
         .getOrElse(BasicForControl.construct(parser, from))
     cst.withContext(from)
@@ -408,16 +406,13 @@ final case class BasicForControl(
 object BasicForControl {
   def construct(parser: CodeParser, from: ForControlContext): BasicForControl = {
     val forInit =
-      CodeParser
-        .toScala(from.forInit())
+      Option(from.forInit())
         .map(fi => ForInit.construct(parser, fi))
     val expression =
-      CodeParser
-        .toScala(from.expression())
+      Option(from.expression())
         .map(e => Expression.construct(e))
     val forUpdate =
-      CodeParser
-        .toScala(from.forUpdate())
+      Option(from.forUpdate())
         .map(u => ForUpdate.construct(u))
     BasicForControl(forInit, expression, forUpdate).withContext(from)
   }
@@ -448,12 +443,11 @@ final case class ExpressionListForInit(expressions: ArraySeq[Expression]) extend
 
 object ForInit {
   def construct(parser: CodeParser, from: ForInitContext): ForInit = {
-    CodeParser
-      .toScala(from.localVariableDeclaration())
+    Option(from.localVariableDeclaration())
       .map(lvd => LocalVariableForInit(LocalVariableDeclaration.construct(parser, lvd)))
       .getOrElse({
         val expressions =
-          CodeParser.toScala(CodeParser.toScala(from.expressionList()).get.expression())
+          CodeParser.toScala(Option(from.expressionList()).get.expression())
         ExpressionListForInit(Expression.construct(expressions))
       })
       .withContext(from)
@@ -487,7 +481,7 @@ object WhileStatement {
   def construct(parser: CodeParser, statement: WhileStatementContext): WhileStatement = {
     WhileStatement(
       Expression.construct(statement.parExpression().expression()),
-      CodeParser.toScala(statement.statement()).flatMap(stmt => Statement.construct(parser, stmt))
+      Option(statement.statement()).flatMap(stmt => Statement.construct(parser, stmt))
     ).withContext(statement)
   }
 }
@@ -531,8 +525,7 @@ object TryStatement {
   def construct(parser: CodeParser, from: TryStatementContext): TryStatement = {
     val catches = CodeParser.toScala(from.catchClause())
     val finallyBlock =
-      CodeParser
-        .toScala(from.finallyBlock())
+      Option(from.finallyBlock())
         .map(fb => Block.constructInner(parser, fb.block()))
     TryStatement(
       Block.constructInner(parser, from.block()),
@@ -601,9 +594,8 @@ object CatchClause {
         CatchClause(
           ApexModifiers.catchModifiers(parser, CodeParser.toScala(from.modifier()), from),
           qualifiedName,
-          CodeParser.getText(from.id()),
-          CodeParser
-            .toScala(from.block())
+          Option(from.id()).map(_.getText).getOrElse(""),
+          Option(from.block())
             .map(block => Block.constructInner(parser, block))
         ).withContext(from)
       })
@@ -641,8 +633,7 @@ final case class ReturnStatement(expression: Option[Expression]) extends Stateme
 object ReturnStatement {
   def construct(statement: ReturnStatementContext): ReturnStatement = {
     ReturnStatement(
-      CodeParser
-        .toScala(statement.expression())
+      Option(statement.expression())
         .map(e => Expression.construct(e))
     ).withContext(statement)
   }
@@ -757,8 +748,7 @@ final case class UpsertStatement(expression: Expression, field: Option[Qualified
 object UpsertStatement {
   def construct(statement: UpsertStatementContext): UpsertStatement = {
     val expression = Expression.construct(statement.expression())
-    val qualifiedName = CodeParser
-      .toScala(statement.qualifiedName())
+    val qualifiedName = Option(statement.qualifiedName())
       .flatMap(qualifiedName => QualifiedName.construct(qualifiedName))
     UpsertStatement(expression, qualifiedName).withContext(statement)
   }
@@ -817,13 +807,11 @@ final case class RunAsStatement(expressions: ArraySeq[Expression], block: Option
 object RunAsStatement {
   def construct(parser: CodeParser, statement: RunAsStatementContext): RunAsStatement = {
     val expressions: ArraySeq[Expression] =
-      CodeParser
-        .toScala(statement.expressionList())
+      Option(statement.expressionList())
         .map(el => Expression.construct(CodeParser.toScala(el.expression())))
         .getOrElse(Expression.emptyExpressions)
     val block =
-      CodeParser
-        .toScala(statement.block())
+      Option(statement.block())
         .map(b => Block.constructInner(parser, b))
     RunAsStatement(expressions, block).withContext(statement)
   }
@@ -886,7 +874,7 @@ object Statement {
     * @param statement ANTLR statement context
     */
   def construct(parser: CodeParser, statement: StatementContext): Option[Statement] = {
-    val typedStatement = CodeParser.toScala(statement.getChild(0))
+    val typedStatement = Option(statement.getChild(0))
     if (typedStatement.isEmpty) {
       // Log here just in case
       LoggerOps.info(s"Apex Statement found without content in ${parser.source.path}")

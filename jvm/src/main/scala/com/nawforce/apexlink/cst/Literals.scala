@@ -117,7 +117,7 @@ case object NullLiteral extends Literal {
 
 object IntegerOrLongLiteral {
   def apply(context: LiteralContext): Literal = {
-    val value = CodeParser.getText(context)
+    val value = Option(context).map(_.getText).getOrElse("")
     if (value.last.toLower == 'l') {
       if (value.length > 20) // 19 + 1 for 'l'
         OversizeLongLiteral(CST.sourceContext.value.get.getLocation(context))
@@ -134,7 +134,7 @@ object IntegerOrLongLiteral {
 
 object DoubleOrDecimalLiteral {
   def apply(context: LiteralContext): Literal = {
-    val value = CodeParser.getText(context)
+    val value = Option(context).map(_.getText).getOrElse("")
     if (value.last.toLower == 'd') {
       DoubleLiteral
     } else if (value.length > 50) {
@@ -147,30 +147,25 @@ object DoubleOrDecimalLiteral {
 
 object Literal {
   def construct(from: LiteralContext): Literal = {
-    CodeParser
-      .toScala(from.IntegerLiteral())
+    Option(from.IntegerLiteral())
       .map(_ => IntegerOrLongLiteral(from))
       .orElse(
-        CodeParser
-          .toScala(from.LongLiteral())
+        Option(from.LongLiteral())
           .map(_ => IntegerOrLongLiteral(from))
       )
       .orElse(
-        CodeParser
-          .toScala(from.NumberLiteral())
+        Option(from.NumberLiteral())
           .map(_ => DoubleOrDecimalLiteral(from))
       )
       .orElse(
-        CodeParser
-          .toScala(from.StringLiteral())
-          .map(x => StringLiteral(CodeParser.getText(x)))
+        Option(from.StringLiteral())
+          .map(x => StringLiteral(Option(x).map(_.getText).getOrElse("")))
       )
       .orElse(
-        CodeParser
-          .toScala(from.MultilineStringLiteral())
-          .map(x => StringLiteral(CodeParser.getText(x)))
+        Option(from.MultilineStringLiteral())
+          .map(x => StringLiteral(Option(x).map(_.getText).getOrElse("")))
       )
-      .orElse(CodeParser.toScala(from.BooleanLiteral()).map(_ => BooleanLiteral))
+      .orElse(Option(from.BooleanLiteral()).map(_ => BooleanLiteral))
       .getOrElse(NullLiteral)
   }
 }

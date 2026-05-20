@@ -56,39 +56,33 @@ final case class WhenLongLiteral(negate: Boolean, value: String) extends WhenLit
 object WhenLiteral {
   def construct(context: WhenLiteralContext): Option[WhenLiteral] = {
     val literal = flattenLiteral(context)
-    CodeParser
-      .toScala(literal.NULL())
+    Option(literal.NULL())
       .map(_ => new WhenNullLiteral())
       .orElse(
-        CodeParser
-          .toScala(literal.IntegerLiteral())
+        Option(literal.IntegerLiteral())
           .map(l => {
             val negate = CodeParser.toScala(literal.SUB()).size % 2 != 0
-            WhenIntegerLiteral(negate, CodeParser.getText(l))
+            WhenIntegerLiteral(negate, Option(l).map(_.getText).getOrElse(""))
           })
       )
       .orElse(
-        CodeParser
-          .toScala(literal.LongLiteral())
+        Option(literal.LongLiteral())
           .map(l => {
             val negate = CodeParser.toScala(literal.SUB()).size % 2 != 0
-            val text   = CodeParser.getText(l)
+            val text   = Option(l).map(_.getText).getOrElse("")
             WhenLongLiteral(negate, text.substring(0, text.length - 1))
           })
       )
       .orElse(
-        CodeParser
-          .toScala(literal.StringLiteral())
-          .map(l => WhenStringLiteral(CodeParser.getText(l)))
+        Option(literal.StringLiteral())
+          .map(l => WhenStringLiteral(Option(l).map(_.getText).getOrElse("")))
       )
       .orElse(
-        CodeParser
-          .toScala(literal.MultilineStringLiteral())
-          .map(l => WhenStringLiteral(CodeParser.getText(l)))
+        Option(literal.MultilineStringLiteral())
+          .map(l => WhenStringLiteral(Option(l).map(_.getText).getOrElse("")))
       )
       .orElse(
-        CodeParser
-          .toScala(literal.qualifiedName())
+        Option(literal.qualifiedName())
           .flatMap(qn => {
             val ids = CodeParser.toScala(qn.id()).map(Id.construct)
             ids.lastOption.map(last => WhenIdLiteral(ids.dropRight(1), last))
@@ -99,7 +93,7 @@ object WhenLiteral {
 
   private def flattenLiteral(value: WhenLiteralContext): WhenLiteralContext = {
     // Remove nesting when a literal is wrapped in brackets
-    CodeParser.toScala(value.whenLiteral()).map(flattenLiteral).getOrElse(value)
+    Option(value.whenLiteral()).map(flattenLiteral).getOrElse(value)
   }
 }
 
@@ -217,8 +211,7 @@ final case class WhenSObjectValue(typeName: TypeName, id: Id) extends WhenValue 
 
 object WhenValue {
   def construct(value: WhenValueContext): WhenValue = {
-    CodeParser
-      .toScala(value.ELSE())
+    Option(value.ELSE())
       .map(_ => new WhenElseValue())
       .getOrElse(if (!value.whenLiteral().isEmpty) {
         WhenLiteralsValue(
@@ -244,7 +237,7 @@ final case class WhenControl(whenValue: WhenValue, block: Block) extends CST {
 object WhenControl {
   def construct(parser: CodeParser, whenControl: WhenControlContext): WhenControl = {
     WhenControl(
-      CodeParser.toScala(whenControl.whenValue()).map(v => WhenValue.construct(v)).get,
+      Option(whenControl.whenValue()).map(v => WhenValue.construct(v)).get,
       Block.constructInner(parser, whenControl.block())
     ).withContext(whenControl)
   }

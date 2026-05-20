@@ -262,16 +262,20 @@ object ApexModifiers {
   ): ArraySeq[(Modifier, LogEntryContext, String)] = {
 
     modifierContexts.flatMap(modifierContext => {
-      val annotation = CodeParser.toScala(modifierContext.annotation())
+      val annotation = Option(modifierContext.annotation())
       val modifiers =
         annotation
           .map(a =>
             ModifierOps(
-              "@" + CodeParser.getText(a.qualifiedName()).toLowerCase,
-              CodeParser.toScala(a.elementValue()).map(ev => CodeParser.getText(ev)).getOrElse("")
+              "@" + Option(a.qualifiedName()).map(_.getText).getOrElse("").toLowerCase,
+              Option(a.elementValue())
+                .map(ev => Option(ev).map(_.getText).getOrElse(""))
+                .getOrElse("")
             )
           )
-          .getOrElse(ModifierOps(CodeParser.getText(modifierContext).toLowerCase, ""))
+          .getOrElse(
+            ModifierOps(Option(modifierContext).map(_.getText).getOrElse("").toLowerCase, "")
+          )
 
       modifiers.map(m =>
         (

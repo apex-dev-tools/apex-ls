@@ -140,17 +140,6 @@ object CodeParser {
     parser.clearCache()
   }
 
-  // Helper for JS Portability
-  def getText(context: ParserRuleContext): String = {
-    Option(context).map(_.getText).getOrElse("")
-  }
-
-  // Helper for JS Portability
-  def getText(context: TerminalNode): String = {
-    Option(context).map(_.getText).getOrElse("")
-  }
-
-  // Helper for JS Portability
   def toScala[T: ClassTag](collection: java.util.List[T]): ArraySeq[T] = {
     collection match {
       case null                    => CodeParser.emptyArraySeq
@@ -158,11 +147,6 @@ object CodeParser {
       case al: util.ArrayList[T]   => ArraySeq.unsafeWrapArray(al.toArray().asInstanceOf[Array[T]])
       case l                       => ArraySeq.unsafeWrapArray(l.asScala.toArray)
     }
-  }
-
-  // Helper for JS Portability
-  def toScala[T](value: T): Option[T] = {
-    Option(value)
   }
 
   private val emptyArraySeq = ArraySeq()
