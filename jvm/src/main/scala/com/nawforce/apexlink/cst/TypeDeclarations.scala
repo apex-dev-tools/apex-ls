@@ -98,7 +98,8 @@ object ClassDeclaration {
     modifiers: ModifierResults,
     classDeclaration: ClassDeclarationContext
   ): ClassDeclaration = {
-    val thisType = outerType.asInner(CodeParser.getText(classDeclaration.id()))
+    val thisType =
+      outerType.asInner(Option(classDeclaration.id()).map(_.getText).getOrElse(""))
     construct(parser, thisType, Some(outerType.typeName), modifiers, classDeclaration)
   }
 
@@ -111,18 +112,15 @@ object ClassDeclaration {
   ): ClassDeclaration = {
 
     val extendType =
-      CodeParser
-        .toScala(classDeclaration.typeRef())
+      Option(classDeclaration.typeRef())
         .map(tr => TypeReference.construct(tr))
         .getOrElse(TypeNames.InternalObject)
     val implementsType =
-      CodeParser
-        .toScala(classDeclaration.typeList())
+      Option(classDeclaration.typeList())
         .map(tl => TypeList.construct(tl))
         .getOrElse(TypeNames.emptyTypeNames)
 
-    val classBodyDeclarations = CodeParser
-      .toScala(classDeclaration.classBody())
+    val classBodyDeclarations = Option(classDeclaration.classBody())
       .map(cb => CodeParser.toScala(cb.classBodyDeclaration()))
       .getOrElse(ArraySeq())
     val typeContext = new RelativeTypeContext
@@ -130,22 +128,20 @@ object ClassDeclaration {
     val bodyDeclarations =
       classBodyDeclarations
         .flatMap(cbd =>
-          CodeParser
-            .toScala(cbd.block())
+          Option(cbd.block())
             .map(x =>
               ArraySeq(
                 ApexInitializerBlock.construct(
                   parser,
                   thisType,
                   ApexModifiers
-                    .initializerBlockModifiers(CodeParser.toScala(cbd.STATIC()).isDefined),
+                    .initializerBlockModifiers(Option(cbd.STATIC()).isDefined),
                   x
                 )
               )
             )
             .orElse(
-              CodeParser
-                .toScala(cbd.memberDeclaration())
+              Option(cbd.memberDeclaration())
                 .map(x =>
                   ClassBodyDeclaration.construct(
                     parser,
@@ -219,7 +215,8 @@ object InterfaceDeclaration {
     modifiers: ModifierResults,
     interfaceDeclaration: InterfaceDeclarationContext
   ): InterfaceDeclaration = {
-    val thisType = outerType.asInner(CodeParser.getText(interfaceDeclaration.id()))
+    val thisType =
+      outerType.asInner(Option(interfaceDeclaration.id()).map(_.getText).getOrElse(""))
     construct(parser, thisType, Some(outerType.typeName), modifiers, interfaceDeclaration)
   }
 
@@ -232,16 +229,14 @@ object InterfaceDeclaration {
   ): InterfaceDeclaration = {
 
     val implementsType =
-      CodeParser
-        .toScala(interfaceDeclaration.typeList())
+      Option(interfaceDeclaration.typeList())
         .map(x => TypeList.construct(x))
         .getOrElse(ArraySeq(TypeNames.InternalInterface))
 
     val typeContext = new RelativeTypeContext()
 
     val methods =
-      CodeParser
-        .toScala(interfaceDeclaration.interfaceBody())
+      Option(interfaceDeclaration.interfaceBody())
         .map(interfaceBody => CodeParser.toScala(interfaceBody.interfaceMethodDeclaration()))
         .map(methods => {
           methods.map(method => {
@@ -396,7 +391,8 @@ object EnumDeclaration {
     modifiers: ModifierResults,
     enumDeclaration: EnumDeclarationContext
   ): EnumDeclaration = {
-    val thisType = outerType.asInner(CodeParser.getText(enumDeclaration.id()))
+    val thisType =
+      outerType.asInner(Option(enumDeclaration.id()).map(_.getText).getOrElse(""))
     construct(parser, thisType, Some(outerType.typeName), modifiers, enumDeclaration)
   }
 
@@ -409,8 +405,7 @@ object EnumDeclaration {
   ): EnumDeclaration = {
 
     val id = Id.construct(enumDeclaration.id())
-    val constants = CodeParser
-      .toScala(enumDeclaration.enumConstants())
+    val constants = Option(enumDeclaration.enumConstants())
       .map(ec => CodeParser.toScala(ec.id()))
       .getOrElse(ArraySeq())
     val fields = constants.map(constant => {

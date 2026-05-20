@@ -79,11 +79,11 @@ final case class Id(name: Name) extends CST {
 
 object Id {
   def construct(idContext: IdContext): Id = {
-    Id(Names(CodeParser.getText(idContext))).withContext(idContext)
+    Id(Names(Option(idContext).map(_.getText).getOrElse(""))).withContext(idContext)
   }
 
   def constructAny(idContext: AnyIdContext): Id = {
-    Id(Names(CodeParser.getText(idContext))).withContext(idContext)
+    Id(Names(Option(idContext).map(_.getText).getOrElse(""))).withContext(idContext)
   }
 }
 
@@ -99,7 +99,8 @@ object QualifiedName {
   def construct(qualifiedName: QualifiedNameContext): Option[QualifiedName] = {
     Option(qualifiedName).map(qualifiedName => {
       val ids = CodeParser.toScala(qualifiedName.id())
-      QualifiedName(ids.map(id => Names(CodeParser.getText(id)))).withContext(qualifiedName)
+      QualifiedName(ids.map(id => Names(Option(id).map(_.getText).getOrElse(""))))
+        .withContext(qualifiedName)
     })
   }
 }
@@ -113,12 +114,10 @@ final case class Annotation(
 object Annotation {
   def construct(annotation: AnnotationContext): Annotation = {
     val elementValue =
-      CodeParser
-        .toScala(annotation.elementValue())
+      Option(annotation.elementValue())
         .flatMap(ElementValue.construct)
     val elementValuePairs =
-      CodeParser
-        .toScala(annotation.elementValuePairs())
+      Option(annotation.elementValuePairs())
         .map(ElementValuePairs.construct)
         .getOrElse(Nil)
 
@@ -138,9 +137,9 @@ final case class ArrayInitializerElementValue(arrayInitializer: ElementValueArra
 
 object ElementValue {
   def construct(elementValue: ElementValueContext): Option[ElementValue] = {
-    val expression       = CodeParser.toScala(elementValue.expression())
-    val annotation       = CodeParser.toScala(elementValue.annotation())
-    val arrayInitializer = CodeParser.toScala(elementValue.elementValueArrayInitializer())
+    val expression       = Option(elementValue.expression())
+    val annotation       = Option(elementValue.annotation())
+    val arrayInitializer = Option(elementValue.elementValueArrayInitializer())
 
     if (expression.nonEmpty) {
       Some(ExpressionElementValue(Expression.construct(expression.get)).withContext(elementValue))
@@ -171,7 +170,10 @@ final case class ElementValuePair(id: String, elementValue: Option[ElementValue]
 
 object ElementValuePair {
   def construct(from: ElementValuePairContext): ElementValuePair = {
-    ElementValuePair(CodeParser.getText(from.id()), ElementValue.construct(from.elementValue()))
+    ElementValuePair(
+      Option(from.id()).map(_.getText).getOrElse(""),
+      ElementValue.construct(from.elementValue())
+    )
       .withContext(from)
   }
 }

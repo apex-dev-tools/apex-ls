@@ -428,8 +428,7 @@ object FullDeclaration {
     val modifiers = ArraySeq.unsafeWrapArray(CodeParser.toScala(typeDeclaration.modifier()).toArray)
     val thisType  = TypeName(name).withNamespace(module.namespace)
 
-    val cst: Option[FullDeclaration] = CodeParser
-      .toScala(typeDeclaration.classDeclaration())
+    val cst: Option[FullDeclaration] = Option(typeDeclaration.classDeclaration())
       .map(cd => {
         val classModifiers = ApexModifiers.classModifiers(parser, modifiers, outer = true, cd.id())
         ClassDeclaration.construct(
@@ -441,8 +440,7 @@ object FullDeclaration {
         )
       })
       .orElse(
-        CodeParser
-          .toScala(typeDeclaration.interfaceDeclaration())
+        Option(typeDeclaration.interfaceDeclaration())
           .map(id =>
             InterfaceDeclaration.construct(
               parser,
@@ -454,8 +452,7 @@ object FullDeclaration {
           )
       )
       .orElse(
-        CodeParser
-          .toScala(typeDeclaration.enumDeclaration())
+        Option(typeDeclaration.enumDeclaration())
           .map(ed =>
             EnumDeclaration.construct(
               parser,

@@ -261,26 +261,24 @@ object SOQL {
       .toScala(query.selectList().selectEntry())
 
     val aggregateFunctions = entries
-      .flatMap(se => CodeParser.toScala(se.soqlFunction()))
+      .flatMap(se => Option(se.soqlFunction()))
       .filter(fn =>
-        CodeParser.toScala(fn.AVG()).nonEmpty ||
-          CodeParser.toScala(fn.COUNT()).nonEmpty ||
-          CodeParser.toScala(fn.COUNT_DISTINCT()).nonEmpty ||
-          CodeParser.toScala(fn.MIN()).nonEmpty ||
-          CodeParser.toScala(fn.MAX()).nonEmpty ||
-          CodeParser.toScala(fn.SUM()).nonEmpty
+        Option(fn.AVG()).nonEmpty ||
+          Option(fn.COUNT()).nonEmpty ||
+          Option(fn.COUNT_DISTINCT()).nonEmpty ||
+          Option(fn.MIN()).nonEmpty ||
+          Option(fn.MAX()).nonEmpty ||
+          Option(fn.SUM()).nonEmpty
       )
-    val countFunctions = aggregateFunctions.filter(fn => CodeParser.toScala(fn.COUNT()).nonEmpty)
+    val countFunctions = aggregateFunctions.filter(fn => Option(fn.COUNT()).nonEmpty)
     val emptyCountFunctions =
-      countFunctions.filter(fn => CodeParser.toScala(fn.fieldName()).isEmpty)
+      countFunctions.filter(fn => Option(fn.fieldName()).isEmpty)
 
     val resultType =
       if (entries.size == 1 && emptyCountFunctions.size == 1) {
         // Count queries are only valid for 'Select Count() From...', otherwise assume is aggregate
         COUNT_RESULT_QUERY
-      } else if (
-        CodeParser.toScala(query.groupByClause()).nonEmpty || aggregateFunctions.nonEmpty
-      ) {
+      } else if (Option(query.groupByClause()).nonEmpty || aggregateFunctions.nonEmpty) {
         AGGREGATE_RESULT_QUERY
       } else {
         LIST_RESULT_QUERY
@@ -293,7 +291,11 @@ object SOQL {
       CodeParser
         .toScala(query.fromNameList().fieldName())
         .map(nameList =>
-          DotName(CodeParser.toScala(nameList.soqlId()).map(name => Name(CodeParser.getText(name))))
+          DotName(
+            CodeParser
+              .toScala(nameList.soqlId())
+              .map(name => Name(Option(name).map(_.getText).getOrElse("")))
+          )
         )
     new SOQL(resultType, fromNames.toArray, boundedExpressions)
   }

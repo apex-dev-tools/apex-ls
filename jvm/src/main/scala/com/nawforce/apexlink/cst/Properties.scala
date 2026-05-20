@@ -175,15 +175,14 @@ object PropertyBlock {
       propertyBlockContext
     )
     val cst = {
-      val getter = CodeParser.toScala(propertyBlockContext.getter())
-      val setter = CodeParser.toScala(propertyBlockContext.setter())
+      val getter = Option(propertyBlockContext.getter())
+      val setter = Option(propertyBlockContext.setter())
 
       if (getter.nonEmpty) {
         Some(
           GetterPropertyBlock(
             modifiers,
-            CodeParser
-              .toScala(getter.get.block())
+            Option(getter.get.block())
               .map(bc => Block.constructOuterFromANTLR(parser, bc))
           )
         )
@@ -192,8 +191,7 @@ object PropertyBlock {
           SetterPropertyBlock(
             modifiers,
             typeName,
-            CodeParser
-              .toScala(setter.get.block())
+            Option(setter.get.block())
               .map(bc => Block.constructOuterFromANTLR(parser, bc))
           )
         )

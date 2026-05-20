@@ -65,7 +65,7 @@ case class Source(
   /** Find a location for a rule, adapts based on source offsets to give absolute position in file
     */
   def getLocation(context: ParserRuleContext): PathLocation = {
-    val stop = CodeParser.toScala(context.stop).getOrElse(context.start)
+    val stop = Option(context.stop).getOrElse(context.start)
     PathLocation(
       path,
       adjustLocation(

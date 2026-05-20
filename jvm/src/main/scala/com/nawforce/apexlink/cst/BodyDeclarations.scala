@@ -88,8 +88,7 @@ object ClassBodyDeclaration {
   ): Seq[ClassBodyDeclaration] = {
 
     val declarations: Seq[ClassBodyDeclaration] =
-      CodeParser
-        .toScala(memberDeclarationContext.methodDeclaration())
+      Option(memberDeclarationContext.methodDeclaration())
         .map(x =>
           Seq(
             ApexMethodDeclaration.construct(
@@ -103,8 +102,7 @@ object ClassBodyDeclaration {
           )
         )
         .orElse(
-          CodeParser
-            .toScala(memberDeclarationContext.fieldDeclaration())
+          Option(memberDeclarationContext.fieldDeclaration())
             .map(x =>
               ApexFieldDeclaration.construct(
                 thisType,
@@ -119,8 +117,7 @@ object ClassBodyDeclaration {
             )
         )
         .orElse(
-          CodeParser
-            .toScala(memberDeclarationContext.constructorDeclaration())
+          Option(memberDeclarationContext.constructorDeclaration())
             .map(x =>
               ApexConstructorDeclaration
                 .construct(
@@ -134,8 +131,7 @@ object ClassBodyDeclaration {
             )
         )
         .orElse(
-          CodeParser
-            .toScala(memberDeclarationContext.interfaceDeclaration())
+          Option(memberDeclarationContext.interfaceDeclaration())
             .map(x =>
               Seq(
                 InterfaceDeclaration.constructInner(
@@ -148,8 +144,7 @@ object ClassBodyDeclaration {
             )
         )
         .orElse(
-          CodeParser
-            .toScala(memberDeclarationContext.enumDeclaration())
+          Option(memberDeclarationContext.enumDeclaration())
             .map(x =>
               Seq(
                 EnumDeclaration.constructInner(
@@ -162,8 +157,7 @@ object ClassBodyDeclaration {
             )
         )
         .orElse(
-          CodeParser
-            .toScala(memberDeclarationContext.propertyDeclaration())
+          Option(memberDeclarationContext.propertyDeclaration())
             .map(x =>
               Seq(
                 ApexPropertyDeclaration
@@ -177,8 +171,7 @@ object ClassBodyDeclaration {
             )
         )
         .orElse(
-          CodeParser
-            .toScala(memberDeclarationContext.classDeclaration())
+          Option(memberDeclarationContext.classDeclaration())
             .map(x =>
               Seq(
                 ClassDeclaration.constructInner(
@@ -297,8 +290,7 @@ object ApexMethodDeclaration {
     modifiers: ModifierResults,
     from: MethodDeclarationContext
   ): ApexMethodDeclaration = {
-    val block = CodeParser
-      .toScala(from.block())
+    val block = Option(from.block())
       .map(b => Block.constructOuterFromANTLR(parser, b))
 
     new ApexMethodDeclaration(
@@ -318,8 +310,7 @@ object ApexMethodDeclaration {
     modifiers: ModifierResults,
     from: InterfaceMethodDeclarationContext
   ): ApexMethodDeclaration = {
-    val typeName = CodeParser
-      .toScala(from.typeRef())
+    val typeName = Option(from.typeRef())
       .map(tr => TypeReference.construct(tr))
       .getOrElse(TypeNames.Void)
     new ApexMethodDeclaration(
@@ -518,8 +509,7 @@ object FormalParameters {
   ): ArraySeq[FormalParameter] = {
     Option(from)
       .map(from => {
-        CodeParser
-          .toScala(from.formalParameterList())
+        Option(from.formalParameterList())
           .map(x => FormalParameterList.construct(parser, typeContext, x))
           .getOrElse(empty)
       })
