@@ -77,6 +77,44 @@ abstract class ClassBodyDeclaration(modifierResults: ModifierResults)
 }
 
 object ClassBodyDeclaration {
+  private object Member {
+    object Method {
+      def unapply(c: MemberDeclarationContext): Option[MethodDeclarationContext] = Option(
+        c.methodDeclaration()
+      )
+    }
+    object Field {
+      def unapply(c: MemberDeclarationContext): Option[FieldDeclarationContext] = Option(
+        c.fieldDeclaration()
+      )
+    }
+    object Constructor {
+      def unapply(c: MemberDeclarationContext): Option[ConstructorDeclarationContext] = Option(
+        c.constructorDeclaration()
+      )
+    }
+    object Interface {
+      def unapply(c: MemberDeclarationContext): Option[InterfaceDeclarationContext] = Option(
+        c.interfaceDeclaration()
+      )
+    }
+    object Enum {
+      def unapply(c: MemberDeclarationContext): Option[EnumDeclarationContext] = Option(
+        c.enumDeclaration()
+      )
+    }
+    object Property {
+      def unapply(c: MemberDeclarationContext): Option[PropertyDeclarationContext] = Option(
+        c.propertyDeclaration()
+      )
+    }
+    object Class {
+      def unapply(c: MemberDeclarationContext): Option[ClassDeclarationContext] = Option(
+        c.classDeclaration()
+      )
+    }
+  }
+
   def construct(
     parser: CodeParser,
     thisType: ThisType,
@@ -87,103 +125,77 @@ object ClassBodyDeclaration {
     memberDeclarationContext: MemberDeclarationContext
   ): Seq[ClassBodyDeclaration] = {
 
-    val declarations: Seq[ClassBodyDeclaration] =
-      Option(memberDeclarationContext.methodDeclaration())
-        .map(x =>
-          Seq(
-            ApexMethodDeclaration.construct(
-              parser,
-              thisType,
-              typeContext,
-              MethodModifiers
-                .classMethodModifiers(parser, modifiers, x.id(), classOwnerInfo, isOuter),
-              x
-            )
+    val declarations: Seq[ClassBodyDeclaration] = memberDeclarationContext match {
+      case Member.Method(x) =>
+        Seq(
+          ApexMethodDeclaration.construct(
+            parser,
+            thisType,
+            typeContext,
+            MethodModifiers
+              .classMethodModifiers(parser, modifiers, x.id(), classOwnerInfo, isOuter),
+            x
           )
         )
-        .orElse(
-          Option(memberDeclarationContext.fieldDeclaration())
-            .map(x =>
-              ApexFieldDeclaration.construct(
-                thisType,
-                FieldModifiers.fieldModifiers(
-                  parser,
-                  modifiers,
-                  isOuter,
-                  CodeParser.toScala(x.variableDeclarators().variableDeclarator()).head.id()
-                ),
-                x
-              )
-            )
+      case Member.Field(x) =>
+        ApexFieldDeclaration.construct(
+          thisType,
+          FieldModifiers.fieldModifiers(
+            parser,
+            modifiers,
+            isOuter,
+            CodeParser.toScala(x.variableDeclarators().variableDeclarator()).head.id()
+          ),
+          x
         )
-        .orElse(
-          Option(memberDeclarationContext.constructorDeclaration())
-            .map(x =>
-              ApexConstructorDeclaration
-                .construct(
-                  parser,
-                  thisType,
-                  typeContext,
-                  ApexModifiers.constructorModifiers(parser, modifiers, x),
-                  x
-                )
-                .toSeq
-            )
+      case Member.Constructor(x) =>
+        ApexConstructorDeclaration
+          .construct(
+            parser,
+            thisType,
+            typeContext,
+            ApexModifiers.constructorModifiers(parser, modifiers, x),
+            x
+          )
+          .toSeq
+      case Member.Interface(x) =>
+        Seq(
+          InterfaceDeclaration.constructInner(
+            parser,
+            thisType,
+            ApexModifiers.interfaceModifiers(parser, modifiers, outer = false, x.id()),
+            x
+          )
         )
-        .orElse(
-          Option(memberDeclarationContext.interfaceDeclaration())
-            .map(x =>
-              Seq(
-                InterfaceDeclaration.constructInner(
-                  parser,
-                  thisType,
-                  ApexModifiers.interfaceModifiers(parser, modifiers, outer = false, x.id()),
-                  x
-                )
-              )
-            )
+      case Member.Enum(x) =>
+        Seq(
+          EnumDeclaration.constructInner(
+            parser,
+            thisType,
+            ApexModifiers.enumModifiers(parser, modifiers, outer = false, x.id()),
+            x
+          )
         )
-        .orElse(
-          Option(memberDeclarationContext.enumDeclaration())
-            .map(x =>
-              Seq(
-                EnumDeclaration.constructInner(
-                  parser,
-                  thisType,
-                  ApexModifiers.enumModifiers(parser, modifiers, outer = false, x.id()),
-                  x
-                )
-              )
-            )
+      case Member.Property(x) =>
+        Seq(
+          ApexPropertyDeclaration.construct(
+            parser,
+            thisType,
+            FieldModifiers.fieldModifiers(parser, modifiers, isOuter, x.id()),
+            x
+          )
         )
-        .orElse(
-          Option(memberDeclarationContext.propertyDeclaration())
-            .map(x =>
-              Seq(
-                ApexPropertyDeclaration
-                  .construct(
-                    parser,
-                    thisType,
-                    FieldModifiers.fieldModifiers(parser, modifiers, isOuter, x.id()),
-                    x
-                  )
-              )
-            )
+      case Member.Class(x) =>
+        Seq(
+          ClassDeclaration.constructInner(
+            parser,
+            thisType,
+            ApexModifiers.classModifiers(parser, modifiers, outer = false, x.id()),
+            x
+          )
         )
-        .orElse(
-          Option(memberDeclarationContext.classDeclaration())
-            .map(x =>
-              Seq(
-                ClassDeclaration.constructInner(
-                  parser,
-                  thisType,
-                  ApexModifiers.classModifiers(parser, modifiers, outer = false, x.id()),
-                  x
-                )
-              )
-            )
-        )
-        .getOrElse(Seq())
+      case _ => Seq()
+    }
 
     declarations.map(_.withContext(memberDeclarationContext))
   }
