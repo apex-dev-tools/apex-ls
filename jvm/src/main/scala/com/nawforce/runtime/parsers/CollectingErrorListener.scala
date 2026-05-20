@@ -15,7 +15,8 @@ package com.nawforce.runtime.parsers
 
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, SYNTAX_CATEGORY}
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import org.antlr.v4.runtime.{BaseErrorListener, RecognitionException, Recognizer}
+import io.github.apexdevtools.apexparser.ApexLexer
+import org.antlr.v4.runtime.{BaseErrorListener, Parser, RecognitionException, Recognizer, Token}
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
@@ -45,12 +46,47 @@ class CollectingErrorListener(path: PathLike) extends BaseErrorListener {
             s"Invalid escape sequence '$escape' in string"
           case _ => msg
         }
-      case _ => msg
+      case _ =>
+        malformedMultilineStringMessage(recognizer, offendingSymbol).getOrElse(msg)
     }
 
     _issues.addOne(
       new Issue(path, Diagnostic(SYNTAX_CATEGORY, Location(line, charPositionInLine), improvedMsg))
     )
+  }
+
+  // Detect the `'''abc'''` / `''''''` shape — three textually adjacent StringLiteral
+  // tokens where the outer two are empty `''`. The lexer can't fold these into a
+  // MultilineStringLiteral because the body must start on a new line, so they
+  // surface as a generic "mismatched input" parser error on the middle token.
+  // A WS token between the literals breaks adjacency and skips the rewrite.
+  private def malformedMultilineStringMessage(
+    recognizer: Recognizer[_, _],
+    offendingSymbol: Any
+  ): Option[String] = {
+    (recognizer, offendingSymbol) match {
+      case (parser: Parser, token: Token) if token.getType == ApexLexer.StringLiteral =>
+        val tokens = parser.getTokenStream
+        val idx    = token.getTokenIndex
+        if (idx > 0 && idx < tokens.size - 1) {
+          val prev = tokens.get(idx - 1)
+          val next = tokens.get(idx + 1)
+          if (
+            prev.getType == ApexLexer.StringLiteral &&
+            next.getType == ApexLexer.StringLiteral &&
+            prev.getText == "''" &&
+            next.getText == "''" &&
+            prev.getStopIndex + 1 == token.getStartIndex &&
+            token.getStopIndex + 1 == next.getStartIndex
+          )
+            Some(
+              "Malformed multi-line string literal, the body of '''...''' must start on a new line"
+            )
+          else
+            None
+        } else None
+      case _ => None
+    }
   }
 
   def issues: ArraySeq[Issue] = {

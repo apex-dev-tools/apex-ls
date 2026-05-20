@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Acceptance of Summer '26 multi-line string literals (`'''...'''`) in expressions and `switch` when clauses (#447)
+- Targeted diagnostic for malformed multi-line string literals such as `'''abc'''` and `''''''`, replacing the generic "mismatched input" syntax error (#443)
 - Qualified enum constants are now permitted in `switch` when clauses (e.g. `when MyEnum.A`) (#441)
 - Distinct exit codes from `CheckForIssues` to separate warnings-only and unused-only outcomes (#440)
 - Improved lexer error messages for invalid escape sequences, including the offending sequence
