@@ -83,6 +83,11 @@ object WhenLiteral {
       )
       .orElse(
         CodeParser
+          .toScala(literal.MultilineStringLiteral())
+          .map(l => WhenStringLiteral(CodeParser.getText(l)))
+      )
+      .orElse(
+        CodeParser
           .toScala(literal.qualifiedName())
           .flatMap(qn => {
             val ids = CodeParser.toScala(qn.id()).map(Id.construct)
