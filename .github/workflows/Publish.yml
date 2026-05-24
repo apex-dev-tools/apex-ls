@@ -20,21 +20,6 @@ on:
         type: boolean
         required: true
         default: false
-      pub_mcp_sbt:
-        description: "Publish MCP JAR"
-        type: boolean
-        required: true
-        default: false
-      pub_mcp_npm:
-        description: "Publish MCP NPM (Latest Tag)"
-        type: boolean
-        required: true
-        default: false
-      pub_mcp_gh:
-        description: "Save MCP Github Artifact"
-        type: boolean
-        required: true
-        default: false
 
 jobs:
   publish:
@@ -68,44 +53,10 @@ jobs:
         if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_sbt }}
         run: sbt ci-release
         env:
-          CI_CLEAN: "" # Skip clean - MCP build needs apex-ls JAR in target/
           PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
           PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-
-      - name: Publish MCP Server to Maven Central
-        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_sbt }}
-        run: sbt ci-release
-        env:
-          PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
-          PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_BASE64 }}
-          SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-          SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        working-directory: mcp
-
-      - name: Build Standalone JAR for GitHub Release
-        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_gh }}
-        run: sbt buildStandalone
-        working-directory: mcp
-
-      - name: Upload Standalone JAR as Artifact
-        if: ${{ inputs.pub_mcp_gh }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: apex-ls-mcp-standalone
-          path: mcp/target/scala-2.13/apex-ls-mcp-*-standalone.jar
-
-      - name: Upload Standalone JAR to GitHub Release
-        if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: mcp/target/scala-2.13/apex-ls-mcp-${{ github.event.release.tag_name }}-standalone.jar
-          asset_name: apex-ls-mcp-${{ github.event.release.tag_name }}-standalone.jar
-          asset_content_type: application/java-archive
 
       # Only publishes full tagged releases to NPM
       - name: Publish NPM
@@ -116,14 +67,3 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: js/npm
-
-      - name: Publish MCP NPM
-        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_mcp_npm }}
-        run: |
-          npm ci --ignore-scripts
-          npm run build
-          npm version --allow-same-version --no-git-tag-version from-git
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: mcp-npm
