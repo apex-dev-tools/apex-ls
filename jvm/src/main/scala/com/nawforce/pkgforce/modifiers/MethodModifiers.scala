@@ -26,8 +26,8 @@ import io.github.apexdevtools.apexparser.ApexParser.ModifierContext
 import scala.collection.compat.immutable.ArraySeq
 
 sealed abstract class MethodOwnerInfo
-case object InterfaceOwnerInfo extends MethodOwnerInfo
-case object EnumOwnerInfo      extends MethodOwnerInfo
+case class InterfaceOwnerInfo(modifiers: ArraySeq[Modifier]) extends MethodOwnerInfo
+case object EnumOwnerInfo                                    extends MethodOwnerInfo
 case class ClassOwnerInfo(modifiers: ArraySeq[Modifier], isExtending: Boolean)
     extends MethodOwnerInfo
 
@@ -190,17 +190,19 @@ object MethodModifiers {
   def interfaceMethodModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
-    context: ParserRuleContext
+    context: ParserRuleContext,
+    ownerInfo: InterfaceOwnerInfo
   ): ModifierResults = {
     val logger = new ModifierLogger()
     val mods   = toModifiers(parser, modifierContexts)
-    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context))
+    interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerInfo)
   }
 
   def interfaceMethodModifiers(
     logger: ModifierLogger,
     modifiers: ArraySeq[(Modifier, LogEntryContext, String)],
-    context: LogEntryContext
+    context: LogEntryContext,
+    ownerInfo: InterfaceOwnerInfo
   ): ModifierResults = {
 
     val allowedModifiers = allowableModifiers(modifiers, Set.empty, "interface methods", logger)
@@ -212,6 +214,11 @@ object MethodModifiers {
       context
     )
 
-    ModifierResults(mods ++ ArraySeq(VIRTUAL_MODIFIER, PUBLIC_MODIFIER), logger.issues).intern
+    val interfaceVisibility = ownerInfo.modifiers
+      .intersect(visibilityModifiers)
+      .headOption
+      .getOrElse(PUBLIC_MODIFIER)
+
+    ModifierResults(mods ++ ArraySeq(VIRTUAL_MODIFIER, interfaceVisibility), logger.issues).intern
   }
 }
