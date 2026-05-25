@@ -50,9 +50,31 @@ class CollectingErrorListener(path: PathLike) extends BaseErrorListener {
         malformedMultilineStringMessage(recognizer, offendingSymbol).getOrElse(msg)
     }
 
-    _issues.addOne(
-      new Issue(path, Diagnostic(SYNTAX_CATEGORY, Location(line, charPositionInLine), improvedMsg))
-    )
+    // Drop syntax errors that are recovery noise from an earlier error on the same line.
+    // ANTLR's lexer recovery frequently emits cascading diagnostics at adjacent columns
+    // (e.g. an invalid escape \s reports first at the backslash, then again at the closing
+    // quote of the same string once recovery re-enters string lexing).
+    if (!isRecoveryNoise(line, improvedMsg)) {
+      _issues.addOne(
+        new Issue(
+          path,
+          Diagnostic(SYNTAX_CATEGORY, Location(line, charPositionInLine), improvedMsg)
+        )
+      )
+    }
+  }
+
+  private def isRecoveryNoise(line: Int, message: String): Boolean = {
+    if (_issues.isEmpty) false
+    else {
+      val previous = _issues.last.diagnostic
+      // Only collapse the typical "invalid escape" recovery cascade where one bad escape
+      // in a string produces multiple diagnostics at neighbouring columns. Other same-line
+      // duplicates (e.g. two genuine "missing ';'" errors on a one-line class) are kept.
+      previous.location.startLine == line &&
+      previous.message.startsWith("Invalid escape sequence") &&
+      message.startsWith("Invalid escape sequence")
+    }
   }
 
   // Detect the `'''abc'''` / `''''''` shape — three textually adjacent StringLiteral

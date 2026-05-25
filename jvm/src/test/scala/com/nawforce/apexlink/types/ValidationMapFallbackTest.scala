@@ -5,7 +5,9 @@ import com.nawforce.apexlink.cst.{
   Block,
   BodyDeclarationVerifyContext,
   ClassBodyDeclaration,
-  ScopeVerifyContext
+  ParseErrors,
+  ScopeVerifyContext,
+  Statement
 }
 import com.nawforce.apexlink.cst.{ClassDeclaration => CSTClassDeclaration}
 import com.nawforce.apexlink.types.apex.TriggerDeclaration
@@ -53,6 +55,10 @@ class ValidationMapFallbackTest extends AnyFunSuite with TestHelper {
     private var _verifyCount: Int = 0
 
     override def statements(context: Option[ScopeVerifyContext]): Seq[Nothing] = Seq.empty
+
+    override def statementsOrErrors(
+      context: Option[ScopeVerifyContext]
+    ): Either[ParseErrors, Seq[Statement]] = Right(Seq.empty)
 
     override def verify(context: ScopeVerifyContext): Unit = {
       _verifyCount += 1
