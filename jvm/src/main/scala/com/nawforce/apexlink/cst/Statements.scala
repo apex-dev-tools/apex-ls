@@ -49,16 +49,16 @@ final case class ParseErrors(issues: ArraySeq[Issue])
   */
 abstract class Block extends Statement {
 
-  /** Statements in the block. Returns an empty Seq if parsing failed; callers that need to
-    * distinguish parse-failure from a genuinely-empty block should use [[statementsOrErrors]].
+  /** Statements in the block. Returns best-effort statements if parsing failed; callers that need
+    * to distinguish parse-failure from a genuinely-empty block should use [[statementsOrErrors]].
     */
   def statements(context: Option[ScopeVerifyContext] = None): Seq[Statement]
 
-  /** Statements in the block, or the parse errors that prevented them being built.
+  /** Statements in the block, or the parse errors encountered while building them.
     *
     * `Right(stmts)` — parsing succeeded; callers can verify or otherwise consume the statements.
-    * `Left(errors)` — parsing failed; the syntax errors have already been logged to `context`,
-    * but the AST is unreliable so callers should not run downstream analysis.
+    * `Left(errors)` — parsing failed; the syntax errors have been logged when a context was
+    * supplied, but the AST is unreliable so callers should not run downstream analysis.
     */
   def statementsOrErrors(
     context: Option[ScopeVerifyContext] = None
