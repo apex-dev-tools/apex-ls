@@ -37,6 +37,9 @@ abstract class Statement extends CST with ControlFlow {
   def verify(context: ScopeVerifyContext): Unit
 }
 
+/** Errors collected when parsing a block on-demand failed. */
+final case class ParseErrors(issues: ArraySeq[Issue])
+
 /** Block of statements, nesting uses a Block as a Statement.
   *
   * There are two types of Block, an Outer which can use lazy loading and an Inner which does not. The OuterBlock
@@ -45,7 +48,21 @@ abstract class Statement extends CST with ControlFlow {
   * need to use.
   */
 abstract class Block extends Statement {
+
+  /** Statements in the block. Returns best-effort statements if parsing failed; callers that need
+    * to distinguish parse-failure from a genuinely-empty block should use [[statementsOrErrors]].
+    */
   def statements(context: Option[ScopeVerifyContext] = None): Seq[Statement]
+
+  /** Statements in the block, or the parse errors encountered while building them.
+    *
+    * `Right(stmts)` — parsing succeeded; callers can verify or otherwise consume the statements.
+    * `Left(errors)` — parsing failed; the syntax errors have been logged when a context was
+    * supplied, but the AST is unreliable so callers should not run downstream analysis.
+    */
+  def statementsOrErrors(
+    context: Option[ScopeVerifyContext] = None
+  ): Either[ParseErrors, Seq[Statement]]
 }
 
 object Block {
@@ -114,11 +131,17 @@ private final case class OuterBlock(
 ) extends Block {
   private var statementsRef: WeakReference[Seq[Statement]] = _
   private var reParsed                                     = false
+  // Sticky once a parse fails; reset on each re-parse so re-validation reflects current source.
+  private var parseErrors: ArraySeq[Issue] = ArraySeq.empty
 
   override def verify(context: ScopeVerifyContext): Unit = {
     val blockContext = new InnerScopeVerifyContext(context)
     statements(Some(blockContext)).foreach(_.verify(blockContext))
-    verifyControlPath(blockContext, BlockControlPattern())
+    // Skip control-flow analysis on a parse failure: it walks a partial AST and
+    // reliably emits spurious "Expected return statement"/"Method does not return"
+    // errors on top of the real syntax error.
+    if (parseErrors.isEmpty)
+      verifyControlPath(blockContext, BlockControlPattern())
     context.typePlugin.foreach(_.onScopeValidated(context.isStatic, blockContext))
   }
 
@@ -138,6 +161,9 @@ private final case class OuterBlock(
         // otherwise we need to re-parse on subsequent validations to re-report the errors
         if (result.issues.isEmpty) {
           blockContextRef = new WeakReference(statementContext)
+          parseErrors = ArraySeq.empty
+        } else {
+          parseErrors = result.issues
         }
         reParsed = true
       }
@@ -152,6 +178,13 @@ private final case class OuterBlock(
       }
     }
     statements
+  }
+
+  override def statementsOrErrors(
+    context: Option[ScopeVerifyContext] = None
+  ): Either[ParseErrors, Seq[Statement]] = {
+    val stmts = statements(context)
+    if (parseErrors.nonEmpty) Left(ParseErrors(parseErrors)) else Right(stmts)
   }
 
   // Construct statements from ANTLR AST
@@ -177,6 +210,10 @@ private final case class StatementBlock(statements: Seq[Statement]) extends Bloc
   }
 
   override def statements(context: Option[ScopeVerifyContext] = None): Seq[Statement] = statements
+
+  override def statementsOrErrors(
+    context: Option[ScopeVerifyContext] = None
+  ): Either[ParseErrors, Seq[Statement]] = Right(statements)
 }
 
 final case class LocalVariableDeclarationStatement(
