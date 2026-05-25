@@ -27,6 +27,9 @@ class CollectingErrorListener(path: PathLike) extends BaseErrorListener {
   // Pattern to match lexer "token recognition error" messages containing escape sequences
   private val tokenErrorPattern = """token recognition error at: '(.*)'""".r
   private val escapePattern     = """.*(\\.).*""".r
+  private val verboseEofPattern = """mismatched input '<EOF>' expecting \{.*""".r
+
+  private final val MaxUsefulEofMessageLength = 160
 
   override def syntaxError(
     recognizer: Recognizer[_, _],
@@ -47,7 +50,9 @@ class CollectingErrorListener(path: PathLike) extends BaseErrorListener {
           case _ => msg
         }
       case _ =>
-        malformedMultilineStringMessage(recognizer, offendingSymbol).getOrElse(msg)
+        malformedMultilineStringMessage(recognizer, offendingSymbol)
+          .orElse(conciseEofMessage(msg))
+          .getOrElse(msg)
     }
 
     // Drop syntax errors that are recovery noise from an earlier error on the same line.
@@ -61,6 +66,14 @@ class CollectingErrorListener(path: PathLike) extends BaseErrorListener {
           Diagnostic(SYNTAX_CATEGORY, Location(line, charPositionInLine), improvedMsg)
         )
       )
+    }
+  }
+
+  private def conciseEofMessage(message: String): Option[String] = {
+    message match {
+      case verboseEofPattern() if message.length > MaxUsefulEofMessageLength =>
+        Some("Unexpected end of input")
+      case _ => None
     }
   }
 

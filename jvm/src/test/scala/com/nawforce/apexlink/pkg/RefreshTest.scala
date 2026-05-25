@@ -257,8 +257,8 @@ class RefreshTest extends AnyFunSuite with TestHelper {
 
         assert(org.flush())
         assert(
-          getMessages(root.join("Dummy.cls"))
-            .startsWith("Syntax: line 1 at 20: mismatched input '<EOF>' expecting {")
+          getMessages(root.join("Dummy.cls")) ==
+            "Syntax: line 1 at 20: Unexpected end of input\n"
         )
       }
     }

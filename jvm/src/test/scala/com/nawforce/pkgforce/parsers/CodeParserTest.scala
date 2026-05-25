@@ -46,7 +46,18 @@ class CodeParserTest extends AnyFunSuite {
     val result = cp.parseClass()
     assert(result.issues.length == 1)
     assert(result.issues.head.diagnostic.location.displayPosition == "line 1 at 20")
-    assert(result.issues.head.diagnostic.message.startsWith("mismatched input '<EOF>' expecting {"))
+    assert(result.issues.head.diagnostic.message == "Unexpected end of input")
+  }
+
+  test("Short EOF expected-token messages are preserved") {
+    val path   = Path("Dummy.cls")
+    val cp     = CodeParser(path, SourceData("public class Dummy"))
+    val result = cp.parseClass()
+    assert(result.issues.length == 1)
+    assert(
+      result.issues.head.diagnostic.message ==
+        "mismatched input '<EOF>' expecting {'extends', 'implements', '{'}"
+    )
   }
 
   test("Class multiple errors") {
@@ -82,6 +93,6 @@ class CodeParserTest extends AnyFunSuite {
     assert(result.issues.length == 1)
     // The surrogate pair should only count as 1 unicode code point
     assert(result.issues.head.diagnostic.location.displayPosition == "line 1 at 34")
-    assert(result.issues.head.diagnostic.message.startsWith("mismatched input '<EOF>' expecting {"))
+    assert(result.issues.head.diagnostic.message == "Unexpected end of input")
   }
 }
