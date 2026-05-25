@@ -37,15 +37,13 @@ class SOQLParserTest extends AnyFunSuite with Matchers {
 
   test("Missing fields") {
     SOQLParser.parse("select") should matchPattern {
-      case Left(Seq(SOQLParser.ParserIssue(1, 6, err)))
-          if err.startsWith("mismatched input '<EOF>' expecting {") =>
+      case Left(Seq(SOQLParser.ParserIssue(1, 6, "Unexpected end of input"))) =>
     }
   }
 
   test("Missing from") {
     SOQLParser.parse("select A") should matchPattern {
-      case Left(Seq(SOQLParser.ParserIssue(1, 8, err)))
-          if err.startsWith("mismatched input '<EOF>' expecting {") =>
+      case Left(Seq(SOQLParser.ParserIssue(1, 8, "Unexpected end of input"))) =>
     }
   }
 
