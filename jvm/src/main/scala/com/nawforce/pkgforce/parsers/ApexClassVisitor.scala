@@ -95,10 +95,11 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
   ): ArraySeq[ApexNode] = {
     val isOuter = parentStack.isEmpty
 
-    wrapParentStack(InterfaceOwnerInfo) {
-      val modifierContext = getModifierContext(parentContext(ctx))
-      val modifiers =
-        ApexModifiers.interfaceModifiers(parser, modifierContext.modifiers, isOuter, ctx.id())
+    val modifierContext = getModifierContext(parentContext(ctx))
+    val modifiers =
+      ApexModifiers.interfaceModifiers(parser, modifierContext.modifiers, isOuter, ctx.id())
+
+    wrapParentStack(InterfaceOwnerInfo(modifiers.modifiers)) {
       ArraySeq(
         new ApexLightNode(
           parser.getPathLocation(parentContext(ctx)),
@@ -199,7 +200,8 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
       MethodModifiers.interfaceMethodModifiers(
         parser,
         ArraySeq.from(CodeParser.toScala(ctx.modifier())),
-        ctx.id()
+        ctx.id(),
+        parentStack.head.asInstanceOf[InterfaceOwnerInfo]
       )
 
     ArraySeq(

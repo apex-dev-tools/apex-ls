@@ -146,11 +146,17 @@ object OutlineParserModifierOps {
     path: PathLike,
     id: OPId,
     annotations: Array[OPAnnotation],
-    src: Array[OPModifier]
+    src: Array[OPModifier],
+    ownerInfo: InterfaceOwnerInfo
   ): ModifierResults = {
     val logger = new ModifierLogger()
     val mods   = toModifiers(path, id.location, annotations, src)
-    MethodModifiers.interfaceMethodModifiers(logger, mods, OPLogEntryContext(path, id.location))
+    MethodModifiers.interfaceMethodModifiers(
+      logger,
+      mods,
+      OPLogEntryContext(path, id.location),
+      ownerInfo
+    )
   }
 
   def initializerBlockModifiers(isStatic: Boolean): ModifierResults =

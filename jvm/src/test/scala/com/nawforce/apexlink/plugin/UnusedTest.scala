@@ -440,6 +440,33 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Global interface method is not flagged as unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "global interface Dummy {String selectOrganization();}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Public interface method can be flagged as unused") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public interface Dummy {String selectOrganization();}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 31-49: Unused public method 'System.String selectOrganization()'\n"
+      )
+    }
+  }
+
   test("Unused interface") {
     FileSystemHelper.run(Map("Dummy.cls" -> "public interface Dummy {void func();}")) {
       root: PathLike =>

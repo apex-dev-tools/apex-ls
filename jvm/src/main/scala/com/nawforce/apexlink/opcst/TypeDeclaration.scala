@@ -40,7 +40,12 @@ import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.apex.ThisType
-import com.nawforce.pkgforce.modifiers.{ClassOwnerInfo, FINAL_MODIFIER, ModifierResults}
+import com.nawforce.pkgforce.modifiers.{
+  ClassOwnerInfo,
+  FINAL_MODIFIER,
+  InterfaceOwnerInfo,
+  ModifierResults
+}
 import com.nawforce.pkgforce.names.{Names, TypeName}
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
@@ -235,8 +240,14 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     val id          = OutlineParserId.construct(itd.id, source.path)
 
     val methods = itd.methods.flatMap(m =>
-      OutlineParserClassBodyDeclaration
-        .constructInterfaceMethodDeclaration(path, m, source, typeContext, thisType)
+      OutlineParserClassBodyDeclaration.constructInterfaceMethodDeclaration(
+        path,
+        m,
+        source,
+        typeContext,
+        InterfaceOwnerInfo(modifierResults.modifiers),
+        thisType
+      )
     )
 
     val declaration = InterfaceDeclaration(
@@ -454,10 +465,12 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     md: OPMethodDeclaration,
     source: Source,
     typeContext: RelativeTypeContext,
+    ownerInfo: InterfaceOwnerInfo,
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults = interfaceMethodModifiers(path, md.id, md.annotations, md.modifiers)
+    val modifierResults =
+      interfaceMethodModifiers(path, md.id, md.annotations, md.modifiers, ownerInfo)
 
     val parameters = md.formalParameters
       .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))

@@ -176,6 +176,20 @@ class InterfaceModifierTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Global interface methods inherit global visibility") {
+    val method = typeDeclaration("global interface Dummy {String foo();}").methods.head
+    assert(method.modifiers contains GLOBAL_MODIFIER)
+    assert(!(method.modifiers contains PUBLIC_MODIFIER))
+    assert(!hasIssues)
+  }
+
+  test("Public interface methods inherit public visibility") {
+    val method = typeDeclaration("public interface Dummy {String foo();}").methods.head
+    assert(method.modifiers contains PUBLIC_MODIFIER)
+    assert(!(method.modifiers contains GLOBAL_MODIFIER))
+    assert(!hasIssues)
+  }
+
   test("Illegal method modifier") {
     typeDeclaration("global interface Dummy {public void foo();}")
     assert(

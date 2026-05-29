@@ -247,7 +247,8 @@ object InterfaceDeclaration {
               MethodModifiers.interfaceMethodModifiers(
                 parser,
                 CodeParser.toScala(method.modifier()),
-                method.id()
+                method.id(),
+                InterfaceOwnerInfo(modifiers.modifiers)
               ),
               method
             )
