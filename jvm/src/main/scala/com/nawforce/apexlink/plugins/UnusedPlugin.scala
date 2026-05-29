@@ -239,13 +239,14 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
           case _ => None
         }
         .map(method => {
-          val suffix = if (method.hasHolders) s", $onlyTestCodeReferenceText" else ""
+          val hierarchyContext = method.unusedHierarchyContext(td.module, td.inTest)
+          val suffix           = if (method.hasHolders) s", $onlyTestCodeReferenceText" else ""
           new Issue(
             method.location.path,
             Diagnostic(
               UNUSED_CATEGORY,
               method.idLocation,
-              s"Unused ${method.visibility.getOrElse(PRIVATE_MODIFIER).name} method '${method.signature}'$suffix"
+              s"Unused ${method.visibility.getOrElse(PRIVATE_MODIFIER).name} method '${method.signature}'$hierarchyContext$suffix"
             )
           )
         })
@@ -296,6 +297,46 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
         case _: MethodDeclaration => true
         case _                    => false
       })
+    }
+
+    def unusedHierarchyContext(module: OPM.Module, inTest: Boolean): String = {
+      if (method.isOverride && overridesUnusedVirtualMethod(module, inTest))
+        " (overrides unused virtual method)"
+      else if (method.isVirtual && allOverridesUnused(module, inTest))
+        " (all overrides also unused)"
+      else
+        ""
+    }
+
+    private def overridesUnusedVirtualMethod(module: OPM.Module, inTest: Boolean): Boolean = {
+      method.shadows.exists({
+        case am: ApexMethodLike if am.isVirtual => !am.isUsed(module, inTest)
+        case _                                  => false
+      })
+    }
+
+    private def allOverridesUnused(module: OPM.Module, inTest: Boolean): Boolean = {
+      val overrides = collectOverrides(method)
+      overrides.nonEmpty && overrides.forall(overrideMethod =>
+        !overrideMethod.isUsed(module, inTest)
+      )
+    }
+
+    private def collectOverrides(method: ApexMethodLike): Set[ApexMethodLike] = {
+      val visited = mutable.Set[ApexMethodLike]()
+      val queue   = mutable.Queue[ApexMethodLike]()
+      queue.enqueueAll(method.shadowedBy.collect { case am: ApexMethodLike if am.isOverride => am })
+
+      while (queue.nonEmpty) {
+        val current = queue.dequeue()
+        if (!visited.contains(current)) {
+          visited.add(current)
+          queue.enqueueAll(current.shadowedBy.collect {
+            case am: ApexMethodLike if am.isOverride => am
+          })
+        }
+      }
+      visited.toSet
     }
 
     private def hasGhostedParameters(module: OPM.Module): Boolean = {

@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Unused warnings for virtual/override method hierarchies now include context when all related overrides are unused (#403)
+- Global interface methods now inherit their containing interface visibility, preventing valid implementations from being incorrectly flagged as unused (#405)
+- Verbose parser diagnostics at end-of-file now report `Unexpected end of input` while preserving concise expected-token messages (#457)
+- Cascading syntax errors after an unclosed method body are now suppressed (#422)
 - Static methods on inner classes are now properly validated and flagged (@metalshark)
 - Public/global methods implementing interfaces from external namespaces are no longer incorrectly flagged as unused (#401)
 - Methods invoked only from triggers are no longer flagged as unused
@@ -34,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- MCP server support and packaging (#454)
 - v1 ForceIgnore implementation (V2 has been the default since 6.0.0)
 
 ## [6.0.2] - 2025-11-25
