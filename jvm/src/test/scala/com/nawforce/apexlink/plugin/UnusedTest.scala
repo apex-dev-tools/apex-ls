@@ -75,6 +75,21 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused public static method includes entry point guidance") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy {public static void run() {}}",
+        "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Dummy.cls")) ==
+          "Unused: line 1 at 39-42: Unused public static method 'void run()'; remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point\n"
+      )
+    }
+  }
+
   test("Unused global method") {
     FileSystemHelper.run(
       Map(
@@ -948,7 +963,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
       val org = createOrgWithUnused(root)
       assert(
         orgIssuesFor(org, root.join("Dummy.cls"))
-          == s"Unused: line 1 at 39-42: Unused public method 'void foo()', $onlyTestCodeReferenceText\n"
+          == "Unused: line 1 at 39-42: Unused public static method 'void foo()'; only referenced by test code, remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point\n"
       )
     }
   }
