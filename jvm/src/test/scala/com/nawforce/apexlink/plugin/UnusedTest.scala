@@ -55,6 +55,26 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused virtual override hierarchy methods include context") {
+    FileSystemHelper.run(
+      Map(
+        "Base.cls"  -> "public virtual class Base { public virtual void describe() {} }",
+        "Child.cls" -> "public class Child extends Base { public override void describe() {} }",
+        "Foo.cls" -> "public class Foo { { Type baseType = Base.class; Type childType = Child.class; } }"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(
+        orgIssuesFor(org, root.join("Base.cls"))
+          .contains("Unused public method 'void describe()' (all overrides also unused)")
+      )
+      assert(
+        orgIssuesFor(org, root.join("Child.cls"))
+          .contains("Unused public method 'void describe()' (overrides unused virtual method)")
+      )
+    }
+  }
+
   test("Unused global method") {
     FileSystemHelper.run(
       Map(

@@ -28,5 +28,6 @@ This guide applies to all changes in the repository unless a more specific `AGEN
 
 ## Git & PR Etiquette
 - Use Conventional Commit messages (e.g., `feat:`, `fix:`, `chore:`).
+- Update `CHANGELOG.md` under `[Unreleased]` for user-facing fixes, features, behavior changes, and removals; if no entry is needed, note why in the PR.
 - Summaries should focus on user-facing impact and avoid mentioning AI assistants.
 - Ensure PR descriptions include the commands/tests that were run.
