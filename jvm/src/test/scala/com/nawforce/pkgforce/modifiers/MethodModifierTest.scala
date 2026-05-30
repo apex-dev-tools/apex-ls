@@ -340,7 +340,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 49, 1, 53),
-            "Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation"
+            "Method with @IsTest or @TestSetup annotation must be in a test class"
           )
         )
       )
@@ -357,7 +357,62 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 52, 1, 56),
-            "Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation"
+            "Method with @IsTest or @TestSetup annotation must be in a test class"
+          )
+        )
+      )
+    )
+  }
+
+  test("TearDown in non-integration test class should error") {
+    val issues =
+      illegalClassMethodAccess(ArraySeq(TEAR_DOWN_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 51, 1, 55),
+            "Method with @TearDown annotation must be in an @IntegrationTest class"
+          )
+        )
+      )
+    )
+  }
+
+  test("TearDown in isTest class should error") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(TEAR_DOWN_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+      ArraySeq(ISTEST_ANNOTATION)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 52, 1, 56),
+            "Method with @TearDown annotation must be in an @IntegrationTest class"
+          )
+        )
+      )
+    )
+  }
+
+  test("TearDown without static should error") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(TEAR_DOWN_ANNOTATION, PUBLIC_MODIFIER),
+      ArraySeq(INTEGRATION_TEST_ANNOTATION)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 54, 1, 58),
+            "testMethod, @IsTest, @IntegrationTest and @TearDown methods must be static"
           )
         )
       )
@@ -376,7 +431,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 43, 1, 47),
-            "testMethod and @IsTest methods must be static"
+            "testMethod, @IsTest, @IntegrationTest and @TearDown methods must be static"
           )
         )
       )
@@ -393,7 +448,7 @@ class MethodModifierTest extends AnyFunSuite {
           Diagnostic(
             ERROR_CATEGORY,
             Location(1, 39, 1, 43),
-            "testMethod and @IsTest methods must be static"
+            "testMethod, @IsTest, @IntegrationTest and @TearDown methods must be static"
           )
         )
       )
@@ -416,6 +471,83 @@ class MethodModifierTest extends AnyFunSuite {
         ArraySeq(TEST_SETUP_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
         ArraySeq(TEST_SETUP_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
         ArraySeq(ISTEST_ANNOTATION)
+      )
+    )
+  }
+
+  test("TearDown in integration test class should be ok") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(TEAR_DOWN_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(TEAR_DOWN_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(INTEGRATION_TEST_ANNOTATION)
+      )
+    )
+  }
+
+  test("IntegrationTest method in integration test class should be ok") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(INTEGRATION_TEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(INTEGRATION_TEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(INTEGRATION_TEST_ANNOTATION)
+      )
+    )
+  }
+
+  test("IntegrationTest method in non-integration test class should error") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(INTEGRATION_TEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+      ArraySeq(ISTEST_ANNOTATION)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 59, 1, 63),
+            "Method with @IntegrationTest annotation must be in an @IntegrationTest class"
+          )
+        )
+      )
+    )
+  }
+
+  test("IsTest method in integration test class should error") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+      ArraySeq(INTEGRATION_TEST_ANNOTATION)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 59, 1, 63),
+            "@IntegrationTest classes can not contain @IsTest methods"
+          )
+        )
+      )
+    )
+  }
+
+  test("Unannotated method in integration test class should error") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER),
+      ArraySeq(INTEGRATION_TEST_ANNOTATION)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 51, 1, 55),
+            "@IntegrationTest classes can only contain @IntegrationTest and @TearDown methods"
+          )
+        )
       )
     )
   }

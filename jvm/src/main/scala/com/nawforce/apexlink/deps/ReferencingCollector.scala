@@ -4,7 +4,7 @@
 package com.nawforce.apexlink.deps
 
 import com.nawforce.apexlink.types.apex.ApexDeclaration
-import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
+import com.nawforce.pkgforce.modifiers.ApexModifiers
 import com.nawforce.pkgforce.parsers.INTERFACE_NATURE
 
 import scala.collection.mutable
@@ -39,7 +39,7 @@ object ReferencingCollector {
       return false
 
     // Always save test classes, we don't bail out here as we want to capture test->test dependencies
-    if (path.head.modifiers.contains(ISTEST_ANNOTATION))
+    if (ApexModifiers.hasTestClassModifier(path.head.modifiers))
       accum.put(typeName, TestInfo(path.head, path))
 
     if (!primary) {

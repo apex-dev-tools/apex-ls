@@ -464,6 +464,23 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused empty integration test class") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "@IntegrationTest public class Dummy {}")) {
+      root: PathLike =>
+        val org = createOrgWithUnused(root)
+        assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused TearDown method") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "@IntegrationTest public class Dummy {@TearDown static void cleanup() {}}")
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
   test("Unused class") {
     FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {Object a; void func() {}}")) {
       root: PathLike =>

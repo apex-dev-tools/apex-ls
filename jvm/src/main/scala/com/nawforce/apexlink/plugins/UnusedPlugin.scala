@@ -400,7 +400,9 @@ object UnusedPlugin {
   private val excludedTestMethodModifiers: Set[Modifier] =
     Set(
       ISTEST_ANNOTATION,
+      INTEGRATION_TEST_ANNOTATION,
       TEST_SETUP_ANNOTATION,
+      TEAR_DOWN_ANNOTATION,
       TEST_METHOD_MODIFIER,
       SUPPRESS_WARNINGS_ANNOTATION_PMD,
       SUPPRESS_WARNINGS_ANNOTATION_UNUSED
