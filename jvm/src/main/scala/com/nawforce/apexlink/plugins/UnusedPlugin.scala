@@ -239,14 +239,16 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
           case _ => None
         }
         .map(method => {
-          val hierarchyContext = method.unusedHierarchyContext(td.module, td.inTest)
-          val suffix           = if (method.hasHolders) s", $onlyTestCodeReferenceText" else ""
+          val hierarchyContext    = method.unusedHierarchyContext(td.module, td.inTest)
+          val entryPointCandidate = method.isPublicStaticEntryPointCandidate(td.inTest)
+          val methodModifierText  = method.unusedMethodModifierText(entryPointCandidate)
+          val suffix              = method.unusedMethodSuffix(entryPointCandidate)
           new Issue(
             method.location.path,
             Diagnostic(
               UNUSED_CATEGORY,
               method.idLocation,
-              s"Unused ${method.visibility.getOrElse(PRIVATE_MODIFIER).name} method '${method.signature}'$hierarchyContext$suffix"
+              s"Unused $methodModifierText method '${method.signature}'$hierarchyContext$suffix"
             )
           )
         })
@@ -297,6 +299,24 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
         case _: MethodDeclaration => true
         case _                    => false
       })
+    }
+
+    def unusedMethodModifierText(includeStatic: Boolean): String = {
+      val visibility = method.visibility.getOrElse(PRIVATE_MODIFIER).name
+      if (includeStatic) s"$visibility static" else visibility
+    }
+
+    def isPublicStaticEntryPointCandidate(inTest: Boolean): Boolean = {
+      !inTest && method.isStatic && method.visibility.contains(PUBLIC_MODIFIER)
+    }
+
+    def unusedMethodSuffix(entryPointCandidate: Boolean): String = {
+      (method.hasHolders, entryPointCandidate) match {
+        case (true, true)  => s"; only referenced by test code, $publicStaticEntryPointActionText"
+        case (true, false) => s", $onlyTestCodeReferenceText"
+        case (false, true) => s"; $publicStaticEntryPointActionText"
+        case _             => ""
+      }
     }
 
     def unusedHierarchyContext(module: OPM.Module, inTest: Boolean): String = {
@@ -363,6 +383,8 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
 object UnusedPlugin {
   val onlyTestCodeReferenceText =
     "only referenced by test code, remove or make private @TestVisible"
+  val publicStaticEntryPointActionText =
+    "remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point"
 
   val suppressModifiers: Set[Modifier] =
     Set(SUPPRESS_WARNINGS_ANNOTATION_PMD, SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
