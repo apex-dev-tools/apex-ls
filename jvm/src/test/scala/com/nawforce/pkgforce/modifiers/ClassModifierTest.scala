@@ -111,6 +111,22 @@ class ClassModifierTest extends AnyFunSuite {
     assert(legalClassAccess(ArraySeq(ISTEST_ANNOTATION)))
   }
 
+  test("isTest and IntegrationTest annotations") {
+    val issues = illegalClassAccess(ArraySeq(ISTEST_ANNOTATION, INTEGRATION_TEST_ANNOTATION))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          diagnostics.Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 31, 1, 36),
+            "Classes can not be both @IsTest and @IntegrationTest"
+          )
+        )
+      )
+    )
+  }
+
   test("isTest and abstract modifier") {
     val issues = illegalClassAccess(ArraySeq(ISTEST_ANNOTATION, ABSTRACT_MODIFIER))
     assert(
@@ -120,7 +136,7 @@ class ClassModifierTest extends AnyFunSuite {
           diagnostics.Diagnostic(
             ERROR_CATEGORY,
             Location(1, 23, 1, 28),
-            "isTest classes can not be abstract or virtual"
+            "Test classes can not be abstract or virtual"
           )
         )
       )
@@ -136,7 +152,7 @@ class ClassModifierTest extends AnyFunSuite {
           diagnostics.Diagnostic(
             ERROR_CATEGORY,
             Location(1, 22, 1, 27),
-            "isTest classes can not be abstract or virtual"
+            "Test classes can not be abstract or virtual"
           )
         )
       )
@@ -221,7 +237,7 @@ class ClassModifierTest extends AnyFunSuite {
           diagnostics.Diagnostic(
             ERROR_CATEGORY,
             Location(1, 34, 1, 37),
-            "isTest can only be used on outer classes"
+            "Test annotations can only be used on outer classes"
           )
         )
       )

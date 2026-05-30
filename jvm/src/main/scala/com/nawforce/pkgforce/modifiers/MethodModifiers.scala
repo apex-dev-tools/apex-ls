@@ -16,6 +16,7 @@ package com.nawforce.pkgforce.modifiers
 import com.nawforce.pkgforce.modifiers.ApexModifiers.{
   allowableModifiers,
   asModifiers,
+  hasTestClassModifier,
   toModifiers,
   visibilityModifiers
 }
@@ -47,12 +48,14 @@ object MethodModifiers {
     FUTURE_ANNOTATION,
     INVOCABLE_METHOD_ANNOTATION,
     ISTEST_ANNOTATION,
+    INTEGRATION_TEST_ANNOTATION,
     TEST_VISIBLE_ANNOTATION,
     NAMESPACE_ACCESSIBLE_ANNOTATION,
     READ_ONLY_ANNOTATION,
     SUPPRESS_WARNINGS_ANNOTATION_PMD,
     SUPPRESS_WARNINGS_ANNOTATION_UNUSED,
     TEST_SETUP_ANNOTATION,
+    TEAR_DOWN_ANNOTATION,
     HTTP_DELETE_ANNOTATION,
     HTTP_GET_ANNOTATION,
     HTTP_PATCH_ANNOTATION,
@@ -165,19 +168,59 @@ object MethodModifiers {
         extendedModifiers
       } else if (
         (extendedModifiers
-          .contains(ISTEST_ANNOTATION) || extendedModifiers.contains(TEST_METHOD_MODIFIER)) &&
+          .contains(ISTEST_ANNOTATION) || extendedModifiers.contains(
+          INTEGRATION_TEST_ANNOTATION
+        ) || extendedModifiers
+          .contains(TEST_METHOD_MODIFIER) || extendedModifiers.contains(TEAR_DOWN_ANNOTATION)) &&
         !extendedModifiers.contains(STATIC_MODIFIER)
       ) {
-        logger.logError(context, "testMethod and @IsTest methods must be static")
+        logger.logError(
+          context,
+          "testMethod, @IsTest, @IntegrationTest and @TearDown methods must be static"
+        )
         STATIC_MODIFIER +: extendedModifiers
       } else if (
         (extendedModifiers
           .contains(ISTEST_ANNOTATION) || extendedModifiers.contains(TEST_SETUP_ANNOTATION)) &&
-        !ownerInfo.modifiers.contains(ISTEST_ANNOTATION)
+        !hasTestClassModifier(ownerInfo.modifiers)
       ) {
         logger.logError(
           context,
-          "Method with @IsTest or @TestSetup annotation must be in a class with @IsTest annotation"
+          "Method with @IsTest or @TestSetup annotation must be in a test class"
+        )
+        extendedModifiers
+      } else if (
+        extendedModifiers.contains(INTEGRATION_TEST_ANNOTATION) &&
+        !ownerInfo.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+      ) {
+        logger.logError(
+          context,
+          "Method with @IntegrationTest annotation must be in an @IntegrationTest class"
+        )
+        extendedModifiers
+      } else if (
+        extendedModifiers.contains(ISTEST_ANNOTATION) &&
+        ownerInfo.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+      ) {
+        logger.logError(context, "@IntegrationTest classes can not contain @IsTest methods")
+        extendedModifiers
+      } else if (
+        extendedModifiers.contains(TEAR_DOWN_ANNOTATION) &&
+        !ownerInfo.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+      ) {
+        logger.logError(
+          context,
+          "Method with @TearDown annotation must be in an @IntegrationTest class"
+        )
+        extendedModifiers
+      } else if (
+        ownerInfo.modifiers.contains(INTEGRATION_TEST_ANNOTATION) &&
+        !extendedModifiers.contains(INTEGRATION_TEST_ANNOTATION) &&
+        !extendedModifiers.contains(TEAR_DOWN_ANNOTATION)
+      ) {
+        logger.logError(
+          context,
+          "@IntegrationTest classes can only contain @IntegrationTest and @TearDown methods"
         )
         extendedModifiers
       } else {

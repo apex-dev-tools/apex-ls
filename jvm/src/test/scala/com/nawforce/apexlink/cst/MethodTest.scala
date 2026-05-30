@@ -64,6 +64,78 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("IntegrationTest method called from IntegrationTest method") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@IntegrationTest static void f1(){} @IntegrationTest static void f2() {f1();} }"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("IntegrationTest method called from IsTest method") {
+    typeDeclarations(
+      Map(
+        "IntegrationDummy.cls" -> "@IntegrationTest public class IntegrationDummy {@IntegrationTest public static void f1(){}}",
+        "Dummy.cls" -> "@IsTest public class Dummy {@IsTest public static void f2() {IntegrationDummy.f1();}}"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Dummy.cls")
+      ) == "Error: line 1 at 61-82: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
+    )
+  }
+
+  test("IntegrationTest method called from non-test context") {
+    typeDeclarations(
+      Map(
+        "TestDummy.cls" -> "@IntegrationTest public class TestDummy {@IntegrationTest public static void f1(){}}",
+        "Dummy.cls" -> "public class Dummy {public static void f2() {TestDummy.f1();}}"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Dummy.cls")
+      ) == "Error: line 1 at 45-59: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
+    )
+  }
+
+  test("IntegrationTest method called from IntegrationTest class helper") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@IntegrationTest static void f1(){} static void f2() {f1();} }"
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 85-87: @IntegrationTest classes can only contain @IntegrationTest and @TearDown methods\nError: line 1 at 91-95: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
+    )
+  }
+
+  test("IntegrationTest can not access private TestVisible method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static void helper(){}}",
+        "Dummy.cls" -> "@IntegrationTest public class Dummy {@IntegrationTest public static void f2() {Target.helper();}}"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Dummy.cls")
+      ) == "Error: line 1 at 79-94: @IntegrationTest classes can not access private @TestVisible methods\n"
+    )
+  }
+
+  test("IntegrationTest can not access private TestVisible field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static String helper;}",
+        "Dummy.cls" -> "@IntegrationTest public class Dummy {@IntegrationTest public static void f2() {String value = Target.helper;}}"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Dummy.cls")
+      ) == "Error: line 1 at 94-107: @IntegrationTest classes can not access private @TestVisible fields\n"
+    )
+  }
+
   test("Method call with non-ambiguous target") {
     FileSystemHelper.run(
       Map(

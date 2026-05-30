@@ -433,7 +433,7 @@ object FullDeclaration {
         val classModifiers = ApexModifiers.classModifiers(parser, modifiers, outer = true, cd.id())
         ClassDeclaration.construct(
           parser,
-          ThisType(module, thisType, classModifiers.modifiers.contains(ISTEST_ANNOTATION)),
+          ThisType(module, thisType, ApexModifiers.hasTestClassModifier(classModifiers.modifiers)),
           None,
           classModifiers,
           cd

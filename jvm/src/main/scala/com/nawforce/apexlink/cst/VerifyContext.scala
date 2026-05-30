@@ -75,6 +75,9 @@ trait VerifyContext {
   /** Test predicate returns true for a modifier on the containing scope */
   def modifiers(pred: Modifier => Boolean): Boolean = parent().exists(_.modifiers(pred))
 
+  /** Test predicate returns true for a modifier on the containing body declaration. */
+  def bodyModifiers(pred: Modifier => Boolean): Boolean = parent().exists(_.bodyModifiers(pred))
+
   /** Test if issues are currently being suppressed */
   def suppressIssues: Boolean = disableIssueDepth != 0 || parent().exists(_.suppressIssues)
 
@@ -275,6 +278,9 @@ final class BodyDeclarationVerifyContext(
 
   override def modifiers(pred: Modifier => Boolean): Boolean =
     classBodyDeclaration.modifiers.exists(pred) || super.modifiers(pred)
+
+  override def bodyModifiers(pred: Modifier => Boolean): Boolean =
+    classBodyDeclaration.modifiers.exists(pred)
 
   override def suppressIssues: Boolean =
     classBodyDeclaration.modifiers.contains(SUPPRESS_WARNINGS_ANNOTATION_PMD) ||

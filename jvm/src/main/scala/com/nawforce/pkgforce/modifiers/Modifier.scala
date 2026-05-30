@@ -74,6 +74,8 @@ case object INVOCABLE_VARIABLE_ANNOTATION extends Modifier("@InvocableVariable")
 
 case object ISTEST_ANNOTATION extends Modifier("@IsTest")
 
+case object INTEGRATION_TEST_ANNOTATION extends Modifier("@IntegrationTest")
+
 case object READ_ONLY_ANNOTATION extends Modifier("@ReadOnly")
 
 case object REMOTE_ACTION_ANNOTATION extends Modifier("@RemoteAction")
@@ -83,6 +85,8 @@ case object SUPPRESS_WARNINGS_ANNOTATION_PMD extends Modifier("@SuppressWarnings
 case object SUPPRESS_WARNINGS_ANNOTATION_UNUSED extends Modifier("@SuppressWarnings('Unused')")
 
 case object TEST_SETUP_ANNOTATION extends Modifier("@TestSetup")
+
+case object TEAR_DOWN_ANNOTATION extends Modifier("@TearDown")
 
 case object TEST_VISIBLE_ANNOTATION extends Modifier("@TestVisible")
 
@@ -132,11 +136,13 @@ object ModifierOps {
       INVOCABLE_METHOD_ANNOTATION,
       INVOCABLE_VARIABLE_ANNOTATION,
       ISTEST_ANNOTATION,
+      INTEGRATION_TEST_ANNOTATION,
       READ_ONLY_ANNOTATION,
       REMOTE_ACTION_ANNOTATION,
       SUPPRESS_WARNINGS_ANNOTATION_PMD,
       SUPPRESS_WARNINGS_ANNOTATION_UNUSED,
       TEST_SETUP_ANNOTATION,
+      TEAR_DOWN_ANNOTATION,
       TEST_VISIBLE_ANNOTATION,
       NAMESPACE_ACCESSIBLE_ANNOTATION,
       REST_RESOURCE_ANNOTATION,
@@ -198,8 +204,16 @@ object ApexModifiers {
   private val TypeModifiersAndAnnotations: Set[Modifier] =
     TypeAnnotations ++ TypeModifiers
 
+  def hasTestClassModifier(modifiers: ArraySeq[Modifier]): Boolean =
+    modifiers.contains(ISTEST_ANNOTATION) || modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+
   private val ClassAnnotations: Set[Modifier] =
-    TypeAnnotations ++ Set(ISTEST_ANNOTATION, REST_RESOURCE_ANNOTATION, JSON_ACCESS_ANNOTATION)
+    TypeAnnotations ++ Set(
+      ISTEST_ANNOTATION,
+      INTEGRATION_TEST_ANNOTATION,
+      REST_RESOURCE_ANNOTATION,
+      JSON_ACCESS_ANNOTATION
+    )
 
   private val ClassModifiers: Set[Modifier] =
     TypeModifiers ++ Set(ABSTRACT_MODIFIER, VIRTUAL_MODIFIER) ++ sharingModifiers.toSet
@@ -383,11 +397,14 @@ object ApexModifiers {
 
     val results =
       if (logger.isEmpty) {
-        if (outer && !mods.contains(ISTEST_ANNOTATION) && mods.contains(PRIVATE_MODIFIER)) {
+        if (mods.contains(ISTEST_ANNOTATION) && mods.contains(INTEGRATION_TEST_ANNOTATION)) {
+          logger.logError(idContext, s"Classes can not be both @IsTest and @IntegrationTest")
+          mods.filterNot(_ == INTEGRATION_TEST_ANNOTATION)
+        } else if (outer && !hasTestClassModifier(mods) && mods.contains(PRIVATE_MODIFIER)) {
           logger.logError(idContext, s"Private modifier is not allowed on outer classes")
           mods.filterNot(_ == PRIVATE_MODIFIER)
         } else if (
-          outer && !mods.contains(ISTEST_ANNOTATION) && !(mods.contains(GLOBAL_MODIFIER) || mods
+          outer && !hasTestClassModifier(mods) && !(mods.contains(GLOBAL_MODIFIER) || mods
             .contains(PUBLIC_MODIFIER))
         ) {
           logger.logError(idContext, s"Outer classes must be declared either 'global' or 'public'")
@@ -395,15 +412,15 @@ object ApexModifiers {
         } else if (mods.contains(ABSTRACT_MODIFIER) && mods.contains(VIRTUAL_MODIFIER)) {
           logger.logError(idContext, s"Abstract classes are virtual classes")
           mods.filterNot(_ == VIRTUAL_MODIFIER)
-        } else if (!outer && mods.contains(ISTEST_ANNOTATION)) {
-          logger.logError(idContext, s"isTest can only be used on outer classes")
-          mods.filterNot(_ == ISTEST_ANNOTATION)
+        } else if (!outer && hasTestClassModifier(mods)) {
+          logger.logError(idContext, s"Test annotations can only be used on outer classes")
+          mods.filterNot(mod => mod == ISTEST_ANNOTATION || mod == INTEGRATION_TEST_ANNOTATION)
         } else if (
-          mods.contains(ISTEST_ANNOTATION) && (mods
+          hasTestClassModifier(mods) && (mods
             .contains(ABSTRACT_MODIFIER) || mods.contains(VIRTUAL_MODIFIER))
         ) {
-          logger.logError(idContext, s"isTest classes can not be abstract or virtual")
-          mods.filterNot(_ == ISTEST_ANNOTATION)
+          logger.logError(idContext, s"Test classes can not be abstract or virtual")
+          mods.filterNot(mod => mod == ISTEST_ANNOTATION || mod == INTEGRATION_TEST_ANNOTATION)
         } else {
           mods
         }
