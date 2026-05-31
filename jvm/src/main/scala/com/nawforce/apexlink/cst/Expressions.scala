@@ -635,9 +635,12 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
           method.modifiers.contains(INTEGRATION_TEST_ANNOTATION) &&
           !context.bodyModifiers(_ == INTEGRATION_TEST_ANNOTATION)
         ) {
-          context.logError(
-            location,
-            "@IntegrationTest methods can only be called from @IntegrationTest methods"
+          context.log(
+            Issue(
+              WARNING_CATEGORY,
+              location,
+              "@IntegrationTest methods can only be called from @IntegrationTest methods"
+            )
           )
         }
         context.addDependency(method)

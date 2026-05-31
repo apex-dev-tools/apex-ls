@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `@IntegrationTest` classes no longer reject ordinary helper members, and calls to `@IntegrationTest` methods from non-integration contexts are reported as warnings instead of deploy-blocking errors (#470)
 - Unused warnings for public static methods now call out their static nature and explain how to document intentional external entry points (#406)
 - Unused warnings for virtual/override method hierarchies now include context when all related overrides are unused (#403)
 - Global interface methods now inherit their containing interface visibility, preventing valid implementations from being incorrectly flagged as unused (#405)
