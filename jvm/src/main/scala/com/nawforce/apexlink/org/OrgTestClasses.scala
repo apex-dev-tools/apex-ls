@@ -20,7 +20,12 @@ import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.rpc.{ClassTestItem, MethodTestItem, TargetLocation}
 import com.nawforce.apexlink.types.apex.{ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
-import com.nawforce.pkgforce.modifiers.{ISTEST_ANNOTATION, Modifier, TEST_METHOD_MODIFIER}
+import com.nawforce.pkgforce.modifiers.{
+  INTEGRATION_TEST_ANNOTATION,
+  ISTEST_ANNOTATION,
+  Modifier,
+  TEST_METHOD_MODIFIER
+}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.platform.Path
@@ -97,7 +102,8 @@ trait OrgTestClasses {
   }
 
   private def hasTestModifier(modifiers: ArraySeq[Modifier]): Boolean = {
-    modifiers.contains(TEST_METHOD_MODIFIER) || modifiers.contains(ISTEST_ANNOTATION)
+    modifiers.contains(TEST_METHOD_MODIFIER) || modifiers.contains(ISTEST_ANNOTATION) || modifiers
+      .contains(INTEGRATION_TEST_ANNOTATION)
   }
 
   private def findTestClassReferences(

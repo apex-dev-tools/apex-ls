@@ -105,6 +105,12 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("IntegrationTest annotation class") {
+    val modifiers = typeDeclaration("@IntegrationTest public class Dummy {}").modifiers
+    assert(modifiers.toSet == Set(PUBLIC_MODIFIER, INTEGRATION_TEST_ANNOTATION))
+    assert(dummyIssues.isEmpty)
+  }
+
   test("TestVisible annotation class") {
     val modifiers = typeDeclaration("@TestVisible public class Dummy {}").modifiers
     assert(modifiers.toSet == Set(PUBLIC_MODIFIER, TEST_VISIBLE_ANNOTATION))

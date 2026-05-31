@@ -19,6 +19,11 @@ import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFieldLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformTypes
+import com.nawforce.pkgforce.modifiers.{
+  INTEGRATION_TEST_ANNOTATION,
+  PRIVATE_MODIFIER,
+  TEST_VISIBLE_ANNOTATION
+}
 import com.nawforce.pkgforce.names._
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
@@ -149,6 +154,16 @@ final case class IdPrimary(id: Id) extends Primary {
     cachedClassFieldDeclaration = field
 
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
+      if (
+        field.get.modifiers.contains(TEST_VISIBLE_ANNOTATION) &&
+        field.get.visibility.contains(PRIVATE_MODIFIER) &&
+        context.thisType.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+      ) {
+        context.logError(
+          location,
+          "@IntegrationTest classes can not access private @TestVisible fields"
+        )
+      }
       Referenceable.addReferencingLocation(field.get, location, context.thisType)
       context.addDependency(field.get)
       Some(

@@ -36,7 +36,7 @@ import com.nawforce.apexlink.types.schema.{SObjectDeclaration, SchemaSObjectType
 import com.nawforce.pkgforce.diagnostics.{IssueLogger, _}
 import io.github.apexdevtools.apexls.api.IssuesCollection
 import com.nawforce.pkgforce.documents._
-import com.nawforce.pkgforce.modifiers.ISTEST_ANNOTATION
+import com.nawforce.pkgforce.modifiers.ApexModifiers
 import com.nawforce.pkgforce.names.TypeNameFuncs.TypeNameFuncs
 import com.nawforce.pkgforce.names.{EncodedName, Name, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
@@ -516,7 +516,7 @@ object OPM {
           getTypeAndSummaryOfPath(path)
             .filter { case (typeId, summary) =>
               typeId.toString
-              !excludeTestClasses || !summary.modifiers.contains(ISTEST_ANNOTATION)
+              !excludeTestClasses || !ApexModifiers.hasTestClassModifier(summary.modifiers)
             }
             .map { case (typeId, _) =>
               (typeId, collector.transitives(typeId))

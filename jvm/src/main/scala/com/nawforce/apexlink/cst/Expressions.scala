@@ -26,6 +26,11 @@ import com.nawforce.apexlink.types.other.{AnyDeclaration, RecordSetDeclaration}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, WARNING_CATEGORY}
+import com.nawforce.pkgforce.modifiers.{
+  INTEGRATION_TEST_ANNOTATION,
+  PRIVATE_MODIFIER,
+  TEST_VISIBLE_ANNOTATION
+}
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
 import com.nawforce.pkgforce.path.{Locatable, Location, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
@@ -442,6 +447,16 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
     val field: Option[FieldDeclaration] =
       DotExpression.findField(name, inputType, context.module, input.isStatic)
     if (field.nonEmpty) {
+      if (
+        field.get.modifiers.contains(TEST_VISIBLE_ANNOTATION) &&
+        field.get.visibility.contains(PRIVATE_MODIFIER) &&
+        context.thisType.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+      ) {
+        context.logError(
+          location,
+          "@IntegrationTest classes can not access private @TestVisible fields"
+        )
+      }
       context.addDependency(field.get)
       if (input.isStatic.contains(true) && !field.get.thisTypeIdOpt.contains(context.typeId))
         Referenceable.addReferencingLocation(inputType, field.get, location, context.thisType)
@@ -606,6 +621,25 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     callee.findMethod(target.name, argTypes, staticContext, context) match {
       case Right(method) =>
         cachedMethod = Some(method)
+        if (
+          method.modifiers.contains(TEST_VISIBLE_ANNOTATION) &&
+          method.visibility.contains(PRIVATE_MODIFIER) &&
+          context.thisType.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+        ) {
+          context.logError(
+            location,
+            "@IntegrationTest classes can not access private @TestVisible methods"
+          )
+        }
+        if (
+          method.modifiers.contains(INTEGRATION_TEST_ANNOTATION) &&
+          !context.bodyModifiers(_ == INTEGRATION_TEST_ANNOTATION)
+        ) {
+          context.logError(
+            location,
+            "@IntegrationTest methods can only be called from @IntegrationTest methods"
+          )
+        }
         context.addDependency(method)
         if (staticContext.contains(true) && !method.thisTypeIdOpt.contains(context.typeId))
           Referenceable.addReferencingLocation(callee, method, location, context.thisType)
