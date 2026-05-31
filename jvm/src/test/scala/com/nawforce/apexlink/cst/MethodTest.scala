@@ -81,7 +81,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(
       getMessages(
         root.join("Dummy.cls")
-      ) == "Error: line 1 at 61-82: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
+      ) == "Warning: line 1 at 61-82: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
     )
   }
 
@@ -95,7 +95,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(
       getMessages(
         root.join("Dummy.cls")
-      ) == "Error: line 1 at 45-59: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
+      ) == "Warning: line 1 at 45-59: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
     )
   }
 
@@ -104,8 +104,15 @@ class MethodTest extends AnyFunSuite with TestHelper {
       "@IntegrationTest public class Dummy {@IntegrationTest static void f1(){} static void f2() {f1();} }"
     )
     assert(
-      dummyIssues == "Error: line 1 at 85-87: @IntegrationTest classes can only contain @IntegrationTest and @TearDown methods\nError: line 1 at 91-95: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
+      dummyIssues == "Warning: line 1 at 91-95: @IntegrationTest methods can only be called from @IntegrationTest methods\n"
     )
+  }
+
+  test("IntegrationTest class can contain ordinary members") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {static Integer counter = 0; String label; private Dummy(String label) {this.label = label;} static Integer helper() {counter += 1; return counter;} class InnerHelper {String value(String input) {return input;}} @IntegrationTest static void testA() {System.assert(true);} @TearDown static void cleanup() {}}"
+    )
+    assert(dummyIssues.isEmpty)
   }
 
   test("IntegrationTest can not access private TestVisible method") {

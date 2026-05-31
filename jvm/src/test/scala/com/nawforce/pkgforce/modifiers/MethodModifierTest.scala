@@ -533,21 +533,12 @@ class MethodModifierTest extends AnyFunSuite {
     )
   }
 
-  test("Unannotated method in integration test class should error") {
-    val issues = illegalClassMethodAccess(
-      ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER),
-      ArraySeq(INTEGRATION_TEST_ANNOTATION)
-    )
+  test("Unannotated method in integration test class should be ok") {
     assert(
-      issues == Seq[Issue](
-        Issue(
-          Path("Dummy.cls"),
-          Diagnostic(
-            ERROR_CATEGORY,
-            Location(1, 51, 1, 55),
-            "@IntegrationTest classes can only contain @IntegrationTest and @TearDown methods"
-          )
-        )
+      legalClassMethodAccess(
+        ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(INTEGRATION_TEST_ANNOTATION)
       )
     )
   }

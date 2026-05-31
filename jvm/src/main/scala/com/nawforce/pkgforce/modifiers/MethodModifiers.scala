@@ -213,16 +213,6 @@ object MethodModifiers {
           "Method with @TearDown annotation must be in an @IntegrationTest class"
         )
         extendedModifiers
-      } else if (
-        ownerInfo.modifiers.contains(INTEGRATION_TEST_ANNOTATION) &&
-        !extendedModifiers.contains(INTEGRATION_TEST_ANNOTATION) &&
-        !extendedModifiers.contains(TEAR_DOWN_ANNOTATION)
-      ) {
-        logger.logError(
-          context,
-          "@IntegrationTest classes can only contain @IntegrationTest and @TearDown methods"
-        )
-        extendedModifiers
       } else {
         extendedModifiers
       }
