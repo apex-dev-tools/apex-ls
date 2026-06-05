@@ -109,6 +109,30 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Non-test class can not call private TestVisible constructors") {
+    typeDeclarations(
+      Map(
+        "Foo.cls"   -> "public class Foo { Foo(){} @TestVisible private Foo(Integer i) {}}",
+        "Dummy.cls" -> "public class Dummy { public Dummy(String s){new Foo(1);} }"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 51-54: Constructor is not visible: Foo.<constructor>(System.Integer)\n"
+    )
+  }
+
+  test("IntegrationTest class can not call private TestVisible constructors") {
+    typeDeclarations(
+      Map(
+        "Foo.cls" -> "public class Foo { Foo(){} @TestVisible private Foo(Integer i) {}}",
+        "Dummy.cls" -> "@IntegrationTest public class Dummy { @IntegrationTest public static void testA(){new Foo(1);} }"
+      )
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 89-92: Constructor is not visible: Foo.<constructor>(System.Integer)\n"
+    )
+  }
+
   test("Call to invalid super constructor") {
     typeDeclarations(
       Map(

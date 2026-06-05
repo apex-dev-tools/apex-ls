@@ -26,11 +26,7 @@ import com.nawforce.apexlink.types.other.{AnyDeclaration, RecordSetDeclaration}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, WARNING_CATEGORY}
-import com.nawforce.pkgforce.modifiers.{
-  INTEGRATION_TEST_ANNOTATION,
-  PRIVATE_MODIFIER,
-  TEST_VISIBLE_ANNOTATION
-}
+import com.nawforce.pkgforce.modifiers.{INTEGRATION_TEST_ANNOTATION, PRIVATE_MODIFIER}
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
 import com.nawforce.pkgforce.path.{Locatable, Location, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
@@ -448,13 +444,14 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       DotExpression.findField(name, inputType, context.module, input.isStatic)
     if (field.nonEmpty) {
       if (
-        field.get.modifiers.contains(TEST_VISIBLE_ANNOTATION) &&
+        field.get.isTestVisible &&
         field.get.visibility.contains(PRIVATE_MODIFIER) &&
-        context.thisType.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+        !field.get.thisTypeIdOpt.contains(context.typeId) &&
+        !context.thisType.isUnitTest
       ) {
         context.logError(
           location,
-          "@IntegrationTest classes can not access private @TestVisible fields"
+          "Private @TestVisible fields can only be accessed from @IsTest classes"
         )
       }
       context.addDependency(field.get)
@@ -622,13 +619,14 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
       case Right(method) =>
         cachedMethod = Some(method)
         if (
-          method.modifiers.contains(TEST_VISIBLE_ANNOTATION) &&
+          method.isTestVisible &&
           method.visibility.contains(PRIVATE_MODIFIER) &&
-          context.thisType.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+          !method.thisTypeIdOpt.contains(context.typeId) &&
+          !context.thisType.isUnitTest
         ) {
           context.logError(
             location,
-            "@IntegrationTest classes can not access private @TestVisible methods"
+            "Private @TestVisible methods can only be accessed from @IsTest classes"
           )
         }
         if (

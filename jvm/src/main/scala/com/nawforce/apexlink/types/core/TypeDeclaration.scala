@@ -59,6 +59,8 @@ trait FieldDeclaration extends DependencyHolder with UnsafeLocatable with Depend
   def visibility: Option[Modifier] =
     modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
 
+  lazy val isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
+
   def isExternallyVisible: Boolean =
     modifiers.exists(FieldDeclaration.externalFieldModifiers.contains)
 
@@ -228,7 +230,7 @@ trait ConstructorDeclaration extends DependencyHolder with Dependent with Parame
 
   def visibility: Modifier =
     modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m)).getOrElse(PRIVATE_MODIFIER)
-  def isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
+  lazy val isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
 
   /** Test if the passed constructor has params compatible with this method. Ideally this would just
     * be a comparison of type names but there is a quirk in how platform generic interfaces are
@@ -264,11 +266,11 @@ trait MethodDeclaration extends DependencyHolder with Dependent with Parameters 
   def nameAndParameterTypes: String = s"$name($parameterTypes)"
   def parameterTypes: String        = parameters.map(_.typeName).mkString(", ")
 
-  def isStatic: Boolean      = modifiers.contains(STATIC_MODIFIER)
-  def isAbstract: Boolean    = modifiers.contains(ABSTRACT_MODIFIER)
-  def isVirtual: Boolean     = modifiers.contains(VIRTUAL_MODIFIER)
-  def isOverride: Boolean    = modifiers.contains(OVERRIDE_MODIFIER)
-  def isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
+  def isStatic: Boolean           = modifiers.contains(STATIC_MODIFIER)
+  def isAbstract: Boolean         = modifiers.contains(ABSTRACT_MODIFIER)
+  def isVirtual: Boolean          = modifiers.contains(VIRTUAL_MODIFIER)
+  def isOverride: Boolean         = modifiers.contains(OVERRIDE_MODIFIER)
+  lazy val isTestVisible: Boolean = modifiers.contains(TEST_VISIBLE_ANNOTATION)
 
   def visibility: Option[Modifier] =
     modifiers.find(m => ApexModifiers.visibilityModifiers.contains(m))
@@ -424,6 +426,7 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
   def visibility: Option[Modifier] = ApexModifiers.visibilityModifiers.find(modifiers.contains)
   def isAbstract: Boolean          = modifiers.contains(ABSTRACT_MODIFIER)
   def isVirtual: Boolean           = modifiers.contains(VIRTUAL_MODIFIER)
+  lazy val isUnitTest: Boolean     = modifiers.contains(ISTEST_ANNOTATION)
   def isExtensible: Boolean =
     nature == INTERFACE_NATURE || (nature == CLASS_NATURE && (isAbstract || isVirtual))
 

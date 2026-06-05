@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Private `@TestVisible` methods, fields, and constructors are now only visible from `@IsTest` callers, matching Salesforce visibility rules for non-test and `@IntegrationTest` code (#471)
 - `@IntegrationTest` classes no longer reject ordinary helper members, and calls to `@IntegrationTest` methods from non-integration contexts are reported as warnings instead of deploy-blocking errors (#470)
 - Unused warnings for public static methods now call out their static nature and explain how to document intentional external entry points (#406)
 - Unused warnings for virtual/override method hierarchies now include context when all related overrides are unused (#403)
