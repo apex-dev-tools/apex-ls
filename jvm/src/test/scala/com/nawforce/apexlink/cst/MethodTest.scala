@@ -125,22 +125,49 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(
       getMessages(
         root.join("Dummy.cls")
-      ) == "Error: line 1 at 79-94: @IntegrationTest classes can not access private @TestVisible methods\n"
+      ) == "Error: line 1 at 79-94: Private @TestVisible methods can only be accessed from @IsTest classes\n"
     )
   }
 
-  test("IntegrationTest can not access private TestVisible field") {
+  test("Non-test class can not access private TestVisible method") {
     typeDeclarations(
       Map(
-        "Target.cls" -> "public class Target {@TestVisible private static String helper;}",
-        "Dummy.cls" -> "@IntegrationTest public class Dummy {@IntegrationTest public static void f2() {String value = Target.helper;}}"
+        "Target.cls" -> "public class Target {@TestVisible private static void helper(){}}",
+        "Dummy.cls"  -> "public class Dummy {public static void f2() {Target.helper();}}"
       )
     )
     assert(
       getMessages(
         root.join("Dummy.cls")
-      ) == "Error: line 1 at 94-107: @IntegrationTest classes can not access private @TestVisible fields\n"
+      ) == "Error: line 1 at 45-60: Private @TestVisible methods can only be accessed from @IsTest classes\n"
     )
+  }
+
+  test("IsTest class can access private TestVisible method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static void helper(){}}",
+        "Dummy.cls" -> "@IsTest public class Dummy {@IsTest public static void f2() {Target.helper();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("Nested class in IsTest class can access private TestVisible method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static void helper(){}}",
+        "Dummy.cls" -> "@IsTest public class Dummy {private class Inner {public void f2() {Target.helper();}}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("Same file class can access private TestVisible method") {
+    typeDeclaration(
+      "public class Dummy {@TestVisible private static void helper(){} public class Inner {public void f2() {Dummy.helper();}}}"
+    )
+    assert(dummyIssues.isEmpty)
   }
 
   test("Method call with non-ambiguous target") {
