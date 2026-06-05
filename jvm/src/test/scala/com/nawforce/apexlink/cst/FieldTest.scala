@@ -99,4 +99,59 @@ class FieldTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("IntegrationTest can not access private TestVisible field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static String helper;}",
+        "Dummy.cls" -> "@IntegrationTest public class Dummy {@IntegrationTest public static void f2() {String value = Target.helper;}}"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Dummy.cls")
+      ) == "Error: line 1 at 94-107: Private @TestVisible fields can only be accessed from @IsTest classes\n"
+    )
+  }
+
+  test("Non-test class can not access private TestVisible field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static String helper;}",
+        "Dummy.cls" -> "public class Dummy {public static void f2() {String value = Target.helper;}}"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Dummy.cls")
+      ) == "Error: line 1 at 60-73: Private @TestVisible fields can only be accessed from @IsTest classes\n"
+    )
+  }
+
+  test("IsTest class can access private TestVisible field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static String helper;}",
+        "Dummy.cls" -> "@IsTest public class Dummy {@IsTest public static void f2() {String value = Target.helper;}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("Nested class in IsTest class can access private TestVisible field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static String helper;}",
+        "Dummy.cls" -> "@IsTest public class Dummy {private class Inner {public void f2() {String value = Target.helper;}}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("Same file class can access private TestVisible field") {
+    typeDeclaration(
+      "public class Dummy {@TestVisible private static String helper; public class Inner {public void f2() {String value = Dummy.helper;}}}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
 }
