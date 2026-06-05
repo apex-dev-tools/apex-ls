@@ -109,6 +109,16 @@ class ConstructorTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Nested class in IsTest class can call private TestVisible constructors") {
+    typeDeclarations(
+      Map(
+        "Foo.cls" -> "public class Foo { Foo(){} @TestVisible private Foo(Integer i) {}}",
+        "Dummy.cls" -> "@isTest public class Dummy { private class Inner { public Inner(){new Foo(1);} } }"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("Non-test class can not call private TestVisible constructors") {
     typeDeclarations(
       Map(

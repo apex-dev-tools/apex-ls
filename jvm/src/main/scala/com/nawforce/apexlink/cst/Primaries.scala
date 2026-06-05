@@ -19,7 +19,6 @@ import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFieldLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.pkgforce.modifiers.PRIVATE_MODIFIER
 import com.nawforce.pkgforce.names._
 import com.nawforce.pkgforce.path.Location
 import com.nawforce.runtime.parsers.CodeParser
@@ -150,12 +149,7 @@ final case class IdPrimary(id: Id) extends Primary {
     cachedClassFieldDeclaration = field
 
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
-      if (
-        field.get.isTestVisible &&
-        field.get.visibility.contains(PRIVATE_MODIFIER) &&
-        !field.get.thisTypeIdOpt.contains(context.typeId) &&
-        !context.thisType.isUnitTest
-      ) {
+      if (TestVisibleAccess.isInvalidPrivateFieldAccess(field.get, context.thisType)) {
         context.logError(
           location,
           "Private @TestVisible fields can only be accessed from @IsTest classes"

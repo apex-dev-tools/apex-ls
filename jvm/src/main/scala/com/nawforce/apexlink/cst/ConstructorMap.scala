@@ -123,7 +123,7 @@ object ConstructorMap {
     thisType: TypeDeclaration,
     superType: Option[TypeDeclaration]
   ): Boolean = {
-    lazy val isTestVisible            = ctor.isTestVisible && thisType.isUnitTest
+    lazy val isTestVisible            = ctor.isTestVisible && thisType.isUnitTestContext
     lazy val isAccessedInThisContext  = areInSameApexFile(ctor, thisType)
     lazy val isAccessedInSuperContext = superType.nonEmpty && areInSameApexFile(ctor, superType.get)
 

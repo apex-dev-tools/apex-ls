@@ -26,7 +26,7 @@ import com.nawforce.apexlink.types.other.{AnyDeclaration, RecordSetDeclaration}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue, WARNING_CATEGORY}
-import com.nawforce.pkgforce.modifiers.{INTEGRATION_TEST_ANNOTATION, PRIVATE_MODIFIER}
+import com.nawforce.pkgforce.modifiers.INTEGRATION_TEST_ANNOTATION
 import com.nawforce.pkgforce.names.{EncodedName, Name, Names, TypeName}
 import com.nawforce.pkgforce.path.{Locatable, Location, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
@@ -443,12 +443,7 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
     val field: Option[FieldDeclaration] =
       DotExpression.findField(name, inputType, context.module, input.isStatic)
     if (field.nonEmpty) {
-      if (
-        field.get.isTestVisible &&
-        field.get.visibility.contains(PRIVATE_MODIFIER) &&
-        !field.get.thisTypeIdOpt.contains(context.typeId) &&
-        !context.thisType.isUnitTest
-      ) {
+      if (TestVisibleAccess.isInvalidPrivateFieldAccess(field.get, context.thisType)) {
         context.logError(
           location,
           "Private @TestVisible fields can only be accessed from @IsTest classes"
@@ -618,12 +613,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     callee.findMethod(target.name, argTypes, staticContext, context) match {
       case Right(method) =>
         cachedMethod = Some(method)
-        if (
-          method.isTestVisible &&
-          method.visibility.contains(PRIVATE_MODIFIER) &&
-          !method.thisTypeIdOpt.contains(context.typeId) &&
-          !context.thisType.isUnitTest
-        ) {
+        if (TestVisibleAccess.isInvalidPrivateMethodAccess(method, context.thisType)) {
           context.logError(
             location,
             "Private @TestVisible methods can only be accessed from @IsTest classes"

@@ -427,6 +427,8 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
   def isAbstract: Boolean          = modifiers.contains(ABSTRACT_MODIFIER)
   def isVirtual: Boolean           = modifiers.contains(VIRTUAL_MODIFIER)
   lazy val isUnitTest: Boolean     = modifiers.contains(ISTEST_ANNOTATION)
+  lazy val isUnitTestContext: Boolean =
+    isUnitTest || (inTest && outerTypeDeclaration.exists(_.isUnitTestContext))
   def isExtensible: Boolean =
     nature == INTERFACE_NATURE || (nature == CLASS_NATURE && (isAbstract || isVirtual))
 
