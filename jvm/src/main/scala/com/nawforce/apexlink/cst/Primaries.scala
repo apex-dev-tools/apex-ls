@@ -149,12 +149,9 @@ final case class IdPrimary(id: Id) extends Primary {
     cachedClassFieldDeclaration = field
 
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
-      if (TestVisibleAccess.isInvalidPrivateFieldAccess(field.get, context.thisType)) {
-        context.logError(
-          location,
-          "Private @TestVisible fields can only be accessed from @IsTest classes"
-        )
-      }
+      TestVisibleAccess
+        .fieldAccessError(field.get, context.thisType)
+        .foreach(context.logError(location, _))
       Referenceable.addReferencingLocation(field.get, location, context.thisType)
       context.addDependency(field.get)
       Some(

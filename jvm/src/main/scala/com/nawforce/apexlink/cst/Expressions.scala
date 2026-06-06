@@ -443,12 +443,9 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
     val field: Option[FieldDeclaration] =
       DotExpression.findField(name, inputType, context.module, input.isStatic)
     if (field.nonEmpty) {
-      if (TestVisibleAccess.isInvalidPrivateFieldAccess(field.get, context.thisType)) {
-        context.logError(
-          location,
-          "Private @TestVisible fields can only be accessed from @IsTest classes"
-        )
-      }
+      TestVisibleAccess
+        .fieldAccessError(field.get, context.thisType)
+        .foreach(context.logError(location, _))
       context.addDependency(field.get)
       if (input.isStatic.contains(true) && !field.get.thisTypeIdOpt.contains(context.typeId))
         Referenceable.addReferencingLocation(inputType, field.get, location, context.thisType)
@@ -613,12 +610,9 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     callee.findMethod(target.name, argTypes, staticContext, context) match {
       case Right(method) =>
         cachedMethod = Some(method)
-        if (TestVisibleAccess.isInvalidPrivateMethodAccess(method, context.thisType)) {
-          context.logError(
-            location,
-            "Private @TestVisible methods can only be accessed from @IsTest classes"
-          )
-        }
+        TestVisibleAccess
+          .methodAccessError(method, context.thisType)
+          .foreach(context.logError(location, _))
         if (
           method.modifiers.contains(INTEGRATION_TEST_ANNOTATION) &&
           !context.bodyModifiers(_ == INTEGRATION_TEST_ANNOTATION)

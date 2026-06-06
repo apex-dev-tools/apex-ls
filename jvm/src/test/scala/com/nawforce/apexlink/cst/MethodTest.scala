@@ -64,6 +64,63 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Unrelated class can not call private static method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {private static void helper(){}}",
+        "Dummy.cls"  -> "public class Dummy {public static void f2() {Target.helper();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).contains("Method is not visible"))
+  }
+
+  test("Unrelated class can not call private instance method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {private void helper(){}}",
+        "Dummy.cls"  -> "public class Dummy {public void f2(Target target) {target.helper();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).contains("Method is not visible"))
+  }
+
+  test("Unrelated class can not call protected instance method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public virtual class Target {protected void helper(){}}",
+        "Dummy.cls"  -> "public class Dummy {public void f2(Target target) {target.helper();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).contains("Method is not visible"))
+  }
+
+  test("Subclass can call protected instance method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public virtual class Target {protected void helper(){}}",
+        "Dummy.cls"  -> "public class Dummy extends Target {public void f2() {helper();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("Subclass can not resolve private instance method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public virtual class Target {private void helper(){}}",
+        "Dummy.cls"  -> "public class Dummy extends Target {public void f2() {helper();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).contains("No matching method found"))
+  }
+
+  test("Same file class can call private method") {
+    typeDeclaration(
+      "public class Dummy {private static void helper(){} public class Inner {public void f2() {Dummy.helper();}}}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("IntegrationTest method called from IntegrationTest method") {
     typeDeclaration(
       "@IntegrationTest public class Dummy {@IntegrationTest static void f1(){} @IntegrationTest static void f2() {f1();} }"
@@ -147,6 +204,16 @@ class MethodTest extends AnyFunSuite with TestHelper {
     typeDeclarations(
       Map(
         "Target.cls" -> "public class Target {@TestVisible private static void helper(){}}",
+        "Dummy.cls" -> "@IsTest public class Dummy {@IsTest public static void f2() {Target.helper();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("IsTest class can access protected TestVisible method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public virtual class Target {@TestVisible protected static void helper(){}}",
         "Dummy.cls" -> "@IsTest public class Dummy {@IsTest public static void f2() {Target.helper();}}"
       )
     )
