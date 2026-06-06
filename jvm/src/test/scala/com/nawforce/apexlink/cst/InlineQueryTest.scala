@@ -37,6 +37,19 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("SOQL security enforced warning") {
+    typeDeclaration(
+      "public class Dummy {{ Object a = [Select Id from Account WITH SECURITY_ENFORCED]; }}"
+    )
+    assert(dummyIssues.contains("WITH SECURITY_ENFORCED is deprecated, use WITH USER_MODE instead"))
+  }
+
+  test("SOQL user mode no warning") {
+    happyTypeDeclaration(
+      "public class Dummy {{ Object a = [Select Id from Account WITH USER_MODE]; }}"
+    )
+  }
+
   test("SOQL list assignment") {
     happyTypeDeclaration("public class Dummy {{ List<Account> a = [Select Id from Account]; }}")
   }
