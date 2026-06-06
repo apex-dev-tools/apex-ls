@@ -81,6 +81,63 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues == "Error: line 1 at 38-49: protected field 'foo' cannot be static\n")
   }
 
+  test("Unrelated class can not access private static field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {private static String helper;}",
+        "Dummy.cls" -> "public class Dummy {public static void f2() {String value = Target.helper;}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).contains("Field is not visible"))
+  }
+
+  test("Unrelated class can not access private instance field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {private String helper;}",
+        "Dummy.cls" -> "public class Dummy {public void f2(Target target) {String value = target.helper;}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).contains("Field is not visible"))
+  }
+
+  test("Unrelated class can not access protected instance field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public virtual class Target {protected String helper;}",
+        "Dummy.cls" -> "public class Dummy {public void f2(Target target) {String value = target.helper;}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).contains("Field is not visible"))
+  }
+
+  test("Subclass can access protected instance field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public virtual class Target {protected String helper;}",
+        "Dummy.cls" -> "public class Dummy extends Target {public void f2() {String value = helper;}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("Subclass can not access private instance field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public virtual class Target {private String helper;}",
+        "Dummy.cls" -> "public class Dummy extends Target {public void f2() {String value = helper;}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).contains("Field is not visible"))
+  }
+
+  test("Same file class can access private field") {
+    typeDeclaration(
+      "public class Dummy {private static String helper; public class Inner {public void f2() {String value = Dummy.helper;}}}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("Potentially recursive field lookup") {
     // The search order for 'a' here is Inner -> (Outer)Dummy -> (Superclass)Inner -> (Outer)Dummy
     // Unless we step in to stop the recursion by avoiding a repeat search of Inner
@@ -131,6 +188,16 @@ class FieldTest extends AnyFunSuite with TestHelper {
     typeDeclarations(
       Map(
         "Target.cls" -> "public class Target {@TestVisible private static String helper;}",
+        "Dummy.cls" -> "@IsTest public class Dummy {@IsTest public static void f2() {String value = Target.helper;}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("IsTest class can access protected TestVisible field") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public virtual class Target {@TestVisible protected static String helper;}",
         "Dummy.cls" -> "@IsTest public class Dummy {@IsTest public static void f2() {String value = Target.helper;}}"
       )
     )
