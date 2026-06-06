@@ -58,6 +58,14 @@ class SOQLParserTest extends AnyFunSuite with Matchers {
     assert(SOQLParser.parse("Select A from Table").isRight)
   }
 
+  test("With Security Enforced") {
+    assert(SOQLParser.parse("Select A from Table WITH SECURITY_ENFORCED").isRight)
+  }
+
+  test("With User Mode") {
+    assert(SOQLParser.parse("Select A from Table WITH USER_MODE").isRight)
+  }
+
   test("Single field, multi-table") {
     assert(SOQLParser.parse("Select A from Table1, Table2").isRight)
   }
