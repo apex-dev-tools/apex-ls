@@ -19,8 +19,9 @@ import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFieldLike}
 import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformTypes
+import com.nawforce.pkgforce.diagnostics.{Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.names._
-import com.nawforce.pkgforce.path.Location
+import com.nawforce.pkgforce.path.{Location, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 import io.github.apexdevtools.apexparser.ApexParser._
 import io.github.apexdevtools.apexparser.ApexParserBaseVisitor
@@ -224,7 +225,8 @@ case object AGGREGATE_RESULT_QUERY extends QueryResultType
 final case class SOQL(
   queryResultType: QueryResultType,
   fromNames: Array[DotName],
-  boundExpressions: ArraySeq[Expression]
+  boundExpressions: ArraySeq[Expression],
+  deprecatedSecurityEnforcedLocation: Option[PathLocation]
 ) extends Primary {
 
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
@@ -232,6 +234,16 @@ final case class SOQL(
     boundExpressions.foreach(expr => {
       expr.verify(input, context)
     })
+
+    deprecatedSecurityEnforcedLocation.foreach(location =>
+      context.log(
+        Issue(
+          WARNING_CATEGORY,
+          location,
+          "WITH SECURITY_ENFORCED is deprecated, use WITH USER_MODE instead"
+        )
+      )
+    )
 
     if (fromNames.length != 1 || fromNames.head.names.size != 1) {
       context.logError(
@@ -303,7 +315,13 @@ object SOQL {
               .map(name => Name(Option(name).map(_.getText).getOrElse("")))
           )
         )
-    new SOQL(resultType, fromNames.toArray, boundedExpressions)
+
+    val deprecatedSecurityEnforcedLocation =
+      Option(query.withClause())
+        .filter(withClause => Option(withClause.SECURITY_ENFORCED()).nonEmpty)
+        .map(withClause => CST.sourceContext.value.get.getLocation(withClause))
+
+    new SOQL(resultType, fromNames.toArray, boundedExpressions, deprecatedSecurityEnforcedLocation)
   }
 }
 
