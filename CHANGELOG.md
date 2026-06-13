@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.0-beta.1] - 2026-06-13
+
 ### Added
 
 - Recognition of Summer '26 test annotations `@IntegrationTest` and `@TearDown`, including test-class and unused-analysis handling (#468)
@@ -43,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Slimmed the JS module surface to the published apex-ls facades
 - Removed JS-portability shims `CodeParser.toScala(value)` and `CodeParser.getText(...)` from the CST construction layer; call sites now use `Option(...)` directly (#449)
 - Replaced cascading `Option(...).orElse(...)` chains in `Literal.construct` and `ClassBodyDeclaration.construct` with extractor-based pattern matching (#449)
+
+### Deprecated
+
+- The npm distribution (`@apexdevtools/apex-ls`) is no longer published by default and is planned for removal; the JVM artifact on Maven Central is the supported distribution. Contact the maintainers if you still require an npm build.
 
 ### Removed
 
