@@ -67,7 +67,9 @@ class StreamDeployer(
 
     // Run plugins over loaded types DependentTypes
     // This has to be done post loading to allow dependencies to be established
-    module.pkg.org.pluginsManager.closePlugins()
+    LoggerOps.infoTime("Closed plugins (unused analysis)", types.size > basicTypesSize) {
+      module.pkg.org.pluginsManager.closePlugins()
+    }
 
     // Report progress and tidy up
     if (types.size > basicTypesSize) {
@@ -192,17 +194,24 @@ class StreamDeployer(
       LoggerOps.info(s"Used $rejectCycles rejection cycles")
 
     // For those not rejected, complete processing
-    classes
-      .filterNot(rejected.contains)
-      .foreach(cls => {
-        // Re-establish dependencies
-        cls.declaration.propagateOuterDependencies(typeCache)
-        cls.declaration.propagateDependencies()
+    val survivors = classes.filterNot(rejected.contains)
+    survivors.foreach(cls => {
+      // Re-establish dependencies
+      cls.declaration.propagateOuterDependencies(typeCache)
+      cls.declaration.propagateDependencies()
 
-        // Report any (existing) diagnostics
-        val path = cls.declaration.location.path
-        cls.diagnostics.foreach(diagnostic => module.pkg.org.issues.add(Issue(path, diagnostic)))
-      })
+      // Report any (existing) diagnostics
+      val path = cls.declaration.location.path
+      cls.diagnostics.foreach(diagnostic => module.pkg.org.issues.add(Issue(path, diagnostic)))
+    })
+
+    // Seed cache-loaded classes into the plugin manager so holder-based unused analysis is
+    // recomputed for them in this workspace (UnusedPlugin.onSummaryValidated) during closePlugins,
+    // rather than replaying the workspace-dependent cached result (issue #477).
+    if (survivors.nonEmpty) {
+      survivors.foreach(cls => module.pkg.org.pluginsManager.createPlugin(cls.declaration))
+      LoggerOps.debug(s"Seeded ${survivors.length} cache-loaded classes for unused recompute")
+    }
   }
 
   /** Load classes from the code cache as types returning TypeNames of those available. Benchmarking

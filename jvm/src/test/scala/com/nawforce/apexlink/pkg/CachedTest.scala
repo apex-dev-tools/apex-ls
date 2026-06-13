@@ -18,6 +18,7 @@ import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.OPM
+import com.nawforce.apexlink.plugins.UnusedPlugin
 import com.nawforce.apexlink.types.apex.{FullDeclaration, SummaryDeclaration}
 import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
@@ -310,6 +311,42 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
         getMessages(org3) ==
           path"/Dummy.cls: Missing: line 1 at 33-55: Unknown field or type 'TestLabel' on 'System.Label'" + "\n"
       )
+    }
+  }
+
+  test("Holder-based unused is recomputed for cache-loaded classes (#477)") {
+    FileSystemHelper.run(
+      Map(
+        "Service.cls" ->
+          "public class Service { public void doWork() {} public void stillUsed() {} }",
+        "Keeper.cls" ->
+          "public class Keeper { public void keep() { new Service().stillUsed(); } }",
+        "Client.cls" ->
+          "public class Client { public void run() { new Service().doWork(); } }"
+      )
+    ) { root: PathLike =>
+      def serviceIssues(org: OPM.OrgImpl): String =
+        org.issues
+          .issuesForFileInternal(root.join("Service.cls"))
+          .map(_.asString())
+          .mkString("\n")
+
+      // Cache with Service.doWork used by Client, so it is not flagged unused
+      val org1 = createOrgWithPlugin(root, classOf[UnusedPlugin])
+      assert(serviceIssues(org1).isEmpty)
+      org1.flush()
+
+      // Remove the only caller of Service.doWork; Service stays held via Keeper.stillUsed()
+      root.join("Client.cls").delete()
+      root.join("Client.cls-meta.xml").delete()
+
+      // Service loads from cache; recompute-on-load reports the now-unused method rather than
+      // replaying the stale (clean) cached result - this is the #477 fix
+      val org2 = createOrgWithPlugin(root, classOf[UnusedPlugin])
+      assertIsSummaryDeclaration(org2.unmanaged, "Service")
+      assert(serviceIssues(org2).contains("Unused public method 'void doWork()'"))
+      // stillUsed() remains held via Keeper, so it must not be flagged
+      assert(!serviceIssues(org2).contains("stillUsed"))
     }
   }
 

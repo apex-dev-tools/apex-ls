@@ -156,7 +156,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.Boolean,
               ArraySeq(ParameterSummary("other", TypeNames.InternalObject)),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -166,7 +167,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.Integer,
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -176,7 +178,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.String,
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -186,7 +189,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.Integer,
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -196,7 +200,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.String,
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -206,7 +211,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               dummyTypeName,
               ArraySeq(ParameterSummary("name", TypeNames.String)),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -216,7 +222,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.listOf(dummyTypeName),
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             )
           ),
           ArraySeq(),
@@ -586,7 +593,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.Boolean,
               ArraySeq(ParameterSummary("other", TypeNames.InternalObject)),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -596,7 +604,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.Integer,
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -606,7 +615,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.String,
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -616,7 +626,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.Integer,
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -626,7 +637,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.String,
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -636,7 +648,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               dummyTypeName,
               ArraySeq(ParameterSummary("name", TypeNames.String)),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             ),
             MethodSummary(
               idLocation,
@@ -646,7 +659,8 @@ class SummaryTest extends AnyFunSuite with TestHelper {
               TypeNames.listOf(dummyTypeName),
               ArraySeq(),
               hasBlock = true,
-              Array()
+              Array(),
+              isSynthetic = true
             )
           ),
           ArraySeq(),
