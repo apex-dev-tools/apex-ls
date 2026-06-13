@@ -32,7 +32,7 @@ import com.nawforce.pkgforce.modifiers.{Modifier, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
 import com.nawforce.pkgforce.parsers.{CLASS_NATURE, ENUM_NATURE, INTERFACE_NATURE, Nature}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
-import com.nawforce.runforce.Internal.Object$
+import io.github.apexdevtools.standardtypes.Internal.Object$
 
 import java.nio.file.{FileSystemNotFoundException, FileSystems, Files, Paths}
 import java.util
@@ -119,7 +119,7 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
     cls: Class[_],
     accum: mutable.Map[Name, PlatformField] = mutable.Map()
   ): mutable.Map[Name, PlatformField] = {
-    if (cls.getCanonicalName.startsWith(PlatformTypeDeclaration.platformPackage)) {
+    if (PlatformTypeDeclaration.isPlatformClassName(cls.getCanonicalName)) {
       cls.getDeclaredFields
         .filterNot(_.isSynthetic)
         .foreach(f => {
@@ -163,8 +163,8 @@ class PlatformTypeDeclaration(val native: Any, val outer: Option[PlatformTypeDec
   protected def getMethods: ArraySeq[PlatformMethod] = {
     val localMethods =
       cls.getMethods
-        .filter(
-          _.getDeclaringClass.getCanonicalName.startsWith(PlatformTypeDeclaration.platformPackage)
+        .filter(m =>
+          PlatformTypeDeclaration.isPlatformClassName(m.getDeclaringClass.getCanonicalName)
         )
         .filterNot(_.isSynthetic)
     nature match {
@@ -298,9 +298,15 @@ class PlatformMethod(
 
 object PlatformTypeDeclaration {
   /* Java package prefix for platform types */
-  private val platformPackage = "com.nawforce.runforce"
+  private val platformPackage = "io.github.apexdevtools.standardtypes"
   /* Java package prefix for SObject types */
-  private val sObjectPackage = "com.nawforce.runforce.SObjects"
+  private val sObjectPackage = "io.github.apexdevtools.sobjecttypes"
+  /* Java package prefix for SObject stubs bundled with the platform types */
+  private val sObjectStubsPackage = s"$platformPackage.SObjectStubs"
+
+  /* Test if a Java class name is from one of the platform type packages */
+  private def isPlatformClassName(cname: String): Boolean =
+    cname.startsWith(platformPackage) || cname.startsWith(sObjectPackage)
 
   /* Cache of loaded platform declarations */
   private val declarationCache = mutable.Map[DotName, Option[PlatformTypeDeclaration]]()
@@ -310,7 +316,7 @@ object PlatformTypeDeclaration {
   lazy val platformPackagePath: java.nio.file.Path = getPathFromPackage(
     s"$platformPackage.System"
   ).getParent
-  lazy val sObjectPackagePath: java.nio.file.Path = getPathFromPackage(sObjectPackage).getParent
+  lazy val sObjectPackagePath: java.nio.file.Path = getPathFromPackage(sObjectPackage)
 
   private def getPathFromPackage(packagePath: String) = {
     val path = "/" + packagePath.replaceAll("\\.", "/")
@@ -357,13 +363,20 @@ object PlatformTypeDeclaration {
         assert(matched.size < 2, s"Found multiple platform type matches for $name")
         matched.map(name =>
           new PlatformTypeDeclaration(
-            classOf[PlatformTypeDeclaration].getClassLoader
-              .loadClass(platformPackage + "." + name),
+            classOf[PlatformTypeDeclaration].getClassLoader.loadClass(javaClassNameFor(name)),
             None
           )
         )
       }
     )
+  }
+
+  /* Java class name for an indexed platform or SObject type */
+  private def javaClassNameFor(name: DotName): String = {
+    if (name.firstName == Names.SObjects)
+      sObjectPackage + "." + DotName(name.names.tail).toString
+    else
+      platformPackage + "." + name.toString
   }
 
   /* Valid platform class names */
@@ -381,7 +394,7 @@ object PlatformTypeDeclaration {
   private lazy val classNameMap: HashMap[DotName, DotName] = {
     val names = mutable.HashMap[DotName, DotName]()
     indexDir(platformPackagePath, DotName(Seq()), names)
-    indexDir(sObjectPackagePath, DotName(Seq()), names)
+    indexDir(sObjectPackagePath, DotName(Seq(Names.SObjects)), names)
     HashMap[DotName, DotName]() ++ names
   }
 
@@ -462,12 +475,15 @@ object PlatformTypeDeclaration {
       } else if (cname == "void") {
         TypeNames.Void
       } else if (
-        cname.startsWith(platformPackage + ".SObjects") ||
-        cname.startsWith(platformPackage + ".SObjectStubs")
+        cname.startsWith(sObjectPackage + ".") ||
+        cname.startsWith(sObjectStubsPackage + ".")
       ) {
-        val names = cname
-          .replace("SObjectStubs", "SObjects")
-          .drop(platformPackage.length + 10)
+        val localName =
+          if (cname.startsWith(sObjectStubsPackage + "."))
+            cname.drop(sObjectStubsPackage.length + 1)
+          else
+            cname.drop(sObjectPackage.length + 1)
+        val names = localName
           .split('.')
           .map(n => Name(n))
           .reverse

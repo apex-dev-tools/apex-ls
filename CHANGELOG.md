@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Upgraded platform types to Salesforce Summer '26 via standard-types and sobject-types 67.0.0
 - Removed the ANTLR-first parsing mode; OutlineParser is now the sole parser path. The `--antlr` / ANTLR parser option is deprecated and a no-op (#433)
 - Upgraded to apex-parser 5.1.0 and the antlr4 4.13 runtime
 - Slimmed the JS module surface to the published apex-ls facades
