@@ -163,7 +163,8 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable {
       typeName,
       parameters.map(_.serialise),
       hasBlock,
-      dependencySummary()
+      dependencySummary(),
+      isSynthetic
     )
   }
 }

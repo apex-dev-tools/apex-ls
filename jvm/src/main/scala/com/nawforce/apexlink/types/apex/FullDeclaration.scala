@@ -22,7 +22,7 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.types.core._
-import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, LoggerOps, UNUSED_CATEGORY}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier, TypeName}
@@ -125,10 +125,26 @@ abstract class FullDeclaration(
 
   override def flush(pc: ParsedCache, context: PackageContext): Unit = {
     if (!flushedToCache) {
-      val diagnostics = module.pkg.org.issueManager.getDiagnostics(location.path).toArray
+      val diagnostics = cacheableDiagnostics(
+        module.pkg.org.issueManager.getDiagnostics(location.path)
+      ).toArray
       pc.upsert(context, name.value, contentHash, writeBinary(ApexSummary(summary, diagnostics)))
       flushedToCache = true
     }
+  }
+
+  /** Filter diagnostics before they are written to the parsed cache.
+    *
+    * Holder-based unused warnings (unused methods/fields/types) are a whole-program property and so
+    * are workspace-dependent; caching them leads to stale results being replayed in other
+    * workspaces (issue #477). We drop them here and recompute on cache load instead (see
+    * StreamDeployer seeding + UnusedPlugin.onSummaryValidated). Unused *local variable* warnings are
+    * wholly determined within a single method body, so they remain safe to cache and are preserved.
+    */
+  private def cacheableDiagnostics(diagnostics: Seq[Diagnostic]): Seq[Diagnostic] = {
+    diagnostics.filterNot(d =>
+      d.category == UNUSED_CATEGORY && !d.message.startsWith("Unused local variable")
+    )
   }
 
   override protected def validate(): Unit = {

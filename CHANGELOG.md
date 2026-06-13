@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Unused method/field/type warnings are now recomputed for cache-loaded classes instead of replaying the cached result, so they reflect actual usage in the current workspace rather than a stale whole-program result captured when the cache was written (#477)
 - Private and protected field/method accesses from unrelated classes are now reported as visibility errors (#474)
 - SOQL queries using deprecated `WITH SECURITY_ENFORCED` now report a warning recommending `WITH USER_MODE` (#466)
 - Private `@TestVisible` methods, fields, and constructors are now only visible from `@IsTest` callers, matching Salesforce visibility rules for non-test and `@IntegrationTest` code (#471)

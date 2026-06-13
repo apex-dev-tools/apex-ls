@@ -268,6 +268,8 @@ class SummaryMethod(
 
   override def hasBlock: Boolean = methodSummary.hasBlock
 
+  override def isSynthetic: Boolean = methodSummary.isSynthetic
+
 }
 
 class SummaryBlock(
@@ -415,6 +417,20 @@ class SummaryDeclaration(
     localConstructors.foreach(_.propagateDependencies())
     localMethods.foreach(_.propagateDependencies())
     nestedTypes.foreach(_.propagateDependencies())
+  }
+
+  /** Collect this type's dependencies together with those of all its members and nested types.
+    * Mirrors FullDeclaration.collectDependencies; the type-level `dependencies` alone omits
+    * member-level use (method/field/block/constructor dependencies), which unused re-analysis
+    * needs in order to ripple to every type this one uses.
+    */
+  def collectDependencies(dependsOn: mutable.Set[Dependent]): Unit = {
+    dependencies.foreach(dependsOn.add)
+    blocks.foreach(_.dependencies.foreach(dependsOn.add))
+    localFields.foreach(_.dependencies.foreach(dependsOn.add))
+    localConstructors.foreach(_.dependencies.foreach(dependsOn.add))
+    localMethods.foreach(_.dependencies.foreach(dependsOn.add))
+    nestedTypes.foreach(_.collectDependencies(dependsOn))
   }
 
   override def gatherDependencies(
