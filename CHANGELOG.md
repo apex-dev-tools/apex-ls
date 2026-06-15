@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Nested classes extending an externally nested base no longer resolve unqualified static field names through the base class's enclosing type, avoiding false `Field is not visible` diagnostics (#482)
 - Private and protected field/method accesses from unrelated classes are now reported as visibility errors (#474)
 - SOQL queries using deprecated `WITH SECURITY_ENFORCED` now report a warning recommending `WITH USER_MODE` (#466)
 - Private `@TestVisible` methods, fields, and constructors are now only visible from `@IsTest` callers, matching Salesforce visibility rules for non-test and `@IntegrationTest` code (#471)

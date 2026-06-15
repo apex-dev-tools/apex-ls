@@ -487,14 +487,21 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
    * being searched a second time. */
   protected def findField(
     name: Name,
-    exclude: mutable.HashSet[TypeDeclaration] = new mutable.HashSet()
+    exclude: mutable.HashSet[TypeDeclaration] = new mutable.HashSet(),
+    searchOuter: Boolean = true
   ): Option[FieldDeclaration] = {
     exclude.add(this)
     fields
       .find(_.name == name)
-      .orElse(superClassDeclaration.filterNot(exclude.contains).flatMap(_.findField(name, exclude)))
       .orElse(
-        outerTypeDeclaration
+        superClassDeclaration
+          .filterNot(exclude.contains)
+          .flatMap(_.findField(name, exclude, searchOuter = false))
+      )
+      .orElse(
+        Option
+          .when(searchOuter)(outerTypeDeclaration)
+          .flatten
           .filterNot(exclude.contains)
           .flatMap(_.findField(name, exclude).filter(_.isStatic))
       )

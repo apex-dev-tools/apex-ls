@@ -221,4 +221,31 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Nested class resolves enclosing static field over superclass enclosing field") {
+    typeDeclarations(
+      Map(
+        "BaseFramework.cls" ->
+          """public class BaseFramework {
+            |  private static final String NAMESPACE = 'base__';
+            |
+            |  public abstract class BaseConfig {
+            |    public abstract void setup();
+            |  }
+            |}""".stripMargin,
+        "Consumer.cls" ->
+          """public class Consumer {
+            |  private static final String NAMESPACE = 'acme__';
+            |
+            |  public class Configuration extends BaseFramework.BaseConfig {
+            |    public override void setup() {
+            |      String objName = NAMESPACE + 'MyObject__c';
+            |      System.debug(objName);
+            |    }
+            |  }
+            |}""".stripMargin
+      )
+    )
+    assert(getMessages(root.join("Consumer.cls")).isEmpty)
+  }
+
 }
