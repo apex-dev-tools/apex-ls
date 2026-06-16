@@ -21,6 +21,7 @@ import com.nawforce.apexlink.types.apex.{
   ApexFieldLike,
   ApexMethodLike,
   FullDeclaration,
+  SummaryDeclaration,
   TriggerDeclaration
 }
 import com.nawforce.apexlink.types.core.{
@@ -66,7 +67,13 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
       .distinct
   }
 
-  private def reportUnused(td: FullDeclaration): Seq[DependentType] = {
+  // Recompute holder-based unused for classes loaded from the parsed cache (issue #477). The cached
+  // result is workspace-dependent (unused is a whole-program property) so replaying it across
+  // workspaces is unsound. SummaryDeclarations are seeded directly into the plugin manager by
+  // StreamDeployer, and the ripple in reportUnused re-validates the types they depend on.
+  override def onSummaryValidated(td: SummaryDeclaration): Seq[DependentType] = reportUnused(td)
+
+  private def reportUnused(td: ApexClassDeclaration): Seq[DependentType] = {
     // Ignore if suppressed, or inner type (handled by unusedIssues)
     if (td.modifiers.exists(suppressModifiers.contains) || td.outerTypeName.isDefined) {
       Seq.empty
@@ -89,14 +96,23 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
         )
       }
 
-      // Return all our dependents so they are re-validated for unused as well
-      val dependents = mutable.Set[Dependent]()
-      td.collectDependencies(dependents)
-      dependents
+      // Return the types we depend on so they are re-validated for unused as well. This is what
+      // makes the analysis order-independent: when a type is added that uses an earlier type, the
+      // earlier type is re-checked with the new holder present. Both parsed and cache-loaded types
+      // must contribute member-level dependencies (method/field/block use), not just type-level,
+      // otherwise a type used only from another type's method body is never re-validated.
+      val collected = mutable.Set[Dependent]()
+      td match {
+        case fd: FullDeclaration    => fd.collectDependencies(collected)
+        case sd: SummaryDeclaration => sd.collectDependencies(collected)
+        case _                      => collected ++= td.dependencies()
+      }
+      collected
         .collect { case td: TypeDeclaration => td }
         .map(_.outermostTypeDeclaration)
         .collect { case dt: DependentType => dt }
         .toSeq
+        .distinct
     }
   }
 
@@ -123,7 +139,7 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
       })
   }
 
-  private implicit class DeclarationOps(td: FullDeclaration) {
+  private implicit class DeclarationOps(td: ApexClassDeclaration) {
 
     /** Generates unused issues for a type, see doc/Unused.md for details.
       *
@@ -222,13 +238,9 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
     private def couldBeUnused(method: ApexMethodLike): Boolean = {
       // If we don't have complete interface information, public/global methods might be
       // implementing external interfaces that we don't have full type information for
-      td match {
-        case apexClass: ApexClassDeclaration =>
-          apexClass.hasAllInterfaces || !method.visibility.exists(m =>
-            m == PUBLIC_MODIFIER || m == GLOBAL_MODIFIER
-          )
-        case _ => true // Non-Apex types can always be checked for unused methods
-      }
+      td.hasAllInterfaces || !method.visibility.exists(m =>
+        m == PUBLIC_MODIFIER || m == GLOBAL_MODIFIER
+      )
     }
 
     def unusedMethods: ArraySeq[Issue] = {

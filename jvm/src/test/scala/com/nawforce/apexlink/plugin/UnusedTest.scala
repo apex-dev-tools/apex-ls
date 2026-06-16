@@ -793,6 +793,37 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  /** Asserts holder-based unused analysis for cache-loaded (summary) classes produces exactly the
+    * same diagnostics as a full parse of the same workspace. This is the core invariant behind
+    * issue #477: unused is a whole-program property, so a cache-loaded result must match what a cold
+    * parse of the same sources would report rather than replaying a stale cached result.
+    */
+  def assertCachedUnusedMatchesFullParse(sources: Map[String, String], files: Seq[String]): Unit = {
+    withManualFlush {
+      FileSystemHelper.run(sources) { root: PathLike =>
+        // Full parse establishes the ground-truth diagnostics
+        val cold = createOrgWithUnused(root)
+        files.foreach(f => assertIsFullDeclaration(cold.unmanaged, f.stripSuffix(".cls")))
+        val coldIssues = files.map(f => f -> orgIssuesFor(cold, root.join(f))).toMap
+        cold.flush()
+
+        // Reload from cache and require identical diagnostics
+        val warm = createOrgWithUnused(root)
+        files.foreach(f => assertIsSummaryDeclaration(warm.unmanaged, f.stripSuffix(".cls")))
+        OrgInfo.current.withValue(warm) {
+          files.foreach(f => {
+            val warmIssues = orgIssuesFor(warm, root.join(f))
+            assert(
+              warmIssues == coldIssues(f),
+              s"cache-loaded unused for $f differs from full parse: " +
+                s"cold='${coldIssues(f)}' warm='$warmIssues'"
+            )
+          })
+        }
+      }
+    }
+  }
+
   test("Used method on summary type") {
     withManualFlush {
       FileSystemHelper.run(
@@ -844,6 +875,86 @@ class UnusedTest extends AnyFunSuite with TestHelper {
             orgIssuesFor(org2, root.join("Dummy.cls")) ==
               "Unused: line 1 at 32-35: Unused public method 'void foo()'\n"
           )
+        }
+      }
+    }
+  }
+
+  test("Enum synthetic methods are not flagged on summary type (#477)") {
+    // values/valueOf/name/ordinal/equals/hashCode/toString are synthetic and must stay excluded
+    // when the enum is loaded from cache, just as on a full parse
+    assertCachedUnusedMatchesFullParse(
+      Map(
+        "Color.cls" -> "public enum Color {RED, GREEN}",
+        "Foo.cls"   -> "public class Foo { {Color c = Color.RED; System.debug(c == Color.GREEN);} }"
+      ),
+      Seq("Color.cls", "Foo.cls")
+    )
+  }
+
+  test("Method used only from a cache-loaded method body is not flagged (#477)") {
+    // Within a single module, member-level holders are established by propagateDependencies before
+    // recompute, so doWork is held via Client.run()'s body. (The cross-module ripple is covered
+    // separately below where re-validation ordering actually matters.)
+    assertCachedUnusedMatchesFullParse(
+      Map(
+        "Service.cls" -> "public class Service {public void doWork() {}}",
+        "Client.cls"  -> "public class Client {public void run() {new Service().doWork();}}"
+      ),
+      Seq("Service.cls", "Client.cls")
+    )
+  }
+
+  test("Field used only from a cache-loaded method body is not flagged (#477)") {
+    assertCachedUnusedMatchesFullParse(
+      Map(
+        "Holder.cls" -> "public class Holder {public String value;}",
+        "Reader.cls" -> "public class Reader {public void read() {System.debug(new Holder().value);}}"
+      ),
+      Seq("Holder.cls", "Reader.cls")
+    )
+  }
+
+  test("Type used only from a cache-loaded method body is not flagged (#477)") {
+    assertCachedUnusedMatchesFullParse(
+      Map(
+        "Widget.cls"  -> "public class Widget {}",
+        "Factory.cls" -> "public class Factory {public Object make() {return new Widget();}}"
+      ),
+      Seq("Widget.cls", "Factory.cls")
+    )
+  }
+
+  test("Cross-module method use from a cache-loaded body is re-validated (#477)") {
+    // base loads before ext, so when both are cache-loaded Service.doWork is first analysed without
+    // a holder (flagged) and must be re-validated once ext's cache-loaded Client - which uses
+    // doWork only inside a method body - is loaded. This exercises member-level dependency ripple
+    // for summary types, which type-level ripple alone would miss.
+    withManualFlush {
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" -> """{"packageDirectories": [{"path": "base"}, {"path": "ext"}]}""",
+          "base/Service.cls"  -> "public class Service {public void doWork() {}}",
+          "ext/Client.cls"    -> "public class Client {public void run() {new Service().doWork();}}"
+        )
+      ) { root: PathLike =>
+        val servicePath = root.join("base").join("Service.cls")
+
+        def isSummary(org: OPM.OrgImpl, name: String): Boolean =
+          org.unmanaged.orderedModules.exists(m =>
+            m.findModuleType(TypeName(Name(name))).exists(_.isInstanceOf[SummaryDeclaration])
+          )
+
+        // Full parse: doWork is held by Client.run, so it is not flagged
+        val cold = createOrgWithUnused(root)
+        assert(orgIssuesFor(cold, servicePath).isEmpty)
+        cold.flush()
+
+        // Reload: both come from cache; doWork must remain unflagged after cross-module ripple
+        val warm = createOrgWithUnused(root)
+        assert(isSummary(warm, "Service") && isSummary(warm, "Client"))
+        OrgInfo.current.withValue(warm) {
+          assert(orgIssuesFor(warm, servicePath).isEmpty)
         }
       }
     }

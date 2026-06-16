@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.0-beta.1] - 2026-06-13
+
 ### Added
 
 - Recognition of Summer '26 test annotations `@IntegrationTest` and `@TearDown`, including test-class and unused-analysis handling (#468)
@@ -19,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Nested classes extending an externally nested base no longer resolve unqualified static field names through the base class's enclosing type, avoiding false `Field is not visible` diagnostics (#482)
+- Unused method/field/type warnings are now recomputed for cache-loaded classes instead of replaying the cached result, so they reflect actual usage in the current workspace rather than a stale whole-program result captured when the cache was written (#477)
 - Private and protected field/method accesses from unrelated classes are now reported as visibility errors (#474)
 - SOQL queries using deprecated `WITH SECURITY_ENFORCED` now report a warning recommending `WITH USER_MODE` (#466)
 - Private `@TestVisible` methods, fields, and constructors are now only visible from `@IsTest` callers, matching Salesforce visibility rules for non-test and `@IntegrationTest` code (#471)
@@ -37,11 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Upgraded platform types to Salesforce Summer '26 via standard-types and sobject-types 67.0.0
 - Removed the ANTLR-first parsing mode; OutlineParser is now the sole parser path. The `--antlr` / ANTLR parser option is deprecated and a no-op (#433)
 - Upgraded to apex-parser 5.1.0 and the antlr4 4.13 runtime
 - Slimmed the JS module surface to the published apex-ls facades
 - Removed JS-portability shims `CodeParser.toScala(value)` and `CodeParser.getText(...)` from the CST construction layer; call sites now use `Option(...)` directly (#449)
 - Replaced cascading `Option(...).orElse(...)` chains in `Literal.construct` and `ClassBodyDeclaration.construct` with extractor-based pattern matching (#449)
+
+### Deprecated
+
+- The npm distribution (`@apexdevtools/apex-ls`) is no longer published by default and is planned for removal; the JVM artifact on Maven Central is the supported distribution. Contact the maintainers if you still require an npm build.
 
 ### Removed
 

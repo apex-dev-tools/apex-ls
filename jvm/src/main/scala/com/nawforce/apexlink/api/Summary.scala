@@ -173,7 +173,8 @@ case class MethodSummary(
   var typeName: TypeName,
   parameters: ArraySeq[ParameterSummary],
   hasBlock: Boolean,
-  dependents: Array[DependentSummary]
+  dependents: Array[DependentSummary],
+  isSynthetic: Boolean = false
 ) {
 
   typeName = typeName.intern
@@ -195,6 +196,7 @@ case class MethodSummary(
     this.typeName == other.typeName &&
     this.parameters == other.parameters &&
     this.hasBlock == other.hasBlock &&
+    this.isSynthetic == other.isSynthetic &&
     this.dependents.sameElements(other.dependents)
   }
 }
