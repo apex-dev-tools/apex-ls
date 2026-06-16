@@ -44,6 +44,23 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.contains("WITH SECURITY_ENFORCED is deprecated, use WITH USER_MODE instead"))
   }
 
+  test("SOQL security enforced warning reports absolute line in property body") {
+    // A property getter body is re-parsed as a separate fragment with a line offset; the
+    // deprecation warning location must map back to the absolute file line, not the
+    // fragment-relative line (see Source.getLocation / lineOffset handling).
+    typeDeclaration("""public class Dummy {
+        |  public List<Account> accounts {
+        |    get {
+        |      return [Select Id from Account WITH SECURITY_ENFORCED];
+        |    }
+        |  }
+        |}""".stripMargin)
+    assert(
+      dummyIssues ==
+        "Warning: line 4 at 37-59: WITH SECURITY_ENFORCED is deprecated, use WITH USER_MODE instead\n"
+    )
+  }
+
   test("SOQL user mode no warning") {
     happyTypeDeclaration(
       "public class Dummy {{ Object a = [Select Id from Account WITH USER_MODE]; }}"
