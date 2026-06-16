@@ -346,14 +346,19 @@ object MethodDeclaration {
     )
 }
 
-/** Method wrapper that enforces an Any return type on the provided method */
-class AnyReturnMethodDeclaration(method: MethodDeclaration) extends MethodDeclaration {
+/** Method wrapper that enforces an Any return type on the provided method. The wrapper is
+  * transparent to the wrapped method's identity: it forwards thisTypeIdOpt and exposes the
+  * underlying method (via 'method') so that visibility and reference resolution operate on the
+  * real declaration rather than the wrapper (which is not an ApexMethodLike).
+  */
+class AnyReturnMethodDeclaration(val method: MethodDeclaration) extends MethodDeclaration {
   override val name: Name                                 = method.name
   override val modifiers: ArraySeq[Modifier]              = method.modifiers
   override val parameters: ArraySeq[ParameterDeclaration] = method.parameters
 
   override def typeName: TypeName = TypeName.Any
   override def hasBlock: Boolean  = method.hasBlock
+  override def thisTypeIdOpt      = method.thisTypeIdOpt
 }
 
 trait AbstractTypeDeclaration {

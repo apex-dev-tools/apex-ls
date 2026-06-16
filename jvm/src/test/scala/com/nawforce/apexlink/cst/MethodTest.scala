@@ -642,6 +642,35 @@ class MethodTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Same class private overloaded method call with ghosted argument") {
+    // The ghosted argument resolves to Any, so overload resolution wraps the chosen method in an
+    // AnyReturnMethodDeclaration. That wrapper must remain transparent to the method's identity,
+    // otherwise a legal same-file private call is wrongly reported as 'Method is not visible'.
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+          |"packageDirectories": [{"path": "force-app"}],
+          |"plugins": {"dependencies": [{"namespace": "ext"}]}
+          |}""".stripMargin,
+        "force-app/Dummy.cls" ->
+          """public class Dummy {
+            |  public void run(ext.Something thing) {
+            |    getStatus(thing);
+            |  }
+            |  private static String getStatus(ext.Something thing) {
+            |    return getStatus(thing.status);
+            |  }
+            |  private static String getStatus(String status) {
+            |    return status;
+            |  }
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
   test("Static method on inner class") {
     typeDeclaration("public class Dummy { class Inner { static void m() {} } }")
     assert(dummyIssues.toLowerCase.contains("static") && dummyIssues.toLowerCase.contains("inner"))
