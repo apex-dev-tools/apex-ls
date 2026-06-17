@@ -15,7 +15,12 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.types.apex.{ApexDeclaration, ApexFieldLike, ApexMethodLike}
-import com.nawforce.apexlink.types.core.{FieldDeclaration, MethodDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{
+  AnyReturnMethodDeclaration,
+  FieldDeclaration,
+  MethodDeclaration,
+  TypeDeclaration
+}
 import com.nawforce.pkgforce.modifiers.{
   GLOBAL_MODIFIER,
   Modifier,
@@ -37,10 +42,17 @@ object TestVisibleAccess {
   }
 
   def methodAccessError(method: MethodDeclaration, calledFrom: TypeDeclaration): Option[String] = {
-    if (isInvalidPrivateMethodAccess(method, calledFrom)) {
+    // Resolve through any Any-return wrapper so the checks below see the real declaration; the
+    // wrapper is not an ApexMethodLike and carries no owning type, which would otherwise make a
+    // same-file private/protected call appear inaccessible.
+    val resolved = method match {
+      case wrapped: AnyReturnMethodDeclaration => wrapped.method
+      case other                               => other
+    }
+    if (isInvalidPrivateMethodAccess(resolved, calledFrom)) {
       Some("Private @TestVisible methods can only be accessed from @IsTest classes")
-    } else if (!isMethodAccessible(method, calledFrom)) {
-      Some(s"Method is not visible: ${method.nameAndParameterTypes}")
+    } else if (!isMethodAccessible(resolved, calledFrom)) {
+      Some(s"Method is not visible: ${resolved.nameAndParameterTypes}")
     } else {
       None
     }
