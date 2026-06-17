@@ -237,6 +237,29 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("IsTest class can call @TestVisible private interface method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private interface IThing {void run();} @TestVisible private static IThing make(){return null;}}",
+        "Dummy.cls" -> "@IsTest public class Dummy {@IsTest public static void f2() {Target.IThing t = Target.make(); t.run();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
+  test("Non-test class can not call @TestVisible private interface method") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private interface IThing {void run();} @TestVisible private static IThing make(){return null;}}",
+        "Dummy.cls" -> "public class Dummy {public static void f2() {Target.IThing t = Target.make(); t.run();}}"
+      )
+    )
+    assert(
+      getMessages(root.join("Dummy.cls"))
+        .contains("Private @TestVisible methods can only be accessed from @IsTest classes")
+    )
+  }
+
   test("Method call with non-ambiguous target") {
     FileSystemHelper.run(
       Map(

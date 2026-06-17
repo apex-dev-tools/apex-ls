@@ -252,6 +252,18 @@ object MethodModifiers {
       .headOption
       .getOrElse(PUBLIC_MODIFIER)
 
-    ModifierResults(mods ++ ArraySeq(VIRTUAL_MODIFIER, interfaceVisibility), logger.issues).intern
+    // A @TestVisible interface exposes its (otherwise private) members to test code. Interface
+    // methods inherit the interface's visibility, so they must inherit @TestVisible too; without
+    // it the member-access check would reject legal calls from @IsTest classes.
+    val inheritedTestVisible =
+      if (ownerInfo.modifiers.contains(TEST_VISIBLE_ANNOTATION))
+        ArraySeq(TEST_VISIBLE_ANNOTATION)
+      else
+        ArraySeq.empty[Modifier]
+
+    ModifierResults(
+      mods ++ ArraySeq(VIRTUAL_MODIFIER, interfaceVisibility) ++ inheritedTestVisible,
+      logger.issues
+    ).intern
   }
 }
