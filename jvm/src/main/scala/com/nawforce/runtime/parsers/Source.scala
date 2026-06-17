@@ -84,17 +84,24 @@ case class Source(
       return location
     }
 
-    val startLine     = location.startLine
+    // The column offset only applies to content on the first line of the fragment, where the
+    // fragment does not start at column 0. The line offset applies throughout, mapping the
+    // fragment-relative line back to its absolute position in the file (consistent with
+    // stampLocation, which is used for normal CST node locations).
     var startPosition = location.startPosition
     if (location.startLine == 1)
       startPosition += columnOffset
 
-    val endLine     = location.endLine
     var endPosition = location.endPosition
     if (location.endLine == 1)
       endPosition += columnOffset
 
-    Location(startLine, startPosition, endLine, endPosition)
+    Location(
+      location.startLine + lineOffset,
+      startPosition,
+      location.endLine + lineOffset,
+      endPosition
+    )
   }
 
   def stampLocation(positionable: Positionable, context: ParserRuleContext): Unit = {

@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Nested classes extending an externally nested base no longer resolve unqualified static field names through the base class's enclosing type, avoiding false `Field is not visible` diagnostics (#482)
 - Unused method/field/type warnings are now recomputed for cache-loaded classes instead of replaying the cached result, so they reflect actual usage in the current workspace rather than a stale whole-program result captured when the cache was written (#477)
 - Private and protected field/method accesses from unrelated classes are now reported as visibility errors (#474)
 - SOQL queries using deprecated `WITH SECURITY_ENFORCED` now report a warning recommending `WITH USER_MODE` (#466)

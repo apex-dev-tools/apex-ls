@@ -221,4 +221,62 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Nested class resolves enclosing static field over superclass enclosing field") {
+    typeDeclarations(
+      Map(
+        "BaseFramework.cls" ->
+          """public class BaseFramework {
+            |  private static final String NAMESPACE = 'base__';
+            |
+            |  public abstract class BaseConfig {
+            |    public abstract void setup();
+            |  }
+            |}""".stripMargin,
+        "Consumer.cls" ->
+          """public class Consumer {
+            |  private static final String NAMESPACE = 'acme__';
+            |
+            |  public class Configuration extends BaseFramework.BaseConfig {
+            |    public override void setup() {
+            |      String objName = NAMESPACE + 'MyObject__c';
+            |      System.debug(objName);
+            |    }
+            |  }
+            |}""".stripMargin
+      )
+    )
+    assert(getMessages(root.join("Consumer.cls")).isEmpty)
+  }
+
+  test("Nested class resolves unqualified static through superclass enclosing type") {
+    // Verified against the platform: a nested class extending an externally nested base may
+    // resolve an unqualified static field name through the base class's enclosing type when
+    // there is no name in scope to shadow it (e.g. ffhttp_OAuthClient referencing
+    // ffhttp_Client.REQUEST_METHOD_POST from a subclass of ffhttp_Client.AbstractClientRequest).
+    typeDeclarations(
+      Map(
+        "BaseFramework.cls" ->
+          """public class BaseFramework {
+            |  public static final String REQUEST_METHOD_POST = 'POST';
+            |
+            |  public abstract class BaseRequest {
+            |    public String method;
+            |    public BaseRequest(String requestMethod) {
+            |      this.method = requestMethod;
+            |    }
+            |  }
+            |}""".stripMargin,
+        "Consumer.cls" ->
+          """public class Consumer {
+            |  public class ExchangeRequest extends BaseFramework.BaseRequest {
+            |    public ExchangeRequest() {
+            |      super(REQUEST_METHOD_POST);
+            |    }
+            |  }
+            |}""".stripMargin
+      )
+    )
+    assert(getMessages(root.join("Consumer.cls")).isEmpty)
+  }
+
 }

@@ -487,14 +487,36 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
    * being searched a second time. */
   protected def findField(
     name: Name,
-    exclude: mutable.HashSet[TypeDeclaration] = new mutable.HashSet()
+    exclude: mutable.HashSet[TypeDeclaration] = new mutable.HashSet(),
+    searchOuter: Boolean = true
   ): Option[FieldDeclaration] = {
     exclude.add(this)
     fields
       .find(_.name == name)
-      .orElse(superClassDeclaration.filterNot(exclude.contains).flatMap(_.findField(name, exclude)))
       .orElse(
-        outerTypeDeclaration
+        // Members inherited via the superclass chain, but not the superclass's own enclosing
+        // scope - that is searched later (below) so a lexically enclosing name takes precedence
+        // over a name reachable through the base class's enclosing type (#482).
+        superClassDeclaration
+          .filterNot(exclude.contains)
+          .flatMap(_.findField(name, exclude, searchOuter = false))
+      )
+      .orElse(
+        // A static from this type's own lexically enclosing scope.
+        Option
+          .when(searchOuter)(outerTypeDeclaration)
+          .flatten
+          .filterNot(exclude.contains)
+          .flatMap(_.findField(name, exclude).filter(_.isStatic))
+      )
+      .orElse(
+        // Fallback: a static reachable through the superclass's enclosing scope. This is valid
+        // Apex (a nested class may resolve an unqualified static through the enclosing type of
+        // an externally nested base) but is lower precedence than the enclosing scope above.
+        Option
+          .when(searchOuter)(superClassDeclaration)
+          .flatten
+          .flatMap(_.outerTypeDeclaration)
           .filterNot(exclude.contains)
           .flatMap(_.findField(name, exclude).filter(_.isStatic))
       )
