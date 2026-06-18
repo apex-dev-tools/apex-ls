@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Nested subclasses now resolve unqualified names to accessible enclosing static fields before inherited private superclass fields, avoiding false `Field is not visible` diagnostics (#488)
+
 ## [6.1.0-beta.1] - 2026-06-13
 
 ### Added
