@@ -16,8 +16,8 @@ package com.nawforce.runtime.parsers
 
 import com.nawforce.pkgforce.parsers.UTF8Decode
 import com.nawforce.runtime.SourceBlob
-import io.github.apexdevtools.apexparser.CaseInsensitiveInputStream
-import org.antlr.v4.runtime.{CharStream, CharStreams}
+import org.antlr.v4.runtime.misc.Interval
+import org.antlr.v4.runtime.{CharStream, CharStreams, IntStream}
 
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
@@ -60,8 +60,8 @@ final case class SourceData(
     CharStreams.fromStream(new ByteArrayInputStream(source, offset, length), StandardCharsets.UTF_8)
   }
 
-  def asInsensitiveStream: CaseInsensitiveInputStream = {
-    new CaseInsensitiveInputStream(
+  def asInsensitiveStream: CharStream = {
+    SourceData.caseInsensitiveStream(
       CharStreams
         .fromStream(new ByteArrayInputStream(source, offset, length), StandardCharsets.UTF_8)
     )
@@ -80,6 +80,14 @@ final case class SourceData(
 }
 
 object SourceData {
+  private[parsers] def emptyInsensitiveStream: CharStream = {
+    caseInsensitiveStream(CharStreams.fromStream(new ByteArrayInputStream(Array[Byte]())))
+  }
+
+  private def caseInsensitiveStream(source: CharStream): CharStream = {
+    new CaseInsensitiveCharStream(source)
+  }
+
   def apply(value: String): SourceData = {
     apply(value.getBytes(StandardCharsets.UTF_8))
   }
@@ -87,4 +95,27 @@ object SourceData {
   def apply(value: SourceBlob): SourceData = {
     new SourceData(value, offset = 0, length = value.length)
   }
+}
+
+private final class CaseInsensitiveCharStream(source: CharStream) extends CharStream {
+  override def getText(interval: Interval): String = source.getText(interval)
+
+  override def consume(): Unit = source.consume()
+
+  override def getSourceName: String = source.getSourceName
+
+  override def index(): Int = source.index()
+
+  override def LA(i: Int): Int = {
+    val c = source.LA(i)
+    if (c == IntStream.EOF) c else Character.toLowerCase(c)
+  }
+
+  override def mark(): Int = source.mark()
+
+  override def release(marker: Int): Unit = source.release(marker)
+
+  override def seek(index: Int): Unit = source.seek(index)
+
+  override def size(): Int = source.size()
 }

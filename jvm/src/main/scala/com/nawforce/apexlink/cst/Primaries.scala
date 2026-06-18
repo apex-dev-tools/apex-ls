@@ -147,6 +147,7 @@ final case class IdPrimary(id: Id) extends Primary {
     val staticContext = Some(true).filter(input.isStatic.contains)
 
     val field = findField(id.name, td, staticContext)
+      .flatMap(field => fallbackToOuterStaticField(id.name, td, staticContext, field, context))
     cachedClassFieldDeclaration = field
 
     if (field.nonEmpty && isAccessible(td, field.get, staticContext)) {
@@ -190,6 +191,35 @@ final case class IdPrimary(id: Id) extends Primary {
       .orElse({
         if (encodedName != namespaceName)
           td.findField(encodedName.fullName, staticContext)
+        else None
+      })
+  }
+
+  private def fallbackToOuterStaticField(
+    name: Name,
+    td: TypeDeclaration,
+    staticContext: Option[Boolean],
+    field: FieldDeclaration,
+    context: ExpressionVerifyContext
+  ): Option[FieldDeclaration] = {
+    TestVisibleAccess.fieldAccessError(field, context.thisType) match {
+      case Some(message) if message == s"Field is not visible: ${field.name}" =>
+        findOuterStaticField(name, td, staticContext).orElse(Some(field))
+      case _ => Some(field)
+    }
+  }
+
+  private def findOuterStaticField(
+    name: Name,
+    td: TypeDeclaration,
+    staticContext: Option[Boolean]
+  ): Option[FieldDeclaration] = {
+    val encodedName   = EncodedName(name)
+    val namespaceName = encodedName.defaultNamespace(td.moduleDeclaration.flatMap(_.namespace))
+    td.findOuterStaticField(namespaceName.fullName, staticContext)
+      .orElse({
+        if (encodedName != namespaceName)
+          td.findOuterStaticField(encodedName.fullName, staticContext)
         else None
       })
   }
