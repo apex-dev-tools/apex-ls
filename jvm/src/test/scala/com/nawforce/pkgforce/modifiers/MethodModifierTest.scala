@@ -205,6 +205,22 @@ class MethodModifierTest extends AnyFunSuite {
     )
   }
 
+  test("Class method duplicate visibility reports method span") {
+    val issues = illegalClassMethodAccess(ArraySeq(PROTECTED_MODIFIER, GLOBAL_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            WARNING_CATEGORY,
+            Location(1, 44, 1, 48),
+            "Only one visibility modifier from 'global', 'public' & 'private' should be used on methods"
+          )
+        )
+      )
+    )
+  }
+
   test("Class method abstract on non-abstract class") {
     val issues = illegalClassMethodAccess(ArraySeq(ABSTRACT_MODIFIER))
     assert(

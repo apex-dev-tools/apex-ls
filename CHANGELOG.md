@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Stabilized diagnostic column spans for missing type-reference and duplicate visibility diagnostics, avoiding context-dependent diff churn (#487)
+
 ## [6.1.0-beta.1] - 2026-06-13
 
 ### Added

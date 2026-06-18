@@ -36,6 +36,40 @@ class IdDependencyTest extends AnyFunSuite with TestHelper {
     assert(tds.head.dependencies().isEmpty)
   }
 
+  test("Missing static field initializer reports identifier span") {
+    val tds = typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          """public class Dummy {
+            |  Object record = fflib_IdGenerator.generate();
+            |}""".stripMargin
+      )
+    )
+    assert(
+      dummyIssues ==
+        "Missing: line 2 at 18-35: No variable or type found for 'fflib_IdGenerator' on 'Dummy'\n"
+    )
+    assert(tds.head.dependencies().isEmpty)
+  }
+
+  test("Missing static set literal call reports identifier span") {
+    val tds = typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          """public class Dummy {
+            |  void func() {
+            |    Object accountList = new Set<Id> {fflib_IdGenerator.generate(Account.SObjectType)};
+            |  }
+            |}""".stripMargin
+      )
+    )
+    assert(
+      dummyIssues ==
+        "Missing: line 3 at 38-55: No variable or type found for 'fflib_IdGenerator' on 'Dummy'\n"
+    )
+    assert(tds.head.dependencies().isEmpty)
+  }
+
   test("Static func creates method dependency") {
     val tds = typeDeclarations(
       Map(
