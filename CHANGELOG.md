@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Private and protected overloaded methods called with ghosted-type arguments no longer report false `Method is not visible` diagnostics (#484)
+
 ## [6.1.0-beta.1] - 2026-06-13
 
 ### Added
