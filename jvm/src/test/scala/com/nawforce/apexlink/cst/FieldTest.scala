@@ -248,6 +248,35 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(getMessages(root.join("Consumer.cls")).isEmpty)
   }
 
+  test("Nested subclass resolves enclosing static field over inherited private field") {
+    typeDeclarations(
+      Map(
+        "Base1.cls" ->
+          """public virtual class Base1 {
+            |  private final Integer bec;
+            |  public Base1(Integer bec) {
+            |    this.bec = bec;
+            |  }
+            |}""".stripMargin,
+        "Outer1.cls" ->
+          """public class Outer1 {
+            |  private static final Integer BEC = 5;
+            |
+            |  public class Inner1 extends Base1 {
+            |    public Inner1() {
+            |      super(BEC);
+            |    }
+            |
+            |    public Integer value() {
+            |      return BEC;
+            |    }
+            |  }
+            |}""".stripMargin
+      )
+    )
+    assert(getMessages(root.join("Outer1.cls")).isEmpty)
+  }
+
   test("Nested class resolves unqualified static through superclass enclosing type") {
     // Verified against the platform: a nested class extending an externally nested base may
     // resolve an unqualified static field name through the base class's enclosing type when

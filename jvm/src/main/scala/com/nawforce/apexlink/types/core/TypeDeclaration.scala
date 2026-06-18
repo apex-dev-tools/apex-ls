@@ -487,6 +487,14 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
     }
   }
 
+  def findOuterStaticField(name: Name, staticContext: Option[Boolean]): Option[FieldDeclaration] = {
+    val matches = findOuterStaticField(name)
+    staticContext match {
+      case Some(x) => matches.find(f => f.isStatic == x)
+      case None    => matches
+    }
+  }
+
   /* Find a field just from its name. We need to be careful here about recursion between types, e.g. an outer class
    * having a super class which is an inner of the outer class. To handle this we just exclude declarations from
    * being searched a second time. */
@@ -525,6 +533,16 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
           .filterNot(exclude.contains)
           .flatMap(_.findField(name, exclude).filter(_.isStatic))
       )
+  }
+
+  private def findOuterStaticField(
+    name: Name,
+    exclude: mutable.HashSet[TypeDeclaration] = new mutable.HashSet()
+  ): Option[FieldDeclaration] = {
+    exclude.add(this)
+    outerTypeDeclaration
+      .filterNot(exclude.contains)
+      .flatMap(_.findField(name, exclude).filter(_.isStatic))
   }
 
   private lazy val methodMap: MethodMap =

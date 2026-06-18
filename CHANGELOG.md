@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Nested subclasses now resolve unqualified names to accessible enclosing static fields before inherited private superclass fields, avoiding false `Field is not visible` diagnostics (#488)
 - Removed use of the deprecated Apex parser `CaseInsensitiveInputStream` from JVM parsing (#489)
 - Private and protected overloaded methods called with ghosted-type arguments no longer report false `Method is not visible` diagnostics (#484)
 
