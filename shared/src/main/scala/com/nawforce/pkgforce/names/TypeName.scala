@@ -30,7 +30,7 @@ import scala.collection.mutable.ArrayBuffer
 final case class TypeName(name: Name, params: Seq[TypeName], outer: Option[TypeName]) {
 
   /** Cache hash code as heavily used in collections */
-  override val hashCode: Int = scala.util.hashing.MurmurHash3.productHash(this)
+  override val hashCode: Int = scala.util.hashing.MurmurHash3.caseClassHash(this)
 
   /** Provide custom handling to toString to deal with internal type display */
   override def toString: String = {
