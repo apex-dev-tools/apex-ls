@@ -165,6 +165,57 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues == "")
   }
 
+  test("Class implements Database.Batchable<sObject> with Set start") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          """
+          | global class Dummy implements Database.Batchable<sObject> {
+          |   public Set<sObject> start(Database.BatchableContext param1) { return new Set<SObject>(); }
+          |   public void execute(Database.BatchableContext param1, List<SObject> param2) {}
+          |   public void finish(Database.BatchableContext param1) {}
+          | }
+          |""".stripMargin
+      )
+    )
+    assert(dummyIssues == "")
+  }
+
+  test("Class implements Database.Batchable<Account> with Set start") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          """
+          | global class Dummy implements Database.Batchable<Account> {
+          |   public Set<Account> start(Database.BatchableContext param1) { return new Set<Account>(); }
+          |   public void execute(Database.BatchableContext param1, List<Account> param2) {}
+          |   public void finish(Database.BatchableContext param1) {}
+          | }
+          |""".stripMargin
+      )
+    )
+    assert(dummyIssues == "")
+  }
+
+  test("Class implements Database.Batchable<Account> does not allow Set execute") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          """
+          | global class Dummy implements Database.Batchable<Account> {
+          |   public Set<Account> start(Database.BatchableContext param1) { return new Set<Account>(); }
+          |   public void execute(Database.BatchableContext param1, Set<Account> param2) {}
+          |   public void finish(Database.BatchableContext param1) {}
+          | }
+          |""".stripMargin
+      )
+    )
+    assert(
+      dummyIssues ==
+        "Missing: line 2 at 14-19: Non-abstract class must implement method 'void execute(Database.BatchableContext, System.List<Schema.Account>)' from interface 'Database.Batchable<Schema.Account>'\n"
+    )
+  }
+
   test("Interface method overload validation - GitHub issue #329") {
     typeDeclarations(
       Map(
