@@ -151,4 +151,11 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("SOQL malformed bind reports syntax error without crashing") {
+    // Regression guard for #295: a malformed bind variable (missing colon) must surface a
+    // syntax error rather than throwing while building the SOQL model (see SOQL.apply guards).
+    typeDeclaration("public class Dummy {{ Object a = [Select Id from Account where Id = aId]; }}")
+    assert(dummyIssues.contains("Syntax: line 1 at 68: no viable alternative at input 'Id = aId'"))
+  }
+
 }

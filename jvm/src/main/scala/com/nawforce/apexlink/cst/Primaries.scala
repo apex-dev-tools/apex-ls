@@ -278,6 +278,12 @@ final case class SOQL(
         s"Expecting SOQL to query only a single SObject, found '${fromNames.mkString(", ")}'"
       )
     }
+
+    // Guard against a malformed query that yielded no FROM names; nothing more we can verify
+    if (fromNames.isEmpty) {
+      return ExprContext(isStatic = Some(false), context.module.any)
+    }
+
     val sobjectType = TypeName(fromNames.head.names.head, Nil, Some(TypeNames.Schema))
 
     if (queryResultType == COUNT_RESULT_QUERY) {
@@ -302,8 +308,9 @@ final case class SOQL(
 
 object SOQL {
   def apply(query: QueryContext): SOQL = {
-    val entries = CodeParser
-      .toScala(query.selectList().selectEntry())
+    val entries = Option(query.selectList())
+      .map(selectList => CodeParser.toScala(selectList.selectEntry()))
+      .getOrElse(ArraySeq.empty[SelectEntryContext])
 
     val aggregateFunctions = entries
       .flatMap(se => Option(se.soqlFunction()))
@@ -333,8 +340,9 @@ object SOQL {
     // is available so currently model as an expression
     val boundedExpressions = new BoundExprVisitor().visit(query).map(ec => Expression.construct(ec))
     val fromNames =
-      CodeParser
-        .toScala(query.fromNameList().fieldName())
+      Option(query.fromNameList())
+        .map(fromNameList => CodeParser.toScala(fromNameList.fieldName()))
+        .getOrElse(ArraySeq.empty[FieldNameContext])
         .map(nameList =>
           DotName(
             CodeParser
