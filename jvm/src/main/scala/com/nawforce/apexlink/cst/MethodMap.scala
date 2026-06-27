@@ -612,9 +612,9 @@ object MethodMap {
       case None => ()
     }
 
-    // Batch allows an Iterable<T> start method instead of usual QueryLocator return
+    // Batch allows some collection start methods instead of usual QueryLocator return
     if (
-      isBatchableStartWithListOrIterable(method) &&
+      isBatchableStartWithCollection(method) &&
       isBatchableStartWithQueryLocator(matchedMethod) &&
       td.implements(TypeName(Seq(Names.Batchable, Names.Database)), ignoreGenerics = true)
     ) {
@@ -826,7 +826,7 @@ object MethodMap {
     } else if (isEqualsLike(interfaceMethod) && isEqualsLike(implMethod))
       true
     else if (
-      isBatchableStartWithQueryLocator(interfaceMethod) && isBatchableStartWithListOrIterable(
+      isBatchableStartWithQueryLocator(interfaceMethod) && isBatchableStartWithCollection(
         implMethod
       )
     )
@@ -864,9 +864,9 @@ object MethodMap {
     method.parameters.length == 1 && method.parameters.head.typeName == TypeNames.BatchableContext
   }
 
-  private def isBatchableStartWithListOrIterable(method: MethodDeclaration): Boolean = {
+  private def isBatchableStartWithCollection(method: MethodDeclaration): Boolean = {
     method.name == XNames.Start &&
-    (method.typeName.isIterable || method.typeName.isList) &&
+    (method.typeName.isIterable || method.typeName.isList || method.typeName.isSet) &&
     !method.isStatic &&
     method.parameters.length == 1 && method.parameters.head.typeName == TypeNames.BatchableContext
   }
