@@ -96,6 +96,21 @@ class XMLDocumentTest extends AnyFunSuite {
     }
   }
 
+  test("unicode text after replacement token is parsed") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "test.xml" -> "<test xmlns=\"http://soap.sforce.com/2006/04/metadata\">{0}…</test>"
+      )
+    ) { root: PathLike =>
+      val file = root.join("test.xml")
+      parse(file) match {
+        case Left(err) => assert(false, err)
+        case Right(doc) =>
+          assert(doc.rootElement.text == "{0}…")
+      }
+    }
+  }
+
   test("single child node") {
     FileSystemHelper.run(
       Map[String, String](
