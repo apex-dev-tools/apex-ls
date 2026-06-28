@@ -5,8 +5,10 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.api.OutlineParserSingleThreaded
-import com.nawforce.pkgforce.path.{Location, PathLike}
+import com.nawforce.pkgforce.path.{Location, PathLike, Positionable}
 import com.nawforce.runtime.FileSystemHelper
+import com.nawforce.runtime.parsers.{Source, SourceData}
+import org.antlr.v4.runtime.{CommonToken, ParserRuleContext}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -187,6 +189,37 @@ class BlockTest extends AnyFunSuite with Matchers with TestHelper {
     // Without the cluster suppression, the lexer reports the same escape error twice
     // on this line as recovery re-enters the string.
     assert(escapeErrors == 1, s"expected a single escape error, got:\n${dummyIssues}")
+  }
+
+  test("Parser context without stop location does not crash location stamping") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "")) { root: PathLike =>
+      val file    = root.join("Dummy.cls")
+      val source  = new Source(file, SourceData(""), 0, 0, None)
+      val context = new ParserRuleContext()
+      val start   = new CommonToken(0, "bad")
+      start.setLine(3)
+      start.setCharPositionInLine(4)
+      context.start = start
+
+      val positioned = new Positionable
+      source.stampLocation(positioned, context)
+
+      assert(positioned.location.path == file)
+      assert(positioned.location.location == Location(3, 4, 3, 7))
+    }
+  }
+
+  test("Merge conflict text in method body does not crash") {
+    typeDeclaration("""public class Dummy {
+        |  public void m() {
+        |<<<<<<< HEAD
+        |    Integer a = 1;
+        |=======
+        |    Integer a = 2;
+        |>>>>>>> branch
+        |  }
+        |}""".stripMargin)
+    assert(dummyIssues.nonEmpty)
   }
 
 }
