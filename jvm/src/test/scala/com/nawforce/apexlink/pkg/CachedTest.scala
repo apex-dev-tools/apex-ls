@@ -314,6 +314,33 @@ class CachedTest extends AnyFunSuite with TestHelper with BeforeAndAfter {
     }
   }
 
+  test("Label with replacement token and unicode ellipsis value is available") {
+    FileSystemHelper.run(
+      Map(
+        "CustomLabels.labels" ->
+          """<?xml version="1.0" encoding="UTF-8"?>
+          |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+          |    <labels>
+          |        <fullName>TestLabel</fullName>
+          |        <language>en_US</language>
+          |        <protected>false</protected>
+          |        <shortDescription>TestLabel Description</shortDescription>
+          |        <value>{0}…</value>
+          |    </labels>
+          |</CustomLabels>
+          |""".stripMargin,
+        "Dummy.cls" -> "public class Dummy { {String a = System.label.TestLabel;} }"
+      )
+    ) { root: PathLike =>
+      val org = createOrg(root)
+      val pkg = org.unmanaged
+
+      assert(org.issues.isEmpty)
+      assert(pkg.orderedModules.head.labels.fields.exists(_.name.value == "TestLabel"))
+      assertIsFullDeclaration(pkg, "Dummy")
+    }
+  }
+
   test("Holder-based unused is recomputed for cache-loaded classes (#477)") {
     FileSystemHelper.run(
       Map(
