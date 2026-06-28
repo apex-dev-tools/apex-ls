@@ -104,13 +104,8 @@ case class Source(
   }
 
   def stampLocation(positionable: Positionable, context: ParserRuleContext): Unit = {
-    // This is debug for https://github.com/nawforce/apex-link/issues/90
-    if (context.stop == null) {
-      val startLine = if (context.start == null) "null" else context.start.getLine
-      throw new Exception(
-        s"Apex parser context missing stop location, context at line $startLine, type ${context.getClass}"
-      )
-    }
+    val stop       = Option(context.stop).getOrElse(context.start)
+    val stopLength = Option(stop.getText).fold(0)(_.length)
 
     positionable.setLocation(
       path,
@@ -119,11 +114,11 @@ case class Source(
         context.start.getCharPositionInLine + columnOffset
       else
         context.start.getCharPositionInLine,
-      context.stop.getLine + lineOffset,
-      if (context.stop.getLine == 1)
-        context.stop.getCharPositionInLine + context.stop.getText.length + columnOffset
+      stop.getLine + lineOffset,
+      if (stop.getLine == 1)
+        stop.getCharPositionInLine + stopLength + columnOffset
       else
-        context.stop.getCharPositionInLine + context.stop.getText.length
+        stop.getCharPositionInLine + stopLength
     )
   }
 }
