@@ -324,14 +324,14 @@ final case class MapCreatorRest(pairs: List[MapCreatorRestPair]) extends Creator
     val keyType = context.getTypeAndAddDependency(enclosedTypes.get._1, context.thisType)
     if (keyType.isLeft) {
       if (!context.module.isGhostedType(enclosedTypes.get._1))
-        context.log(keyType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
+        context.logTypeError(location, keyType.swap.getOrElse(throw new NoSuchElementException))
       return ExprContext.empty
     }
 
     val valueType = context.getTypeAndAddDependency(enclosedTypes.get._2, context.thisType)
     if (valueType.isLeft) {
       if (!context.module.isGhostedType(enclosedTypes.get._2))
-        context.log(valueType.swap.getOrElse(throw new NoSuchElementException).asIssue(location))
+        context.logTypeError(location, valueType.swap.getOrElse(throw new NoSuchElementException))
       return ExprContext.empty
     }
 
@@ -430,7 +430,7 @@ final case class SetOrListCreatorRest(parts: ArraySeq[Expression]) extends Creat
     context.getTypeAndAddDependency(enclosedType.get, context.thisType) match {
       case Left(error) =>
         if (!context.module.isGhostedType(enclosedType.get))
-          context.log(error.asIssue(location))
+          context.logTypeError(location, error)
         // Still verify parts for variable usage tracking, even though we can't type check
         parts.foreach(_.verify(input, context))
         ExprContext.empty

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Missing nested Apex type diagnostics now clarify when the outer type exists but the referenced nested type is not declared (#149)
+
 ## [6.1.0-beta.2] - 2026-06-18
 
 ### Fixed

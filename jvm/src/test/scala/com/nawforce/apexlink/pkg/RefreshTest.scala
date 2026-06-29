@@ -111,7 +111,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         assert(org.flush())
         assert(
           getMessages(root.join("pkg").join("Foo.cls"))
-            == "Missing: line 1 at 28-29: No type declaration found for 'Bar.Inner'\n"
+            == "Missing: line 1 at 28-29: No nested type 'Inner' found on Apex type 'Bar' while resolving 'Bar.Inner'; declare the nested type explicitly or use the actual type name\n"
         )
       }
     }
@@ -129,7 +129,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         val pkg = org.unmanaged
         assert(
           getMessages(root.join("pkg").join("Foo.cls"))
-            == "Missing: line 1 at 28-29: No type declaration found for 'Bar.Inner'\n"
+            == "Missing: line 1 at 28-29: No nested type 'Inner' found on Apex type 'Bar' while resolving 'Bar.Inner'; declare the nested type explicitly or use the actual type name\n"
         )
 
         refresh(pkg, root.join("pkg/Bar.cls"), "public class Bar {public class Inner {}}")
@@ -377,7 +377,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         assert(org.flush())
         assert(
           getMessages(root.join("pkg").join("Foo.trigger"))
-            == "Missing: line 1 at 50-51: No type declaration found for 'Bar.Inner'\n"
+            == "Missing: line 1 at 50-51: No nested type 'Inner' found on Apex type 'Bar' while resolving 'Bar.Inner'; declare the nested type explicitly or use the actual type name\n"
         )
       }
     }
@@ -395,7 +395,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         val pkg = org.unmanaged
         assert(
           getMessages(root.join("pkg").join("Foo.trigger"))
-            == "Missing: line 1 at 50-51: No type declaration found for 'Bar.Inner'\n"
+            == "Missing: line 1 at 50-51: No nested type 'Inner' found on Apex type 'Bar' while resolving 'Bar.Inner'; declare the nested type explicitly or use the actual type name\n"
         )
 
         refresh(pkg, root.join("pkg").join("Bar.cls"), "public class Bar {public class Inner {}}")
@@ -1112,7 +1112,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         refresh(pkg, root.join("pkg/Bar.cls"), "public class Bar {}", highPriority = true)
         assert(
           getMessages(root.join("pkg").join("Foo.cls"))
-            == "Missing: line 1 at 28-29: No type declaration found for 'Bar.Inner'\n"
+            == "Missing: line 1 at 28-29: No nested type 'Inner' found on Apex type 'Bar' while resolving 'Bar.Inner'; declare the nested type explicitly or use the actual type name\n"
         )
       }
     }
@@ -1130,7 +1130,7 @@ class RefreshTest extends AnyFunSuite with TestHelper {
         val pkg = org.unmanaged
         assert(
           getMessages(root.join("pkg").join("Foo.cls"))
-            == "Missing: line 1 at 28-29: No type declaration found for 'Bar.Inner'\n"
+            == "Missing: line 1 at 28-29: No nested type 'Inner' found on Apex type 'Bar' while resolving 'Bar.Inner'; declare the nested type explicitly or use the actual type name\n"
         )
 
         refresh(
