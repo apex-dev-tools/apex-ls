@@ -635,7 +635,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
           td match {
             case Left(error) =>
               if (!context.module.isGhostedType(method.typeName))
-                context.log(error.asIssue(location))
+                context.logTypeError(location, error)
               context.saveResult(this, target.location.location) {
                 ExprContext(None, None, method)
               }

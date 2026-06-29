@@ -338,6 +338,44 @@ class BugTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Issue 149: phantom inner class references have a clearer error") {
+    FileSystemHelper.run(
+      Map(
+        "Outer.cls" -> "public class Outer {}",
+        "Container.cls" ->
+          """
+            |public class Container {
+            |  class Outer {}
+            |  class Consumer {
+            |    Outer.Missing field;
+            |  }
+            |}
+            |""".stripMargin,
+        "Dummy.cls" ->
+          """
+            |public class Dummy extends Outer.Missing {
+            |  Outer.Missing field;
+            |  void func(Outer.Missing arg) {
+            |    Outer.Missing local = new Outer.Missing();
+            |  }
+            |}
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+
+      val messages = getMessages(root.join("Dummy.cls"))
+      assert(messages.contains("No nested type 'Missing' found on Apex type 'Outer'"))
+      assert(messages.contains("declare the nested type explicitly or use the actual type name"))
+      assert(!messages.contains("No type declaration found for 'Outer.Missing'"))
+
+      val relativeMessages = getMessages(root.join("Container.cls"))
+      assert(relativeMessages.contains("No nested type 'Missing' found on Apex type 'Outer'"))
+      assert(relativeMessages.contains("while resolving 'Outer.Missing'"))
+      assert(!relativeMessages.contains("No type declaration found for 'Outer.Missing'"))
+    }
+  }
+
   test("Interface equals") {
     FileSystemHelper.run(
       Map(

@@ -101,7 +101,7 @@ final case class TriggerDeclaration(
       tdOpt match {
         case Left(error) =>
           if (!module.isGhostedType(objectTypeName))
-            OrgInfo.log(error.asIssue(objectNameId.location))
+            context.logTypeError(objectNameId.location, error)
         case Right(_) =>
           val triggerContext = context
             .getTypeFor(TypeNames.trigger(objectTypeName), this)
