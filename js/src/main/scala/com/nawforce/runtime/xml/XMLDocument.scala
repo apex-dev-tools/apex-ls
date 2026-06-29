@@ -66,14 +66,30 @@ object XMLDocument {
   var errors: List[Issue] = Nil
 
   def apply(path: PathLike, sourceData: SourceData): IssuesAnd[Option[XMLDocument]] = {
+    val source = sourceData.asString
+    if (source.nonEmpty && source.forall(isXmlWhitespace))
+      return IssuesAnd(None)
+
     errors = Nil
     val parser = new DOMParser(getOptions(path))
-    val doc    = parser.parseFromString(sourceData.asString, "text/xml")
+    val doc    = parser.parseFromString(trimLeadingXmlWhitespace(source), "text/xml")
     if (errors.nonEmpty) {
       IssuesAnd(ArraySeq(errors.last), None)
     } else {
       IssuesAnd(Some(new XMLDocument(path, doc)))
     }
+  }
+
+  private def trimLeadingXmlWhitespace(value: String): String = {
+    val start = value.indexWhere(!isXmlWhitespace(_))
+    if (start > 0)
+      value.drop(start)
+    else
+      value
+  }
+
+  private def isXmlWhitespace(char: Char): Boolean = {
+    char == ' ' || char == '\t' || char == '\r' || char == '\n'
   }
 
   private def getOptions(path: PathLike): Object with Dynamic = {

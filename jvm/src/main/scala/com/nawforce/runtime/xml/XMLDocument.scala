@@ -48,9 +48,18 @@ object XMLDocument {
   val sfNamespace = "http://soap.sforce.com/2006/04/metadata"
 
   def apply(path: PathLike, sourceData: SourceData): IssuesAnd[Option[XMLDocument]] = {
+    val bytes = sourceData.asUTF8
+    if (bytes.nonEmpty && bytes.forall(isXmlWhitespace))
+      return IssuesAnd(None)
+
     try {
       IssuesAnd(
-        Some(new XMLDocument(path, XMLLineLoader.load(new ByteArrayInputStream(sourceData.asUTF8))))
+        Some(
+          new XMLDocument(
+            path,
+            XMLLineLoader.load(new ByteArrayInputStream(trimLeadingXmlWhitespace(bytes)))
+          )
+        )
       )
     } catch {
       case e: SAXParseException =>
@@ -69,6 +78,19 @@ object XMLDocument {
         )
     }
   }
+
+  private def trimLeadingXmlWhitespace(bytes: Array[Byte]): Array[Byte] = {
+    val start = bytes.indexWhere(!isXmlWhitespace(_))
+    if (start > 0)
+      bytes.drop(start)
+    else
+      bytes
+  }
+
+  private def isXmlWhitespace(byte: Byte): Boolean = {
+    byte == ' ' || byte == '\t' || byte == '\r' || byte == '\n'
+  }
+
 }
 
 trait WithLocation extends NoBindingFactoryAdapter {
