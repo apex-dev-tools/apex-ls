@@ -44,6 +44,10 @@ class XMLDocumentTest extends AnyFunSuite {
     }
   }
 
+  def parseOptional(path: PathLike): IssuesAnd[Option[XMLDocument]] = {
+    XMLFactory.parse(path)
+  }
+
   test("Simple doc is parsed") {
     FileSystemHelper.run(Map[String, String]("test.xml" -> "<test/>")) { root: PathLike =>
       parse(root.join("test.xml")) match {
@@ -57,7 +61,7 @@ class XMLDocumentTest extends AnyFunSuite {
     FileSystemHelper.run(Map[String, String]("test.xml" -> "\n  <test>")) { root: PathLike =>
       val file = root.join("test.xml")
       parse(file) match {
-        case Left(Issue(f, Diagnostic(ERROR_CATEGORY, Location(2, _, 2, _), _), _)) if f == file =>
+        case Left(Issue(f, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _)) if f == file =>
           ()
         case Left(err) => assert(false, err)
         case Right(_)  => assert(false)
@@ -77,6 +81,16 @@ class XMLDocumentTest extends AnyFunSuite {
     }
   }
 
+  test("whitespace only doc has no error") {
+    FileSystemHelper.run(Map[String, String]("test.xml" -> " \n\t \r\n  ")) { root: PathLike =>
+      parseOptional(root.join("test.xml")) match {
+        case IssuesAnd(errors, doc) =>
+          assert(errors.isEmpty)
+          assert(doc.isEmpty)
+      }
+    }
+  }
+
   test("root node") {
     FileSystemHelper.run(
       Map[String, String](
@@ -92,6 +106,41 @@ class XMLDocumentTest extends AnyFunSuite {
           assert(node.line == 1)
           assert(node.name == XMLName(XMLDocument.sfNamespace, "test"))
           assert(node.text == "Hello")
+      }
+    }
+  }
+
+  test("leading whitespace before declaration is parsed") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "test.xml" ->
+          """
+            |<?xml version="1.0" encoding="UTF-8"?>
+            |<test xmlns="http://soap.sforce.com/2006/04/metadata">Hello</test>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      parse(root.join("test.xml")) match {
+        case Left(err) => assert(false, err)
+        case Right(doc) =>
+          assert(doc.rootElement.text == "Hello")
+      }
+    }
+  }
+
+  test("leading whitespace before root element is parsed") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "test.xml" ->
+          """
+            |<test xmlns="http://soap.sforce.com/2006/04/metadata">Hello</test>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      parse(root.join("test.xml")) match {
+        case Left(err) => assert(false, err)
+        case Right(doc) =>
+          assert(doc.rootElement.text == "Hello")
       }
     }
   }

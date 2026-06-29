@@ -220,6 +220,66 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
     }
   }
 
+  test("Label file event with leading whitespace before declaration") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "force-app/main/default/labels/CustomLabels.labels" ->
+          """
+            |<?xml version="1.0" encoding="UTF-8"?>
+            |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata"/>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      val (ws, logger) = Workspace(root)
+      assert(logger.isEmpty)
+      assert(ws.nonEmpty)
+      ws.get.events.toList should matchPattern {
+        case List(LabelFileEvent(SourceInfo(PathLocation(labelsPath, Location.all), _)))
+            if labelsPath == root
+              .join("force-app")
+              .join("main")
+              .join("default")
+              .join("labels")
+              .join("CustomLabels.labels") =>
+      }
+    }
+  }
+
+  test("Label file event with leading whitespace before root element") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "force-app/main/default/labels/CustomLabels.labels" ->
+          """
+            |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata"/>
+            |""".stripMargin
+      )
+    ) { root: PathLike =>
+      val (ws, logger) = Workspace(root)
+      assert(logger.isEmpty)
+      assert(ws.nonEmpty)
+      ws.get.events.toList should matchPattern {
+        case List(LabelFileEvent(SourceInfo(PathLocation(labelsPath, Location.all), _)))
+            if labelsPath == root
+              .join("force-app")
+              .join("main")
+              .join("default")
+              .join("labels")
+              .join("CustomLabels.labels") =>
+      }
+    }
+  }
+
+  test("Whitespace only label file has no parse error") {
+    FileSystemHelper.run(
+      Map[String, String]("force-app/main/default/labels/CustomLabels.labels" -> " \n\t \r\n  ")
+    ) { root: PathLike =>
+      val (ws, logger) = Workspace(root)
+      assert(logger.isEmpty)
+      assert(ws.nonEmpty)
+      assert(ws.get.events.collect { case event: IssuesEvent => event }.isEmpty)
+    }
+  }
+
   test("Label parse error") {
     FileSystemHelper.run(
       Map[String, String]("force-app/main/default/labels/CustomLabels.labels" -> "<CustomLabels")
