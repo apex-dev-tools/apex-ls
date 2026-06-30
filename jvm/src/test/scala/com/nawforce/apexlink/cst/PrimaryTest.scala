@@ -109,6 +109,16 @@ class PrimaryTest extends AnyFunSuite with Matchers with TestHelper {
     }
   }
 
+  test("SOQL bound WHERE FORMULA expression") {
+    val soqlPrimary =
+      primaryOf[SOQL]("[Select Id from Account WHERE FORMULA('EndDate - StartDate') > :days]")
+    assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
+    assert(soqlPrimary.fromNames sameElements Array(DotName(Name("Account"))))
+    soqlPrimary.boundExpressions should matchPattern {
+      case ArraySeq(PrimaryExpression(IdPrimary(Id(Name("days"))))) =>
+    }
+  }
+
   test("SOQL multiple bound LIMIT expressions") {
     val soqlPrimary = primaryOf[SOQL]("[Select Id from Account Limit :Limit]")
     assert(soqlPrimary.queryResultType == LIST_RESULT_QUERY)
