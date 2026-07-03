@@ -180,8 +180,23 @@ class SOQLParserTest extends AnyFunSuite with Matchers {
     assert(SOQLParser.parse("Select A from Table Where B in :a").isRight)
   }
 
+  test("Where formula") {
+    assert(SOQLParser.parse("Select A from Table Where FORMULA('B - C') > 1").isRight)
+  }
+
+  test("Where formula bound expr") {
+    assert(SOQLParser.parse("Select A from Table Where FORMULA('B - C') > :a").isRight)
+  }
+
   test("Simple Group by ") {
     assert(SOQLParser.parse("Select A from Table Group By B Having C <> 1").isRight)
+  }
+
+  test("Having formula not allowed") {
+    SOQLParser.parse(
+      "Select A from Table Group By B Having FORMULA('B - C') > 1"
+    ) should matchPattern { case Left(Seq(SOQLParser.ParserIssue(1, _, _), _*)) =>
+    }
   }
 
   test("Rollup") {
