@@ -58,9 +58,10 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
 
-      # Only publishes full tagged releases to NPM
+      # NPM distribution is deprecated: only publish on explicit manual opt-in,
+      # never automatically from a GitHub Release (see CHANGELOG "Deprecated")
       - name: Publish NPM
-        if: ${{ github.event_name == 'release' && github.event.action == 'released' || inputs.pub_npm }}
+        if: ${{ inputs.pub_npm }}
         run: |
           npm version --allow-same-version --no-git-tag-version from-git
           npm publish --access public
