@@ -5,25 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Fixed
-
-- Missing nested Apex type diagnostics now clarify when the outer type exists but the referenced nested type is not declared (#149)
-
-## [6.1.0-beta.2] - 2026-06-18
-
-### Fixed
-
-- Stabilized diagnostic column spans for missing type-reference and duplicate visibility diagnostics, avoiding context-dependent diff churn (#487)
-- Nested subclasses now resolve unqualified names to accessible enclosing static fields before inherited private superclass fields, avoiding false `Field is not visible` diagnostics (#488)
-- Removed use of the deprecated Apex parser `CaseInsensitiveInputStream` from JVM parsing (#489)
-- Private and protected overloaded methods called with ghosted-type arguments no longer report false `Method is not visible` diagnostics (#484)
-
-## [6.1.0-beta.1] - 2026-06-13
+## [6.1.0] - 2026-07-03
 
 ### Added
 
+- Bound variables are now extracted from SOQL `WHERE FORMULA(...)` comparisons (e.g. `WHERE FORMULA('EndDate - StartDate') > :days`), following the apex-parser WHERE AST split; `FORMULA(...)` remains rejected in `HAVING` (#495)
 - Recognition of Summer '26 test annotations `@IntegrationTest` and `@TearDown`, including test-class and unused-analysis handling (#468)
 - Acceptance of Summer '26 multi-line string literals (`'''...'''`) in expressions and `switch` when clauses (#447)
 - Targeted diagnostic for malformed multi-line string literals such as `'''abc'''` and `''''''`, replacing the generic "mismatched input" syntax error (#443)
@@ -33,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Missing nested Apex type diagnostics now clarify when the outer type exists but the referenced nested type is not declared (#149)
+- Stabilized diagnostic column spans for missing type-reference and duplicate visibility diagnostics, avoiding context-dependent diff churn (#487)
+- Nested subclasses now resolve unqualified names to accessible enclosing static fields before inherited private superclass fields, avoiding false `Field is not visible` diagnostics (#488)
+- Removed use of the deprecated Apex parser `CaseInsensitiveInputStream` from JVM parsing (#489)
+- Private and protected overloaded methods called with ghosted-type arguments no longer report false `Method is not visible` diagnostics (#484)
 - Nested classes extending an externally nested base no longer resolve unqualified static field names through the base class's enclosing type, avoiding false `Field is not visible` diagnostics (#482)
 - Unused method/field/type warnings are now recomputed for cache-loaded classes instead of replaying the cached result, so they reflect actual usage in the current workspace rather than a stale whole-program result captured when the cache was written (#477)
 - Private and protected field/method accesses from unrelated classes are now reported as visibility errors (#474)
