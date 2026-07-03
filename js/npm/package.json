@@ -15,7 +15,7 @@
     "test-snapshot": "npm run test-samples -- --updateSnapshot"
   },
   "dependencies": {
-    "@xmldom/xmldom": "0.7.9"
+    "@xmldom/xmldom": "^0.8.13"
   },
   "devDependencies": {
     "@types/jest": "^29.2.0",

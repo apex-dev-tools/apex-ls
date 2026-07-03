@@ -60,6 +60,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP server support and packaging (#454)
 - v1 ForceIgnore implementation (V2 has been the default since 6.0.0)
 
+### Security
+
+- Upgraded the JS runtime's `@xmldom/xmldom` dependency from 0.7.9 to 0.8.13, clearing several XML serialization-injection and denial-of-service advisories
+
 ## [6.0.2] - 2025-11-25
 
 ### Fixed
