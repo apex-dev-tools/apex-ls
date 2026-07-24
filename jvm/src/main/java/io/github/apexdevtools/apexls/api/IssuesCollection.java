@@ -44,7 +44,6 @@ public interface IssuesCollection {
   /**
    * Array of current Issues for the metadata file path that are entirely enclosed within a code range defined by
    * the Location. Returns an empty array if there are none. This does not reset the updates issues tracking.
-   * Note: This was added to aid PMD integration.
    */
   Issue[] issuesForFileLocation(String path, IssueLocation location);
 

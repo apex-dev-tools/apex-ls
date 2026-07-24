@@ -200,7 +200,6 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       assert(result.error.isEmpty)
       assert(LoggerOps.getLoggingLevel == DEBUG_LOGGING)
       assert(ServerOps.getCurrentParser == OutlineParserSingleThreaded)
-      assert(ServerOps.getExternalAnalysis.mode == NoAnalysis)
       assert(ServerOps.isAutoFlushEnabled)
       assert(ServerOps.getIndexerConfiguration == IndexerConfiguration(1, 2))
       assert(Environment.getCacheDirOverride.contains(Some(cacheDir)))

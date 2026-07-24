@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.rpc
 
-import com.nawforce.apexlink.api.{ExternalAnalysisConfiguration, Org, ServerOps}
+import com.nawforce.apexlink.api.{Org, ServerOps}
 import com.nawforce.apexlink.org.{OPM, OrgInfo}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -555,7 +555,10 @@ class OrgAPIImpl extends OrgAPI {
   }
 
   override def setExternalAnalysisMode(mode: String): Future[Unit] = {
-    ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode))
+    LoggerOps.info(
+      "setExternalAnalysisMode is deprecated and no longer has any effect. " +
+        "External analysis provider (SPI) support has been removed."
+    )
     Future.successful(())
   }
 

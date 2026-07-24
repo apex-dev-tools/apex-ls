@@ -14,7 +14,6 @@
 
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.analysis.OrgAnalysis
 import com.nawforce.apexlink.api.{Package, TypeSummary}
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
@@ -358,10 +357,6 @@ trait PackageAPI extends Package {
 
     // Close any open plugins
     org.pluginsManager.closePlugins()
-
-    // Run external analysis, we don't refresh on types referencing the changed files here as we assume external
-    // analysis would not be capable of doing multi-file work, at least for now.
-    OrgAnalysis.afterRefresh(this.org, toUpsert.map(request => Path(request._1)).toSet)
 
     true
   }

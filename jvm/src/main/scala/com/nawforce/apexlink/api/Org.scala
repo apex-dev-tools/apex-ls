@@ -265,8 +265,11 @@ object Org {
     // All should be options on the org, some are cached when the org is created
     options.loggingLevel.foreach(LoggerOps.setLoggingLevel)
     options.parser.foreach(ServerOps.setCurrentParser)
-    options.externalAnalysisMode.foreach(mode =>
-      ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode._1, mode._2))
+    options.externalAnalysisMode.foreach(_ =>
+      LoggerOps.info(
+        "OpenOptions.externalAnalysisMode is deprecated and no longer has any effect. " +
+          "External analysis provider (SPI) support has been removed."
+      )
     )
     options.cacheDirectory.foreach(path => {
       Environment.setCacheDirOverride(Some(Some(Path(path))))
