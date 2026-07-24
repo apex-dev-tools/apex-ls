@@ -86,18 +86,6 @@ trait TestHelper {
     }
   }
 
-  def withExternalAnalysis[T](
-    mode: AnalysisMode,
-    params: Map[String, List[(String, List[String])]] = Map()
-  )(op: => T): T = {
-    val current = ServerOps.setExternalAnalysis(ExternalAnalysisConfiguration(mode, params))
-    try {
-      op
-    } finally {
-      ServerOps.setExternalAnalysis(current)
-    }
-  }
-
   def withEmptyOrg[T](op: OPM.OrgImpl => T): T = {
     val org = emptyOrg()
     OrgInfo.current.withValue(org) {

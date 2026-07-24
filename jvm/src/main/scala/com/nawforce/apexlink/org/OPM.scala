@@ -13,7 +13,6 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.analysis.OrgAnalysis
 import com.nawforce.apexlink.api.{AvailableParser, BuildInfo, Org, Package, ServerOps, TypeSummary}
 import com.nawforce.apexlink.cst.CompilationUnit
 import com.nawforce.apexlink.deps.{DownWalker, MaxDependencyCountParser, TransitiveCollector}
@@ -165,9 +164,6 @@ object OPM {
       if (autoFlush)
         flusher.refreshAndFlush()
     }
-
-    // Once loaded we can run external analysis
-    OrgAnalysis.afterLoad(this)
 
     /** Get all loaded packages. */
     def getPackages(): Array[Package] = {

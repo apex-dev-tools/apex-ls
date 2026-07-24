@@ -39,5 +39,5 @@ This model is essentially assuming that if you create a method that shadows anot
 # Warning suppression
 You may come across cases where an unused warning is not valid or even just not wanted yet. To avoid the warning you can use one of two forms of suppression annotation on either the method of containing class.
 
-The most specific annotation to use is ‘“@SuppressWarnings('Unused')”. You can also use “ @SuppressWarnings(‘PMD’)” since PMD also has some unused capabilities. 
+The most specific annotation to use is ‘“@SuppressWarnings('Unused')”. You can also use “ @SuppressWarnings(‘PMD’)”, though this is legacy/deprecated now that apex-ls no longer integrates with PMD via an external analysis provider. 
 

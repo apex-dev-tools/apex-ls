@@ -30,6 +30,9 @@ case object OutlineParserMultithreaded extends AvailableParser {
   override def toString = "Outline Parser - Multithreaded"
 }
 
+/** Deprecated, external analysis provider (SPI) support has been removed and this no longer has
+  * any effect.
+  */
 sealed trait AnalysisMode {
   val shortName: String         = toString.toLowerCase
   override def toString: String = shortName
@@ -52,10 +55,8 @@ case class IndexerConfiguration(rescanTriggerTimeMs: Long, quietPeriodForRescanM
   val enabled: Boolean = rescanTriggerTimeMs > 0 && quietPeriodForRescanMs > 0
 }
 
-/** Setting for external analysis, such as PMD. The mode determines if/when analysis is performed
-  * while the params provide directives on how to perform the analysis. Params are grouped by
-  * analysis provider name, e.g. PMD, within each group is a list of params each with a list
-  * of values (which may be empty). The meaning of the params is specific to each provider.
+/** Deprecated, external analysis provider (SPI) support has been removed and this no longer has
+  * any effect. Retained as a no-op stub to avoid breaking existing clients.
   */
 case class ExternalAnalysisConfiguration(
   mode: AnalysisMode,
@@ -80,7 +81,7 @@ object ExternalAnalysisConfiguration {
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
   private var autoFlush                      = true
-  private var externalAnalysis               = ExternalAnalysisConfiguration(RefreshAnalysis, Map())
+  private val defaultExternalAnalysis        = ExternalAnalysisConfiguration(RefreshAnalysis, Map())
   private var currentParser: AvailableParser = OutlineParserMultithreaded
   private var indexerConfiguration           = IndexerConfiguration(0, 0)
 
@@ -95,13 +96,19 @@ object ServerOps {
   }
 
   def getExternalAnalysis: ExternalAnalysisConfiguration = {
-    externalAnalysis
+    LoggerOps.info(
+      "getExternalAnalysis is deprecated and no longer has any effect. " +
+        "External analysis provider (SPI) support has been removed."
+    )
+    defaultExternalAnalysis
   }
 
   def setExternalAnalysis(config: ExternalAnalysisConfiguration): ExternalAnalysisConfiguration = {
-    val current = externalAnalysis
-    externalAnalysis = config
-    current
+    LoggerOps.info(
+      "setExternalAnalysis is deprecated and no longer has any effect. " +
+        "External analysis provider (SPI) support has been removed."
+    )
+    defaultExternalAnalysis
   }
 
   def getCurrentParser: AvailableParser = {

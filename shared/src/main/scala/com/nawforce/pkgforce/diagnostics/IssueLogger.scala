@@ -108,7 +108,10 @@ class IssueLogger(val externalPathFilter: Option[PathLike => Boolean] = None)
     issuesForFilesInternal(internalPaths, includeWarnings, maxIssuesPerFile).toArray
   }
 
-  /** This is specialised accessor to aid PMD integration. */
+  /** This is a specialised accessor for issues that fall within a code range. Note: This is used
+    * by PMD to call into apex-ls directly, do not remove even though it is unused within this
+    * repo.
+    */
   override def issuesForFileLocation(path: String, location: IssueLocation): Array[APIIssue] = {
     issuesForFileLocationInternal(Path(path), location)
   }

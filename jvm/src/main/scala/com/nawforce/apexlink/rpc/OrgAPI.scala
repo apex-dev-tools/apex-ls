@@ -205,6 +205,9 @@ case class OpenOptions private (
     copy(loggingLevel = Some(level))
   }
 
+  /** Deprecated, external analysis provider (SPI) support has been removed and this no longer
+    * has any effect. Retained as a no-op stub to avoid breaking existing clients.
+    */
   def withExternalAnalysisMode(
     mode: String,
     params: Map[String, List[(String, List[String])]]
@@ -259,6 +262,9 @@ trait OrgAPI {
   @api.JSONRPCMethod(name = "setLoggingLevel")
   def setLoggingLevel(level: String): Future[Unit]
 
+  /** Deprecated, external analysis provider (SPI) support has been removed and this no longer
+    * has any effect. Retained as a no-op stub to avoid breaking existing clients.
+    */
   @api.JSONRPCMethod(name = "setExternalAnalysisMode")
   def setExternalAnalysisMode(mode: String): Future[Unit]
 
