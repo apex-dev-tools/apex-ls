@@ -44,6 +44,8 @@ public interface IssuesCollection {
   /**
    * Array of current Issues for the metadata file path that are entirely enclosed within a code range defined by
    * the Location. Returns an empty array if there are none. This does not reset the updates issues tracking.
+   * Note: This is used by PMD to call into apex-ls directly, do not remove even though it is
+   * unused within this repo.
    */
   Issue[] issuesForFileLocation(String path, IssueLocation location);
 
