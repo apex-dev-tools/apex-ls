@@ -687,9 +687,113 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
             excludeTestClasses = true
           )
           .map(_.maxDependencyCount)
-          .forall(d => d.isLeft && d.swap.toOption.flatten.get == "'abc' is not an integer value")
+          .forall(d =>
+            d.isLeft && d.swap.toOption.flatten.get ==
+              "'abc' is not an integer value or a known dependencyCountAliases entry"
+          )
       )
 
+    }
+  }
+
+  test("Get DependencyCounts with MaxDependencyCount comment using a configured alias") {
+    FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
+      root.createFile(
+        "sfdx-project.json",
+        """
+          |{
+          |  "packageDirectories": [
+          |    {
+          |      "path": "force-app",
+          |      "default": true
+          |    }
+          |  ],
+          |  "namespace": "",
+          |  "sfdcLoginUrl": "https://login.salesforce.com",
+          |  "sourceApiVersion": "48.0",
+          |  "plugins" : {
+          |     "dependencyCountAliases": {
+          |       "med": 50,
+          |       "group": {
+          |         "name": 23
+          |       }
+          |     }
+          |  }
+          |}
+          |""".stripMargin
+      )
+      root.createFile(
+        root.join("force-app/main/default/classes/Test.cls").toString,
+        """
+        |//MaxDependencyCount(med)
+        |public class Test {}""".stripMargin
+      )
+      root.createFile(
+        root.join("force-app/main/default/classes/Test2.cls").toString,
+        """
+        |//MaxDependencyCount(group.name)
+        |public class Test2 {}""".stripMargin
+      )
+
+      val orgAPI = createOrg(root)
+      val counts = orgAPI
+        .getDependencyCounts(
+          Array(
+            root.join("force-app/main/default/classes/Test.cls").toString,
+            root.join("force-app/main/default/classes/Test2.cls").toString
+          ),
+          excludeTestClasses = true
+        )
+        .map(c => c.path -> c.maxDependencyCount)
+        .toMap
+      assert(counts(root.join("force-app/main/default/classes/Test.cls").toString) == Right(50))
+      assert(counts(root.join("force-app/main/default/classes/Test2.cls").toString) == Right(23))
+    }
+  }
+
+  test("Get DependencyCounts with MaxDependencyCount comment using an unknown alias") {
+    FileSystemHelper.runWithCopy(samplesDir.join("dependency-counts")) { root: PathLike =>
+      root.createFile(
+        "sfdx-project.json",
+        """
+          |{
+          |  "packageDirectories": [
+          |    {
+          |      "path": "force-app",
+          |      "default": true
+          |    }
+          |  ],
+          |  "namespace": "",
+          |  "sfdcLoginUrl": "https://login.salesforce.com",
+          |  "sourceApiVersion": "48.0",
+          |  "plugins" : {
+          |     "dependencyCountAliases": {
+          |       "med": 50
+          |     }
+          |  }
+          |}
+          |""".stripMargin
+      )
+      root.createFile(
+        root.join("force-app/main/default/classes/Test.cls").toString,
+        """
+        |//MaxDependencyCount(unknown)
+        |public class Test {}""".stripMargin
+      )
+
+      val orgAPI = createOrg(root)
+      assert(
+        orgAPI
+          .getDependencyCounts(
+            Array(root.join("force-app/main/default/classes/Test.cls").toString),
+            excludeTestClasses = true
+          )
+          .map(_.maxDependencyCount)
+          .forall(d =>
+            d.isLeft && d.swap.toOption.flatten.get ==
+              "'unknown' is not an integer value or a known dependencyCountAliases entry"
+          )
+      )
     }
   }
 

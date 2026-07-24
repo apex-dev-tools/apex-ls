@@ -72,6 +72,14 @@ The recommended approach is to configure apex-ls settings under the `plugins.ape
       "externalMetadata": [...],
       "library": true,
       "maxDependencyCount": 10,
+      "dependencyCountAliases": {
+        "low": 10,
+        "med": 50,
+        "high": 100,
+        "group": {
+          "name": 23
+        }
+      },
       "options": {
         "forceIgnoreVersion": "v2"
       }
@@ -115,8 +123,34 @@ For backward compatibility, the legacy configuration style is still supported:
 | `externalMetadata`  | Array         | `[]`    | External metadata directories to include in analysis. |
 | `library`           | Boolean       | `false` | Whether this project should be treated as a library. |
 | `maxDependencyCount` | Integer      | None    | Maximum number of dependencies allowed. |
+| `dependencyCountAliases` | Object    | `{}`    | Named aliases for `maxDependencyCount` values, referenced from the `//MaxDependencyCount(name)` comment. Nested objects create dotted keys, e.g. `group.name`. |
 
 The `options` section supports additional configuration options that may be added in future releases.
+
+##### `dependencyCountAliases`
+
+Repeating `// MaxDependencyCount(number)` across many files is a maintenance burden, especially when the limit needs to change project-wide. `dependencyCountAliases` lets you define named presets (optionally grouped in nested objects) that the `//MaxDependencyCount(...)` comment can reference by name instead of by number:
+
+```json
+"dependencyCountAliases": {
+  "low": 10,
+  "med": 50,
+  "high": 100,
+  "group": {
+    "name": 23
+  }
+}
+```
+
+```apex
+// MaxDependencyCount(med)
+public class MyClass {}
+
+// MaxDependencyCount(group.name)
+public class MyOtherClass {}
+```
+
+Plain numbers, e.g. `// MaxDependencyCount(50)`, are still supported for one-off cases. If a referenced name is not found in `dependencyCountAliases`, an error is reported.
 
 ## Development
 

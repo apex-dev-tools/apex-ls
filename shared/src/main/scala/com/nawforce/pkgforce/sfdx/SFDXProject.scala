@@ -115,6 +115,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   def unpackagedMetadata: Seq[PackageDirectory] = apexConfig.unpackagedMetadata
   def additionalNamespaces: Array[Option[Name]] = apexConfig.additionalNamespaces
   def maxDependencyCount: Option[Int]           = apexConfig.maxDependencyCount
+  def dependencyCountAliases: Map[String, Int]  = apexConfig.dependencyCountAliases
   def isLibrary: Boolean                        = apexConfig.isLibrary
   def externalMetadata: Seq[String]             = apexConfig.externalMetadata
   def options: Map[String, String]              = apexConfig.options

@@ -27,9 +27,10 @@ class MaxDependencyCountParser(org: Org) {
 
   def count(td: ApexDeclaration): Either[Option[String], Int] = {
     val dependencyLimitParseExceptions = mutable.Queue[String]()
+    val aliases = org.getProjectConfig().map(_.dependencyCountAliases).getOrElse(Map.empty)
 
     def parseTokenToDependencyLimit(t: Token): Option[Int] = {
-      getDependencyLimit(t) match {
+      getDependencyLimit(t, aliases) match {
         case Right(result) => Some(result)
         case Left(value) =>
           if (value.nonEmpty)
@@ -62,7 +63,10 @@ class MaxDependencyCountParser(org: Org) {
     }
   }
 
-  private def getDependencyLimit(token: Token): Either[Option[String], Int] = {
+  private def getDependencyLimit(
+    token: Token,
+    aliases: Map[String, Int]
+  ): Either[Option[String], Int] = {
     val tokenText = token.getText.filterNot((x: Char) => x.isWhitespace)
     val start     = tokenText.indexOf(maxCountMarker)
     if (start == -1) return Left(None)
@@ -73,7 +77,12 @@ class MaxDependencyCountParser(org: Org) {
     Try(text.toInt) match {
       case Success(value) if value >= 0 => Right(value)
       case Success(_)                   => Left(Some(s"'$text' must be >=0"))
-      case Failure(_)                   => Left(Some(s"'$text' is not an integer value"))
+      case Failure(_) =>
+        aliases.get(text) match {
+          case Some(value) => Right(value)
+          case None =>
+            Left(Some(s"'$text' is not an integer value or a known dependencyCountAliases entry"))
+        }
     }
   }
 }
