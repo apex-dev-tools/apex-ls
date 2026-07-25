@@ -5,6 +5,7 @@
 package com.nawforce.apexlink.cst
 import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignable}
 import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike, ApexDeclaration}
 import com.nawforce.apexlink.types.core.{ConstructorDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.synthetic.{
@@ -38,9 +39,26 @@ final case class ConstructorMap(
     params: ArraySeq[TypeName],
     context: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
+    if (!hasCompatibleCollectionInitializer(params))
+      return Left(s"Constructor not defined: ${getConstructorString(params)}")
+
     constructorsByParam.get(params.length) match {
       case Some(potential) => findPotentialMatch(potential, params, context)
       case None            => Left(s"No constructor defined with ${params.length} arguments")
+    }
+  }
+
+  private def hasCompatibleCollectionInitializer(params: ArraySeq[TypeName]): Boolean = {
+    val createdElement = typeName.flatMap(_.getSetOrListType)
+    val sourceElement  = params.headOption.flatMap(_.getSetOrListType)
+    params.length != 1 || createdElement.isEmpty || sourceElement.isEmpty ||
+    createdElement == sourceElement
+  }
+
+  private def getConstructorString(params: ArraySeq[TypeName]): String = {
+    typeName match {
+      case Some(name) => s"$name.<constructor>(${params.mkString(",")})"
+      case None       => s"<constructor>(${params.mkString(",")})"
     }
   }
 
@@ -49,14 +67,6 @@ final case class ConstructorMap(
     params: ArraySeq[TypeName],
     context: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
-    def getCtorString: String = {
-      typeName match {
-        case Some(name) =>
-          s"$name.<constructor>(${params.mkString(",")})"
-        case None => s"<constructor>(${params.mkString(",")})"
-      }
-    }
-
     val potential = findMostSpecificMatch(strict = true, matches, params, context)
       .orElse(findMostSpecificMatch(strict = false, matches, params, context))
 
@@ -68,11 +78,11 @@ final case class ConstructorMap(
           // Check the rest of assignable for accessible ctors, if not return the original error
           findPotentialMatch(matches.filterNot(_ == ctor), params, context) match {
             case Right(ctor) => Right(ctor)
-            case _           => Left(s"Constructor is not visible: $getCtorString")
+            case _           => Left(s"Constructor is not visible: ${getConstructorString(params)}")
           }
         }
-      case Some(Left(error)) => Left(s"$error: $getCtorString")
-      case None              => Left(s"Constructor not defined: $getCtorString")
+      case Some(Left(error)) => Left(s"$error: ${getConstructorString(params)}")
+      case None              => Left(s"Constructor not defined: ${getConstructorString(params)}")
     }
   }
 

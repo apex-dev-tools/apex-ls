@@ -152,6 +152,9 @@ object AssignableSupport {
     fromType: TypeName,
     context: VerifyContext
   ): Boolean = {
+    if (toType.name == Names.Set$ && fromType.name == Names.Set$)
+      return toType.params == fromType.params
+
     // SObject narrowing is supported on List & Set but not Map
     checkGenericParameterAssignability(
       toType.params,
