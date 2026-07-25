@@ -67,9 +67,12 @@ class OperationsTest extends AnyFunSuite with TestHelper {
     typeDeclaration(
       "public class Dummy {{Set<Id> chainIds = new Set<Id>(); chainIds.addAll('a,b'.split(','));}}"
     )
+    // Suffix omitted: Set.addAll has two overloads (List<T>/Set<T>) and which one the error
+    // suggests depends on JVM reflection method ordering, which is not stable across environments.
     assert(
-      dummyIssues ==
-        "Missing: line 1 at 55-88: No matching method found for 'addAll' on 'System.Set<System.Id>' taking arguments 'System.List<System.String>', wrong argument types for calling 'public virtual System.Boolean addAll(System.List<System.Id> fromList)'\n"
+      dummyIssues.startsWith(
+        "Missing: line 1 at 55-88: No matching method found for 'addAll' on 'System.Set<System.Id>' taking arguments 'System.List<System.String>'"
+      )
     )
   }
 
@@ -84,8 +87,9 @@ class OperationsTest extends AnyFunSuite with TestHelper {
       "public class Dummy {{Set<Id> a = new Set<Id>(); a.addAll(new Set<String>{'a'});}}"
     )
     assert(
-      dummyIssues ==
-        "Missing: line 1 at 48-78: No matching method found for 'addAll' on 'System.Set<System.Id>' taking arguments 'System.Set<System.String>', wrong argument types for calling 'public virtual System.Boolean addAll(System.List<System.Id> fromList)'\n"
+      dummyIssues.startsWith(
+        "Missing: line 1 at 48-78: No matching method found for 'addAll' on 'System.Set<System.Id>' taking arguments 'System.Set<System.String>'"
+      )
     )
   }
 
@@ -94,8 +98,9 @@ class OperationsTest extends AnyFunSuite with TestHelper {
       "public class Dummy {{Set<Id> a = new Set<Id>(); a.removeAll(new List<String>{'a'});}}"
     )
     assert(
-      dummyIssues ==
-        "Missing: line 1 at 48-82: No matching method found for 'removeAll' on 'System.Set<System.Id>' taking arguments 'System.List<System.String>', wrong argument types for calling 'public virtual System.Boolean removeAll(System.Set<System.Id> setOfElementsToRemove)'\n"
+      dummyIssues.startsWith(
+        "Missing: line 1 at 48-82: No matching method found for 'removeAll' on 'System.Set<System.Id>' taking arguments 'System.List<System.String>'"
+      )
     )
   }
 
@@ -104,8 +109,9 @@ class OperationsTest extends AnyFunSuite with TestHelper {
       "public class Dummy {{Set<Id> a = new Set<Id>(); a.retainAll(new Set<String>{'a'});}}"
     )
     assert(
-      dummyIssues ==
-        "Missing: line 1 at 48-81: No matching method found for 'retainAll' on 'System.Set<System.Id>' taking arguments 'System.Set<System.String>', wrong argument types for calling 'public virtual System.Boolean retainAll(System.Set<System.Id> setOfElementsToRetain)'\n"
+      dummyIssues.startsWith(
+        "Missing: line 1 at 48-81: No matching method found for 'retainAll' on 'System.Set<System.Id>' taking arguments 'System.Set<System.String>'"
+      )
     )
   }
 
@@ -114,8 +120,9 @@ class OperationsTest extends AnyFunSuite with TestHelper {
       "public class Dummy {{List<Id> a = new List<Id>(); a.addAll(new Set<String>{'a'});}}"
     )
     assert(
-      dummyIssues ==
-        "Missing: line 1 at 50-80: No matching method found for 'addAll' on 'System.List<System.Id>' taking arguments 'System.Set<System.String>', wrong argument types for calling 'public virtual void addAll(System.List<System.Id> fromList)'\n"
+      dummyIssues.startsWith(
+        "Missing: line 1 at 50-80: No matching method found for 'addAll' on 'System.List<System.Id>' taking arguments 'System.Set<System.String>'"
+      )
     )
   }
 
