@@ -56,6 +56,8 @@ The following arguments are available:
 
 The Apex Language Server can be configured through the `sfdx-project.json` file. There are two supported configuration styles:
 
+See [Differences From Salesforce Behaviour](doc/SalesforceDifferences.md) for details of how package directories are processed.
+
 #### Recommended: Namespaced Configuration
 
 The recommended approach is to configure apex-ls settings under the `plugins.apex-ls` section:

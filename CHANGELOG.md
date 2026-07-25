@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Documentation and clarified diagnostics for the deliberate difference between apex-ls package-directory handling and Salesforce's merged deployment behaviour (#339)
 - `dependencyCountAliases` `sfdx-project.json` option to define named (and optionally nested) presets for `// MaxDependencyCount(...)`, so `// MaxDependencyCount(med)` or `// MaxDependencyCount(group.name)` can be used instead of repeating raw numbers across files (#324)
 
 ### Fixed
