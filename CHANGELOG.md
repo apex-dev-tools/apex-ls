@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Classes implementing an interface method whose parameter or return type is a ghosted (unavailable dependency package) type no longer report a false `Non-abstract class must implement method` diagnostic when the implementation uses a different, project-local type (#327)
+- `addAll`/`removeAll`/`retainAll` on `List`/`Set` (e.g. `Set<Id>.addAll(List<String>)`, such as the result of `String.split`) now require the collection argument's type parameter to exactly match, requiring an explicit cast, matching the Apex compiler; the sole exception, `List<T>.addAll(List<T>)`, is unaffected (#293)
 
 ### Removed
 
