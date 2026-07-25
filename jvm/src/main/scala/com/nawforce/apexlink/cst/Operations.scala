@@ -14,7 +14,11 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.AssignableSupport.{couldBeEqual, isAssignableDeclaration}
+import com.nawforce.apexlink.cst.AssignableSupport.{
+  AssignableOptions,
+  couldBeEqual,
+  isAssignableDeclaration
+}
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.apexlink.types.platform.PlatformTypes
@@ -238,7 +242,12 @@ case object AssignmentOperation extends Operation {
     if (rightContext.typeName == TypeNames.Null) {
       Right(leftContext)
     } else if (
-      isAssignableDeclaration(leftContext.typeName, rightContext.typeDeclaration, context)
+      isAssignableDeclaration(
+        leftContext.typeName,
+        rightContext.typeDeclaration,
+        context,
+        AssignableOptions.assignment
+      )
     ) {
       Right(leftContext)
     } else {

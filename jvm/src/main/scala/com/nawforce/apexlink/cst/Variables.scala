@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.cst
 
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
+import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignableDeclaration}
 import com.nawforce.apexlink.org.Referenceable
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
@@ -47,7 +47,14 @@ final case class VariableDeclarator(
               location,
               s"Expecting instance for operation, not type '${rhsCtx.typeName}'"
             )
-          } else if (!isAssignableDeclaration(lhsType.typeName, rhsCtx.typeDeclaration, context)) {
+          } else if (
+            !isAssignableDeclaration(
+              lhsType.typeName,
+              rhsCtx.typeDeclaration,
+              context,
+              AssignableOptions.assignment
+            )
+          ) {
             context.log(
               Issue(
                 ERROR_CATEGORY,

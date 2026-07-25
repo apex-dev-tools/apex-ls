@@ -194,6 +194,12 @@ class CreationTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Set equals accepts same element type") {
+    happyTypeDeclaration(
+      "public class Dummy {{Boolean value = new Set<Id>().equals(new Set<Id>());}}"
+    )
+  }
+
   test("List with map constructor") {
     typeDeclaration("public class Dummy {{Object a = new List<Address>{1 => 2};}}")
     assert(

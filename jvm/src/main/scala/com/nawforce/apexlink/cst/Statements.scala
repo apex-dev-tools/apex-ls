@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.cst
 
 import io.github.apexdevtools.types.base.{Location => OPLocation}
-import com.nawforce.apexlink.cst.AssignableSupport.isAssignableDeclaration
+import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignableDeclaration}
 import com.nawforce.apexlink.cst.stmts._
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
@@ -658,7 +658,14 @@ final case class ReturnStatement(expression: Option[Expression]) extends Stateme
       Some(s"Void method can not return a value")
     } else {
       expr.flatMap(e => {
-        if (e.isDefined && !isAssignableDeclaration(expectedType, e.typeDeclaration, context))
+        if (
+          e.isDefined && !isAssignableDeclaration(
+            expectedType,
+            e.typeDeclaration,
+            context,
+            AssignableOptions.assignment
+          )
+        )
           Some(s"Incompatible return type, '${e.typeName}' is not assignable to '$expectedType'")
         else
           None
