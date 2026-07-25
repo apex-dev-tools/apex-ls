@@ -15,6 +15,8 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
 class ImplementsTest extends AnyFunSuite with TestHelper {
@@ -231,6 +233,29 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
       )
     )
     assert(dummyIssues.isEmpty)
+  }
+
+  test(
+    "Interface method with ghosted parameter type implemented with a derived type - GitHub issue #327"
+  ) {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+          |"packageDirectories": [{"path": "force-app"}],
+          |"plugins": {"dependencies": [{"namespace": "ext"}]}
+          |}""".stripMargin,
+        "force-app/DerivedType.cls" -> "public class DerivedType extends ext.Something {}",
+        "force-app/IFoo.cls"        -> "public interface IFoo { void foo(ext.Something a); }",
+        "force-app/Impl.cls" ->
+          """public class Impl implements IFoo {
+            |  public void foo(DerivedType b) {}
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(getMessages(root.join("force-app").join("Impl.cls")).isEmpty)
+    }
   }
 
 }

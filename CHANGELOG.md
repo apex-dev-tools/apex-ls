@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `dependencyCountAliases` `sfdx-project.json` option to define named (and optionally nested) presets for `// MaxDependencyCount(...)`, so `// MaxDependencyCount(med)` or `// MaxDependencyCount(group.name)` can be used instead of repeating raw numbers across files (#324)
 
+### Fixed
+
+- Classes implementing an interface method whose parameter or return type is a ghosted (unavailable dependency package) type no longer report a false `Non-abstract class must implement method` diagnostic when the implementation uses a different, project-local type (#327)
+
 ### Removed
 
 - Internal Service Provider Interface (SPI) support used to integrate external analysis tools such as the now-deprecated apex-ls-pmd has been removed. Public APIs that configured external analysis (`ServerOps.getExternalAnalysis`/`setExternalAnalysis`, `OpenOptions.withExternalAnalysisMode`, and the RPC method `setExternalAnalysisMode`) are retained as deprecated no-op stubs for backward compatibility, and now log a deprecation notice (#439)
