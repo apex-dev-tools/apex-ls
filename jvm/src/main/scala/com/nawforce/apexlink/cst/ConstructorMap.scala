@@ -39,7 +39,7 @@ final case class ConstructorMap(
     params: ArraySeq[TypeName],
     context: VerifyContext
   ): Either[String, ConstructorDeclaration] = {
-    if (!hasCompatibleCollectionInitializer(params))
+    if (hasMismatchedCollectionInitializer(params))
       return Left(s"Constructor not defined: ${getConstructorString(params)}")
 
     constructorsByParam.get(params.length) match {
@@ -48,11 +48,11 @@ final case class ConstructorMap(
     }
   }
 
-  private def hasCompatibleCollectionInitializer(params: ArraySeq[TypeName]): Boolean = {
+  private def hasMismatchedCollectionInitializer(params: ArraySeq[TypeName]): Boolean = {
     val createdElement = typeName.flatMap(_.getSetOrListType)
     val sourceElement  = params.headOption.flatMap(_.getSetOrListType)
-    params.length != 1 || createdElement.isEmpty || sourceElement.isEmpty ||
-    createdElement == sourceElement
+    params.length == 1 && createdElement.nonEmpty && sourceElement.nonEmpty &&
+    createdElement != sourceElement
   }
 
   private def getConstructorString(params: ArraySeq[TypeName]): String = {

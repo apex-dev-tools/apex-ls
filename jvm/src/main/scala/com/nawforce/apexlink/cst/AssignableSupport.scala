@@ -24,6 +24,7 @@ object AssignableSupport {
   /** Options for determining assignability
     * @param strictConversions limit implicit type conversions
     * @param narrowSObjects narrowing of SObject conversions, i.e. SObject cast to Account
+    * @param invariantSet require identical Set type parameters
     */
   case class AssignableOptions(
     strictConversions: Boolean,
@@ -37,6 +38,9 @@ object AssignableSupport {
     val default: AssignableOptions =
       AssignableOptions(strictConversions = false, narrowSObjects = true)
 
+    /** Options for assignment and return validation, where Apex treats Set type parameters as
+      * invariant.
+      */
     val assignment: AssignableOptions =
       AssignableOptions(strictConversions = false, narrowSObjects = true, invariantSet = true)
   }
