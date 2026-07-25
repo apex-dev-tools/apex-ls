@@ -63,6 +63,75 @@ class OperationsTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Set<Id> addAll from List<String> should fail (Issue #293)") {
+    typeDeclaration(
+      "public class Dummy {{Set<Id> chainIds = new Set<Id>(); chainIds.addAll('a,b'.split(','));}}"
+    )
+    // Suffix omitted: Set.addAll has two overloads (List<T>/Set<T>) and which one the error
+    // suggests depends on JVM reflection method ordering, which is not stable across environments.
+    assert(
+      dummyIssues.startsWith(
+        "Missing: line 1 at 55-88: No matching method found for 'addAll' on 'System.Set<System.Id>' taking arguments 'System.List<System.String>'"
+      )
+    )
+  }
+
+  test("Set<Id> addAll from cast List<Id> should be allowed (Issue #293)") {
+    happyTypeDeclaration(
+      "public class Dummy {{Set<Id> chainIds = new Set<Id>(); chainIds.addAll((List<Id>) 'a,b'.split(','));}}"
+    )
+  }
+
+  test("Set<Id> addAll from Set<String> should fail") {
+    typeDeclaration(
+      "public class Dummy {{Set<Id> a = new Set<Id>(); a.addAll(new Set<String>{'a'});}}"
+    )
+    assert(
+      dummyIssues.startsWith(
+        "Missing: line 1 at 48-78: No matching method found for 'addAll' on 'System.Set<System.Id>' taking arguments 'System.Set<System.String>'"
+      )
+    )
+  }
+
+  test("Set<Id> removeAll from List<String> should fail") {
+    typeDeclaration(
+      "public class Dummy {{Set<Id> a = new Set<Id>(); a.removeAll(new List<String>{'a'});}}"
+    )
+    assert(
+      dummyIssues.startsWith(
+        "Missing: line 1 at 48-82: No matching method found for 'removeAll' on 'System.Set<System.Id>' taking arguments 'System.List<System.String>'"
+      )
+    )
+  }
+
+  test("Set<Id> retainAll from Set<String> should fail") {
+    typeDeclaration(
+      "public class Dummy {{Set<Id> a = new Set<Id>(); a.retainAll(new Set<String>{'a'});}}"
+    )
+    assert(
+      dummyIssues.startsWith(
+        "Missing: line 1 at 48-81: No matching method found for 'retainAll' on 'System.Set<System.Id>' taking arguments 'System.Set<System.String>'"
+      )
+    )
+  }
+
+  test("List<Id> addAll from Set<String> should fail") {
+    typeDeclaration(
+      "public class Dummy {{List<Id> a = new List<Id>(); a.addAll(new Set<String>{'a'});}}"
+    )
+    assert(
+      dummyIssues.startsWith(
+        "Missing: line 1 at 50-80: No matching method found for 'addAll' on 'System.List<System.Id>' taking arguments 'System.Set<System.String>'"
+      )
+    )
+  }
+
+  test("List<Id> addAll from List<String> should be allowed") {
+    happyTypeDeclaration(
+      "public class Dummy {{List<Id> a = new List<Id>(); a.addAll(new List<String>{'a'});}}"
+    )
+  }
+
   test("Alternative not equal") {
     happyTypeDeclaration("public class Dummy {{Boolean a; a = 1 <> 2; }}")
   }

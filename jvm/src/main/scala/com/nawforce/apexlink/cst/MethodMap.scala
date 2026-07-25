@@ -128,12 +128,20 @@ final case class MethodMap private (
     else if (exactMatches.length > 1)
       return Left(AMBIGUOUS_ERROR)
 
+    // The built-in List/Set bulk mutators (addAll, removeAll, retainAll) require their collection
+    // argument's type parameter to exactly match the receiver's - the platform does not apply the
+    // implicit widening (e.g. String -> Id) or SObject narrowing used for other method calls, with
+    // the sole exception of the List<T>.addAll(List<T>) overload, which behaves like a normal call.
+    // As an exact match already failed above, drop these from the candidates for the fuzzy match
+    // stages below so they correctly report no match instead of matching via loose conversions.
+    val fuzzyMatchCandidates = staticContextMatches.filterNot(isInvariantCollectionMutator)
+
     // If no exact we need to search for possible in two stages, either using strict assignment or lax if
     // we are still short of a possible match
     var found =
-      mostSpecificMatch(strict = true, staticContextMatches, params, context)
+      mostSpecificMatch(strict = true, fuzzyMatchCandidates, params, context)
         .getOrElse(
-          mostSpecificMatch(strict = false, staticContextMatches, params, context)
+          mostSpecificMatch(strict = false, fuzzyMatchCandidates, params, context)
             .getOrElse(Left(NO_MATCH_ERROR))
         )
 
@@ -146,6 +154,18 @@ final case class MethodMap private (
     }
 
     found
+  }
+
+  /** True for the List/Set candidate overloads of addAll/removeAll/retainAll that require an exact
+    * (invariant) match of their collection argument's type parameter, i.e. all of them except the
+    * List<T>.addAll(List<T>) overload. See [[MethodMap.invariantCollectionMutatorNames]].
+    */
+  private def isInvariantCollectionMutator(candidate: MethodDeclaration): Boolean = {
+    typeName.exists(receiver =>
+      (receiver.isList || receiver.isSet) &&
+        MethodMap.invariantCollectionMutatorNames.contains(candidate.name) &&
+        !(receiver.isList && candidate.parameters.headOption.exists(_.typeName.isList))
+    )
   }
 
   /** Helper for finding static methods on related type declarations */
@@ -214,6 +234,12 @@ object MethodMap {
   type WorkingMap = mutable.HashMap[(Name, Int), List[MethodDeclaration]]
 
   private val DISALLOWED_TYPES_FOR_AURAENABLED = List(TypeNames.Set$)
+
+  /** Method names on System.List/System.Set that require invariant matching of their collection
+    * argument's type parameter, see [[MethodMap.isInvariantCollectionMutator]].
+    */
+  private val invariantCollectionMutatorNames: Set[Name] =
+    Set(Names("addAll"), Names("removeAll"), Names("retainAll"))
 
   def empty(): MethodMap = {
     new MethodMap(None, None, Map(), Nil)
