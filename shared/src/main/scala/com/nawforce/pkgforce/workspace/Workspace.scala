@@ -21,7 +21,11 @@ import com.nawforce.pkgforce.sfdx.SFDXProject
 
 /** Contains any config option that can be used by the Org
   */
-case class ProjectConfig(maxDependencyCount: Option[Int], isLibrary: Boolean = false)
+case class ProjectConfig(
+  maxDependencyCount: Option[Int],
+  isLibrary: Boolean = false,
+  dependencyCountAliases: Map[String, Int] = Map.empty
+)
 
 /** Metadata workspace, maintains information on available metadata within a project/package.
   *
@@ -70,7 +74,7 @@ object Workspace {
         new Workspace(
           issueManager,
           layers,
-          Some(ProjectConfig(proj.maxDependencyCount, proj.isLibrary)),
+          Some(ProjectConfig(proj.maxDependencyCount, proj.isLibrary, proj.dependencyCountAliases)),
           proj.externalMetadataPaths
         )
       }

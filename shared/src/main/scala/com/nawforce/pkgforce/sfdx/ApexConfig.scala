@@ -32,6 +32,7 @@ case class ApexConfig(
   val unpackagedMetadata: Seq[PackageDirectory] = computeUnpackagedMetadata()
   val additionalNamespaces: Array[Option[Name]] = computeAdditionalNamespaces()
   val maxDependencyCount: Option[Int]           = computeMaxDependencyCount()
+  val dependencyCountAliases: Map[String, Int]  = computeDependencyCountAliases()
   val isLibrary: Boolean                        = computeIsLibrary()
   val externalMetadata: Seq[String]             = computeExternalMetadata()
   val options: Map[String, String]              = computeOptions()
@@ -161,6 +162,54 @@ case class ApexConfig(
         throw SFDXProjectError(lineAndOffset, message)
       })
       .getOrElse(None)
+  }
+
+  private def computeDependencyCountAliases(): Map[String, Int] = {
+    configSource.get("dependencyCountAliases") match {
+      case None => Map.empty
+      case Some(value: ujson.Obj) =>
+        flattenDependencyCountAliases("dependencyCountAliases", "", value)
+      case Some(value) =>
+        config
+          .lineAndOffsetOf(value)
+          .map(lineAndOffset => {
+            throw SFDXProjectError(lineAndOffset, "'dependencyCountAliases' should be an object")
+          })
+          .getOrElse(Map.empty)
+    }
+  }
+
+  private def flattenDependencyCountAliases(
+    errorPath: String,
+    keyPrefix: String,
+    obj: ujson.Obj
+  ): Map[String, Int] = {
+    obj.value.toSeq.flatMap { case (key, value) =>
+      val fullKey       = if (keyPrefix.isEmpty) key else s"$keyPrefix.$key"
+      val fullErrorPath = s"$errorPath.$key"
+      value match {
+        case nested: ujson.Obj =>
+          flattenDependencyCountAliases(fullErrorPath, fullKey, nested).toSeq
+        case _ =>
+          parseAliasCount(fullErrorPath, value).map(fullKey -> _).toSeq
+      }
+    }.toMap
+  }
+
+  private def parseAliasCount(errorPath: String, value: ujson.Value): Option[Int] = {
+    value match {
+      case num: ujson.Num if num.toString.matches("[0-9]+") =>
+        Try(num.toString().toInt) match {
+          case Success(parsedValue) => Some(parsedValue)
+          case Failure(_) =>
+            throwCountError(value, s"'$errorPath' value '${num.toString}' is not an integer")
+        }
+      case _ =>
+        throwCountError(
+          value,
+          s"'$errorPath' value '${value.toString}' should be a positive integer or nested object"
+        )
+    }
   }
 
   private def computeIsLibrary(): Boolean = {

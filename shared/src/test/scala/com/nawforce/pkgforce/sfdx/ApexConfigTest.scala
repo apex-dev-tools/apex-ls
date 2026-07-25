@@ -72,6 +72,112 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
+  test("Legacy configuration - with dependencyCountAliases") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "plugins": {
+            |    "dependencyCountAliases": {
+            |      "low": 10,
+            |      "med": 50,
+            |      "high": 100,
+            |      "group": {
+            |        "name": 23
+            |      }
+            |    }
+            |  },
+            |  "packageDirectories": []
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.nonEmpty)
+      assert(
+        project.get.apexConfig.dependencyCountAliases ==
+          Map("low" -> 10, "med" -> 50, "high" -> 100, "group.name" -> 23)
+      )
+    }
+  }
+
+  test("dependencyCountAliases - defaults to empty map when absent") {
+    FileSystemHelper.run(
+      Map("sfdx-project.json" -> "{\"plugins\": {}, \"packageDirectories\": []}")
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.nonEmpty)
+      assert(project.get.apexConfig.dependencyCountAliases.isEmpty)
+    }
+  }
+
+  test("dependencyCountAliases - precedence apex-ls over legacy") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "plugins": {
+            |    "dependencyCountAliases": {"low": 10},
+            |    "apex-ls": {
+            |      "dependencyCountAliases": {"low": 20}
+            |    }
+            |  },
+            |  "packageDirectories": []
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(logger.issues.isEmpty)
+      assert(project.nonEmpty)
+      assert(project.get.apexConfig.dependencyCountAliases == Map("low" -> 20)) // apex-ls wins
+    }
+  }
+
+  test("Error handling - dependencyCountAliases not an object") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"dependencyCountAliases\": \"invalid\"}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty) // Should fail
+      assert(
+        logger.issues
+          .exists(_.diagnostic.message.contains("'dependencyCountAliases' should be an object"))
+      )
+    }
+  }
+
+  test("Error handling - dependencyCountAliases entry not a number") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"dependencyCountAliases\": {\"low\": \"ten\"}}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty) // Should fail
+      assert(
+        logger.issues.exists(_.diagnostic.message.contains("'dependencyCountAliases.low' value"))
+      )
+    }
+  }
+
+  test("Error handling - dependencyCountAliases nested entry not a number") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" -> "{\"plugins\": {\"dependencyCountAliases\": {\"group\": {\"name\": true}}}, \"packageDirectories\": []}"
+      )
+    ) { root: PathLike =>
+      val project = SFDXProject(root, logger)
+      assert(project.isEmpty) // Should fail
+      assert(
+        logger.issues
+          .exists(_.diagnostic.message.contains("'dependencyCountAliases.group.name' value"))
+      )
+    }
+  }
+
   test("Legacy configuration - with options") {
     FileSystemHelper.run(
       Map(
