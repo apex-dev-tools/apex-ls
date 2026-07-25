@@ -128,6 +128,78 @@ class CreationTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("List Id constructor assigned to List Object") {
+    happyTypeDeclaration(
+      "public class Dummy {{Set<Id> ids = new Set<Id>(); List<Object> value = new List<Id>(ids);}}"
+    )
+  }
+
+  test("Set Id constructor rejected when assigned to Set Object") {
+    typeDeclaration(
+      "public class Dummy {{Set<Id> ids = new Set<Id>(); Set<Object> value = new Set<Id>(ids);}}"
+    )
+    assert(
+      dummyIssues.contains(
+        "Incompatible types in assignment, from 'System.Set<System.Id>' to 'System.Set<Object>'"
+      )
+    )
+  }
+
+  test("Set Object constructor rejects Set Id initializer") {
+    typeDeclaration(
+      "public class Dummy {{Set<Id> ids = new Set<Id>(); Set<Object> value = new Set<Object>(ids);}}"
+    )
+    assert(
+      dummyIssues.contains(
+        "Constructor not defined: System.Set<Object>.<constructor>(System.Set<System.Id>)"
+      )
+    )
+  }
+
+  test("List Object constructor rejects Set Id initializer") {
+    typeDeclaration(
+      "public class Dummy {{Set<Id> ids = new Set<Id>(); List<Object> value = new List<Object>(ids);}}"
+    )
+    assert(
+      dummyIssues.contains(
+        "Constructor not defined: System.List<Object>.<constructor>(System.Set<System.Id>)"
+      )
+    )
+  }
+
+  test("Set Id constructor accepts Set Id initializer") {
+    happyTypeDeclaration(
+      "public class Dummy {{Set<Id> ids = new Set<Id>(); Set<Id> value = new Set<Id>(ids);}}"
+    )
+  }
+
+  test("Set Id rejected when directly assigned to Set Object") {
+    typeDeclaration("public class Dummy {{Set<Id> ids = new Set<Id>(); Set<Object> value = ids;}}")
+    assert(
+      dummyIssues.contains(
+        "Incompatible types in assignment, from 'System.Set<System.Id>' to 'System.Set<Object>'"
+      )
+    )
+  }
+
+  test("List Id accepted when directly assigned to List Object") {
+    happyTypeDeclaration(
+      "public class Dummy {{List<Id> ids = new List<Id>(); List<Object> value = ids;}}"
+    )
+  }
+
+  test("List Id constructor accepts Set Id initializer") {
+    happyTypeDeclaration(
+      "public class Dummy {{Set<Id> ids = new Set<Id>(); List<Id> value = new List<Id>(ids);}}"
+    )
+  }
+
+  test("Set equals accepts same element type") {
+    happyTypeDeclaration(
+      "public class Dummy {{Boolean value = new Set<Id>().equals(new Set<Id>());}}"
+    )
+  }
+
   test("List with map constructor") {
     typeDeclaration("public class Dummy {{Object a = new List<Address>{1 => 2};}}")
     assert(

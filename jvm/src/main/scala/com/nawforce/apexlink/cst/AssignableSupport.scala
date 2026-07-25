@@ -24,14 +24,25 @@ object AssignableSupport {
   /** Options for determining assignability
     * @param strictConversions limit implicit type conversions
     * @param narrowSObjects narrowing of SObject conversions, i.e. SObject cast to Account
+    * @param invariantSet require identical Set type parameters
     */
-  case class AssignableOptions(strictConversions: Boolean, narrowSObjects: Boolean)
+  case class AssignableOptions(
+    strictConversions: Boolean,
+    narrowSObjects: Boolean,
+    invariantSet: Boolean = false
+  )
 
   object AssignableOptions {
 
     /** Most commonly used options */
     val default: AssignableOptions =
       AssignableOptions(strictConversions = false, narrowSObjects = true)
+
+    /** Options for assignment and return validation, where Apex treats Set type parameters as
+      * invariant.
+      */
+    val assignment: AssignableOptions =
+      AssignableOptions(strictConversions = false, narrowSObjects = true, invariantSet = true)
   }
 
   /** Determine if two values could be equal based on type
@@ -100,7 +111,7 @@ object AssignableSupport {
     } else if (!options.strictConversions && fromType.typeName.isRecordSet) {
       isRecordSetAssignable(toType, fromType.typeName)
     } else if (toType.params.nonEmpty || fromType.typeName.params.nonEmpty) {
-      isAssignableGeneric(toType, fromType, context)
+      isAssignableGeneric(toType, fromType, context, options)
     } else {
       (if (options.strictConversions)
          strictAssignable.contains(toType, fromType.typeName)
@@ -114,13 +125,15 @@ object AssignableSupport {
   private def isAssignableGeneric(
     toType: TypeName,
     fromType: TypeDeclaration,
-    context: VerifyContext
+    context: VerifyContext,
+    options: AssignableOptions
   ): Boolean = {
     if (toType.params.size == fromType.typeName.params.size) {
       isAssignableName(toType, fromType) && hasAssignableGenericParams(
         toType,
         fromType.typeName,
-        context
+        context,
+        options
       )
     } else if (toType.params.isEmpty || fromType.typeName.params.isEmpty) {
       // e.g. Object a = List<A> | Iterable<A> a = new CustomIterator() | Iterable<A> a = QueryLocator
@@ -150,8 +163,12 @@ object AssignableSupport {
   private def hasAssignableGenericParams(
     toType: TypeName,
     fromType: TypeName,
-    context: VerifyContext
+    context: VerifyContext,
+    options: AssignableOptions
   ): Boolean = {
+    if (options.invariantSet && toType.name == Names.Set$ && fromType.name == Names.Set$)
+      return toType.params == fromType.params
+
     // SObject narrowing is supported on List & Set but not Map
     checkGenericParameterAssignability(
       toType.params,
