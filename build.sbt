@@ -23,9 +23,6 @@ ThisBuild / versionScheme          := Some("strict")
 ThisBuild / resolvers += Resolver.mavenLocal
 ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
-// Java 17 development with Java 8 runtime compatibility
-ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8")
-
 lazy val build      = taskKey[File]("Build artifacts")
 lazy val pack       = inputKey[Unit]("Publish specific local version")
 lazy val npmInstall = taskKey[Unit]("Install Node modules for Scala.js tasks")
@@ -55,6 +52,8 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
     )
   )
   .jvmSettings(
+    javacOptions ++= Seq("--release", "8"),
+    scalacOptions ++= Seq("-release", "8"),
     build       := buildJVM.value,
     Test / fork := true,
     Test / javaOptions ++= enableNativeAccessForJdk24Plus.value,
