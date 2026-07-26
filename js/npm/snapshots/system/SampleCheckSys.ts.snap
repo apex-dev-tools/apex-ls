@@ -389,11 +389,11 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
     ],
     [
       "force-app/commons/httpMocks/objects/HttpCalloutMockVariable__mdt/HttpCalloutMockVariable__mdt.object-meta.xml",
-      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'HttpCalloutMockVariable__mdt', remove the 'label' field if it is extending the SObject",
+      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'HttpCalloutMockVariable__mdt'. Package directories are processed independently and the last definition is used; Salesforce instead merges package directory metadata on deploy. Remove the 'label' field if this is intended to extend the SObject",
     ],
     [
       "force-app/commons/httpMocks/objects/HttpCalloutMock__mdt/HttpCalloutMock__mdt.object-meta.xml",
-      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'HttpCalloutMock__mdt', remove the 'label' field if it is extending the SObject",
+      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'HttpCalloutMock__mdt'. Package directories are processed independently and the last definition is used; Salesforce instead merges package directory metadata on deploy. Remove the 'label' field if this is intended to extend the SObject",
     ],
     [
       "force-app/commons/localization/Localization.cls",
@@ -688,7 +688,7 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
     ],
     [
       "force-app/commons/query/cache/objects/QueryCache__mdt/QueryCache__mdt.object-meta.xml",
-      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'QueryCache__mdt', remove the 'label' field if it is extending the SObject",
+      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'QueryCache__mdt'. Package directories are processed independently and the last definition is used; Salesforce instead merges package directory metadata on deploy. Remove the 'label' field if this is intended to extend the SObject",
     ],
     [
       "force-app/commons/schema/CustomMetadataService.cls",
@@ -791,7 +791,7 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
     ],
     [
       "force-app/commons/triggerHandler/objects/LogicSwitch__c/LogicSwitch__c.object-meta.xml",
-      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'LogicSwitch__c', remove the 'label' field if it is extending the SObject",
+      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'LogicSwitch__c'. Package directories are processed independently and the last definition is used; Salesforce instead merges package directory metadata on deploy. Remove the 'label' field if this is intended to extend the SObject",
     ],
     [
       "force-app/commons/triggerHandlerMdt/classes/MetadataTriggerHandlerTest.cls",
@@ -803,7 +803,7 @@ exports[`Check samples Sample: Apex-Opensource-Library 1`] = `
     ],
     [
       "force-app/commons/triggerHandlerMdt/objects/TriggerLogic__mdt/TriggerLogic__mdt.object-meta.xml",
-      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'TriggerLogic__mdt', remove the 'label' field if it is extending the SObject",
+      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'TriggerLogic__mdt'. Package directories are processed independently and the last definition is used; Salesforce instead merges package directory metadata on deploy. Remove the 'label' field if this is intended to extend the SObject",
     ],
     [
       "force-app/commons/xml/XmlParser.cls",
@@ -14736,7 +14736,7 @@ exports[`Check samples Sample: MyTriggers 1`] = `
     ],
     [
       "MyTriggers/framework/objects/MyTriggerSetting__mdt/MyTriggerSetting__mdt.object-meta.xml",
-      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'MyTriggerSetting__mdt', remove the 'label' field if it is extending the SObject",
+      "Warning: line 1: SObject appears to be re-defining an SObject that already exists 'MyTriggerSetting__mdt'. Package directories are processed independently and the last definition is used; Salesforce instead merges package directory metadata on deploy. Remove the 'label' field if this is intended to extend the SObject",
     ],
   ],
   "status": 7,

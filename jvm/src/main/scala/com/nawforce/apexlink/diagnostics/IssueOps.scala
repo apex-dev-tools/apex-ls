@@ -124,7 +124,7 @@ object IssueOps {
       Diagnostic(
         ERROR_CATEGORY,
         location.location,
-        s"SObject appears to be extending an unknown SObject, '$name'"
+        s"SObject appears to be extending an unknown SObject, '$name'. The defining metadata must appear in an earlier package directory; package directories are processed in order rather than being merged on deploy as they are by Salesforce"
       )
     )
   }
@@ -151,7 +151,7 @@ object IssueOps {
       Diagnostic(
         WARNING_CATEGORY,
         location.location,
-        s"SObject appears to be re-defining an SObject that already exists '$name', remove the 'label' field if it is extending the SObject"
+        s"SObject appears to be re-defining an SObject that already exists '$name'. Package directories are processed independently and the last definition is used; Salesforce instead merges package directory metadata on deploy. Remove the 'label' field if this is intended to extend the SObject"
       )
     )
   }

@@ -313,7 +313,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
         assert(
-          getMessages() == path"/ext/objects/Foo__c.object: Error: line 1: SObject appears to be extending an unknown SObject, 'Foo__c'" + "\n"
+          getMessages() == path"/ext/objects/Foo__c.object: Error: line 1: SObject appears to be extending an unknown SObject, 'Foo__c'. The defining metadata must appear in an earlier package directory; package directories are processed in order rather than being merged on deploy as they are by Salesforce" + "\n"
         )
       }
     }
@@ -338,7 +338,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         org.unmanaged.refresh(basePath, highPriority = false)
         assert(org.flush())
         assert(
-          getMessages() == path"/ext/objects/Foo__c/fields/Baz__c.field-meta.xml: Error: line 1: SObject appears to be extending an unknown SObject, 'Foo__c'" + "\n"
+          getMessages() == path"/ext/objects/Foo__c/fields/Baz__c.field-meta.xml: Error: line 1: SObject appears to be extending an unknown SObject, 'Foo__c'. The defining metadata must appear in an earlier package directory; package directories are processed in order rather than being merged on deploy as they are by Salesforce" + "\n"
         )
       }
     }
