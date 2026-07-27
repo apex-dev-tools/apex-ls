@@ -85,6 +85,57 @@ class VarTest extends AnyFunSuite with TestHelper {
     assert(!hasIssues)
   }
 
+  test("Shadow parameter") {
+    typeDeclaration("public class Dummy { String a; void func(String a) {}}")
+    assert(
+      dummyIssues.startsWith("Warning: line 1 at 48-49: Parameter is hiding class field 'a', see")
+    )
+  }
+
+  test("Shadow parameter in static context") {
+    typeDeclaration("public class Dummy { static String a; static void func(String a) {}}")
+    assert(
+      dummyIssues.startsWith("Warning: line 1 at 62-63: Parameter is hiding class field 'a', see")
+    )
+  }
+
+  test("Shadow parameter with mismatched static context") {
+    typeDeclaration("public class Dummy { String a; static void func(String a) {}}")
+    assert(!hasIssues)
+  }
+
+  test("Shadow parameter with mismatched instance context") {
+    typeDeclaration("public class Dummy { static String a; void func(String a) {}}")
+    assert(!hasIssues)
+  }
+
+  test("Shadow parameter inherited from superclass") {
+    typeDeclaration(
+      "public virtual class Dummy { String a; class Dummy2 extends Dummy { void func(String a) {}}}"
+    )
+    assert(
+      dummyIssues.startsWith("Warning: line 1 at 85-86: Parameter is hiding class field 'a', see")
+    )
+  }
+
+  test("Shadow constructor parameter") {
+    typeDeclaration("public class Dummy { String a; Dummy(String a) {}}")
+    assert(
+      dummyIssues.startsWith("Warning: line 1 at 44-45: Parameter is hiding class field 'a', see")
+    )
+  }
+
+  test("Parameter does not shadow field") {
+    typeDeclaration("public class Dummy { String a; void func(String b) {}}")
+    assert(!hasIssues)
+  }
+
+  test("Local variable shadowing parameter and field reports both warnings") {
+    typeDeclaration("public class Dummy { String a; void func(String a) {String a;}}")
+    assert(dummyIssues.contains("Parameter is hiding class field 'a', see"))
+    assert(dummyIssues.contains("Local variable is hiding class field 'a', see"))
+  }
+
   test("Reference local var") {
     typeDeclaration("public class Dummy { void func() {String a; String b = a;}}")
     assert(!hasIssues)

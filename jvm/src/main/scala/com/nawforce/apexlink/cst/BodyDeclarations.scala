@@ -25,7 +25,7 @@ import com.nawforce.apexlink.types.apex.{
   ThisType
 }
 import com.nawforce.apexlink.types.core._
-import com.nawforce.pkgforce.diagnostics.{ERROR_CATEGORY, Issue}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers._
@@ -469,6 +469,21 @@ final case class FormalParameter(
 
   def verify(context: BodyDeclarationVerifyContext): Unit = {
     id.validate(context)
+    context.thisType.findField(id.name, None).foreach {
+      case field: ApexFieldDeclaration
+          if field.isStatic == context.bodyModifiers(_ == STATIC_MODIFIER) =>
+        context.log(
+          new Issue(
+            id.location.path,
+            new Diagnostic(
+              WARNING_CATEGORY,
+              id.location.location,
+              s"Parameter is hiding class field '${id.name}', see ${field.location.toString}"
+            )
+          )
+        )
+      case _ => ()
+    }
     modifiers.issues.foreach(context.log)
   }
 }

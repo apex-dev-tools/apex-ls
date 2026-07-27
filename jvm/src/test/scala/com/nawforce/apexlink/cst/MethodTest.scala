@@ -169,7 +169,11 @@ class MethodTest extends AnyFunSuite with TestHelper {
     typeDeclaration(
       "@IntegrationTest public class Dummy {static Integer counter = 0; String label; private Dummy(String label) {this.label = label;} static Integer helper() {counter += 1; return counter;} class InnerHelper {String value(String input) {return input;}} @IntegrationTest static void testA() {System.assert(true);} @TearDown static void cleanup() {}}"
     )
-    assert(dummyIssues.isEmpty)
+    assert(
+      dummyIssues.startsWith(
+        "Warning: line 1 at 100-105: Parameter is hiding class field 'label', see"
+      )
+    )
   }
 
   test("IntegrationTest can not access private TestVisible method") {
