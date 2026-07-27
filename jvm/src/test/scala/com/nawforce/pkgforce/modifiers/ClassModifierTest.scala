@@ -25,6 +25,17 @@ import scala.collection.compat.immutable.ArraySeq
 
 class ClassModifierTest extends AnyFunSuite {
 
+  private def classIssues(source: String): ArraySeq[Issue] = {
+    val path   = Path("Dummy.cls")
+    val parser = CodeParser(path, SourceData(source))
+    val result = parser.parseClass()
+    if (result.issues.nonEmpty) {
+      result.issues
+    } else {
+      ApexNode(parser, result.value).get.parseIssues
+    }
+  }
+
   def legalClassAccess(use: ArraySeq[Modifier], expected: ArraySeq[Modifier]): Boolean = {
     val modifiers = use.map(_.name).mkString(" ")
     val path      = Path("Dummy.cls")
@@ -109,6 +120,33 @@ class ClassModifierTest extends AnyFunSuite {
 
   test("isTest modifier") {
     assert(legalClassAccess(ArraySeq(ISTEST_ANNOTATION)))
+  }
+
+  test("Duplicate SuppressWarnings annotation with identical arguments") {
+    val issues =
+      classIssues("@SuppressWarnings('PMD') @SuppressWarnings('PMD') public class Dummy {}")
+    assert(issues.map(_.diagnostic.message) == Seq("Duplicate modifier: SuppressWarnings"))
+    assert(issues.forall(_.diagnostic.category == ERROR_CATEGORY))
+  }
+
+  test("Duplicate SuppressWarnings annotation with different arguments") {
+    val issues =
+      classIssues("@SuppressWarnings('PMD') @SuppressWarnings('Unused') public class Dummy {}")
+    assert(issues.map(_.diagnostic.message) == Seq("Duplicate modifier: SuppressWarnings"))
+    assert(issues.forall(_.diagnostic.category == ERROR_CATEGORY))
+  }
+
+  test("Duplicate SuppressWarnings annotation with unrecognized arguments") {
+    val issues =
+      classIssues("@SuppressWarnings('Foo') @SuppressWarnings('Bar') public class Dummy {}")
+    assert(issues.map(_.diagnostic.message) == Seq("Duplicate modifier: SuppressWarnings"))
+    assert(issues.forall(_.diagnostic.category == ERROR_CATEGORY))
+  }
+
+  test("Duplicate TestVisible annotation") {
+    val issues = classIssues("@TestVisible @TestVisible public class Dummy {}")
+    assert(issues.map(_.diagnostic.message) == Seq("Duplicate modifier: TestVisible"))
+    assert(issues.forall(_.diagnostic.category == ERROR_CATEGORY))
   }
 
   test("isTest and IntegrationTest annotations") {

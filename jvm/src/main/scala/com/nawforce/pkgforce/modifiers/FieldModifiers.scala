@@ -51,7 +51,7 @@ object FieldModifiers {
     idContext: IdContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts)
+    val mods   = toModifiers(parser, modifierContexts, logger)
     fieldModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 
