@@ -535,7 +535,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages() == "/Base.cls: Warning: line 1 at 43-45: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+        getMessages() == "/Base.cls: Error: line 1 at 43-45: Abstract methods must be global, public or protected\n"
       )
     }
   }
@@ -549,7 +549,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages() == "/Base.cls: Warning: line 1 at 43-45: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+        getMessages() == "/Base.cls: Error: line 1 at 43-45: Abstract methods must be global, public or protected\n"
       )
     }
   }
@@ -592,7 +592,7 @@ class MethodTest extends AnyFunSuite with TestHelper {
     ) { root: PathLike =>
       createOrg(root)
       assert(
-        getMessages() == "/Dummy.cls: Warning: line 1 at 44-46: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+        getMessages() == "/Dummy.cls: Error: line 1 at 44-46: Abstract methods must be global, public or protected\n"
       )
     }
   }
@@ -609,8 +609,8 @@ class MethodTest extends AnyFunSuite with TestHelper {
       assert(
         getMessages(
           root.join("Dummy.cls")
-        ) == "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword\n" +
-          "Warning: line 1 at 44-46: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+        ) == "Error: line 1 at 44-46: Abstract methods must be global, public or protected\n" +
+          "Error: line 1 at 90-92: Method 'fn' must use the 'override' keyword\n"
       )
     }
   }

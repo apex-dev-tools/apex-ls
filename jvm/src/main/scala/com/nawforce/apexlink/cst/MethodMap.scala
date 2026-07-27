@@ -663,6 +663,8 @@ object MethodMap {
       matchedMethod.modifiers.intersect(Seq(ABSTRACT_MODIFIER, VIRTUAL_MODIFIER)).headOption
     val superOverrideModifier =
       method.modifiers.contains(OVERRIDE_MODIFIER)
+    val hasInvalidOverrideVisibility =
+      superOverrideModifier && method.visibility.forall(_ == PRIVATE_MODIFIER)
     if (!isBasePrivate) {
       if (baseModifier.isEmpty) {
         setMethodError(
@@ -711,7 +713,7 @@ object MethodMap {
           s"Overriding a private abstract method can cause a GACK, change to protected, public or global",
           errors
         )
-      else
+      else if (!hasInvalidOverrideVisibility)
         setMethodError(
           method,
           s"Overriding a private method may not work, change to protected, public or global",

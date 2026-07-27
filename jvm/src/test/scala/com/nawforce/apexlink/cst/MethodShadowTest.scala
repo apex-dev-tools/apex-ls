@@ -79,6 +79,21 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Private override of private virtual suppresses duplicate guidance") {
+    testMethods(
+      Map(
+        "Dummy.cls" ->
+          """public virtual class Dummy {
+            | private virtual void func() {}
+            | public class Other extends Dummy {private override void func() {} }
+            |}
+            |""".stripMargin
+      ),
+      "Error: line 3 at 57-61: Override methods must be global, public or protected\n" +
+        "Warning: line 2 at 22-26: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+    )
+  }
+
   test("Override of protected virtual") {
     testMethods(
       Map(
@@ -139,6 +154,22 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Private override of private abstract keeps GACK guidance") {
+    testMethods(
+      Map(
+        "Dummy.cls" ->
+          """public abstract class Dummy {
+            | private abstract void func();
+            | public abstract class Other extends Dummy {private override void func() {} }
+            |}
+            |""".stripMargin
+      ),
+      "Error: line 2 at 23-27: Abstract methods must be global, public or protected\n" +
+        "Error: line 3 at 66-70: Overriding a private abstract method can cause a GACK, change to protected, public or global\n" +
+        "Error: line 3 at 66-70: Override methods must be global, public or protected\n"
+    )
+  }
+
   test("Override of protected abstract") {
     testMethods(
       Map(
@@ -155,7 +186,19 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Dummy.cls" -> "public class Dummy extends SuperClass { private override void func() {} }",
         "SuperClass.cls" -> "public abstract class SuperClass { protected abstract void func();}"
       ),
-      "Error: line 1 at 62-66: Method 'func' can not reduce visibility in override\n"
+      "Error: line 1 at 62-66: Method 'func' can not reduce visibility in override\n" +
+        "Error: line 1 at 62-66: Override methods must be global, public or protected\n"
+    )
+  }
+
+  test("Override of protected abstract (with omitted visibility)") {
+    testMethods(
+      Map(
+        "Dummy.cls"      -> "public class Dummy extends SuperClass { override void func() {} }",
+        "SuperClass.cls" -> "public abstract class SuperClass { protected abstract void func();}"
+      ),
+      "Error: line 1 at 54-58: Method 'func' can not reduce visibility in override\n" +
+        "Error: line 1 at 54-58: Override methods must be global, public or protected\n"
     )
   }
 
