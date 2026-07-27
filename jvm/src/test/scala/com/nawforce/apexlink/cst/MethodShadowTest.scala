@@ -79,6 +79,21 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Private override of private virtual suppresses duplicate guidance") {
+    testMethods(
+      Map(
+        "Dummy.cls" ->
+          """public virtual class Dummy {
+            | private virtual void func() {}
+            | public class Other extends Dummy {private override void func() {} }
+            |}
+            |""".stripMargin
+      ),
+      "Error: line 3 at 57-61: Override methods must be global, public or protected\n" +
+        "Warning: line 2 at 22-26: Private method overrides have inconsistent behaviour, use global, public or protected\n"
+    )
+  }
+
   test("Override of protected virtual") {
     testMethods(
       Map(
@@ -136,6 +151,22 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "SuperClass.cls" -> "public abstract class SuperClass { private abstract void func();}"
       ),
       "Error: line 1 at 52-56: Overriding a private abstract method can cause a GACK, change to protected, public or global\n"
+    )
+  }
+
+  test("Private override of private abstract keeps GACK guidance") {
+    testMethods(
+      Map(
+        "Dummy.cls" ->
+          """public abstract class Dummy {
+            | private abstract void func();
+            | public abstract class Other extends Dummy {private override void func() {} }
+            |}
+            |""".stripMargin
+      ),
+      "Error: line 2 at 23-27: Abstract methods must be global, public or protected\n" +
+        "Error: line 3 at 66-70: Overriding a private abstract method can cause a GACK, change to protected, public or global\n" +
+        "Error: line 3 at 66-70: Override methods must be global, public or protected\n"
     )
   }
 
