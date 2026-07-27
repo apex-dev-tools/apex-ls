@@ -111,6 +111,15 @@ object MethodModifiers {
          ArraySeq(GLOBAL_MODIFIER)
        } else ArraySeq()) ++ normalModifiers
 
+    if (
+      (visibility.isEmpty || visibility.contains(PRIVATE_MODIFIER)) &&
+      extendedModifiers.intersect(ArraySeq(ABSTRACT_MODIFIER, OVERRIDE_MODIFIER)).nonEmpty
+    ) {
+      val methodType =
+        if (extendedModifiers.contains(ABSTRACT_MODIFIER)) "Abstract" else "Override"
+      logger.logError(context, s"$methodType methods must be global, public or protected")
+    }
+
     val isGlobal = visibility.contains(GLOBAL_MODIFIER)
     val results = {
       if (!isGlobal && extendedModifiers.contains(WEBSERVICE_MODIFIER)) {
@@ -159,7 +168,7 @@ object MethodModifiers {
         PUBLIC_MODIFIER +: extendedModifiers.diff(visibilityModifiers)
       } else if (
         (visibility.isEmpty || visibility.contains(PRIVATE_MODIFIER)) &&
-        extendedModifiers.intersect(virtualAbstractModifiers).nonEmpty
+        extendedModifiers.contains(VIRTUAL_MODIFIER)
       ) {
         logger.logWarning(
           context,

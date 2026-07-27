@@ -233,7 +233,8 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {abstract void func();}")
     assert(
       dummyIssues ==
-        "Error: line 1 at 34-38: Abstract methods can only be declared on abstract classes\n"
+        "Error: line 1 at 34-38: Abstract methods can only be declared on abstract classes\n" +
+        "Error: line 1 at 34-38: Abstract methods must be global, public or protected\n"
     )
   }
 
