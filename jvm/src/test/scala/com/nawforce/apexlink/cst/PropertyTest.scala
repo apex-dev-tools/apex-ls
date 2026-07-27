@@ -360,7 +360,7 @@ class PropertyTest extends AnyFunSuite with TestHelper {
     assert(property.writeAccess == property.readAccess)
     assert(
       dummyIssues ==
-        "Error: line 1 at 53-56: Modifier '@TestVisible' is used more than once\n"
+        "Error: line 1 at 20-32: Duplicate modifier: TestVisible\n"
     )
   }
 }
