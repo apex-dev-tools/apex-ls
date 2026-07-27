@@ -101,6 +101,18 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(getMessages(root.join("Dummy.cls")).contains("Field is not visible"))
   }
 
+  test("IsTest class can not read private field without TestVisible") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {private static String f;}",
+        "Dummy.cls" -> "@IsTest public class Dummy {static testMethod void t() {String s = Target.f;}}"
+      )
+    )
+    assert(
+      getMessages(root.join("Dummy.cls")) == "Error: line 1 at 67-75: Field is not visible: f\n"
+    )
+  }
+
   test("Unrelated class can not access protected instance field") {
     typeDeclarations(
       Map(

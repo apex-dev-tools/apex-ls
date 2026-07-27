@@ -84,6 +84,44 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(getMessages(root.join("Dummy.cls")).contains("Method is not visible"))
   }
 
+  test("IsTest class can not call private instance method without TestVisible") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {private void helper(){}}",
+        "Dummy.cls" -> "@IsTest public class Dummy {static testMethod void t() {Target x = new Target(); x.helper();}}"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Dummy.cls")
+      ) == "Error: line 1 at 81-91: Method is not visible: helper()\n"
+    )
+  }
+
+  test("IsTest class can not call private static method without TestVisible") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {private static void helper(){}}",
+        "Dummy.cls"  -> "@IsTest public class Dummy {static testMethod void t() {Target.helper();}}"
+      )
+    )
+    assert(
+      getMessages(
+        root.join("Dummy.cls")
+      ) == "Error: line 1 at 56-71: Method is not visible: helper()\n"
+    )
+  }
+
+  test("IsTest class can call private static method with TestVisible") {
+    typeDeclarations(
+      Map(
+        "Target.cls" -> "public class Target {@TestVisible private static void helper(){}}",
+        "Dummy.cls"  -> "@IsTest public class Dummy {static testMethod void t() {Target.helper();}}"
+      )
+    )
+    assert(getMessages(root.join("Dummy.cls")).isEmpty)
+  }
+
   test("Unrelated class can not call protected instance method") {
     typeDeclarations(
       Map(
