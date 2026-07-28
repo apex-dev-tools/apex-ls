@@ -56,6 +56,93 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
                            |$bodyContent
                            |}""".stripMargin.replaceAll("\r\n", "\n")
 
+  private val testVisibleContent =
+    """public virtual class VisibilityTarget {
+      |  public static String publicField;
+      |  protected static String protectedField;
+      |  private static String privateField;
+      |  @TestVisible private static String testVisibleField;
+      |
+      |  public static void publicMethod() {}
+      |  protected static void protectedMethod() {}
+      |  private static void privateMethod() {}
+      |  @TestVisible private static void testVisibleMethod() {}
+      |
+      |  public class PublicType {}
+      |  private class PrivateType {}
+      |  @TestVisible private class TestVisibleType {}
+      |}""".stripMargin
+
+  private def staticCompletionLabels(
+    root: PathLike,
+    declaration: String
+  ): Set[String] = {
+    val org     = createOrg(root)
+    val path    = root.join("Completion.cls")
+    val content = s"$declaration { static void complete() { VisibilityTarget."
+    org
+      .getCompletionItemsInternal(path, line = 1, offset = content.length, content)
+      .map(_.label)
+      .toSet
+  }
+
+  test("@TestVisible static completions respect caller accessibility") {
+    FileSystemHelper.run(Map("VisibilityTarget.cls" -> testVisibleContent)) { root: PathLike =>
+      val testLabels = staticCompletionLabels(root, "@IsTest private class Completion")
+      assert(
+        Set(
+          "publicField",
+          "publicMethod()",
+          "PublicType",
+          "testVisibleField",
+          "testVisibleMethod()",
+          "TestVisibleType"
+        ).subsetOf(testLabels)
+      )
+      assert(!Set("privateField", "privateMethod()", "PrivateType").exists(testLabels))
+
+      val normalLabels = staticCompletionLabels(root, "public class Completion")
+      assert(Set("publicField", "publicMethod()", "PublicType").subsetOf(normalLabels))
+      assert(
+        !Set(
+          "privateField",
+          "privateMethod()",
+          "PrivateType",
+          "testVisibleField",
+          "testVisibleMethod()",
+          "TestVisibleType"
+        ).exists(normalLabels)
+      )
+
+      val subtypeLabels =
+        staticCompletionLabels(root, "public class Completion extends VisibilityTarget")
+      assert(
+        Set("protectedField", "protectedMethod()").subsetOf(subtypeLabels)
+      )
+    }
+  }
+
+  test("Static completions without a caller remain public") {
+    FileSystemHelper.run(Map("VisibilityTarget.cls" -> testVisibleContent)) { root: PathLike =>
+      val org          = createOrg(root)
+      val content      = "VisibilityTarget."
+      val completions  =
+        org.getCompletionItemsInternal(root.join("Completion.cls"), 1, content.length, content)
+      val labels       = completions.map(_.label).toSet
+      val nonPublicSet = Set(
+        "protectedField",
+        "protectedMethod()",
+        "privateField",
+        "privateMethod()",
+        "PrivateType",
+        "testVisibleField",
+        "testVisibleMethod()",
+        "TestVisibleType"
+      )
+      assert(!nonPublicSet.exists(labels))
+    }
+  }
+
   test("Internal Completion") {
     FileSystemHelper.run(Map()) { root: PathLike =>
       val org  = createOrg(root)

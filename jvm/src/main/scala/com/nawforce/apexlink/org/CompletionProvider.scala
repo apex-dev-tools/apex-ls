@@ -21,7 +21,6 @@ import com.nawforce.apexlink.rpc.CompletionItemLink
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexFullDeclaration}
 import com.nawforce.apexlink.types.core._
 import com.nawforce.pkgforce.documents.{ApexClassDocument, ApexTriggerDocument, MetadataDocument}
-import com.nawforce.pkgforce.modifiers.{PRIVATE_MODIFIER, PROTECTED_MODIFIER, PUBLIC_MODIFIER}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLike
 import com.vmware.antlr4c3.CodeCompletionCore
@@ -304,26 +303,19 @@ trait CompletionProvider {
   ): Array[CompletionItemLink] = {
     var items = Array[CompletionItemLink]()
 
-    val minimumVisibility =
-      if (fromDeclaration.contains(targetDeclaration))
-        PRIVATE_MODIFIER.order
-      else if (fromDeclaration.exists(_.extendsOrImplements(targetDeclaration.typeName)))
-        PROTECTED_MODIFIER.order
-      else PUBLIC_MODIFIER.order
-
     items = items ++ targetDeclaration.methods
       .filter(isStatic.isEmpty || _.isStatic == isStatic.get)
-      .filter(_.visibility.map(_.order).getOrElse(0) >= minimumVisibility)
+      .filter(TestVisibleAccess.access(_, fromDeclaration).isAccessible)
       .map(method => CompletionItemLink(method))
 
     items = items ++ targetDeclaration.fields
       .filter(isStatic.isEmpty || _.isStatic == isStatic.get)
-      .filter(_.visibility.map(_.order).getOrElse(0) >= minimumVisibility)
+      .filter(TestVisibleAccess.access(_, fromDeclaration).isAccessible)
       .map(field => CompletionItemLink(field))
 
     if (isStatic.isEmpty || isStatic.contains(true)) {
       items = items ++ targetDeclaration.nestedTypes
-        .filter(_.visibility.map(_.order).getOrElse(0) >= minimumVisibility)
+        .filter(TestVisibleAccess.access(_, fromDeclaration).isAccessible)
         .flatMap(nested => CompletionItemLink(nested))
     }
     if (isStatic.isEmpty) {

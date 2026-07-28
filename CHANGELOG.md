@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fix completion omitting `@TestVisible` members in test classes.
+
 - Warn when implementing an interface or inherited abstract method with a static method could be
   confusing.
 
