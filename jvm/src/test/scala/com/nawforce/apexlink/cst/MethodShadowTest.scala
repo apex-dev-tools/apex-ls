@@ -40,7 +40,7 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
         "Dummy.cls" -> "public class Dummy extends SuperClass { public static void func() {} }",
         "SuperClass.cls" -> "public abstract class SuperClass { public abstract void func(); }"
       ),
-      "Warning: line 1 at 59-63: Static method 'void func()' cannot implement abstract method from class 'SuperClass'; make it an instance method\n"
+      "Warning: line 1 at 59-63: Implementing 'void func()' from abstract class 'SuperClass' with a static method can be confusing, change to an instance method\n"
     )
   }
 

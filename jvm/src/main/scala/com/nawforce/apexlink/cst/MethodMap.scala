@@ -558,7 +558,7 @@ object MethodMap {
             if (matched.isStatic) {
               setMethodError(
                 matched,
-                s"Static method '${matched.signature}' cannot implement method from interface '${interface.typeName}'; make it an instance method",
+                s"Implementing '${matched.signature}' from interface '${interface.typeName}' with a static method can be confusing, change to an instance method",
                 errors,
                 isWarning = true
               )
@@ -613,7 +613,7 @@ object MethodMap {
         }
         setMethodError(
           method,
-          s"Static method '${method.signature}' cannot implement abstract method from class '$declaringType'; make it an instance method",
+          s"Implementing '${method.signature}' from abstract class '$declaringType' with a static method can be confusing, change to an instance method",
           errors,
           isWarning = true
         )

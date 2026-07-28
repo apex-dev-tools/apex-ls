@@ -73,7 +73,7 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
     )
     assert(
       dummyIssues ==
-        "Warning: line 1 at 52-56: Static method 'void func()' cannot implement method from interface 'A'; make it an instance method\n"
+        "Warning: line 1 at 52-56: Implementing 'void func()' from interface 'A' with a static method can be confusing, change to an instance method\n"
     )
   }
 
@@ -96,7 +96,7 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
     )
     assert(
       dummyIssues ==
-        "Warning: line 1 at 62-69: Static method 'void execute(System.SchedulableContext)' cannot implement method from interface 'System.Schedulable'; make it an instance method\n"
+        "Warning: line 1 at 62-69: Implementing 'void execute(System.SchedulableContext)' from interface 'System.Schedulable' with a static method can be confusing, change to an instance method\n"
     )
   }
 
@@ -119,7 +119,7 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
     )
     assert(
       dummyIssues ==
-        "Warning: line 1 at 60-67: Static method 'void execute(System.QueueableContext)' cannot implement method from interface 'System.Queueable'; make it an instance method\n"
+        "Warning: line 1 at 60-67: Implementing 'void execute(System.QueueableContext)' from interface 'System.Queueable' with a static method can be confusing, change to an instance method\n"
     )
   }
 

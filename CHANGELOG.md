@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Warn when a static method is used to implement an interface or inherited abstract method.
+- Warn when implementing an interface or inherited abstract method with a static method could be
+  confusing.
 
 ### Added
 
