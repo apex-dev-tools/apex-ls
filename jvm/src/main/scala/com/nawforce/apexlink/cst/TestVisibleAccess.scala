@@ -38,12 +38,12 @@ object TestVisibleAccess {
   }
 
   case object Accessible extends AccessResult {
-    override val isAccessible: Boolean         = true
+    override val isAccessible: Boolean        = true
     override val errorMessage: Option[String] = None
   }
 
   case class Inaccessible(message: String) extends AccessResult {
-    override val isAccessible: Boolean         = false
+    override val isAccessible: Boolean        = false
     override val errorMessage: Option[String] = Some(message)
   }
 
@@ -62,59 +62,56 @@ object TestVisibleAccess {
     resolved.visibility.flatMap(_ => access(resolved, Some(calledFrom)).errorMessage)
   }
 
-  def access(
-    field: FieldDeclaration,
-    calledFrom: Option[TypeDeclaration]
-  ): AccessResult = {
+  def access(field: FieldDeclaration, calledFrom: Option[TypeDeclaration]): AccessResult = {
     if (calledFrom.exists(isInvalidPrivateFieldAccess(field, _))) {
       Inaccessible("Private @TestVisible fields can only be accessed from @IsTest classes")
-    } else if (!isAccessible(
-                 field.visibility.getOrElse(PRIVATE_MODIFIER),
-                 field.thisTypeIdOpt.map(_.typeName),
-                 isSameApexFile(field, calledFrom),
-                 field.isTestVisible,
-                 calledFrom
-               )) {
+    } else if (
+      !isAccessible(
+        field.visibility.getOrElse(PRIVATE_MODIFIER),
+        field.thisTypeIdOpt.map(_.typeName),
+        isSameApexFile(field, calledFrom),
+        field.isTestVisible,
+        calledFrom
+      )
+    ) {
       Inaccessible(s"Field is not visible: ${field.name}")
     } else {
       Accessible
     }
   }
 
-  def access(
-    method: MethodDeclaration,
-    calledFrom: Option[TypeDeclaration]
-  ): AccessResult = {
+  def access(method: MethodDeclaration, calledFrom: Option[TypeDeclaration]): AccessResult = {
     val resolved = method match {
       case wrapped: AnyReturnMethodDeclaration => wrapped.method
       case other                               => other
     }
     if (calledFrom.exists(isInvalidPrivateMethodAccess(resolved, _))) {
       Inaccessible("Private @TestVisible methods can only be accessed from @IsTest classes")
-    } else if (!isAccessible(
-                 resolved.visibility.getOrElse(PRIVATE_MODIFIER),
-                 resolved.thisTypeIdOpt.map(_.typeName),
-                 isSameApexFile(resolved, calledFrom),
-                 resolved.isTestVisible,
-                 calledFrom
-               )) {
+    } else if (
+      !isAccessible(
+        resolved.visibility.getOrElse(PRIVATE_MODIFIER),
+        resolved.thisTypeIdOpt.map(_.typeName),
+        isSameApexFile(resolved, calledFrom),
+        resolved.isTestVisible,
+        calledFrom
+      )
+    ) {
       Inaccessible(s"Method is not visible: ${resolved.nameAndParameterTypes}")
     } else {
       Accessible
     }
   }
 
-  def access(
-    declaration: TypeDeclaration,
-    calledFrom: Option[TypeDeclaration]
-  ): AccessResult = {
-    if (!isAccessible(
-          declaration.visibility.getOrElse(PRIVATE_MODIFIER),
-          declaration.outerTypeName,
-          isSameApexFile(declaration, calledFrom),
-          declaration.modifiers.contains(TEST_VISIBLE_ANNOTATION),
-          calledFrom
-        )) {
+  def access(declaration: TypeDeclaration, calledFrom: Option[TypeDeclaration]): AccessResult = {
+    if (
+      !isAccessible(
+        declaration.visibility.getOrElse(PRIVATE_MODIFIER),
+        declaration.outerTypeName,
+        isSameApexFile(declaration, calledFrom),
+        declaration.modifiers.contains(TEST_VISIBLE_ANNOTATION),
+        calledFrom
+      )
+    ) {
       Inaccessible(s"Type is not visible: ${declaration.typeName}")
     } else {
       Accessible
