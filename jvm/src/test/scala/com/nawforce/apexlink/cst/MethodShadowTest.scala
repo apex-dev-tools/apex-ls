@@ -34,6 +34,26 @@ class MethodShadowTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Static implementation of inherited abstract method") {
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public static void func() {} }",
+        "SuperClass.cls" -> "public abstract class SuperClass { public abstract void func(); }"
+      ),
+      "Warning: line 1 at 59-63: Static method 'void func()' cannot implement abstract method from class 'SuperClass'; make it an instance method\n"
+    )
+  }
+
+  test("Instance implementation of inherited abstract method") {
+    testMethods(
+      Map(
+        "Dummy.cls" -> "public class Dummy extends SuperClass { public override void func() {} }",
+        "SuperClass.cls" -> "public abstract class SuperClass { public abstract void func(); }"
+      ),
+      ""
+    )
+  }
+
   test("Override of public virtual without override") {
     testMethods(
       Map(

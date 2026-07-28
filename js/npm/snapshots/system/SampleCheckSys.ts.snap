@@ -3479,6 +3479,8 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Cumulus/force-app/main/default/classes/OPP_OpportunityNaming.cls",
       "Unused: line 177 at 20-85: Unused local variable 'allFields'",
       "Unused: line 314 at 25-36: Unused public static method 'System.String getConQuery(System.Set<System.String>)'; remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
+      "Warning: line 111 at 36-58: Static method 'System.List<Schema.Opportunity> getOppNamesAfterInsert(System.List<Schema.Opportunity>)' cannot implement method from interface 'npsp.OPP_INaming'; make it an instance method",
+      "Warning: line 65 at 23-38: Static method 'void refreshOppNames(System.List<Schema.Opportunity>)' cannot implement method from interface 'npsp.OPP_INaming'; make it an instance method",
     ],
     [
       "Cumulus/force-app/main/default/classes/OPP_OpportunityNaming_BATCH_TEST.cls",
@@ -4102,6 +4104,7 @@ exports[`Check samples Sample: Cumulus 1`] = `
     [
       "Cumulus/force-app/main/default/classes/UTIL_MasterSchedulable.cls",
       "Unused: line 52 at 12-46: Unused local variable 'instance'",
+      "Warning: line 46 at 23-30: Static method 'void execute(System.SchedulableContext)' cannot implement method from interface 'System.Schedulable'; make it an instance method",
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_Namespace.cls",
@@ -4336,6 +4339,7 @@ exports[`Check samples Sample: Cumulus 1`] = `
     [
       "Cumulus/force-app/tdtm/classes/TDTM_ObjectDataGateway.cls",
       "Unused: line 90 at 23-56: Unused public static method 'void ClearCachedTriggerHandlersForTest()'; only referenced by test code, remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
+      "Warning: line 67 at 32-57: Static method 'System.List<System.SObject> getClassesToCallForObject(System.String, npsp.TDTM_Runnable.Action)' cannot implement method from interface 'npsp.TDTM_iTableDataGateway'; make it an instance method",
     ],
     [
       "Cumulus/force-app/tdtm/classes/TDTM_TriggerHandler.cls",
@@ -11883,6 +11887,7 @@ exports[`Check samples Sample: EDA 1`] = `
       "force-app/main/default/classes/EDAHealthCheckGroupAPIService.cls",
       "Unused: line 97 at 36-88: Unused local variable 'hlthChkItemsList'",
       "Unused: line 98 at 21-53: Unused local variable 'rowKeysList'",
+      "Warning: line 52 at 54-65: Static method 'hed.HealthCheckGroupAPIServiceInterface getInstance()' cannot implement method from interface 'hed.HealthCheckGroupAPIServiceInterface'; make it an instance method",
     ],
     [
       "force-app/main/default/classes/ERR_AsyncErrors.cls",
@@ -12332,6 +12337,10 @@ exports[`Check samples Sample: EnhancedLightningGrid 1`] = `
 {
   "logs": [
     [
+      "EnhancedLightningGrid/classes/CustomDataProviderExample.cls",
+      "Warning: line 9 at 28-35: Static method 'SDGResult getData(SDG, SDGRequest)' cannot implement method from interface 'sdgDataProvider'; make it an instance method",
+    ],
+    [
       "EnhancedLightningGrid/classes/SDGField.cls",
       "Unused: line 28 at 105-112: Unused local variable 'canSort'",
       "Unused: line 28 at 137-144: Unused local variable 'options'",
@@ -12352,10 +12361,22 @@ exports[`Check samples Sample: EnhancedLightningGrid 1`] = `
       "EnhancedLightningGrid/classes/sdgDataProviderApexExample.cls",
       "Unused: line 17 at 16-62: Unused local variable 'dataoffset'",
       "Unused: line 18 at 16-44: Unused local variable 'datalimit'",
+      "Warning: line 13 at 28-35: Static method 'SDGResult getData(SDG, SDGRequest)' cannot implement method from interface 'sdgIDataProvider'; make it an instance method",
+      "Warning: line 8 at 30-46: Static method 'System.Boolean isUserSelectable()' cannot implement method from interface 'sdgIDataProvider'; make it an instance method",
     ],
     [
       "EnhancedLightningGrid/classes/sdgDataProviderFactory.cls",
       "Unused: line 12 at 26-37: Unused public static method 'System.Boolean isNameValid(System.String)'; only referenced by test code, remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
+    ],
+    [
+      "EnhancedLightningGrid/classes/sdgDataProviderMetadata.cls",
+      "Warning: line 13 at 28-35: Static method 'SDGResult getData(SDG, SDGRequest)' cannot implement method from interface 'sdgIDataProvider'; make it an instance method",
+      "Warning: line 8 at 26-42: Static method 'System.Boolean isUserSelectable()' cannot implement method from interface 'sdgIDataProvider'; make it an instance method",
+    ],
+    [
+      "EnhancedLightningGrid/classes/sdgDataProviderNative.cls",
+      "Warning: line 12 at 28-35: Static method 'SDGResult getData(SDG, SDGRequest)' cannot implement method from interface 'sdgIDataProvider'; make it an instance method",
+      "Warning: line 8 at 26-42: Static method 'System.Boolean isUserSelectable()' cannot implement method from interface 'sdgIDataProvider'; make it an instance method",
     ],
     [
       "EnhancedLightningGrid/classes/sdgDataProviderNativeTest.cls",
@@ -12364,6 +12385,8 @@ exports[`Check samples Sample: EnhancedLightningGrid 1`] = `
     [
       "EnhancedLightningGrid/classes/sdgDataProviderRelationship.cls",
       "Unused: line 102 at 17-24: Unused local variable 'idfield'",
+      "Warning: line 12 at 28-35: Static method 'SDGResult getData(SDG, SDGRequest)' cannot implement method from interface 'sdgIDataProvider'; make it an instance method",
+      "Warning: line 8 at 26-42: Static method 'System.Boolean isUserSelectable()' cannot implement method from interface 'sdgIDataProvider'; make it an instance method",
     ],
     [
       "EnhancedLightningGrid/classes/sdgImportExport.cls",
@@ -12372,6 +12395,14 @@ exports[`Check samples Sample: EnhancedLightningGrid 1`] = `
     [
       "EnhancedLightningGrid/classes/sdgLabels.cls",
       "Unused: line 7 at 26-35: Unused class 'sdgLabels', only referenced by test code, consider using @isTest or @SuppressWarnings('Unused') if needed",
+    ],
+    [
+      "EnhancedLightningGrid/classes/sdgMetadataDataProvider.cls",
+      "Warning: line 8 at 28-35: Static method 'SDGResult getData(SDG, SDGRequest)' cannot implement method from interface 'sdgDataProvider'; make it an instance method",
+    ],
+    [
+      "EnhancedLightningGrid/classes/sdgNativeDataProvider.cls",
+      "Warning: line 9 at 32-39: Static method 'SDGResult getData(SDG, SDGRequest)' cannot implement method from interface 'sdgDataProvider'; make it an instance method",
     ],
     [
       "EnhancedLightningGrid/classes/sdgObjectEventHandlerTest.cls",
@@ -12418,6 +12449,10 @@ exports[`Check samples Sample: EnhancedLightningGrid 1`] = `
       "Unused: line 86 at 15-76: Unused local variable 'booleanfield'",
       "Unused: line 90 at 16-33: Unused local variable 'errorThrown'",
       "Unused: line 91 at 15-28: Unused local variable 'errorMsg'",
+    ],
+    [
+      "EnhancedLightningGrid/classes/sdgRelationshipDataProvider.cls",
+      "Warning: line 9 at 28-35: Static method 'SDGResult getData(SDG, SDGRequest)' cannot implement method from interface 'sdgDataProvider'; make it an instance method",
     ],
     [
       "EnhancedLightningGrid/classes/sdgSecurity.cls",
@@ -13951,6 +13986,7 @@ exports[`Check samples Sample: HEDAP 1`] = `
       "force-app/main/default/classes/EDAHealthCheckGroupAPIService.cls",
       "Unused: line 97 at 36-88: Unused local variable 'hlthChkItemsList'",
       "Unused: line 98 at 21-53: Unused local variable 'rowKeysList'",
+      "Warning: line 52 at 54-65: Static method 'hed.HealthCheckGroupAPIServiceInterface getInstance()' cannot implement method from interface 'hed.HealthCheckGroupAPIServiceInterface'; make it an instance method",
     ],
     [
       "force-app/main/default/classes/ERR_AsyncErrors.cls",
@@ -16615,6 +16651,8 @@ exports[`Check samples Sample: NPSP 1`] = `
       "NPSP/force-app/main/default/classes/OPP_OpportunityNaming.cls",
       "Unused: line 177 at 20-85: Unused local variable 'allFields'",
       "Unused: line 314 at 25-36: Unused public static method 'System.String getConQuery(System.Set<System.String>)'; remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
+      "Warning: line 111 at 36-58: Static method 'System.List<Schema.Opportunity> getOppNamesAfterInsert(System.List<Schema.Opportunity>)' cannot implement method from interface 'npsp.OPP_INaming'; make it an instance method",
+      "Warning: line 65 at 23-38: Static method 'void refreshOppNames(System.List<Schema.Opportunity>)' cannot implement method from interface 'npsp.OPP_INaming'; make it an instance method",
     ],
     [
       "NPSP/force-app/main/default/classes/OPP_OpportunityNaming_BATCH_TEST.cls",
@@ -17238,6 +17276,7 @@ exports[`Check samples Sample: NPSP 1`] = `
     [
       "NPSP/force-app/main/default/classes/UTIL_MasterSchedulable.cls",
       "Unused: line 52 at 12-46: Unused local variable 'instance'",
+      "Warning: line 46 at 23-30: Static method 'void execute(System.SchedulableContext)' cannot implement method from interface 'System.Schedulable'; make it an instance method",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_Namespace.cls",
@@ -17472,6 +17511,7 @@ exports[`Check samples Sample: NPSP 1`] = `
     [
       "NPSP/force-app/tdtm/classes/TDTM_ObjectDataGateway.cls",
       "Unused: line 90 at 23-56: Unused public static method 'void ClearCachedTriggerHandlersForTest()'; only referenced by test code, remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
+      "Warning: line 67 at 32-57: Static method 'System.List<System.SObject> getClassesToCallForObject(System.String, npsp.TDTM_Runnable.Action)' cannot implement method from interface 'npsp.TDTM_iTableDataGateway'; make it an instance method",
     ],
     [
       "NPSP/force-app/tdtm/classes/TDTM_TriggerHandler.cls",
@@ -28476,8 +28516,17 @@ exports[`Check samples Sample: apex-recipes 1`] = `
       "Unused: line 51 at 23-58: Unused public static method 'void atFutureMethodWithCalloutPrivileges(System.String)'; only referenced by test code, remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
     ],
     [
+      "force-app/main/default/classes/Async Apex Recipes/QueueableChainingRecipes.cls",
+      "Warning: line 26 at 23-30: Static method 'void execute(System.QueueableContext)' cannot implement method from interface 'System.Queueable'; make it an instance method",
+    ],
+    [
+      "force-app/main/default/classes/Async Apex Recipes/QueueableRecipes.cls",
+      "Warning: line 27 at 23-30: Static method 'void execute(System.QueueableContext)' cannot implement method from interface 'System.Queueable'; make it an instance method",
+    ],
+    [
       "force-app/main/default/classes/Async Apex Recipes/QueueableWithCalloutRecipes.cls",
       "Unused: line 22 at 17-53: Unused class 'QueueableWithCalloutRecipes.QueueableWithCalloutRecipesException'",
+      "Warning: line 36 at 23-30: Static method 'void execute(System.QueueableContext)' cannot implement method from interface 'System.Queueable'; make it an instance method",
     ],
     [
       "force-app/main/default/classes/Collection Recipes/CollectionUtils.cls",

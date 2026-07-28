@@ -359,7 +359,7 @@ object MethodMap {
     }
     staticLocals
       .filterNot(ignorableStatics.contains)
-      .foreach(method => applyStaticMethod(workingMap, method))
+      .foreach(method => applyStaticMethod(workingMap, method, errors))
 
     val ad = td match {
       case ad: ApexClassDeclaration => Some(ad)
@@ -555,6 +555,14 @@ object MethodMap {
                 )
               )
             }
+            if (matched.isStatic) {
+              setMethodError(
+                matched,
+                s"Static method '${matched.signature}' cannot implement method from interface '${interface.typeName}'; make it an instance method",
+                errors,
+                isWarning = true
+              )
+            }
             matched.addShadow(method)
           case Some(_) => ()
           case None =>
@@ -583,14 +591,34 @@ object MethodMap {
       })
   }
 
-  private def applyStaticMethod(workingMap: WorkingMap, method: MethodDeclaration): Unit = {
+  private def applyStaticMethod(
+    workingMap: WorkingMap,
+    method: MethodDeclaration,
+    errors: mutable.Buffer[Issue]
+  ): Unit = {
     val key     = (method.name, method.parameters.length)
     val methods = workingMap.getOrElse(key, Nil)
     val matched = methods.find(mapMethod => areSameMethodsIgnoringReturn(mapMethod, method))
-    if (matched.isEmpty)
-      workingMap.put(key, method :: methods)
-    else if (matched.get.isStatic)
-      workingMap.put(key, method :: methods.filterNot(_ eq matched.get))
+    matched match {
+      case None =>
+        workingMap.put(key, method :: methods)
+      case Some(matched) if matched.isStatic =>
+        workingMap.put(key, method :: methods.filterNot(_ eq matched))
+      case Some(matched) if matched.isAbstract =>
+        val declaringType = matched match {
+          case apexMethod: ApexMethodLike => apexMethod.thisTypeId.typeName
+          case platformMethod: PlatformMethod =>
+            platformMethod.typeDeclaration.typeName
+          case _ => TypeNames.InternalObject
+        }
+        setMethodError(
+          method,
+          s"Static method '${method.signature}' cannot implement abstract method from class '$declaringType'; make it an instance method",
+          errors,
+          isWarning = true
+        )
+      case _ => ()
+    }
   }
 
   /** Add an instance method into the working map.
