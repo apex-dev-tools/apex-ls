@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Warn when implementing an interface or inherited abstract method with a static method could be
+  confusing.
+
 ### Added
 
 - Documentation and clarified diagnostics for the deliberate difference between apex-ls package-directory handling and Salesforce's merged deployment behaviour (#339)

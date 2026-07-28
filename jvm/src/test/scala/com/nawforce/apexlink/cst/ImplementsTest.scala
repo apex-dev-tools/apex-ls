@@ -64,6 +64,83 @@ class ImplementsTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("Static implementation of interface method") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" -> "public class Dummy implements A {public static void func() {}}",
+        "A.cls"     -> "public interface A {void func();}"
+      )
+    )
+    assert(
+      dummyIssues ==
+        "Warning: line 1 at 52-56: Implementing 'void func()' from interface 'A' with a static method can be confusing, change to an instance method\n"
+    )
+  }
+
+  test("Unrelated static method on interface implementation") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" -> "public class Dummy implements A {public void func() {} public static void helper() {}}",
+        "A.cls" -> "public interface A {void func();}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Static implementation of Schedulable method") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          "public class Dummy implements Schedulable {public static void execute(SchedulableContext context) {}}"
+      )
+    )
+    assert(
+      dummyIssues ==
+        "Warning: line 1 at 62-69: Implementing 'void execute(System.SchedulableContext)' from interface 'System.Schedulable' with a static method can be confusing, change to an instance method\n"
+    )
+  }
+
+  test("Instance implementation of Schedulable method") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          "public class Dummy implements Schedulable {public void execute(SchedulableContext context) {}}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Static implementation of Queueable method") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          "public class Dummy implements Queueable {public static void execute(QueueableContext context) {}}"
+      )
+    )
+    assert(
+      dummyIssues ==
+        "Warning: line 1 at 60-67: Implementing 'void execute(System.QueueableContext)' from interface 'System.Queueable' with a static method can be confusing, change to an instance method\n"
+    )
+  }
+
+  test("Instance implementation of Queueable method") {
+    typeDeclarations(
+      Map(
+        "Dummy.cls" ->
+          "public class Dummy implements Queueable {public void execute(QueueableContext context) {}}"
+      )
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Missing implementation of Schedulable method") {
+    typeDeclarations(Map("Dummy.cls" -> "public class Dummy implements Schedulable {}"))
+    assert(
+      dummyIssues ==
+        "Missing: line 1 at 13-18: Non-abstract class must implement method 'void execute(System.SchedulableContext)' from interface 'System.Schedulable'\n"
+    )
+  }
+
   test("Protected implementation of interface method") {
     typeDeclarations(
       Map(
