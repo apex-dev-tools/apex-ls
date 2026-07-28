@@ -310,9 +310,17 @@ final class BodyDeclarationVerifyContext(
         (thisType.typeName == field.thisType.typeName ||
           thisType.extendsOrImplements(field.thisType.typeName))
       case block: ApexInitializerBlock =>
-        field.isStatic == block.isStatic && block.thisType.typeId == field.thisTypeId
+        (!block.isStatic || field.isStatic) && block.thisType.typeId == field.thisTypeId
       case property: ApexPropertyDeclaration =>
         property == field
+      case _ => false
+    }
+  }
+
+  def isFinalStaticFieldAssignedFromInstanceInitializer(field: ApexFieldDeclaration): Boolean = {
+    classBodyDeclaration match {
+      case block: ApexInitializerBlock =>
+        field.isStatic && !block.isStatic && block.thisType.typeId == field.thisTypeId
       case _ => false
     }
   }

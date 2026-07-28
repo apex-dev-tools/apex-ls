@@ -907,7 +907,8 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
         s"Expecting instance for operation, not type '${rightInter.typeName}'"
       )
 
-    // TODO Remove temporary warning, add getReadOnlyError calls back to each operation verify
+    // Keep these as warnings: Apex permits assignment to final locals and parameters, and a
+    // stricter apex-ls warning is far less disruptive than a false error.
     operation match {
       case AssignmentOperation | BitwiseAssignmentOperation |
           ArithmeticAddSubtractAssignmentOperation | ArithmeticMultiplyDivideAssignmentOperation =>

@@ -106,18 +106,25 @@ abstract class Operation {
   ): Option[String] = {
     exprContext.locatable match {
       case Some(variable: VariableDeclarator) if variable.isReadOnly =>
-        Some(s"Variable '${variable.id.name.value}' can not be assigned to, it is final")
+        Some(s"Variable '${variable.id.name.value}' should not be assigned to, it is final")
+      case Some(field: ApexFieldDeclaration)
+          if field.isReadOnly &&
+            isFinalStaticFieldAssignedFromInstanceInitializer(field, verifyContext) =>
+        Some(
+          s"Final static field '${field.name.value}' is assigned in an instance initializer, it will be reassigned on each construction, use a static initializer"
+        )
       case Some(field: ApexFieldDeclaration)
           if field.isReadOnly && !isFieldFinalInitialisationContext(field, verifyContext) =>
-        // Final fields can be set in ctor & init blocks
-        Some(s"Field '${field.name.value}' can not be assigned to, it is final")
+        Some(
+          s"Field '${field.name.value}' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor"
+        )
       case Some(id: Id) if verifyContext.isVar(id.name).exists(_.isReadOnly) =>
         // For params the locatable only gives Id currently, so we need extra verification
         verifyContext
           .isVar(id.name)
           .flatMap(varDetails =>
             if (varDetails.isReadOnly && varDetails.definition.contains(id))
-              Some(s"Parameter '${id.name.value}' can not be assigned to, it is final")
+              Some(s"Parameter '${id.name.value}' should not be assigned to, it is final")
             else None
           )
       case _ => None
@@ -132,6 +139,20 @@ abstract class Operation {
       case bodyContext: BodyDeclarationVerifyContext =>
         bodyContext.isFieldFinalInitialisationContext(field)
       case _ => context.parent().exists(parent => isFieldFinalInitialisationContext(field, parent))
+    }
+  }
+
+  private def isFinalStaticFieldAssignedFromInstanceInitializer(
+    field: ApexFieldDeclaration,
+    context: VerifyContext
+  ): Boolean = {
+    context match {
+      case bodyContext: BodyDeclarationVerifyContext =>
+        bodyContext.isFinalStaticFieldAssignedFromInstanceInitializer(field)
+      case _ =>
+        context
+          .parent()
+          .exists(parent => isFinalStaticFieldAssignedFromInstanceInitializer(field, parent))
     }
   }
 }
