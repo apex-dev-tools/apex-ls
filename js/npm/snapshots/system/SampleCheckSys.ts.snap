@@ -34379,10 +34379,6 @@ exports[`Check samples Sample: apex-trigger-actions-framework 1`] = `
       "Unused: line 34 at 46-55: Unused field 'OPERATION'",
     ],
     [
-      "trigger-actions-framework/main/default/classes/FormulaFilter.cls",
-      "Missing: line 163 at 11-44: No type declaration found for 'System.FormulaValidationException'",
-    ],
-    [
       "trigger-actions-framework/main/default/classes/FormulaFilterTest.cls",
       "Unused: line 332 at 17-23: Unused property 'record'",
       "Unused: line 337 at 17-28: Unused property 'recordPrior'",
