@@ -7,18 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Fix completion omitting `@TestVisible` members in test classes.
-
-- Warn when implementing an interface or inherited abstract method with a static method could be
-  confusing.
+## [6.2.0] - 2026-07-29
 
 ### Added
 
+- Warnings when a static method implements an interface method or inherited abstract method, since
+  static implementations of instance contracts can be confusing (#351)
 - Documentation and clarified diagnostics for the deliberate difference between apex-ls package-directory handling and Salesforce's merged deployment behaviour (#339)
 - `dependencyCountAliases` `sfdx-project.json` option to define named (and optionally nested) presets for `// MaxDependencyCount(...)`, so `// MaxDependencyCount(med)` or `// MaxDependencyCount(group.name)` can be used instead of repeating raw numbers across files (#324)
 
 ### Fixed
 
+- Completions from test classes now include accessible `@TestVisible` members (#522)
 - Static final assignments from instance initializer blocks now receive targeted advisory guidance
   matching Apex legality, and final-assignment warnings distinguish enforced fields from
   deliberately stricter guidance for locals and parameters (#124)
