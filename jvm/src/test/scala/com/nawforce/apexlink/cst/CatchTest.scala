@@ -12,6 +12,13 @@ class CatchTest extends AnyFunSuite with TestHelper {
     happyTypeDeclaration("public class Dummy {{ try {} catch (AssertException a) {} }}")
   }
 
+  test("Catch formula exceptions") {
+    happyTypeDeclaration("""public class Dummy {{
+        |  try {} catch (System.FormulaValidationException validationException) {}
+        |  try {} catch (System.FormulaEvaluationException evaluationException) {}
+        |}}""".stripMargin)
+  }
+
   test("Catch custom exception") {
     typeDeclarations(
       Map(
