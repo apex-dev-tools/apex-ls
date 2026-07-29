@@ -73,10 +73,7 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
       |  @TestVisible private class TestVisibleType {}
       |}""".stripMargin
 
-  private def staticCompletionLabels(
-    root: PathLike,
-    declaration: String
-  ): Set[String] = {
+  private def staticCompletionLabels(root: PathLike, declaration: String): Set[String] = {
     val org     = createOrg(root)
     val path    = root.join("Completion.cls")
     val content = s"$declaration { static void complete() { VisibilityTarget."
@@ -116,19 +113,17 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
 
       val subtypeLabels =
         staticCompletionLabels(root, "public class Completion extends VisibilityTarget")
-      assert(
-        Set("protectedField", "protectedMethod()").subsetOf(subtypeLabels)
-      )
+      assert(Set("protectedField", "protectedMethod()").subsetOf(subtypeLabels))
     }
   }
 
   test("Static completions without a caller remain public") {
     FileSystemHelper.run(Map("VisibilityTarget.cls" -> testVisibleContent)) { root: PathLike =>
-      val org          = createOrg(root)
-      val content      = "VisibilityTarget."
-      val completions  =
+      val org     = createOrg(root)
+      val content = "VisibilityTarget."
+      val completions =
         org.getCompletionItemsInternal(root.join("Completion.cls"), 1, content.length, content)
-      val labels       = completions.map(_.label).toSet
+      val labels = completions.map(_.label).toSet
       val nonPublicSet = Set(
         "protectedField",
         "protectedMethod()",
