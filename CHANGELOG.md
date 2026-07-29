@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Static final assignments from instance initializer blocks now receive targeted advisory guidance
+  matching Apex legality, and final-assignment warnings distinguish enforced fields from
+  deliberately stricter guidance for locals and parameters (#124)
 - Duplicate annotations on declarations are now reported as errors, including annotations with different or unrecognized arguments (#287)
 - Abstract and override methods with omitted or private visibility now report an error, matching the latest Apex compiler behaviour (#386)
 - Set assignments and List/Set constructor initializers now enforce the platform's collection element-type compatibility rules (#318)

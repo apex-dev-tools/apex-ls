@@ -9,15 +9,16 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class FinalTest extends AnyFunSuite with TestHelper {
 
-  // Apex does not always enforce 'final', we are trying to do better ;-)
-  // There are likely additional cases where we should enforce read-only, here we only have known cases to date
+  // Apex permits reassignment of final locals and parameters, but restricts final fields by
+  // context. It also permits static final fields in instance initializers; apex-ls warns about
+  // that likely accidental pattern and the stricter local and parameter guidance.
 
   test("Initialised local") {
     typeDeclaration("public class Dummy {{final String a=''; a = 'a';}}")
 
     assert(
       dummyIssues ==
-        "Warning: line 1 at 40-47: Variable 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 40-47: Variable 'a' should not be assigned to, it is final\n"
     )
   }
 
@@ -25,7 +26,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {{final String a; a = 'a';}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 37-44: Variable 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 37-44: Variable 'a' should not be assigned to, it is final\n"
     )
   }
 
@@ -33,7 +34,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final String a=''; void func(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 51-59: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 51-59: Field 'a' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor\n"
     )
   }
 
@@ -41,7 +42,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final String a; void func(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 48-56: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 48-56: Field 'a' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor\n"
     )
   }
 
@@ -49,7 +50,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final static String a=''; void func(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 58-66: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 58-66: Field 'a' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor\n"
     )
   }
 
@@ -57,7 +58,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final static String a; void func(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 55-63: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 55-63: Field 'a' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor\n"
     )
   }
 
@@ -71,11 +72,21 @@ class FinalTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
-  test("Static field assignment not allowed in instance init") {
+  test("Static final field assignment in instance init warns") {
     typeDeclaration("public class Dummy {final static String a; {a += 'a';}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 44-52: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 44-52: Final static field 'a' is assigned in an instance initializer, it will be reassigned on each construction, use a static initializer\n"
+    )
+  }
+
+  test("Instance field assignment not allowed in static init") {
+    typeDeclaration("public class Dummy {final String a; static {Dummy d; d.a = ''; d.a += 'a';}}")
+    assert(
+      dummyIssues ==
+        """Warning: line 1 at 53-61: Field 'a' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor
+          |Warning: line 1 at 63-73: Field 'a' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor
+          |""".stripMargin
     )
   }
 
@@ -97,15 +108,50 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {final static String a; Dummy(){a += 'a';}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 51-59: Field 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 51-59: Field 'a' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor\n"
     )
+  }
+
+  test("Apex final field initialisation contexts with plain assignment") {
+    typeDeclaration("""public class Dummy {
+        |  static final String staticValue;
+        |  final String instanceValue;
+        |  { staticValue = 'a'; instanceValue = 'a'; }
+        |  static { staticValue = 'a'; }
+        |  Dummy() { instanceValue = 'a'; }
+        |}
+        |""".stripMargin)
+    assert(
+      dummyIssues ==
+        "Warning: line 4 at 4-21: Final static field 'staticValue' is assigned in an instance initializer, it will be reassigned on each construction, use a static initializer\n"
+    )
+  }
+
+  test("Apex final field initialisation contexts with compound assignment") {
+    typeDeclaration("""public class Dummy {
+        |  static final String staticValue;
+        |  final String instanceValue;
+        |  { staticValue += 'a'; instanceValue += 'a'; }
+        |  static { staticValue += 'a'; }
+        |  Dummy() { instanceValue += 'a'; }
+        |}
+        |""".stripMargin)
+    assert(
+      dummyIssues ==
+        "Warning: line 4 at 4-22: Final static field 'staticValue' is assigned in an instance initializer, it will be reassigned on each construction, use a static initializer\n"
+    )
+  }
+
+  test("Non-final static field assignment in instance init is allowed") {
+    typeDeclaration("public class Dummy {static String a; {a = ''; a += 'a';}}")
+    assert(dummyIssues.isEmpty)
   }
 
   test("Parameter not assignable in instance method") {
     typeDeclaration("public class Dummy {void func(final Integer a) {a &= 1;}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 48-54: Parameter 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 48-54: Parameter 'a' should not be assigned to, it is final\n"
     )
   }
 
@@ -113,7 +159,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {static void func(final Integer a) {a &= 1;}}")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 55-61: Parameter 'a' can not be assigned to, it is final\n"
+        "Warning: line 1 at 55-61: Parameter 'a' should not be assigned to, it is final\n"
     )
   }
 
@@ -121,7 +167,7 @@ class FinalTest extends AnyFunSuite with TestHelper {
     typeDeclaration("public class Dummy {enum MyEnum {A} void func(){MyEnum.A = null;} }")
     assert(
       dummyIssues ==
-        "Warning: line 1 at 48-63: Field 'A' can not be assigned to, it is final\n"
+        "Warning: line 1 at 48-63: Field 'A' can not be assigned to here, final fields can only be assigned in their declaration, an init block, or a constructor\n"
     )
   }
 
