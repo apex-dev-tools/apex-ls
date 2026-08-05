@@ -14,7 +14,9 @@
 
 package io.github.apexdevtools.apexls
 
-import com.nawforce.apexlink.api.Org
+import com.nawforce.apexlink.api.{Org, ServerOps}
+import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.runtime.platform.Environment
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.io.ByteArrayOutputStream
@@ -98,8 +100,12 @@ class BatchTest extends AnyFunSuite {
   }
 
   test("malformed workspace configuration is a workspace loading failure") {
-    val workspace = Files.createTempDirectory("batch-workspace")
-    val project   = workspace.resolve("sfdx-project.json")
+    val workspace              = Files.createTempDirectory("batch-workspace")
+    val project                = workspace.resolve("sfdx-project.json")
+    val originalCacheDirectory = Environment.getCacheDirOverride
+    val originalAutoFlush      = ServerOps.isAutoFlushEnabled
+    val originalParser         = ServerOps.getCurrentParser
+    val originalLoggingLevel   = LoggerOps.getLoggingLevel
     try {
       Files.write(project, "{".getBytes(StandardCharsets.UTF_8))
       val command = new TestCommand("workspace", requiresWorkspace = true)
@@ -111,6 +117,10 @@ class BatchTest extends AnyFunSuite {
 
       assert(invocation.status == 3)
       assert(invocation.json("error")("code").str == "WORKSPACE_LOAD_FAILED")
+      assert(Environment.getCacheDirOverride == originalCacheDirectory)
+      assert(ServerOps.isAutoFlushEnabled == originalAutoFlush)
+      assert(ServerOps.getCurrentParser == originalParser)
+      assert(LoggerOps.getLoggingLevel == originalLoggingLevel)
     } finally {
       Files.deleteIfExists(project)
       Files.deleteIfExists(workspace)

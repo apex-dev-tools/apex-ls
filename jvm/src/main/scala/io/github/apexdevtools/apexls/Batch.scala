@@ -14,9 +14,10 @@
 
 package io.github.apexdevtools.apexls
 
-import com.nawforce.apexlink.api.Org
+import com.nawforce.apexlink.api.{Org, ServerOps}
 import com.nawforce.apexlink.rpc.OpenOptions
-import com.nawforce.runtime.platform.Path
+import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.runtime.platform.{Environment, Path}
 
 import java.io.{OutputStream, PrintStream}
 import java.nio.charset.StandardCharsets
@@ -52,8 +53,12 @@ object Batch {
       case stream: PrintStream => stream
       case _                   => new PrintStream(stderr, true, StandardCharsets.UTF_8.name())
     }
-    val originalStdout = System.out
-    val originalStderr = System.err
+    val originalStdout         = System.out
+    val originalStderr         = System.err
+    val originalCacheDirectory = Environment.getCacheDirOverride
+    val originalAutoFlush      = ServerOps.isAutoFlushEnabled
+    val originalParser         = ServerOps.getCurrentParser
+    val originalLoggingLevel   = LoggerOps.getLoggingLevel
 
     System.setOut(diagnosticStream)
     System.setErr(diagnosticStream)
@@ -82,6 +87,10 @@ object Batch {
           )
           (BatchProtocol.write(serializationFailure), StatusInternal)
       } finally {
+        Environment.setCacheDirOverride(originalCacheDirectory)
+        ServerOps.setAutoFlush(originalAutoFlush)
+        ServerOps.setCurrentParser(originalParser)
+        LoggerOps.setLoggingLevel(originalLoggingLevel)
         System.setOut(originalStdout)
         System.setErr(originalStderr)
       }
