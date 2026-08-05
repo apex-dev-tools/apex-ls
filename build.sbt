@@ -26,6 +26,7 @@ ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 lazy val build      = taskKey[File]("Build artifacts")
 lazy val pack       = inputKey[Unit]("Publish specific local version")
 lazy val npmInstall = taskKey[Unit]("Install Node modules for Scala.js tasks")
+lazy val batchDistributionTest = taskKey[Unit]("Test the packaged JVM batch dispatcher")
 lazy val Dev        = config("dev") extend Compile
 
 // Don't publish root
@@ -54,7 +55,12 @@ lazy val apexls = crossProject(JSPlatform, JVMPlatform)
   .jvmSettings(
     javacOptions ++= Seq("--release", "8"),
     scalacOptions ++= Seq("-release", "8"),
-    build       := buildJVM.value,
+    build := buildJVM.value,
+    batchDistributionTest := testBatchDistribution(
+      build.value,
+      crossTarget.value,
+      streams.value.log
+    ),
     Test / fork := true,
     Test / javaOptions ++= enableNativeAccessForJdk24Plus.value,
     libraryDependencies ++= Seq(
@@ -117,6 +123,37 @@ def buildJs(jsTask: TaskKey[Attributed[Report]]): Def.Initialize[Task[File]] = D
   syncNodeModules.value
 
   targetFile
+}
+
+def testBatchDistribution(targetJar: File, targetDir: File, log: Logger): Unit = {
+  val javaName = if (scala.util.Properties.isWin) "java.exe" else "java"
+  val javaExecutable = file(sys.props("java.home")) / "bin" / javaName
+  IO.withTemporaryDirectory { temporaryDirectory =>
+    val workspace = temporaryDirectory / "workspace with spaces"
+    IO.createDirectory(workspace)
+    val stdout = new StringBuilder
+    val stderr = new StringBuilder
+    val command = Seq(
+      javaExecutable.getAbsolutePath,
+      "-cp",
+      (targetDir / "*").getAbsolutePath,
+      "io.github.apexdevtools.apexls.Batch",
+      "ping",
+      "--workspace",
+      workspace.getAbsolutePath
+    )
+    val logger = ProcessLogger(stdout append _ append '\n', stderr append _ append '\n')
+    val status = Process(command) ! logger
+    val expected =
+      """{"protocolVersion":1,"command":"ping","ok":true,"result":{},"error":null}"""
+    if (status != 0 || stdout.toString.trim != expected) {
+      sys.error(
+        s"Packaged batch dispatcher failed (status $status, jar $targetJar): " +
+          s"stdout=${stdout.toString.trim}, stderr=${stderr.toString.trim}"
+      )
+    }
+  }
+  log.info("Packaged JVM batch dispatcher passed wildcard-classpath execution")
 }
 
 def syncNodeModules: Def.Initialize[Task[Unit]] = Def.task {
