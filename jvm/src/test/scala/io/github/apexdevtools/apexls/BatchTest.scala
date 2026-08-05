@@ -60,10 +60,6 @@ class BatchTest extends AnyFunSuite {
   }
 
   test("invalid common and command options are argument failures") {
-    val invalidParser = invoke(Array("ping", "--parser", "not-a-parser"))
-    assert(invalidParser.status == 1)
-    assert(invalidParser.json("error")("code").str == "INVALID_ARGUMENT")
-
     val invalidOption = invoke(Array("ping", "--invalid"))
     assert(invalidOption.status == 1)
     assert(invalidOption.json("error")("code").str == "INVALID_ARGUMENT")
@@ -71,6 +67,13 @@ class BatchTest extends AnyFunSuite {
     val missingValue = invoke(Array("ping", "--workspace"))
     assert(missingValue.status == 1)
     assert(missingValue.json("error")("code").str == "INVALID_ARGUMENT")
+  }
+
+  test("parser selection is not a supported option") {
+    val invocation = invoke(Array("ping", "--parser", "OutlineSingle"))
+
+    assert(invocation.status == 1)
+    assert(invocation.json("error")("code").str == "INVALID_ARGUMENT")
   }
 
   test("invalid workspace scope is an argument failure") {
@@ -127,7 +130,7 @@ class BatchTest extends AnyFunSuite {
     }
   }
 
-  test("workspace, cache, and parser options are passed to workspace commands") {
+  test("workspace and cache options are passed to workspace commands") {
     val command  = new TestCommand("workspace", requiresWorkspace = true)
     val captures = collection.mutable.ArrayBuffer[BatchOptions]()
     val loader = new BatchWorkspaceLoader {
@@ -138,14 +141,7 @@ class BatchTest extends AnyFunSuite {
     }
 
     val cacheEnabled = invoke(
-      Array(
-        "workspace",
-        "--workspace",
-        "/workspace with spaces",
-        "--cache-dir=/cache with spaces",
-        "--parser",
-        "OutlineMulti"
-      ),
+      Array("workspace", "--workspace", "/workspace with spaces", "--cache-dir=/cache with spaces"),
       commands = Seq(command),
       loader = loader
     )
@@ -160,10 +156,8 @@ class BatchTest extends AnyFunSuite {
     assert(captures.head.workspace == "/workspace with spaces")
     assert(captures.head.cacheDirectory.contains("/cache with spaces"))
     assert(captures.head.cacheEnabled)
-    assert(captures.head.parser == "OutlineMulti")
     assert(captures(1).workspace == "/workspace with spaces")
     assert(!captures(1).cacheEnabled)
-    assert(captures(1).parser == "OutlineSingle")
   }
 
   test("thrown command exceptions return analysis failures and keep stdout clean") {

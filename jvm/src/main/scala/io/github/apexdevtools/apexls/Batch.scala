@@ -196,18 +196,14 @@ object Batch {
 private[apexls] final case class BatchOptions(
   workspace: String,
   cacheDirectory: Option[String],
-  cacheEnabled: Boolean,
-  parser: String
+  cacheEnabled: Boolean
 )
 
 private[apexls] object BatchOptions {
-  private final val DefaultParser = "OutlineSingle"
-
   def parse(args: IndexedSeq[String]): Either[BatchError, (BatchOptions, Seq[String])] = {
     var workspace      = Option(System.getProperty("user.dir")).getOrElse(".")
     var cacheDirectory = Option.empty[String]
     var cacheEnabled   = true
-    var parser         = DefaultParser
     var index          = 0
     val commandArgs    = mutable.ArrayBuffer[String]()
     val seen           = mutable.Set[String]()
@@ -244,12 +240,6 @@ private[apexls] object BatchOptions {
             case Left(error)      => return Left(error)
             case Right(candidate) => cacheDirectory = Some(candidate)
           }
-        case "--parser" =>
-          if (!seen.add(option)) return duplicate(option)
-          value(option, inlineValue).flatMap(normalizeParser) match {
-            case Left(error)      => return Left(error)
-            case Right(candidate) => parser = candidate
-          }
         case "--no-cache" =>
           if (inlineValue.nonEmpty) {
             return Left(BatchError("INVALID_ARGUMENT", "Option '--no-cache' does not take a value"))
@@ -261,27 +251,12 @@ private[apexls] object BatchOptions {
       index += 1
     }
 
-    Right((BatchOptions(workspace, cacheDirectory, cacheEnabled, parser), commandArgs.toSeq))
+    Right((BatchOptions(workspace, cacheDirectory, cacheEnabled), commandArgs.toSeq))
   }
 
   private def splitOption(token: String): (String, Option[String]) = {
     val index = token.indexOf('=')
     if (index < 0) (token, None) else (token.substring(0, index), Some(token.substring(index + 1)))
-  }
-
-  private def normalizeParser(parser: String): Either[BatchError, String] = {
-    parser.toLowerCase match {
-      case "antlr"         => Right("ANTLR")
-      case "outlinesingle" => Right("OutlineSingle")
-      case "outlinemulti"  => Right("OutlineMulti")
-      case _ =>
-        Left(
-          BatchError(
-            "INVALID_ARGUMENT",
-            s"Unknown parser '$parser', expected 'ANTLR', 'OutlineSingle' or 'OutlineMulti'"
-          )
-        )
-    }
   }
 }
 
@@ -332,7 +307,6 @@ private[apexls] object DefaultBatchWorkspaceLoader extends BatchWorkspaceLoader 
     try {
       val openOptions = OpenOptions
         .default()
-        .withParser(options.parser)
         .withLoggingLevel("none")
         .withAutoFlush(enabled = false)
         .withCache(options.cacheEnabled)
