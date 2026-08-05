@@ -38,13 +38,13 @@ class BatchTest extends AnyFunSuite {
     assert(invocation.stdout.count(_ == '\n') == 1)
   }
 
-  test("a command may return a successful result") {
-    val command    = new TestCommand("success", requiresWorkspace = false)
-    val invocation = invoke(Array("success"), commands = Seq(command))
+  test("commands own serialization of their result shape") {
+    val invocation = invoke(Array("details"), commands = Seq(DetailsCommand))
 
     assert(invocation.status == 0)
     assert(invocation.json("ok").bool)
-    assert(invocation.json("result").obj.isEmpty)
+    assert(invocation.json("result")("count").num == 2)
+    assert(invocation.json("result")("label").str == "details")
   }
 
   test("missing and unknown commands are argument failures") {
@@ -192,6 +192,19 @@ class BatchTest extends AnyFunSuite {
     assert(invocation.stderr.contains("serialization broke"))
   }
 
+  test("command result encoding failures return serialization failures") {
+    val command = new TestCommand(
+      "serialize-result",
+      requiresWorkspace = false,
+      writer = _ => throw new IllegalStateException("result encoding broke")
+    )
+    val invocation = invoke(Array("serialize-result"), commands = Seq(command))
+
+    assert(invocation.status == 3)
+    assert(invocation.json("error")("code").str == "SERIALIZATION_FAILED")
+    assert(invocation.stderr.contains("result encoding broke"))
+  }
+
   private def invoke(
     args: Array[String],
     commands: Seq[BatchCommand] = Seq.empty,
@@ -227,21 +240,42 @@ class BatchTest extends AnyFunSuite {
   private class TestCommand(
     override val name: String,
     override val requiresWorkspace: Boolean,
-    action: BatchContext => BatchResult = _ => BatchPingResult()
+    action: BatchContext => Unit = _ => (),
+    writer: Unit => ujson.Value = _ => ujson.Obj()
   ) extends BatchCommand {
-    override def execute(
-      context: BatchContext,
-      args: Seq[String]
-    ): Either[BatchError, BatchResult] = Right(action(context))
+    override type Result = Unit
+
+    override def execute(context: BatchContext, args: Seq[String]): Either[BatchError, Unit] =
+      Right(action(context))
+
+    override def writeResult(result: Unit): ujson.Value = writer(result)
   }
 
   private object PingCommand extends BatchCommand {
+    override type Result = Unit
+
     override val name: String               = "ping"
     override val requiresWorkspace: Boolean = false
-    override def execute(
-      context: BatchContext,
-      args: Seq[String]
-    ): Either[BatchError, BatchResult] = Right(BatchPingResult())
+    override def execute(context: BatchContext, args: Seq[String]): Either[BatchError, Unit] =
+      Right(())
+
+    override def writeResult(result: Unit): ujson.Value = ujson.Obj()
+  }
+
+  private final class Details(val count: Int, val label: String)
+
+  private object DetailsCommand extends BatchCommand {
+    override type Result = Details
+
+    override val name: String               = "details"
+    override val requiresWorkspace: Boolean = false
+
+    override def execute(context: BatchContext, args: Seq[String]): Either[BatchError, Details] =
+      Right(new Details(2, "details"))
+
+    override def writeResult(result: Details): ujson.Value = {
+      ujson.Obj("count" -> result.count, "label" -> result.label)
+    }
   }
 
   private object NoWorkspaceLoader extends BatchWorkspaceLoader {

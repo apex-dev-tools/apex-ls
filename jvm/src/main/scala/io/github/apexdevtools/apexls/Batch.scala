@@ -133,7 +133,22 @@ object Batch {
                       command.execute(context, commandArguments) match {
                         case Left(error) =>
                           (BatchProtocol.failure(commandName, error), StatusArgument)
-                        case Right(result) => (BatchProtocol.success(commandName, result), StatusOk)
+                        case Right(result) =>
+                          try {
+                            (
+                              BatchProtocol.success(commandName, command.writeResult(result)),
+                              StatusOk
+                            )
+                          } catch {
+                            case NonFatal(exception) =>
+                              exception.printStackTrace(System.err)
+                              failure(
+                                commandName,
+                                "SERIALIZATION_FAILED",
+                                message(exception),
+                                StatusInternal
+                              )
+                          }
                       }
                     } catch {
                       case NonFatal(exception) =>
@@ -183,13 +198,14 @@ object Batch {
   }
 
   private object PingCommand extends BatchCommand {
+    override type Result = Unit
+
     override val name: String               = "ping"
     override val requiresWorkspace: Boolean = false
-    override def execute(
-      context: BatchContext,
-      args: Seq[String]
-    ): Either[BatchError, BatchResult] =
-      Right(BatchPingResult())
+    override def execute(context: BatchContext, args: Seq[String]): Either[BatchError, Unit] =
+      Right(())
+
+    override def writeResult(result: Unit): ujson.Value = ujson.Obj()
   }
 }
 
@@ -263,13 +279,16 @@ private[apexls] object BatchOptions {
 private[apexls] final case class BatchContext(options: BatchOptions, org: Option[Org])
 
 private[apexls] trait BatchCommand {
+  type Result
+
   def name: String
   def requiresWorkspace: Boolean
   def validate(args: Seq[String]): Either[BatchError, Unit] = {
     if (args.isEmpty) Right(())
     else Left(BatchError("INVALID_ARGUMENT", s"Unexpected argument '${args.head}'"))
   }
-  def execute(context: BatchContext, args: Seq[String]): Either[BatchError, BatchResult]
+  def execute(context: BatchContext, args: Seq[String]): Either[BatchError, Result]
+  def writeResult(result: Result): ujson.Value
 }
 
 private[apexls] final case class BatchDispatchFailure(error: BatchError, status: Int)

@@ -19,28 +19,21 @@ import upickle.default.{macroRW, ReadWriter}
 /** A stable, machine-readable error returned by the JVM batch protocol. */
 final case class BatchError(code: String, message: String)
 
-/** A result returned by a JVM batch command. */
-trait BatchResult
-
-/** Empty result used by the protocol health-check command. */
-final case class BatchPingResult() extends BatchResult
-
 /** Versioned response envelope shared by all JVM batch commands. */
 final case class BatchEnvelope(
   protocolVersion: Int,
   command: String,
   ok: Boolean,
-  result: Option[BatchResult],
+  result: Option[ujson.Value],
   error: Option[BatchError]
 )
 
 private[apexls] object BatchProtocol {
   final val Version: Int = 1
 
-  implicit private val errorWriter: ReadWriter[BatchError]           = macroRW
-  implicit private val pingResultWriter: ReadWriter[BatchPingResult] = macroRW
+  implicit private val errorWriter: ReadWriter[BatchError] = macroRW
 
-  def success(command: String, result: BatchResult): BatchEnvelope = {
+  def success(command: String, result: ujson.Value): BatchEnvelope = {
     BatchEnvelope(Version, command, ok = true, Some(result), None)
   }
 
@@ -50,10 +43,8 @@ private[apexls] object BatchProtocol {
 
   def write(envelope: BatchEnvelope): String = {
     val result = envelope.result match {
-      case Some(value: BatchPingResult) => upickle.default.writeJs(value)
-      case Some(value) =>
-        throw new IllegalArgumentException(s"Unsupported batch result '${value.getClass.getName}'")
-      case None => ujson.Null
+      case Some(value) => value
+      case None        => ujson.Null
     }
     val error = envelope.error match {
       case Some(value) => upickle.default.writeJs(value)
