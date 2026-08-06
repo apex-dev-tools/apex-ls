@@ -39,6 +39,32 @@ The jar is also executable without a client via the commands, `CheckForIssues` a
   java -cp "apex-ls*.jar" io.github.apexdevtools.apexls.<CommandName> [args]
   ```
 
+JVM batch integrations should use the versioned dispatcher instead:
+
+  ```sh
+  java -cp "<apex-ls distribution>/*" io.github.apexdevtools.apexls.Batch <command> [options]
+  ```
+
+The dispatcher writes exactly one UTF-8 JSON response to stdout. Its shared options are
+`--workspace <path>`, `--cache-dir <path>`, and `--no-cache`. The initial `ping` command provides a
+lightweight way to verify the distribution and protocol. Exit status `0` indicates success, `1`
+indicates an invalid command, argument, or request scope, and `3` indicates a workspace, analysis,
+serialization, or unexpected internal failure. Logs and exception details are written to stderr.
+Stable error codes are `INVALID_ARGUMENT`, `UNKNOWN_COMMAND`, `INVALID_SCOPE`,
+`WORKSPACE_LOAD_FAILED`, `ANALYSIS_FAILED`, `SERIALIZATION_FAILED`, and `INTERNAL_ERROR`.
+
+Every response uses protocol version 1 and has the same envelope:
+
+  ```json
+  {
+    "protocolVersion": 1,
+    "command": "ping",
+    "ok": true,
+    "result": {},
+    "error": null
+  }
+  ```
+
 The following arguments are available:
 
 | Argument             | Description                                                                                        | Supported Commands |
