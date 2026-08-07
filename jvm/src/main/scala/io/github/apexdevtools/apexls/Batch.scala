@@ -29,7 +29,13 @@ object Batch {
   private final val StatusInternal = 3
 
   private val commands: Seq[BatchCommand] =
-    Seq(PingCommand, DependencyReportCommand, DependencyCountsCommand, DependencyBombsCommand)
+    Seq(
+      PingCommand,
+      DependencyReportCommand,
+      DependencyCountsCommand,
+      DependencyBombsCommand,
+      TestClassesCommand
+    )
 
   def main(args: Array[String]): Unit = {
     System.exit(run(args, System.out, System.err))

@@ -395,6 +395,7 @@ class OrgAPITest extends AsyncFunSuite with BeforeAndAfterEach with TestHelper {
       assert(result.error.isEmpty)
       assert(classes.testClassesWithPath.length == 1)
       assert(classes.testClassesWithPath(0)._1 == "HelloTest")
+      assert(classes.testClassesWithPath(0)._2.toSeq == Seq("HelloTest", "Hello"))
     }
   }
 

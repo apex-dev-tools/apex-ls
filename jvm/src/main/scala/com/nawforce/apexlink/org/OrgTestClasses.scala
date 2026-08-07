@@ -13,7 +13,7 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.api.TypeSummary
+import com.nawforce.apexlink.api.{TestClass, TypeSummary}
 import com.nawforce.apexlink.deps.ReferencingCollector
 import com.nawforce.apexlink.deps.ReferencingCollector.NodeInfo
 import com.nawforce.apexlink.finding.TypeResolver
@@ -21,6 +21,7 @@ import com.nawforce.apexlink.rpc.{ClassTestItem, MethodTestItem, TargetLocation}
 import com.nawforce.apexlink.types.apex.{ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.{TypeDeclaration, TypeId}
 import com.nawforce.pkgforce.modifiers.{
+  ApexModifiers,
   INTEGRATION_TEST_ANNOTATION,
   ISTEST_ANNOTATION,
   Modifier,
@@ -37,8 +38,27 @@ import scala.collection.mutable
 trait OrgTestClasses {
   self: OPM.OrgImpl =>
 
+  def getImpactedTestClasses(paths: Array[String]): Array[TestClass] = {
+    findTestClassReferences(paths.map(p => Path(p)))
+      .map(info =>
+        TestClass(info.testClass.typeName.toString, info.explain.map(_.typeName.toString).toArray)
+      )
+      .toArray
+      .sortBy(_.name)
+  }
+
+  def getDeclaredTestClasses(paths: Array[String]): Array[TestClass] = {
+    findTestClasses(paths)
+      .map(cls => TestClass(cls.typeName.toString, Array.empty))
+      .groupBy(_.name)
+      .values
+      .map(_.head)
+      .toArray
+      .sortBy(_.name)
+  }
+
   def getTestClassNames(paths: Array[String]): Array[String] = {
-    getTestClassNamesInternal(paths.map(p => Path(p))).map(_._1).toArray
+    getImpactedTestClasses(paths).map(_.name)
   }
 
   def getTestClassNamesInternal(paths: Array[PathLike]): Set[(String, Array[String])] = {
@@ -84,7 +104,12 @@ trait OrgTestClasses {
   }
 
   private def getAllTestClasses: Array[ApexDeclaration] = {
-    packages.view.flatMap(_.orderedModules.flatMap(_.testClasses.toSeq)).toArray
+    packages.view
+      .flatMap(
+        _.orderedModules.flatMap(module => module.testClasses.toSeq ++ module.nonTestClasses.toSeq)
+      )
+      .filter(isDeclaredTestClass)
+      .toArray
   }
 
   private def findTestClassesFromPaths(paths: Array[String]): Array[ApexDeclaration] = {
@@ -95,7 +120,7 @@ trait OrgTestClasses {
           typeId.module
             .findType(typeId.typeName)
             .toOption
-            .collect { case td: ApexDeclaration if td.inTest => td }
+            .collect { case td: ApexDeclaration if isDeclaredTestClass(td) => td }
             .filter(_.outerTypeName.isEmpty)
         })
       })
@@ -104,6 +129,12 @@ trait OrgTestClasses {
   private def hasTestModifier(modifiers: ArraySeq[Modifier]): Boolean = {
     modifiers.contains(TEST_METHOD_MODIFIER) || modifiers.contains(ISTEST_ANNOTATION) || modifiers
       .contains(INTEGRATION_TEST_ANNOTATION)
+  }
+
+  private def isDeclaredTestClass(cls: ApexDeclaration): Boolean = {
+    ApexModifiers.hasTestClassModifier(cls.modifiers) || cls.methods.exists(method =>
+      hasTestModifier(method.modifiers)
+    )
   }
 
   private def findTestClassReferences(
