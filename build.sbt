@@ -131,29 +131,42 @@ def testBatchDistribution(targetJar: File, targetDir: File, log: Logger): Unit =
   IO.withTemporaryDirectory { temporaryDirectory =>
     val workspace = temporaryDirectory / "workspace with spaces"
     IO.createDirectory(workspace)
-    val stdout = new StringBuilder
-    val stderr = new StringBuilder
-    val command = Seq(
-      javaExecutable.getAbsolutePath,
-      "-cp",
-      (targetDir / "*").getAbsolutePath,
-      "io.github.apexdevtools.apexls.Batch",
-      "ping",
-      "--workspace",
-      workspace.getAbsolutePath
+    IO.write(
+      workspace / "sfdx-project.json",
+      """{"packageDirectories":[{"path":".","default":true}],"namespace":""}"""
     )
-    val logger = ProcessLogger(stdout append _ append '\n', stderr append _ append '\n')
-    val status = Process(command) ! logger
-    val expected =
-      """{"protocolVersion":1,"command":"ping","ok":true,"result":{},"error":null}"""
-    if (status != 0 || stdout.toString.trim != expected) {
-      sys.error(
-        s"Packaged batch dispatcher failed (status $status, jar $targetJar): " +
-          s"stdout=${stdout.toString.trim}, stderr=${stderr.toString.trim}"
+    val commands = Seq(
+      "ping"              -> "{}",
+      "dependency-report" -> "{\"nodes\":[]}",
+      "dependency-counts" -> "{\"counts\":[]}",
+      "dependency-bombs"  -> "{\"bombs\":[]}"
+    )
+    commands.foreach { case (batchCommand, result) =>
+      val stdout = new StringBuilder
+      val stderr = new StringBuilder
+      val command = Seq(
+        javaExecutable.getAbsolutePath,
+        "-cp",
+        (targetDir / "*").getAbsolutePath,
+        "io.github.apexdevtools.apexls.Batch",
+        batchCommand,
+        "--workspace",
+        workspace.getAbsolutePath,
+        "--no-cache"
       )
+      val logger = ProcessLogger(stdout append _ append '\n', stderr append _ append '\n')
+      val status = Process(command) ! logger
+      val expected =
+        s"""{"protocolVersion":1,"command":"$batchCommand","ok":true,"result":$result,"error":null}"""
+      if (status != 0 || stdout.toString.trim != expected) {
+        sys.error(
+          s"Packaged batch dispatcher failed (status $status, jar $targetJar): " +
+            s"stdout=${stdout.toString.trim}, stderr=${stderr.toString.trim}"
+        )
+      }
     }
   }
-  log.info("Packaged JVM batch dispatcher passed wildcard-classpath execution")
+  log.info("Packaged JVM batch commands passed wildcard-classpath execution")
 }
 
 def syncNodeModules: Def.Initialize[Task[Unit]] = Def.task {

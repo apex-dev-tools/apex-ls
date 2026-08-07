@@ -401,15 +401,13 @@ case class GetDependencyCounts(
   request: GetDependencyCountsRequest
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OrgInfo.current.withValue(orgImpl) {
-      promise.success(
-        GetDependencyCountsResult(
-          orgImpl
-            .getDependencyCounts(request.paths, request.excludeTestClasses)
-        )
+    promise.success(
+      GetDependencyCountsResult(
+        queue.org
+          .getDependencyCounts(request.paths, request.excludeTestClasses)
+          .map(count => DependencyCount(count.path, count.count, count.maxDependencyCount))
       )
-    }
+    )
   }
 }
 
@@ -429,15 +427,13 @@ case class GetAllDependencyCounts(
   request: GetAllDependencyCountsRequest
 ) extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OrgInfo.current.withValue(orgImpl) {
-      promise.success(
-        GetAllDependencyCountsResult(
-          orgImpl
-            .getAllDependencyCounts(request.directoryScope, request.excludeTestClasses)
-        )
+    promise.success(
+      GetAllDependencyCountsResult(
+        queue.org
+          .getAllDependencyCounts(request.directoryScope, request.excludeTestClasses)
+          .map(count => DependencyCount(count.path, count.count, count.maxDependencyCount))
       )
-    }
+    )
   }
 }
 

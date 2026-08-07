@@ -14,13 +14,15 @@
 
 package io.github.apexdevtools.apexls
 
-import com.nawforce.apexlink.api.{Org, ServerOps}
+import com.nawforce.apexlink.api.{DependencyCount, Org, ServerOps}
+import com.nawforce.apexlink.rpc.{BombScore, DependencyNode}
 import com.nawforce.apexlink.rpc.OpenOptions
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.runtime.platform.{Environment, Path}
 
 import java.io.{OutputStream, PrintStream}
 import java.nio.charset.StandardCharsets
+import java.nio.file.Paths
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
@@ -30,7 +32,8 @@ object Batch {
   private final val StatusArgument = 1
   private final val StatusInternal = 3
 
-  private val commands: Seq[BatchCommand] = Seq(PingCommand)
+  private val commands: Seq[BatchCommand] =
+    Seq(PingCommand, DependencyReportCommand, DependencyCountsCommand, DependencyBombsCommand)
 
   def main(args: Array[String]): Unit = {
     System.exit(run(args, System.out, System.err))
@@ -206,6 +209,217 @@ object Batch {
       Right(())
 
     override def writeResult(result: Unit): ujson.Value = ujson.Obj()
+  }
+
+  private object DependencyReportCommand extends BatchCommand {
+    override type Result = Array[DependencyNode]
+
+    override val name: String               = "dependency-report"
+    override val requiresWorkspace: Boolean = true
+
+    override def execute(
+      context: BatchContext,
+      args: Seq[String]
+    ): Either[BatchError, Array[DependencyNode]] = {
+      val org = context.org.get
+      val ids = org.getTypeIdentifiers(apexOnly = true)
+      Right(
+        org.getDependencyGraph(ids, depth = 1, apexOnly = true, ignoring = Array.empty).nodeData
+      )
+    }
+
+    override def writeResult(result: Array[DependencyNode]): ujson.Value = {
+      val nodes = result.sortBy(node => identifierName(node.identifier)).map { node =>
+        ujson.Obj(
+          "name"               -> identifierName(node.identifier),
+          "nature"             -> node.nature,
+          "size"               -> ujson.Num(node.size.toDouble),
+          "transitiveCount"    -> node.transitiveCount,
+          "maxDependencyCount" -> optionalNumber(node.maxDependencyCount),
+          "isEntryPoint"       -> node.isEntryPoint,
+          "extending"          -> identifiers(node.extending),
+          "implementing"       -> identifiers(node.implementing),
+          "using"              -> identifiers(node.using)
+        )
+      }
+      ujson.Obj("nodes" -> ujson.Arr(nodes.toIndexedSeq: _*))
+    }
+
+    private def identifiers(
+      values: Array[com.nawforce.pkgforce.names.TypeIdentifier]
+    ): ujson.Arr = {
+      ujson.Arr(values.map(identifierName).sorted.map(ujson.Str).toIndexedSeq: _*)
+    }
+  }
+
+  private object DependencyCountsCommand extends BatchCommand {
+    override type Result = Array[DependencyCount]
+
+    override val name: String               = "dependency-counts"
+    override val requiresWorkspace: Boolean = true
+
+    override def validate(args: Seq[String]): Either[BatchError, Unit] = {
+      DependencyCountsArguments.parse(args).map(_ => ())
+    }
+
+    override def execute(
+      context: BatchContext,
+      args: Seq[String]
+    ): Either[BatchError, Array[DependencyCount]] = {
+      DependencyCountsArguments.parse(args).flatMap { arguments =>
+        val workspace = Path(context.options.workspace)
+        val scope = arguments.scope match {
+          case Some(value) if Paths.get(value).isAbsolute => Path(value)
+          case Some(value)                                => workspace.join(value)
+          case None                                       => workspace
+        }
+        if (!scope.isDirectory) {
+          Left(BatchError("INVALID_SCOPE", s"Scope '$scope' is not a directory"))
+        } else if (!scope.native.toRealPath().startsWith(workspace.native.toRealPath())) {
+          Left(BatchError("INVALID_SCOPE", s"Scope '$scope' is outside workspace '$workspace'"))
+        } else {
+          Right(
+            context.org.get
+              .getAllDependencyCounts(scope.toString, arguments.excludeTests)
+              .sortBy(_.path)
+          )
+        }
+      }
+    }
+
+    override def writeResult(result: Array[DependencyCount]): ujson.Value = {
+      val counts = result.map { dependency =>
+        val (maximum, maximumError) = dependency.maxDependencyCount match {
+          case Right(value)      => (ujson.Num(value), ujson.Null)
+          case Left(Some(error)) => (ujson.Null, ujson.Str(error))
+          case Left(None)        => (ujson.Null, ujson.Null)
+        }
+        ujson.Obj(
+          "path"                    -> dependency.path,
+          "count"                   -> dependency.count,
+          "maxDependencyCount"      -> maximum,
+          "maxDependencyCountError" -> maximumError
+        )
+      }
+      ujson.Obj("counts" -> ujson.Arr(counts.toIndexedSeq: _*))
+    }
+  }
+
+  private object DependencyBombsCommand extends BatchCommand {
+    override type Result = Array[BombScore]
+
+    override val name: String               = "dependency-bombs"
+    override val requiresWorkspace: Boolean = true
+
+    override def validate(args: Seq[String]): Either[BatchError, Unit] = {
+      DependencyBombsArguments.parse(args).map(_ => ())
+    }
+
+    override def execute(
+      context: BatchContext,
+      args: Seq[String]
+    ): Either[BatchError, Array[BombScore]] = {
+      DependencyBombsArguments.parse(args).map { arguments =>
+        context.org.get
+          .getDependencyBombs(arguments.count)
+          .sortBy(bomb => (-bomb.score, identifierName(bomb.identifier)))
+      }
+    }
+
+    override def writeResult(result: Array[BombScore]): ujson.Value = {
+      val bombs = result.map { bomb =>
+        ujson.Obj(
+          "name"   -> identifierName(bomb.identifier),
+          "usedBy" -> bomb.usedBy,
+          "uses"   -> bomb.uses,
+          "score"  -> bomb.score
+        )
+      }
+      ujson.Obj("bombs" -> ujson.Arr(bombs.toIndexedSeq: _*))
+    }
+  }
+
+  private def optionalNumber(value: Option[Int]): ujson.Value = {
+    value.map(ujson.Num(_)).getOrElse(ujson.Null)
+  }
+
+  private def identifierName(identifier: com.nawforce.pkgforce.names.TypeIdentifier): String = {
+    identifier.typeName.toString
+  }
+}
+
+private[apexls] final case class DependencyCountsArguments(
+  scope: Option[String],
+  excludeTests: Boolean
+)
+
+private[apexls] object DependencyCountsArguments {
+  def parse(args: Seq[String]): Either[BatchError, DependencyCountsArguments] = {
+    var scope        = Option.empty[String]
+    var excludeTests = false
+    var index        = 0
+
+    while (index < args.length) {
+      val token = args(index)
+      if (token == "--exclude-tests") {
+        if (excludeTests)
+          return Left(
+            BatchError("INVALID_ARGUMENT", "Option '--exclude-tests' may only be provided once")
+          )
+        excludeTests = true
+      } else if (token == "--scope" || token.startsWith("--scope=")) {
+        if (scope.nonEmpty)
+          return Left(BatchError("INVALID_ARGUMENT", "Option '--scope' may only be provided once"))
+        if (token == "--scope") {
+          if (index + 1 >= args.length || args(index + 1).startsWith("--"))
+            return Left(BatchError("INVALID_ARGUMENT", "Option '--scope' requires a value"))
+          index += 1
+          scope = Some(args(index))
+        } else {
+          val value = token.substring("--scope=".length)
+          if (value.isEmpty)
+            return Left(BatchError("INVALID_ARGUMENT", "Option '--scope' requires a value"))
+          scope = Some(value)
+        }
+      } else {
+        return Left(BatchError("INVALID_ARGUMENT", s"Unexpected argument '$token'"))
+      }
+      index += 1
+    }
+
+    Right(DependencyCountsArguments(scope, excludeTests))
+  }
+}
+
+private[apexls] final case class DependencyBombsArguments(count: Int)
+
+private[apexls] object DependencyBombsArguments {
+  private final val DefaultCount = 20
+
+  def parse(args: Seq[String]): Either[BatchError, DependencyBombsArguments] = {
+    args match {
+      case Seq()                 => Right(DependencyBombsArguments(DefaultCount))
+      case Seq("--count", value) => parseCount(value)
+      case Seq(token) if token.startsWith("--count=") =>
+        parseCount(token.substring("--count=".length))
+      case Seq("--count") =>
+        Left(BatchError("INVALID_ARGUMENT", "Option '--count' requires a value"))
+      case _ =>
+        Left(BatchError("INVALID_ARGUMENT", s"Unexpected argument '${args.head}'"))
+    }
+  }
+
+  private def parseCount(value: String): Either[BatchError, DependencyBombsArguments] = {
+    try {
+      val count = value.toInt
+      if (count < 0)
+        Left(BatchError("INVALID_ARGUMENT", "Option '--count' must be non-negative"))
+      else
+        Right(DependencyBombsArguments(count))
+    } catch {
+      case _: NumberFormatException =>
+        Left(BatchError("INVALID_ARGUMENT", "Option '--count' must be a non-negative integer"))
+    }
   }
 }
 

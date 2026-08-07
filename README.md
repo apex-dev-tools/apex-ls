@@ -46,12 +46,15 @@ JVM batch integrations should use the versioned dispatcher instead:
   ```
 
 The dispatcher writes exactly one UTF-8 JSON response to stdout. Its shared options are
-`--workspace <path>`, `--cache-dir <path>`, and `--no-cache`. The initial `ping` command provides a
-lightweight way to verify the distribution and protocol. Exit status `0` indicates success, `1`
-indicates an invalid command, argument, or request scope, and `3` indicates a workspace, analysis,
-serialization, or unexpected internal failure. Logs and exception details are written to stderr.
-Stable error codes are `INVALID_ARGUMENT`, `UNKNOWN_COMMAND`, `INVALID_SCOPE`,
-`WORKSPACE_LOAD_FAILED`, `ANALYSIS_FAILED`, `SERIALIZATION_FAILED`, and `INTERNAL_ERROR`.
+`--workspace <path>`, `--cache-dir <path>`, and `--no-cache`. Available commands are `ping`,
+`dependency-report`, `dependency-counts`, and `dependency-bombs`. `dependency-counts` additionally
+accepts `--scope <directory>` (workspace-relative or absolute within the workspace) and
+`--exclude-tests`; `dependency-bombs` accepts a non-negative `--count <n>` that defaults to 20.
+Exit status `0` indicates success, `1` indicates an invalid command, argument, or request scope, and
+`3` indicates a workspace, analysis, serialization, or unexpected internal failure. Logs and
+exception details are written to stderr. Stable error codes are `INVALID_ARGUMENT`,
+`UNKNOWN_COMMAND`, `INVALID_SCOPE`, `WORKSPACE_LOAD_FAILED`, `ANALYSIS_FAILED`,
+`SERIALIZATION_FAILED`, and `INTERNAL_ERROR`.
 
 Every response uses protocol version 1 and has the same envelope:
 

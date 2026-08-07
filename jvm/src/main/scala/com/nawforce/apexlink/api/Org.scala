@@ -16,7 +16,7 @@ package com.nawforce.apexlink.api
 
 import com.nawforce.apexlink.org.{OPM, RefreshListener}
 import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
-import com.nawforce.apexlink.rpc._
+import com.nawforce.apexlink.rpc.{DependencyCount => _, _}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
 import com.nawforce.pkgforce.path.{PathLike, PathLocation}
@@ -199,6 +199,23 @@ trait Org {
     * returned for your ridicule.
     */
   def getDependencyBombs(count: Int): Array[BombScore]
+
+  /** Get dependency counts for all Apex classes and triggers under a workspace directory.
+    *
+    * @param scopeDirectory directory within the workspace, either workspace-relative or absolute
+    * @param excludeTestClasses omit Apex test classes from the result
+    */
+  def getAllDependencyCounts(
+    scopeDirectory: String,
+    excludeTestClasses: Boolean
+  ): Array[DependencyCount]
+
+  /** Get dependency counts for Apex classes and triggers identified by path.
+    *
+    * @param paths paths of classes and triggers to inspect
+    * @param excludeTestClasses omit Apex test classes from the result
+    */
+  def getDependencyCounts(paths: Array[String], excludeTestClasses: Boolean): Array[DependencyCount]
 
   /** Find test class names that can be used to test the passed set of files.
     *
