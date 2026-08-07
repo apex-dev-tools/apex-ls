@@ -13,7 +13,15 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.api.{AvailableParser, BuildInfo, Org, Package, ServerOps, TypeSummary}
+import com.nawforce.apexlink.api.{
+  AvailableParser,
+  BuildInfo,
+  DependencyCount,
+  Org,
+  Package,
+  ServerOps,
+  TypeSummary
+}
 import com.nawforce.apexlink.cst.CompilationUnit
 import com.nawforce.apexlink.deps.{DownWalker, MaxDependencyCountParser, TransitiveCollector}
 import com.nawforce.apexlink.finding.TypeFinder
@@ -431,7 +439,7 @@ object OPM {
       * @param scopeDirectory     limit to classes & triggers under this directory, maybe relative to org path
       * @param excludeTestClasses ignore @isTest classes
       */
-    def getAllDependencyCounts(
+    override def getAllDependencyCounts(
       scopeDirectory: String,
       excludeTestClasses: Boolean
     ): Array[DependencyCount] = {
@@ -462,7 +470,7 @@ object OPM {
       * @param paths paths of types to find dependency information for
       * @param excludeTestClasses ignore @isTest classes
       */
-    def getDependencyCounts(
+    override def getDependencyCounts(
       paths: Array[String],
       excludeTestClasses: Boolean
     ): Array[DependencyCount] = {

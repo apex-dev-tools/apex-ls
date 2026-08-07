@@ -14,14 +14,12 @@
 
 package io.github.apexdevtools.apexls
 
-import com.nawforce.apexlink.api.{Org, ServerOps}
-import com.nawforce.apexlink.rpc.OpenOptions
+import com.nawforce.apexlink.api.ServerOps
 import com.nawforce.pkgforce.diagnostics.LoggerOps
-import com.nawforce.runtime.platform.{Environment, Path}
+import com.nawforce.runtime.platform.Environment
 
 import java.io.{OutputStream, PrintStream}
 import java.nio.charset.StandardCharsets
-import scala.collection.mutable
 import scala.util.control.NonFatal
 
 /** Versioned, machine-readable entry point for one-shot JVM analysis commands. */
@@ -30,7 +28,8 @@ object Batch {
   private final val StatusArgument = 1
   private final val StatusInternal = 3
 
-  private val commands: Seq[BatchCommand] = Seq(PingCommand)
+  private val commands: Seq[BatchCommand] =
+    Seq(PingCommand, DependencyReportCommand, DependencyCountsCommand, DependencyBombsCommand)
 
   def main(args: Array[String]): Unit = {
     System.exit(run(args, System.out, System.err))
@@ -195,167 +194,5 @@ object Batch {
 
   private def message(exception: Throwable): String = {
     Option(exception.getMessage).filter(_.nonEmpty).getOrElse(exception.getClass.getSimpleName)
-  }
-
-  private object PingCommand extends BatchCommand {
-    override type Result = Unit
-
-    override val name: String               = "ping"
-    override val requiresWorkspace: Boolean = false
-    override def execute(context: BatchContext, args: Seq[String]): Either[BatchError, Unit] =
-      Right(())
-
-    override def writeResult(result: Unit): ujson.Value = ujson.Obj()
-  }
-}
-
-private[apexls] final case class BatchOptions(
-  workspace: String,
-  cacheDirectory: Option[String],
-  cacheEnabled: Boolean
-)
-
-private[apexls] object BatchOptions {
-  def parse(args: IndexedSeq[String]): Either[BatchError, (BatchOptions, Seq[String])] = {
-    var workspace      = Option(System.getProperty("user.dir")).getOrElse(".")
-    var cacheDirectory = Option.empty[String]
-    var cacheEnabled   = true
-    var index          = 0
-    val commandArgs    = mutable.ArrayBuffer[String]()
-    val seen           = mutable.Set[String]()
-
-    def duplicate(option: String): Left[BatchError, Nothing] = {
-      Left(BatchError("INVALID_ARGUMENT", s"Option '$option' may only be provided once"))
-    }
-
-    def value(option: String, inline: Option[String]): Either[BatchError, String] = {
-      inline match {
-        case Some(candidate) if candidate.nonEmpty => Right(candidate)
-        case Some(_) => Left(BatchError("INVALID_ARGUMENT", s"Option '$option' requires a value"))
-        case None if index + 1 >= args.length =>
-          Left(BatchError("INVALID_ARGUMENT", s"Option '$option' requires a value"))
-        case None =>
-          index += 1
-          Right(args(index))
-      }
-    }
-
-    while (index < args.length) {
-      val token                 = args(index)
-      val (option, inlineValue) = splitOption(token)
-      option match {
-        case "--workspace" =>
-          if (!seen.add(option)) return duplicate(option)
-          value(option, inlineValue) match {
-            case Left(error)      => return Left(error)
-            case Right(candidate) => workspace = candidate
-          }
-        case "--cache-dir" =>
-          if (!seen.add(option)) return duplicate(option)
-          value(option, inlineValue) match {
-            case Left(error)      => return Left(error)
-            case Right(candidate) => cacheDirectory = Some(candidate)
-          }
-        case "--no-cache" =>
-          if (inlineValue.nonEmpty) {
-            return Left(BatchError("INVALID_ARGUMENT", "Option '--no-cache' does not take a value"))
-          }
-          if (!seen.add(option)) return duplicate(option)
-          cacheEnabled = false
-        case _ => commandArgs += token
-      }
-      index += 1
-    }
-
-    Right((BatchOptions(workspace, cacheDirectory, cacheEnabled), commandArgs.toSeq))
-  }
-
-  private def splitOption(token: String): (String, Option[String]) = {
-    val index = token.indexOf('=')
-    if (index < 0) (token, None) else (token.substring(0, index), Some(token.substring(index + 1)))
-  }
-}
-
-private[apexls] final case class BatchContext(options: BatchOptions, org: Option[Org])
-
-private[apexls] trait BatchCommand {
-  type Result
-
-  def name: String
-  def requiresWorkspace: Boolean
-  def validate(args: Seq[String]): Either[BatchError, Unit] = {
-    if (args.isEmpty) Right(())
-    else Left(BatchError("INVALID_ARGUMENT", s"Unexpected argument '${args.head}'"))
-  }
-  def execute(context: BatchContext, args: Seq[String]): Either[BatchError, Result]
-  def writeResult(result: Result): ujson.Value
-}
-
-private[apexls] final case class BatchDispatchFailure(error: BatchError, status: Int)
-
-private[apexls] trait BatchWorkspaceLoader {
-  def load(options: BatchOptions): Either[BatchDispatchFailure, Org]
-}
-
-private[apexls] object DefaultBatchWorkspaceLoader extends BatchWorkspaceLoader {
-  private final val StatusArgument = 1
-  private final val StatusInternal = 3
-
-  override def load(options: BatchOptions): Either[BatchDispatchFailure, Org] = {
-    val workspace = Path(options.workspace)
-    if (!workspace.exists || !workspace.isDirectory) {
-      return Left(
-        BatchDispatchFailure(
-          BatchError("INVALID_SCOPE", s"Workspace '${options.workspace}' is not a directory"),
-          StatusArgument
-        )
-      )
-    }
-    if (!workspace.join("sfdx-project.json").isFile) {
-      return Left(
-        BatchDispatchFailure(
-          BatchError(
-            "INVALID_SCOPE",
-            s"Workspace '${options.workspace}' does not contain sfdx-project.json"
-          ),
-          StatusArgument
-        )
-      )
-    }
-
-    try {
-      val openOptions = OpenOptions
-        .default()
-        .withLoggingLevel("none")
-        .withAutoFlush(enabled = false)
-        .withCache(options.cacheEnabled)
-        .withCacheDirectory(options.cacheDirectory.getOrElse(""))
-      val org = Org.newOrg(workspace, openOptions)
-      if (org.getProjectConfig().isEmpty) {
-        return Left(
-          BatchDispatchFailure(
-            BatchError("WORKSPACE_LOAD_FAILED", s"Unable to load workspace '${options.workspace}'"),
-            StatusInternal
-          )
-        )
-      }
-      if (options.cacheEnabled) {
-        org.flush()
-      }
-      Right(org)
-    } catch {
-      case NonFatal(exception) =>
-        Left(
-          BatchDispatchFailure(
-            BatchError(
-              "WORKSPACE_LOAD_FAILED",
-              Option(exception.getMessage)
-                .filter(_.nonEmpty)
-                .getOrElse(exception.getClass.getSimpleName)
-            ),
-            StatusInternal
-          )
-        )
-    }
   }
 }
