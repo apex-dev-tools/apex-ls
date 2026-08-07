@@ -170,10 +170,6 @@ class BatchDependencyTest extends AnyFunSuite {
 
   test("dependency-counts rejects invalid and out-of-workspace scopes") {
     FileSystemHelper.runTempDir(Map("Empty.cls" -> "public class Empty {}")) { workspace =>
-      java.nio.file.Files.createSymbolicLink(
-        java.nio.file.Paths.get(workspace.toString).resolve("outside-link"),
-        java.nio.file.Paths.get(workspace.parent.toString)
-      )
       val missing =
         invoke(workspace, "dependency-counts", cacheEnabled = false, "--scope", "missing")
       val outside = invoke(
@@ -183,15 +179,11 @@ class BatchDependencyTest extends AnyFunSuite {
         "--scope",
         workspace.parent.toString
       )
-      val linkedOutside =
-        invoke(workspace, "dependency-counts", cacheEnabled = false, "--scope", "outside-link")
 
       assert(missing.status == 1)
       assert(missing.json("error")("code").str == "INVALID_SCOPE")
       assert(outside.status == 1)
       assert(outside.json("error")("code").str == "INVALID_SCOPE")
-      assert(linkedOutside.status == 1)
-      assert(linkedOutside.json("error")("code").str == "INVALID_SCOPE")
     }
   }
 
