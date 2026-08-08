@@ -173,6 +173,25 @@ class IssueLoggerTest extends AnyFunSuite with BeforeAndAfter {
     assert(!allIssues.exists(_.diagnostic.message == "Unused 1"))
   }
 
+  test("replaceUnusedIssues clears and distributes findings across all contributing paths") {
+    val secondPath = Path("/project/src/classes/TestClassPart.cls")
+    issuesManager.add(createUnusedIssue(testPath, "Stale first"))
+    issuesManager.add(createUnusedIssue(secondPath, "Stale second"))
+    issuesManager.add(createWarningIssue(secondPath, "Keep warning"))
+
+    IssueProviderOps.replaceUnusedIssues(
+      issuesManager,
+      Seq(testPath, secondPath),
+      Seq(createUnusedIssue(secondPath, "New second"))
+    )
+
+    assert(issuesManager.issuesForFileInternal(testPath).isEmpty)
+    val secondIssues = issuesManager.issuesForFileInternal(secondPath)
+    assert(secondIssues.exists(_.diagnostic.message == "Keep warning"))
+    assert(secondIssues.exists(_.diagnostic.message == "New second"))
+    assert(!secondIssues.exists(_.diagnostic.message == "Stale second"))
+  }
+
   test("replaceUnusedIssues with external filter applies write-time filtering") {
     val externalFilter: PathLike => Boolean = path => path.toString.contains("external")
     val filteredManager                     = new IssueLogger(Some(externalFilter))

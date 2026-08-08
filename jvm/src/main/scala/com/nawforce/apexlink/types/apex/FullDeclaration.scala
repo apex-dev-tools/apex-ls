@@ -22,7 +22,7 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
 import com.nawforce.apexlink.org.{OPM, OrgInfo, Referenceable}
 import com.nawforce.apexlink.types.core._
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, LoggerOps, UNUSED_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, LoggerOps, UNUSED_CATEGORY}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier, TypeName}
@@ -85,6 +85,16 @@ abstract class FullDeclaration(
   // Track if this has been flushed to cache yet
   private var flushedToCache = false
 
+  // Local unused diagnostics are source-local and safe to cache, even when this org's presentation
+  // policy suppresses them because another error is present. Keeping them here allows a later org
+  // using the same parsed cache to opt into unused-on-error without requiring a full parse.
+  private var suppressedLocalUnusedDiagnostics = ArraySeq.empty[Diagnostic]
+
+  private[nawforce] def setSuppressedLocalUnused(issues: Seq[Issue]): Unit = {
+    suppressedLocalUnusedDiagnostics =
+      ArraySeq.from(issues.iterator.filter(_.path == source.path).map(_.diagnostic))
+  }
+
   // For ApexNode compatibility
   override val children: ArraySeq[ApexNode] = bodyDeclarations
 
@@ -126,8 +136,9 @@ abstract class FullDeclaration(
   override def flush(pc: ParsedCache, context: PackageContext): Unit = {
     if (!flushedToCache) {
       val diagnostics = cacheableDiagnostics(
-        module.pkg.org.issueManager.getDiagnostics(location.path)
-      ).toArray
+        module.pkg.org.issueManager.getDiagnostics(location.path) ++
+          suppressedLocalUnusedDiagnostics
+      ).distinct.toArray
       pc.upsert(context, name.value, contentHash, writeBinary(ApexSummary(summary, diagnostics)))
       flushedToCache = true
     }

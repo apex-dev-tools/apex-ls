@@ -15,7 +15,6 @@
 package com.nawforce.apexlink.api
 
 import com.nawforce.apexlink.org.{OPM, RefreshListener}
-import com.nawforce.apexlink.plugins.{PluginsManager, UnusedPlugin}
 import com.nawforce.apexlink.rpc.{DependencyCount => _, _}
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import com.nawforce.pkgforce.names.TypeIdentifier
@@ -322,17 +321,19 @@ object Org {
         ServerOps.setAutoFlush(false)
       }
     )
-    options.unused.foreach(enabled =>
-      if (!enabled) PluginsManager.removePlugins(Seq(classOf[UnusedPlugin]))
-    )
-
     LoggerOps.infoTime(
       s"Org created",
       show = true,
       s" with autoFlush = ${ServerOps.isAutoFlushEnabled}, build = ${BuildInfo.implementationBuild}"
     ) {
       val (workspace, issueManager) = Workspace(path)
-      new OPM.OrgImpl(path, issueManager, workspace)
+      new OPM.OrgImpl(
+        path,
+        issueManager,
+        workspace,
+        unusedEnabled = options.unused.getOrElse(true),
+        unusedOnError = options.unusedOnError.getOrElse(false)
+      )
     }
   }
 }
