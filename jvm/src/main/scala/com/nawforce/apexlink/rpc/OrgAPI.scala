@@ -195,7 +195,8 @@ case class OpenOptions private (
   cacheDirectory: Option[String] = None,
   indexerConfiguration: Option[(Long, Long)] = None,
   autoFlush: Option[Boolean] = None,
-  unused: Option[Boolean] = None
+  unused: Option[Boolean] = None,
+  unusedOnError: Option[Boolean] = None
 ) {
   def withParser(name: String): OpenOptions = {
     copy(parser = Some(name))
@@ -236,6 +237,13 @@ case class OpenOptions private (
 
   def withUnused(enabled: Boolean): OpenOptions = {
     copy(unused = Some(enabled))
+  }
+
+  /** Configure whether unused diagnostics are reported when a contributing source file has an
+    * error. Disabled by default to reduce diagnostic noise while editing in an IDE.
+    */
+  def withUnusedOnError(enabled: Boolean): OpenOptions = {
+    copy(unusedOnError = Some(enabled))
   }
 }
 

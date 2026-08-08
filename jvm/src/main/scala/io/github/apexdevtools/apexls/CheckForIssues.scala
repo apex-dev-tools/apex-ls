@@ -150,6 +150,7 @@ object CheckForIssues {
         .withCache(!nocache)
         .withCacheDirectory(cacheDirectory)
         .withUnused(detailLevel == "unused")
+        .withUnusedOnError(detailLevel == "unused")
 
       // Load org and flush to cache if we are using it
       val org = Org.newOrg(Path(workspace), options)

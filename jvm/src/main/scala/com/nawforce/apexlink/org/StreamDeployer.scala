@@ -202,7 +202,11 @@ class StreamDeployer(
 
       // Report any (existing) diagnostics
       val path = cls.declaration.location.path
-      cls.diagnostics.foreach(diagnostic => module.pkg.org.issues.add(Issue(path, diagnostic)))
+      cls.diagnostics
+        .filter(diagnostic =>
+          module.pkg.org.unusedEnabled || diagnostic.category != UNUSED_CATEGORY
+        )
+        .foreach(diagnostic => module.pkg.org.issues.add(Issue(path, diagnostic)))
     })
 
     // Seed cache-loaded classes into the plugin manager so holder-based unused analysis is

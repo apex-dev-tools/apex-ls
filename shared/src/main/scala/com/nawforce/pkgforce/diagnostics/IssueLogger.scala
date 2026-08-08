@@ -280,4 +280,14 @@ object IssueProviderOps {
     else
       logger.log.put(path, newIssues)
   }
+
+  /** Replace unused issues for every path contributing to a declaration. New issues are stored
+    * against their own paths; paths without new issues are still cleared to avoid stale findings.
+    */
+  def replaceUnusedIssues(logger: IssueLogger, paths: Seq[PathLike], issues: Seq[Issue]): Unit = {
+    val issuesByPath = issues.groupBy(_.path)
+    paths.distinct.foreach(path =>
+      replaceUnusedIssues(logger, path, issuesByPath.getOrElse(path, Seq.empty))
+    )
+  }
 }

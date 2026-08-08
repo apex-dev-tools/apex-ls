@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Org-scoped `OpenOptions.withUnusedOnError` configuration for batch/CI callers that need unused
+  diagnostics alongside errors, while preserving IDE-friendly suppression by default (#517)
 - A versioned JVM batch dispatcher with centralized workspace and cache options, stable JSON
   result/error envelopes, and machine-clean stdout for one-shot analysis integrations (#527)
 - JVM batch commands for deterministic dependency reports, scoped dependency counts, and dependency
