@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Targeted warnings when a SOQL or child-relationship RecordSet is passed to a scalar SObject
+  parameter, where Salesforce runtime success depends on the RecordSet containing exactly one row
+  (#394)
 - A versioned JVM batch dispatcher with centralized workspace and cache options, stable JSON
   result/error envelopes, and machine-clean stdout for one-shot analysis integrations (#527)
 - JVM batch commands for deterministic dependency reports, scoped dependency counts, and dependency
