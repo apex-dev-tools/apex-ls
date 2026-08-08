@@ -143,12 +143,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
     } else {
       val args = arguments.map(_.verify(input, context))
       if (args.forall(_.isDefined))
-        validateConstructor(
-          createdName.location,
-          creating.declaration,
-          args.map(arg => arg.typeName),
-          context
-        )
+        validateConstructor(createdName.location, creating.declaration, args, context)
       else
         creating
     }
@@ -157,7 +152,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
   private def validateConstructor(
     createdNameLocation: PathLocation,
     input: Option[TypeDeclaration],
-    arguments: ArraySeq[TypeName],
+    argumentContexts: ArraySeq[ExprContext],
     context: ExpressionVerifyContext
   ): ExprContext = {
     input match {
@@ -166,11 +161,12 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
           context.logError(location, s"Abstract classes cannot be constructed: ${td.typeName}")
           return ExprContext.empty
         }
-        td.findConstructor(arguments, context) match {
+        td.findConstructor(argumentContexts.map(_.typeName), context) match {
           case Left(error) =>
             context.logError(location, error)
             ExprContext.empty
           case Right(ctor) =>
+            RecordSetCoercion.warnForParameters(td, ctor, arguments, argumentContexts, context)
             context.addDependency(ctor)
             Referenceable.addReferencingLocation(td, ctor, createdNameLocation, td)
             ExprContext(Some(false), input, ctor)

@@ -21,7 +21,12 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.names.TypeNames._
 import com.nawforce.apexlink.org.{OPM, Referenceable}
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexConstructorLike}
-import com.nawforce.apexlink.types.core.{FieldDeclaration, MethodDeclaration, TypeDeclaration}
+import com.nawforce.apexlink.types.core.{
+  FieldDeclaration,
+  MethodDeclaration,
+  Parameters,
+  TypeDeclaration
+}
 import com.nawforce.apexlink.types.other.{AnyDeclaration, RecordSetDeclaration}
 import com.nawforce.apexlink.types.platform.{PlatformTypeDeclaration, PlatformTypes}
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
@@ -312,6 +317,24 @@ object DotExpression {
         else None
       })
   }
+
+  /** Standard child relationships are exposed by the platform model as Lists, while custom child
+    * relationships use the internal RecordSet type. Normalize instance access so both follow the
+    * same Apex RecordSet conversion and overload-resolution rules.
+    */
+  def instanceFieldType(field: FieldDeclaration, receiver: TypeDeclaration): TypeName = {
+    val fieldType = field.typeName
+    if (
+      receiver.isSObject && fieldType.isList && fieldType.params.size == 1 &&
+      (fieldType.params.head == TypeNames.SObject || fieldType.params.head.outer.contains(
+        TypeNames.Schema
+      ))
+    ) {
+      TypeNames.recordSetOf(fieldType.params.head)
+    } else {
+      fieldType
+    }
+  }
 }
 
 final case class DotExpressionWithId(expression: Expression, safeNavigation: Boolean, target: Id)
@@ -451,9 +474,12 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
         Referenceable.addReferencingLocation(inputType, field.get, location, context.thisType)
       else
         Referenceable.addReferencingLocation(field.get, location, context.thisType)
-      val target = context.getTypeAndAddDependency(field.get.typeName, inputType).toOption
+      val fieldType =
+        if (input.isStatic.contains(true)) field.get.typeName
+        else DotExpression.instanceFieldType(field.get, inputType)
+      val target = context.getTypeAndAddDependency(fieldType, inputType).toOption
       if (target.isEmpty) {
-        context.missingType(location, field.get.typeName)
+        context.missingType(location, fieldType)
         return ExprContext.empty
       }
       return ExprContext(isStatic = Some(false), target, field.get)
@@ -602,14 +628,22 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     input: ExprContext,
     context: ExpressionVerifyContext
   ): ExprContext = {
-    val argTypes = arguments.map(arg => {
+    val argContexts = arguments.map(arg => {
       val argExpr = arg.verify(input, context)
-      interceptFoundArg(input, context, arg, argExpr)
+      (argExpr, interceptFoundArg(input, context, arg, argExpr))
     })
+    val argTypes = argContexts.map(_._2)
 
     callee.findMethod(target.name, argTypes, staticContext, context) match {
       case Right(method) =>
         cachedMethod = Some(method)
+        RecordSetCoercion.warnForParameters(
+          callee,
+          method,
+          arguments,
+          argContexts.map(_._1),
+          context
+        )
         TestVisibleAccess
           .methodAccessError(method, context.thisType)
           .foreach(context.logError(location, _))
@@ -717,20 +751,74 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
               context.logError(location, error)
               ExprContext.empty
             case Right(ctor: ApexConstructorLike) =>
+              RecordSetCoercion.warnForParameters(td, ctor, arguments, args, context)
               Referenceable.addReferencingLocation(td, ctor, location, context.thisType)
               context.saveResult(this, ctor.idLocation) {
                 ExprContext(Some(false), Some(td), ctor)
               }
             case Right(ctor: CustomConstructorDeclaration) =>
+              RecordSetCoercion.warnForParameters(td, ctor, arguments, args, context)
               context.saveResult(this, ctor.nameLocation) {
                 ExprContext(Some(false), Some(td), ctor)
               }
             case Right(ctor) =>
+              RecordSetCoercion.warnForParameters(td, ctor, arguments, args, context)
               ExprContext(Some(false), Some(td), ctor)
           }
         case _ => ExprContext.empty
       }
     } else ExprContext.empty
+  }
+}
+
+private[cst] object RecordSetCoercion {
+  private val objectCollectionMethods =
+    Set(Name("contains"), Name("containsKey"), Name("get"), Name("remove"))
+
+  def warnForParameters(
+    callee: TypeDeclaration,
+    parameters: Parameters,
+    arguments: ArraySeq[Expression],
+    argumentContexts: ArraySeq[ExprContext],
+    context: ExpressionVerifyContext
+  ): Unit = {
+    if (isObjectCollectionMethod(callee, parameters))
+      return
+
+    parameters.parameters
+      .lazyZip(arguments)
+      .lazyZip(argumentContexts)
+      .foreach { case (parameter, argument, argumentContext) =>
+        if (
+          argumentContext.isDefined && argumentContext.typeName.isRecordSet &&
+          isScalarSObject(parameter.typeName, context)
+        ) {
+          context.log(
+            Issue(
+              WARNING_CATEGORY,
+              argument.location,
+              s"RecordSet coerced to '${parameter.typeName}'; runtime requires exactly one row"
+            )
+          )
+        }
+      }
+  }
+
+  private def isScalarSObject(typeName: TypeName, context: ExpressionVerifyContext): Boolean = {
+    typeName.params.isEmpty &&
+    (typeName == TypeNames.SObject || context
+      .getTypeFor(typeName, context.thisType)
+      .toOption
+      .exists(_.isSObject))
+  }
+
+  private def isObjectCollectionMethod(callee: TypeDeclaration, parameters: Parameters): Boolean = {
+    parameters match {
+      case method: MethodDeclaration =>
+        (callee.typeName.isList || callee.typeName.isSet || callee.typeName.isMap) &&
+        objectCollectionMethods.contains(method.name)
+      case _ => false
+    }
   }
 }
 

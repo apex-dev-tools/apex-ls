@@ -156,15 +156,18 @@ final case class IdPrimary(id: Id) extends Primary {
         .foreach(context.logError(location, _))
       Referenceable.addReferencingLocation(field.get, location, context.thisType)
       context.addDependency(field.get)
+      val fieldType =
+        if (staticContext.contains(true)) field.get.typeName
+        else DotExpression.instanceFieldType(field.get, td)
       Some(
         context
-          .getTypeAndAddDependency(field.get.typeName, td)
+          .getTypeAndAddDependency(fieldType, td)
           .toOption
           .map(target => {
             ExprContext(isStatic = Some(false), Some(target), field.get)
           })
           .getOrElse({
-            context.missingType(location, field.get.typeName)
+            context.missingType(location, fieldType)
             ExprContext.empty
           })
       )
