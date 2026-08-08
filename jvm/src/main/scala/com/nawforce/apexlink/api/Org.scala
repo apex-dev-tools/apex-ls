@@ -217,6 +217,26 @@ trait Org {
     */
   def getDependencyCounts(paths: Array[String], excludeTestClasses: Boolean): Array[DependencyCount]
 
+  /** Find test classes impacted by the passed set of Apex class paths.
+    *
+    * Results include direct and transitive references and references through supertypes,
+    * interfaces, and nested types. Each result contains a dependency explanation from the test
+    * class to a supplied type. Missing, deleted, and unrecognised paths are ignored.
+    *
+    * Class namespaces are included and results are ordered by name.
+    */
+  def getImpactedTestClasses(paths: Array[String]): Array[TestClass]
+
+  /** Find top-level test classes declared in the workspace or at the supplied Apex class paths.
+    *
+    * Pass an empty array to retrieve all declared test classes. Missing, unreadable, syntactically
+    * invalid, and non-test paths are ignored. Explanations are empty because this operation
+    * classifies declarations rather than dependencies.
+    *
+    * Class namespaces are included and results are ordered by name.
+    */
+  def getDeclaredTestClasses(paths: Array[String]): Array[TestClass]
+
   /** Find test class names that can be used to test the passed set of files.
     *
     * This calculates a set of tests that should be run when the passed files have been changed. The

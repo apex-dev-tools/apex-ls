@@ -379,12 +379,13 @@ object GetDependencyBombs {
 case class GetTestClassNames(promise: Promise[GetTestClassNamesResult], paths: Array[String])
     extends APIRequest {
   override def process(queue: OrgQueue): Unit = {
-    val orgImpl = queue.org.asInstanceOf[OPM.OrgImpl]
-    OrgInfo.current.withValue(orgImpl) {
-      promise.success(
-        GetTestClassNamesResult(orgImpl.getTestClassNamesInternal(paths.map(p => Path(p))).toArray)
+    promise.success(
+      GetTestClassNamesResult(
+        queue.org
+          .getImpactedTestClasses(paths)
+          .map(testClass => (testClass.name, testClass.explanation))
       )
-    }
+    )
   }
 }
 

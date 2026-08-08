@@ -139,7 +139,8 @@ def testBatchDistribution(targetJar: File, targetDir: File, log: Logger): Unit =
       "ping"              -> "{}",
       "dependency-report" -> "{\"nodes\":[]}",
       "dependency-counts" -> "{\"counts\":[]}",
-      "dependency-bombs"  -> "{\"bombs\":[]}"
+      "dependency-bombs"  -> "{\"bombs\":[]}",
+      "test-classes"      -> "{\"testClasses\":[]}"
     )
     commands.foreach { case (batchCommand, result) =>
       val stdout = new StringBuilder
@@ -153,7 +154,7 @@ def testBatchDistribution(targetJar: File, targetDir: File, log: Logger): Unit =
         "--workspace",
         workspace.getAbsolutePath,
         "--no-cache"
-      )
+      ) ++ (if (batchCommand == "test-classes") Seq("--mode", "all") else Seq.empty)
       val logger = ProcessLogger(stdout append _ append '\n', stderr append _ append '\n')
       val status = Process(command) ! logger
       val expected =

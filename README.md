@@ -47,9 +47,12 @@ JVM batch integrations should use the versioned dispatcher instead:
 
 The dispatcher writes exactly one UTF-8 JSON response to stdout. Its shared options are
 `--workspace <path>`, `--cache-dir <path>`, and `--no-cache`. Available commands are `ping`,
-`dependency-report`, `dependency-counts`, and `dependency-bombs`. `dependency-counts` additionally
+`dependency-report`, `dependency-counts`, `dependency-bombs`, and `test-classes`.
+`dependency-counts` additionally
 accepts `--scope <directory>` (workspace-relative or absolute within the workspace) and
 `--exclude-tests`; `dependency-bombs` accepts a non-negative `--count <n>` that defaults to 20.
+`test-classes` accepts `--mode impacted` with one or more repeatable `--path <path>` arguments, or
+`--mode all` with optional repeatable paths. Paths may be absolute or workspace-relative.
 Exit status `0` indicates success, `1` indicates an invalid command, argument, or request scope, and
 `3` indicates a workspace, analysis, serialization, or unexpected internal failure. Logs and
 exception details are written to stderr. Stable error codes are `INVALID_ARGUMENT`,

@@ -22,7 +22,7 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
 
   private def getTestClassNames(root: PathLike, paths: Array[String]): Set[String] = {
     withOrg(org => {
-      org.getTestClassNamesInternal(paths.map(p => root.join(p))).map(_._1)
+      org.getImpactedTestClasses(paths.map(p => root.join(p).toString)).map(_.name).toSet
     })
   }
 
@@ -111,6 +111,98 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
     ) { (root: PathLike, ns: Option[String]) =>
       assert(getTestClassNames(root, Array("Dummy.cls")) == Set(withNamespace(ns, "DummyTest")))
       assert(getTestClassNames(root, Array("DummyTest.cls")) == Set(withNamespace(ns, "DummyTest")))
+    }
+  }
+
+  test("Impacted test classes expose namespace-qualified explanation chains") {
+    run(
+      Map(
+        "Service.cls"     -> "public class Service {}",
+        "ServiceImpl.cls" -> "public class ServiceImpl { Service service; }",
+        "ServiceTest.cls" -> "@isTest public class ServiceTest { ServiceImpl service; }"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      val results = withOrg(
+        _.getImpactedTestClasses(
+          Array(
+            root.join("Service.cls").toString,
+            root.join("missing.cls").toString,
+            root.join("Service.cls").toString
+          )
+        )
+      )
+
+      assert(results.map(_.name).toSeq == Seq(withNamespace(ns, "ServiceTest")))
+      assert(
+        results.head.explanation.toSeq == Seq(
+          withNamespace(ns, "ServiceTest"),
+          withNamespace(ns, "ServiceImpl"),
+          withNamespace(ns, "Service")
+        )
+      )
+
+      val deduplicated = withOrg(
+        _.getImpactedTestClasses(
+          Array(root.join("Service.cls").toString, root.join("ServiceImpl.cls").toString)
+        )
+      )
+      assert(deduplicated.map(_.name).toSeq == Seq(withNamespace(ns, "ServiceTest")))
+    }
+  }
+
+  test("Declared test classes support all and selected paths") {
+    run(
+      Map(
+        "Annotated.cls" -> "@IsTeSt private class Annotated {}",
+        "Legacy.cls"    -> "public class Legacy { testMethod static void verifiesBehavior() {} }",
+        "Ordinary.cls"  -> "public class Ordinary {}"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      val all = withOrg(_.getDeclaredTestClasses(Array.empty))
+      assert(
+        all.map(_.name).toSeq == Seq(withNamespace(ns, "Annotated"), withNamespace(ns, "Legacy"))
+      )
+      assert(all.forall(_.explanation.isEmpty))
+
+      val selected = withOrg(
+        _.getDeclaredTestClasses(
+          Array(
+            root.join("Legacy.cls").toString,
+            root.join("Annotated.cls").toString,
+            root.join("Legacy.cls").toString,
+            root.join("Ordinary.cls").toString,
+            root.join("Broken.cls").toString,
+            root.join("missing.cls").toString
+          )
+        )
+      )
+      assert(
+        selected.map(_.name).toSeq == Seq(
+          withNamespace(ns, "Annotated"),
+          withNamespace(ns, "Legacy")
+        )
+      )
+    }
+  }
+
+  test("Declared test classes ignore syntax and read failures") {
+    FileSystemHelper.run(
+      Map(
+        "Good.cls"   -> "@isTest private class Good {}",
+        "Broken.cls" -> "@isTest private class Broken {"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      val results = withOrg(
+        _.getDeclaredTestClasses(
+          Array(
+            root.join("Good.cls").toString,
+            root.join("Broken.cls").toString,
+            root.join("missing.cls").toString
+          )
+        )
+      )
+      assert(results.map(_.name).toSeq == Seq("Good"))
     }
   }
 

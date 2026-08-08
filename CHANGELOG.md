@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   result/error envelopes, and machine-clean stdout for one-shot analysis integrations (#527)
 - JVM batch commands for deterministic dependency reports, scoped dependency counts, and dependency
   bomb rankings (#528)
+- Public impacted and declared test-class discovery APIs, plus a deterministic `test-classes` JVM
+  batch command with dependency explanations and namespace-qualified names (#529)
 
 ## [6.2.0] - 2026-07-29
 
