@@ -67,8 +67,13 @@ import scala.util.hashing.MurmurHash3
   */
 object OPM {
 
-  class OrgImpl(val path: PathLike, val issueManager: IssueLogger, initWorkspace: Option[Workspace])
-      extends Org
+  class OrgImpl(
+    val path: PathLike,
+    val issueManager: IssueLogger,
+    initWorkspace: Option[Workspace],
+    private[nawforce] val unusedEnabled: Boolean = true,
+    private[nawforce] val unusedOnError: Boolean = false
+  ) extends Org
       with OrgTestClasses {
     // Acquire lock for all operations that may be impacted by refresh
     val refreshLock = new ReentrantLock(true)
@@ -81,9 +86,8 @@ object OPM {
     val monitorLauncher: Monitor = new Monitor(path)
 
     /** Manager for post validation plugins */
-    private[nawforce] val pluginsManager = new PluginsManager(
-      workspace.projectConfig.exists(_.isLibrary)
-    )
+    private[nawforce] val pluginsManager =
+      new PluginsManager(workspace.projectConfig.exists(_.isLibrary), unusedEnabled)
 
     /** Parsed Apex data cache, the cache holds summary information about Apex types to speed
       * startup

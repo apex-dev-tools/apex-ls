@@ -24,9 +24,11 @@ import scala.collection.mutable
   * have been validated. Plugins may dynamically add additional types for analysis as part of the
   * close handling.
   */
-class PluginsManager(isLibrary: Boolean = false) {
-  private val availablePlugins = activePlugins()
-  private val livePlugins      = new mutable.HashMap[DependentType, Option[Plugin]]()
+class PluginsManager(isLibrary: Boolean = false, unusedEnabled: Boolean = true) {
+  private val availablePlugins = activePlugins().filter(constructor =>
+    unusedEnabled || constructor.getDeclaringClass != classOf[UnusedPlugin]
+  )
+  private val livePlugins = new mutable.HashMap[DependentType, Option[Plugin]]()
 
   /** Create a new plugin dispatcher for a DependentType. */
   def createPlugin(td: DependentType): Plugin = {

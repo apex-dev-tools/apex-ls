@@ -78,20 +78,32 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
     if (td.modifiers.exists(suppressModifiers.contains) || td.outerTypeName.isDefined) {
       Seq.empty
     } else {
-      // Only update if we don't have errors, to reduce noise
+      // By default, do not report unused alongside errors to reduce IDE noise. Batch/CI orgs can
+      // opt into retaining both sets of diagnostics without affecting any other org in the JVM.
       val existingIssues = td.paths.flatMap(td.module.pkg.org.issues.issuesForFileInternal)
       val hasErrors =
         existingIssues.exists(issue => DiagnosticCategory.isErrorType(issue.diagnostic.category))
-      if (hasErrors) {
-        IssueProviderOps.replaceUnusedIssues(td.module.pkg.org.issues, td.paths.head, Seq())
+      if (hasErrors && !td.module.pkg.org.unusedOnError) {
+        td match {
+          case fd: FullDeclaration =>
+            fd.setSuppressedLocalUnused(
+              existingIssues.filter(_.diagnostic.message.startsWith("Unused local variable"))
+            )
+          case _ => ()
+        }
+        IssueProviderOps.replaceUnusedIssues(td.module.pkg.org.issues, td.paths, Seq())
       } else {
         // This is a bit messy, we need to preserve unused locals are they are pre-computed
         // via onBlockValidate. They need to be handled that way for local suppression to work.
         val localUnused =
           existingIssues.filter(_.diagnostic.message.startsWith("Unused local variable"))
+        td match {
+          case fd: FullDeclaration => fd.setSuppressedLocalUnused(Seq.empty)
+          case _                   => ()
+        }
         IssueProviderOps.replaceUnusedIssues(
           td.module.pkg.org.issues,
-          td.paths.head,
+          td.paths,
           td.unusedIssues ++ localUnused
         )
       }
