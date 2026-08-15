@@ -41,6 +41,13 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  private def assertProjectIssues(files: Map[String, String], expected: String): Unit = {
+    FileSystemHelper.run(files) { root: PathLike =>
+      createOrg(root)
+      assert(getMessages(root.join("Dummy.cls")) == expected)
+    }
+  }
+
   test("List.add(T) warns for a standard relationship RecordSet") {
     assertDummyIssues(
       """public class Dummy {
@@ -149,6 +156,50 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Relationship RecordSet receiver contains warns for a RecordSet argument") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void verify(Account parent) {
+        |    parent.Contacts.contains(parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 3 at 29-44: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Relationship RecordSet receiver indexOf warns for a RecordSet argument") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void verify(Account parent) {
+        |    parent.Contacts.indexOf(parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 3 at 28-43: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Direct SOQL RecordSet receiver contains warns for a RecordSet argument") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void verify() {
+        |    [SELECT Id FROM Contact].contains([SELECT Id FROM Contact]);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 3 at 38-62: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Direct SOQL RecordSet receiver indexOf warns for a RecordSet argument") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void verify() {
+        |    [SELECT Id FROM Contact].indexOf([SELECT Id FROM Contact]);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 3 at 37-61: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
   test("Assignment and addAll preserve a relationship RecordSet") {
     assertDummyIssues(
       """public class Dummy {
@@ -162,16 +213,87 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Object-taking APIs preserve a relationship RecordSet") {
+  test("Object parameters preserve a relationship RecordSet") {
     assertDummyIssues(
       """public class Dummy {
         |  void takeObject(Object value) {}
         |  void verify(Account parent) {
-        |    List<Contact> contacts = new List<Contact>();
-        |    contacts.contains(parent.Contacts);
         |    List<Object> objects = new List<Object>();
         |    objects.add(parent.Contacts);
         |    takeObject(parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      ""
+    )
+  }
+
+  test("Multiple RecordSet arguments warn at their respective locations") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(Contact first, SObject second) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 4 at 9-24: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n" +
+        "Warning: line 4 at 26-41: RecordSet coerced to 'System.SObject'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("This constructor call warns for a RecordSet argument") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  Dummy(Contact value) {}
+        |  Dummy(Account parent) {
+        |    this(parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 4 at 9-24: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Super constructor call warns for a RecordSet argument") {
+    assertProjectIssues(
+      Map(
+        "Base.cls" -> "virtual class Base { public Base(Contact value) {} }",
+        "Dummy.cls" ->
+          """public class Dummy extends Base {
+            |  public Dummy(Account parent) {
+            |    super(parent.Contacts);
+            |  }
+            |}""".stripMargin
+      ),
+      "Warning: line 3 at 10-25: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Standard child relationship RecordSet cannot receive chained field access") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void verify(Account parent) {
+        |    Object value = parent.Contacts.Account;
+        |  }
+        |}""".stripMargin,
+      "Missing: line 3 at 19-42: Unknown field 'Account' on SObject '[Schema.Contact Records]'\n"
+    )
+  }
+
+  test("Custom child relationship RecordSet cannot receive chained field access") {
+    assertCustomIssues(
+      """public class Dummy {
+        |  void verify(Parent__c parent) {
+        |    Object value = parent.Parent__r.Parent__c;
+        |  }
+        |}""".stripMargin,
+      "Missing: line 3 at 19-45: Unknown field 'Parent__c' on SObject '[Schema.Child__c Records]'\n"
+    )
+  }
+
+  test("Direct SOQL RecordSet may access a child relationship") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void verify() {
+        |    Object value = [SELECT Id FROM Account].Contacts;
         |  }
         |}""".stripMargin,
       ""
@@ -202,6 +324,20 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
         |  }
         |}""".stripMargin,
       ""
+    )
+  }
+
+  test("Concrete scalar overload wins over SObject and Object overloads") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(Contact value) {}
+        |  void take(SObject value) {}
+        |  void take(Object value) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 6 at 9-24: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
     )
   }
 

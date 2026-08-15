@@ -21,6 +21,18 @@ import com.nawforce.pkgforce.names.{Names, TypeName}
 /** Rules for determining if one type is assignable to another */
 object AssignableSupport {
 
+  /** How Apex converts a RecordSet argument to a selected parameter. The overload rank is lower
+    * for conversions Apex prefers when multiple overloads are otherwise compatible.
+    */
+  sealed trait RecordSetConversion {
+    def overloadRank: Int
+  }
+
+  final case class PreservedRecordSet(overloadRank: Int)    extends RecordSetConversion
+  final case class PreservedCollection(overloadRank: Int)   extends RecordSetConversion
+  final case class ScalarSObjectCoercion(overloadRank: Int) extends RecordSetConversion
+  final case class PreservedObject(overloadRank: Int)       extends RecordSetConversion
+
   /** Options for determining assignability
     * @param strictConversions limit implicit type conversions
     * @param narrowSObjects narrowing of SObject conversions, i.e. SObject cast to Account
@@ -109,7 +121,7 @@ object AssignableSupport {
     ) {
       true
     } else if (!options.strictConversions && fromType.typeName.isRecordSet) {
-      isRecordSetAssignable(toType, fromType.typeName)
+      isRecordSetAssignable(toType, fromType.typeName, context)
     } else if (toType.params.nonEmpty || fromType.typeName.params.nonEmpty) {
       isAssignableGeneric(toType, fromType, context, options)
     } else {
@@ -232,29 +244,55 @@ object AssignableSupport {
     }
   }
 
-  /** Test if RecordSet in fromType is assignable to toType.
+  /** Classify conversion of a RecordSet to a target type.
     * @param toType the type we are trying to assign to
     * @param fromType the RecordSet typeName, maybe over SObject or a specific SObject
+    * @param context context used to identify scalar SObject targets
     */
-  private def isRecordSetAssignable(toType: TypeName, fromType: TypeName): Boolean = {
+  def recordSetConversion(
+    toType: TypeName,
+    fromType: TypeName,
+    context: VerifyContext
+  ): Option[RecordSetConversion] = {
+    if (!fromType.isRecordSet || fromType.params.isEmpty)
+      return None
+
     // Where we don't know specific RecordSet SObject we need some flex in rules
     val fromSObjectType    = fromType.params.head
     val isSObjectRecordSet = fromSObjectType == TypeNames.SObject
     if (toType.isList || toType.isRecordSet) {
-      // Assignment to List or RecordSet must be same type or SObject/Object
       val toObject = toType.params.head
-      if (toObject == TypeNames.SObject || toObject == TypeNames.InternalObject)
-        true
-      else
-        isSObjectRecordSet || toObject == fromSObjectType
+      val rank =
+        if (toObject == fromSObjectType || isSObjectRecordSet) 0
+        else if (toObject == TypeNames.SObject) 1
+        else if (toObject == TypeNames.InternalObject) 4
+        else return None
+      if (toType.isRecordSet) Some(PreservedRecordSet(rank))
+      else Some(PreservedCollection(rank))
+    } else if (toType == TypeNames.InternalObject) {
+      Some(PreservedObject(5))
     } else {
-      // Assignment non-list/Recordset must be same type or SObject/Object
-      if (toType == TypeNames.SObject || toType == TypeNames.InternalObject)
-        true
+      val isScalarSObject =
+        toType.params.isEmpty && (toType == TypeNames.SObject || context
+          .getTypeFor(toType, context.thisType)
+          .toOption
+          .exists(_.isSObject))
+      if (
+        !isScalarSObject || (!isSObjectRecordSet && toType != fromSObjectType && toType != TypeNames.SObject)
+      )
+        None
+      else if (toType == TypeNames.SObject)
+        Some(ScalarSObjectCoercion(3))
       else
-        isSObjectRecordSet || toType == fromSObjectType
+        Some(ScalarSObjectCoercion(2))
     }
   }
+
+  private def isRecordSetAssignable(
+    toType: TypeName,
+    fromType: TypeName,
+    context: VerifyContext
+  ): Boolean = recordSetConversion(toType, fromType, context).nonEmpty
 
   private val strictAssignable: Set[(TypeName, TypeName)] =
     Set(

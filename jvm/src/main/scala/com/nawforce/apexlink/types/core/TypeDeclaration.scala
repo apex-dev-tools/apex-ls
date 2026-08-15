@@ -15,7 +15,11 @@
 package com.nawforce.apexlink.types.core
 
 import com.nawforce.apexlink.api._
-import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignable}
+import com.nawforce.apexlink.cst.AssignableSupport.{
+  AssignableOptions,
+  isAssignable,
+  recordSetConversion
+}
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
@@ -180,9 +184,10 @@ trait Parameters {
     val zip = params.lazyZip(otherParams).lazyZip(parameters).toList
     Some(zip.forall(tuple => {
       if (tuple._1.isRecordSet) {
-        val sObjectType = tuple._1.params.head
-        val otherScore  = scoreRecordSetAssignability(tuple._2.typeName, sObjectType)
-        val thisScore   = scoreRecordSetAssignability(tuple._3.typeName, sObjectType)
+        val otherScore =
+          recordSetConversion(tuple._2.typeName, tuple._1, context).map(_.overloadRank)
+        val thisScore =
+          recordSetConversion(tuple._3.typeName, tuple._1, context).map(_.overloadRank)
         thisScore.nonEmpty && (otherScore.isEmpty || thisScore.get < otherScore.get)
       } else {
         isAssignable(tuple._2.typeName, tuple._3.typeName, context)
@@ -203,26 +208,6 @@ trait Parameters {
     )
   }
 
-  /** Create a score for toType reflecting its priority (low is high) when matching against a
-    * RecordSet of sObjectType. The ordering here was empirically derived, having all of these
-    * available as possible matches does not create an ambiguity error, although the single record
-    * conversion may fail at runtime.
-    */
-  private def scoreRecordSetAssignability(toType: TypeName, sObjectType: TypeName): Option[Int] = {
-    if (toType == TypeNames.listOf(sObjectType))
-      Some(0)
-    else if (toType.isSObjectList)
-      Some(1)
-    else if (toType == sObjectType)
-      Some(2)
-    else if (toType == TypeNames.SObject)
-      Some(3)
-    else if (toType.isObjectList)
-      Some(4)
-    else if (toType == TypeNames.InternalObject)
-      Some(5)
-    else None
-  }
 }
 
 trait ConstructorDeclaration extends DependencyHolder with Dependent with Parameters {

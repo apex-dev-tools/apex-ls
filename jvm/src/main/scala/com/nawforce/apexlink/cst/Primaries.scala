@@ -158,7 +158,7 @@ final case class IdPrimary(id: Id) extends Primary {
       context.addDependency(field.get)
       val fieldType =
         if (staticContext.contains(true)) field.get.typeName
-        else DotExpression.instanceFieldType(field.get, td)
+        else RecordSetSupport.instanceFieldType(field.get, td)
       Some(
         context
           .getTypeAndAddDependency(fieldType, td)

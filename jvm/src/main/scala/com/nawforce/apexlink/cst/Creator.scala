@@ -141,9 +141,10 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
       creating.typeDeclaration.validateFieldConstructorArguments(input, arguments, context)
       creating
     } else {
-      val args = arguments.map(_.verify(input, context))
-      if (args.forall(_.isDefined))
-        validateConstructor(createdName.location, creating.declaration, args, context)
+      val argumentValues =
+        arguments.map(arg => RecordSetSupport.ArgumentValue(arg, arg.verify(input, context)))
+      if (argumentValues.forall(_.value.isDefined))
+        validateConstructor(createdName.location, creating.declaration, argumentValues, context)
       else
         creating
     }
@@ -152,7 +153,7 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
   private def validateConstructor(
     createdNameLocation: PathLocation,
     input: Option[TypeDeclaration],
-    argumentContexts: ArraySeq[ExprContext],
+    arguments: ArraySeq[RecordSetSupport.ArgumentValue],
     context: ExpressionVerifyContext
   ): ExprContext = {
     input match {
@@ -161,12 +162,12 @@ final case class ClassCreatorRest(arguments: ArraySeq[Expression]) extends Creat
           context.logError(location, s"Abstract classes cannot be constructed: ${td.typeName}")
           return ExprContext.empty
         }
-        td.findConstructor(argumentContexts.map(_.typeName), context) match {
+        td.findConstructor(arguments.map(_.typeName), context) match {
           case Left(error) =>
             context.logError(location, error)
             ExprContext.empty
           case Right(ctor) =>
-            RecordSetCoercion.warnForParameters(td, ctor, arguments, argumentContexts, context)
+            RecordSetSupport.warnForParameters(ctor, arguments, context)
             context.addDependency(ctor)
             Referenceable.addReferencingLocation(td, ctor, createdNameLocation, td)
             ExprContext(Some(false), input, ctor)
