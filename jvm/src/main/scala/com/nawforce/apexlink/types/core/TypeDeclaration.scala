@@ -142,7 +142,17 @@ trait ParameterDeclaration {
   }
 }
 
+private object ParameterSpecificity {
+  sealed trait Comparison
+  case object Better       extends Comparison
+  case object Equal        extends Comparison
+  case object Worse        extends Comparison
+  case object Incomparable extends Comparison
+}
+
 trait Parameters {
+  import ParameterSpecificity._
+
   val parameters: ArraySeq[ParameterDeclaration]
 
   /** Test if this params are compatible with those passed. Ideally this would just be a comparison
@@ -168,10 +178,11 @@ trait Parameters {
     }
   }
 
-  /** Determine if this params is a more specific version of the passed params. For this to be true
-    * all the parameters of this parameters must be assignable to the corresponding parameter of the
-    * other method. However, when dealing with RecordSets (SOQL results) we also prioritise degrees
-    * of specificness and use those to select as well.
+  /** Determine whether these parameters dominate the passed parameters. Each RecordSet argument
+    * compares the centralized conversion ranks; every ordinary argument compares parameter
+    * assignability in both directions. RecordSet calls require every position to be better or equal
+    * and at least one strictly better position. Ordinary-only calls retain their historic
+    * better-or-equal behavior.
     */
   def hasMoreSpecificParams(
     otherParams: ArraySeq[ParameterDeclaration],
@@ -181,32 +192,47 @@ trait Parameters {
     if (parameters.length != otherParams.length || parameters.length != params.length)
       return None
 
-    if (!params.exists(_.isRecordSet))
-      return Some(
-        otherParams
-          .lazyZip(parameters)
-          .forall((otherParameter, thisParameter) =>
-            isAssignable(otherParameter.typeName, thisParameter.typeName, context)
-          )
-      )
-
     val comparisons = params.lazyZip(otherParams).lazyZip(parameters).map {
       (argumentType, otherParameter, thisParameter) =>
-        if (argumentType.isRecordSet) {
-          val otherScore =
-            recordSetConversion(otherParameter.typeName, argumentType, context).map(_.overloadRank)
-          val thisScore =
-            recordSetConversion(thisParameter.typeName, argumentType, context).map(_.overloadRank)
-          (thisScore, otherScore) match {
-            case (Some(a), Some(b)) => a.compare(b)
-            case (Some(_), None)    => -1
-            case _                  => 1
-          }
-        } else {
-          if (isAssignable(otherParameter.typeName, thisParameter.typeName, context)) 0 else 1
-        }
+        compareParameterSpecificity(argumentType, thisParameter, otherParameter, context)
     }
-    Some(comparisons.forall(_ <= 0) && comparisons.exists(_ < 0))
+    val noWorse = comparisons.forall(comparison => comparison == Better || comparison == Equal)
+    val hasStrictImprovement = comparisons.contains(Better)
+    val hasRecordSetArgument = params.exists(_.isRecordSet)
+    Some(noWorse && (hasStrictImprovement || !hasRecordSetArgument))
+  }
+
+  private def compareParameterSpecificity(
+    argumentType: TypeName,
+    thisParameter: ParameterDeclaration,
+    otherParameter: ParameterDeclaration,
+    context: VerifyContext
+  ): Comparison = {
+    if (argumentType.isRecordSet) {
+      val thisRank =
+        recordSetConversion(thisParameter.typeName, argumentType, context).map(_.overloadRank)
+      val otherRank =
+        recordSetConversion(otherParameter.typeName, argumentType, context).map(_.overloadRank)
+      (thisRank, otherRank) match {
+        case (Some(a), Some(b)) if a < b  => Better
+        case (Some(a), Some(b)) if a == b => Equal
+        case (Some(_), Some(_))           => Worse
+        case (Some(_), None)              => Better
+        case (None, Some(_))              => Worse
+        case _                            => Incomparable
+      }
+    } else {
+      val thisToOther =
+        isAssignable(otherParameter.typeName, thisParameter.typeName, context)
+      val otherToThis =
+        isAssignable(thisParameter.typeName, otherParameter.typeName, context)
+      (thisToOther, otherToThis) match {
+        case (true, true)   => Equal
+        case (true, false)  => Better
+        case (false, true)  => Worse
+        case (false, false) => Incomparable
+      }
+    }
   }
 
   /** Determine if parameter type names are considered the same. During method and constructor calls

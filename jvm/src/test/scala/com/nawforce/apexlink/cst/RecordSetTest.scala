@@ -365,6 +365,148 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("Method overload combines equal RecordSet rank with numeric specificity") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(List<Contact> values, Integer count) {}
+        |  void take(List<Contact> values, Decimal count) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, 1);
+        |  }
+        |}""".stripMargin,
+      ""
+    )
+  }
+
+  test("Method overload combines equal RecordSet rank with reference and interface specificity") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  interface Marker {}
+        |  virtual class ParentValue implements Marker {}
+        |  class ChildValue extends ParentValue {}
+        |  void takeReference(List<Contact> values, ChildValue value) {}
+        |  void takeReference(List<Contact> values, ParentValue value) {}
+        |  void takeInterface(List<Contact> values, ChildValue value) {}
+        |  void takeInterface(List<Contact> values, Marker value) {}
+        |  void verify(Account parent, ChildValue value) {
+        |    takeReference(parent.Contacts, value);
+        |    takeInterface(parent.Contacts, value);
+        |  }
+        |}""".stripMargin,
+      ""
+    )
+  }
+
+  test("New constructor combines equal RecordSet rank with three-argument specificity") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  class Holder {
+        |    Holder(List<Contact> values, String label, Integer count) {}
+        |    Holder(List<Contact> values, String label, Decimal count) {}
+        |  }
+        |  void verify(Account parent) {
+        |    new Holder(parent.Contacts, 'label', 1);
+        |  }
+        |}""".stripMargin,
+      ""
+    )
+  }
+
+  test("This constructor combines scalar RecordSet rank with three-argument specificity") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  Dummy(Contact value, String label, Integer count) {}
+        |  Dummy(Contact value, String label, Decimal count) {}
+        |  Dummy(Account parent) {
+        |    this(parent.Contacts, 'label', 1);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 5 at 9-24: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Super constructor combines scalar RecordSet rank with three-argument specificity") {
+    assertProjectIssues(
+      Map(
+        "Base.cls" ->
+          "virtual class Base { public Base(Contact value, String label, Integer count) {} public Base(Contact value, String label, Decimal count) {} }",
+        "Dummy.cls" ->
+          """public class Dummy extends Base {
+            |  public Dummy(Account parent) {
+            |    super(parent.Contacts, 'label', 1);
+            |  }
+            |}""".stripMargin
+      ),
+      "Warning: line 3 at 10-25: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Method overload combines multiple scalar RecordSets with numeric specificity") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(Contact first, Contact second, Integer count) {}
+        |  void take(Contact first, Contact second, Decimal count) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, parent.Contacts, 1);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 5 at 9-24: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n" +
+        "Warning: line 5 at 26-41: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Better RecordSet rank wins when ordinary positions are equal") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(List<Contact> values, Integer count) {}
+        |  void take(Contact value, Integer count) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, 1);
+        |  }
+        |}""".stripMargin,
+      ""
+    )
+  }
+
+  test("Conflicting RecordSet and ordinary improvements remain ambiguous") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(List<Contact> values, Decimal count) {}
+        |  void take(Contact value, Integer count) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, 1);
+        |  }
+        |}""".stripMargin,
+      "Missing: line 5 at 4-28: Ambiguous method call for 'take' on 'Dummy' taking arguments '[Schema.Contact Records], System.Integer', wrong argument types for calling 'void take(Schema.Contact value, System.Integer count)'\n"
+    )
+  }
+
+  test("Equal RecordSet ranks with incomparable ordinary parameters remain ambiguous") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(List<Contact> values, Integer count) {}
+        |  void take(List<Contact> values, String count) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, null);
+        |  }
+        |}""".stripMargin,
+      "Missing: line 5 at 4-31: Ambiguous method call for 'take' on 'Dummy' taking arguments '[Schema.Contact Records], null', wrong argument types for calling 'void take(System.List<Schema.Contact> values, System.String count)'\n"
+    )
+  }
+
+  test("Equal RecordSet ranks with conflicting ordinary improvements remain ambiguous") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(List<Contact> values, Integer first, Decimal second) {}
+        |  void take(List<Contact> values, Decimal first, Integer second) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, 1, 1);
+        |  }
+        |}""".stripMargin,
+      "Missing: line 5 at 4-31: Ambiguous method call for 'take' on 'Dummy' taking arguments '[Schema.Contact Records], System.Integer, System.Integer', wrong argument types for calling 'void take(System.List<Schema.Contact> values, System.Decimal first, System.Integer second)'\n"
+    )
+  }
+
   test("RecordSet ranking does not change ordinary overload specificity") {
     assertDummyIssues(
       """public class Dummy {
