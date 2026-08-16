@@ -15,7 +15,13 @@ package com.nawforce.runtime.xml
 
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.pkgforce.xml.{XMLDocumentLike, XMLElementLike, XMLName}
+import com.nawforce.pkgforce.xml.{
+  XMLDocumentLike,
+  XMLElementLike,
+  XMLName,
+  XMLSourceElement,
+  XMLSourceRange
+}
 import com.nawforce.runtime.parsers.SourceData
 import org.xml.sax.Locator
 
@@ -26,22 +32,36 @@ import scala.collection.mutable
 import scala.xml._
 import scala.xml.parsing.NoBindingFactoryAdapter
 
-final class XMLElement(element: Elem) extends XMLElementLike {
-  override lazy val line: Int = element.attribute("line").get.toString().toInt
+final class XMLElement private[xml] (element: Elem, sourceElement: Option[XMLSourceElement])
+    extends XMLElementLike {
+  def this(element: Elem) = this(element, None)
+
+  override lazy val line: Int =
+    sourceElement.fold(element.attribute("line").get.toString().toInt)(_.location.startLine)
+
+  override lazy val location: Location = sourceElement.fold(Location(line))(_.location)
 
   override lazy val name: XMLName = XMLName(element.namespace, element.label)
 
   override lazy val text: String = element.text
 
   override def getChildren(name: String): Seq[XMLElementLike] = {
-    (element \ name)
-      .filter(x => x.namespace == XMLDocument.sfNamespace)
-      .map(n => new XMLElement(n.asInstanceOf[Elem]))
+    val sourceChildren = sourceElement.map(_.children)
+    element.child.collect { case child: Elem => child }.zipWithIndex.collect {
+      case (child, index) if child.namespace == XMLDocument.sfNamespace && child.label == name =>
+        new XMLElement(child, sourceChildren.map(_(index)))
+    }
   }
 }
 
-final class XMLDocument(path: PathLike, elem: Elem) extends XMLDocumentLike(path) {
-  override lazy val rootElement: XMLElementLike = new XMLElement(elem)
+final class XMLDocument private[xml] (
+  path: PathLike,
+  elem: Elem,
+  sourceElement: Option[XMLSourceElement]
+) extends XMLDocumentLike(path) {
+  def this(path: PathLike, elem: Elem) = this(path, elem, None)
+
+  override lazy val rootElement: XMLElementLike = new XMLElement(elem, sourceElement)
 }
 
 object XMLDocument {
@@ -53,14 +73,11 @@ object XMLDocument {
       return IssuesAnd(None)
 
     try {
-      IssuesAnd(
-        Some(
-          new XMLDocument(
-            path,
-            XMLLineLoader.load(new ByteArrayInputStream(trimLeadingXmlWhitespace(bytes)))
-          )
-        )
-      )
+      val elem = XMLLineLoader.load(new ByteArrayInputStream(trimLeadingXmlWhitespace(bytes)))
+      val sourceElement = XMLSourceRange
+        .index(sourceData.asString)
+        .filter(matchesTree(elem, _))
+      IssuesAnd(Some(new XMLDocument(path, elem, sourceElement)))
     } catch {
       case e: SAXParseException =>
         IssuesAnd(
@@ -89,6 +106,16 @@ object XMLDocument {
 
   private def isXmlWhitespace(byte: Byte): Boolean = {
     byte == ' ' || byte == '\t' || byte == '\r' || byte == '\n'
+  }
+
+  private def matchesTree(element: Elem, sourceElement: XMLSourceElement): Boolean = {
+    val qualifiedName = Option(element.prefix).fold(element.label)(_ + ":" + element.label)
+    val children      = element.child.collect { case child: Elem => child }
+    sourceElement.qualifiedName == qualifiedName &&
+    children.length == sourceElement.children.length &&
+    children.zip(sourceElement.children).forall { case (child, sourceChild) =>
+      matchesTree(child, sourceChild)
+    }
   }
 
 }

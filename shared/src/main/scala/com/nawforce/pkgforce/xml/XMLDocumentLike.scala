@@ -23,6 +23,12 @@ trait XMLElementLike {
   // Input line number for element
   val line: Int
 
+  /** Complete half-open lexical location of the element when source ranges are available. Lines
+    * are one-based and columns are zero-based Unicode code-point offsets. External implementations
+    * retain the previous point location by default.
+    */
+  def location: Location = Location(line)
+
   // Namespace & node label
   val name: XMLName
 

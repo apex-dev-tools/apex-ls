@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Source-accurate, half-open lexical ranges for successfully parsed XML elements on JVM and
+  Scala.js, exposed through `XMLElementLike.location` while retaining the existing `line` API
+  (#535)
 - Targeted warnings when a SOQL or child-relationship RecordSet is passed to a scalar SObject
   parameter, where Salesforce runtime success depends on the RecordSet containing exactly one row
   (#394)

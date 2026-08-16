@@ -15,7 +15,13 @@ package com.nawforce.runtime.xml
 
 import com.nawforce.pkgforce.diagnostics._
 import com.nawforce.pkgforce.path.{Location, PathLike}
-import com.nawforce.pkgforce.xml.{XMLDocumentLike, XMLElementLike, XMLName}
+import com.nawforce.pkgforce.xml.{
+  XMLDocumentLike,
+  XMLElementLike,
+  XMLName,
+  XMLSourceElement,
+  XMLSourceRange
+}
 import com.nawforce.runtime.parsers.SourceData
 
 import scala.collection.immutable.ArraySeq
@@ -24,8 +30,13 @@ import scala.scalajs.js
 import scala.scalajs.js.{Dynamic, Object}
 import scala.util.matching.Regex
 
-class XMLElement(element: Element) extends XMLElementLike {
-  override lazy val line: Int = element.lineNumber
+class XMLElement private[xml] (element: Element, sourceElement: Option[XMLSourceElement])
+    extends XMLElementLike {
+  def this(element: Element) = this(element, None)
+
+  override lazy val line: Int = sourceElement.fold(element.lineNumber)(_.location.startLine)
+
+  override lazy val location: Location = sourceElement.fold(Location(line))(_.location)
 
   override lazy val name: XMLName = XMLName(element.namespaceURI, element.localName)
 
@@ -43,22 +54,33 @@ class XMLElement(element: Element) extends XMLElementLike {
   }
 
   override def getChildren(name: String): Seq[XMLElementLike] = {
-    val matched = ArrayBuffer[XMLElementLike]()
-    val nl      = element.childNodes
+    val matched        = ArrayBuffer[XMLElementLike]()
+    val nl             = element.childNodes
+    val sourceChildren = sourceElement.map(_.children)
+    var elementIndex   = 0
     for (i <- 0 until nl.length) {
       val n = nl.item(i)
-      if (
-        n.nodeType == Node.ELEMENT_NODE && n.namespaceURI == XMLDocument.sfNamespace && n.localName == name
-      ) {
-        matched.append(new XMLElement(n.asInstanceOf[Element]))
+      if (n.nodeType == Node.ELEMENT_NODE) {
+        if (n.namespaceURI == XMLDocument.sfNamespace && n.localName == name) {
+          matched.append(
+            new XMLElement(n.asInstanceOf[Element], sourceChildren.map(_(elementIndex)))
+          )
+        }
+        elementIndex += 1
       }
     }
     matched.toSeq
   }
 }
 
-class XMLDocument(path: PathLike, doc: Document) extends XMLDocumentLike(path) {
-  override lazy val rootElement: XMLElementLike = new XMLElement(doc.documentElement)
+class XMLDocument private[xml] (
+  path: PathLike,
+  doc: Document,
+  sourceElement: Option[XMLSourceElement]
+) extends XMLDocumentLike(path) {
+  def this(path: PathLike, doc: Document) = this(path, doc, None)
+
+  override lazy val rootElement: XMLElementLike = new XMLElement(doc.documentElement, sourceElement)
 }
 
 object XMLDocument {
@@ -76,7 +98,8 @@ object XMLDocument {
     if (errors.nonEmpty) {
       IssuesAnd(ArraySeq(errors.last), None)
     } else {
-      IssuesAnd(Some(new XMLDocument(path, doc)))
+      val sourceElement = XMLSourceRange.index(source).filter(matchesTree(doc.documentElement, _))
+      IssuesAnd(Some(new XMLDocument(path, doc, sourceElement)))
     }
   }
 
@@ -90,6 +113,20 @@ object XMLDocument {
 
   private def isXmlWhitespace(char: Char): Boolean = {
     char == ' ' || char == '\t' || char == '\r' || char == '\n'
+  }
+
+  private def matchesTree(element: Element, sourceElement: XMLSourceElement): Boolean = {
+    val children = ArrayBuffer[Element]()
+    val nodes    = element.childNodes
+    for (index <- 0 until nodes.length) {
+      val child = nodes.item(index)
+      if (child.nodeType == Node.ELEMENT_NODE) children.append(child.asInstanceOf[Element])
+    }
+    sourceElement.qualifiedName == element.nodeName &&
+    children.length == sourceElement.children.length &&
+    children.zip(sourceElement.children).forall { case (child, sourceChild) =>
+      matchesTree(child, sourceChild)
+    }
   }
 
   private def getOptions(path: PathLike): Object with Dynamic = {
