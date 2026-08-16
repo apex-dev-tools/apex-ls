@@ -22,6 +22,13 @@ import com.nawforce.pkgforce.names.TypeName
 
 import scala.collection.immutable.ArraySeq
 
+sealed trait RecordSetOrigin
+
+object RecordSetOrigin {
+  case object DirectQuery       extends RecordSetOrigin
+  case object ChildRelationship extends RecordSetOrigin
+}
+
 /** CST-facing support for RecordSet field access and call-site diagnostics. */
 private[cst] object RecordSetSupport {
 
@@ -37,10 +44,15 @@ private[cst] object RecordSetSupport {
     * relationships use the internal RecordSet type. Normalize instance access so both follow the
     * same Apex RecordSet conversion and overload-resolution rules.
     */
-  def instanceFieldType(field: FieldDeclaration, receiver: TypeDeclaration): TypeName = {
+  def instanceFieldType(
+    field: FieldDeclaration,
+    receiver: TypeDeclaration,
+    receiverOrigin: Option[RecordSetOrigin] = None
+  ): TypeName = {
     val fieldType = field.typeName
     if (
-      receiver.isSObject && fieldType.isList && fieldType.params.size == 1 &&
+      (receiver.isSObject || receiverOrigin.contains(RecordSetOrigin.DirectQuery)) &&
+      fieldType.isList && fieldType.params.size == 1 &&
       (fieldType.params.head == TypeNames.SObject || fieldType.params.head.outer.contains(
         TypeNames.Schema
       ))
@@ -56,10 +68,10 @@ private[cst] object RecordSetSupport {
     * the platform's cardinality-dependent scalar conversion.
     */
   def isChildRelationshipReceiver(input: ExprContext): Boolean =
-    input.typeName.isRecordSet && input.locatable.exists {
-      case field: FieldDeclaration => field.typeName.isList || field.typeName.isRecordSet
-      case _                       => false
-    }
+    input.recordSetOrigin.contains(RecordSetOrigin.ChildRelationship)
+
+  def fieldRecordSetOrigin(fieldType: TypeName): Option[RecordSetOrigin] =
+    Option.when(fieldType.isRecordSet)(RecordSetOrigin.ChildRelationship)
 
   /** Emit warnings after overload resolution, using expression-owned source locations. */
   def warnForParameters(

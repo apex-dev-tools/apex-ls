@@ -260,17 +260,24 @@ object AssignableSupport {
     // Where we don't know specific RecordSet SObject we need some flex in rules
     val fromSObjectType    = fromType.params.head
     val isSObjectRecordSet = fromSObjectType == TypeNames.SObject
-    if (toType.isList || toType.isRecordSet) {
+    if (toType.isList || toType.isRecordSet || toType.isIterable) {
       val toObject = toType.params.head
-      val rank =
+      val elementRank =
         if (toObject == fromSObjectType || isSObjectRecordSet) 0
         else if (toObject == TypeNames.SObject) 1
-        else if (toObject == TypeNames.InternalObject) 4
+        else if (toObject == TypeNames.InternalObject) 2
         else return None
+      // Exact and SObject collections precede scalar coercions; Object collections follow them.
+      // Within each element tier, List/RecordSet is more specific than Iterable.
+      val rank = elementRank match {
+        case 0 => if (toType.isIterable) 1 else 0
+        case 1 => if (toType.isIterable) 3 else 2
+        case _ => if (toType.isIterable) 7 else 6
+      }
       if (toType.isRecordSet) Some(PreservedRecordSet(rank))
       else Some(PreservedCollection(rank))
     } else if (toType == TypeNames.InternalObject) {
-      Some(PreservedObject(5))
+      Some(PreservedObject(8))
     } else {
       val isScalarSObject =
         toType.params.isEmpty && (toType == TypeNames.SObject || context
@@ -282,9 +289,9 @@ object AssignableSupport {
       )
         None
       else if (toType == TypeNames.SObject)
-        Some(ScalarSObjectCoercion(3))
+        Some(ScalarSObjectCoercion(5))
       else
-        Some(ScalarSObjectCoercion(2))
+        Some(ScalarSObjectCoercion(4))
     }
   }
 

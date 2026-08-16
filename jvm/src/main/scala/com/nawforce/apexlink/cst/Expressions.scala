@@ -44,11 +44,14 @@ import scala.collection.immutable.ArraySeq
   * @param isStatic static or instance or either context
   * @param declaration input/return type declaration, for return None is used to mean unknown/indeterminable
   * @param locatable position of code that generated this context to support introspection
+  * @param recordSetOrigin origin needed to distinguish valid direct-query field access from invalid
+  *                        child-relationship path chaining
   */
 case class ExprContext(
   isStatic: Option[Boolean],
   declaration: Option[TypeDeclaration],
-  locatable: Option[Locatable] = None
+  locatable: Option[Locatable] = None,
+  recordSetOrigin: Option[RecordSetOrigin] = None
 ) {
   def isVoid = false
 
@@ -458,13 +461,19 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
         Referenceable.addReferencingLocation(field.get, location, context.thisType)
       val fieldType =
         if (input.isStatic.contains(true)) field.get.typeName
-        else RecordSetSupport.instanceFieldType(field.get, inputType)
+        else
+          RecordSetSupport.instanceFieldType(field.get, inputType, input.recordSetOrigin)
       val target = context.getTypeAndAddDependency(fieldType, inputType).toOption
       if (target.isEmpty) {
         context.missingType(location, fieldType)
         return ExprContext.empty
       }
-      return ExprContext(isStatic = Some(false), target, field.get)
+      return ExprContext(
+        isStatic = Some(false),
+        target,
+        Some(field.get),
+        RecordSetSupport.fieldRecordSetOrigin(fieldType)
+      )
     }
 
     // TODO: Private/protected types?

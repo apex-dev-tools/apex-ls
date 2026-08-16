@@ -181,18 +181,27 @@ trait Parameters {
     if (parameters.length != otherParams.length || parameters.length != params.length)
       return None
 
-    val zip = params.lazyZip(otherParams).lazyZip(parameters).toList
-    Some(zip.forall(tuple => {
-      if (tuple._1.isRecordSet) {
-        val otherScore =
-          recordSetConversion(tuple._2.typeName, tuple._1, context).map(_.overloadRank)
-        val thisScore =
-          recordSetConversion(tuple._3.typeName, tuple._1, context).map(_.overloadRank)
-        thisScore.nonEmpty && (otherScore.isEmpty || thisScore.get < otherScore.get)
-      } else {
-        isAssignable(tuple._2.typeName, tuple._3.typeName, context)
-      }
-    }))
+    val comparisons = params.lazyZip(otherParams).lazyZip(parameters).map {
+      (argumentType, otherParameter, thisParameter) =>
+        if (argumentType.isRecordSet) {
+          val otherScore =
+            recordSetConversion(otherParameter.typeName, argumentType, context).map(_.overloadRank)
+          val thisScore =
+            recordSetConversion(thisParameter.typeName, argumentType, context).map(_.overloadRank)
+          (thisScore, otherScore) match {
+            case (Some(a), Some(b)) => a.compare(b)
+            case (Some(_), None)    => -1
+            case _                  => 1
+          }
+        } else {
+          val thisToOther = isAssignable(otherParameter.typeName, thisParameter.typeName, context)
+          val otherToThis = isAssignable(thisParameter.typeName, otherParameter.typeName, context)
+          if (!thisToOther) 1
+          else if (otherToThis) 0
+          else -1
+        }
+    }
+    Some(comparisons.forall(_ <= 0) && comparisons.exists(_ < 0))
   }
 
   /** Determine if parameter type names are considered the same. During method and constructor calls

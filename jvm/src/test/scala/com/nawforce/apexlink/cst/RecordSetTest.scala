@@ -292,11 +292,104 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
   test("Direct SOQL RecordSet may access a child relationship") {
     assertDummyIssues(
       """public class Dummy {
+        |  void take(Contact value) {}
         |  void verify() {
-        |    Object value = [SELECT Id FROM Account].Contacts;
+        |    List<Contact> assigned = [SELECT Id, (SELECT Id FROM Contacts) FROM Account].Contacts;
+        |    take([SELECT Id, (SELECT Id FROM Contacts) FROM Account].Contacts);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 5 at 9-69: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Standard RecordSets preserve Iterable compatibility across type flows") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(Iterable<Contact> values) {}
+        |  Iterable<Contact> queryValues() { return [SELECT Id FROM Contact]; }
+        |  Iterable<Contact> relationshipValues(Account parent) { return parent.Contacts; }
+        |  void verify(Account parent, Boolean choose, Iterable<Contact> values) {
+        |    Iterable<Contact> assigned = parent.Contacts;
+        |    take(parent.Contacts);
+        |    take([SELECT Id FROM Contact]);
+        |    Iterable<Contact> common = choose ? parent.Contacts : new List<Contact>();
+        |    Boolean comparable = values == parent.Contacts;
         |  }
         |}""".stripMargin,
       ""
+    )
+  }
+
+  test("Custom RecordSets preserve Iterable compatibility") {
+    assertCustomIssues(
+      """public class Dummy {
+        |  void take(Iterable<Child__c> values) {}
+        |  Iterable<Child__c> queryValues() { return [SELECT Id FROM Child__c]; }
+        |  void verify(Parent__c parent) {
+        |    Iterable<Child__c> assigned = parent.Parent__r;
+        |    take(parent.Parent__r);
+        |    take([SELECT Id FROM Child__c]);
+        |  }
+        |}""".stripMargin,
+      ""
+    )
+  }
+
+  test("Method overload dominance allows equal and better RecordSet ranks") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(Contact first, Contact second) {}
+        |  void take(Contact first, SObject second) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 5 at 9-24: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n" +
+        "Warning: line 5 at 26-41: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Constructor overload dominance allows equal and better RecordSet ranks") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  class Holder {
+        |    Holder(Contact first, Contact second) {}
+        |    Holder(Contact first, SObject second) {}
+        |  }
+        |  void verify(Account parent) {
+        |    new Holder(parent.Contacts, parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Warning: line 7 at 15-30: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n" +
+        "Warning: line 7 at 32-47: RecordSet coerced to 'Schema.Contact'; runtime requires exactly one row\n"
+    )
+  }
+
+  test("Crossed method RecordSet ranks remain ambiguous") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(List<Contact> first, Contact second) {}
+        |  void take(Contact first, List<Contact> second) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts, parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Missing: line 5 at 4-42: Ambiguous method call for 'take' on 'Dummy' taking arguments '[Schema.Contact Records], [Schema.Contact Records]', wrong argument types for calling 'void take(Schema.Contact first, System.List<Schema.Contact> second)'\n"
+    )
+  }
+
+  test("Crossed constructor RecordSet ranks remain ambiguous") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  class Holder {
+        |    Holder(List<Contact> first, Contact second) {}
+        |    Holder(Contact first, List<Contact> second) {}
+        |  }
+        |  void verify(Account parent) {
+        |    new Holder(parent.Contacts, parent.Contacts);
+        |  }
+        |}""".stripMargin,
+      "Error: line 7 at 14-48: Ambiguous constructor call: Dummy.Holder.<constructor>([Schema.Contact Records],[Schema.Contact Records])\n"
     )
   }
 
@@ -321,6 +414,20 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
         |  void take(List<Account> value) {}
         |  void verify() {
         |    take([SELECT Id FROM Account]);
+        |  }
+        |}""".stripMargin,
+      ""
+    )
+  }
+
+  test("Iterable overload wins over scalar overload") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(Contact value) {}
+        |  void take(Iterable<Contact> values) {}
+        |  void verify(Account parent) {
+        |    take(parent.Contacts);
+        |    take([SELECT Id FROM Contact]);
         |  }
         |}""".stripMargin,
       ""
