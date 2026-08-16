@@ -390,6 +390,7 @@ class XMLDocumentTest extends AnyFunSuite {
           } catch {
             case ex: XMLException =>
               assert(ex.msg == "Expecting element 'test' to have a single 'a' child element")
+              assert(ex.where == doc.rootElement.location)
             case _: Throwable => assert(false)
           }
       }
@@ -412,9 +413,27 @@ class XMLDocumentTest extends AnyFunSuite {
           } catch {
             case ex: XMLException =>
               assert(ex.msg == "Expecting element 'test' to have a single 'a' child element")
+              assert(ex.where == doc.rootElement.location)
             case _: Throwable => assert(false)
           }
       }
+    }
+  }
+
+  test("element validation errors select the smallest offending element") {
+    val source =
+      s"<wrong xmlns='$namespace'><enabled>sometimes</enabled></wrong>"
+    withDocument(source) { doc =>
+      val root    = doc.rootElement
+      val enabled = root.getChildren("enabled").head
+
+      val wrongName = intercept[XMLException](root.checkIsOrThrow("expected"))
+      assert(wrongName.where == root.location)
+      assert(Location.extract(source, wrongName.where) == source)
+
+      val wrongBoolean = intercept[XMLException](root.getOptionalSingleChildAsBoolean("enabled"))
+      assert(wrongBoolean.where == enabled.location)
+      assert(Location.extract(source, wrongBoolean.where) == "<enabled>sometimes</enabled>")
     }
   }
 
@@ -427,30 +446,7 @@ class XMLDocumentTest extends AnyFunSuite {
     }
   }
 
-  private def slice(source: String, location: Location): String = {
-    source.substring(
-      indexAt(source, location.startLine, location.startPosition),
-      indexAt(source, location.endLine, location.endPosition)
-    )
-  }
-
-  private def indexAt(source: String, targetLine: Int, codePointColumn: Int): Int = {
-    var index       = 0
-    var currentLine = 1
-    while (currentLine < targetLine) {
-      source.charAt(index) match {
-        case '\r' =>
-          index += 1
-          if (index < source.length && source.charAt(index) == '\n') index += 1
-          currentLine += 1
-        case '\n' =>
-          index += 1
-          currentLine += 1
-        case char => index += Character.charCount(Character.codePointAt(source, index))
-      }
-    }
-    source.offsetByCodePoints(index, codePointColumn)
-  }
+  private def slice(source: String, location: Location): String = Location.extract(source, location)
 
   private def newlineName(newline: String): String = newline match {
     case "\n"   => "LF"

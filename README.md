@@ -33,6 +33,8 @@ Maven:
 The library can be consumed in JVM and ScalaJS projects, however the features available to each differ. See the JavaDoc for more details on the API. <!-- TODO link to hosted javadoc -->
 XML API consumers can also see [XML Element Locations](doc/XML_Element_Locations.md) for the
 source-range and coordinate contract.
+The [Location Ranges](doc/Location_Ranges.md) guide documents named point, whole-line, and span
+factories plus source extraction and sentinel clamping.
 
 The jar is also executable without a client via the commands, `CheckForIssues` and `DependencyReport`:
 

@@ -568,7 +568,7 @@ class StandardObjectTest extends AnyFunSuite with TestHelper {
       assert(
         getMessages(root.join("objects", "Account.object"))
           .startsWith(
-            "Error: line 10: Expecting element 'fields' to have a single 'type' child element\n"
+            "Error: line 10:4 to 15:13: Expecting element 'fields' to have a single 'type' child element\n"
           )
       )
     }

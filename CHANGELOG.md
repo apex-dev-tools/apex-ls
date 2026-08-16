@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Explicit `Location.point`, `Location.wholeLine`, and half-open `Location.span` factories, plus
+  source extraction that clamps whole-line sentinels before line endings (#362)
 - Source-accurate, half-open lexical ranges for successfully parsed XML elements on JVM and
   Scala.js, exposed through `XMLElementLike.location` while retaining the existing `line` API
   (#535)
@@ -23,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bomb rankings (#528)
 - Public impacted and declared test-class discovery APIs, plus a deterministic `test-classes` JVM
   batch command with dependency explanations and namespace-qualified names (#529)
+
+### Changed
+
+- Labels, inline SObject components, and XML-derived metadata validation diagnostics now use exact
+  element ranges; standalone metadata components continue to use whole-file locations (#362)
 
 ## [6.2.0] - 2026-07-29
 

@@ -298,34 +298,52 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Label events") {
+    val source =
+      """<?xml version="1.0" encoding="UTF-8"?>
+        |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+        |    <labels>
+        |        <fullName>TestLabel1</fullName>
+        |        <protected>false</protected>
+        |    </labels>
+        |    <labels>
+        |        <fullName>TestLabel2</fullName>
+        |        <protected>true</protected>
+        |    </labels>
+        |</CustomLabels>
+        |""".stripMargin
     FileSystemHelper.run(
-      Map[String, String](
-        "force-app/main/default/labels/CustomLabels.labels" ->
-          """<?xml version="1.0" encoding="UTF-8"?>
-          |<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
-          |    <labels><fullName>TestLabel1</fullName><protected>false</protected></labels>
-          |    <labels><fullName>TestLabel2</fullName><protected>true</protected></labels>
-          |</CustomLabels>
-          |""".stripMargin
-      )
+      Map[String, String]("force-app/main/default/labels/CustomLabels.labels" -> source)
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
       assert(logger.isEmpty)
       assert(ws.nonEmpty)
 
-      ws.get.events.toList should matchPattern {
+      val events = ws.get.events.toList
+      events should matchPattern {
         case List(
-              LabelEvent(
-                PathLocation(labelsPath1, Location(3, 0, 3, 0)),
-                Name("TestLabel1"),
-                false
-              ),
-              LabelEvent(PathLocation(labelsPath2, Location(4, 0, 4, 0)), Name("TestLabel2"), true),
+              LabelEvent(PathLocation(labelsPath1, _), Name("TestLabel1"), false),
+              LabelEvent(PathLocation(labelsPath2, _), Name("TestLabel2"), true),
               LabelFileEvent(SourceInfo(PathLocation(labelsPath3, Location.all), _))
             )
             if labelsPath1 == labelsPath(root) &&
               labelsPath2 == labelsPath1 && labelsPath3 == labelsPath1 =>
       }
+
+      val locations = events.collect { case LabelEvent(location, _, _) => location.location }
+      assert(locations == Seq(Location.span(3, 4, 6, 13), Location.span(7, 4, 10, 13)))
+      assert(locations.distinct.length == 2)
+      assert(
+        locations.map(Location.extract(source, _)) == Seq(
+          """<labels>
+            |        <fullName>TestLabel1</fullName>
+            |        <protected>false</protected>
+            |    </labels>""".stripMargin,
+          """<labels>
+            |        <fullName>TestLabel2</fullName>
+            |        <protected>true</protected>
+            |    </labels>""".stripMargin
+        )
+      )
     }
   }
 
@@ -733,13 +751,14 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Bad Custom Setting") {
+    val source =
+      """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+        |  <customSettingsType>Bad</customSettingsType>
+        |</CustomObject>
+        |""".stripMargin
     FileSystemHelper.run(
       Map[String, String](
-        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-          |  <customSettingsType>Bad</customSettingsType>
-          |</CustomObject>
-          |""".stripMargin
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> source
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -754,17 +773,21 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
         "MyObject__c.object-meta.xml"
       )
       val location = PathLocation(path, Location.all)
-      ws.get.events.toList should matchPattern {
+      val events   = ws.get.events.toList
+      events should matchPattern {
         case List(
               SObjectEvent(sourceInfo, name, false, None, None),
-              IssuesEvent(
-                ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
-              )
+              IssuesEvent(ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, _, _), _)))
             )
             if sourceInfo.get.location == location && name == Name(
               "MyObject__c"
             ) && objectPath == path =>
       }
+      val issue = events.collectFirst { case IssuesEvent(issues) => issues.head }.get
+      assert(
+        Location.extract(source, issue.diagnostic.location) ==
+          "<customSettingsType>Bad</customSettingsType>"
+      )
     }
   }
 
@@ -798,13 +821,14 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
   }
 
   test("Bad SharingModel") {
+    val source =
+      """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+        |   <sharingModel>Something</sharingModel>
+        |</CustomObject>
+        |""".stripMargin
     FileSystemHelper.run(
       Map[String, String](
-        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" ->
-          """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-          |   <sharingModel>Something</sharingModel>
-          |</CustomObject>
-          |""".stripMargin
+        "force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> source
       )
     ) { root: PathLike =>
       val (ws, logger) = Workspace(root)
@@ -819,17 +843,100 @@ class WorkspaceTest extends AnyFunSuite with Matchers {
         "MyObject__c.object-meta.xml"
       )
       val location = PathLocation(path, Location.all)
-      ws.get.events.toList should matchPattern {
+      val events   = ws.get.events.toList
+      events should matchPattern {
         case List(
               SObjectEvent(sourceInfo, name, false, None, None),
-              IssuesEvent(
-                ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _))
-              )
+              IssuesEvent(ArraySeq(Issue(objectPath, Diagnostic(ERROR_CATEGORY, _, _), _)))
             )
             if sourceInfo.get.location == location && name == Name(
               "MyObject__c"
             ) && objectPath == path =>
       }
+      val issue = events.collectFirst { case IssuesEvent(issues) => issues.head }.get
+      assert(
+        Location.extract(source, issue.diagnostic.location) ==
+          "<sharingModel>Something</sharingModel>"
+      )
+    }
+  }
+
+  test("Inline Custom Object component locations cover complete elements") {
+    val source =
+      """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+        |  <fields>
+        |    <fullName>Name__c</fullName>
+        |    <type>Text</type>
+        |  </fields>
+        |  <fieldSets>
+        |    <fullName>Summary</fullName>
+        |  </fieldSets>
+        |  <sharingReasons>
+        |    <fullName>Manual</fullName>
+        |  </sharingReasons>
+        |</CustomObject>
+        |""".stripMargin
+    FileSystemHelper.run(
+      Map("force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> source)
+    ) { root: PathLike =>
+      val (ws, logger) = Workspace(root)
+      assert(logger.isEmpty)
+      val events = ws.get.events.toList
+      events should matchPattern {
+        case List(
+              SObjectEvent(_, Name("MyObject__c"), false, None, None),
+              CustomFieldEvent(_, Name("Name__c"), Name("Text"), None, None),
+              FieldsetEvent(_, Name("Summary")),
+              SharingReasonEvent(_, Name("Manual"))
+            ) =>
+      }
+
+      val locations = events.collect {
+        case CustomFieldEvent(sourceInfo, _, _, _, _) => sourceInfo.location.location
+        case FieldsetEvent(sourceInfo, _)             => sourceInfo.location.location
+        case SharingReasonEvent(sourceInfo, _)        => sourceInfo.location.location
+      }
+      assert(
+        locations == Seq(
+          Location.span(2, 2, 5, 11),
+          Location.span(6, 2, 8, 14),
+          Location.span(9, 2, 11, 19)
+        )
+      )
+      assert(
+        locations.map(Location.extract(source, _)) == Seq(
+          """<fields>
+            |    <fullName>Name__c</fullName>
+            |    <type>Text</type>
+            |  </fields>""".stripMargin,
+          """<fieldSets>
+            |    <fullName>Summary</fullName>
+            |  </fieldSets>""".stripMargin,
+          """<sharingReasons>
+            |    <fullName>Manual</fullName>
+            |  </sharingReasons>""".stripMargin
+        )
+      )
+    }
+  }
+
+  test("Invalid inline Custom Object field type selects the type element") {
+    val source =
+      """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+        |  <fields>
+        |    <fullName>Name__c</fullName>
+        |    <type>Silly</type>
+        |  </fields>
+        |</CustomObject>
+        |""".stripMargin
+    FileSystemHelper.run(
+      Map("force-app/main/default/objects/MyObject__c/MyObject__c.object-meta.xml" -> source)
+    ) { root: PathLike =>
+      val (ws, logger) = Workspace(root)
+      assert(logger.isEmpty)
+      val issue = ws.get.events.collectFirst { case IssuesEvent(issues) => issues.head }.get
+      assert(issue.diagnostic.location == Location.span(4, 4, 4, 22))
+      assert(Location.extract(source, issue.diagnostic.location) == "<type>Silly</type>")
     }
   }
 

@@ -18743,7 +18743,7 @@ exports[`Check samples Sample: Volunteers-for-Salesforce 1`] = `
     ],
     [
       "src/objects/Campaign.object",
-      "Error: line 101: Related field 'Volunteer_Job__c.Number_of_Shifts__c' required by Schema.Campaign is not defined",
+      "Error: line 101:4 to 109:13: Related field 'Volunteer_Job__c.Number_of_Shifts__c' required by Schema.Campaign is not defined",
     ],
   ],
   "status": 4,

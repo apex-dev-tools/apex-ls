@@ -24,6 +24,10 @@ can be associated unambiguously with the complete parsed element tree. If that a
 no partial exact ranges are used and elements retain their previous point-location behavior.
 Malformed XML diagnostics also remain point based.
 
+Label declarations and inline SObject fields, field sets, and sharing reasons use these complete
+element ranges. XML-derived validation errors use the smallest offending element available, such
+as an invalid value child, while a missing child is reported against its parent. Standalone
+metadata component files remain whole-file locations.
+
 This API does not change `Location` constructors, equality, sentinels, or four-field serialization.
-It also does not migrate label generation, SObject generation, or XML validation diagnostics to
-consume the new ranges; those consumer changes remain separate work.
+See [Location Ranges](Location_Ranges.md) for the named factory and extraction contract.
