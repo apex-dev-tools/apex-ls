@@ -38,6 +38,11 @@ exports[`Check samples Sample: ActionPlansV4 1`] = `
       "Unused: line 414 at 30-57: Unused public method 'Schema.ActionPlanTemplate__c createNewActionPlanTemplate(System.Integer)', only referenced by test code, remove or make private @TestVisible",
     ],
     [
+      "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansTriggerHandlers.cls",
+      "Warning: line 337 at 21-93: RecordSet coerced to 'System.SObject'; runtime requires exactly one row",
+      "Warning: line 349 at 21-132: RecordSet coerced to 'System.SObject'; runtime requires exactly one row",
+    ],
+    [
       "sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls",
       "Unused: line 27 at 29-43: Unused field 'MAX_APTODELETE'",
       "Warning: line 609 at 3-114: Local variable is hiding class field 'apSettings', see sfdx-source/LabsActionPlans/main/default/classes/ActionPlansUtilities.cls: line 581 at 16-52",
@@ -3019,6 +3024,10 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Unused: line 41 at 32-56: Unused field 'giftRecordTypeIdForTests'",
     ],
     [
+      "Cumulus/force-app/main/default/classes/CRLP_FiscalYears.cls",
+      "Warning: line 98:20 to 100:65: RecordSet coerced to 'Schema.Organization'; runtime requires exactly one row",
+    ],
+    [
       "Cumulus/force-app/main/default/classes/CRLP_GAU_BATCH_TEST.cls",
       "Unused: line 65:35 to 66:87: Unused local variable 'gau'",
     ],
@@ -3837,6 +3846,7 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Cumulus/force-app/main/default/classes/RD2_PauseForm_CTRL.cls",
       "Unused: line 74 at 39-54: Unused property 'scheduleService'",
       "Unused: line 84 at 36-48: Unused property 'queryService'",
+      "Warning: line 211 at 41-61: RecordSet coerced to 'Schema.npe03__Recurring_Donation__c'; runtime requires exactly one row",
     ],
     [
       "Cumulus/force-app/main/default/classes/RD2_QueryService.cls",
@@ -3902,6 +3912,7 @@ exports[`Check samples Sample: Cumulus 1`] = `
       "Unused: line 528 at 31-40: Unused public method 'npsp.RD2_VisualizeScheduleController.DataTableColumn getColumn(System.String)', only referenced by test code, remove or make private @TestVisible",
       "Unused: line 553 at 20-30: Unused public method 'void setRecords(System.List<Object>)', only referenced by test code, remove or make private @TestVisible",
       "Unused: line 67 at 24-33: Unused property 'startDate'",
+      "Warning: line 354 at 49-69: RecordSet coerced to 'Schema.npe03__Recurring_Donation__c'; runtime requires exactly one row",
     ],
     [
       "Cumulus/force-app/main/default/classes/RD_Constants.cls",
@@ -4200,6 +4211,7 @@ exports[`Check samples Sample: Cumulus 1`] = `
     [
       "Cumulus/force-app/main/default/classes/UTIL_FiscalYearInfo.cls",
       "Unused: line 139 at 19-32: Unused public method 'System.Integer getFiscalYear(System.Date)', only referenced by test code, remove or make private @TestVisible",
+      "Warning: line 76:53 to 80:13: RecordSet coerced to 'Schema.Organization'; runtime requires exactly one row",
     ],
     [
       "Cumulus/force-app/main/default/classes/UTIL_Http.cls",
@@ -16261,6 +16273,10 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Unused: line 41 at 32-56: Unused field 'giftRecordTypeIdForTests'",
     ],
     [
+      "NPSP/force-app/main/default/classes/CRLP_FiscalYears.cls",
+      "Warning: line 98:20 to 100:65: RecordSet coerced to 'Schema.Organization'; runtime requires exactly one row",
+    ],
+    [
       "NPSP/force-app/main/default/classes/CRLP_GAU_BATCH_TEST.cls",
       "Unused: line 65:35 to 66:87: Unused local variable 'gau'",
     ],
@@ -17079,6 +17095,7 @@ exports[`Check samples Sample: NPSP 1`] = `
       "NPSP/force-app/main/default/classes/RD2_PauseForm_CTRL.cls",
       "Unused: line 74 at 39-54: Unused property 'scheduleService'",
       "Unused: line 84 at 36-48: Unused property 'queryService'",
+      "Warning: line 211 at 41-61: RecordSet coerced to 'Schema.npe03__Recurring_Donation__c'; runtime requires exactly one row",
     ],
     [
       "NPSP/force-app/main/default/classes/RD2_QueryService.cls",
@@ -17144,6 +17161,7 @@ exports[`Check samples Sample: NPSP 1`] = `
       "Unused: line 528 at 31-40: Unused public method 'npsp.RD2_VisualizeScheduleController.DataTableColumn getColumn(System.String)', only referenced by test code, remove or make private @TestVisible",
       "Unused: line 553 at 20-30: Unused public method 'void setRecords(System.List<Object>)', only referenced by test code, remove or make private @TestVisible",
       "Unused: line 67 at 24-33: Unused property 'startDate'",
+      "Warning: line 354 at 49-69: RecordSet coerced to 'Schema.npe03__Recurring_Donation__c'; runtime requires exactly one row",
     ],
     [
       "NPSP/force-app/main/default/classes/RD_Constants.cls",
@@ -17442,6 +17460,7 @@ exports[`Check samples Sample: NPSP 1`] = `
     [
       "NPSP/force-app/main/default/classes/UTIL_FiscalYearInfo.cls",
       "Unused: line 139 at 19-32: Unused public method 'System.Integer getFiscalYear(System.Date)', only referenced by test code, remove or make private @TestVisible",
+      "Warning: line 76:53 to 80:13: RecordSet coerced to 'Schema.Organization'; runtime requires exactly one row",
     ],
     [
       "NPSP/force-app/main/default/classes/UTIL_Http.cls",
@@ -53950,6 +53969,10 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
       "Unused: line 10 at 25-36: Unused public method 'System.PageReference awardPoints()', only referenced by test code, remove or make private @TestVisible",
     ],
     [
+      "forcedotcom-enterprise-architecture/src/classes/ContestantControllerTest.cls",
+      "Warning: line 9 at 4-42: RecordSet coerced to 'System.SObject'; runtime requires exactly one row",
+    ],
+    [
       "forcedotcom-enterprise-architecture/src/classes/ContestantService.cls",
       "Unused: line 16 at 20-34: Unused public static method 'void retireFromRace(System.List<ContestantService.RaceRetirement>)'; only referenced by test code, remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
       "Unused: line 25 at 12-24: Unused field 'contestantId'",
@@ -53972,6 +53995,10 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
     [
       "forcedotcom-enterprise-architecture/src/classes/RaceController.cls",
       "Unused: line 10 at 25-36: Unused public method 'System.PageReference awardPoints()', only referenced by test code, remove or make private @TestVisible",
+    ],
+    [
+      "forcedotcom-enterprise-architecture/src/classes/RaceControllerTest.cls",
+      "Warning: line 9 at 4-36: RecordSet coerced to 'System.SObject'; runtime requires exactly one row",
     ],
     [
       "forcedotcom-enterprise-architecture/src/classes/RaceDataSelector.cls",
@@ -54016,6 +54043,7 @@ exports[`Check samples Sample: forcedotcom-enterprise-architecture 1`] = `
       "Unused: line 213 at 20-47: Unused public static method 'void purgeVolumeDataForChapter10(System.Boolean)'; remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
       "Unused: line 221 at 20-48: Unused public static method 'void createVolumeDataForChapter10(System.Integer, System.String, System.Integer, System.Integer)'; remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
       "Unused: line 306 at 20-52: Unused public static method 'void createVolumeDataForViewStateTest()'; remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
+      "Warning: line 216 at 28-77: RecordSet coerced to 'System.SObject'; runtime requires exactly one row",
     ],
     [
       "forcedotcom-enterprise-architecture/src/classes/fflib_QueryFactory.cls",
@@ -55012,8 +55040,13 @@ exports[`Check samples Sample: salesforce-bot-toolkit 1`] = `
 
 exports[`Check samples Sample: salesforce-limit-monitor 1`] = `
 {
-  "logs": [],
-  "status": 0,
+  "logs": [
+    [
+      "force-app/main/default/classes/LimitsUtil.cls",
+      "Warning: line 38 at 6-75: RecordSet coerced to 'System.SObject'; runtime requires exactly one row",
+    ],
+  ],
+  "status": 5,
 }
 `;
 

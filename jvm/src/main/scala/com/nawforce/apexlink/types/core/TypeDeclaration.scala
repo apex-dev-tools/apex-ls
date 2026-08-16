@@ -15,7 +15,11 @@
 package com.nawforce.apexlink.types.core
 
 import com.nawforce.apexlink.api._
-import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignable}
+import com.nawforce.apexlink.cst.AssignableSupport.{
+  AssignableOptions,
+  isAssignable,
+  recordSetConversion
+}
 import com.nawforce.apexlink.cst._
 import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.finding.TypeResolver
@@ -138,7 +142,17 @@ trait ParameterDeclaration {
   }
 }
 
+private object ParameterSpecificity {
+  sealed trait Comparison
+  case object Better       extends Comparison
+  case object Equal        extends Comparison
+  case object Worse        extends Comparison
+  case object Incomparable extends Comparison
+}
+
 trait Parameters {
+  import ParameterSpecificity._
+
   val parameters: ArraySeq[ParameterDeclaration]
 
   /** Test if this params are compatible with those passed. Ideally this would just be a comparison
@@ -164,10 +178,11 @@ trait Parameters {
     }
   }
 
-  /** Determine if this params is a more specific version of the passed params. For this to be true
-    * all the parameters of this parameters must be assignable to the corresponding parameter of the
-    * other method. However, when dealing with RecordSets (SOQL results) we also prioritise degrees
-    * of specificness and use those to select as well.
+  /** Determine whether these parameters dominate the passed parameters. Each RecordSet argument
+    * compares the centralized conversion ranks; every ordinary argument compares parameter
+    * assignability in both directions. RecordSet calls require every position to be better or equal
+    * and at least one strictly better position. Ordinary-only calls retain their historic
+    * better-or-equal behavior.
     */
   def hasMoreSpecificParams(
     otherParams: ArraySeq[ParameterDeclaration],
@@ -177,17 +192,47 @@ trait Parameters {
     if (parameters.length != otherParams.length || parameters.length != params.length)
       return None
 
-    val zip = params.lazyZip(otherParams).lazyZip(parameters).toList
-    Some(zip.forall(tuple => {
-      if (tuple._1.isRecordSet) {
-        val sObjectType = tuple._1.params.head
-        val otherScore  = scoreRecordSetAssignability(tuple._2.typeName, sObjectType)
-        val thisScore   = scoreRecordSetAssignability(tuple._3.typeName, sObjectType)
-        thisScore.nonEmpty && (otherScore.isEmpty || thisScore.get < otherScore.get)
-      } else {
-        isAssignable(tuple._2.typeName, tuple._3.typeName, context)
+    val comparisons = params.lazyZip(otherParams).lazyZip(parameters).map {
+      (argumentType, otherParameter, thisParameter) =>
+        compareParameterSpecificity(argumentType, thisParameter, otherParameter, context)
+    }
+    val noWorse = comparisons.forall(comparison => comparison == Better || comparison == Equal)
+    val hasStrictImprovement = comparisons.contains(Better)
+    val hasRecordSetArgument = params.exists(_.isRecordSet)
+    Some(noWorse && (hasStrictImprovement || !hasRecordSetArgument))
+  }
+
+  private def compareParameterSpecificity(
+    argumentType: TypeName,
+    thisParameter: ParameterDeclaration,
+    otherParameter: ParameterDeclaration,
+    context: VerifyContext
+  ): Comparison = {
+    if (argumentType.isRecordSet) {
+      val thisRank =
+        recordSetConversion(thisParameter.typeName, argumentType, context).map(_.overloadRank)
+      val otherRank =
+        recordSetConversion(otherParameter.typeName, argumentType, context).map(_.overloadRank)
+      (thisRank, otherRank) match {
+        case (Some(a), Some(b)) if a < b  => Better
+        case (Some(a), Some(b)) if a == b => Equal
+        case (Some(_), Some(_))           => Worse
+        case (Some(_), None)              => Better
+        case (None, Some(_))              => Worse
+        case _                            => Incomparable
       }
-    }))
+    } else {
+      val thisToOther =
+        isAssignable(otherParameter.typeName, thisParameter.typeName, context)
+      val otherToThis =
+        isAssignable(thisParameter.typeName, otherParameter.typeName, context)
+      (thisToOther, otherToThis) match {
+        case (true, true)   => Equal
+        case (true, false)  => Better
+        case (false, true)  => Worse
+        case (false, false) => Incomparable
+      }
+    }
   }
 
   /** Determine if parameter type names are considered the same. During method and constructor calls
@@ -203,26 +248,6 @@ trait Parameters {
     )
   }
 
-  /** Create a score for toType reflecting its priority (low is high) when matching against a
-    * RecordSet of sObjectType. The ordering here was empirically derived, having all of these
-    * available as possible matches does not create an ambiguity error, although the single record
-    * conversion may fail at runtime.
-    */
-  private def scoreRecordSetAssignability(toType: TypeName, sObjectType: TypeName): Option[Int] = {
-    if (toType == TypeNames.listOf(sObjectType))
-      Some(0)
-    else if (toType.isSObjectList)
-      Some(1)
-    else if (toType == sObjectType)
-      Some(2)
-    else if (toType == TypeNames.SObject)
-      Some(3)
-    else if (toType.isObjectList)
-      Some(4)
-    else if (toType == TypeNames.InternalObject)
-      Some(5)
-    else None
-  }
 }
 
 trait ConstructorDeclaration extends DependencyHolder with Dependent with Parameters {

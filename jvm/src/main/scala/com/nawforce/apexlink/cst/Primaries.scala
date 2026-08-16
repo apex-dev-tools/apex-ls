@@ -21,7 +21,7 @@ import com.nawforce.apexlink.types.core.{FieldDeclaration, TypeDeclaration}
 import com.nawforce.apexlink.types.platform.PlatformTypes
 import com.nawforce.pkgforce.diagnostics.{Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.names._
-import com.nawforce.pkgforce.path.{Location, PathLocation}
+import com.nawforce.pkgforce.path.{Locatable, Location, PathLocation}
 import com.nawforce.runtime.parsers.CodeParser
 import io.github.apexdevtools.apexparser.ApexParser._
 import io.github.apexdevtools.apexparser.ApexParserBaseVisitor
@@ -131,10 +131,10 @@ final case class IdPrimary(id: Id) extends Primary {
       .isVar(id.name, markUsed = true)
       .map(varTypeAndDefinition => {
         typeName = Some(varTypeAndDefinition.declaration.typeName)
-        ExprContext(
+        new ExprContext(
           isStatic = Some(false),
           Some(varTypeAndDefinition.declaration),
-          varTypeAndDefinition.definition
+          varTypeAndDefinition.definition.map(definition => definition: Locatable)
         )
       })
   }
@@ -156,15 +156,23 @@ final case class IdPrimary(id: Id) extends Primary {
         .foreach(context.logError(location, _))
       Referenceable.addReferencingLocation(field.get, location, context.thisType)
       context.addDependency(field.get)
+      val fieldType =
+        if (staticContext.contains(true)) field.get.typeName
+        else RecordSetSupport.instanceFieldType(field.get, td)
       Some(
         context
-          .getTypeAndAddDependency(field.get.typeName, td)
+          .getTypeAndAddDependency(fieldType, td)
           .toOption
           .map(target => {
-            ExprContext(isStatic = Some(false), Some(target), field.get)
+            ExprContext(
+              isStatic = Some(false),
+              Some(target),
+              Some(field.get),
+              RecordSetSupport.fieldRecordSetOrigin(fieldType)
+            )
           })
           .getOrElse({
-            context.missingType(location, field.get.typeName)
+            context.missingType(location, fieldType)
             ExprContext.empty
           })
       )
@@ -300,7 +308,11 @@ final case class SOQL(
             context.missingType(location, sobjectType)
           ExprContext(isStatic = Some(false), context.module.any)
         case Right(td) =>
-          ExprContext(isStatic = Some(false), td)
+          ExprContext(
+            isStatic = Some(false),
+            Some(td),
+            recordSetOrigin = Some(RecordSetOrigin.DirectQuery)
+          )
       }
     }
   }
