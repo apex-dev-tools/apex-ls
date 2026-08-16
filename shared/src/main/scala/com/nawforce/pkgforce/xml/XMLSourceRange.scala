@@ -22,8 +22,6 @@ import scala.collection.mutable
   */
 private[nawforce] final case class XMLSourceElement(
   qualifiedName: String,
-  localName: String,
-  namespace: Option[String],
   location: Location,
   children: Seq[XMLSourceElement]
 )
@@ -35,10 +33,7 @@ private[nawforce] object XMLSourceRange {
 
   private final case class OpenElement(
     qualifiedName: String,
-    localName: String,
-    namespace: Option[String],
     start: Position,
-    namespaces: Map[String, String],
     children: mutable.ArrayBuffer[XMLSourceElement]
   )
 
@@ -157,57 +152,36 @@ private[nawforce] object XMLSourceRange {
       readName() match {
         case None => failed = true
         case Some(qualifiedName) =>
-          val declarations = mutable.Map[String, String]()
-          var complete     = false
-          var selfClosing  = false
-          while (!failed && !complete && offset < source.length) {
-            skipWhitespace()
-            if (offset >= source.length) {
-              failed = true
-            } else if (startsWith("/>")) {
-              advance(2)
-              complete = true
-              selfClosing = true
-            } else if (current == '>') {
-              advance()
-              complete = true
-            } else {
-              readAttribute() match {
-                case Some(("xmlns", value)) =>
-                  decodeReferences(value) match {
-                    case Some(decoded) => declarations.update("", decoded)
-                    case None          => failed = true
-                  }
-                case Some((name, value)) if name.startsWith("xmlns:") =>
-                  decodeReferences(value) match {
-                    case Some(decoded) =>
-                      declarations.update(name.substring("xmlns:".length), decoded)
-                    case None => failed = true
-                  }
-                case Some(_) => ()
-                case None    => failed = true
-              }
-            }
-          }
-          if (!complete) failed = true
-          if (!failed) {
-            val parentNamespaces = elements.headOption.fold(
-              Map("xml" -> "http://www.w3.org/XML/1998/namespace")
-            )(_.namespaces)
-            val namespaces      = parentNamespaces ++ declarations
-            val (prefix, local) = splitName(qualifiedName)
-            val namespace = namespaces.get(prefix).orElse(if (prefix.isEmpty) Some("") else None)
-            val open = OpenElement(
-              qualifiedName,
-              local,
-              namespace,
-              start,
-              namespaces,
-              mutable.ArrayBuffer.empty
-            )
-            if (selfClosing) append(build(open, position)) else elements.push(open)
+          finishOpeningTag() match {
+            case Some(selfClosing) =>
+              val open = OpenElement(qualifiedName, start, mutable.ArrayBuffer.empty)
+              if (selfClosing) append(build(open, position)) else elements.push(open)
+            case None => failed = true
           }
       }
+    }
+
+    private def finishOpeningTag(): Option[Boolean] = {
+      var quote: Char = 0
+      while (offset < source.length) {
+        val char = current
+        if (quote != 0) {
+          if (char == quote) quote = 0
+          advance()
+        } else {
+          char match {
+            case '\'' | '"' =>
+              quote = char
+              advance()
+            case '>' =>
+              val selfClosing = offset > 0 && source.charAt(offset - 1) == '/'
+              advance()
+              return Some(selfClosing)
+            case _ => advance()
+          }
+        }
+      }
+      None
     }
 
     private def closeElement(): Unit = {
@@ -222,39 +196,10 @@ private[nawforce] object XMLSourceRange {
       }
     }
 
-    private def readAttribute(): Option[(String, String)] = {
-      readName().flatMap { name =>
-        skipWhitespace()
-        if (offset >= source.length || current != '=') None
-        else {
-          advance()
-          skipWhitespace()
-          if (offset >= source.length || (current != '\'' && current != '"')) None
-          else {
-            val quote = current
-            advance()
-            val start = offset
-            while (offset < source.length && current != quote && current != '<') advance()
-            if (offset >= source.length || current != quote) None
-            else {
-              val value = source.substring(start, offset)
-              advance()
-              Some(name -> value)
-            }
-          }
-        }
-      }
-    }
-
     private def readName(): Option[String] = {
       val start = offset
       while (offset < source.length && !isNameDelimiter(current)) advance()
       if (offset == start) None else Some(source.substring(start, offset))
-    }
-
-    private def splitName(name: String): (String, String) = {
-      val colon = name.indexOf(':')
-      if (colon < 0) ("", name) else (name.substring(0, colon), name.substring(colon + 1))
     }
 
     private def skipWhitespace(): Unit =
@@ -263,8 +208,6 @@ private[nawforce] object XMLSourceRange {
     private def build(open: OpenElement, end: Position): XMLSourceElement =
       XMLSourceElement(
         open.qualifiedName,
-        open.localName,
-        open.namespace,
         Location(open.start.line, open.start.column, end.line, end.column),
         open.children.toSeq
       )
@@ -284,46 +227,5 @@ private[nawforce] object XMLSourceRange {
 
     private def isXmlWhitespace(char: Char): Boolean =
       char == ' ' || char == '\t' || char == '\r' || char == '\n'
-
-    private def decodeReferences(value: String): Option[String] = {
-      val result = new StringBuilder()
-      var index  = 0
-      while (index < value.length) {
-        if (value.charAt(index) != '&') {
-          result.append(value.charAt(index))
-          index += 1
-        } else {
-          val end = value.indexOf(';', index + 1)
-          if (end < 0) return None
-          val reference = value.substring(index + 1, end)
-          val decoded = reference match {
-            case "amp"                               => Some("&")
-            case "apos"                              => Some("'")
-            case "gt"                                => Some(">")
-            case "lt"                                => Some("<")
-            case "quot"                              => Some("\"")
-            case numeric if numeric.startsWith("#x") => parseCodePoint(numeric.substring(2), 16)
-            case numeric if numeric.startsWith("#")  => parseCodePoint(numeric.substring(1), 10)
-            case _                                   => None
-          }
-          decoded match {
-            case Some(text) => result.append(text)
-            case None       => return None
-          }
-          index = end + 1
-        }
-      }
-      Some(result.toString())
-    }
-
-    private def parseCodePoint(value: String, radix: Int): Option[String] = {
-      try {
-        val codePoint = Integer.parseInt(value, radix)
-        if (!Character.isValidCodePoint(codePoint)) None
-        else Some(new String(Character.toChars(codePoint)))
-      } catch {
-        case _: NumberFormatException => None
-      }
-    }
   }
 }

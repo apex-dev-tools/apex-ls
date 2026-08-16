@@ -122,22 +122,7 @@ object XMLDocument {
       val child = nodes.item(index)
       if (child.nodeType == Node.ELEMENT_NODE) children.append(child.asInstanceOf[Element])
     }
-    val dynamicElement = element.asInstanceOf[js.Dynamic]
-    val localName = dynamicElement
-      .selectDynamic("localName")
-      .asInstanceOf[js.UndefOr[String]]
-      .toOption
-      .filter(_ != null)
-      .getOrElse(element.nodeName.split(":").last)
-    val namespace = dynamicElement
-      .selectDynamic("namespaceURI")
-      .asInstanceOf[js.UndefOr[String]]
-      .toOption
-      .filter(_ != null)
-      .getOrElse("")
     sourceElement.qualifiedName == element.nodeName &&
-    sourceElement.localName == localName &&
-    sourceElement.namespace.forall(_ == namespace) &&
     children.length == sourceElement.children.length &&
     children.zip(sourceElement.children).forall { case (child, sourceChild) =>
       matchesTree(child, sourceChild)

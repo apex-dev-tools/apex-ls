@@ -150,6 +150,18 @@ class XMLDocumentTest extends AnyFunSuite {
     }
   }
 
+  test("element locations handle DOCTYPE internal subsets") {
+    val source =
+      s" \r\n<!DOCTYPE m:root [<!-- ] > --><!ENTITY sample 'a > b'>]>\r\n<m:root xmlns:m='$namespace'><m:child>&amp;</m:child></m:root>"
+    withDocument(source) { doc =>
+      val root  = doc.rootElement
+      val child = root.getChildren("child").head
+      assert(root.line == 3)
+      assert(slice(source, root.location) == source.substring(source.indexOf("<m:root")))
+      assert(slice(source, child.location) == "<m:child>&amp;</m:child>")
+    }
+  }
+
   test("element locations handle default and qualified namespaces") {
     val source =
       s"<m:root xmlns:m='$namespace'><m:child/><m:child><m:leaf/></m:child></m:root>"

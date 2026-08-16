@@ -110,11 +110,8 @@ object XMLDocument {
 
   private def matchesTree(element: Elem, sourceElement: XMLSourceElement): Boolean = {
     val qualifiedName = Option(element.prefix).fold(element.label)(_ + ":" + element.label)
-    val namespace     = Option(element.namespace).getOrElse("")
     val children      = element.child.collect { case child: Elem => child }
     sourceElement.qualifiedName == qualifiedName &&
-    sourceElement.localName == element.label &&
-    sourceElement.namespace.forall(_ == namespace) &&
     children.length == sourceElement.children.length &&
     children.zip(sourceElement.children).forall { case (child, sourceChild) =>
       matchesTree(child, sourceChild)

@@ -17,13 +17,12 @@ compatibility. For indexed elements, the retained `line` API is the same as
 `location.startLine`. External `XMLElementLike` implementations remain source compatible because
 `location` defaults to the existing point location `Location(line)`.
 
-The shared lexical scanner handles quoted attributes, entity references, comments, CDATA,
-processing instructions, XML declarations, DOCTYPE internal subsets, namespaces, nesting, and
-self-closing tags. The resulting lexical tree is associated with the JVM scala-xml or Scala.js
-xmldom tree only when qualified/local names, available resolved namespaces, child order, and the
-complete tree shape agree. If scanning or whole-tree association fails, no partial exact ranges
-are used and elements retain their previous point-location behavior. Malformed XML diagnostics
-also remain point based.
+Exact ranges are available for elements containing quoted attributes (including `>`), entity
+references, comments, CDATA, processing instructions, XML declarations, DOCTYPE internal subsets,
+namespaces, nesting, and self-closing tags. Exact ranges are exposed only when the original source
+can be associated unambiguously with the complete parsed element tree. If that association fails,
+no partial exact ranges are used and elements retain their previous point-location behavior.
+Malformed XML diagnostics also remain point based.
 
 This API does not change `Location` constructors, equality, sentinels, or four-field serialization.
 It also does not migrate label generation, SObject generation, or XML validation diagnostics to

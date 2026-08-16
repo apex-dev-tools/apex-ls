@@ -19,20 +19,6 @@ import com.nawforce.runtime.platform.Path
 import org.scalatest.funsuite.AnyFunSuite
 
 class XMLDocumentPlatformTest extends AnyFunSuite {
-  private val namespace = "http://soap.sforce.com/2006/04/metadata"
-
-  test("Scala.js associates original source ranges across a DOCTYPE") {
-    val source =
-      s" \r\n<!DOCTYPE m:root [<!ENTITY sample 'a > b'>]>\r\n<m:root xmlns:m='$namespace'><m:child>&amp;</m:child></m:root>"
-    val document = XMLDocument(Path("test.xml"), SourceData(source)).value.get
-    assert(document.rootElement.line == 3)
-    assert(document.rootElement.location == Location(3, 0, 3, 91))
-    assert(document.rootElement.getChildren("child").head.location == Location(3, 58, 3, 82))
-    val elementLine = source.split("\r\n")(2)
-    assert(elementLine.substring(0, 91) == elementLine)
-    assert(elementLine.substring(58, 82) == "<m:child>&amp;</m:child>")
-  }
-
   test("Scala.js malformed XML recovery does not expose an element range") {
     val result   = XMLDocument(Path("test.xml"), SourceData("<root><child></root>"))
     val location = result.issues.head.diagnostic.location
