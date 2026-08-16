@@ -365,6 +365,24 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("RecordSet ranking does not change ordinary overload specificity") {
+    assertDummyIssues(
+      """public class Dummy {
+        |  void take(Integer value) {}
+        |  void take(Decimal value) {}
+        |  class Holder {
+        |    Holder(Integer value) {}
+        |    Holder(Decimal value) {}
+        |  }
+        |  void verify() {
+        |    take(1);
+        |    new Holder(1);
+        |  }
+        |}""".stripMargin,
+      ""
+    )
+  }
+
   test("Crossed method RecordSet ranks remain ambiguous") {
     assertDummyIssues(
       """public class Dummy {

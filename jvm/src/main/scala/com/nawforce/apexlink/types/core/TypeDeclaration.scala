@@ -181,6 +181,15 @@ trait Parameters {
     if (parameters.length != otherParams.length || parameters.length != params.length)
       return None
 
+    if (!params.exists(_.isRecordSet))
+      return Some(
+        otherParams
+          .lazyZip(parameters)
+          .forall((otherParameter, thisParameter) =>
+            isAssignable(otherParameter.typeName, thisParameter.typeName, context)
+          )
+      )
+
     val comparisons = params.lazyZip(otherParams).lazyZip(parameters).map {
       (argumentType, otherParameter, thisParameter) =>
         if (argumentType.isRecordSet) {
@@ -194,11 +203,7 @@ trait Parameters {
             case _                  => 1
           }
         } else {
-          val thisToOther = isAssignable(otherParameter.typeName, thisParameter.typeName, context)
-          val otherToThis = isAssignable(thisParameter.typeName, otherParameter.typeName, context)
-          if (!thisToOther) 1
-          else if (otherToThis) 0
-          else -1
+          if (isAssignable(otherParameter.typeName, thisParameter.typeName, context)) 0 else 1
         }
     }
     Some(comparisons.forall(_ <= 0) && comparisons.exists(_ < 0))
