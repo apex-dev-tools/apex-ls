@@ -30,3 +30,22 @@ Practical consequences:
   (last wins) and produces a warning.
 
 Related issue: #339.
+
+## RecordSet Scalar Coercion
+
+Salesforce permits a SOQL result or child-relationship RecordSet to be passed to a scalar SObject
+parameter. The call succeeds when the RecordSet contains exactly one row, but throws a
+`System.QueryException` when it contains zero or multiple rows. Ordinary `List` and `Set` values do
+not receive this conversion and are rejected by the Apex compiler.
+
+apex-ls accepts the platform conversion but reports a warning because its safety cannot be
+determined statically. The warning applies after overload resolution selects a scalar concrete
+SObject or `SObject` parameter, including `List.add`, indexed `List.add`, `Set.add`, user-defined
+methods, and constructors. It applies consistently to direct SOQL and standard or custom child
+relationships.
+
+Collection parameters and operations such as assignment and `addAll` preserve the complete
+RecordSet and do not warn. Neither do `Object` parameters or collection APIs that intentionally
+accept an object for comparison or lookup, such as `contains(Object)`.
+
+This behavior was verified on API 68.0 (Winter '27). Related issue: #394.

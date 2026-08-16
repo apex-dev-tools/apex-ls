@@ -44,11 +44,14 @@ import scala.collection.immutable.ArraySeq
   * @param isStatic static or instance or either context
   * @param declaration input/return type declaration, for return None is used to mean unknown/indeterminable
   * @param locatable position of code that generated this context to support introspection
+  * @param recordSetOrigin origin needed to distinguish valid direct-query field access from invalid
+  *                        child-relationship path chaining
   */
 case class ExprContext(
   isStatic: Option[Boolean],
   declaration: Option[TypeDeclaration],
-  locatable: Option[Locatable] = None
+  locatable: Option[Locatable] = None,
+  recordSetOrigin: Option[RecordSetOrigin] = None
 ) {
   def isVoid = false
 
@@ -312,6 +315,7 @@ object DotExpression {
         else None
       })
   }
+
 }
 
 final case class DotExpressionWithId(expression: Expression, safeNavigation: Boolean, target: Id)
@@ -441,7 +445,11 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
 
     val name = target.name
     val field: Option[FieldDeclaration] =
-      DotExpression.findField(name, inputType, context.module, input.isStatic)
+      Option
+        .unless(RecordSetSupport.isChildRelationshipReceiver(input))(
+          DotExpression.findField(name, inputType, context.module, input.isStatic)
+        )
+        .flatten
     if (field.nonEmpty) {
       TestVisibleAccess
         .fieldAccessError(field.get, context.thisType)
@@ -451,12 +459,21 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
         Referenceable.addReferencingLocation(inputType, field.get, location, context.thisType)
       else
         Referenceable.addReferencingLocation(field.get, location, context.thisType)
-      val target = context.getTypeAndAddDependency(field.get.typeName, inputType).toOption
+      val fieldType =
+        if (input.isStatic.contains(true)) field.get.typeName
+        else
+          RecordSetSupport.instanceFieldType(field.get, inputType, input.recordSetOrigin)
+      val target = context.getTypeAndAddDependency(fieldType, inputType).toOption
       if (target.isEmpty) {
-        context.missingType(location, field.get.typeName)
+        context.missingType(location, fieldType)
         return ExprContext.empty
       }
-      return ExprContext(isStatic = Some(false), target, field.get)
+      return ExprContext(
+        isStatic = Some(false),
+        target,
+        Some(field.get),
+        RecordSetSupport.fieldRecordSetOrigin(fieldType)
+      )
     }
 
     // TODO: Private/protected types?
@@ -602,14 +619,16 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
     input: ExprContext,
     context: ExpressionVerifyContext
   ): ExprContext = {
-    val argTypes = arguments.map(arg => {
+    val argumentValues = arguments.map(arg => {
       val argExpr = arg.verify(input, context)
-      interceptFoundArg(input, context, arg, argExpr)
+      RecordSetSupport.ArgumentValue(arg, argExpr, interceptFoundArg(input, context, arg, argExpr))
     })
+    val argTypes = argumentValues.map(_.typeName)
 
     callee.findMethod(target.name, argTypes, staticContext, context) match {
       case Right(method) =>
         cachedMethod = Some(method)
+        RecordSetSupport.warnForParameters(method, argumentValues, context)
         TestVisibleAccess
           .methodAccessError(method, context.thisType)
           .foreach(context.logError(location, _))
@@ -706,27 +725,31 @@ final case class MethodCallCtor(isSuper: Boolean, arguments: ArraySeq[Expression
     extends MethodCall {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     // Verify args so vars don't show as unused and map to typeNames
-    val args = arguments.map(_.verify(input, context))
-    if (args.forall(_.isDefined)) {
+    val argumentValues =
+      arguments.map(arg => RecordSetSupport.ArgumentValue(arg, arg.verify(input, context)))
+    if (argumentValues.forall(_.value.isDefined)) {
       val ctorSearchContext = if (isSuper) context.superType else Some(context.thisType)
 
       ctorSearchContext match {
         case Some(td) =>
-          td.findConstructor(args.map(arg => arg.typeName), context) match {
+          td.findConstructor(argumentValues.map(_.typeName), context) match {
             case Left(error) =>
               context.logError(location, error)
               ExprContext.empty
-            case Right(ctor: ApexConstructorLike) =>
-              Referenceable.addReferencingLocation(td, ctor, location, context.thisType)
-              context.saveResult(this, ctor.idLocation) {
-                ExprContext(Some(false), Some(td), ctor)
-              }
-            case Right(ctor: CustomConstructorDeclaration) =>
-              context.saveResult(this, ctor.nameLocation) {
-                ExprContext(Some(false), Some(td), ctor)
-              }
             case Right(ctor) =>
-              ExprContext(Some(false), Some(td), ctor)
+              RecordSetSupport.warnForParameters(ctor, argumentValues, context)
+              ctor match {
+                case apexCtor: ApexConstructorLike =>
+                  Referenceable.addReferencingLocation(td, apexCtor, location, context.thisType)
+                  context.saveResult(this, apexCtor.idLocation) {
+                    ExprContext(Some(false), Some(td), apexCtor)
+                  }
+                case customCtor: CustomConstructorDeclaration =>
+                  context.saveResult(this, customCtor.nameLocation) {
+                    ExprContext(Some(false), Some(td), customCtor)
+                  }
+                case _ => ExprContext(Some(false), Some(td), ctor)
+              }
           }
         case _ => ExprContext.empty
       }
