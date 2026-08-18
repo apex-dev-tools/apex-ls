@@ -25,11 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bomb rankings (#528)
 - Public impacted and declared test-class discovery APIs, plus a deterministic `test-classes` JVM
   batch command with dependency explanations and namespace-qualified names (#529)
+- Errors when an inaccessible nested Apex class, interface, or enum is written explicitly in
+  source, covering declared, parameter, return, construction, cast, `instanceof`, type literal,
+  qualifier, catch, for-loop, switch, extends and implements positions, honouring same-file access
+  and the `@TestVisible` unit-test exception (#341)
 
 ### Changed
 
 - Labels, inline SObject components, and XML-derived metadata validation diagnostics now use exact
   element ranges; standalone metadata components continue to use whole-file locations (#362)
+- The private parent class check on `extends` now reports `Type is not visible: <type>` against the
+  written parent type name rather than the class identifier, and applies the same `@TestVisible`
+  and same-file rules as every other explicit type reference (#341)
 
 ## [6.2.0] - 2026-07-29
 

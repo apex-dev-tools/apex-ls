@@ -33,7 +33,8 @@ final case class ApexPropertyDeclaration(
   _modifiers: ModifierResults,
   typeName: TypeName,
   id: Id,
-  propertyBlocks: Seq[PropertyBlock]
+  propertyBlocks: Seq[PropertyBlock],
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
 ) extends ClassBodyDeclaration(_modifiers)
     with ApexFieldLike {
 
@@ -67,6 +68,8 @@ final case class ApexPropertyDeclaration(
       .getOrElse(visibility.getOrElse(PRIVATE_MODIFIER))
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
+    SourceTypeAccess.validate(typeOccurrences, context)
+
     val propertyType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
     if (propertyType.isEmpty)
       context.missingType(id.location, typeName)
@@ -102,7 +105,8 @@ object ApexPropertyDeclaration {
     modifiers: ModifierResults,
     propertyDeclaration: PropertyDeclarationContext
   ): ApexPropertyDeclaration = {
-    val typeName = TypeReference.construct(propertyDeclaration.typeRef())
+    val (typeName, occurrences) =
+      TypeReference.constructWithOccurrences(propertyDeclaration.typeRef())
     ApexPropertyDeclaration(
       thisType,
       modifiers,
@@ -110,7 +114,8 @@ object ApexPropertyDeclaration {
       Id.construct(propertyDeclaration.id()),
       CodeParser
         .toScala(propertyDeclaration.propertyBlock())
-        .flatMap(pb => PropertyBlock.construct(parser, pb, typeName))
+        .flatMap(pb => PropertyBlock.construct(parser, pb, typeName)),
+      occurrences
     ).withContext(propertyDeclaration)
   }
 }

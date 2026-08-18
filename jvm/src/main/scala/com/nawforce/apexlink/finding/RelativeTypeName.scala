@@ -14,7 +14,13 @@
 
 package com.nawforce.apexlink.finding
 
-import com.nawforce.apexlink.cst.{ScopeVerifyContext, CST, VerifyContext}
+import com.nawforce.apexlink.cst.{
+  CST,
+  ScopeVerifyContext,
+  SourceTypeAccess,
+  SourceTypeOccurrence,
+  VerifyContext
+}
 import com.nawforce.apexlink.finding.TypeResolver.TypeResponse
 import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.types.core.TypeDeclaration
@@ -22,6 +28,7 @@ import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.parsers.Nature
 import com.nawforce.pkgforce.path.PathLocation
 
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
 /** Context to aid RelativeTypeName resolve via the originating ApexDeclaration. This needs freezing
@@ -78,7 +85,11 @@ final class RelativeTypeContext {
  * the relative TypeName to be converted to an absolute form. Assumes outerTypeName can always be resolved
  * against the module!
  */
-final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeTypeName: TypeName) {
+final case class RelativeTypeName(
+  typeContext: RelativeTypeContext,
+  relativeTypeName: TypeName,
+  occurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
+) {
 
   /** Is this the magical void? */
   def isVoid: Boolean = {
@@ -94,6 +105,11 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
     }
   }
 
+  /** Validate the accessibility of the written form of this type, see SourceTypeAccess. */
+  def validateAccess(context: VerifyContext): Unit = {
+    SourceTypeAccess.validate(occurrences, context)
+  }
+
   /** Helper for creating a dependence on a relative type name. */
   def dependOn(location: PathLocation, context: VerifyContext): Unit = {
     if (relativeTypeName != TypeNames.Void) {
@@ -106,6 +122,7 @@ final case class RelativeTypeName(typeContext: RelativeTypeContext, relativeType
           td.typeName.params.foreach(typeName =>
             context.getTypeAndAddDependency(typeName, typeContext.contextTypeDeclaration)
           )
+          validateAccess(context)
         case None => ()
       }
     }

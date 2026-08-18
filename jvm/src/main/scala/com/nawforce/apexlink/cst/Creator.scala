@@ -37,6 +37,12 @@ final case class CreatedName(idPairs: List[IdCreatedNamePair]) extends CST {
 
   def verify(context: ExpressionVerifyContext): ExprContext = {
 
+    // The written name is the dotted chain of ids, report against its final identifier
+    idPairs.lastOption.foreach(last =>
+      SourceTypeAccess.validate(typeName, last.id.location, context)
+    )
+    idPairs.foreach(pair => SourceTypeAccess.validate(pair.typeOccurrences, context))
+
     val newType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
     if (newType.nonEmpty) {
       ExprContext(isStatic = Some(false), newType, newType.get)
@@ -54,7 +60,11 @@ object CreatedName {
   }
 }
 
-final case class IdCreatedNamePair(id: Id, types: ArraySeq[TypeName]) extends CST {
+final case class IdCreatedNamePair(
+  id: Id,
+  types: ArraySeq[TypeName],
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
+) extends CST {
   val typeName: TypeName = {
     val encName = EncodedName(id.name)
     if (encName.ext.nonEmpty)
@@ -70,12 +80,10 @@ object IdCreatedNamePair {
   }
 
   def construct(from: IdCreatedNamePairContext): IdCreatedNamePair = {
-    IdCreatedNamePair(
-      Id.constructAny(from.anyId()),
-      Option(from.typeList())
-        .map(tl => TypeList.construct(tl))
-        .getOrElse(TypeNames.emptyTypeNames)
-    ).withContext(from)
+    val (types, occurrences) = Option(from.typeList())
+      .map(tl => TypeList.constructWithOccurrences(tl))
+      .getOrElse((TypeNames.emptyTypeNames, SourceTypeOccurrence.empty))
+    IdCreatedNamePair(Id.constructAny(from.anyId()), types, occurrences).withContext(from)
   }
 }
 

@@ -82,6 +82,11 @@ abstract class FullDeclaration(
   override val nature: Nature
   override val inTest: Boolean = _inTest
 
+  /** Located occurrences of the types written in the extends and implements clauses. Set after
+    * construction as the clauses are parsed before the declaration itself exists.
+    */
+  var superTypeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
+
   // Track if this has been flushed to cache yet
   private var flushedToCache = false
 
@@ -222,16 +227,6 @@ abstract class FullDeclaration(
       if (superClassDeclaration.nature != CLASS_NATURE) {
         OrgInfo.logError(id.location, s"Parent type '${superClass.get.asDotName}' must be a class")
       } else if (
-        !inTest &&
-        superClassDeclaration.visibility.getOrElse(PRIVATE_MODIFIER) == PRIVATE_MODIFIER &&
-        superClassDeclaration.outermostTypeDeclaration != outermostTypeDeclaration
-      ) {
-        // Private is OK with Outer extends Inner, Inner extends Inner or Test classes
-        OrgInfo.logError(
-          id.location,
-          s"Parent class '${superClass.get.asDotName}' is private, it must be public or global"
-        )
-      } else if (
         superClassDeclaration.modifiers
           .intersect(Seq(VIRTUAL_MODIFIER, ABSTRACT_MODIFIER))
           .isEmpty
@@ -242,6 +237,10 @@ abstract class FullDeclaration(
         )
       }
     })
+
+    // Accessibility of the written extends/implements types, this covers what was previously a
+    // bespoke private parent class check
+    SourceTypeAccess.validate(superTypeOccurrences, context)
 
     // Check for duplicate nested types
     val duplicateNestedType =

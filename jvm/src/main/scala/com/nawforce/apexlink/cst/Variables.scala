@@ -122,9 +122,12 @@ object VariableDeclarators {
 final case class LocalVariableDeclaration(
   modifiers: ModifierResults,
   typeName: TypeName,
-  variableDeclarators: VariableDeclarators
+  variableDeclarators: VariableDeclarators,
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
 ) extends CST {
   def verify(context: ScopeVerifyContext): Unit = {
+
+    SourceTypeAccess.validate(typeOccurrences, context)
 
     variableDeclarators.declarators.foreach(vd => {
       context.thisType.findField(vd.id.name, None).foreach {
@@ -159,7 +162,7 @@ object LocalVariableDeclaration {
     parser: CodeParser,
     from: LocalVariableDeclarationContext
   ): LocalVariableDeclaration = {
-    val typeName = TypeReference.construct(from.typeRef())
+    val (typeName, occurrences) = TypeReference.constructWithOccurrences(from.typeRef())
     val modifiers = ApexModifiers.localVariableModifiers(
       parser,
       CodeParser.toScala(from.modifier()),
@@ -173,7 +176,8 @@ object LocalVariableDeclaration {
         typeName,
         modifiers.modifiers.contains(FINAL_MODIFIER),
         from.variableDeclarators()
-      )
+      ),
+      occurrences
     ).withContext(from)
   }
 
@@ -182,7 +186,7 @@ object LocalVariableDeclaration {
     varModifiers: ArraySeq[ModifierContext],
     from: FieldDeclarationContext
   ): LocalVariableDeclaration = {
-    val typeName = TypeReference.construct(from.typeRef())
+    val (typeName, occurrences) = TypeReference.constructWithOccurrences(from.typeRef())
     val modifiers =
       ApexModifiers.localVariableModifiers(parser, varModifiers, from, isTrigger = true)
     LocalVariableDeclaration(
@@ -192,7 +196,8 @@ object LocalVariableDeclaration {
         typeName,
         modifiers.modifiers.contains(FINAL_MODIFIER),
         from.variableDeclarators()
-      )
+      ),
+      occurrences
     ).withContext(from)
   }
 }

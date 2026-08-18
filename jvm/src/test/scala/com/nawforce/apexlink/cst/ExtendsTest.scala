@@ -58,7 +58,7 @@ class ExtendsTest extends AnyFunSuite with TestHelper {
     )
     assert(
       dummyIssues ==
-        "Error: line 1 at 13-18: Parent class 'Outer.SuperClass' is private, it must be public or global\n"
+        "Error: line 1 at 33-43: Type is not visible: Outer.SuperClass\n"
     )
   }
 
@@ -71,7 +71,37 @@ class ExtendsTest extends AnyFunSuite with TestHelper {
         )
       ).size == 2
     )
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 55-65: Type is not visible: Outer.SuperClass\n"
+    )
+  }
+
+  test("Private @TestVisible superclass (from test)") {
+    assert(
+      typeDeclarations(
+        Map(
+          "Outer.cls" -> "global class Outer { @TestVisible private virtual class SuperClass {}}",
+          "Dummy.cls" -> "@isTest public class Dummy {class InTest extends Outer.SuperClass {}}"
+        )
+      ).size == 2
+    )
     assert(dummyIssues.isEmpty)
+  }
+
+  test("Private @TestVisible superclass (from non-test)") {
+    assert(
+      typeDeclarations(
+        Map(
+          "Outer.cls" -> "global class Outer { @TestVisible private virtual class SuperClass {}}",
+          "Dummy.cls" -> "global class Dummy extends Outer.SuperClass {}"
+        )
+      ).size == 2
+    )
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 33-43: Type is not visible: Outer.SuperClass\n"
+    )
   }
 
   test("Private superclass (peer)") {

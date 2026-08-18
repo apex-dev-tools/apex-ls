@@ -34,6 +34,7 @@ import com.nawforce.apexlink.cst.{
   InterfaceDeclaration,
   PropertyBlock,
   QualifiedName,
+  SourceTypeOccurrence,
   VariableDeclarator
 }
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
@@ -98,12 +99,14 @@ private[opcst] object OutlineParserClassDeclaration {
   ): ClassDeclaration = {
 
     val id = OutlineParserId.construct(ctd.id, source.path)
-    val extendType =
+    val (extendType, extendOccurrences) =
       Option(ctd.extendsTypeRef)
-        .map(tr => TypeReference.construct(tr))
-        .getOrElse(TypeNames.InternalObject)
-    val implementsType =
-      Option(ctd.implementsTypeList).map(TypeList.construct).getOrElse(TypeNames.emptyTypeNames)
+        .map(tr => TypeReference.constructWithOccurrences(tr, source.path))
+        .getOrElse((TypeNames.InternalObject, SourceTypeOccurrence.empty))
+    val (implementsType, implementsOccurrences) =
+      Option(ctd.implementsTypeList)
+        .map(TypeList.constructWithOccurrences(_, source.path))
+        .getOrElse((TypeNames.emptyTypeNames, SourceTypeOccurrence.empty))
 
     val typeContext = new RelativeTypeContext
 
@@ -171,6 +174,7 @@ private[opcst] object OutlineParserClassDeclaration {
       implementsType,
       bodyDeclarations
     )
+    declaration.superTypeOccurrences = extendOccurrences ++ implementsOccurrences
     stampLocation(
       declaration,
       ctd.location.copy(
@@ -232,10 +236,10 @@ private[opcst] object OutlineParserInterfaceDeclaration {
     endLineOffset: Option[Int] = None
   ): InterfaceDeclaration = {
 
-    val implementsType =
+    val (implementsType, implementsOccurrences) =
       Option(itd.implementsTypeList)
-        .map(TypeList.construct)
-        .getOrElse(ArraySeq(TypeNames.InternalInterface))
+        .map(TypeList.constructWithOccurrences(_, source.path))
+        .getOrElse((ArraySeq(TypeNames.InternalInterface), SourceTypeOccurrence.empty))
     val typeContext = new RelativeTypeContext
     val id          = OutlineParserId.construct(itd.id, source.path)
 
@@ -262,6 +266,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
       implementsType,
       ArraySeq.from(methods)
     )
+    declaration.superTypeOccurrences = implementsOccurrences
     stampLocation(
       declaration,
       itd.location.copy(
@@ -423,13 +428,15 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
       .pipe(ArraySeq.from)
 
+    val (methodTypeName, methodTypeOccurrences) = TypeReference.constructWithOccurrences(
+      md.typeRef.asInstanceOf[Option[UnresolvedTypeRef]],
+      source.path
+    )
+
     val declaration = new ApexMethodDeclaration(
       thisType,
       modifierResults,
-      RelativeTypeName(
-        typeContext,
-        TypeReference.construct(md.typeRef.asInstanceOf[Option[UnresolvedTypeRef]])
-      ),
+      RelativeTypeName(typeContext, methodTypeName, methodTypeOccurrences),
       OutlineParserId.construct(md.id, source.path),
       parameters,
       block
@@ -476,13 +483,15 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       .flatMap(OutlineParserFormalParameter.construct(path, _, source, typeContext))
       .pipe(ArraySeq.from)
 
+    val (methodTypeName, methodTypeOccurrences) = TypeReference.constructWithOccurrences(
+      md.typeRef.asInstanceOf[Option[UnresolvedTypeRef]],
+      source.path
+    )
+
     val declaration = new ApexMethodDeclaration(
       thisType,
       modifierResults,
-      RelativeTypeName(
-        typeContext,
-        TypeReference.construct(md.typeRef.asInstanceOf[Option[UnresolvedTypeRef]])
-      ),
+      RelativeTypeName(typeContext, methodTypeName, methodTypeOccurrences),
       OutlineParserId.construct(md.id, source.path),
       parameters,
       None
@@ -522,7 +531,11 @@ private[opcst] object OutlineParserClassBodyDeclaration {
   ): Option[ClassBodyDeclaration] = {
 
     val modifierResults = fieldModifiers(path, fd.id, fd.annotations, fd.modifiers, isOuter)
-    val fieldTypeName   = TypeReference.construct(fd.typeRef.asInstanceOf[UnresolvedTypeRef])
+    val (fieldTypeName, fieldTypeOccurrences) =
+      TypeReference.constructWithOccurrences(
+        fd.typeRef.asInstanceOf[UnresolvedTypeRef],
+        source.path
+      )
     val vd = constructVariableDeclarator(
       fd,
       source,
@@ -531,7 +544,13 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       isOuter
     )
 
-    val declaration = ApexFieldDeclaration(thisType, modifierResults, fieldTypeName, vd)
+    val declaration = ApexFieldDeclaration(
+      thisType,
+      modifierResults,
+      fieldTypeName,
+      vd,
+      typeOccurrences = fieldTypeOccurrences
+    )
     val location = OPLocation(
       fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.location.startLine,
       fd.typeRef
@@ -640,7 +659,11 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val propertyTypeName = TypeReference.construct(pd.typeRef.asInstanceOf[UnresolvedTypeRef])
+    val (propertyTypeName, propertyTypeOccurrences) =
+      TypeReference.constructWithOccurrences(
+        pd.typeRef.asInstanceOf[UnresolvedTypeRef],
+        source.path
+      )
 
     def parsePropertyBlock(pb: OPPropertyBlock): Option[PropertyBlock] = {
 
@@ -668,7 +691,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         modifierResults,
         propertyTypeName,
         OutlineParserId.construct(pd.id, source.path),
-        propertyBlocks
+        propertyBlocks,
+        propertyTypeOccurrences
       )
 
     val location = OPLocation(
@@ -699,9 +723,11 @@ private[opcst] object OutlineParserFormalParameter {
     typeContext: RelativeTypeContext
   ): Option[FormalParameter] = {
 
+    val (typeName, occurrences) =
+      TypeReference.constructWithOccurrences(src.typeRef, source.path)
     val fp = FormalParameter(
       parameterModifiers(path, src.location, src.annotations, src.modifiers),
-      RelativeTypeName(typeContext, TypeReference.construct(src.typeRef)),
+      RelativeTypeName(typeContext, typeName, occurrences),
       OutlineParserId.construct(src, source.path)
     )
     Some(fp)

@@ -305,10 +305,11 @@ object ApexMethodDeclaration {
     val block = Option(from.block())
       .map(b => Block.constructOuterFromANTLR(parser, b))
 
+    val (returnTypeName, occurrences) = TypeReference.constructWithOccurrences(from.typeRef())
     new ApexMethodDeclaration(
       thisType,
       modifiers,
-      RelativeTypeName(typeContext, TypeReference.construct(from.typeRef())),
+      RelativeTypeName(typeContext, returnTypeName, occurrences),
       Id.construct(from.id()),
       FormalParameters.construct(parser, typeContext, from.formalParameters()),
       block
@@ -322,13 +323,13 @@ object ApexMethodDeclaration {
     modifiers: ModifierResults,
     from: InterfaceMethodDeclarationContext
   ): ApexMethodDeclaration = {
-    val typeName = Option(from.typeRef())
-      .map(tr => TypeReference.construct(tr))
-      .getOrElse(TypeNames.Void)
+    val (typeName, occurrences) = Option(from.typeRef())
+      .map(tr => TypeReference.constructWithOccurrences(tr))
+      .getOrElse((TypeNames.Void, SourceTypeOccurrence.empty))
     new ApexMethodDeclaration(
       thisType,
       modifiers,
-      RelativeTypeName(typeContext, typeName),
+      RelativeTypeName(typeContext, typeName, occurrences),
       Id.construct(from.id()),
       FormalParameters.construct(parser, typeContext, from.formalParameters()),
       None
@@ -341,7 +342,8 @@ final case class ApexFieldDeclaration(
   _modifiers: ModifierResults,
   typeName: TypeName,
   variableDeclarator: VariableDeclarator,
-  isEnumConstant: Boolean = false
+  isEnumConstant: Boolean = false,
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
 ) extends ClassBodyDeclaration(_modifiers)
     with ApexFieldLike {
 
@@ -369,6 +371,8 @@ final case class ApexFieldDeclaration(
       context.log(Issue(ERROR_CATEGORY, location, s"protected field '${id.name}' cannot be static"))
     }
 
+    SourceTypeAccess.validate(typeOccurrences, context)
+
     variableDeclarator.verify(
       ExprContext(staticContext, context.thisType),
       new OuterScopeVerifyContext(context, modifiers.contains(STATIC_MODIFIER))
@@ -383,7 +387,8 @@ object ApexFieldDeclaration {
     modifiers: ModifierResults,
     fieldDeclaration: FieldDeclarationContext
   ): Seq[ApexFieldDeclaration] = {
-    val typeName = TypeReference.construct(fieldDeclaration.typeRef())
+    val (typeName, occurrences) =
+      TypeReference.constructWithOccurrences(fieldDeclaration.typeRef())
     VariableDeclarators
       .construct(
         typeName,
@@ -392,7 +397,8 @@ object ApexFieldDeclaration {
       )
       .declarators
       .map(vd => {
-        ApexFieldDeclaration(thisType, modifiers, typeName, vd).withContext(fieldDeclaration)
+        ApexFieldDeclaration(thisType, modifiers, typeName, vd, typeOccurrences = occurrences)
+          .withContext(fieldDeclaration)
       })
   }
 }
@@ -470,6 +476,7 @@ final case class FormalParameter(
   def verify(context: BodyDeclarationVerifyContext): Unit = {
     id.validate(context)
     modifiers.issues.foreach(context.log)
+    relativeTypeName.validateAccess(context)
   }
 }
 
@@ -487,9 +494,10 @@ object FormalParameter {
     typeContext: RelativeTypeContext,
     from: FormalParameterContext
   ): FormalParameter = {
+    val (typeName, occurrences) = TypeReference.constructWithOccurrences(from.typeRef)
     FormalParameter(
       ApexModifiers.parameterModifiers(parser, CodeParser.toScala(from.modifier()), from),
-      RelativeTypeName(typeContext, TypeReference.construct(from.typeRef)),
+      RelativeTypeName(typeContext, typeName, occurrences),
       Id.construct(from.id())
     )
   }
