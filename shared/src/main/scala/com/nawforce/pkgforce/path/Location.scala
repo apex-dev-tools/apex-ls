@@ -44,6 +44,62 @@ object Location {
   def apply(startLine: Int, startPosition: Int, endLine: Int, endPosition: Int): Location = {
     new Location(startLine, startPosition, endLine, endPosition)
   }
+
+  /** A zero-length point at the supplied one-based line and zero-based column. */
+  def point(line: Int, column: Int): Location =
+    new Location(line, column, line, column)
+
+  /** The complete content of a one-based line as a half-open range. The end column is an explicit
+    * sentinel which [[extract]] clamps before the line terminator.
+    */
+  def wholeLine(line: Int): Location =
+    new Location(line, 0, line, Int.MaxValue)
+
+  /** A half-open range from the supplied start coordinate (inclusive) to end coordinate
+    * (exclusive). Lines are one-based and columns are zero-based Unicode code-point offsets.
+    */
+  def span(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int): Location =
+    new Location(startLine, startColumn, endLine, endColumn)
+
+  /** Extract a half-open location from source text. Coordinates beyond a line's content are
+    * clamped before its line terminator, so [[wholeLine]] never consumes the following newline.
+    * Lines beyond the source are clamped to the end, retaining [[all]] behavior.
+    */
+  def extract(source: String, location: Location): String =
+    source.substring(
+      sourceIndex(source, location.startLine, location.startPosition),
+      sourceIndex(source, location.endLine, location.endPosition)
+    )
+
+  private def sourceIndex(source: String, targetLine: Int, targetColumn: Int): Int = {
+    var index = 0
+    var line  = 1
+    while (line < targetLine && index < source.length) {
+      source.charAt(index) match {
+        case '\r' =>
+          index += 1
+          if (index < source.length && source.charAt(index) == '\n') index += 1
+          line += 1
+        case '\n' =>
+          index += 1
+          line += 1
+        case _ => index += Character.charCount(Character.codePointAt(source, index))
+      }
+    }
+
+    if (line < targetLine) {
+      source.length
+    } else {
+      val lineStart = index
+      while (
+        index < source.length && source.charAt(index) != '\r' && source.charAt(index) != '\n'
+      ) {
+        index += Character.charCount(Character.codePointAt(source, index))
+      }
+      val lineLength = source.codePointCount(lineStart, index)
+      source.offsetByCodePoints(lineStart, Math.max(0, Math.min(targetColumn, lineLength)))
+    }
+  }
 }
 
 sealed case class LocationAnd[T](location: Location, value: T)

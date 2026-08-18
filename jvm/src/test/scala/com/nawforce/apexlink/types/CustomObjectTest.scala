@@ -31,7 +31,7 @@ class CustomObjectTest extends AnyFunSuite with TestHelper {
       createOrg(root)
       assert(
         getMessages(root.join("objects", "Foo__c.object")) ==
-          "Error: line 10: Unrecognised type 'Silly' on custom field 'Bar__c'\n"
+          "Error: line 12 at 8-26: Unrecognised type 'Silly' on custom field 'Bar__c'\n"
       )
     }
   }

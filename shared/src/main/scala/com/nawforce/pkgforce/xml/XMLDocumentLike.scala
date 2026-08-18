@@ -39,15 +39,12 @@ trait XMLElementLike {
   def checkIsOrThrow(value: String): Unit = {
     if (name.namespace != XMLDocumentLike.sfNamespace) {
       throw XMLException(
-        Location(line),
+        location,
         s"Expected element in Salesforce namespace, but has namespace '${name.namespace}' "
       )
     }
     if (name.label != value) {
-      throw XMLException(
-        Location(line),
-        s"Expected element named '$value', but found '${name.label}'"
-      )
+      throw XMLException(location, s"Expected element named '$value', but found '${name.label}'")
     }
   }
 
@@ -69,7 +66,7 @@ trait XMLElementLike {
     val text = getOptionalSingleChildAsString(name)
     if (text.isEmpty)
       throw XMLException(
-        Location(line),
+        location,
         s"Expecting element '${this.name.label}' to have a single '$name' child element"
       )
     text.get
@@ -85,7 +82,7 @@ trait XMLElementLike {
     val value = getOptionalSingleChildAsBoolean(name)
     if (value.isEmpty)
       throw XMLException(
-        Location(line),
+        location,
         s"Expecting element '${this.name.label}' to have a single '$name' child element"
       )
     value.get
@@ -98,7 +95,7 @@ trait XMLElementLike {
       val isBoolean = matched.get.text.matches("true|false")
       if (!isBoolean)
         throw XMLException(
-          Location(line),
+          matched.get.location,
           s"Expecting value to be either 'true' or 'false', found '${matched.get.text}'"
         )
       Some(matched.get.text == "true")

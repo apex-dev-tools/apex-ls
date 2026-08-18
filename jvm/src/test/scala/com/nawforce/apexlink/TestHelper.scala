@@ -334,19 +334,8 @@ trait TestHelper {
 }
 
 object TestHelper {
-  final val CURSOR = "$"
-  def locToString(source: String, loc: Location): String = {
-    val lines = source.linesWithSeparators.toArray
-    if (loc.startLine == loc.endLine) {
-      return lines(loc.startLine - 1).substring(loc.startCharOffset(), loc.endCharOffset())
-    }
-
-    // may be Location.all/Int.MaxValue
-    val endLine = if (loc.endLine > lines.length) lines.length else loc.endLine
-    lines(loc.startLine - 1).substring(loc.startPosition, lines(loc.startLine - 1).length) + lines(
-      endLine - 1
-    ).substring(0, loc.endPosition)
-  }
+  final val CURSOR                                       = "$"
+  def locToString(source: String, loc: Location): String = Location.extract(source, loc)
 }
 
 case class TargetLocationString(targetPath: String, target: String)

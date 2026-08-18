@@ -57,11 +57,7 @@ object LabelGenerator {
                     val protect: Boolean =
                       c.getOptionalSingleChildAsBoolean("protected").getOrElse(true)
                     Some(
-                      LabelEvent(
-                        PathLocation(document.path, Location(c.line)),
-                        Name(fullName),
-                        protect
-                      )
+                      LabelEvent(PathLocation(document.path, c.location), Name(fullName), protect)
                     )
                   } catch {
                     case e: XMLException =>

@@ -139,7 +139,7 @@ object SObjectGenerator {
             .getChildren("fields")
             .flatMap(field => {
               createField(
-                SourceInfo(PathLocation(controllingPath.get, Location(field.line)), sourceData.get),
+                SourceInfo(PathLocation(controllingPath.get, field.location), sourceData.get),
                 field,
                 controllingPath.get
               )
@@ -148,10 +148,7 @@ object SObjectGenerator {
               .getChildren("fieldSets")
               .flatMap(fieldSet => {
                 createFieldSet(
-                  SourceInfo(
-                    PathLocation(controllingPath.get, Location(fieldSet.line)),
-                    sourceData.get
-                  ),
+                  SourceInfo(PathLocation(controllingPath.get, fieldSet.location), sourceData.get),
                   fieldSet,
                   controllingPath.get
                 )
@@ -161,7 +158,7 @@ object SObjectGenerator {
               .flatMap(sharingReason => {
                 createSharingReason(
                   SourceInfo(
-                    PathLocation(controllingPath.get, Location(sharingReason.line)),
+                    PathLocation(controllingPath.get, sharingReason.location),
                     sourceData.get
                   ),
                   sharingReason,
@@ -196,20 +193,23 @@ object SObjectGenerator {
   private def extractCustomSettingsType(
     doc: XMLDocumentLike
   ): IssuesAnd[Option[CustomSettingType]] = {
-    doc.rootElement.getOptionalSingleChildAsString("customSettingsType") match {
-      case Some("List")      => IssuesAnd(Some(ListCustomSetting))
-      case Some("Hierarchy") => IssuesAnd(Some(HierarchyCustomSetting))
-      case Some(x) =>
-        IssuesAnd(
-          ArraySeq(
-            Issue(
-              ERROR_CATEGORY,
-              PathLocation(doc.path, Location(doc.rootElement.line)),
-              s"Unexpected customSettingsType value '$x', should be 'List' or 'Hierarchy'"
+    doc.rootElement.getOptionalSingleChild("customSettingsType") match {
+      case Some(element) =>
+        element.text match {
+          case "List"      => IssuesAnd(Some(ListCustomSetting))
+          case "Hierarchy" => IssuesAnd(Some(HierarchyCustomSetting))
+          case value =>
+            IssuesAnd(
+              ArraySeq(
+                Issue(
+                  ERROR_CATEGORY,
+                  PathLocation(doc.path, element.location),
+                  s"Unexpected customSettingsType value '$value', should be 'List' or 'Hierarchy'"
+                )
+              ),
+              None
             )
-          ),
-          None
-        )
+        }
       case None => IssuesAnd(None)
     }
   }
@@ -226,25 +226,24 @@ object SObjectGenerator {
   )
 
   private def extractSharingModel(doc: XMLDocumentLike): IssuesAnd[Option[SharingModel]] = {
-    val sharingModel = doc.rootElement.getOptionalSingleChildAsString("sharingModel")
-    if (sharingModel.nonEmpty) {
-      val matched = allSharingModels.find(_.value == sharingModel.get)
-      if (matched.nonEmpty) {
-        IssuesAnd(matched)
-      } else {
-        IssuesAnd(
-          ArraySeq(
-            Issue(
-              ERROR_CATEGORY,
-              PathLocation(doc.path, Location(doc.rootElement.line)),
-              s"Unexpected sharingModel value '${sharingModel.get}'"
-            )
-          ),
-          None
-        )
-      }
-    } else {
-      IssuesAnd(None)
+    doc.rootElement.getOptionalSingleChild("sharingModel") match {
+      case Some(element) =>
+        val matched = allSharingModels.find(_.value == element.text)
+        if (matched.nonEmpty) {
+          IssuesAnd(matched)
+        } else {
+          IssuesAnd(
+            ArraySeq(
+              Issue(
+                ERROR_CATEGORY,
+                PathLocation(doc.path, element.location),
+                s"Unexpected sharingModel value '${element.text}'"
+              )
+            ),
+            None
+          )
+        }
+      case None => IssuesAnd(None)
     }
   }
 
@@ -260,7 +259,8 @@ object SObjectGenerator {
       if (!name.toString.endsWith("__c"))
         return Iterator()
 
-      val rawType = elem.getSingleChildAsString("type").trim
+      val typeElement = elem.getOptionalSingleChild("type")
+      val rawType     = elem.getSingleChildAsString("type").trim
       if (!fieldTypes.contains(rawType)) {
         return IssuesEvent.iterator(
           ArraySeq(
@@ -268,7 +268,7 @@ object SObjectGenerator {
               path,
               Diagnostic(
                 ERROR_CATEGORY,
-                Location(elem.line),
+                typeElement.map(_.location).getOrElse(elem.location),
                 s"Unrecognised type '$rawType' on custom field '$name'"
               )
             )

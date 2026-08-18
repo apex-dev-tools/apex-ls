@@ -411,7 +411,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
 
         assert(
           getMessages() ==
-            path"/objects/Foo__c.object: Missing: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
+            path"/objects/Foo__c.object: Missing: line 10:4 to 15:13: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
         )
 
         assert(unmanagedSObject("Foo__c").get.findField(Name("Lookup__c"), Some(false)).nonEmpty)
@@ -495,7 +495,7 @@ class RefreshSObjectTest extends AnyFunSuite with TestHelper {
         val org = createOrg(root)
         assert(
           getMessages() ==
-            path"/objects/Foo__c/Foo__c.object-meta.xml: Missing: line 10: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
+            path"/objects/Foo__c/Foo__c.object-meta.xml: Missing: line 10:4 to 15:13: Lookup object Schema.Bar__c does not exist for field 'Lookup__r'" + "\n"
         )
 
         val basePath = root.join("objects", "Bar__c", "Bar__c.object-meta.xml")

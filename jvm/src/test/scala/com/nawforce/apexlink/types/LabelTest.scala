@@ -13,10 +13,12 @@
  */
 package com.nawforce.apexlink.types
 
-import com.nawforce.apexlink.TestHelper
+import com.nawforce.apexlink.TestHelper.CURSOR
+import com.nawforce.apexlink.types.other.LabelDeclaration
+import com.nawforce.apexlink.{LocationLinkString, TestHelper}
 import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
 import com.nawforce.pkgforce.names.{Name, TypeIdentifier, TypeName}
-import com.nawforce.pkgforce.path.PathLike
+import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -128,6 +130,59 @@ class LabelTest extends AnyFunSuite with TestHelper {
           .getDependencyHolders(labelsTypeId, apexOnly = false)
           .sameElements(Array(dummyTypeId))
       )
+    }
+  }
+
+  test("Label definitions and unused diagnostics select the complete label element") {
+    val labelsSource =
+      """<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+        |  <labels>
+        |    <fullName>TestLabel</fullName>
+        |    <protected>false</protected>
+        |    <value>Test value</value>
+        |  </labels>
+        |  <labels>
+        |    <fullName>UnusedLabel</fullName>
+        |    <value>Unused value</value>
+        |  </labels>
+        |</CustomLabels>
+        |""".stripMargin
+    val expectedElement =
+      """<labels>
+        |    <fullName>TestLabel</fullName>
+        |    <protected>false</protected>
+        |    <value>Test value</value>
+        |  </labels>""".stripMargin
+    val expectedUnusedElement =
+      """<labels>
+        |    <fullName>UnusedLabel</fullName>
+        |    <value>Unused value</value>
+        |  </labels>""".stripMargin
+    val (apexSource, cursor) =
+      withCursor(s"public class Dummy { {String value = Label.Test${CURSOR}Label;} }")
+
+    FileSystemHelper.run(Map("CustomLabels.labels" -> labelsSource, "Dummy.cls" -> apexSource)) {
+      root: PathLike =>
+        val org        = createOrg(root)
+        val labelsPath = root.join("CustomLabels.labels")
+        val definition = org.unmanaged
+          .getDefinition(root.join("Dummy.cls"), line = 1, offset = cursor, None)
+          .head
+        assert(definition.targetPath == labelsPath.toString)
+        assert(definition.target == Location.span(2, 2, 6, 11))
+        assert(definition.targetSelection == definition.target)
+        assert(Location.extract(labelsSource, definition.target) == expectedElement)
+        assert(LocationLinkString(root, apexSource, definition).targetSelection == expectedElement)
+
+        val labelType = org.unmanaged.getTypeOfPathInternal(labelsPath).get
+        val declaration = labelType.module
+          .moduleType(labelType.typeName)
+          .get
+          .asInstanceOf[LabelDeclaration]
+        val unused = declaration.unused().head
+        assert(unused.diagnostic.location == Location.span(7, 2, 10, 11))
+        assert(unused.diagnostic.location != definition.target)
+        assert(Location.extract(labelsSource, unused.diagnostic.location) == expectedUnusedElement)
     }
   }
 
