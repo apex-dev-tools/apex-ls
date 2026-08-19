@@ -93,6 +93,14 @@ trait VerifyContext {
     }
   }
 
+  /** Record that a type visibility issue is about to be reported for a written type reference,
+    * returning false if an equivalent issue has already been reported during this validation. The
+    * same written type can be reached more than once, for example by the several declarators of a
+    * single field declaration, and should only be reported once.
+    */
+  def recordTypeVisibilityIssue(location: PathLocation, typeId: TypeId): Boolean =
+    parent().forall(_.recordTypeVisibilityIssue(location, typeId))
+
   def missingType(location: PathLocation, typeName: TypeName): Unit = {
     if (!module.isGulped && !module.isGhostedType(typeName) && !suppressIssues)
       OrgInfo.log(IssueOps.noTypeDeclaration(location, typeName, isApexType))
@@ -239,6 +247,11 @@ final class TypeVerifyContext(
 
   private val typeCache = mutable.Map[(TypeName, TypeDeclaration), TypeResponse]()
 
+  /** Type visibility issues already reported while validating this type, keyed on the source
+    * location of the written reference and the identity of the resolved type.
+    */
+  private val reportedTypeVisibilityIssues = mutable.Set[(PathLocation, TypeId)]()
+
   private val plugin =
     if (enablePlugins)
       Some(typeDeclaration.module.pkg.org.pluginsManager.createPlugin(typeDeclaration))
@@ -254,6 +267,9 @@ final class TypeVerifyContext(
 
   override def getTypeFor(typeName: TypeName, from: TypeDeclaration): TypeResponse =
     typeCache.getOrElseUpdate((typeName, from), TypeResolver(typeName, from, Some(module)))
+
+  override def recordTypeVisibilityIssue(location: PathLocation, typeId: TypeId): Boolean =
+    reportedTypeVisibilityIssues.add((location, typeId))
 
   override def modifiers(pred: Modifier => Boolean): Boolean =
     typeDeclaration.modifiers.exists(pred) || super.modifiers(pred)

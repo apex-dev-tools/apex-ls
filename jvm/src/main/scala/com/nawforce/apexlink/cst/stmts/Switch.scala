@@ -28,6 +28,8 @@ import io.github.apexdevtools.apexparser.ApexParser.{
   WhenValueContext
 }
 
+import scala.collection.immutable.ArraySeq
+
 sealed abstract class WhenLiteral extends CST {
   def isComparableTo(typeName: TypeName): Boolean
 }
@@ -157,6 +159,7 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
                 )
                 return Seq()
               }
+              SourceTypeAccess.validate(qualifierType, iv.qualifier.last.location, context)
               context.addDependency(qualifierType)
             case Left(_) =>
               context.logError(
@@ -181,7 +184,11 @@ final case class WhenLiteralsValue(literals: Seq[WhenLiteral]) extends WhenValue
   }
 }
 
-final case class WhenSObjectValue(typeName: TypeName, id: Id) extends WhenValue {
+final case class WhenSObjectValue(
+  typeName: TypeName,
+  id: Id,
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
+) extends WhenValue {
   def checkMatchableTo(context: ScopeVerifyContext, typeName: TypeName): Seq[String] = {
     context.logError(id.location, s"A $typeName literal is required for this value")
     Seq()
@@ -205,6 +212,7 @@ final case class WhenSObjectValue(typeName: TypeName, id: Id) extends WhenValue 
   }
 
   override def verify(context: ScopeVerifyContext): Unit = {
+    SourceTypeAccess.validate(typeOccurrences, context)
     context.addVar(id.name, id, isReadOnly = false, typeName, context.thisType)
   }
 }
@@ -220,7 +228,8 @@ object WhenValue {
             .flatMap(l => WhenLiteral.construct(l))
         )
       } else {
-        WhenSObjectValue(TypeReference.construct(value.typeRef()), Id.construct(value.id()))
+        val (typeName, occurrences) = TypeReference.constructWithOccurrences(value.typeRef())
+        WhenSObjectValue(typeName, Id.construct(value.id()), occurrences)
       })
   }
 }

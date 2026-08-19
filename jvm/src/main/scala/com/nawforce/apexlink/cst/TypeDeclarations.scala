@@ -111,14 +111,14 @@ object ClassDeclaration {
     classDeclaration: ClassDeclarationContext
   ): ClassDeclaration = {
 
-    val extendType =
+    val (extendType, extendOccurrences) =
       Option(classDeclaration.typeRef())
-        .map(tr => TypeReference.construct(tr))
-        .getOrElse(TypeNames.InternalObject)
-    val implementsType =
+        .map(tr => TypeReference.constructWithOccurrences(tr))
+        .getOrElse((TypeNames.InternalObject, SourceTypeOccurrence.empty))
+    val (implementsType, implementsOccurrences) =
       Option(classDeclaration.typeList())
-        .map(tl => TypeList.construct(tl))
-        .getOrElse(TypeNames.emptyTypeNames)
+        .map(tl => TypeList.constructWithOccurrences(tl))
+        .getOrElse((TypeNames.emptyTypeNames, SourceTypeOccurrence.empty))
 
     val classBodyDeclarations = Option(classDeclaration.classBody())
       .map(cb => CodeParser.toScala(cb.classBodyDeclaration()))
@@ -170,6 +170,7 @@ object ClassDeclaration {
       implementsType,
       bodyDeclarations
     ).withContext(classDeclaration)
+    td.superTypeOccurrences = SourceTypeOccurrence.concat(extendOccurrences, implementsOccurrences)
     typeContext.freeze(td)
     td
   }
@@ -228,10 +229,10 @@ object InterfaceDeclaration {
     interfaceDeclaration: InterfaceDeclarationContext
   ): InterfaceDeclaration = {
 
-    val implementsType =
+    val (implementsType, implementsOccurrences) =
       Option(interfaceDeclaration.typeList())
-        .map(x => TypeList.construct(x))
-        .getOrElse(ArraySeq(TypeNames.InternalInterface))
+        .map(x => TypeList.constructWithOccurrences(x))
+        .getOrElse((ArraySeq(TypeNames.InternalInterface), SourceTypeOccurrence.empty))
 
     val typeContext = new RelativeTypeContext()
 
@@ -268,6 +269,7 @@ object InterfaceDeclaration {
       implementsType,
       methods
     ).withContext(interfaceDeclaration)
+    td.superTypeOccurrences = implementsOccurrences
     typeContext.freeze(td)
     td
   }

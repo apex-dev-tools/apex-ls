@@ -476,10 +476,10 @@ final case class DotExpressionWithId(expression: Expression, safeNavigation: Boo
       )
     }
 
-    // TODO: Private/protected types?
     if (input.isStatic.contains(true)) {
       val nt = inputType.findLocalType(TypeName(name))
       if (nt.nonEmpty) {
+        SourceTypeAccess.validate(nt.get, target.location, context)
         return ExprContext(isStatic = Some(true), nt.get)
       }
     }
@@ -789,9 +789,14 @@ final case class NewExpression(creator: Creator) extends Expression {
   }
 }
 
-final case class CastExpression(typeName: TypeName, expression: Expression) extends Expression {
+final case class CastExpression(
+  typeName: TypeName,
+  expression: Expression,
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
+) extends Expression {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
     expression.verify(input, context)
+    SourceTypeAccess.validate(typeOccurrences, context)
 
     val castType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
     if (castType.isEmpty) {
@@ -950,9 +955,13 @@ final case class BinaryExpression(lhs: Expression, rhs: Expression, op: String) 
   }
 }
 
-final case class InstanceOfExpression(expression: Expression, typeName: TypeName)
-    extends Expression {
+final case class InstanceOfExpression(
+  expression: Expression,
+  typeName: TypeName,
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
+) extends Expression {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+    SourceTypeAccess.validate(typeOccurrences, context)
     val instanceOfType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
     if (instanceOfType.isEmpty)
       context.missingType(location, typeName)
@@ -1035,10 +1044,8 @@ object Expression {
           NewExpression(Creator.construct(expr.creator()))
 
         case expr: CastExpressionContext =>
-          CastExpression(
-            TypeReference.construct(expr.typeRef()),
-            Expression.construct(expr.expression())
-          )
+          val (typeName, occurrences) = TypeReference.constructWithOccurrences(expr.typeRef())
+          CastExpression(typeName, Expression.construct(expr.expression()), occurrences)
 
         case expr: SubExpressionContext =>
           SubExpression(Expression.construct(expr.expression()))
@@ -1135,10 +1142,8 @@ object Expression {
           }
 
         case expr: InstanceOfExpressionContext =>
-          InstanceOfExpression(
-            Expression.construct(expr.expression()),
-            TypeReference.construct(expr.typeRef())
-          )
+          val (typeName, occurrences) = TypeReference.constructWithOccurrences(expr.typeRef())
+          InstanceOfExpression(Expression.construct(expr.expression()), typeName, occurrences)
 
         case expr: EqualityExpressionContext =>
           val op = Option(expr.EQUAL())

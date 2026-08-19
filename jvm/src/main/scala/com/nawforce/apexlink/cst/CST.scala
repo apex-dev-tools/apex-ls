@@ -17,7 +17,7 @@ import com.nawforce.apexlink.diagnostics.IssueOps
 import com.nawforce.apexlink.names.XNames.NameUtils
 import com.nawforce.pkgforce.diagnostics.Issue
 import com.nawforce.pkgforce.names.{Name, Names, TypeName}
-import com.nawforce.pkgforce.path.Positionable
+import com.nawforce.pkgforce.path.{PathLocation, Positionable}
 import com.nawforce.runtime.parsers.{CodeParser, Source}
 import io.github.apexdevtools.apexparser.ApexParser._
 
@@ -89,6 +89,11 @@ object Id {
 
 final case class QualifiedName(names: Seq[Name]) extends CST {
   def asTypeName(): TypeName = TypeName(names.reverse)
+
+  /** Locations of the individual identifiers of the name, empty when constructed without a parse
+    * context. Used to report against the final identifier of a written type reference.
+    */
+  var idLocations: Seq[PathLocation] = Nil
 }
 
 object QualifiedName {
@@ -99,8 +104,10 @@ object QualifiedName {
   def construct(qualifiedName: QualifiedNameContext): Option[QualifiedName] = {
     Option(qualifiedName).map(qualifiedName => {
       val ids = CodeParser.toScala(qualifiedName.id())
-      QualifiedName(ids.map(id => Names(Option(id).map(_.getText).getOrElse(""))))
+      val qname = QualifiedName(ids.map(id => Names(Option(id).map(_.getText).getOrElse(""))))
         .withContext(qualifiedName)
+      CST.sourceContext.value.foreach(source => qname.idLocations = ids.map(source.getLocation))
+      qname
     })
   }
 }

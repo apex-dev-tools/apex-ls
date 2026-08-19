@@ -67,8 +67,13 @@ final case class LiteralPrimary(literal: Literal) extends Primary {
   }
 }
 
-final case class TypeReferencePrimary(typeName: TypeName) extends Primary {
+final case class TypeReferencePrimary(
+  typeName: TypeName,
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
+) extends Primary {
   override def verify(input: ExprContext, context: ExpressionVerifyContext): ExprContext = {
+
+    SourceTypeAccess.validate(typeOccurrences, context)
 
     // Workaround miss parsing of Foo__c.SObjectType.class as a typeRef
     val targetTypeName =
@@ -183,8 +188,10 @@ final case class IdPrimary(id: Id) extends Primary {
 
   private def isTypeReference(context: ExpressionVerifyContext): Option[ExprContext] = {
     context.getTypeAndAddDependency(TypeName(id.name), context.thisType) match {
-      case Right(td) => Some(ExprContext(isStatic = Some(true), Some(td), td))
-      case _         => None
+      case Right(td) =>
+        SourceTypeAccess.validate(td, id.location, context)
+        Some(ExprContext(isStatic = Some(true), Some(td), td))
+      case _ => None
     }
   }
 
@@ -424,7 +431,8 @@ object Primary {
         case ctx: LiteralPrimaryContext =>
           LiteralPrimary(Literal.construct(ctx.literal())).withContext(ctx.literal())
         case ctx: TypeRefPrimaryContext =>
-          TypeReferencePrimary(TypeReference.construct(ctx.typeRef()))
+          val (typeName, occurrences) = TypeReference.constructWithOccurrences(ctx.typeRef())
+          TypeReferencePrimary(typeName, occurrences)
         case _: VoidPrimaryContext =>
           TypeReferencePrimary(TypeName.Void)
         case id: IdPrimaryContext =>

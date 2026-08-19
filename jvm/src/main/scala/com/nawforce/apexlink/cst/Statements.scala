@@ -327,8 +327,12 @@ object ForControl {
   * @param id loop variable identifier
   * @param expression iteration expression
   */
-final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expression)
-    extends ForControl {
+final case class EnhancedForControl(
+  typeName: TypeName,
+  id: Id,
+  expression: Expression,
+  typeOccurrences: ArraySeq[SourceTypeOccurrence] = SourceTypeOccurrence.empty
+) extends ForControl {
 
   /** Add vars introduced by the control to a context */
   override def addVars(context: ScopeVerifyContext): Unit = {
@@ -337,6 +341,7 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
 
   override def verify(context: ScopeVerifyContext): Unit = {
     id.validate(context)
+    SourceTypeAccess.validate(typeOccurrences, context)
 
     // Check expression first to build dependencies before we can bail out
     val exprContext = expression.verify(context)
@@ -409,10 +414,12 @@ final case class EnhancedForControl(typeName: TypeName, id: Id, expression: Expr
 object EnhancedForControl {
 
   def construct(from: EnhancedForControlContext): EnhancedForControl = {
+    val (typeName, occurrences) = TypeReference.constructWithOccurrences(from.typeRef())
     EnhancedForControl(
-      TypeReference.construct(from.typeRef()),
+      typeName,
       Id.construct(from.id()),
-      Expression.construct(from.expression())
+      Expression.construct(from.expression()),
+      occurrences
     ).withContext(from)
   }
 }
@@ -591,6 +598,11 @@ final case class CatchClause(
             context.module.any
           case Right(td) =>
             if (exceptionTypeName.name.endsWith(Names.Exception)) {
+              SourceTypeAccess.validate(
+                td,
+                qname.idLocations.lastOption.getOrElse(qname.location),
+                context
+              )
               td
             } else {
               context.log(
