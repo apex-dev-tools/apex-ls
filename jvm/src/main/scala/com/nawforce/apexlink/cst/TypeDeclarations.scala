@@ -170,7 +170,7 @@ object ClassDeclaration {
       implementsType,
       bodyDeclarations
     ).withContext(classDeclaration)
-    td.superTypeOccurrences = extendOccurrences ++ implementsOccurrences
+    td.superTypeOccurrences = SourceTypeOccurrence.concat(extendOccurrences, implementsOccurrences)
     typeContext.freeze(td)
     td
   }

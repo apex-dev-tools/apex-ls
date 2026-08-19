@@ -398,6 +398,66 @@ class NestedTypeVisibilityTest extends AnyFunSuite with TestHelper {
     assertClean("global class Target {}", "global class Dummy { Target a; }")
   }
 
+  // Unqualified names inherited from a superclass in another file
+  //
+  // Occurrences are only collected for qualified names, since an unqualified name is either a top
+  // level type or a nested type that is visible from where it is written -- with one exception,
+  // a nested type Apex resolves through the superclass. These are not diagnosed at type reference
+  // sites. The tests below pin that gap; it is a false negative, never a false positive, and the
+  // qualified form is unaffected. Sites that check an already resolved declaration rather than a
+  // written type reference, construction and catch clauses, do still report.
+
+  private val inheritedTarget =
+    "global virtual class Target { private class Hidden { Hidden() {} } " +
+      "private class HiddenException extends Exception {} }"
+
+  test("Qualified inherited private nested type is diagnosed") {
+    assertHidden(inheritedTarget, "global class Dummy extends Target { Target.Hidden a; }")
+  }
+
+  test("Unqualified inherited private nested type is not diagnosed at type reference sites") {
+    Seq(
+      "Hidden a;",
+      "List<Hidden> a;",
+      "void func() { Hidden a; }",
+      "void func(Hidden a) {}",
+      "Hidden func() { return null; }",
+      "void func(Object o) { Object a = (Hidden)o; }",
+      "void func(Object o) { Boolean a = o instanceof Hidden; }",
+      "void func() { Type a = Hidden.class; }"
+    ).foreach(body =>
+      assertHiddenCount(inheritedTarget, s"global class Dummy extends Target { $body }", 0)
+    )
+  }
+
+  test("Unqualified inherited private nested type is diagnosed on construction") {
+    assertHiddenCount(
+      inheritedTarget,
+      "global class Dummy extends Target { void func() { Object a = new Hidden(); } }",
+      1
+    )
+  }
+
+  test("Unqualified inherited private nested type is diagnosed in a catch clause") {
+    assertHiddenCount(
+      inheritedTarget,
+      "global class Dummy extends Target { void func() { try {} catch (HiddenException e) {} } }",
+      1
+    )
+  }
+
+  test("Unqualified same file nested type is never diagnosed") {
+    assert(
+      typeDeclarations(
+        Map(
+          "Dummy.cls" ->
+            "global class Dummy { private class Hidden {} class Peer extends Dummy { Hidden a; } }"
+        )
+      ).nonEmpty
+    )
+    assert(!dummyIssues.contains("not visible"))
+  }
+
   test("Nested non-Apex declarations are never diagnosed") {
     // A Visualforce component is a nested type of the Component declaration but is not an Apex
     // declaration, applying the rule to it caused false positives during investigation

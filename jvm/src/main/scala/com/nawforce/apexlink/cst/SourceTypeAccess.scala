@@ -23,13 +23,31 @@ import scala.collection.immutable.ArraySeq
 
 /** A type explicitly written in Apex source along with the location of the final identifier of the
   * written name. A single type reference such as 'Map<String, Outer.Hidden[]>' yields an occurrence
-  * for each written component so that a diagnostic can be reported against the component at fault
-  * rather than against the normalized collection wrapper.
+  * for each written component that could denote a nested type, so that a diagnostic can be reported
+  * against the component at fault rather than against the normalized collection wrapper.
+  *
+  * Only qualified names are recorded, see TypeReference; an unqualified name is either a top level
+  * type or resolves to a nested type that is visible from where it is written.
   */
 final case class SourceTypeOccurrence(typeName: TypeName, location: PathLocation)
 
 object SourceTypeOccurrence {
   val empty: ArraySeq[SourceTypeOccurrence] = ArraySeq.empty
+
+  /** Join two occurrence lists, keeping the shared empty instance when neither recorded anything. */
+  def concat(
+    left: ArraySeq[SourceTypeOccurrence],
+    right: ArraySeq[SourceTypeOccurrence]
+  ): ArraySeq[SourceTypeOccurrence] = {
+    if (left.isEmpty) right
+    else if (right.isEmpty) left
+    else left ++ right
+  }
+
+  /** Join occurrence lists, keeping the shared empty instance when none recorded anything. */
+  def concat(parts: Seq[ArraySeq[SourceTypeOccurrence]]): ArraySeq[SourceTypeOccurrence] = {
+    if (parts.forall(_.isEmpty)) empty else ArraySeq.from(parts.flatten)
+  }
 }
 
 /** Validation of the accessibility of types that are explicitly written in Apex source.

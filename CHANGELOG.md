@@ -28,7 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Errors when an inaccessible nested Apex class, interface, or enum is written explicitly in
   source, covering declared, parameter, return, construction, cast, `instanceof`, type literal,
   qualifier, catch, for-loop, switch, extends and implements positions, honouring same-file access
-  and the `@TestVisible` unit-test exception (#341)
+  and the `@TestVisible` unit-test exception. Type reference positions are checked for qualified
+  names such as `Outer.Hidden`; a name Apex resolves unqualified through a superclass in another
+  file is not reported there (#341)
 
 ### Changed
 

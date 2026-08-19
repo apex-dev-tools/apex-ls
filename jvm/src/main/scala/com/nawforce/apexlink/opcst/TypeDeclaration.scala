@@ -174,7 +174,8 @@ private[opcst] object OutlineParserClassDeclaration {
       implementsType,
       bodyDeclarations
     )
-    declaration.superTypeOccurrences = extendOccurrences ++ implementsOccurrences
+    declaration.superTypeOccurrences =
+      SourceTypeOccurrence.concat(extendOccurrences, implementsOccurrences)
     stampLocation(
       declaration,
       ctd.location.copy(

@@ -90,10 +90,22 @@ private[cst] object ANTLRCST {
 
 object TypeReference {
 
-  /** Accumulator for the located type occurrences of a written type reference. A null accumulator
-    * disables collection so the common construction path does no extra work.
+  /** Accumulator for the located type occurrences of a written type reference. The backing buffer
+    * is only created if something is actually recorded, and a null accumulator disables collection
+    * altogether so the common construction path does no extra work.
     */
-  private type Occurrences = mutable.ArrayBuffer[SourceTypeOccurrence]
+  private final class Occurrences {
+    private var buffer: mutable.ArrayBuffer[SourceTypeOccurrence] = _
+
+    def add(typeName: TypeName, location: PathLocation): Unit = {
+      if (buffer == null)
+        buffer = new mutable.ArrayBuffer[SourceTypeOccurrence](2)
+      buffer.append(SourceTypeOccurrence(typeName, location))
+    }
+
+    def result(): ArraySeq[SourceTypeOccurrence] =
+      if (buffer == null) SourceTypeOccurrence.empty else ArraySeq.from(buffer)
+  }
 
   def construct(typeRefs: List[TypeRefContext]): List[TypeName] = {
     typeRefs.map(x => TypeReference.construct(x))
@@ -119,9 +131,9 @@ object TypeReference {
   def constructWithOccurrences(
     typeRefOpt: Option[CSTTypeReference]
   ): (TypeName, ArraySeq[SourceTypeOccurrence]) = {
-    val accum    = new mutable.ArrayBuffer[SourceTypeOccurrence]()
+    val accum    = new Occurrences
     val typeName = build(typeRefOpt, accum)
-    (typeName, if (accum.isEmpty) SourceTypeOccurrence.empty else ArraySeq.from(accum))
+    (typeName, accum.result())
   }
 
   private def build(typeRefOpt: Option[CSTTypeReference], accum: Occurrences): TypeName = {
@@ -133,12 +145,12 @@ object TypeReference {
 
           // Only decode head as rest can't legally be in EncodedName format
           val typeName = createTypeName(decodeName(names.head, accum), names.tail, accum)
-          if (accum != null) {
+          if (accum != null && names.sizeIs > 1) {
+            // Only a qualified name can denote a nested type, so 'String', 'Account' and the like
+            // are never recorded; type arguments record themselves through the recursion above.
             // Record against the last written identifier, e.g. the 'Hidden' of 'Outer.Hidden'. The
             // array subscripts are excluded so we validate the component, not the List wrapper.
-            names.lastOption
-              .flatMap(_.idLocation)
-              .foreach(location => accum.append(SourceTypeOccurrence(typeName, location)))
+            names.last.idLocation.foreach(location => accum.add(typeName, location))
           }
           typeName.withArraySubscripts(arraySubs)
         }
@@ -201,6 +213,6 @@ object TypeList {
     typeList: TypeListContext
   ): (ArraySeq[TypeName], ArraySeq[SourceTypeOccurrence]) = {
     val results = CodeParser.toScala(typeList.typeRef()).map(TypeReference.constructWithOccurrences)
-    (results.map(_._1), results.flatMap(_._2))
+    (results.map(_._1), SourceTypeOccurrence.concat(results.map(_._2)))
   }
 }

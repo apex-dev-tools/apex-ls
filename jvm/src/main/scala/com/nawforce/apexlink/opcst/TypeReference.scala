@@ -105,6 +105,6 @@ private[opcst] object TypeList {
   ): (ArraySeq[TypeName], ArraySeq[SourceTypeOccurrence]) = {
     val results =
       ArraySeq.from(typeList.map(t => TypeReference.constructWithOccurrences(Some(t), path)))
-    (results.map(_._1), results.flatMap(_._2))
+    (results.map(_._1), SourceTypeOccurrence.concat(results.map(_._2)))
   }
 }
