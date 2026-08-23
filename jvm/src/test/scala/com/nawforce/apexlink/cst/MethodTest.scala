@@ -493,6 +493,134 @@ class MethodTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Static aura enabled method with disallowed platform return types") {
+    val disallowed = Map(
+      "Schema.SObjectType"            -> "Schema.SObjectType",
+      "SObjectType"                   -> "Schema.SObjectType",
+      "Schema.DescribeSObjectResult"  -> "Schema.DescribeSObjectResult",
+      "Schema.DescribeFieldResult"    -> "Schema.DescribeFieldResult",
+      "Schema.RecordTypeInfo"         -> "Schema.RecordTypeInfo",
+      "Database.QueryLocator"         -> "Database.QueryLocator",
+      "Database.SaveResult"           -> "Database.SaveResult",
+      "Exception"                     -> "System.Exception",
+      "System.PageReference"          -> "System.PageReference",
+      "Messaging.SingleEmailMessage"  -> "Messaging.SingleEmailMessage",
+      "ApexPages.StandardController"  -> "ApexPages.StandardController",
+      "Approval.ProcessResult"        -> "Approval.ProcessResult",
+      "QuickAction.QuickActionResult" -> "QuickAction.QuickActionResult"
+    )
+    disallowed.foreach(kv => {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls" -> s"public class Dummy { @AuraEnabled public static ${kv._1} fn(){ return null;} }"
+        )
+      ) { root: PathLike =>
+        createOrg(root)
+        assert(
+          getMessages(root.join("Dummy.cls")) ==
+            s"Error: line 1 at 13-18: AuraEnabled methods do not support return type of ${kv._2}\n"
+        )
+      }
+    })
+  }
+
+  test("Static aura enabled method with disallowed type nested in return type") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @AuraEnabled public static Map<SObjectType, List<SObject>> fn(){ return null;} }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 13-18: AuraEnabled methods do not support return type of System.Map<Schema.SObjectType, System.List<System.SObject>>\n"
+      )
+    }
+  }
+
+  test("Static aura enabled method with allowed return types") {
+    Seq(
+      "Object",
+      "Blob",
+      "Id",
+      "SObject",
+      "System.Type",
+      "Database.DMLOptions",
+      "Schema.DisplayType",
+      "System.Url",
+      "Iterable<String>"
+    ).foreach(typeName => {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls" -> s"public class Dummy { @AuraEnabled public static $typeName fn(){ return null;} }"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+      }
+    })
+  }
+
+  test("Static aura enabled method returning user exception is allowed") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public class MyException extends Exception {} @AuraEnabled public static MyException fn(){ return null;} }"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Non static aura enabled method without get prefix") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "public class Dummy { @AuraEnabled public String other(){ return null;} }")
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 48-53: Non static AuraEnabled methods must be named with a prefix 'get'\n"
+      )
+    }
+  }
+
+  test("Non static aura enabled method with get prefix") {
+    Seq("getFoo", "GETFOO", "get", "getter").foreach(name => {
+      FileSystemHelper.run(
+        Map(
+          "Dummy.cls" -> s"public class Dummy { @AuraEnabled public String $name(){ return null;} }"
+        )
+      ) { root: PathLike =>
+        createHappyOrg(root)
+      }
+    })
+  }
+
+  test("Static aura enabled method without get prefix is allowed") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { @AuraEnabled public static String other(){ return null;} }"
+      )
+    ) { root: PathLike =>
+      createHappyOrg(root)
+    }
+  }
+
+  test("Non static aura enabled method without get prefix in inner class") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "public class Dummy { public class Inner { @AuraEnabled public String other(){ return null;} } }"
+      )
+    ) { root: PathLike =>
+      createOrg(root)
+      assert(
+        getMessages(
+          root.join("Dummy.cls")
+        ) == "Error: line 1 at 69-74: Non static AuraEnabled methods must be named with a prefix 'get'\n"
+      )
+    }
+  }
+
   test("Static method with protected modifier") {
     FileSystemHelper.run(
       Map(

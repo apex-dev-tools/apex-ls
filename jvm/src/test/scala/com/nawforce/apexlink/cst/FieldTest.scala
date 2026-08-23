@@ -320,4 +320,66 @@ class FieldTest extends AnyFunSuite with TestHelper {
     assert(getMessages(root.join("Consumer.cls")).isEmpty)
   }
 
+  test("AuraEnabled field with disallowed type") {
+    val disallowed = Map(
+      "Set<String>"                  -> "System.Set<System.String>",
+      "SObjectType"                  -> "Schema.SObjectType",
+      "Schema.SObjectType"           -> "Schema.SObjectType",
+      "Schema.DescribeFieldResult"   -> "Schema.DescribeFieldResult",
+      "Database.QueryLocator"        -> "Database.QueryLocator",
+      "Exception"                    -> "System.Exception",
+      "System.PageReference"         -> "System.PageReference",
+      "Messaging.SingleEmailMessage" -> "Messaging.SingleEmailMessage"
+    )
+    disallowed.foreach(kv => {
+      typeDeclaration(s"public class Dummy { @AuraEnabled public ${kv._1} f; }")
+      assert(
+        dummyIssues.endsWith(s"AuraEnabled fields do not support type of ${kv._2}\n"),
+        dummyIssues
+      )
+    })
+  }
+
+  test("AuraEnabled field with disallowed nested type") {
+    typeDeclaration("public class Dummy { @AuraEnabled public Map<SObjectType, List<SObject>> f; }")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 73-74: AuraEnabled fields do not support type of System.Map<Schema.SObjectType, System.List<System.SObject>>\n"
+    )
+  }
+
+  test("AuraEnabled field with allowed type") {
+    Seq("String", "Object", "SObject", "Account", "List<String>", "Database.DMLOptions")
+      .foreach(typeName => {
+        typeDeclaration(s"public class Dummy { @AuraEnabled public $typeName f; }")
+        assert(!hasIssues, typeName)
+      })
+  }
+
+  test("AuraEnabled property with disallowed field type is allowed") {
+    Seq("Set<String>", "Schema.SObjectType", "Exception").foreach(typeName => {
+      typeDeclaration(s"public class Dummy { @AuraEnabled public $typeName p { get; set; } }")
+      assert(!hasIssues, typeName)
+    })
+  }
+
+  test("AuraEnabled field can not be static") {
+    typeDeclaration("public class Dummy { @AuraEnabled public static String f; }")
+    assert(dummyIssues == "Error: line 1 at 55-56: AuraEnabled fields cannot be static\n")
+  }
+
+  test("AuraEnabled static property is allowed") {
+    typeDeclaration("public class Dummy { @AuraEnabled public static String p { get; set; } }")
+    assert(!hasIssues)
+  }
+
+  test("AuraEnabled field rules apply to inner class fields") {
+    typeDeclaration(
+      "public class Dummy { public class Inner { @AuraEnabled public Set<String> f; } }"
+    )
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 74-75: AuraEnabled fields do not support type of System.Set<System.String>\n"
+    )
+  }
 }

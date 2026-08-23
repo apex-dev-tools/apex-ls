@@ -15,7 +15,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignable}
 import com.nawforce.apexlink.names.TypeNames.TypeNameUtils
-import com.nawforce.apexlink.names.{TypeNames, XNames}
+import com.nawforce.apexlink.names.{AuraEnabledTypes, TypeNames, XNames}
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.apex.{ApexClassDeclaration, ApexDeclaration, ApexMethodLike}
 import com.nawforce.apexlink.types.core.MethodDeclaration.emptyMethodDeclarations
@@ -233,8 +233,6 @@ final case class MethodMap private (
 object MethodMap {
   type WorkingMap = mutable.HashMap[(Name, Int), List[MethodDeclaration]]
 
-  private val DISALLOWED_TYPES_FOR_AURAENABLED = List(TypeNames.Set$)
-
   /** Method names on System.List/System.Set that require invariant matching of their collection
     * argument's type parameter, see [[MethodMap.isInvariantCollectionMutator]].
     */
@@ -384,7 +382,7 @@ object MethodMap {
           checkInterfaces(ad, location, td.isAbstract, workingMap, errors)
       })
 
-    // Valida auraEnabled methods to disallow Sets
+    // Validate auraEnabled methods only use supported types
     checkAuraEnabledMethods(location, errors, workingMap)
 
     // Finally, construct the actual MethodMap
@@ -409,18 +407,12 @@ object MethodMap {
     workingMap: WorkingMap
   ): Unit = {
 
-    def hasDisallowedTypes(typeName: TypeName): Boolean = {
-      DISALLOWED_TYPES_FOR_AURAENABLED.exists(disAllowed => {
-        disAllowed.name == typeName.name && disAllowed.outer == typeName.outer
-      }) || typeName.params.exists(hasDisallowedTypes)
-    }
-
     val auraEnabledMethods = workingMap.values.flatten.collect {
       case m: ApexMethodDeclaration if m.modifiers.contains(AURA_ENABLED_ANNOTATION) => m
     }
 
     auraEnabledMethods
-      .filter(_.parameters.map(_.typeName).exists(hasDisallowedTypes))
+      .filter(_.parameters.map(_.typeName).exists(AuraEnabledTypes.isDisallowed))
       .foreach(m =>
         errors.append(
           new Issue(
@@ -428,14 +420,14 @@ object MethodMap {
             Diagnostic(
               ERROR_CATEGORY,
               location.get.location,
-              s"AuraEnabled methods do not support parameter type of ${m.parameters.map(_.typeName).filter(hasDisallowedTypes).mkString(", ")}"
+              s"AuraEnabled methods do not support parameter type of ${m.parameters.map(_.typeName).filter(AuraEnabledTypes.isDisallowed).mkString(", ")}"
             )
           )
         )
       )
 
     auraEnabledMethods
-      .filter(m => hasDisallowedTypes(m.typeName))
+      .filter(m => AuraEnabledTypes.isDisallowed(m.typeName))
       .foreach(m => {
         errors.append(
           new Issue(

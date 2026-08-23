@@ -16,7 +16,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.finding.{RelativeTypeContext, RelativeTypeName}
 import com.nawforce.apexlink.memory.SkinnySet
-import com.nawforce.apexlink.names.TypeNames
+import com.nawforce.apexlink.names.{AuraEnabledTypes, TypeNames}
 import com.nawforce.apexlink.types.apex.{
   ApexBlockLike,
   ApexConstructorLike,
@@ -270,6 +270,16 @@ class ApexMethodDeclaration(
         context.logError(id.location, "Abstract methods do not need virtual keyword")
     }
 
+    if (
+      modifiers.contains(AURA_ENABLED_ANNOTATION) && !isStatic &&
+      !name.value.toLowerCase.startsWith("get")
+    ) {
+      context.logError(
+        id.location,
+        "Non static AuraEnabled methods must be named with a prefix 'get'"
+      )
+    }
+
     returnTypeName.dependOn(id.location, context)
     id.validateForMethod(context)
     parameters.foreach(_.verify(context))
@@ -369,6 +379,20 @@ final case class ApexFieldDeclaration(
 
     if (isStatic && modifiers.contains(PROTECTED_MODIFIER)) {
       context.log(Issue(ERROR_CATEGORY, location, s"protected field '${id.name}' cannot be static"))
+    }
+
+    // Both rules are specific to fields, an AuraEnabled property may be static and may use any type
+    if (modifiers.contains(AURA_ENABLED_ANNOTATION)) {
+      if (isStatic)
+        context.logError(id.location, "AuraEnabled fields cannot be static")
+
+      val resolvedTypeName =
+        context.getTypeFor(typeName, context.thisType).map(_.typeName).getOrElse(typeName)
+      if (AuraEnabledTypes.isDisallowed(resolvedTypeName))
+        context.logError(
+          id.location,
+          s"AuraEnabled fields do not support type of $resolvedTypeName"
+        )
     }
 
     SourceTypeAccess.validate(typeOccurrences, context)
