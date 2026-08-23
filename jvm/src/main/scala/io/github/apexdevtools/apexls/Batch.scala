@@ -34,7 +34,8 @@ object Batch {
       DependencyReportCommand,
       DependencyCountsCommand,
       DependencyBombsCommand,
-      TestClassesCommand
+      TestClassesCommand,
+      LoadBenchmarkCommand
     )
 
   def main(args: Array[String]): Unit = {
