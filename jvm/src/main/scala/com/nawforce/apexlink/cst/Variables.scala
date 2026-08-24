@@ -16,6 +16,7 @@ package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.cst.AssignableSupport.{AssignableOptions, isAssignableDeclaration}
 import com.nawforce.apexlink.org.Referenceable
+import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.diagnostics.{Diagnostic, ERROR_CATEGORY, Issue, WARNING_CATEGORY}
 import com.nawforce.pkgforce.modifiers.{ApexModifiers, FINAL_MODIFIER, ModifierResults}
 import com.nawforce.pkgforce.names.TypeName
@@ -30,7 +31,9 @@ final case class VariableDeclarator(
   id: Id,
   init: Option[Expression]
 ) extends CST {
-  def verify(input: ExprContext, context: ScopeVerifyContext): Unit = {
+
+  /** Verify and return the resolved type of the declared variable, if it could be resolved. */
+  def verify(input: ExprContext, context: ScopeVerifyContext): Option[TypeDeclaration] = {
     id.validate(context)
 
     val lhsType = context.getTypeAndAddDependency(typeName, context.thisType).toOption
@@ -69,6 +72,8 @@ final case class VariableDeclarator(
 
     // Needed for non-for loop vars where addVars is not called
     addVars(context)
+
+    lhsType
   }
 
   def addVars(context: ScopeVerifyContext): Unit = {

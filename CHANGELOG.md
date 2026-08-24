@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   time, phase breakdown, size profile and full effective configuration as JSON, driven by
   `tools/load-benchmark` for a fresh JVM per run, fixed heap, repetition, interleaving, bounded
   parallelism and optional JFR capture, with a committed `apex-samples` v1.4.0 baseline (#539)
+- Errors for the `@AuraEnabled` shape and placement rules the platform enforces: the full set of
+  platform types that cannot be used as an `@AuraEnabled` return, parameter or field type (only
+  `Set` was recognised before, so `Map<SObjectType, List<SObject>>` and other common cases were
+  missed), `AuraEnabled fields do not support type of X` for fields (properties stay unrestricted),
+  `AuraEnabled fields cannot be static` (static properties stay legal), and
+  `Non static AuraEnabled methods must be named with a prefix 'get'` (#326)
 - Explicit `Location.point`, `Location.wholeLine`, and half-open `Location.span` factories, plus
   source extraction that clamps whole-line sentinels before line endings (#362)
 - Source-accurate, half-open lexical ranges for successfully parsed XML elements on JVM and

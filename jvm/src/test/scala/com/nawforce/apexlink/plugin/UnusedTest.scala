@@ -180,7 +180,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
   test("Unused @AuraEnabled method") {
     FileSystemHelper.run(
       Map(
-        "Dummy.cls" -> "public class Dummy {@AuraEnabled public void foo() {}}",
+        "Dummy.cls" -> "public class Dummy {@AuraEnabled public void getFoo() {}}",
         "Foo.cls"   -> "public class Foo{ {Type t = Dummy.class;} }"
       )
     ) { root: PathLike =>
@@ -288,7 +288,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
   test("Nested @AuraEnabled method") {
     FileSystemHelper.run(
       Map(
-        "Dummy.cls" -> "public class Dummy {public class Inner {public @AuraEnabled void foo() {}} }",
+        "Dummy.cls" -> "public class Dummy {public class Inner {public @AuraEnabled void getFoo() {}} }",
         "Foo.cls" -> "public class Foo{ {Type t1 = Dummy.class; Type t2 = Dummy.Inner.class;} }"
       )
     ) { root: PathLike =>
