@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A repeatable workspace load benchmark, a `benchmark-load` JVM batch command reporting total load
+  time, phase breakdown, size profile and full effective configuration as JSON, driven by
+  `tools/load-benchmark` for a fresh JVM per run, fixed heap, repetition, interleaving, bounded
+  parallelism and optional JFR capture, with a committed `apex-samples` v1.4.0 baseline (#539)
 - Explicit `Location.point`, `Location.wholeLine`, and half-open `Location.span` factories, plus
   source extraction that clamps whole-line sentinels before line endings (#362)
 - Source-accurate, half-open lexical ranges for successfully parsed XML elements on JVM and

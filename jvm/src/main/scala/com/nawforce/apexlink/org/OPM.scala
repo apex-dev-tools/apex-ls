@@ -171,7 +171,9 @@ object OPM {
 
     // After packages/module setup load metadata & flush to cache
     OrgInfo.current.withValue(this) {
-      packages.foreach(_.modules.foreach(_.freeze()))
+      LoggerOps.debugTime("Modules deployed") {
+        packages.foreach(_.modules.foreach(_.freeze()))
+      }
       CodeParser.clearCaches()
       if (autoFlush)
         flusher.refreshAndFlush()

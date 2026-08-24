@@ -1,0 +1,12 @@
+{
+  "apex-samples": {
+    "description": "Public baseline corpus, three sample projects spanning small, medium and large",
+    "root": "$SAMPLES",
+    "ref": "v1.4.0",
+    "projects": [
+      { "name": "apex-recipes", "path": "apex-recipes/apex-recipes" },
+      { "name": "EDA", "path": "EDA/EDA" },
+      { "name": "Cumulus", "path": "Cumulus" }
+    ]
+  }
+}

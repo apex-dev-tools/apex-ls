@@ -1,0 +1,2338 @@
+{
+  "schemaVersion": 1,
+  "generated": "2026-08-23T22:38:17Z",
+  "harness": {
+    "repetitions": 9,
+    "firstRunDiscarded": true,
+    "heap": "4g",
+    "java": "openjdk version \"17.0.20\" 2026-07-21",
+    "classpath": "<classpath>",
+    "jfr": false,
+    "note": "Apple silicon laptop with other development work running concurrently; a record of the format and of one machine at one commit, not a threshold."
+  },
+  "apexLs": {
+    "commit": "0b41b9f63f959e3bd8047804e1fca996787f36f2",
+    "describe": "v6.2.0-32-g0b41b9f63"
+  },
+  "corpus": {
+    "name": "apex-samples",
+    "ref": "v1.4.0",
+    "commit": "1556acfbffe2550667471c92686209cb9c2880bf"
+  },
+  "workspaces": [
+    {
+      "name": "apex-recipes",
+      "identity": "sha256:4061dee52921700c",
+      "path": null,
+      "variants": [
+        {
+          "label": "default",
+          "configuration": {
+            "parser": "Outline Parser - Multithreaded",
+            "parserOption": "OutlineMulti",
+            "cache": {
+              "enabled": false,
+              "directoryProvided": false,
+              "directory": null
+            },
+            "unused": true,
+            "unusedOnError": false,
+            "logging": "none",
+            "autoFlush": false
+          },
+          "parallelism": {
+            "requested": null,
+            "availableProcessors": 10,
+            "contextNumThreads": null,
+            "contextMinThreads": null,
+            "contextMaxThreads": null
+          },
+          "size": {
+            "packageCount": 1,
+            "moduleCount": 1,
+            "apexTypeCount": 142,
+            "apexClassFileCount": 139,
+            "triggerFileCount": 3,
+            "metadataFileCount": 330,
+            "apexSourceBytes": 610931,
+            "byNature": {
+              "apex": 139,
+              "trigger": 3,
+              "label": 1,
+              "flow": 1,
+              "sObject": 14
+            }
+          },
+          "issues": {
+            "errors": 19,
+            "warnings": 4,
+            "unused": 141
+          },
+          "environment": {
+            "javaVersion": "17.0.20",
+            "javaVendor": "Homebrew",
+            "jvmName": "OpenJDK 64-Bit Server VM",
+            "jvmVersion": "17.0.20+0",
+            "osName": "Mac OS X",
+            "osArch": "aarch64",
+            "osVersion": "26.5.2",
+            "maxHeapBytes": 4294967296,
+            "garbageCollectors": [
+              "G1 Old Generation",
+              "G1 Young Generation"
+            ],
+            "jvmArguments": [
+              "-Xms4g",
+              "-Xmx4g"
+            ],
+            "implementationBuild": "1787524386777"
+          },
+          "invocation": [
+            "<java>",
+            "-Xms4g",
+            "-Xmx4g",
+            "-cp",
+            "<classpath>",
+            "io.github.apexdevtools.apexls.Batch",
+            "benchmark-load",
+            "--workspace",
+            "<workspace>",
+            "--parser",
+            "OutlineMulti",
+            "--unused",
+            "true",
+            "--unused-on-error",
+            "false",
+            "--logging",
+            "none",
+            "--no-cache"
+          ],
+          "statistics": {
+            "totalLoadMs": {
+              "n": 8,
+              "medianMs": 1709.126,
+              "minMs": 1303.987,
+              "maxMs": 2779.399,
+              "spreadMs": 1475.412,
+              "madMs": 388.945,
+              "samplesMs": [
+                2752.509,
+                2779.399,
+                1336.375,
+                1337.037,
+                1714.387,
+                1703.866,
+                1303.987,
+                2610.066
+              ]
+            },
+            "cacheFlushMs": null
+          },
+          "consistent": true,
+          "runs": [
+            {
+              "index": 0,
+              "discarded": true,
+              "totalLoadMs": 1704.624,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 1184.777,
+                  "maxMs": 1184.777,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 249.776,
+                  "maxMs": 47.309,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 1585.157,
+                  "maxMs": 1585.157,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 1689.118,
+                  "maxMs": 1689.118,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.679,
+                  "maxMs": 0.679,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 5.695,
+                  "maxMs": 5.695,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 14.398,
+                  "maxMs": 14.398,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 910.289,
+                  "maxMs": 96.686,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 84.286,
+                  "maxMs": 84.286,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 1,
+              "discarded": false,
+              "totalLoadMs": 2752.509,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 1904.832,
+                  "maxMs": 1904.832,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 352.158,
+                  "maxMs": 61.202,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 2562.071,
+                  "maxMs": 2562.071,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 2725.55,
+                  "maxMs": 2725.55,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.908,
+                  "maxMs": 1.908,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 8.867,
+                  "maxMs": 8.867,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 59.383,
+                  "maxMs": 59.383,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 1515.672,
+                  "maxMs": 185.727,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 134.558,
+                  "maxMs": 134.558,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 2,
+              "discarded": false,
+              "totalLoadMs": 2779.399,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 1948.314,
+                  "maxMs": 1948.314,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 402.384,
+                  "maxMs": 78.728,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 2549.184,
+                  "maxMs": 2549.184,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 2760.173,
+                  "maxMs": 2760.173,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.211,
+                  "maxMs": 1.211,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 8.511,
+                  "maxMs": 8.511,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 26.171,
+                  "maxMs": 26.171,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 1514.026,
+                  "maxMs": 198.704,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 177.83,
+                  "maxMs": 177.83,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 3,
+              "discarded": false,
+              "totalLoadMs": 1336.375,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 930.331,
+                  "maxMs": 930.331,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 213.373,
+                  "maxMs": 34.681,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 1233.212,
+                  "maxMs": 1233.212,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 1323.694,
+                  "maxMs": 1323.694,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.624,
+                  "maxMs": 0.624,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 4.967,
+                  "maxMs": 4.967,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 15.589,
+                  "maxMs": 15.589,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 706.041,
+                  "maxMs": 84.88,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 72.889,
+                  "maxMs": 72.889,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 4,
+              "discarded": false,
+              "totalLoadMs": 1337.037,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 920.474,
+                  "maxMs": 920.474,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 210.746,
+                  "maxMs": 36.01,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 1241.842,
+                  "maxMs": 1241.842,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 1323.609,
+                  "maxMs": 1323.609,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.627,
+                  "maxMs": 0.627,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 5.107,
+                  "maxMs": 5.107,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 14.318,
+                  "maxMs": 14.318,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 689.588,
+                  "maxMs": 71.957,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 65.593,
+                  "maxMs": 65.593,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 5,
+              "discarded": false,
+              "totalLoadMs": 1714.387,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 1210.475,
+                  "maxMs": 1210.475,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 229.576,
+                  "maxMs": 40.537,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 1603.359,
+                  "maxMs": 1603.359,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 1699.675,
+                  "maxMs": 1699.675,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.02,
+                  "maxMs": 1.02,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 11.154,
+                  "maxMs": 11.154,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 28.613,
+                  "maxMs": 28.613,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 960.975,
+                  "maxMs": 104.225,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 78.527,
+                  "maxMs": 78.527,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 6,
+              "discarded": false,
+              "totalLoadMs": 1703.866,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 1205.544,
+                  "maxMs": 1205.544,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 255.372,
+                  "maxMs": 45.461,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 1589.511,
+                  "maxMs": 1589.511,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 1688.505,
+                  "maxMs": 1688.505,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.37,
+                  "maxMs": 1.37,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 7.286,
+                  "maxMs": 7.286,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 14.622,
+                  "maxMs": 14.622,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 925.889,
+                  "maxMs": 105.728,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 80.482,
+                  "maxMs": 80.482,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 7,
+              "discarded": false,
+              "totalLoadMs": 1303.987,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 879.357,
+                  "maxMs": 879.357,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 208.801,
+                  "maxMs": 36.075,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 1206.501,
+                  "maxMs": 1206.501,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 1290.505,
+                  "maxMs": 1290.505,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.647,
+                  "maxMs": 0.647,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 5.063,
+                  "maxMs": 5.063,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 14.617,
+                  "maxMs": 14.617,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 651.499,
+                  "maxMs": 74.261,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 67.359,
+                  "maxMs": 67.359,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 8,
+              "discarded": false,
+              "totalLoadMs": 2610.066,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 1908.946,
+                  "maxMs": 1908.946,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 139,
+                  "totalMs": 328.679,
+                  "maxMs": 56.101,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 2450.027,
+                  "maxMs": 2450.027,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 2588.478,
+                  "maxMs": 2588.478,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.732,
+                  "maxMs": 0.732,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 8.164,
+                  "maxMs": 8.164,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 27.228,
+                  "maxMs": 27.228,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 142,
+                  "totalMs": 1551.827,
+                  "maxMs": 249.016,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 102.082,
+                  "maxMs": 102.082,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "EDA",
+      "identity": "sha256:7b3857d8eb5c97d5",
+      "path": null,
+      "variants": [
+        {
+          "label": "default",
+          "configuration": {
+            "parser": "Outline Parser - Multithreaded",
+            "parserOption": "OutlineMulti",
+            "cache": {
+              "enabled": false,
+              "directoryProvided": false,
+              "directory": null
+            },
+            "unused": true,
+            "unusedOnError": false,
+            "logging": "none",
+            "autoFlush": false
+          },
+          "parallelism": {
+            "requested": null,
+            "availableProcessors": 10,
+            "contextNumThreads": null,
+            "contextMinThreads": null,
+            "contextMaxThreads": null
+          },
+          "size": {
+            "packageCount": 2,
+            "moduleCount": 1,
+            "apexTypeCount": 638,
+            "apexClassFileCount": 601,
+            "triggerFileCount": 37,
+            "metadataFileCount": 1757,
+            "apexSourceBytes": 7338547,
+            "byNature": {
+              "apex": 601,
+              "trigger": 37,
+              "label": 1,
+              "page": 1,
+              "sObject": 35
+            }
+          },
+          "issues": {
+            "errors": 47,
+            "warnings": 37,
+            "unused": 378
+          },
+          "environment": {
+            "javaVersion": "17.0.20",
+            "javaVendor": "Homebrew",
+            "jvmName": "OpenJDK 64-Bit Server VM",
+            "jvmVersion": "17.0.20+0",
+            "osName": "Mac OS X",
+            "osArch": "aarch64",
+            "osVersion": "26.5.2",
+            "maxHeapBytes": 4294967296,
+            "garbageCollectors": [
+              "G1 Old Generation",
+              "G1 Young Generation"
+            ],
+            "jvmArguments": [
+              "-Xms4g",
+              "-Xmx4g"
+            ],
+            "implementationBuild": "1787524386777"
+          },
+          "invocation": [
+            "<java>",
+            "-Xms4g",
+            "-Xmx4g",
+            "-cp",
+            "<classpath>",
+            "io.github.apexdevtools.apexls.Batch",
+            "benchmark-load",
+            "--workspace",
+            "<workspace>",
+            "--parser",
+            "OutlineMulti",
+            "--unused",
+            "true",
+            "--unused-on-error",
+            "false",
+            "--logging",
+            "none",
+            "--no-cache"
+          ],
+          "statistics": {
+            "totalLoadMs": {
+              "n": 8,
+              "medianMs": 3997.111,
+              "minMs": 3204.666,
+              "maxMs": 6365.32,
+              "spreadMs": 3160.654,
+              "madMs": 587.549,
+              "samplesMs": [
+                5842.847,
+                6365.32,
+                3915.746,
+                3204.666,
+                4078.477,
+                3614.458,
+                3861.429,
+                5668.12
+              ]
+            },
+            "cacheFlushMs": null
+          },
+          "consistent": true,
+          "runs": [
+            {
+              "index": 0,
+              "discarded": true,
+              "totalLoadMs": 3986.726,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 3055.096,
+                  "maxMs": 3055.096,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 435.388,
+                  "maxMs": 68.248,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 3783.204,
+                  "maxMs": 3783.204,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 3969.031,
+                  "maxMs": 3969.031,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.791,
+                  "maxMs": 1.791,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 24.761,
+                  "maxMs": 24.761,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 53.082,
+                  "maxMs": 53.082,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 2527.053,
+                  "maxMs": 196.056,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 164.148,
+                  "maxMs": 164.148,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 1,
+              "discarded": false,
+              "totalLoadMs": 5842.847,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 4724.125,
+                  "maxMs": 4724.125,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 685.109,
+                  "maxMs": 105.51,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 5644.747,
+                  "maxMs": 5644.747,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 5827.265,
+                  "maxMs": 5827.265,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.795,
+                  "maxMs": 0.795,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 19.014,
+                  "maxMs": 19.014,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 36.973,
+                  "maxMs": 36.973,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 3925.158,
+                  "maxMs": 473.502,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 164.939,
+                  "maxMs": 164.939,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 2,
+              "discarded": false,
+              "totalLoadMs": 6365.32,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 4827.912,
+                  "maxMs": 4827.912,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 504.586,
+                  "maxMs": 87.651,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 6039.979,
+                  "maxMs": 6039.979,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 6336.389,
+                  "maxMs": 6336.389,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.712,
+                  "maxMs": 0.712,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 45.307,
+                  "maxMs": 45.307,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 153.418,
+                  "maxMs": 153.418,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 4240.466,
+                  "maxMs": 384.538,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 250.926,
+                  "maxMs": 250.926,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 3,
+              "discarded": false,
+              "totalLoadMs": 3915.746,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 3226.373,
+                  "maxMs": 3226.373,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 350.643,
+                  "maxMs": 50.703,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 3755.674,
+                  "maxMs": 3755.674,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 3903.301,
+                  "maxMs": 3903.301,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.7,
+                  "maxMs": 0.7,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 19.5,
+                  "maxMs": 19.5,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 45.164,
+                  "maxMs": 45.164,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 2858.612,
+                  "maxMs": 159.852,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 129.828,
+                  "maxMs": 129.828,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 4,
+              "discarded": false,
+              "totalLoadMs": 3204.666,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 2472.846,
+                  "maxMs": 2472.846,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 350.12,
+                  "maxMs": 48.839,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 3045.291,
+                  "maxMs": 3045.291,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 3191.936,
+                  "maxMs": 3191.936,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.677,
+                  "maxMs": 0.677,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 24.047,
+                  "maxMs": 24.047,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 36.226,
+                  "maxMs": 36.226,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 2039.834,
+                  "maxMs": 162.165,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 130.208,
+                  "maxMs": 130.208,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 5,
+              "discarded": false,
+              "totalLoadMs": 4078.477,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 3148.373,
+                  "maxMs": 3148.373,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 442.642,
+                  "maxMs": 65.453,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 3886.33,
+                  "maxMs": 3886.33,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 4065.194,
+                  "maxMs": 4065.194,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.542,
+                  "maxMs": 1.542,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 16.456,
+                  "maxMs": 16.456,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 43.788,
+                  "maxMs": 43.788,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 2604.947,
+                  "maxMs": 221.517,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 157.545,
+                  "maxMs": 157.545,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 6,
+              "discarded": false,
+              "totalLoadMs": 3614.458,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 2756.437,
+                  "maxMs": 2756.437,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 371.185,
+                  "maxMs": 58.027,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 3425.681,
+                  "maxMs": 3425.681,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 3600.43,
+                  "maxMs": 3600.43,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.75,
+                  "maxMs": 0.75,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 21.748,
+                  "maxMs": 21.748,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 43.105,
+                  "maxMs": 43.105,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 2298.492,
+                  "maxMs": 174.76,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 153.434,
+                  "maxMs": 153.434,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 7,
+              "discarded": false,
+              "totalLoadMs": 3861.429,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 3021.957,
+                  "maxMs": 3021.957,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 448.508,
+                  "maxMs": 78.491,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 3699.613,
+                  "maxMs": 3699.613,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 3848.932,
+                  "maxMs": 3848.932,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.791,
+                  "maxMs": 0.791,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 17.833,
+                  "maxMs": 17.833,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 52.216,
+                  "maxMs": 52.216,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 2475.084,
+                  "maxMs": 198.931,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 132.359,
+                  "maxMs": 132.359,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 8,
+              "discarded": false,
+              "totalLoadMs": 5668.12,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 4224.318,
+                  "maxMs": 4224.318,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 601,
+                  "totalMs": 521.502,
+                  "maxMs": 109.547,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 5364.142,
+                  "maxMs": 5364.142,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 5640.805,
+                  "maxMs": 5640.805,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.834,
+                  "maxMs": 0.834,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 22.042,
+                  "maxMs": 22.042,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 97.689,
+                  "maxMs": 97.689,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 638,
+                  "totalMs": 3610.869,
+                  "maxMs": 408.394,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 229.149,
+                  "maxMs": 229.149,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cumulus",
+      "identity": "sha256:364aeb6941787f9c",
+      "path": null,
+      "variants": [
+        {
+          "label": "default",
+          "configuration": {
+            "parser": "Outline Parser - Multithreaded",
+            "parserOption": "OutlineMulti",
+            "cache": {
+              "enabled": false,
+              "directoryProvided": false,
+              "directory": null
+            },
+            "unused": true,
+            "unusedOnError": false,
+            "logging": "none",
+            "autoFlush": false
+          },
+          "parallelism": {
+            "requested": null,
+            "availableProcessors": 10,
+            "contextNumThreads": null,
+            "contextMinThreads": null,
+            "contextMaxThreads": null
+          },
+          "size": {
+            "packageCount": 7,
+            "moduleCount": 1,
+            "apexTypeCount": 1060,
+            "apexClassFileCount": 1034,
+            "triggerFileCount": 26,
+            "metadataFileCount": 3054,
+            "apexSourceBytes": 14262179,
+            "byNature": {
+              "apex": 1034,
+              "trigger": 26,
+              "label": 2,
+              "component": 19,
+              "page": 79,
+              "sObject": 51
+            }
+          },
+          "issues": {
+            "errors": 19,
+            "warnings": 91,
+            "unused": 1655
+          },
+          "environment": {
+            "javaVersion": "17.0.20",
+            "javaVendor": "Homebrew",
+            "jvmName": "OpenJDK 64-Bit Server VM",
+            "jvmVersion": "17.0.20+0",
+            "osName": "Mac OS X",
+            "osArch": "aarch64",
+            "osVersion": "26.5.2",
+            "maxHeapBytes": 4294967296,
+            "garbageCollectors": [
+              "G1 Old Generation",
+              "G1 Young Generation"
+            ],
+            "jvmArguments": [
+              "-Xms4g",
+              "-Xmx4g"
+            ],
+            "implementationBuild": "1787524386777"
+          },
+          "invocation": [
+            "<java>",
+            "-Xms4g",
+            "-Xmx4g",
+            "-cp",
+            "<classpath>",
+            "io.github.apexdevtools.apexls.Batch",
+            "benchmark-load",
+            "--workspace",
+            "<workspace>",
+            "--parser",
+            "OutlineMulti",
+            "--unused",
+            "true",
+            "--unused-on-error",
+            "false",
+            "--logging",
+            "none",
+            "--no-cache"
+          ],
+          "statistics": {
+            "totalLoadMs": {
+              "n": 8,
+              "medianMs": 7554.015,
+              "minMs": 6616.154,
+              "maxMs": 11161.522,
+              "spreadMs": 4545.368,
+              "madMs": 888.572,
+              "samplesMs": [
+                11161.522,
+                6987.095,
+                8120.934,
+                6803.764,
+                6616.154,
+                6714.731,
+                8537.361,
+                9810.342
+              ]
+            },
+            "cacheFlushMs": null
+          },
+          "consistent": true,
+          "runs": [
+            {
+              "index": 0,
+              "discarded": true,
+              "totalLoadMs": 10535.576,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 9140.307,
+                  "maxMs": 9140.307,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 968.954,
+                  "maxMs": 118.047,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 10340.078,
+                  "maxMs": 10340.078,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 10520.282,
+                  "maxMs": 10520.282,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.755,
+                  "maxMs": 0.755,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 23.233,
+                  "maxMs": 23.233,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 181.474,
+                  "maxMs": 181.474,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 7968.086,
+                  "maxMs": 175.318,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 161.211,
+                  "maxMs": 161.211,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 1,
+              "discarded": false,
+              "totalLoadMs": 11161.522,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 9817.607,
+                  "maxMs": 9817.607,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 1380.096,
+                  "maxMs": 195.955,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 10988.778,
+                  "maxMs": 10988.778,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 11148.693,
+                  "maxMs": 11148.693,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.199,
+                  "maxMs": 1.199,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 17.569,
+                  "maxMs": 17.569,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 148.544,
+                  "maxMs": 148.544,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 8229.616,
+                  "maxMs": 261.828,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 141.648,
+                  "maxMs": 141.648,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 2,
+              "discarded": false,
+              "totalLoadMs": 6987.095,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 5383.648,
+                  "maxMs": 5383.648,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 973.778,
+                  "maxMs": 70.702,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 6623.127,
+                  "maxMs": 6623.127,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 6957.877,
+                  "maxMs": 6957.877,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.752,
+                  "maxMs": 0.752,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 12.177,
+                  "maxMs": 12.177,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 60.584,
+                  "maxMs": 60.584,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 4212.641,
+                  "maxMs": 74.868,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 273.179,
+                  "maxMs": 273.179,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 3,
+              "discarded": false,
+              "totalLoadMs": 8120.934,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 6832.463,
+                  "maxMs": 6832.463,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 1028.728,
+                  "maxMs": 80.523,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 7909.589,
+                  "maxMs": 7909.589,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 8102.904,
+                  "maxMs": 8102.904,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.691,
+                  "maxMs": 0.691,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 11.017,
+                  "maxMs": 11.017,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 53.797,
+                  "maxMs": 53.797,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 5592.458,
+                  "maxMs": 133.635,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 168.165,
+                  "maxMs": 168.165,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 4,
+              "discarded": false,
+              "totalLoadMs": 6803.764,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 5830.35,
+                  "maxMs": 5830.35,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 826.083,
+                  "maxMs": 67.761,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 6635.031,
+                  "maxMs": 6635.031,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 6791.34,
+                  "maxMs": 6791.34,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.681,
+                  "maxMs": 0.681,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 15.366,
+                  "maxMs": 15.366,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 75.09,
+                  "maxMs": 75.09,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 4825.293,
+                  "maxMs": 68.681,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 138.686,
+                  "maxMs": 138.686,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 5,
+              "discarded": false,
+              "totalLoadMs": 6616.154,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 5638.923,
+                  "maxMs": 5638.923,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 773.93,
+                  "maxMs": 66.372,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 6444.194,
+                  "maxMs": 6444.194,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 6603.568,
+                  "maxMs": 6603.568,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.184,
+                  "maxMs": 1.184,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 12.232,
+                  "maxMs": 12.232,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 65.482,
+                  "maxMs": 65.482,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 4709.415,
+                  "maxMs": 70.088,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 142.559,
+                  "maxMs": 142.559,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 6,
+              "discarded": false,
+              "totalLoadMs": 6714.731,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 5530.26,
+                  "maxMs": 5530.26,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 893.424,
+                  "maxMs": 90.845,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 6506.421,
+                  "maxMs": 6506.421,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 6699.016,
+                  "maxMs": 6699.016,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.71,
+                  "maxMs": 0.71,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 14.844,
+                  "maxMs": 14.844,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 78.387,
+                  "maxMs": 78.387,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 4510.527,
+                  "maxMs": 99.242,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 170.662,
+                  "maxMs": 170.662,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 7,
+              "discarded": false,
+              "totalLoadMs": 8537.361,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 7307.676,
+                  "maxMs": 7307.676,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 977.282,
+                  "maxMs": 88.199,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 8325.088,
+                  "maxMs": 8325.088,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 8520.164,
+                  "maxMs": 8520.164,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 0.726,
+                  "maxMs": 0.726,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 11.932,
+                  "maxMs": 11.932,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 115.092,
+                  "maxMs": 115.092,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 6235.002,
+                  "maxMs": 111.968,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 168.649,
+                  "maxMs": 168.649,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            },
+            {
+              "index": 8,
+              "discarded": false,
+              "totalLoadMs": 9810.342,
+              "cacheFlushMs": null,
+              "observedParseThreads": 1,
+              "phases": [
+                {
+                  "phase": "classParseBatch",
+                  "count": 1,
+                  "totalMs": 7950.114,
+                  "maxMs": 7950.114,
+                  "threads": 1
+                },
+                {
+                  "phase": "classParseFile",
+                  "count": 1034,
+                  "totalMs": 1230.092,
+                  "maxMs": 139.322,
+                  "threads": 1
+                },
+                {
+                  "phase": "moduleDeploy",
+                  "count": 1,
+                  "totalMs": 9447.399,
+                  "maxMs": 9447.399,
+                  "threads": 1
+                },
+                {
+                  "phase": "orgCreate",
+                  "count": 1,
+                  "totalMs": 9790.687,
+                  "maxMs": 9790.687,
+                  "threads": 1
+                },
+                {
+                  "phase": "summaryCacheLoad",
+                  "count": 1,
+                  "totalMs": 1.404,
+                  "maxMs": 1.404,
+                  "threads": 1
+                },
+                {
+                  "phase": "triggerParseBatch",
+                  "count": 1,
+                  "totalMs": 37.528,
+                  "maxMs": 37.528,
+                  "threads": 1
+                },
+                {
+                  "phase": "unusedAnalysis",
+                  "count": 1,
+                  "totalMs": 139.339,
+                  "maxMs": 139.339,
+                  "threads": 1
+                },
+                {
+                  "phase": "validateFile",
+                  "count": 1060,
+                  "totalMs": 6640.352,
+                  "maxMs": 68.077,
+                  "threads": 1
+                },
+                {
+                  "phase": "workspaceScan",
+                  "count": 1,
+                  "totalMs": 292.217,
+                  "maxMs": 292.217,
+                  "threads": 1
+                }
+              ],
+              "jfr": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

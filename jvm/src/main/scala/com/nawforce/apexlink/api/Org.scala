@@ -326,7 +326,7 @@ object Org {
       show = true,
       s" with autoFlush = ${ServerOps.isAutoFlushEnabled}, build = ${BuildInfo.implementationBuild}"
     ) {
-      val (workspace, issueManager) = Workspace(path)
+      val (workspace, issueManager) = LoggerOps.debugTime("Workspace scanned") { Workspace(path) }
       new OPM.OrgImpl(
         path,
         issueManager,

@@ -15,6 +15,14 @@ package com.nawforce.pkgforce.diagnostics
 
 import java.io.{PrintStream, PrintWriter, StringWriter}
 
+/** Receives the elapsed time of each LoggerOps timed span, independently of the logging level.
+  * Used by the workspace load benchmark harness to build a phase breakdown without having to parse
+  * log output.
+  */
+trait TimingCollector {
+  def record(label: String, elapsedNanos: Long): Unit
+}
+
 /** Minimalistic logging, the best kind of logging system. */
 trait Logger {
   def info(message: String): Unit
@@ -45,6 +53,8 @@ object LoggerOps {
   private var loggingLevel: Integer = NO_LOGGING
   private var logger: Logger        = new DefaultLogger(System.err)
 
+  @volatile private var timingCollector: TimingCollector = _
+
   def getLoggingLevel: Integer = this.loggingLevel
 
   /** Set debug logging level, one of NO_LOGGING, INFO_LOGGING, DEBUG_LOGGING or TRACE_LOGGING */
@@ -68,6 +78,13 @@ object LoggerOps {
   def setLogger(newLogger: Logger): Logger = {
     val current = logger
     logger = newLogger
+    current
+  }
+
+  /** Install a collector for timed spans, pass None to remove. Returns the previous collector. */
+  def setTimingCollector(collector: Option[TimingCollector]): Option[TimingCollector] = {
+    val current = Option(timingCollector)
+    timingCollector = collector.orNull
     current
   }
 
@@ -120,13 +137,16 @@ object LoggerOps {
   private def time[T](log: String => Unit, msg: String, show: Boolean, postMsg: String)(
     op: => T
   ): T = {
-    val start = System.currentTimeMillis()
+    val start = System.nanoTime()
     try {
       op
     } finally {
-      val end = System.currentTimeMillis()
+      val elapsed   = System.nanoTime() - start
+      val collector = timingCollector
+      if (collector != null)
+        collector.record(msg, elapsed)
       if (show)
-        log(s"$msg in ${end - start}ms$postMsg")
+        log(s"$msg in ${elapsed / 1000000}ms$postMsg")
     }
   }
 
