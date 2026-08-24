@@ -25,13 +25,14 @@ import com.nawforce.pkgforce.names.{Name, TypeName}
   */
 object AuraEnabledTypes {
 
-  private def namespaced(namespace: String, names: String*): Seq[TypeName] = {
-    val outer = Some(TypeName(Name(namespace)))
-    names.map(name => TypeName(Name(name), Nil, outer))
+  private def namespaced(namespace: String, names: String*): (Name, Set[Name]) = {
+    (Name(namespace), names.map(Name(_)).toSet)
   }
 
-  /** Entries carry no type arguments, matching ignores them, see [[isDisallowed]]. */
-  private val disallowedTypes: Set[TypeName] = (
+  /** Namespace to the type names disallowed within it. Every entry is a two level name, matching
+    * is by name only so type arguments never take part, see [[isDisallowed]].
+    */
+  private val disallowedTypes: Map[Name, Set[Name]] = Map(
     namespaced(
       "System",
       "Address",
@@ -106,129 +107,134 @@ object AuraEnabledTypes {
       "XmlException",
       "XmlStreamReader",
       "XmlStreamWriter"
-    ) ++
-      namespaced(
-        "Schema",
-        "ChildRelationship",
-        "DataCategory",
-        "DataCategoryGroupSobjectTypePair",
-        "DescribeColorResult",
-        "DescribeDataCategoryGroupResult",
-        "DescribeDataCategoryGroupStructureResult",
-        "DescribeFieldResult",
-        "DescribeIconResult",
-        "DescribeSObjectResult",
-        "DescribeTabResult",
-        "DescribeTabSetResult",
-        "FieldSet",
-        "FieldSetMember",
-        "FilteredLookupInfo",
-        "PicklistEntry",
-        "RecordTypeInfo",
-        "SObjectField",
-        "SObjectType",
-        "SObjectTypeFieldSets",
-        "SObjectTypeFields"
-      ) ++
-      namespaced(
-        "Database",
-        "DeleteResult",
-        "DeletedRecord",
-        "DuplicateError",
-        "EmptyRecycleBinResult",
-        "Error",
-        "GetDeletedResult",
-        "GetUpdatedResult",
-        "LeadConvert",
-        "LeadConvertResult",
-        "MergeRequest",
-        "MergeResult",
-        "QueryLocator",
-        "SaveResult",
-        "UndeleteResult",
-        "UpsertResult"
-      ) ++
-      namespaced(
-        "Messaging",
-        "Email",
-        "EmailAttachment",
-        "EmailFileAttachment",
-        "MassEmailMessage",
-        "RenderEmailTemplateBodyResult",
-        "RenderEmailTemplateError",
-        "SendEmailError",
-        "SendEmailResult",
-        "SingleEmailMessage"
-      ) ++
-      namespaced(
-        "ApexPages",
-        "IdeaStandardController",
-        "IdeaStandardSetController",
-        "KnowledgeArticleVersionStandardController",
-        "Message",
-        "StandardController",
-        "StandardSetController"
-      ) ++
-      namespaced(
-        "Approval",
-        "LockResult",
-        "ProcessRequest",
-        "ProcessResult",
-        "ProcessSubmitRequest",
-        "ProcessWorkitemRequest",
-        "UnlockResult"
-      ) ++
-      namespaced(
-        "QuickAction",
-        "Control",
-        "DescribeAvailableQuickActionResult",
-        "DescribeLayoutComponent",
-        "DescribeLayoutItem",
-        "DescribeLayoutRow",
-        "DescribeLayoutSection",
-        "DescribeQuickActionDefaultValue",
-        "DescribeQuickActionParameter",
-        "DescribeQuickActionResult",
-        "EmptySpace",
-        "ExpandedLookup",
-        "Field",
-        "FieldLayoutComponent",
-        "QuickActionRequest",
-        "QuickActionResult",
-        "QuickActionTemplateResult",
-        "ReportChartComponent",
-        "SControl",
-        "Separator",
-        "VisualforcePage"
-      ) ++
-      namespaced(
-        "Datacloud",
-        "AdditionalInformationMap",
-        "DuplicateResult",
-        "FieldDiff",
-        "FieldDifferenceType",
-        "FindDuplicatesResult",
-        "MatchRecord",
-        "MatchResult"
-      ) ++
-      namespaced(
-        "Search",
-        "KnowledgeSuggestionFilter",
-        "QuestionSuggestionFilter",
-        "SuggestionOption"
-      ) ++
-      namespaced("dom", "Document", "XmlNode") ++
-      namespaced("eventbus", "ChangeEventHeader") ++
-      namespaced("Package", "Version")
-  ).toSet
+    ),
+    namespaced(
+      "Schema",
+      "ChildRelationship",
+      "DataCategory",
+      "DataCategoryGroupSobjectTypePair",
+      "DescribeColorResult",
+      "DescribeDataCategoryGroupResult",
+      "DescribeDataCategoryGroupStructureResult",
+      "DescribeFieldResult",
+      "DescribeIconResult",
+      "DescribeSObjectResult",
+      "DescribeTabResult",
+      "DescribeTabSetResult",
+      "FieldSet",
+      "FieldSetMember",
+      "FilteredLookupInfo",
+      "PicklistEntry",
+      "RecordTypeInfo",
+      "SObjectField",
+      "SObjectType",
+      "SObjectTypeFieldSets",
+      "SObjectTypeFields"
+    ),
+    namespaced(
+      "Database",
+      "DeleteResult",
+      "DeletedRecord",
+      "DuplicateError",
+      "EmptyRecycleBinResult",
+      "Error",
+      "GetDeletedResult",
+      "GetUpdatedResult",
+      "LeadConvert",
+      "LeadConvertResult",
+      "MergeRequest",
+      "MergeResult",
+      "QueryLocator",
+      "SaveResult",
+      "UndeleteResult",
+      "UpsertResult"
+    ),
+    namespaced(
+      "Messaging",
+      "Email",
+      "EmailAttachment",
+      "EmailFileAttachment",
+      "MassEmailMessage",
+      "RenderEmailTemplateBodyResult",
+      "RenderEmailTemplateError",
+      "SendEmailError",
+      "SendEmailResult",
+      "SingleEmailMessage"
+    ),
+    namespaced(
+      "ApexPages",
+      "IdeaStandardController",
+      "IdeaStandardSetController",
+      "KnowledgeArticleVersionStandardController",
+      "Message",
+      "StandardController",
+      "StandardSetController"
+    ),
+    namespaced(
+      "Approval",
+      "LockResult",
+      "ProcessRequest",
+      "ProcessResult",
+      "ProcessSubmitRequest",
+      "ProcessWorkitemRequest",
+      "UnlockResult"
+    ),
+    namespaced(
+      "QuickAction",
+      "Control",
+      "DescribeAvailableQuickActionResult",
+      "DescribeLayoutComponent",
+      "DescribeLayoutItem",
+      "DescribeLayoutRow",
+      "DescribeLayoutSection",
+      "DescribeQuickActionDefaultValue",
+      "DescribeQuickActionParameter",
+      "DescribeQuickActionResult",
+      "EmptySpace",
+      "ExpandedLookup",
+      "Field",
+      "FieldLayoutComponent",
+      "QuickActionRequest",
+      "QuickActionResult",
+      "QuickActionTemplateResult",
+      "ReportChartComponent",
+      "SControl",
+      "Separator",
+      "VisualforcePage"
+    ),
+    namespaced(
+      "Datacloud",
+      "AdditionalInformationMap",
+      "DuplicateResult",
+      "FieldDiff",
+      "FieldDifferenceType",
+      "FindDuplicatesResult",
+      "MatchRecord",
+      "MatchResult"
+    ),
+    namespaced(
+      "Search",
+      "KnowledgeSuggestionFilter",
+      "QuestionSuggestionFilter",
+      "SuggestionOption"
+    ),
+    namespaced("dom", "Document", "XmlNode"),
+    namespaced("eventbus", "ChangeEventHeader"),
+    namespaced("Package", "Version")
+  )
 
   /** Is this type, or any type used as an argument of it, disallowed by @AuraEnabled? The check is
     * over the whole type argument tree, so Map<Schema.SObjectType, List<SObject>> is disallowed,
     * but it does not extend into the members of a user type.
+    *
+    * Only a namespace qualified two level name can match, so a nested type such as
+    * Messaging.InboundEmail.BinaryAttachment is not caught by its outermost name. Names compare
+    * case insensitively, as Apex identifiers do.
     */
   def isDisallowed(typeName: TypeName): Boolean = {
-    disallowedTypes.contains(
-      if (typeName.params.isEmpty) typeName else TypeName(typeName.name, Nil, typeName.outer)
+    typeName.outer.exists(namespace =>
+      namespace.outer.isEmpty && namespace.params.isEmpty &&
+        disallowedTypes.get(namespace.name).exists(_.contains(typeName.name))
     ) || typeName.params.exists(isDisallowed)
   }
 }

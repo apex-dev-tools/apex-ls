@@ -340,6 +340,15 @@ class FieldTest extends AnyFunSuite with TestHelper {
     })
   }
 
+  test("AuraEnabled field with unqualified disallowed type") {
+    // The written form is unqualified, matching relies on the resolved type name
+    typeDeclaration("public class Dummy { @AuraEnabled public SObjectType f; }")
+    assert(
+      dummyIssues ==
+        "Error: line 1 at 53-54: AuraEnabled fields do not support type of Schema.SObjectType\n"
+    )
+  }
+
   test("AuraEnabled field with disallowed nested type") {
     typeDeclaration("public class Dummy { @AuraEnabled public Map<SObjectType, List<SObject>> f; }")
     assert(

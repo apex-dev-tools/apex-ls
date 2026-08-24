@@ -381,26 +381,26 @@ final case class ApexFieldDeclaration(
       context.log(Issue(ERROR_CATEGORY, location, s"protected field '${id.name}' cannot be static"))
     }
 
+    SourceTypeAccess.validate(typeOccurrences, context)
+
+    val resolvedType = variableDeclarator.verify(
+      ExprContext(staticContext, context.thisType),
+      new OuterScopeVerifyContext(context, modifiers.contains(STATIC_MODIFIER))
+    )
+
     // Both rules are specific to fields, an AuraEnabled property may be static and may use any type
     if (modifiers.contains(AURA_ENABLED_ANNOTATION)) {
       if (isStatic)
         context.logError(id.location, "AuraEnabled fields cannot be static")
 
-      val resolvedTypeName =
-        context.getTypeFor(typeName, context.thisType).map(_.typeName).getOrElse(typeName)
-      if (AuraEnabledTypes.isDisallowed(resolvedTypeName))
-        context.logError(
-          id.location,
-          s"AuraEnabled fields do not support type of $resolvedTypeName"
+      resolvedType
+        .map(_.typeName)
+        .filter(AuraEnabledTypes.isDisallowed)
+        .foreach(typeName =>
+          context.logError(id.location, s"AuraEnabled fields do not support type of $typeName")
         )
     }
 
-    SourceTypeAccess.validate(typeOccurrences, context)
-
-    variableDeclarator.verify(
-      ExprContext(staticContext, context.thisType),
-      new OuterScopeVerifyContext(context, modifiers.contains(STATIC_MODIFIER))
-    )
     setDepends(context.dependencies)
   }
 }
