@@ -15,12 +15,17 @@ package com.nawforce.pkgforce.modifiers
 
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
 import com.nawforce.runtime.parsers.CodeParser
-import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
+import com.nawforce.runtime.parsers.CodeParser.{ParserRuleContext, TerminalNode}
+import io.github.apexdevtools.apexparser.ApexParser
 import io.github.apexdevtools.apexparser.ApexParser.{
+  AnnotationContext,
+  ElementValuePairContext,
+  ElementValuePairsContext,
   IdContext,
   ModifierContext,
   PropertyBlockContext
 }
+import org.antlr.v4.runtime.tree.ParseTree
 
 import scala.collection.compat.immutable.ArraySeq
 
@@ -160,22 +165,38 @@ object ModifierOps {
     .toMap
 
   /** Recover from name, use safeApply */
-  def apply(name: String, value: String): Array[Modifier] = {
+  def apply(name: String, parameters: Option[ArraySeq[AnnotationParameter]]): Array[Modifier] = {
     if (name.startsWith("@suppresswarnings")) {
-      val trimmed = value.trim
-      if (trimmed.length > 2 && trimmed.head == '\'' && trimmed.last == '\'') {
-        val parts =
-          trimmed.substring(1, trimmed.length - 1).trim.split(",").map(_.trim.toLowerCase())
-        parts.flatMap {
-          case "pmd"    => Some(SUPPRESS_WARNINGS_ANNOTATION_PMD)
-          case "unused" => Some(SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
-          case _        => None
-        }
-      } else {
-        Array.empty
-      }
+      suppressWarningsModifiers(parameters)
     } else {
       byName.get(name.toLowerCase()).toArray
+    }
+  }
+
+  /* The suppression categories are the only annotation values consumed today. Both the bare form,
+   * @SuppressWarnings('PMD'), and the named form, @SuppressWarnings(value='PMD'), are legal Apex
+   * and carry the same meaning. Categories may also be combined within the one literal. */
+  private def suppressWarningsModifiers(
+    parameters: Option[ArraySeq[AnnotationParameter]]
+  ): Array[Modifier] = {
+    parameters
+      .getOrElse(AnnotationParameter.emptyArraySeq)
+      .filter(_.name.forall(_.equalsIgnoreCase("value")))
+      .flatMap(parameter => suppressWarningsCategories(parameter.value))
+      .toArray
+  }
+
+  private def suppressWarningsCategories(value: String): Array[Modifier] = {
+    val trimmed = value.trim
+    if (trimmed.length > 2 && trimmed.head == '\'' && trimmed.last == '\'') {
+      val parts = trimmed.substring(1, trimmed.length - 1).trim.split(",").map(_.trim.toLowerCase())
+      parts.flatMap {
+        case "pmd"    => Some(SUPPRESS_WARNINGS_ANNOTATION_PMD)
+        case "unused" => Some(SUPPRESS_WARNINGS_ANNOTATION_UNUSED)
+        case _        => None
+      }
+    } else {
+      Array.empty
     }
   }
 }
@@ -280,7 +301,7 @@ object ApexModifiers {
       modifierContexts
         .flatMap(modifierContext =>
           Option(modifierContext.annotation()).map(annotation =>
-            (annotation.qualifiedName().getText, LogEntryContext(parser, modifierContext))
+            (annotation.id().getText, LogEntryContext(parser, modifierContext))
           )
         ),
       logger
@@ -292,14 +313,12 @@ object ApexModifiers {
         annotation
           .map(a =>
             ModifierOps(
-              "@" + Option(a.qualifiedName()).map(_.getText).getOrElse("").toLowerCase,
-              Option(a.elementValue())
-                .map(ev => Option(ev).map(_.getText).getOrElse(""))
-                .getOrElse("")
+              "@" + Option(a.id()).map(_.getText).getOrElse("").toLowerCase,
+              toAnnotationParameters(parser, a)
             )
           )
           .getOrElse(
-            ModifierOps(Option(modifierContext).map(_.getText).getOrElse("").toLowerCase, "")
+            ModifierOps(Option(modifierContext).map(_.getText).getOrElse("").toLowerCase, None)
           )
 
       modifiers.map(m =>
@@ -312,6 +331,68 @@ object ApexModifiers {
     })
 
     deduplicateAnnotationModifiers(modifiers)
+  }
+
+  /* Build the parameter list as written. An annotation holds either a single bare value or a list
+   * of name = value pairs, an empty list is only distinguishable from no list at all by the
+   * parentheses. */
+  private[nawforce] def toAnnotationParameters(
+    parser: CodeParser,
+    annotation: AnnotationContext
+  ): Option[ArraySeq[AnnotationParameter]] = {
+    if (annotation.LPAREN() == null)
+      None
+    else
+      Some(
+        Option(annotation.elementValue())
+          .map(value => {
+            val location = parser.getPathLocation(value).location
+            ArraySeq(
+              AnnotationParameter(None, value.getText, None, None, Some(location), Some(location))
+            )
+          })
+          .orElse(
+            Option(annotation.elementValuePairs()).map(pairs => toAnnotationPairs(parser, pairs))
+          )
+          .getOrElse(AnnotationParameter.emptyArraySeq)
+      )
+  }
+
+  /* A comma is a token in the tree, its absence between two pairs means they were separated by
+   * whitespace. */
+  private def toAnnotationPairs(
+    parser: CodeParser,
+    pairs: ElementValuePairsContext
+  ): ArraySeq[AnnotationParameter] = {
+    val parameters = ArraySeq.newBuilder[AnnotationParameter]
+    var isFirst    = true
+    var sawComma   = false
+
+    CodeParser
+      .toScala[ParseTree](pairs.children)
+      .foreach {
+        case pair: ElementValuePairContext =>
+          val separator =
+            if (isFirst) None
+            else if (sawComma) Some(AnnotationParameterSeparator.Comma)
+            else Some(AnnotationParameterSeparator.Whitespace)
+          val name  = Option(pair.id())
+          val value = Option(pair.elementValue())
+          parameters += AnnotationParameter(
+            Some(name.map(_.getText).getOrElse("")),
+            value.map(_.getText).getOrElse(""),
+            separator,
+            name.map(id => parser.getPathLocation(id).location),
+            value.map(v => parser.getPathLocation(v).location),
+            Some(parser.getPathLocation(pair).location)
+          )
+          isFirst = false
+          sawComma = false
+        case node: TerminalNode if node.getSymbol.getType == ApexParser.COMMA =>
+          sawComma = true
+        case _ => ()
+      }
+    parameters.result()
   }
 
   private[nawforce] def validateDuplicateAnnotations(

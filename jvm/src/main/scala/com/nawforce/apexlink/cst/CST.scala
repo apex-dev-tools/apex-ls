@@ -113,7 +113,7 @@ object QualifiedName {
 }
 
 final case class Annotation(
-  name: Option[QualifiedName],
+  name: Option[Id],
   elementValuePairs: List[ElementValuePair],
   elementValue: Option[ElementValue]
 ) extends CST
@@ -128,48 +128,17 @@ object Annotation {
         .map(ElementValuePairs.construct)
         .getOrElse(Nil)
 
-    Annotation(QualifiedName.construct(annotation.qualifiedName()), elementValuePairs, elementValue)
+    Annotation(Option(annotation.id()).map(Id.construct), elementValuePairs, elementValue)
       .withContext(annotation)
   }
 }
 
-sealed abstract class ElementValue() extends CST
-
-final case class ExpressionElementValue(expression: Expression) extends ElementValue
-
-final case class AnnotationElementValue(annotation: Annotation) extends ElementValue
-
-final case class ArrayInitializerElementValue(arrayInitializer: ElementValueArrayInitializer)
-    extends ElementValue
+final case class ElementValue(literal: Literal) extends CST
 
 object ElementValue {
   def construct(elementValue: ElementValueContext): Option[ElementValue] = {
-    val expression       = Option(elementValue.expression())
-    val annotation       = Option(elementValue.annotation())
-    val arrayInitializer = Option(elementValue.elementValueArrayInitializer())
-
-    if (expression.nonEmpty) {
-      Some(ExpressionElementValue(Expression.construct(expression.get)).withContext(elementValue))
-    } else if (annotation.nonEmpty) {
-      Some(AnnotationElementValue(Annotation.construct(annotation.get)).withContext(elementValue))
-    } else if (arrayInitializer.nonEmpty) {
-      Some(
-        ArrayInitializerElementValue(ElementValueArrayInitializer.construct(arrayInitializer.get))
-          .withContext(elementValue)
-      )
-    } else {
-      None
-    }
-  }
-}
-
-final case class ElementValueArrayInitializer(elementValues: Seq[ElementValue]) extends CST
-
-object ElementValueArrayInitializer {
-  def construct(from: ElementValueArrayInitializerContext): ElementValueArrayInitializer = {
-    val elements = CodeParser.toScala(from.elementValue())
-    ElementValueArrayInitializer(elements.flatMap(x => ElementValue.construct(x)))
-      .withContext(from)
+    Option(elementValue.literal())
+      .map(literal => ElementValue(Literal.construct(literal)).withContext(elementValue))
   }
 }
 

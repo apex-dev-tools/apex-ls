@@ -46,6 +46,27 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
     assert(!hasIssues)
   }
 
+  test("Outer Suppress (PMD,Unused)") {
+    typeDeclaration(
+      "@SuppressWarnings('PMD,Unused') public class Dummy {class Inner {Integer b; List<Inner> a; {Integer b = a[null].b;}}}"
+    )
+    assert(!hasIssues)
+  }
+
+  test("Outer Suppress (value='PMD')") {
+    typeDeclaration(
+      "@SuppressWarnings(value='PMD') public class Dummy {class Inner {Integer b; List<Inner> a; {Integer b = a[null].b;}}}"
+    )
+    assert(!hasIssues)
+  }
+
+  test("Outer Suppress (unknown parameter name)") {
+    typeDeclaration(
+      "@SuppressWarnings(bogus='PMD') public class Dummy {class Inner {Integer b; List<Inner> a; {Integer b = a[null].b;}}}"
+    )
+    assert(hasIssues)
+  }
+
   test("Inner Suppress") {
     typeDeclaration(
       "public class Dummy {@SuppressWarnings class Inner {Integer b; List<Inner> a; {Integer b = a[null].b;}}}"
@@ -258,6 +279,17 @@ class SuppressWarningsTest extends AnyFunSuite with TestHelper {
         "Dummy.cls" -> "public class Dummy {@SuppressWarnings('PMD') class Inner {} }",
         "Foo.cls"   -> "public class Foo { {Type t = Dummy.class;} }"
       )
+    ) { root: PathLike =>
+      createOrgWithUnused(root)
+      withOrg(org => {
+        assert(org.issueManager.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
+      })
+    }
+  }
+
+  test("Unused outer class suppress (value='Unused')") {
+    FileSystemHelper.run(
+      Map("Dummy.cls" -> "@SuppressWarnings(value='Unused') public class Dummy {}")
     ) { root: PathLike =>
       createOrgWithUnused(root)
       withOrg(org => {
