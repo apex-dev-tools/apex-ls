@@ -42,6 +42,7 @@ import com.nawforce.apexlink.names.TypeNames
 import com.nawforce.apexlink.org.OrgInfo
 import com.nawforce.apexlink.types.apex.ThisType
 import com.nawforce.pkgforce.modifiers.{
+  AnnotationTarget,
   ClassOwnerInfo,
   FINAL_MODIFIER,
   InterfaceOwnerInfo,
@@ -531,7 +532,8 @@ private[opcst] object OutlineParserClassBodyDeclaration {
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
 
-    val modifierResults = fieldModifiers(path, fd.id, fd.annotations, fd.modifiers, isOuter)
+    val modifierResults =
+      fieldModifiers(path, fd.id, fd.annotations, fd.modifiers, isOuter, AnnotationTarget.Fields)
     val (fieldTypeName, fieldTypeOccurrences) =
       TypeReference.constructWithOccurrences(
         fd.typeRef.asInstanceOf[UnresolvedTypeRef],
@@ -683,8 +685,16 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       }
     }
 
-    val modifierResults = fieldModifiers(path, pd.id, pd.annotations, pd.modifiers, isOuter)
-    val propertyBlocks  = ArraySeq.from(pd.propertyBlocks.flatMap(parsePropertyBlock))
+    val modifierResults =
+      fieldModifiers(
+        path,
+        pd.id,
+        pd.annotations,
+        pd.modifiers,
+        isOuter,
+        AnnotationTarget.Properties
+      )
+    val propertyBlocks = ArraySeq.from(pd.propertyBlocks.flatMap(parsePropertyBlock))
 
     val declaration =
       ApexPropertyDeclaration(

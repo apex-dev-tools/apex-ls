@@ -21,7 +21,8 @@ object OutlineParserModifierOps {
     declarationLocation: OPLocation,
     annotations: Array[OPAnnotation],
     src: Array[OPModifier],
-    logger: ModifierLogger
+    logger: ModifierLogger,
+    target: AnnotationTarget
   ): ArraySeq[(Modifier, LogEntryContext, String)] = {
 
     def normaliseModifierLocation(modifier: OPModifier): OPLocation = {
@@ -40,10 +41,18 @@ object OutlineParserModifierOps {
     ApexModifiers.validateDuplicateAnnotations(annotationContexts, logger)
 
     val modifiers = {
-      annotations.flatMap(opA =>
-        ModifierOps("@" + opA.name.replace(" ", "").toLowerCase, toAnnotationParameters(opA))
+      annotations.flatMap(opA => {
+        val parameters = toAnnotationParameters(opA)
+        AnnotationValidation.validate(
+          opA.name,
+          parameters,
+          target,
+          OPLogEntryContext(path, normaliseAnnotationLocation(opA)),
+          logger
+        )
+        ModifierOps("@" + opA.name.replace(" ", "").toLowerCase, parameters)
           .map(m => (m, OPLogEntryContext(path, normaliseAnnotationLocation(opA)), "Annotation"))
-      ) ++
+      }) ++
         src.flatMap(opM =>
           ModifierOps(opM.text.replace(" ", "").toLowerCase, None)
             .map(m => (m, OPLogEntryContext(path, normaliseModifierLocation(opM)), "Modifier"))
@@ -81,15 +90,18 @@ object OutlineParserModifierOps {
     }
   }
 
+  /* Fields and properties share their modifier and annotation rules, they are told apart only for
+   * the annotation properties that are legal on one and not the other. */
   def fieldModifiers(
     path: PathLike,
     id: OPId,
     annotations: Array[OPAnnotation],
     src: Array[OPModifier],
-    outer: Boolean
+    outer: Boolean,
+    target: AnnotationTarget
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.location, annotations, src, logger)
+    val mods   = toModifiers(path, id.location, annotations, src, logger, target)
     FieldModifiers.fieldModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
@@ -103,7 +115,8 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, declarationLocation, annotations, src, logger)
+    val mods =
+      toModifiers(path, declarationLocation, annotations, src, logger, AnnotationTarget.Classes)
     ApexModifiers.classModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
@@ -117,7 +130,8 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, declarationLocation, annotations, src, logger)
+    val mods =
+      toModifiers(path, declarationLocation, annotations, src, logger, AnnotationTarget.Interfaces)
     ApexModifiers.interfaceModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
@@ -131,7 +145,8 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, declarationLocation, annotations, src, logger)
+    val mods =
+      toModifiers(path, declarationLocation, annotations, src, logger, AnnotationTarget.Enums)
     ApexModifiers.enumModifiers(logger, mods, outer, OPLogEntryContext(path, id.location))
   }
 
@@ -142,7 +157,8 @@ object OutlineParserModifierOps {
     src: Array[OPModifier]
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.location, annotations, src, logger)
+    val mods =
+      toModifiers(path, id.location, annotations, src, logger, AnnotationTarget.Constructors)
     ApexModifiers.constructorModifiers(logger, mods, OPLogEntryContext(path, id.location))
   }
 
@@ -154,7 +170,8 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, idLocation, annotations, src, logger)
+    val mods =
+      toModifiers(path, idLocation, annotations, src, logger, AnnotationTarget.Parameters)
     ApexModifiers.parameterModifiers(logger, mods, OPLogEntryContext(path, idLocation))
   }
 
@@ -168,7 +185,7 @@ object OutlineParserModifierOps {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.location, annotations, src, logger)
+    val mods   = toModifiers(path, id.location, annotations, src, logger, AnnotationTarget.Methods)
 
     MethodModifiers.classMethodModifiers(
       logger,
@@ -187,7 +204,7 @@ object OutlineParserModifierOps {
     ownerInfo: InterfaceOwnerInfo
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(path, id.location, annotations, src, logger)
+    val mods   = toModifiers(path, id.location, annotations, src, logger, AnnotationTarget.Methods)
     MethodModifiers.interfaceMethodModifiers(
       logger,
       mods,

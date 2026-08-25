@@ -78,7 +78,7 @@ object MethodModifiers {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts, logger)
+    val mods   = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Methods)
     classMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerInfo, isOuter)
   }
 
@@ -236,7 +236,7 @@ object MethodModifiers {
     ownerInfo: InterfaceOwnerInfo
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts, logger)
+    val mods   = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Methods)
     interfaceMethodModifiers(logger, mods, LogEntryContext(parser, context), ownerInfo)
   }
 
