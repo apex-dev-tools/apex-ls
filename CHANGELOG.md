@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bomb rankings (#528)
 - Public impacted and declared test-class discovery APIs, plus a deterministic `test-classes` JVM
   batch command with dependency explanations and namespace-qualified names (#529)
+- Recognition of `@SuppressWarnings(value='PMD')`, the named form of the annotation parameter. It
+  is legal Apex and carries the same meaning as the bare `@SuppressWarnings('PMD')`, but was
+  previously ignored, so the suppression had no effect (#541)
 - Errors when an inaccessible nested Apex class, interface, or enum is written explicitly in
   source, covering declared, parameter, return, construction, cast, `instanceof`, type literal,
   qualifier, catch, for-loop, switch, extends and implements positions, honouring same-file access
@@ -44,6 +47,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Annotation parameters are now read as a structured list of names, values, separators and
+  locations rather than as a flattened string, from both the outline parser and the ANTLR parser.
+  The ANTLR path previously read only a bare value, so a named parameter such as
+  `@AuraEnabled(cacheable=true)` was seen as having no parameters at all. No new validation is
+  applied to what is read (#541)
+- Updated `outline-parser` to 2.1.0 and `apex-parser` to 5.2.0. The apex-parser annotation grammar
+  is tightened to match the platform: `@Schema.AuraEnabled`, nested annotations, array-initialiser
+  values such as `label={'a','b'}`, and non-literal values such as `@AuraEnabled(cacheable=foo)`
+  are now syntax errors (#541)
 - Labels, inline SObject components, and XML-derived metadata validation diagnostics now use exact
   element ranges; standalone metadata components continue to use whole-file locations (#362)
 - The private parent class check on `extends` now reports `Type is not visible: <type>` against the

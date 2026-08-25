@@ -5,6 +5,7 @@ package com.nawforce.runtime.platform
 
 import io.github.apexdevtools.types.base.{
   Annotation => OPAnnotation,
+  AnnotationParameterSeparator => OPAnnotationParameterSeparator,
   IdWithLocation => OPId,
   Location => OPLocation,
   Modifier => OPModifier
@@ -40,16 +41,44 @@ object OutlineParserModifierOps {
 
     val modifiers = {
       annotations.flatMap(opA =>
-        ModifierOps("@" + opA.name.replace(" ", "").toLowerCase, opA.parameters.getOrElse(""))
+        ModifierOps("@" + opA.name.replace(" ", "").toLowerCase, toAnnotationParameters(opA))
           .map(m => (m, OPLogEntryContext(path, normaliseAnnotationLocation(opA)), "Annotation"))
       ) ++
         src.flatMap(opM =>
-          ModifierOps(opM.text.replace(" ", "").toLowerCase, "")
+          ModifierOps(opM.text.replace(" ", "").toLowerCase, None)
             .map(m => (m, OPLogEntryContext(path, normaliseModifierLocation(opM)), "Modifier"))
         )
     }
 
     ApexModifiers.deduplicateAnnotationModifiers(ArraySeq.from(modifiers))
+  }
+
+  private def toAnnotationParameters(
+    annotation: OPAnnotation
+  ): Option[ArraySeq[AnnotationParameter]] = {
+    annotation.parameterList.map(parameters =>
+      ArraySeq.from(
+        parameters.map(parameter =>
+          AnnotationParameter(
+            parameter.name,
+            parameter.value,
+            parameter.precedingSeparator.map(toSeparator),
+            parameter.nameLocation.map(OutlineParserLocationOps.toLocation),
+            parameter.valueLocation.map(OutlineParserLocationOps.toLocation),
+            parameter.location.map(OutlineParserLocationOps.toLocation)
+          )
+        )
+      )
+    )
+  }
+
+  private def toSeparator(
+    separator: OPAnnotationParameterSeparator
+  ): AnnotationParameterSeparator = {
+    separator match {
+      case OPAnnotationParameterSeparator.Comma => AnnotationParameterSeparator.Comma
+      case _                                    => AnnotationParameterSeparator.Whitespace
+    }
   }
 
   def fieldModifiers(
