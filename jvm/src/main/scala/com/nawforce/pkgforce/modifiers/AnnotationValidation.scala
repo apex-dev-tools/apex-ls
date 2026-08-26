@@ -33,10 +33,14 @@ object AnnotationValidation {
     context: LogEntryContext,
     logger: ModifierLogger
   ): Unit = {
-    for {
-      definition <- AnnotationDefinition(name)
-      written    <- parameters
-    } validateParameters(definition, written, target, context, logger)
+    parameters.foreach(written => {
+      /* The separator is a property of Apex's annotation syntax rather than of any one annotation,
+       * so it is checked whatever was written. Reporting a comma inside the parameter list of an
+       * annotation we do not know claims nothing about whether that annotation exists. */
+      validateSeparators(written, context, logger)
+      AnnotationDefinition(name)
+        .foreach(definition => validateParameters(definition, written, target, context, logger))
+    })
   }
 
   private def validateParameters(
@@ -47,23 +51,30 @@ object AnnotationValidation {
     logger: ModifierLogger
   ): Unit = {
     if (parameters.isEmpty) {
-      definition.emptyParameterMessage.foreach(message => logger.logError(context, message))
+      definition.emptyParameterMessage.foreach(message =>
+        logger.logAnnotationError(context, message)
+      )
       return
     }
 
-    validateSeparators(parameters, context, logger)
+    /* Only the combination rules need the values, and most annotations have none. */
+    val values =
+      if (definition.combinations.isEmpty) None
+      else Some(new mutable.LinkedHashMap[String, Seq[String]]())
 
-    val values = new mutable.LinkedHashMap[String, Seq[String]]()
-    parameters
-      .filterNot(isEmptyParameter)
-      .foreach(parameter =>
+    parameters.foreach(parameter =>
+      if (!isEmptyParameter(parameter))
         validateParameter(definition, parameter, target, context, logger)
           .foreach { case (property, value) =>
-            values.update(property.key, values.getOrElse(property.key, Seq()) :+ value)
+            values.foreach(written =>
+              written.update(property.key, written.getOrElse(property.key, Seq()) :+ value)
+            )
           }
-      )
+    )
 
-    validateCombinations(definition, parameters, values.toMap, context, logger)
+    values.foreach(written =>
+      validateCombinations(definition, parameters, written.toMap, context, logger)
+    )
   }
 
   /* Apex separates parameters by whitespace alone. The grammar and the outline parser both record a
@@ -77,7 +88,7 @@ object AnnotationValidation {
     parameters
       .find(_.precedingSeparator.contains(AnnotationParameterSeparator.Comma))
       .foreach(parameter =>
-        logger.logError(at(context, parameter.location), "Expecting ')' but was: ','")
+        logger.logAnnotationError(at(context, parameter.location), "Expecting ')' but was: ','")
       )
   }
 
@@ -97,7 +108,7 @@ object AnnotationValidation {
       case None =>
         definition.bareValue match {
           case None =>
-            logger.logError(
+            logger.logAnnotationError(
               at(context, parameter.location),
               s"Annotation parameter on ${definition.name} must be written as name=value"
             )
@@ -108,7 +119,7 @@ object AnnotationValidation {
       case Some(name) =>
         definition.property(name) match {
           case None =>
-            logger.logError(
+            logger.logAnnotationError(
               at(context, parameter.nameLocation.orElse(parameter.location)),
               s"No such property, $name, defined on this annotation: ${definition.name}"
             )
@@ -132,7 +143,7 @@ object AnnotationValidation {
     val valueContext = at(context, parameter.valueLocation.orElse(parameter.location))
 
     if (!property.propertyType.accepts(value)) {
-      logger.logError(
+      logger.logAnnotationError(
         valueContext,
         s"Invalid value for property $name expected type ${property.propertyType.typeName}"
       )
@@ -141,19 +152,19 @@ object AnnotationValidation {
 
     val content =
       if (AnnotationValue.isStringLiteral(value)) AnnotationValue.stringContent(value) else value
-    if (property.values.exists(!_.contains(content.toLowerCase))) {
-      logger.logError(
+    if (property.allowedValues.exists(!_.contains(content.toLowerCase))) {
+      logger.logAnnotationError(
         valueContext,
         s"Annotation property, $name on ${definition.name}, unknown value: $content"
       )
       return None
     }
 
-    val formatError = property.valueCheck.flatMap(check => check(value))
-    formatError.foreach(message => logger.logError(valueContext, message))
+    val formatError = property.valueCheck.flatMap(check => check(content))
+    formatError.foreach(message => logger.logAnnotationError(valueContext, message))
 
-    if (property.targets.exists(!_.contains(target))) {
-      logger.logError(
+    if (property.notAllowedOn.contains(target)) {
+      logger.logAnnotationError(
         at(context, parameter.nameLocation.orElse(parameter.location)),
         s"Annotation property, $name on ${definition.name}, is not allowed on ${target.pluralName}"
       )
@@ -175,7 +186,10 @@ object AnnotationValidation {
     definition.combinations
       .filter(combination => combination.isInvalid(values))
       .foreach(combination =>
-        logger.logError(anchorFor(parameters, combination.anchor, context), combination.message)
+        logger.logAnnotationError(
+          anchorFor(parameters, combination.anchor, context),
+          combination.message
+        )
       )
   }
 

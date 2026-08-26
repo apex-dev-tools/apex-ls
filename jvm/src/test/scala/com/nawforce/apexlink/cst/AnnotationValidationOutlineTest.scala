@@ -146,6 +146,87 @@ class AnnotationValidationOutlineTest extends AnyFunSuite with TestHelper {
     assert(issuesFor("@Bogus(anything=1) public class Dummy {}").isEmpty)
   }
 
+  test("Required with default value is rejected") {
+    assert(
+      issuesFor(
+        "public class Dummy {@InvocableVariable(required=true defaultValue='z') public String f;}"
+      )
+        == "Error: line 1 at 53-69: Invalid combination of values for properties required and defaultValue on InvocableVariable\n"
+    )
+  }
+
+  test("Parallel test seeing all data is rejected") {
+    assert(
+      issuesFor("@IsTest(SeeAllData=true IsParallel=true) public class Dummy {}")
+        == "Error: line 1 at 24-39: Test class annotated with @isTest(IsParallel=true) cannot also be annotated with @isTest(SeeAllData=true)\n"
+    )
+  }
+
+  test("Parallel test not seeing all data is accepted") {
+    assert(issuesFor("@IsTest(SeeAllData=false IsParallel=true) public class Dummy {}").isEmpty)
+  }
+
+  test("Comma is rejected on an unknown annotation") {
+    assert(
+      issuesFor("@Bogus(a=1, b=2) public class Dummy {}")
+        == "Error: line 1 at 12-15: Expecting ')' but was: ','\n"
+    )
+  }
+
+  test("Trailing comma is rejected on an unknown annotation") {
+    assert(
+      issuesFor("@Bogus(cacheable=true,) public class Dummy {}")
+        == "Error: line 1 at 0-23: Expecting ')' but was: ','\n"
+    )
+  }
+
+  test("Comma is rejected on an annotation with an unestablished parameter set") {
+    assert(
+      issuesFor("@IntegrationTest(SeeAllData=true, IsParallel=false) public class Dummy {}")
+        == "Error: line 1 at 34-50: Expecting ')' but was: ','\n"
+    )
+  }
+
+  test("Property target rule does not fire where the annotation itself is rejected") {
+    assert(
+      issuesFor("@AuraEnabled(cacheable=true) public class Dummy {}")
+        == "Error: line 1 at 0-28: Annotation '@AuraEnabled' is not supported on classes\n"
+    )
+  }
+
+  test("Continuation carries no target restriction") {
+    assert(
+      issuesFor("public class Dummy {@AuraEnabled(continuation=true) public String f;}").isEmpty
+    )
+  }
+
+  /* A parameter diagnostic must not suppress the rules that both report on and correct the
+   * modifier set, they guard on the logger being empty. */
+  test("Parameter error does not suppress the inner test class rule") {
+    assert(
+      issuesFor("public class Dummy {@IsTest(SeeAllData=true, IsParallel=false) class Inner {}}")
+        == "Error: line 1 at 45-61: Expecting ')' but was: ','\n" +
+        "Error: line 1 at 69-74: Test annotations can only be used on outer classes\n"
+    )
+  }
+
+  test("Parameter error does not suppress the outer class visibility rule") {
+    assert(
+      issuesFor("@RestResource(urlMapping='x') class Dummy {}")
+        == "Error: line 1 at 25-28: Rest Resource url must begin with a forward slash, '/'\n" +
+        "Error: line 1 at 36-41: Outer classes must be declared either 'global' or 'public'\n"
+    )
+  }
+
+  test("Parameter error does not suppress the duplicate visibility warning") {
+    assert(
+      issuesFor(
+        "public class Dummy {@AuraEnabled(cacheable=0) public private static String m() {return null;}}"
+      ) == "Error: line 1 at 43-44: Invalid value for property cacheable expected type Boolean\n" +
+        "Warning: line 1 at 75-76: Only one visibility modifier from 'global', 'public' & 'private' should be used on methods\n"
+    )
+  }
+
   /* Only this path sees it, the grammar requires a separator. The value is reported rather than
    * the missing separator because that is all the outline parser can see. */
   test("Missing separator is reported against the value") {

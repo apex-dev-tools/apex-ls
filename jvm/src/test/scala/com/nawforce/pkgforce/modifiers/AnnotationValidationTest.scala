@@ -319,4 +319,76 @@ class AnnotationValidationTest extends AnyFunSuite {
   test("Annotation with an unestablished parameter set is not validated") {
     assert(messages(onClass("@IntegrationTest(anything=1)")).isEmpty)
   }
+
+  test("Comma is rejected on an unknown annotation") {
+    assert(message(onClass("@Bogus(a=1, b=2)")) == "Expecting ')' but was: ','")
+  }
+
+  test("Comma is rejected on an annotation with an unestablished parameter set") {
+    assert(
+      message(onClass("@IntegrationTest(SeeAllData=true, IsParallel=false)"))
+        == "Expecting ')' but was: ','"
+    )
+  }
+
+  test("Property target rule does not fire where the annotation itself is rejected") {
+    assert(
+      messages(onClass("@AuraEnabled(cacheable=true)"))
+        == Seq("Annotation '@AuraEnabled' is not supported on classes")
+    )
+  }
+
+  test("Continuation carries no target restriction") {
+    assert(messages(onField("@AuraEnabled(continuation=true)")).isEmpty)
+  }
+
+  test("On install is accepted") {
+    assert(messages(onClass("@IsTest(OnInstall=true)")).isEmpty)
+  }
+
+  test("On install rejects a non Boolean") {
+    assert(
+      message(onClass("@IsTest(OnInstall=1)"))
+        == "Invalid value for property OnInstall expected type Boolean"
+    )
+  }
+
+  test("Future callout is accepted") {
+    assert(messages(onMethod("@Future(callout=true)")).isEmpty)
+  }
+
+  test("Future rejects an unknown parameter") {
+    assert(
+      message(onMethod("@Future(callout=true x='y')"))
+        == "No such property, x, defined on this annotation: Future"
+    )
+  }
+
+  test("Invocable method parameters are accepted") {
+    assert(
+      messages(
+        onMethod(
+          "@InvocableMethod(label='a' description='b' category='c' configurationEditor='d' iconName='e' callout=true)"
+        )
+      ).isEmpty
+    )
+  }
+
+  test("Invocable method rejects a Boolean label") {
+    assert(
+      message(onMethod("@InvocableMethod(label=false)"))
+        == "Invalid value for property label expected type String"
+    )
+  }
+
+  test("Deserializable is accepted") {
+    assert(messages(onClass("@JsonAccess(serializable='never' deserializable='never')")).isEmpty)
+  }
+
+  test("Json access rejects a Boolean control value") {
+    assert(
+      message(onClass("@JsonAccess(serializable=true)"))
+        == "Invalid value for property serializable expected type String"
+    )
+  }
 }
