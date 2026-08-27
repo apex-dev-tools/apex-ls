@@ -14,6 +14,8 @@
 
 package io.github.apexdevtools.apexls
 
+import com.nawforce.apexlink.types.apex.FullDeclaration
+import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.diagnostics.LoggerOps
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -30,6 +32,33 @@ class LoadPhaseCollectorTest extends AnyFunSuite {
       LoadPhaseCollector.phaseOf("Closed plugins (unused analysis)").contains("unusedAnalysis")
     )
     assert(LoadPhaseCollector.phaseOf("Refreshed something").isEmpty)
+  }
+
+  test("validation decomposition spans map to their own phases") {
+    assert(LoadPhaseCollector.phaseOf(TypeDeclaration.MethodMapSpan).contains("validateMethodMap"))
+    assert(
+      LoadPhaseCollector
+        .phaseOf(TypeDeclaration.ConstructorMapSpan)
+        .contains("validateConstructorMap")
+    )
+    assert(
+      LoadPhaseCollector
+        .phaseOf(FullDeclaration.BodyDeclarationSpan)
+        .contains("validateBodyDeclarations")
+    )
+    assert(
+      LoadPhaseCollector
+        .phaseOf(FullDeclaration.OuterDependencySpan)
+        .contains("validateOuterDependencies")
+    )
+  }
+
+  test("decomposition spans are not swallowed by the per type validate span") {
+    // "Validated " prefixed labels map to validateFile, so a decomposition label must not use it
+    assert(!FullDeclaration.BodyDeclarationSpan.startsWith("Validated "))
+    assert(!FullDeclaration.OuterDependencySpan.startsWith("Validated "))
+    assert(!TypeDeclaration.MethodMapSpan.startsWith("Validated "))
+    assert(!TypeDeclaration.ConstructorMapSpan.startsWith("Validated "))
   }
 
   test("spans naming a file are aggregated without keeping the path") {

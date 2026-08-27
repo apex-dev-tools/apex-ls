@@ -14,6 +14,8 @@
 
 package io.github.apexdevtools.apexls
 
+import com.nawforce.apexlink.types.apex.FullDeclaration
+import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.diagnostics.TimingCollector
 
 import java.util.concurrent.ConcurrentHashMap
@@ -75,6 +77,10 @@ private[apexls] object LoadPhaseCollector {
       case "Modules deployed"                        => Some("moduleDeploy")
       case "Loaded summary classes"                  => Some("summaryCacheLoad")
       case "Closed plugins (unused analysis)"        => Some("unusedAnalysis")
+      case TypeDeclaration.MethodMapSpan             => Some("validateMethodMap")
+      case TypeDeclaration.ConstructorMapSpan        => Some("validateConstructorMap")
+      case FullDeclaration.BodyDeclarationSpan       => Some("validateBodyDeclarations")
+      case FullDeclaration.OuterDependencySpan       => Some("validateOuterDependencies")
       case ClassParseBatch()                         => Some("classParseBatch")
       case TriggerParseBatch()                       => Some("triggerParseBatch")
       case _ if label.startsWith("Parsed ")          => Some(ClassParseFile)

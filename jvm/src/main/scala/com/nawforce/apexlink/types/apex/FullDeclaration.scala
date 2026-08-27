@@ -170,7 +170,9 @@ abstract class FullDeclaration(
         val context = new TypeVerifyContext(None, this, None, enablePlugins = true)
         modifierIssues.foreach(context.log)
         verify(context)
-        propagateOuterDependencies(new TypeCache())
+        LoggerOps.debugTime(FullDeclaration.OuterDependencySpan, show = false) {
+          propagateOuterDependencies(new TypeCache())
+        }
 
         // Re-validation may update diagnostics which now need flushing
         flushedToCache = false
@@ -266,7 +268,11 @@ abstract class FullDeclaration(
     })
 
     // Detail check each body declaration
-    bodyDeclarations.foreach(bd => bd.validate(new BodyDeclarationVerifyContext(context, bd, None)))
+    LoggerOps.debugTime(FullDeclaration.BodyDeclarationSpan, show = false) {
+      bodyDeclarations.foreach(bd =>
+        bd.validate(new BodyDeclarationVerifyContext(context, bd, None))
+      )
+    }
 
     nestedTypes
       .filter(t => t.nestedTypes.nonEmpty)
@@ -420,6 +426,13 @@ final case class ThisType(module: OPM.Module, typeName: TypeName, inTest: Boolea
 }
 
 object FullDeclaration {
+
+  /** Labels for the timed spans that decompose validation. Constant so that recording one costs no
+    * allocation, and never logged, so they are invisible at every logging level. Deliberately not
+    * prefixed "Validated ", which the load benchmark maps to the per type span.
+    */
+  final val BodyDeclarationSpan = "Body declarations verified"
+  final val OuterDependencySpan = "Outer dependencies propagated"
 
   def create(
     module: OPM.Module,

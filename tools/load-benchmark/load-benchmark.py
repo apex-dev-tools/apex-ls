@@ -23,7 +23,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 BATCH_MAIN = "io.github.apexdevtools.apexls.Batch"
 TOOL_DIR = Path(__file__).resolve().parent
 REPO_DIR = TOOL_DIR.parent.parent
@@ -331,6 +331,7 @@ def variant_report(args, plan):
         },
         "size": last["size"],
         "issues": last["issues"],
+        "validation": last.get("validation"),
         "environment": last["environment"],
         "invocation": redact_command(args, plan, kept[-1]["command"]),
         "statistics": {
@@ -358,6 +359,7 @@ def run_report(args, run):
         "cacheFlushMs": result["timings"]["cacheFlushMs"],
         "observedParseThreads": result["parallelism"]["observedParseThreads"],
         "phases": result["timings"]["phases"],
+        "validation": result.get("validation"),
         "jfr": run["jfr"] if args.include_paths else jfr_name(run["jfr"]),
     }
 

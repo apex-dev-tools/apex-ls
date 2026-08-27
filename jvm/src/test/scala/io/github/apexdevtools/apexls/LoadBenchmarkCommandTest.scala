@@ -42,7 +42,7 @@ class LoadBenchmarkCommandTest extends AnyFunSuite with BatchCommandTestSupport 
       assert(invocation.status == 0)
 
       val result = invocation.json("result")
-      assert(result("schemaVersion").num == 1)
+      assert(result("schemaVersion").num == 2)
       assert(result("label").str == "cold")
       assert(result("workspace")("identity").str.startsWith("sha256:"))
 
@@ -73,6 +73,16 @@ class LoadBenchmarkCommandTest extends AnyFunSuite with BatchCommandTestSupport 
       assert(size("byNature")("apex").num == 2)
 
       assert(result("issues")("errors").num == 0)
+
+      val validation = result("validation")
+      assert(validation("typeContexts").num > 0)
+      assert(validation("typeCacheLookups").num > 0)
+      assert(
+        validation("typeCacheLookups").num ==
+          validation("typeCacheHits").num + validation("typeCacheMisses").num
+      )
+      assert(validation("typeCacheHitRate").num >= 0)
+
       assert(result("parallelism")("availableProcessors").num > 0)
       assert(result("environment")("javaVersion").str.nonEmpty)
       assert(result("environment")("maxHeapBytes").num > 0)

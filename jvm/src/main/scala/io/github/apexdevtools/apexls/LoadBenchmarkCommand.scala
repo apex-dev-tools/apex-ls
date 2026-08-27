@@ -15,6 +15,7 @@
 package io.github.apexdevtools.apexls
 
 import com.nawforce.apexlink.api.{BuildInfo, Org, ServerOps}
+import com.nawforce.apexlink.cst.ValidationStats
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.rpc.OpenOptions
 import com.nawforce.pkgforce.diagnostics.{LoggerOps, UNUSED_CATEGORY}
@@ -106,9 +107,11 @@ private[apexls] object LoadBenchmarkCommand extends BatchCommand {
     val collector         = new LoadPhaseCollector
     val previousCollector = LoggerOps.setTimingCollector(Some(collector))
     try {
+      ValidationStats.reset()
       val start          = System.nanoTime()
       val org            = Org.newOrg(workspace, openOptions(options, arguments))
       val totalLoadNanos = System.nanoTime() - start
+      val validation     = ValidationStats.snapshot()
       if (org.getProjectConfig().isEmpty) {
         Left(BatchError("WORKSPACE_LOAD_FAILED", s"Unable to load workspace '$workspace'"))
       } else {
@@ -124,6 +127,7 @@ private[apexls] object LoadBenchmarkCommand extends BatchCommand {
             parallelism = parallelismOf(arguments, collector),
             size = sizeOf(org),
             issues = issuesOf(org),
+            validation = validation,
             environment = environmentOf(arguments)
           )
         )

@@ -104,6 +104,10 @@ over individual files, which exceeds wall time when parsing runs on several thre
 | `triggerParseBatch` | the trigger parse pass |
 | `summaryCacheLoad` | loading summary types from the parsed cache |
 | `validateFile` | per type validation |
+| `validateBodyDeclarations` | detail checking of a type's body declarations, within `validateFile` |
+| `validateOuterDependencies` | outer dependency propagation, within `validateFile` |
+| `validateMethodMap` | building a type's method map, forced by whatever needs it first |
+| `validateConstructorMap` | building a type's constructor map, forced the same way |
 | `unusedAnalysis` | the plugin close pass that produces unused diagnostics |
 
 Only these phases are collected. The underlying spans are labelled with file paths, so anything
@@ -117,11 +121,19 @@ interpretable. `packageCount` counts packages including ghosted namespaces decla
 `metadataFileCount` counts every indexed file including the meta XML that accompanies Apex.
 `issues` is a cheap check that two runs analysed the same thing.
 
+### Validation counts
+
+`validation` counts the type resolutions performed while validating, split into the lookups the per
+type cache answered and those that reached the resolver, plus the number of validation contexts the
+work was spread over. These describe apex-ls' own behaviour rather than the workspace, so they are
+safe to report for a private codebase.
+
 ### Parallelism
 
 `--parallelism N` bounds the pool the parallel parts of the load run on, by passing
-`-Dscala.concurrent.context.{num,min,max}Threads=N` to the fresh JVM. Every result records the
-requested level, the properties actually set, the machine's core count, and
+`-Dscala.concurrent.context.{num,min,max}Threads=N` to the fresh JVM. The class parse pool reads
+`maxThreads` as an explicit level, so a sweep can go above its default bound of four threads. Every
+result records the requested level, the properties actually set, the machine's core count, and
 `observedParseThreads`, the number of distinct threads that ran per file parse spans.
 
 `observedParseThreads` is the ground truth: it reports what happened rather than what was asked
