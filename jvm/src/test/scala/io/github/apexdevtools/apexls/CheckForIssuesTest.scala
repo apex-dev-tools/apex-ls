@@ -9,6 +9,12 @@ import java.nio.charset.StandardCharsets
 
 class CheckForIssuesTest extends AnyFunSuite {
 
+  private val errorMessage   = "No type declaration found for 'Silly'"
+  private val warningMessage = "Local variable is hiding class field 'value'"
+  private val unusedMessage  = "Unused local variable 'unusedLocal'"
+
+  private val formats = Seq("text", "json", "pmd")
+
   test("exit status is issues when errors are present") {
     assert(CheckForIssues.exitStatus(hasErrors = true, hasWarnings = false, hasUnused = false) == 4)
     assert(CheckForIssues.exitStatus(hasErrors = true, hasWarnings = true, hasUnused = true) == 4)
@@ -30,6 +36,104 @@ class CheckForIssuesTest extends AnyFunSuite {
     assert(
       CheckForIssues.exitStatus(hasErrors = false, hasWarnings = false, hasUnused = false) == 0
     )
+  }
+
+  test("detail modes select warnings and unused findings independently") {
+    assert(
+      CheckForIssues.DetailMode.all
+        .map(_.name) == Seq("errors", "warnings", "errors-and-unused", "unused")
+    )
+    assert(!CheckForIssues.DetailMode.errors.includeWarnings)
+    assert(!CheckForIssues.DetailMode.errors.includeUnused)
+    assert(CheckForIssues.DetailMode.warnings.includeWarnings)
+    assert(!CheckForIssues.DetailMode.warnings.includeUnused)
+    assert(!CheckForIssues.DetailMode.errorsAndUnused.includeWarnings)
+    assert(CheckForIssues.DetailMode.errorsAndUnused.includeUnused)
+    assert(CheckForIssues.DetailMode.unused.includeWarnings)
+    assert(CheckForIssues.DetailMode.unused.includeUnused)
+  }
+
+  test("unused analysis is enabled only for the modes that report unused findings") {
+    assert(!CheckForIssues.DetailMode.errors.unusedAnalysis)
+    assert(!CheckForIssues.DetailMode.warnings.unusedAnalysis)
+    assert(CheckForIssues.DetailMode.errorsAndUnused.unusedAnalysis)
+    assert(CheckForIssues.DetailMode.unused.unusedAnalysis)
+  }
+
+  test("unknown detail level is rejected") {
+    withMixedIssues { root =>
+      val (status, _) = runAndCapture(root, "text", "unused-only")
+      assert(status == 1)
+    }
+  }
+
+  test("errors detail reports only errors in every format") {
+    withMixedIssues { root =>
+      formats.foreach(format => {
+        val (status, output) = runAndCapture(root, format, "errors")
+        assert(status == 4, format)
+        assert(reports(output, format, errorMessage), format)
+        assert(!reports(output, format, warningMessage), format)
+        assert(!reports(output, format, unusedMessage), format)
+      })
+    }
+  }
+
+  test("warnings detail reports errors and ordinary warnings in every format") {
+    withMixedIssues { root =>
+      formats.foreach(format => {
+        val (status, output) = runAndCapture(root, format, "warnings")
+        assert(status == 4, format)
+        assert(reports(output, format, errorMessage), format)
+        assert(reports(output, format, warningMessage), format)
+        assert(!reports(output, format, unusedMessage), format)
+      })
+    }
+  }
+
+  test("errors-and-unused detail reports errors and unused findings in every format") {
+    withMixedIssues { root =>
+      formats.foreach(format => {
+        val (status, output) = runAndCapture(root, format, "errors-and-unused")
+        assert(status == 4, format)
+        assert(reports(output, format, errorMessage), format)
+        assert(!reports(output, format, warningMessage), format)
+        assert(reports(output, format, unusedMessage), format)
+      })
+    }
+  }
+
+  test("unused detail reports errors, ordinary warnings and unused findings in every format") {
+    withMixedIssues { root =>
+      formats.foreach(format => {
+        val (status, output) = runAndCapture(root, format, "unused")
+        assert(status == 4, format)
+        assert(reports(output, format, errorMessage), format)
+        assert(reports(output, format, warningMessage), format)
+        assert(reports(output, format, unusedMessage), format)
+      })
+    }
+  }
+
+  test("exit status matches the reported set when there are no errors") {
+    withoutErrors { root =>
+      formats.foreach(format => {
+        assert(runAndCapture(root, format, "errors")._1 == 0, format)
+        assert(runAndCapture(root, format, "warnings")._1 == 5, format)
+        assert(runAndCapture(root, format, "errors-and-unused")._1 == 6, format)
+        assert(runAndCapture(root, format, "unused")._1 == 7, format)
+      })
+    }
+  }
+
+  test("nothing excluded from the report contributes to the exit status") {
+    withoutErrors { root =>
+      formats.foreach(format => {
+        val (status, output) = runAndCapture(root, format, "errors-and-unused")
+        assert(status == 6, format)
+        assert(!reports(output, format, warningMessage), format)
+      })
+    }
   }
 
   test("JSON diagnostics preserve exact XML element ranges") {
@@ -60,6 +164,31 @@ class CheckForIssuesTest extends AnyFunSuite {
     }
   }
 
+  private val warningSource =
+    "public class Warner { public String value; public void run() { String value = 'x'; System.debug(value); } }"
+
+  private val unusedSource =
+    "public class Unusd { public void keep() { String unusedLocal; } }"
+
+  private val errorSource =
+    "public class Bad { { Silly s = null; System.debug(s); } }"
+
+  private def withMixedIssues(verify: PathLike => Unit): Unit = {
+    FileSystemHelper.runTempDir(
+      Map(
+        "classes/Bad.cls"    -> errorSource,
+        "classes/Warner.cls" -> warningSource,
+        "classes/Unusd.cls"  -> unusedSource
+      )
+    )(verify)
+  }
+
+  private def withoutErrors(verify: PathLike => Unit): Unit = {
+    FileSystemHelper.runTempDir(
+      Map("classes/Warner.cls" -> warningSource, "classes/Unusd.cls" -> unusedSource)
+    )(verify)
+  }
+
   private def withInvalidFieldType(verify: PathLike => Unit): Unit = {
     val source =
       """<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
@@ -72,11 +201,37 @@ class CheckForIssuesTest extends AnyFunSuite {
     FileSystemHelper.runTempDir(Map("objects/Foo__c.object" -> source))(verify)
   }
 
-  private def runAndCapture(root: PathLike, format: String): (Int, String) = {
+  /** Extract the reported messages from a rendered report, so each renderer is checked against the
+    * same expectations.
+    */
+  private def messages(output: String, format: String): Seq[String] = {
+    format match {
+      case "json" =>
+        ujson
+          .read(output)("files")
+          .arr
+          .flatMap(file => file("messages").arr.map(_("message").str))
+          .toSeq
+      case "pmd" =>
+        (scala.xml.XML.loadString(output) \\ "violation").map(_.text.trim).toSeq
+      case _ =>
+        output.linesIterator.toSeq
+    }
+  }
+
+  private def reports(output: String, format: String, message: String): Boolean = {
+    messages(output, format).exists(_.contains(message))
+  }
+
+  private def runAndCapture(
+    root: PathLike,
+    format: String,
+    detail: String = "errors"
+  ): (Int, String) = {
     val bytes  = new ByteArrayOutputStream()
     val stream = new PrintStream(bytes, true, StandardCharsets.UTF_8.name())
     val status = Console.withOut(stream) {
-      CheckForIssues.run(format, "none", "errors", nocache = true, Seq.empty, root.toString, "")
+      CheckForIssues.run(format, "none", detail, nocache = true, Seq.empty, root.toString, "")
     }
     stream.flush()
     (status, new String(bytes.toByteArray, StandardCharsets.UTF_8))
