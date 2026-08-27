@@ -18,7 +18,7 @@ import com.nawforce.apexlink.api._
 import com.nawforce.apexlink.rpc.OpenOptions
 import com.nawforce.pkgforce.diagnostics.UNUSED_CATEGORY
 import com.nawforce.runtime.platform.Path
-import io.github.apexdevtools.api.IssueLocation
+import io.github.apexdevtools.api.{Issue, IssueLocation}
 import mainargs.{Flag, ParserForMethods, TokensReader, arg, main}
 
 import java.time.Instant
@@ -38,6 +38,42 @@ object CheckForIssues {
   private final val STATUS_WARNINGS_ONLY: Int       = 5
   private final val STATUS_UNUSED_ONLY: Int         = 6
   private final val STATUS_WARNINGS_AND_UNUSED: Int = 7
+
+  /** Reporting detail, expressed as the two independent axes it actually has. Ordinary warnings
+    * and unused findings are selected separately, errors are always reported.
+    */
+  private[apexls] case class DetailMode(
+    name: String,
+    includeWarnings: Boolean,
+    includeUnused: Boolean
+  ) {
+
+    /** True if the analysis engine needs to produce unused findings for this mode. */
+    def unusedAnalysis: Boolean = includeUnused
+
+    def includes(issue: Issue): Boolean = {
+      if (issue.isError) true
+      else if (isUnusedIssue(issue.rule().name())) includeUnused
+      else includeWarnings
+    }
+  }
+
+  private[apexls] object DetailMode {
+    val errors: DetailMode =
+      DetailMode("errors", includeWarnings = false, includeUnused = false)
+    val warnings: DetailMode =
+      DetailMode("warnings", includeWarnings = true, includeUnused = false)
+    val errorsAndUnused: DetailMode =
+      DetailMode("errors-and-unused", includeWarnings = false, includeUnused = true)
+    val unused: DetailMode =
+      DetailMode("unused", includeWarnings = true, includeUnused = true)
+
+    val all: Seq[DetailMode] = Seq(errors, warnings, errorsAndUnused, unused)
+
+    def parse(value: String): Option[DetailMode] = all.find(_.name == value)
+
+    def displayNames: String = all.map(mode => s"'${mode.name}'").mkString(", ")
+  }
 
   case class Param(providerId: String, name: String, values: Option[List[String]])
 
@@ -78,7 +114,7 @@ object CheckForIssues {
     format: String = "text",
     @arg(short = 'l', doc = "Text output logging level, none (default), info or debug")
     logging: String = "none",
-    @arg(short = 'd', doc = "Detail level, errors (default), warnings, unused")
+    @arg(short = 'd', doc = "Detail level, errors (default), warnings, errors-and-unused, unused")
     detail: String = "errors",
     @arg(short = 'n', doc = "Disable cache use")
     nocache: Flag,
@@ -132,11 +168,11 @@ object CheckForIssues {
               return STATUS_ARGS
           }
 
-      val detailLevel = detail match {
-        case "errors" | "warnings" | "unused" => detail
-        case _ =>
+      val detailMode = DetailMode.parse(detail) match {
+        case Some(mode) => mode
+        case None =>
           System.err.println(
-            s"Unknown detail level provided '$detail', should be 'errors', 'warnings' or 'unused'"
+            s"Unknown detail level provided '$detail', should be one of ${DetailMode.displayNames}"
           )
           return STATUS_ARGS
       }
@@ -149,8 +185,8 @@ object CheckForIssues {
         .withLoggingLevel(loggingLevel)
         .withCache(!nocache)
         .withCacheDirectory(cacheDirectory)
-        .withUnused(detailLevel == "unused")
-        .withUnusedOnError(detailLevel == "unused")
+        .withUnused(detailMode.unusedAnalysis)
+        .withUnusedOnError(detailMode.unusedAnalysis)
 
       // Load org and flush to cache if we are using it
       val org = Org.newOrg(Path(workspace), options)
@@ -158,13 +194,15 @@ object CheckForIssues {
         org.flush()
       }
 
-      // Output issues
-      val includeWarnings = detailLevel == "warnings" || detailLevel == "unused"
-      if (outputFormat == "pmd") {
-        writeIssuesPMD(org, includeWarnings)
-      } else {
-        writeIssues(org, outputFormat == "json", includeWarnings)
+      // Every renderer and the exit status are derived from this one filtered set so that
+      // what is reported and what the process status claims can not disagree.
+      val issues = selectIssues(org, detailMode)
+      outputFormat match {
+        case "pmd"  => print(asPMD(issues))
+        case "json" => print(render(issues, new JSONMessageWriter()))
+        case _      => print(render(issues, new TextMessageWriter()))
       }
+      exitStatus(issues)
 
     } catch {
       case ex: Throwable =>
@@ -173,40 +211,37 @@ object CheckForIssues {
     }
   }
 
-  private def writeIssues(org: Org, asJSON: Boolean, includeWarnings: Boolean): Int = {
+  private[apexls] def selectIssues(org: Org, detailMode: DetailMode): Array[Issue] = {
+    org.issues
+      .issuesForFiles(null, detailMode.includeWarnings || detailMode.includeUnused, 0)
+      .filter(detailMode.includes)
+  }
 
-    val issues = org.issues.issuesForFiles(null, includeWarnings, 0)
-    val writer = if (asJSON) new JSONMessageWriter() else new TextMessageWriter()
+  private def render(issues: Array[Issue], writer: MessageWriter): String = {
     writer.startOutput()
-    var hasErrors   = false
-    var hasWarnings = false
-    var hasUnused   = false
-    var lastPath    = ""
+    var lastPath = ""
 
     issues.foreach(issue => {
-      hasErrors |= issue.isError()
-      if (!issue.isError) {
-        if (isUnusedIssue(issue.rule().name())) hasUnused = true
-        else hasWarnings = true
+      if (issue.filePath() != lastPath) {
+        if (lastPath.nonEmpty)
+          writer.endDocument()
+        lastPath = issue.filePath()
+        writer.startDocument(lastPath)
       }
-      if (includeWarnings || issue.isError) {
-
-        if (issue.filePath() != lastPath) {
-          if (lastPath.nonEmpty)
-            writer.endDocument()
-          lastPath = issue.filePath()
-          writer.startDocument(lastPath)
-        }
-
-        writer.writeMessage(issue.rule().name(), issue.fileLocation(), issue.message)
-
-      }
+      writer.writeMessage(issue.rule().name(), issue.fileLocation(), issue.message)
     })
     if (lastPath.nonEmpty)
       writer.endDocument()
 
-    print(writer.output)
-    exitStatus(hasErrors, hasWarnings, hasUnused)
+    writer.output
+  }
+
+  private[apexls] def exitStatus(issues: Array[Issue]): Int = {
+    exitStatus(
+      hasErrors = issues.exists(_.isError),
+      hasWarnings = issues.exists(issue => !issue.isError && !isUnusedIssue(issue.rule().name())),
+      hasUnused = issues.exists(issue => !issue.isError && isUnusedIssue(issue.rule().name()))
+    )
   }
 
   private[apexls] def exitStatus(
@@ -290,13 +325,7 @@ object CheckForIssues {
           .endCharOffset()} }"""
   }
 
-  private def writeIssuesPMD(org: Org, includeWarnings: Boolean): Int = {
-
-    val issues    = org.issues.issuesForFiles(null, includeWarnings, 0)
-    val hasErrors = issues.exists(_.isError())
-    val hasWarnings =
-      issues.exists(issue => !issue.isError && !isUnusedIssue(issue.rule().name()))
-    val hasUnused    = issues.exists(issue => !issue.isError && isUnusedIssue(issue.rule().name()))
+  private def asPMD(issues: Array[Issue]): String = {
     val issuesByFile = issues.groupBy(_.filePath())
     val files = issuesByFile.map(kv => {
       val path   = kv._1
@@ -328,8 +357,7 @@ object CheckForIssues {
     </pmd>
 
     val printer = new scala.xml.PrettyPrinter(80, 2)
-    println(printer.format(pmd))
-    exitStatus(hasErrors, hasWarnings, hasUnused)
+    printer.format(pmd) + "\n"
   }
 
   private object JSON {

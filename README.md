@@ -84,7 +84,23 @@ The following arguments are available:
 | `--nocache` / `-n`   | Do not load from or write to an existing apex-ls cache.                                            | All                |
 | `--cache-dir` / `-c` | Cache directory path, defaults to `APEXLINK_CACHE_DIR` env or `$HOME/.apexlink_cache`.             | All                |
 | `--workspace` / `-w` | Workspace directory path, defaults to current directory. Must contain an `sfdx-project.json` file. | All                |
-| `--detail` / `-d`    | Detail level: `errors (default) \| warnings \| unused`                                             | CheckForIssues     |
+| `--detail` / `-d`    | Detail level: `errors (default) \| warnings \| errors-and-unused \| unused`                        | CheckForIssues     |
+
+`CheckForIssues` detail levels select ordinary warnings and unused findings independently; errors are
+always reported.
+
+| Detail level        | Reports                                        |
+|---------------------|------------------------------------------------|
+| `errors` (default)  | Errors                                         |
+| `warnings`          | Errors and ordinary warnings                   |
+| `errors-and-unused` | Errors and unused findings                     |
+| `unused`            | Errors, ordinary warnings and unused findings  |
+
+Unused analysis only runs for `errors-and-unused` and `unused`. The text, JSON and PMD reports and
+the process exit status are all derived from the same selected set of issues. Exit status `0`
+indicates nothing was reported, `1` an invalid argument, `3` an unexpected failure, `4` errors were
+reported, `5` ordinary warnings only, `6` unused findings only, and `7` both ordinary warnings and
+unused findings.
 
 ## Configuration
 

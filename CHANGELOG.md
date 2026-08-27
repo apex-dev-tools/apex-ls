@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A `CheckForIssues` `--detail errors-and-unused` level that reports errors and unused findings
+  while excluding ordinary warnings, for batch/CI consumers that want unused findings to affect
+  output and exit status without accepting all warnings. The text, JSON and PMD reports and the
+  exit status are now all derived from one selected set of issues, so what is reported and what the
+  exit status claims can no longer disagree. `errors`, `warnings` and `unused` keep their existing
+  meanings and the exit codes are unchanged (#481)
 - A repeatable workspace load benchmark, a `benchmark-load` JVM batch command reporting total load
   time, phase breakdown, size profile and full effective configuration as JSON, driven by
   `tools/load-benchmark` for a fresh JVM per run, fixed heap, repetition, interleaving, bounded
