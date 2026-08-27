@@ -201,7 +201,6 @@ object ModifierOps {
   }
 }
 
-// FUTURE: Validate arguments of the annotations
 // FUTURE: Cross modifier/annotation checking
 
 object ApexModifiers {
@@ -294,7 +293,8 @@ object ApexModifiers {
   def toModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
-    logger: ModifierLogger
+    logger: ModifierLogger,
+    target: AnnotationTarget
   ): ArraySeq[(Modifier, LogEntryContext, String)] = {
 
     validateDuplicateAnnotations(
@@ -311,12 +311,13 @@ object ApexModifiers {
       val annotation = Option(modifierContext.annotation())
       val modifiers =
         annotation
-          .map(a =>
-            ModifierOps(
-              "@" + Option(a.id()).map(_.getText).getOrElse("").toLowerCase,
-              toAnnotationParameters(parser, a)
-            )
-          )
+          .map(a => {
+            val name       = Option(a.id()).map(_.getText).getOrElse("")
+            val parameters = toAnnotationParameters(parser, a)
+            AnnotationValidation
+              .validate(name, parameters, target, LogEntryContext(parser, modifierContext), logger)
+            ModifierOps("@" + name.toLowerCase, parameters)
+          })
           .getOrElse(
             ModifierOps(Option(modifierContext).map(_.getText).getOrElse("").toLowerCase, None)
           )
@@ -495,7 +496,7 @@ object ApexModifiers {
     idContext: IdContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts, logger)
+    val mods   = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Classes)
     classModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 
@@ -556,7 +557,7 @@ object ApexModifiers {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts, logger)
+    val mods   = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Interfaces)
     interfaceModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 
@@ -605,7 +606,7 @@ object ApexModifiers {
   ): ModifierResults = {
 
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts, logger)
+    val mods   = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Enums)
     enumModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 
@@ -652,7 +653,7 @@ object ApexModifiers {
 
     val logger = new ModifierLogger()
 
-    val modifiers = toModifiers(parser, modifierContexts, logger)
+    val modifiers = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Properties)
     val allowedModifiers =
       allowableModifiers(modifiers, visibilityModifiers.toSet, "property set/get", logger)
 
@@ -673,7 +674,7 @@ object ApexModifiers {
     context: ParserRuleContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts, logger)
+    val mods   = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Constructors)
     constructorModifiers(logger, mods, LogEntryContext(parser, context))
   }
 
@@ -709,7 +710,7 @@ object ApexModifiers {
     context: ParserRuleContext
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts, logger)
+    val mods   = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Parameters)
     parameterModifiers(logger, mods, LogEntryContext(parser, context))
   }
 
@@ -740,7 +741,7 @@ object ApexModifiers {
 
     val logger = new ModifierLogger()
 
-    val modifiers = toModifiers(parser, modifierContexts, logger)
+    val modifiers = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Locals)
 
     val allowedModifiers =
       allowableModifiers(modifiers, legalCatchModifiersAndAnnotations, "catch variables", logger)
@@ -766,7 +767,7 @@ object ApexModifiers {
 
     val logger = new ModifierLogger()
 
-    val modifiers = toModifiers(parser, modifierContexts, logger)
+    val modifiers = toModifiers(parser, modifierContexts, logger, AnnotationTarget.Locals)
 
     val allowedModifiers =
       allowableModifiers(

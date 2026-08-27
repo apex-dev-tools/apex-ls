@@ -23,8 +23,13 @@ import scala.collection.mutable.ArrayBuffer
   * Provides convenience methods for logging errors and warnings with LogEntryContext.
   */
 class ModifierLogger {
-  private var issueLog: ArrayBuffer[Issue] = _
+  private var issueLog: ArrayBuffer[Issue]           = _
+  private var annotationIssueLog: ArrayBuffer[Issue] = _
 
+  /** Has a structural issue been logged? The modifier rules guard on this to avoid reporting a
+    * consequence of a problem already reported. Annotation parameter issues are excluded, see
+    * [[logAnnotationError]].
+    */
   def isEmpty: Boolean = issueLog == null
 
   private def log(issue: Issue): Unit = {
@@ -34,10 +39,15 @@ class ModifierLogger {
   }
 
   def issues: ArraySeq[Issue] = {
-    if (isEmpty)
+    if (issueLog == null && annotationIssueLog == null) {
       Issue.emptyArray
-    else
+    } else if (annotationIssueLog == null) {
       ArraySeq.unsafeWrapArray(issueLog.toArray)
+    } else if (issueLog == null) {
+      ArraySeq.unsafeWrapArray(annotationIssueLog.toArray)
+    } else {
+      ArraySeq.unsafeWrapArray((annotationIssueLog ++ issueLog).toArray)
+    }
   }
 
   def logError(context: LogEntryContext, message: String): Unit = {
@@ -46,5 +56,20 @@ class ModifierLogger {
 
   def logWarning(context: LogEntryContext, message: String): Unit = {
     log(Issue(context.path, Diagnostic(WARNING_CATEGORY, context.location, message)))
+  }
+
+  /** Log an error against an annotation parameter.
+    *
+    * Held apart from the structural issues so that it does not make the logger non-empty. A
+    * misspelt parameter says nothing about whether the declaration itself is well formed, so it
+    * must not suppress the rules that guard on [[isEmpty]] - those rules both report and correct
+    * the modifier set, so suppressing them changes what the declaration resolves to.
+    */
+  def logAnnotationError(context: LogEntryContext, message: String): Unit = {
+    if (annotationIssueLog == null)
+      annotationIssueLog = new ArrayBuffer[Issue]()
+    annotationIssueLog.append(
+      Issue(context.path, Diagnostic(ERROR_CATEGORY, context.location, message))
+    )
   }
 }

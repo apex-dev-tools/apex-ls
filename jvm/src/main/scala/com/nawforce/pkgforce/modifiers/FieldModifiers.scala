@@ -44,14 +44,17 @@ object FieldModifiers {
   private val InnerFieldModifiersAndAnnotations: Set[Modifier] =
     FieldModifiersAndAnnotations - STATIC_MODIFIER
 
+  /* Fields and properties share their modifier and annotation rules, they are told apart only for
+   * the annotation properties that are legal on one and not the other. */
   def fieldModifiers(
     parser: CodeParser,
     modifierContexts: ArraySeq[ModifierContext],
     outer: Boolean,
-    idContext: IdContext
+    idContext: IdContext,
+    target: AnnotationTarget
   ): ModifierResults = {
     val logger = new ModifierLogger()
-    val mods   = toModifiers(parser, modifierContexts, logger)
+    val mods   = toModifiers(parser, modifierContexts, logger, target)
     fieldModifiers(logger, mods, outer, LogEntryContext(parser, idContext))
   }
 

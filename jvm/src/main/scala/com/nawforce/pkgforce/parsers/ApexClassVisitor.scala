@@ -255,7 +255,8 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
       parser,
       modifierContext.modifiers,
       parentStack.size == 1,
-      variableDeclarators.head.id()
+      variableDeclarators.head.id(),
+      AnnotationTarget.Fields
     )
     if (variableDeclarators.size == 1) {
       val vd = variableDeclarators.head
@@ -301,7 +302,8 @@ class ApexClassVisitor(parser: CodeParser) extends TreeVisitor[ApexNode] {
         parser,
         modifierContext.modifiers,
         parentStack.size == 1,
-        ctx.id()
+        ctx.id(),
+        AnnotationTarget.Properties
       )
     val fieldType = Option(ctx.typeRef()).map(_.getText).getOrElse("")
     ArraySeq(

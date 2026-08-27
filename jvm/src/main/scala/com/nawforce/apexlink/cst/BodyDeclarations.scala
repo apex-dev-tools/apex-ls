@@ -144,7 +144,8 @@ object ClassBodyDeclaration {
             parser,
             modifiers,
             isOuter,
-            CodeParser.toScala(x.variableDeclarators().variableDeclarator()).head.id()
+            CodeParser.toScala(x.variableDeclarators().variableDeclarator()).head.id(),
+            AnnotationTarget.Fields
           ),
           x
         )
@@ -181,7 +182,8 @@ object ClassBodyDeclaration {
           ApexPropertyDeclaration.construct(
             parser,
             thisType,
-            FieldModifiers.fieldModifiers(parser, modifiers, isOuter, x.id()),
+            FieldModifiers
+              .fieldModifiers(parser, modifiers, isOuter, x.id(), AnnotationTarget.Properties),
             x
           )
         )

@@ -38,6 +38,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recognition of `@SuppressWarnings(value='PMD')`, the named form of the annotation parameter. It
   is legal Apex and carries the same meaning as the bare `@SuppressWarnings('PMD')`, but was
   previously ignored, so the suppression had no effect (#541)
+- Validation of annotation parameters, driven by a per-annotation property table of names, value
+  types, allowed values and allowed targets. Reported against the parameter at fault, from both
+  parser adapters: a comma between parameters (`Expecting ')' but was: ','`, Apex separates them by
+  whitespace alone), a bare value where a name is required, an unknown parameter name
+  (`No such property, bogus, defined on this annotation: AuraEnabled`), a value of the wrong type
+  (`Invalid value for property scope expected type String`), an unknown value for a parameter with
+  a fixed set (`Annotation property, scope on AuraEnabled, unknown value: bogus`), a parameter used
+  on a declaration that does not accept it (`Annotation property, cacheable on AuraEnabled, is not
+  allowed on fields`), and the cross-parameter rules on `@AuraEnabled`, `@InvocableVariable` and
+  `@IsTest`. `@JsonAccess()` and `@RestResource` url format are also checked. Annotations whose
+  parameters have not been established against an org, and annotations apex-ls does not know, are
+  not validated, so a new platform annotation still analyses cleanly (#541)
 - Errors when an inaccessible nested Apex class, interface, or enum is written explicitly in
   source, covering declared, parameter, return, construction, cast, `instanceof`, type literal,
   qualifier, catch, for-loop, switch, extends and implements positions, honouring same-file access
