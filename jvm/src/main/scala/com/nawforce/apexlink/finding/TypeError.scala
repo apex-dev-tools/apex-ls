@@ -14,7 +14,7 @@
 
 package com.nawforce.apexlink.finding
 
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, MISSING_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticId, Issue, MISSING_CATEGORY}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLocation
 
@@ -30,7 +30,12 @@ final case class MissingType(_typeName: TypeName) extends TypeError(_typeName) {
   def asIssue(location: PathLocation): Issue = {
     new Issue(
       location.path,
-      Diagnostic(MISSING_CATEGORY, location.location, s"No type declaration found for '$typeName'")
+      Diagnostic(
+        MISSING_CATEGORY,
+        location.location,
+        s"No type declaration found for '$typeName'",
+        DiagnosticId.MissingType
+      )
     )
   }
 
@@ -45,7 +50,8 @@ final case class InaccessibleType(_typeName: TypeName) extends TypeError(_typeNa
       Diagnostic(
         MISSING_CATEGORY,
         location.location,
-        s"Type '$typeName' is not accessible from here"
+        s"Type '$typeName' is not accessible from here",
+        DiagnosticId.InaccessibleType
       )
     )
   }
@@ -62,7 +68,8 @@ final case class WrongTypeArguments(_typeName: TypeName, expected: Integer)
       Diagnostic(
         MISSING_CATEGORY,
         location.location,
-        s"Wrong number of type arguments for '$typeName', expected $expected"
+        s"Wrong number of type arguments for '$typeName', expected $expected",
+        DiagnosticId.WrongTypeArguments
       )
     )
   }

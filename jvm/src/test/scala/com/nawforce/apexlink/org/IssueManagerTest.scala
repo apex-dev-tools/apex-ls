@@ -15,7 +15,7 @@ package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.TestHelper
 import com.nawforce.pkgforce.PathInterpolator.PathInterpolator
-import com.nawforce.pkgforce.diagnostics.{Issue, SYNTAX_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticId, Issue, SYNTAX_CATEGORY}
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -47,9 +47,13 @@ class IssueManagerTest extends AnyFunSuite with TestHelper {
         assert(org.issues.hasUpdatedIssues.isEmpty)
 
         val expectedIssue = Issue(
-          SYNTAX_CATEGORY,
-          PathLocation(root.join("Dummy.cls"), Location(1, 18)),
-          "mismatched input '<EOF>' expecting {'extends', 'implements', '{'}"
+          root.join("Dummy.cls"),
+          Diagnostic(
+            SYNTAX_CATEGORY,
+            Location(1, 18),
+            "mismatched input '<EOF>' expecting {'extends', 'implements', '{'}",
+            DiagnosticId.SyntaxError
+          )
         )
 
         val dummyPath = root.join("Dummy.cls")
@@ -118,9 +122,13 @@ class IssueManagerTest extends AnyFunSuite with TestHelper {
 
         val expectedIssues = Array(
           Issue(
-            SYNTAX_CATEGORY,
-            PathLocation(root.join("Dummy.cls"), Location(1, 18)),
-            "mismatched input '<EOF>' expecting {'extends', 'implements', '{'}"
+            root.join("Dummy.cls"),
+            Diagnostic(
+              SYNTAX_CATEGORY,
+              Location(1, 18),
+              "mismatched input '<EOF>' expecting {'extends', 'implements', '{'}",
+              DiagnosticId.SyntaxError
+            )
           )
         )
 

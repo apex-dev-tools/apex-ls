@@ -10,9 +10,20 @@ const isCategory =
   (...cats: string[]) =>
   (str: string) =>
     cats.some((c) => str.startsWith(c));
-const isErrorCat = isCategory("Syntax", "Error", "Missing");
-const isWarnCat = isCategory("Warning", "Unused");
-const isSyntaxCat = isCategory("Syntax");
+const isErrorCat = isCategory(
+  "Syntax",
+  "Error",
+  "Missing",
+  "syntax-error",
+  "missing-type",
+  "inaccessible-type",
+  "wrong-type-arguments",
+  "missing-variable-or-type",
+  "unknown-sobject-field",
+  "unknown-field-or-type"
+);
+const isWarnCat = isCategory("Warning", "Unused", "unused-");
+const isSyntaxCat = isCategory("Syntax", "syntax-error");
 
 // .each runs first before any hooks like beforeAll
 function getSamples(): [string, string, string | null][] {

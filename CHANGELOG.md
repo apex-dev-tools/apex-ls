@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stable lower-kebab-case IDs for Apex syntax errors, missing-name diagnostics, and unused
+  findings. `CheckForIssues` now uses IDs in text prefixes and PMD `rule` attributes, and adds an
+  `id` field alongside `category` in JSON. Diagnostics not yet catalogued continue to use their
+  category name as a fallback (#557)
 - A `CheckForIssues` `--detail errors-and-unused` level that reports errors and unused findings
   while excluding ordinary warnings, for batch/CI consumers that want unused findings to affect
   output and exit status without accepting all warnings. The text, JSON and PMD reports and the

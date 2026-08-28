@@ -228,7 +228,12 @@ object CheckForIssues {
         lastPath = issue.filePath()
         writer.startDocument(lastPath)
       }
-      writer.writeMessage(issue.rule().name(), issue.fileLocation(), issue.message)
+      writer.writeMessage(
+        issue.rule().name(),
+        issue.rule().id(),
+        issue.fileLocation(),
+        issue.message
+      )
     })
     if (lastPath.nonEmpty)
       writer.endDocument()
@@ -265,7 +270,12 @@ object CheckForIssues {
 
     def startDocument(path: String): Unit
 
-    def writeMessage(category: String, location: IssueLocation, message: String): Unit
+    def writeMessage(
+      category: String,
+      diagnosticId: String,
+      location: IssueLocation,
+      message: String
+    ): Unit
 
     def endDocument(): Unit
 
@@ -279,8 +289,12 @@ object CheckForIssues {
 
     override def startDocument(path: String): Unit = if (showPath) buffer ++= path + '\n'
 
-    override def writeMessage(category: String, location: IssueLocation, message: String): Unit =
-      buffer ++= s"$category: ${location.displayPosition}: $message\n"
+    override def writeMessage(
+      category: String,
+      diagnosticId: String,
+      location: IssueLocation,
+      message: String
+    ): Unit = buffer ++= s"$diagnosticId: ${location.displayPosition}: $message\n"
 
     override def endDocument(): Unit = {}
 
@@ -305,9 +319,16 @@ object CheckForIssues {
       firstMessage = true
     }
 
-    override def writeMessage(category: String, location: IssueLocation, message: String): Unit = {
+    override def writeMessage(
+      category: String,
+      diagnosticId: String,
+      location: IssueLocation,
+      message: String
+    ): Unit = {
       buffer ++= (if (firstMessage) "" else ",\n")
-      buffer ++= s"""{${locationAsJSON(location)}, "category": "$category", "message": "${JSON
+      buffer ++= s"""{${locationAsJSON(
+          location
+        )}, "category": "$category", "id": "$diagnosticId", "message": "${JSON
           .encode(message)}"}"""
       firstMessage = false
     }
@@ -336,7 +357,7 @@ object CheckForIssues {
                    endline={issue.fileLocation().endLineNumber().toString}
                    begincolumn={issue.fileLocation().startCharOffset().toString}
                    endcolumn={issue.fileLocation().endCharOffset().toString}
-                   rule={issue.rule.name()}
+                   rule={issue.rule.id()}
                    ruleset={issue.provider()}
                    priority={issue.rule.priority().toString}>
           {issue.message()}

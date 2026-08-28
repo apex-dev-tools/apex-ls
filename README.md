@@ -102,6 +102,8 @@ indicates nothing was reported, `1` an invalid argument, `3` an unexpected failu
 reported, `5` ordinary warnings only, `6` unused findings only, and `7` both ordinary warnings and
 unused findings.
 
+See [Diagnostic IDs](doc/Diagnostic_IDs.md) for the stable identifiers surfaced by these reports.
+
 ## Configuration
 
 ### sfdx-project.json Options

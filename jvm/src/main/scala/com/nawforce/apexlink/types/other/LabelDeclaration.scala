@@ -20,7 +20,7 @@ import com.nawforce.apexlink.names.XNames.NameUtils
 import com.nawforce.apexlink.org.OPM
 import com.nawforce.apexlink.types.core._
 import com.nawforce.apexlink.types.platform.PlatformTypes
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, UNUSED_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticId, Issue, UNUSED_CATEGORY}
 import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers.{
   GLOBAL_MODIFIER,
@@ -129,7 +129,12 @@ final class LabelDeclaration(
       .map(label =>
         new Issue(
           label.location.path,
-          Diagnostic(UNUSED_CATEGORY, label.location.location, s"Label '$typeName.${label.name}'")
+          Diagnostic(
+            UNUSED_CATEGORY,
+            label.location.location,
+            s"Label '$typeName.${label.name}'",
+            DiagnosticId.UnusedLabel
+          )
         )
       )
   }

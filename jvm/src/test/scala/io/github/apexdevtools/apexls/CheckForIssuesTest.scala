@@ -115,6 +115,22 @@ class CheckForIssuesTest extends AnyFunSuite {
     }
   }
 
+  test("every format surfaces stable IDs and uncatalogued IDs fall back to categories") {
+    withMixedIssues { root =>
+      formats.foreach(format => {
+        val (_, output) = runAndCapture(root, format, "unused")
+        assert(identifier(output, format, errorMessage) == "missing-type", format)
+        assert(identifier(output, format, warningMessage) == "Warning", format)
+        assert(identifier(output, format, unusedMessage) == "unused-local-variable", format)
+      })
+
+      val (_, jsonOutput) = runAndCapture(root, "json", "unused")
+      val warning         = jsonMessage(jsonOutput, warningMessage)
+      assert(warning("category").str == "Warning")
+      assert(warning("id").str == "Warning")
+    }
+  }
+
   test("exit status matches the reported set when there are no errors") {
     withoutErrors { root =>
       formats.foreach(format => {
@@ -221,6 +237,31 @@ class CheckForIssuesTest extends AnyFunSuite {
 
   private def reports(output: String, format: String, message: String): Boolean = {
     messages(output, format).exists(_.contains(message))
+  }
+
+  private def identifier(output: String, format: String, message: String): String = {
+    format match {
+      case "json" => jsonMessage(output, message)("id").str
+      case "pmd" =>
+        (scala.xml.XML.loadString(output) \\ "violation")
+          .find(_.text.contains(message))
+          .map(_ \@ "rule")
+          .getOrElse(fail(output))
+      case _ =>
+        output.linesIterator
+          .find(_.contains(message))
+          .map(_.takeWhile(_ != ':'))
+          .getOrElse(fail(output))
+    }
+  }
+
+  private def jsonMessage(output: String, message: String): ujson.Value = {
+    ujson
+      .read(output)("files")
+      .arr
+      .flatMap(file => file("messages").arr)
+      .find(_("message").str.contains(message))
+      .getOrElse(fail(output))
   }
 
   private def runAndCapture(

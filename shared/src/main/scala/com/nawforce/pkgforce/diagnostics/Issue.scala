@@ -37,8 +37,10 @@ import upickle.default.{macroRW, ReadWriter => RW}
 import scala.collection.compat.immutable.ArraySeq
 
 /** Shim between DiagnosticCategory & Rule, upickle is unhappy if DiagnosticCategory extends Rule */
-final case class DiagnosticRule(category: DiagnosticCategory) extends Rule {
+final case class DiagnosticRule(category: DiagnosticCategory, diagnosticId: String = "")
+    extends Rule {
   override def name(): String      = category.name
+  override def id(): String        = if (diagnosticId.nonEmpty) diagnosticId else name()
   override def priority(): Integer = category.priority
 }
 
@@ -55,7 +57,7 @@ final case class Issue(
 
   override def message(): String = diagnostic.message
 
-  override def rule(): Rule = DiagnosticRule(diagnostic.category)
+  override def rule(): Rule = DiagnosticRule(diagnostic.category, diagnostic.id)
 
   override def isError: java.lang.Boolean = isErrorType(diagnostic.category)
 }

@@ -33,6 +33,7 @@ import com.nawforce.apexlink.types.core.{
 import com.nawforce.pkgforce.diagnostics.{
   Diagnostic,
   DiagnosticCategory,
+  DiagnosticId,
   Issue,
   IssueProviderOps,
   UNUSED_CATEGORY
@@ -144,7 +145,8 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
             Diagnostic(
               UNUSED_CATEGORY,
               definition.location.location,
-              s"Unused local variable '${localVar._1}'"
+              s"Unused local variable '${localVar._1}'",
+              DiagnosticId.UnusedLocalVariable
             )
           )
         )
@@ -201,7 +203,8 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
             Diagnostic(
               UNUSED_CATEGORY,
               td.idLocation,
-              s"Unused ${td.nature.value} '${td.typeName}'$suffix"
+              s"Unused ${td.nature.value} '${td.typeName}'$suffix",
+              DiagnosticId.UnusedType
             )
           )
         )
@@ -242,7 +245,12 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
           val suffix = if (field.hasHolders) s", $onlyTestCodeReferenceText" else ""
           new Issue(
             field.location.path,
-            Diagnostic(UNUSED_CATEGORY, field.idLocation, s"Unused $nature '${field.name}'$suffix")
+            Diagnostic(
+              UNUSED_CATEGORY,
+              field.idLocation,
+              s"Unused $nature '${field.name}'$suffix",
+              DiagnosticId.UnusedField
+            )
           )
         })
     }
@@ -272,7 +280,8 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
             Diagnostic(
               UNUSED_CATEGORY,
               method.idLocation,
-              s"Unused $methodModifierText method '${method.signature}'$hierarchyContext$suffix"
+              s"Unused $methodModifierText method '${method.signature}'$hierarchyContext$suffix",
+              DiagnosticId.UnusedMethod
             )
           )
         })

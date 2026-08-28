@@ -52,7 +52,12 @@ object IssueOps {
   def noTypeDeclaration(location: PathLocation, typeName: TypeName): Issue =
     Issue(
       location.path,
-      Diagnostic(MISSING_CATEGORY, location.location, s"No type declaration found for '$typeName'")
+      Diagnostic(
+        MISSING_CATEGORY,
+        location.location,
+        s"No type declaration found for '$typeName'",
+        DiagnosticId.MissingType
+      )
     )
 
   def noTypeDeclaration(
@@ -68,7 +73,8 @@ object IssueOps {
           Diagnostic(
             MISSING_CATEGORY,
             location.location,
-            s"No nested type '${typeName.name}' found on Apex type '$outerTypeName' while resolving '$typeName'; declare the nested type explicitly or use the actual type name"
+            s"No nested type '${typeName.name}' found on Apex type '$outerTypeName' while resolving '$typeName'; declare the nested type explicitly or use the actual type name",
+            DiagnosticId.MissingType
           )
         )
       )
@@ -81,7 +87,8 @@ object IssueOps {
       Diagnostic(
         MISSING_CATEGORY,
         location.location,
-        s"No variable or type found for '$name' on '$typeName'"
+        s"No variable or type found for '$name' on '$typeName'",
+        DiagnosticId.MissingVariableOrType
       )
     )
 
@@ -91,7 +98,8 @@ object IssueOps {
       Diagnostic(
         MISSING_CATEGORY,
         location.location,
-        s"Unknown field '$name' on SObject '$typeName'"
+        s"Unknown field '$name' on SObject '$typeName'",
+        DiagnosticId.UnknownSObjectField
       )
     )
 
@@ -101,7 +109,8 @@ object IssueOps {
       Diagnostic(
         MISSING_CATEGORY,
         location.location,
-        s"Unknown field or type '$name' on '$typeName'"
+        s"Unknown field or type '$name' on '$typeName'",
+        DiagnosticId.UnknownFieldOrType
       )
     )
 

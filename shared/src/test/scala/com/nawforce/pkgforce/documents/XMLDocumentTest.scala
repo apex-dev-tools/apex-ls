@@ -69,7 +69,8 @@ class XMLDocumentTest extends AnyFunSuite {
     FileSystemHelper.run(Map[String, String]("test.xml" -> "\n  <test>")) { root: PathLike =>
       val file = root.join("test.xml")
       parse(file) match {
-        case Left(Issue(f, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _), _)) if f == file =>
+        case Left(Issue(f, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), _, _), _))
+            if f == file =>
           ()
         case Left(err) => assert(false, err)
         case Right(_)  => assert(false)
@@ -81,7 +82,8 @@ class XMLDocumentTest extends AnyFunSuite {
     FileSystemHelper.run(Map[String, String]("test.xml" -> "")) { root: PathLike =>
       val file = root.join("test.xml")
       parse(file) match {
-        case Left(Issue(f, Diagnostic(ERROR_CATEGORY, Location(1, 0, 1, 0), _), _)) if f == file =>
+        case Left(Issue(f, Diagnostic(ERROR_CATEGORY, Location(1, 0, 1, 0), _, _), _))
+            if f == file =>
           ()
         case Left(err) => assert(false, err)
         case Right(_)  => assert(false)
