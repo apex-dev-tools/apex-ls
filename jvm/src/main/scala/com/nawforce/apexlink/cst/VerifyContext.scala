@@ -247,6 +247,8 @@ final class TypeVerifyContext(
 
   private val typeCache = mutable.Map[(TypeName, TypeDeclaration), TypeResponse]()
 
+  ValidationStats.recordTypeContext()
+
   /** Type visibility issues already reported while validating this type, keyed on the source
     * location of the written reference and the identity of the resolved type.
     */
@@ -265,8 +267,19 @@ final class TypeVerifyContext(
 
   override def superType: Option[TypeDeclaration] = typeDeclaration.superClassDeclaration
 
-  override def getTypeFor(typeName: TypeName, from: TypeDeclaration): TypeResponse =
-    typeCache.getOrElseUpdate((typeName, from), TypeResolver(typeName, from, Some(module)))
+  override def getTypeFor(typeName: TypeName, from: TypeDeclaration): TypeResponse = {
+    val key = (typeName, from)
+    typeCache.get(key) match {
+      case Some(cached) =>
+        ValidationStats.recordTypeCacheHit()
+        cached
+      case None =>
+        ValidationStats.recordTypeCacheMiss()
+        val resolved = TypeResolver(typeName, from, Some(module))
+        typeCache.put(key, resolved)
+        resolved
+    }
+  }
 
   override def recordTypeVisibilityIssue(location: PathLocation, typeId: TypeId): Boolean =
     reportedTypeVisibilityIssues.add((location, typeId))

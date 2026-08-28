@@ -62,6 +62,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the `@TestVisible` unit-test exception. Type reference positions are checked for qualified
   names such as `Outer.Hidden`; a name Apex resolves unqualified through a superclass in another
   file is not reported there (#341)
+- Load benchmark reporting of what validation spends its time on: separately timed method map,
+  constructor map, body declaration and outer dependency spans, and counts of the type resolutions
+  performed while validating along with how many were answered from the per type cache (#540)
+
+### Fixed
+
+- Cold workspace loads now really do parse in parallel when the multi-threaded outline parser is
+  selected. The parse loop iterated the class list through a parallel collection's iterator, which
+  is sequential, so parsing ran on a single thread whichever parser was chosen. Parsing now runs on
+  a bounded pool of at most four threads: measurement shows the per file cost of parsing grows with
+  concurrency, so beyond a few threads wall clock stops improving while CPU use keeps climbing.
+  `-Dscala.concurrent.context.maxThreads=N` sets the level explicitly (#540)
 
 ### Changed
 

@@ -570,11 +570,17 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
       .flatMap(_.findField(name, exclude).filter(_.isStatic))
   }
 
+  // Timed where they are forced rather than where validation asks for them, as resolving a call
+  // during body validation forces them first far more often than the explicit force does.
   private lazy val methodMap: MethodMap =
-    MethodMap(this, None, MethodMap.empty(), methods, ArraySeq())
+    LoggerOps.debugTime(TypeDeclaration.MethodMapSpan, show = false) {
+      MethodMap(this, None, MethodMap.empty(), methods, ArraySeq())
+    }
 
   private lazy val constructorMap: ConstructorMap =
-    ConstructorMap(this, None, constructors, ConstructorMap.empty)
+    LoggerOps.debugTime(TypeDeclaration.ConstructorMapSpan, show = false) {
+      ConstructorMap(this, None, constructors, ConstructorMap.empty)
+    }
 
   override def findConstructor(
     params: ArraySeq[TypeName],
@@ -715,4 +721,10 @@ trait TypeDeclaration extends AbstractTypeDeclaration with Dependent with PreReV
 object TypeDeclaration {
   val emptyTypeDeclarations: ArraySeq[TypeDeclaration] = ArraySeq()
   private val externalTypeModifiers: Set[Modifier] = Set(GLOBAL_MODIFIER, REST_RESOURCE_ANNOTATION)
+
+  /** Labels for the timed spans that decompose validation. Constant so that recording one costs no
+    * allocation, and never logged, so they are invisible at every logging level.
+    */
+  final val MethodMapSpan      = "Built method map"
+  final val ConstructorMapSpan = "Built constructor map"
 }

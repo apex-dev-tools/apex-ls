@@ -14,6 +14,8 @@
 
 package io.github.apexdevtools.apexls
 
+import com.nawforce.apexlink.cst.ValidationStatsSnapshot
+
 /** Effective load configuration, every value is set explicitly by the benchmark command. */
 private[apexls] final case class LoadBenchmarkConfiguration(
   parser: String,
@@ -79,11 +81,12 @@ private[apexls] final case class LoadBenchmarkResult(
   parallelism: LoadBenchmarkParallelism,
   size: LoadBenchmarkSize,
   issues: LoadBenchmarkIssues,
+  validation: ValidationStatsSnapshot,
   environment: LoadBenchmarkEnvironment
 )
 
 private[apexls] object LoadBenchmarkReport {
-  final val SchemaVersion: Int = 1
+  final val SchemaVersion: Int = 2
 
   def write(result: LoadBenchmarkResult): ujson.Value = {
     ujson.Obj(
@@ -102,7 +105,21 @@ private[apexls] object LoadBenchmarkReport {
       ),
       "size"        -> writeSize(result.size),
       "issues"      -> writeIssues(result.issues),
+      "validation"  -> writeValidation(result.validation),
       "environment" -> writeEnvironment(result.environment)
+    )
+  }
+
+  /** Type resolution counts. These describe apex-ls' own behaviour, not the workspace, so they are
+    * safe to report for a private codebase.
+    */
+  private def writeValidation(validation: ValidationStatsSnapshot): ujson.Value = {
+    ujson.Obj(
+      "typeContexts"     -> count(validation.typeContexts),
+      "typeCacheHits"    -> count(validation.typeCacheHits),
+      "typeCacheMisses"  -> count(validation.typeCacheMisses),
+      "typeCacheLookups" -> count(validation.typeCacheLookups),
+      "typeCacheHitRate" -> validation.typeCacheHitRate.map(ujson.Num).getOrElse(ujson.Null)
     )
   }
 
@@ -183,6 +200,8 @@ private[apexls] object LoadBenchmarkReport {
       "implementationBuild" -> environment.implementationBuild
     )
   }
+
+  private def count(value: Long): ujson.Value = ujson.Num(value.toDouble)
 
   /** Nanoseconds as milliseconds to microsecond precision. */
   private def milliseconds(nanos: Long): ujson.Value = {

@@ -26,9 +26,10 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
 import com.nawforce.pkgforce.stream._
 
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, ForkJoinPool}
 import scala.collection.immutable.ArraySeq
 import scala.collection.parallel.CollectionConverters._
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.{BufferedIterator, mutable}
 import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
@@ -261,26 +262,26 @@ class StreamDeployer(
     val docsByType      = new ConcurrentHashMap[TypeName, ClassDocument]()
     val failedDocuments = new ConcurrentLinkedQueue[ClassDocument]()
 
-    val clsItr =
-      if (selectedParser == OutlineParserSingleThreaded) classes.iterator else classes.par.iterator
+    def parse(cls: ClassDocument): Unit = {
+      cls.path.readSourceData() match {
+        case Left(error) =>
+          LoggerOps.info(s"Failed reading source $error")
+        case Right(srcData) =>
+          LoggerOps.debugTime(s"Parsed ${cls.path}") {
+            val td = OutlineParserFullDeclaration
+              .toFullDeclaration(cls, srcData, module)
+              .map(td => {
+                localAccum.put(td.typeName, td)
+                docsByType.put(td.typeName, cls)
+              })
+            if (td.isEmpty) failedDocuments.add(cls)
+          }
+      }
+    }
 
     LoggerOps.debugTime(s"Parsed ${classes.length} classes", classes.nonEmpty) {
-      clsItr.foreach(cls => {
-        cls.path.readSourceData() match {
-          case Left(error) =>
-            LoggerOps.info(s"Failed reading source $error")
-          case Right(srcData) =>
-            LoggerOps.debugTime(s"Parsed ${cls.path}") {
-              val td = OutlineParserFullDeclaration
-                .toFullDeclaration(cls, srcData, module)
-                .map(td => {
-                  localAccum.put(td.typeName, td)
-                  docsByType.put(td.typeName, cls)
-                })
-              if (td.isEmpty) failedDocuments.add(cls)
-            }
-        }
-      })
+      if (selectedParser == OutlineParserSingleThreaded) classes.foreach(parse)
+      else StreamDeployer.parseInParallel(classes, parse)
       localAccum.entrySet.forEach(kv => {
         types.put(kv.getKey, kv.getValue)
       })
@@ -317,5 +318,37 @@ class StreamDeployer(
           }
         })
     }
+  }
+}
+
+object StreamDeployer {
+
+  /** Threads to parse on. The per file cost of parsing grows with concurrency, so wall clock stops
+    * improving after a few threads while CPU use keeps climbing. Take the part of the win that is
+    * real and leave the rest of the machine to whatever else the developer is running.
+    *
+    * `scala.concurrent.context.maxThreads`, which bounds the parallel collection pool this used to
+    * run on, still sets the level explicitly when it holds a plain integer.
+    */
+  private val parseThreads: Int = {
+    val requested = Option(System.getProperty("scala.concurrent.context.maxThreads"))
+      .flatMap(_.toIntOption)
+      .getOrElse(Math.min(Runtime.getRuntime.availableProcessors(), 4))
+    Math.max(requested, 1)
+  }
+
+  /** Shared by every module deployed in this process, so that a workspace of many modules parses on
+    * parseThreads rather than that many threads per module. The pool's workers are daemon threads
+    * that retire when they have been idle, so it does not need shutting down.
+    */
+  private lazy val parseTaskSupport = new ForkJoinTaskSupport(new ForkJoinPool(parseThreads))
+
+  /** Parse on a bounded pool. A parallel collection defaults to the global execution context, which
+    * would use every core, and iterating one gives a sequential splitter rather than parallelism.
+    */
+  private def parseInParallel[T](documents: ArraySeq[T], parse: T => Unit): Unit = {
+    val parallel = documents.par
+    parallel.tasksupport = parseTaskSupport
+    parallel.foreach(parse)
   }
 }
