@@ -263,16 +263,163 @@ class AnnotationValidationTest extends AnyFunSuite {
     assert(messages(onClass("@IsTest(SeeAllData=false IsParallel=true)")).isEmpty)
   }
 
+  /* A quoted string is coerced wherever a Boolean is expected, and the combination rules read the
+     coerced value. cacheable, SeeAllData and IsParallel count only 'true' as true. */
+  test("Scope with a quoted true cacheable is accepted") {
+    assert(messages(onMethod("@AuraEnabled(cacheable='true' scope='global')")).isEmpty)
+    assert(messages(onMethod("@AuraEnabled(cacheable='TRUE' scope='global')")).isEmpty)
+  }
+
+  test("Scope with a quoted false cacheable is rejected") {
+    assert(
+      message(onMethod("@AuraEnabled(cacheable='false' scope='global')"))
+        == "Invalid combination of values for properties cacheable and scope on AuraEnabled"
+    )
+  }
+
+  test("Scope with a quoted cacheable that is not true is rejected") {
+    assert(
+      message(onMethod("@AuraEnabled(cacheable='yes' scope='global')"))
+        == "Invalid combination of values for properties cacheable and scope on AuraEnabled"
+    )
+  }
+
+  test("Parallel test with a quoted true seeing all data is rejected") {
+    assert(
+      message(onClass("@IsTest(SeeAllData='true' IsParallel='true')"))
+        == "Test class annotated with @isTest(IsParallel=true) cannot also be annotated with @isTest(SeeAllData=true)"
+    )
+  }
+
+  test("Parallel test with a quoted seeing all data that is not true is accepted") {
+    assert(messages(onClass("@IsTest(SeeAllData='yes' IsParallel=true)")).isEmpty)
+    assert(messages(onClass("@IsTest(SeeAllData=true IsParallel='yes')")).isEmpty)
+  }
+
+  /* required is read the other way round, everything but 'false' counts as true. The platform is
+     not consistent between the two, both readings are org verified. */
+  test("Quoted required that is not false with a default value is rejected") {
+    assert(
+      message(onField("@InvocableVariable(required='yes' defaultValue='z')"))
+        == "Invalid combination of values for properties required and defaultValue on InvocableVariable"
+    )
+  }
+
+  test("Quoted true required with a default value is rejected") {
+    assert(
+      message(onField("@InvocableVariable(required='true' defaultValue='z')"))
+        == "Invalid combination of values for properties required and defaultValue on InvocableVariable"
+    )
+  }
+
+  test("Quoted false required with a default value is accepted") {
+    assert(messages(onField("@InvocableVariable(required='false' defaultValue='z')")).isEmpty)
+    assert(messages(onField("@InvocableVariable(required='FALSE' defaultValue='z')")).isEmpty)
+  }
+
+  /* A repeated parameter is read as the last written, so that is the value the rule sees. */
+  test("Scope with a cacheable last written false is rejected") {
+    assert(
+      message(onMethod("@AuraEnabled(cacheable=true cacheable=false scope='global')"))
+        == "Invalid combination of values for properties cacheable and scope on AuraEnabled"
+    )
+  }
+
+  test("Scope with a cacheable last written true is accepted") {
+    assert(
+      messages(onMethod("@AuraEnabled(cacheable=false cacheable=true scope='global')")).isEmpty
+    )
+  }
+
+  test("Required last written true with a default value is rejected") {
+    assert(
+      message(onField("@InvocableVariable(required=false required=true defaultValue='z')"))
+        == "Invalid combination of values for properties required and defaultValue on InvocableVariable"
+    )
+  }
+
+  test("Required last written false with a default value is accepted") {
+    assert(
+      messages(onField("@InvocableVariable(required=true required=false defaultValue='z')")).isEmpty
+    )
+  }
+
+  test("Parallel test last written to see all data is rejected") {
+    assert(
+      message(onClass("@IsTest(SeeAllData=false SeeAllData=true IsParallel=true)"))
+        == "Test class annotated with @isTest(IsParallel=true) cannot also be annotated with @isTest(SeeAllData=true)"
+    )
+  }
+
+  test("Parallel test last written not to see all data is accepted") {
+    assert(messages(onClass("@IsTest(SeeAllData=true SeeAllData=false IsParallel=true)")).isEmpty)
+  }
+
   test("Duplicate parameters are accepted") {
     assert(messages(onMethod("@AuraEnabled(cacheable=true cacheable=false)")).isEmpty)
   }
 
-  test("No parameter list is accepted") {
-    assert(messages(onClass("@JsonAccess")).isEmpty)
+  /* The platform reads the parameter list as a map, so only the last of a repeated name is
+     validated, whatever the check. */
+  test("Duplicate parameter is validated where it was written last") {
+    assert(
+      message(onClass("@JsonAccess(serializable='always' serializable='bogus')"))
+        == "Annotation property, serializable on JsonAccess, unknown value: bogus"
+    )
+  }
+
+  test("Duplicate parameter overwritten by a valid value is accepted") {
+    assert(messages(onClass("@JsonAccess(serializable='bogus' serializable='always')")).isEmpty)
+  }
+
+  test("Duplicate parameter of the wrong type is validated where it was written last") {
+    assert(
+      message(onMethod("@AuraEnabled(cacheable=true scope='global' scope=true)"))
+        == "Invalid value for property scope expected type String"
+    )
+  }
+
+  test("Duplicate parameter overwritten by a value of the right type is accepted") {
+    assert(messages(onMethod("@AuraEnabled(cacheable=true scope=true scope='global')")).isEmpty)
+  }
+
+  test("Duplicate parameter format rule is applied where it was written last") {
+    assert(
+      message(onClass("@RestResource(urlMapping='/x' urlMapping='y')"))
+        == "Rest Resource url must begin with a forward slash, '/'"
+    )
+  }
+
+  test("Duplicate parameter overwritten by a valid format is accepted") {
+    assert(messages(onClass("@RestResource(urlMapping='x' urlMapping='/y')")).isEmpty)
+  }
+
+  test("Duplicate unknown parameter name is reported once") {
+    assert(
+      messages(onMethod("@AuraEnabled(bogus=true bogus=false)")) == Seq(
+        "No such property, bogus, defined on this annotation: AuraEnabled"
+      )
+    )
+  }
+
+  test("Duplicate unknown parameter name is anchored on the last of them") {
+    assert(anchors(onMethod("@AuraEnabled(bogus=true BOGUS=false)")) == Seq("BOGUS"))
+  }
+
+  test("Duplicate parameter not allowed on its target is reported once") {
+    assert(
+      messages(onField("@AuraEnabled(cacheable=true cacheable=false)")) == Seq(
+        "Annotation property, cacheable on AuraEnabled, is not allowed on fields"
+      )
+    )
   }
 
   test("Empty parameter list is accepted where nothing is required") {
     assert(messages(onMethod("@AuraEnabled()")).isEmpty)
+  }
+
+  test("No parameter list is accepted where nothing is required") {
+    assert(messages(onMethod("@AuraEnabled")).isEmpty)
   }
 
   test("Empty parameter list is rejected where one is required") {
@@ -282,8 +429,64 @@ class AnnotationValidationTest extends AnyFunSuite {
     )
   }
 
+  test("No parameter list is rejected where one is required") {
+    assert(
+      message(onClass("@JsonAccess"))
+        == "At least one JSON serialization control parameter must be specified"
+    )
+  }
+
+  test("Another parameter does not satisfy a required parameter") {
+    assert(
+      messages(onClass("@JsonAccess(bogus='x')")) == Seq(
+        "At least one JSON serialization control parameter must be specified",
+        "No such property, bogus, defined on this annotation: JsonAccess"
+      )
+    )
+  }
+
   test("Json access with a control parameter is accepted") {
     assert(messages(onClass("@JsonAccess(serializable='always')")).isEmpty)
+  }
+
+  test("Json access serializable values are accepted") {
+    assert(messages(onClass("@JsonAccess(serializable='never')")).isEmpty)
+    assert(messages(onClass("@JsonAccess(serializable='sameNamespace')")).isEmpty)
+    assert(messages(onClass("@JsonAccess(serializable='samePackage')")).isEmpty)
+    assert(messages(onClass("@JsonAccess(serializable='always')")).isEmpty)
+  }
+
+  test("Json access deserializable values are accepted") {
+    assert(messages(onClass("@JsonAccess(deserializable='never')")).isEmpty)
+    assert(messages(onClass("@JsonAccess(deserializable='sameNamespace')")).isEmpty)
+    assert(messages(onClass("@JsonAccess(deserializable='samePackage')")).isEmpty)
+    assert(messages(onClass("@JsonAccess(deserializable='always')")).isEmpty)
+  }
+
+  test("Json access values are case insensitive") {
+    assert(messages(onClass("@JsonAccess(serializable='ALWAYS')")).isEmpty)
+    assert(messages(onClass("@JsonAccess(deserializable='SAMEPACKAGE')")).isEmpty)
+  }
+
+  test("Json access unknown serializable value is rejected") {
+    assert(
+      message(onClass("@JsonAccess(serializable='bogus')"))
+        == "Annotation property, serializable on JsonAccess, unknown value: bogus"
+    )
+  }
+
+  test("Json access unknown deserializable value is rejected") {
+    assert(
+      message(onClass("@JsonAccess(deserializable='bogus')"))
+        == "Annotation property, deserializable on JsonAccess, unknown value: bogus"
+    )
+  }
+
+  test("Json access empty value is rejected") {
+    assert(
+      message(onClass("@JsonAccess(serializable='')"))
+        == "Annotation property, serializable on JsonAccess, unknown value: "
+    )
   }
 
   test("Rest resource url must begin with a slash") {
@@ -295,6 +498,23 @@ class AnnotationValidationTest extends AnyFunSuite {
 
   test("Rest resource url beginning with a slash is accepted") {
     assert(messages(onClass("@RestResource(urlMapping='/x')")).isEmpty)
+  }
+
+  test("Rest resource without a url is rejected") {
+    assert(message(onClass("@RestResource")) == "Required property is missing: urlMapping")
+  }
+
+  test("Rest resource with an empty parameter list is rejected") {
+    assert(message(onClass("@RestResource()")) == "Required property is missing: urlMapping")
+  }
+
+  test("Rest resource with another parameter is rejected") {
+    assert(
+      messages(onClass("@RestResource(bogus='x')")) == Seq(
+        "Required property is missing: urlMapping",
+        "No such property, bogus, defined on this annotation: RestResource"
+      )
+    )
   }
 
   test("Suppress warnings named value is accepted") {
