@@ -659,6 +659,7 @@ final case class MethodCallWithId(target: Id, arguments: ArraySeq[Expression]) e
                 ExprContext(None, None, method)
               }
             case Right(td) =>
+              SourceTypeAccess.validateMethodReturnType(td, method, location, context)
               context.saveResult(this, target.location.location) {
                 ExprContext(isStatic = Some(false), Some(td), method)
               }

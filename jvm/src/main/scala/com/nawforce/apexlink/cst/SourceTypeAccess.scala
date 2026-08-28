@@ -15,7 +15,7 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.types.apex.ApexDeclaration
-import com.nawforce.apexlink.types.core.TypeDeclaration
+import com.nawforce.apexlink.types.core.{MethodDeclaration, TypeDeclaration}
 import com.nawforce.pkgforce.names.TypeName
 import com.nawforce.pkgforce.path.PathLocation
 
@@ -70,6 +70,39 @@ object SourceTypeAccess {
       context
         .getTypeFor(typeName, context.thisType)
         .foreach(td => validate(td, location, context))
+  }
+
+  /** Validate the return type of a method resolved at a call site.
+    *
+    * The return type is not written in the calling source, so this is not a written occurrence; it
+    * is checked against the resolved method in the way the org does. Only the return type itself is
+    * examined and never its type arguments, matching the org, which accepts a 'List<Hidden>' return
+    * where it rejects a bare 'Hidden' one.
+    */
+  def validateMethodReturnType(
+    returnType: TypeDeclaration,
+    method: MethodDeclaration,
+    location: PathLocation,
+    context: VerifyContext
+  ): Unit = {
+    returnType match {
+      case nested: ApexDeclaration if nested.outerTypeName.nonEmpty && !context.suppressIssues =>
+        if (
+          !TestVisibleAccess.access(nested, Some(context.thisType)).isAccessible &&
+          context.recordTypeVisibilityIssue(location, nested.typeId)
+        )
+          context.logError(
+            location,
+            s"Method return type ${nested.typeName} is not visible for: ${signatureOf(method)}"
+          )
+      case _ => ()
+    }
+  }
+
+  /** The org qualifies the method name with its owning type in this diagnostic. */
+  private def signatureOf(method: MethodDeclaration): String = {
+    val owner = method.thisTypeIdOpt.map(typeId => s"${typeId.typeName}.").getOrElse("")
+    s"${method.typeName} $owner${method.nameAndParameterTypes}"
   }
 
   /** Validate an already resolved type that was explicitly written at the given location. */

@@ -62,6 +62,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the `@TestVisible` unit-test exception. Type reference positions are checked for qualified
   names such as `Outer.Hidden`; a name Apex resolves unqualified through a superclass in another
   file is not reported there (#341)
+- An error where a method is called whose return type is a nested type not visible from the calling
+  file, `Method return type Outer.Hidden is not visible for: Outer.Hidden Outer.make()`. The return
+  type is not written at the call site, so it was not covered by the checks on written type
+  references added for #341; it is now checked against the resolved method, as the org does. The
+  check applies wherever the call appears, including where the result is discarded, and covers
+  nested classes, interfaces, enums and exceptions. Only the return type itself is checked and never
+  its type arguments, matching the org, which accepts a `List<Hidden>` return where it rejects a
+  bare `Hidden` one (#551)
 - Load benchmark reporting of what validation spends its time on: separately timed method map,
   constructor map, body declaration and outer dependency spans, and counts of the type resolutions
   performed while validating along with how many were answered from the per type cache (#540)
