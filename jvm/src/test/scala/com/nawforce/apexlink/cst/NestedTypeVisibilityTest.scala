@@ -231,10 +231,15 @@ class NestedTypeVisibilityTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  // Apex only enforces the visibility of a caught type when the handler uses the exception, see
+  // issue #549. A handler that ignores the exception compiles against a type it cannot otherwise
+  // name, so the diagnostic is withheld unless the variable is referenced.
+
   test("Catch exception type") {
     assertHidden(
       hiddenExcept,
-      "global class Dummy { void func() { try {} catch (Target.HiddenException e) {} } }",
+      "global class Dummy { void func() { try {} " +
+        "catch (Target.HiddenException e) { System.debug(e); } } }",
       "HiddenException"
     )
   }
@@ -242,7 +247,41 @@ class NestedTypeVisibilityTest extends AnyFunSuite with TestHelper {
   test("Catch exception type (accessible)") {
     assertClean(
       "global class Target { public class ShownException extends Exception {} }",
-      "global class Dummy { void func() { try {} catch (Target.ShownException e) {} } }"
+      "global class Dummy { void func() { try {} " +
+        "catch (Target.ShownException e) { System.debug(e); } } }"
+    )
+  }
+
+  test("Catch exception type is not diagnosed when the exception is unused") {
+    Seq(
+      "try {} catch (Target.HiddenException e) {}",
+      "try {} catch (Target.HiddenException e) { System.debug('unrelated'); }",
+      "try {} catch (Target.HiddenException e) { throw new IllegalArgumentException('x'); }"
+    ).foreach(body =>
+      assertHiddenCount(hiddenExcept, s"global class Dummy { void func() { $body } }", 0)
+    )
+  }
+
+  test("Catch exception type is diagnosed for any use of the exception") {
+    Seq(
+      "try {} catch (Target.HiddenException e) { throw e; }",
+      "try {} catch (Target.HiddenException e) { System.debug(e.getMessage()); }",
+      "try {} catch (Target.HiddenException e) { Object o = e; }",
+      "try {} catch (Target.HiddenException e) { if (true) { System.debug(e); } }",
+      "try {} catch (Target.HiddenException e) { for (Integer i = 0; i < 1; i++) { throw e; } }"
+    ).foreach(body =>
+      assertHiddenCount(hiddenExcept, s"global class Dummy { void func() { $body } }", 1)
+    )
+  }
+
+  test("Catch exception type is diagnosed per clause that uses its exception") {
+    assertHiddenCount(
+      "global class Target { private class HiddenException extends Exception {} " +
+        "private class OtherHiddenException extends Exception {} }",
+      "global class Dummy { void func() { try {} " +
+        "catch (Target.HiddenException e) {} " +
+        "catch (Target.OtherHiddenException e2) { System.debug(e2); } } }",
+      1
     )
   }
 
@@ -441,7 +480,8 @@ class NestedTypeVisibilityTest extends AnyFunSuite with TestHelper {
   test("Unqualified inherited private nested type is diagnosed in a catch clause") {
     assertHiddenCount(
       inheritedTarget,
-      "global class Dummy extends Target { void func() { try {} catch (HiddenException e) {} } }",
+      "global class Dummy extends Target { void func() { try {} " +
+        "catch (HiddenException e) { System.debug(e); } } }",
       1
     )
   }

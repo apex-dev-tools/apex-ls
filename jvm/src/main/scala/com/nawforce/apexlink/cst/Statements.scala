@@ -598,11 +598,6 @@ final case class CatchClause(
             context.module.any
           case Right(td) =>
             if (exceptionTypeName.name.endsWith(Names.Exception)) {
-              SourceTypeAccess.validate(
-                td,
-                qname.idLocations.lastOption.getOrElse(qname.location),
-                context
-              )
               td
             } else {
               context.log(
@@ -615,14 +610,23 @@ final case class CatchClause(
               context.module.any
             }
         }
+      val exceptionVar = Name(id)
       // definition = None disables issues like 'Unused' for exceptions
       blockContext.addVar(
-        Name(id),
+        exceptionVar,
         None,
         modifiers.modifiers.contains(FINAL_MODIFIER),
         exceptionType
       )
       block.verify(blockContext)
+      // Apex only enforces visibility of the caught type where the handler references the
+      // exception, so a clause that ignores it may name a type it could not otherwise use.
+      if (blockContext.referencedVars.contains(exceptionVar))
+        SourceTypeAccess.validate(
+          exceptionType,
+          qname.idLocations.lastOption.getOrElse(qname.location),
+          context
+        )
       context.typePlugin.foreach(_.onScopeValidated(context.isStatic, blockContext))
     })
   }
