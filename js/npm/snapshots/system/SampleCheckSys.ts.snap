@@ -2581,7 +2581,7 @@ exports[`Check samples Sample: Cumulus 1`] = `
     ],
     [
       "Cumulus/force-app/main/default/classes/ALLO_UnitTestHelper_TEST.cls",
-      "Unused: line 456 at 23-50: Unused public method 'void assertOpportunityAllocation(Schema.npsp__Allocation__c, System.Id, System.Decimal, System.Double, System.Id, System.String)'",
+      "Unused: line 469 at 23-50: Unused public method 'void assertOpportunityAllocation(Schema.npsp__Allocation__c, System.Id, System.Decimal, System.Double, System.String, System.String)'",
       "Unused: line 482 at 23-46: Unused public method 'void assertPaymentAllocation(Schema.npsp__Allocation__c, System.Id, System.Decimal, System.Double, System.String, System.String)'",
       "Unused: line 534 at 23-47: Unused public method 'void assertCampaignAllocation(Schema.npsp__Allocation__c, System.Id, System.Decimal, System.Double, System.String, System.String)'",
       "Unused: line 603 at 47-89: Unused public method 'System.Map<System.Id, System.List<Schema.npsp__Allocation__c>> buildMapOfAllocationsByRecurringDonationId(System.List<Schema.npsp__Allocation__c>)'",
@@ -15830,7 +15830,7 @@ exports[`Check samples Sample: NPSP 1`] = `
     ],
     [
       "NPSP/force-app/main/default/classes/ALLO_UnitTestHelper_TEST.cls",
-      "Unused: line 456 at 23-50: Unused public method 'void assertOpportunityAllocation(Schema.npsp__Allocation__c, System.Id, System.Decimal, System.Double, System.Id, System.String)'",
+      "Unused: line 469 at 23-50: Unused public method 'void assertOpportunityAllocation(Schema.npsp__Allocation__c, System.Id, System.Decimal, System.Double, System.String, System.String)'",
       "Unused: line 482 at 23-46: Unused public method 'void assertPaymentAllocation(Schema.npsp__Allocation__c, System.Id, System.Decimal, System.Double, System.String, System.String)'",
       "Unused: line 534 at 23-47: Unused public method 'void assertCampaignAllocation(Schema.npsp__Allocation__c, System.Id, System.Decimal, System.Double, System.String, System.String)'",
       "Unused: line 603 at 47-89: Unused public method 'System.Map<System.Id, System.List<Schema.npsp__Allocation__c>> buildMapOfAllocationsByRecurringDonationId(System.List<Schema.npsp__Allocation__c>)'",

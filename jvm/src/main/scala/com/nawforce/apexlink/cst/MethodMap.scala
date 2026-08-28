@@ -244,8 +244,17 @@ object MethodMap {
   }
 
   private def toMap(workingMap: WorkingMap): Map[(Name, Int), Array[MethodDeclaration]] = {
-    workingMap.map(kv => (kv._1, kv._2.toArray)).toMap
+    workingMap.map(kv => (kv._1, kv._2.sortBy(overloadOrder).toArray)).toMap
   }
+
+  /** Order for the members of an overload group. The methods of a group arrive in whatever order
+    * they were discovered in, which for platform types is the order of `java.lang.Class.getMethods`
+    * and so is not stable between runs. Anything that selects from a group by position, such as the
+    * suggestion in a 'No matching method found' message or the pick made when an argument is 'any'
+    * and several overloads are assignable, would otherwise vary with it.
+    */
+  private def overloadOrder(method: MethodDeclaration): (String, String, String) =
+    (method.parameterTypes, method.typeName.toString, method.modifiers.mkString(" "))
 
   /** Construct for an arbitrary type declaration. This is just for simple type
     * declarations with non-complex needs.
