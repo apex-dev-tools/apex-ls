@@ -105,6 +105,35 @@ class NestedTypeVisibilityTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  private def returnTypeIssues(classes: Map[String, String], parser: String): Seq[String] =
+    messagesFor(classes, parser, "Dummy.cls").linesIterator
+      .filter(_.contains("Method return type"))
+      .toSeq
+
+  /** Assert a single return type diagnostic naming the given method signature, in both adapters. */
+  private def assertReturnTypeHidden(
+    target: String,
+    dummy: String,
+    signature: String,
+    typeName: String = "Target.Hidden"
+  ): Unit = {
+    val classes  = Map("Target.cls" -> target, "Dummy.cls" -> dummy)
+    val expected = s"Method return type $typeName is not visible for: $signature"
+    parsers.foreach(parser => {
+      val issues = returnTypeIssues(classes, parser)
+      assert(issues.size == 1, s"parser '$parser': $issues")
+      assert(issues.head.endsWith(expected), s"parser '$parser': ${issues.head}")
+    })
+  }
+
+  /** Assert no return type diagnostic is raised for Dummy.cls, in both parser adapters. */
+  private def assertReturnTypeClean(target: String, dummy: String): Unit = {
+    val classes = Map("Target.cls" -> target, "Dummy.cls" -> dummy)
+    parsers.foreach(parser =>
+      assert(returnTypeIssues(classes, parser).isEmpty, s"parser '$parser'")
+    )
+  }
+
   // Declared types
 
   test("Field type") {
@@ -425,14 +454,6 @@ class NestedTypeVisibilityTest extends AnyFunSuite with TestHelper {
     )
   }
 
-  test("Derived method return type is not diagnosed") {
-    assertClean(
-      "global class Target { private class Hidden { public Integer value; } " +
-        "@TestVisible private static Hidden make() { return null; } }",
-      "@isTest global class Dummy { static void func() { Integer a = Target.make().value; } }"
-    )
-  }
-
   test("Top level types are never diagnosed") {
     assertClean("global class Target {}", "global class Dummy { Target a; }")
   }
@@ -515,6 +536,215 @@ class NestedTypeVisibilityTest extends AnyFunSuite with TestHelper {
         assert(getMessages(root.join("Dummy.cls")).isEmpty, s"parser '$parser'")
       }
     )
+  }
+
+  // Method return types at the call site, see issue #551
+  //
+  // The org rejects a call whose return type is a nested type the caller cannot see, naming the
+  // type and the full signature. This is checked against the resolved method rather than as a
+  // written type reference, so it holds wherever the call appears, including where the result is
+  // discarded. Only the return type itself is checked and never its type arguments, which is what
+  // the org does.
+
+  private val hiddenReturn =
+    "global class Target { private class Hidden { public Integer value; } " +
+      "public static Hidden make() { return null; } }"
+  private val shownReturn =
+    "global class Target { public class Shown { public Integer value; } " +
+      "public static Shown make() { return null; } }"
+
+  test("Call site return type") {
+    assertReturnTypeHidden(
+      hiddenReturn,
+      "global class Dummy { void func() { Object a = Target.make(); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type (accessible)") {
+    assertReturnTypeClean(
+      shownReturn,
+      "global class Dummy { void func() { Object a = Target.make(); } }"
+    )
+  }
+
+  test("Call site return type is reported over the call") {
+    val classes = Map(
+      "Target.cls" -> hiddenReturn,
+      "Dummy.cls"  -> "global class Dummy { void func() { Target.make(); } }"
+    )
+    val expected = "Error: line 1 at 35-48: Method return type Target.Hidden is not visible for: " +
+      "Target.Hidden Target.make()"
+    parsers.foreach(parser =>
+      assert(returnTypeIssues(classes, parser) == Seq(expected), s"parser '$parser'")
+    )
+  }
+
+  test("Call site return type with a discarded result") {
+    assertReturnTypeHidden(
+      hiddenReturn,
+      "global class Dummy { void func() { Target.make(); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type as an argument") {
+    assertReturnTypeHidden(
+      hiddenReturn,
+      "global class Dummy { void func() { System.debug(Target.make()); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type as a receiver") {
+    assertReturnTypeHidden(
+      hiddenReturn,
+      "global class Dummy { void func() { Integer a = Target.make().value; } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type in a return statement") {
+    assertReturnTypeHidden(
+      hiddenReturn,
+      "global class Dummy { Object func() { return Target.make(); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type in a ternary") {
+    assertReturnTypeHidden(
+      hiddenReturn,
+      "global class Dummy { void func(Boolean b) { Object a = b ? Target.make() : null; } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type of an instance method") {
+    assertReturnTypeHidden(
+      "global class Target { private class Hidden {} public Hidden make() { return null; } }",
+      "global class Dummy { void func() { Object a = new Target().make(); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type with parameters") {
+    assertReturnTypeHidden(
+      "global class Target { private class Hidden {} " +
+        "public static Hidden make(String a, Integer b) { return null; } }",
+      "global class Dummy { void func() { Object a = Target.make('x', 1); } }",
+      "Target.Hidden Target.make(System.String, System.Integer)"
+    )
+  }
+
+  test("Call site return type of a private nested interface") {
+    assertReturnTypeHidden(
+      "global class Target { private interface Hidden {} public static Hidden make() " +
+        "{ return null; } }",
+      "global class Dummy { void func() { Object a = Target.make(); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type of a private nested enum") {
+    assertReturnTypeHidden(
+      "global class Target { private enum Hidden { A, B } public static Hidden make() " +
+        "{ return null; } }",
+      "global class Dummy { void func() { Object a = Target.make(); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Call site return type of a private nested exception") {
+    assertReturnTypeHidden(
+      "global class Target { private class HiddenException extends Exception {} " +
+        "public static HiddenException make() { return null; } }",
+      "global class Dummy { void func() { Object a = Target.make(); } }",
+      "Target.HiddenException Target.make()",
+      "Target.HiddenException"
+    )
+  }
+
+  test("Call site generic return type is not checked") {
+    // The org accepts a List<Hidden> return where it rejects a bare Hidden one
+    Seq("List<Hidden>", "Map<String, Hidden>", "Set<Hidden>", "Hidden[]").foreach(returnType =>
+      assertReturnTypeClean(
+        s"global class Target { private class Hidden {} public static $returnType make() " +
+          "{ return null; } }",
+        "global class Dummy { void func() { Object a = Target.make(); } }"
+      )
+    )
+  }
+
+  test("Call site return type of a void method") {
+    assertReturnTypeClean(
+      "global class Target { private class Hidden {} public static void make() {} }",
+      "global class Dummy { void func() { Target.make(); } }"
+    )
+  }
+
+  test("Call site top level return type") {
+    assertReturnTypeClean(
+      "global class Target { public static Target make() { return null; } }",
+      "global class Dummy { void func() { Object a = Target.make(); } }"
+    )
+  }
+
+  test("Same file call site return type is allowed") {
+    assert(
+      typeDeclarations(
+        Map(
+          "Dummy.cls" ->
+            ("global class Dummy { private class Hidden {} static Hidden make() { return null; } " +
+              "void func() { Object a = make(); } }")
+        )
+      ).nonEmpty
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("Subclass of the outer type can not call a private nested return type") {
+    assertReturnTypeHidden(
+      "global virtual class Target { private class Hidden {} public static Hidden make() " +
+        "{ return null; } }",
+      "global class Dummy extends Target { void func() { Object a = Target.make(); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("@TestVisible call site return type from a test class") {
+    assertReturnTypeClean(
+      "global class Target { @TestVisible private class Hidden {} public static Hidden make() " +
+        "{ return null; } }",
+      "@isTest global class Dummy { static void func() { Object a = Target.make(); } }"
+    )
+  }
+
+  test("@TestVisible call site return type from a normal class") {
+    assertReturnTypeHidden(
+      "global class Target { @TestVisible private class Hidden {} public static Hidden make() " +
+        "{ return null; } }",
+      "global class Dummy { void func() { Object a = Target.make(); } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("@TestVisible method returning a private type is checked from a test class") {
+    assertReturnTypeHidden(
+      "global class Target { private class Hidden { public Integer value; } " +
+        "@TestVisible private static Hidden make() { return null; } }",
+      "@isTest global class Dummy { static void func() { Integer a = Target.make().value; } }",
+      "Target.Hidden Target.make()"
+    )
+  }
+
+  test("Repeated calls each report once") {
+    val classes = Map(
+      "Target.cls" -> hiddenReturn,
+      "Dummy.cls" ->
+        "global class Dummy { void func() { Target.make(); Target.make(); } }"
+    )
+    parsers.foreach(parser => assert(returnTypeIssues(classes, parser).size == 2, s"$parser"))
   }
 
   test("SObject switch value type is checked") {
