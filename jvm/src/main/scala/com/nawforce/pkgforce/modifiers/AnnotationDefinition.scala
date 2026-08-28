@@ -25,11 +25,25 @@ object AnnotationValue {
 
   def stringContent(value: String): String = value.substring(1, value.length - 1)
 
-  def isTrue(value: String): Boolean = value.equalsIgnoreCase("true")
+  def isBooleanLiteral(value: String): Boolean =
+    value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")
 
-  def isFalse(value: String): Boolean = value.equalsIgnoreCase("false")
+  /** The value the platform reads, a quoted string is unwrapped before it is interpreted. */
+  def content(value: String): String =
+    if (isStringLiteral(value)) stringContent(value) else value
 
-  def isBooleanLiteral(value: String): Boolean = isTrue(value) || isFalse(value)
+  /** True as `cacheable`, `SeeAllData` and `IsParallel` are read, only 'true' is true and every
+    * other string coerces to false.
+    */
+  def coercesToTrue(value: String): Boolean = content(value).equalsIgnoreCase("true")
+
+  /** True as `required` is read, only 'false' is false and every other string coerces to true.
+    *
+    * The platform is not consistent between the two readings, `cacheable='yes'` counts as false
+    * while `required='yes'` counts as true. Both are org verified, see apex-ls#556.
+    */
+  def coercesToTrueUnlessFalse(value: String): Boolean =
+    !content(value).equalsIgnoreCase("false")
 }
 
 /** Type of an annotation property, as the platform compiler reports it. */
@@ -77,14 +91,25 @@ final case class AnnotationProperty(
 
 /** A rule over more than one property of the same annotation.
   *
-  * `isInvalid` is given every value written for each property, keyed by the lower cased property
-  * name, duplicate parameters being legal. The diagnostic is reported against `anchor`.
+  * `isInvalid` is given the winning value of each property, keyed by the lower cased property
+  * name. A name written more than once is legal and the platform reads the last of them, so that
+  * is the value a rule sees. The diagnostic is reported against `anchor`.
   */
 final case class AnnotationCombination(
   anchor: String,
   message: String,
-  isInvalid: Map[String, Seq[String]] => Boolean
+  isInvalid: Map[String, String] => Boolean
 )
+
+/** A rule requiring at least one of a set of properties to be written.
+  *
+  * The platform applies these to the parameter list however it was written, so the bare form with
+  * no parentheses at all is rejected just as the empty parenthesised form is, and writing some
+  * other property does not satisfy the rule.
+  */
+final case class AnnotationRequirement(properties: Set[String], message: String) {
+  val keys: Set[String] = properties.map(_.toLowerCase)
+}
 
 /** What is known about one annotation's parameters.
   *
@@ -96,7 +121,7 @@ final case class AnnotationDefinition(
   name: String,
   properties: Seq[AnnotationProperty] = Seq(),
   bareValueProperty: Option[String] = None,
-  emptyParameterMessage: Option[String] = None,
+  requires: Option[AnnotationRequirement] = None,
   combinations: Seq[AnnotationCombination] = Seq()
 ) {
   private val byName: Map[String, AnnotationProperty] = properties.map(p => (p.key, p)).toMap
@@ -109,9 +134,14 @@ final case class AnnotationDefinition(
 /** The annotation property table.
   *
   * Every entry is backed by an observed compile result against an API 68.0 org, see the
-  * investigation on apex-ls#326. Where the org's behaviour was not established the property is
-  * left as a plain string rather than guessed at, so that nothing here reports on code the
-  * platform accepts.
+  * investigation on apex-ls#326 and its extension on apex-ls#556. Where the org's behaviour was
+  * not established the property is left as a plain string rather than guessed at, so that nothing
+  * here reports on code the platform accepts.
+  *
+  * One thing is left deliberately unvalidated: `@InvocableMethod`'s `configurationEditor` must
+  * name a Lightning Web Component and `iconName` has a format, both recorded as B10. apex-ls
+  * cannot resolve a component name and the icon format was never established, so both stay plain
+  * strings. That is a permanent omission rather than an open gap.
   */
 object AnnotationDefinition {
 
@@ -122,6 +152,11 @@ object AnnotationDefinition {
      continuation, so it carries no restriction. */
   private val notOnFieldsOrProperties =
     Set[AnnotationTarget](AnnotationTarget.Fields, AnnotationTarget.Properties)
+
+  /* M01-M16: all four documented values are accepted on both properties, case insensitively, and
+     anything else is rejected as an unknown value. */
+  private val jsonAccessValues =
+    Set("never", "sameNamespace", "samePackage", "always")
 
   private def urlMappingCheck(content: String): Option[String] = {
     Option.when(!content.startsWith("/"))("Rest Resource url must begin with a forward slash, '/'")
@@ -147,7 +182,7 @@ object AnnotationDefinition {
             "Invalid combination of values for properties cacheable and scope on AuraEnabled",
             values =>
               values.contains("scope") &&
-                !values.getOrElse("cacheable", Seq()).exists(!AnnotationValue.isFalse(_))
+                !values.get("cacheable").exists(AnnotationValue.coercesToTrue)
           )
         )
       ),
@@ -158,9 +193,8 @@ object AnnotationDefinition {
       AnnotationDefinition("HttpPatch"),
       AnnotationDefinition("HttpPost"),
       AnnotationDefinition("HttpPut"),
-      /* configurationEditor must name a Lightning Web Component and iconName has a format rule
-         (B10). Neither is implemented, apex-ls cannot resolve a component name and the icon format
-         was not established, so both are left as plain strings. */
+      /* configurationEditor and iconName carry format rules that are deliberately not implemented,
+         see the note on this object. */
       AnnotationDefinition(
         "InvocableMethod",
         Seq(
@@ -187,7 +221,7 @@ object AnnotationDefinition {
             "Invalid combination of values for properties required and defaultValue on InvocableVariable",
             values =>
               values.contains("defaultvalue") &&
-                values.getOrElse("required", Seq()).exists(AnnotationValue.isTrue)
+                values.get("required").exists(AnnotationValue.coercesToTrueUnlessFalse)
           )
         )
       ),
@@ -203,26 +237,32 @@ object AnnotationDefinition {
             "IsParallel",
             "Test class annotated with @isTest(IsParallel=true) cannot also be annotated with @isTest(SeeAllData=true)",
             values =>
-              values.getOrElse("isparallel", Seq()).exists(AnnotationValue.isTrue) &&
-                values.getOrElse("seealldata", Seq()).exists(AnnotationValue.isTrue)
+              values.get("isparallel").exists(AnnotationValue.coercesToTrue) &&
+                values.get("seealldata").exists(AnnotationValue.coercesToTrue)
           )
         )
       ),
       AnnotationDefinition(
         "JsonAccess",
         Seq(
-          AnnotationProperty("serializable", StringType),
-          AnnotationProperty("deserializable", StringType)
+          AnnotationProperty("serializable", StringType, values = Some(jsonAccessValues)),
+          AnnotationProperty("deserializable", StringType, values = Some(jsonAccessValues))
         ),
-        emptyParameterMessage =
-          Some("At least one JSON serialization control parameter must be specified")
+        requires = Some(
+          AnnotationRequirement(
+            Set("serializable", "deserializable"),
+            "At least one JSON serialization control parameter must be specified"
+          )
+        )
       ),
       AnnotationDefinition("NamespaceAccessible"),
       AnnotationDefinition("ReadOnly"),
       AnnotationDefinition("RemoteAction"),
       AnnotationDefinition(
         "RestResource",
-        Seq(AnnotationProperty("urlMapping", StringType, valueCheck = Some(urlMappingCheck)))
+        Seq(AnnotationProperty("urlMapping", StringType, valueCheck = Some(urlMappingCheck))),
+        requires =
+          Some(AnnotationRequirement(Set("urlMapping"), "Required property is missing: urlMapping"))
       ),
       AnnotationDefinition(
         "SuppressWarnings",

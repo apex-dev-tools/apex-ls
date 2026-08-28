@@ -70,6 +70,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nested classes, interfaces, enums and exceptions. Only the return type itself is checked and never
   its type arguments, matching the org, which accepts a `List<Hidden>` return where it rejects a
   bare `Hidden` one (#551)
+- Unknown value errors for `@JsonAccess`. `serializable` and `deserializable` accept `never`,
+  `sameNamespace`, `samePackage` and `always`, case insensitively, and nothing else
+  (`Annotation property, serializable on JsonAccess, unknown value: bogus`). The accepted set had
+  not been established against an org, so the two properties were previously validated only as
+  plain strings (#556)
+- `Required property is missing: urlMapping` where `@RestResource` is written without a url. The
+  platform requires it however the annotation is written, so the bare form, the empty parameter
+  list, and a list naming only other properties are all rejected (#556)
 - Load benchmark reporting of what validation spends its time on: separately timed method map,
   constructor map, body declaration and outer dependency spans, and counts of the type resolutions
   performed while validating along with how many were answered from the per type cache (#540)
@@ -93,6 +101,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A required annotation parameter is now also checked on the bare annotation form, so
+  `@JsonAccess` with no parentheses is reported just as `@JsonAccess()` is, matching the platform
+  (#556)
+- A parameter written more than once is now validated only where it was written last. The platform
+  reads the parameter list as a map, so `@JsonAccess(serializable='bogus' serializable='always')`
+  compiles and is no longer reported, and the unknown name, value type, value set, format and
+  target checks each apply once, to the winning value (#556)
+- The `@AuraEnabled`, `@InvocableVariable` and `@IsTest` cross-parameter rules now read a quoted
+  Boolean value as the platform coerces it, where before they fired only on a literal `true` or
+  `false`. The platform is not consistent about how it coerces: `cacheable`, `SeeAllData` and
+  `IsParallel` count only `'true'` as true, so `@AuraEnabled(cacheable='yes' scope='global')` is
+  rejected, while `required` counts everything but `'false'` as true, so
+  `@InvocableVariable(required='yes' defaultValue='z')` is rejected too. Both readings are org
+  verified (#556)
 - Annotation parameters are now read as a structured list of names, values, separators and
   locations rather than as a flattened string, from both the outline parser and the ANTLR parser.
   The ANTLR path previously read only a bare value, so a named parameter such as

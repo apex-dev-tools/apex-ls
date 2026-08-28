@@ -37,10 +37,14 @@ class ClassModifierTest extends AnyFunSuite {
   }
 
   def legalClassAccess(use: ArraySeq[Modifier], expected: ArraySeq[Modifier]): Boolean = {
-    val modifiers = use.map(_.name).mkString(" ")
-    val path      = Path("Dummy.cls")
-    val cp        = CodeParser(path, SourceData(s"$modifiers class Dummy {}"))
-    val result    = cp.parseClass()
+    legalClassAccessFor(use.map(_.name).mkString(" "), expected)
+  }
+
+  /* An annotation that requires a parameter cannot be written from its name alone. */
+  def legalClassAccessFor(modifiers: String, expected: ArraySeq[Modifier]): Boolean = {
+    val path   = Path("Dummy.cls")
+    val cp     = CodeParser(path, SourceData(s"$modifiers class Dummy {}"))
+    val result = cp.parseClass()
     if (result.issues.nonEmpty) {
       false
     } else {
@@ -206,7 +210,12 @@ class ClassModifierTest extends AnyFunSuite {
   }
 
   test("Json Access annotation") {
-    assert(legalClassAccess(ArraySeq(JSON_ACCESS_ANNOTATION, PUBLIC_MODIFIER)))
+    assert(
+      legalClassAccessFor(
+        "@JsonAccess(serializable='always') public",
+        ArraySeq(JSON_ACCESS_ANNOTATION, PUBLIC_MODIFIER)
+      )
+    )
   }
 
   test("Abstract & virtual modifier") {
@@ -227,10 +236,13 @@ class ClassModifierTest extends AnyFunSuite {
   }
 
   def innerLegalClassAccess(use: ArraySeq[Modifier], expected: ArraySeq[Modifier]): Boolean = {
-    val modifiers = use.map(_.name).mkString(" ")
-    val path      = Path("Dummy.cls")
-    val cp        = CodeParser(path, SourceData(s"public class Dummy {$modifiers class Bar {} }"))
-    val result    = cp.parseClass()
+    innerLegalClassAccessFor(use.map(_.name).mkString(" "), expected)
+  }
+
+  def innerLegalClassAccessFor(modifiers: String, expected: ArraySeq[Modifier]): Boolean = {
+    val path   = Path("Dummy.cls")
+    val cp     = CodeParser(path, SourceData(s"public class Dummy {$modifiers class Bar {} }"))
+    val result = cp.parseClass()
     if (result.issues.nonEmpty) {
       false
     } else {
@@ -292,7 +304,12 @@ class ClassModifierTest extends AnyFunSuite {
   }
 
   test("Inner Json Access annotation") {
-    assert(innerLegalClassAccess(ArraySeq(JSON_ACCESS_ANNOTATION)))
+    assert(
+      innerLegalClassAccessFor(
+        "@JsonAccess(serializable='always')",
+        ArraySeq(JSON_ACCESS_ANNOTATION)
+      )
+    )
   }
 
   test("Inner Abstract & virtual modifier") {

@@ -124,7 +124,8 @@ class ClassModifierTest extends AnyFunSuite with TestHelper {
   }
 
   test("RestResource annotation class") {
-    val modifiers = typeDeclaration("@RestResource public class Dummy {}").modifiers
+    val modifiers =
+      typeDeclaration("@RestResource(urlMapping='/x') public class Dummy {}").modifiers
     assert(modifiers.toSet == Set(PUBLIC_MODIFIER, REST_RESOURCE_ANNOTATION))
     assert(dummyIssues.isEmpty)
   }

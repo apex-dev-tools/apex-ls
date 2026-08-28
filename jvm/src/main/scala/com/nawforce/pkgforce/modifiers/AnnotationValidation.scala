@@ -33,14 +33,22 @@ object AnnotationValidation {
     context: LogEntryContext,
     logger: ModifierLogger
   ): Unit = {
-    parameters.foreach(written => {
-      /* The separator is a property of Apex's annotation syntax rather than of any one annotation,
-       * so it is checked whatever was written. Reporting a comma inside the parameter list of an
-       * annotation we do not know claims nothing about whether that annotation exists. */
-      validateSeparators(written, context, logger)
-      AnnotationDefinition(name)
-        .foreach(definition => validateParameters(definition, written, target, context, logger))
-    })
+    /* The separator is a property of Apex's annotation syntax rather than of any one annotation,
+     * so it is checked whatever was written. Reporting a comma inside the parameter list of an
+     * annotation we do not know claims nothing about whether that annotation exists. */
+    parameters.foreach(written => validateSeparators(written, context, logger))
+
+    /* A missing parameter list is validated as an empty one, the platform rejects a bare
+     * annotation that requires a parameter just as it rejects the empty parenthesised form. */
+    AnnotationDefinition(name).foreach(definition =>
+      validateParameters(
+        definition,
+        parameters.getOrElse(AnnotationParameter.emptyArraySeq),
+        target,
+        context,
+        logger
+      )
+    )
   }
 
   private def validateParameters(
@@ -50,31 +58,57 @@ object AnnotationValidation {
     context: LogEntryContext,
     logger: ModifierLogger
   ): Unit = {
-    if (parameters.isEmpty) {
-      definition.emptyParameterMessage.foreach(message =>
-        logger.logAnnotationError(context, message)
-      )
-      return
-    }
+    validateRequirement(definition, parameters, context, logger)
 
     /* Only the combination rules need the values, and most annotations have none. */
     val values =
       if (definition.combinations.isEmpty) None
-      else Some(new mutable.LinkedHashMap[String, Seq[String]]())
+      else Some(new mutable.LinkedHashMap[String, String]())
 
-    parameters.foreach(parameter =>
+    lastWritten(parameters).foreach(parameter =>
       if (!isEmptyParameter(parameter))
         validateParameter(definition, parameter, target, context, logger)
           .foreach { case (property, value) =>
-            values.foreach(written =>
-              written.update(property.key, written.getOrElse(property.key, Seq()) :+ value)
-            )
+            values.foreach(written => written.update(property.key, value))
           }
     )
 
     values.foreach(written =>
       validateCombinations(definition, parameters, written.toMap, context, logger)
     )
+  }
+
+  /* A required parameter is decided by what was written, before anything is said about whether
+   * the values are legal. Writing some other property does not satisfy the rule, the platform
+   * reports the missing one alongside the unknown name. The diagnostic has no parameter to anchor
+   * on, so it is reported against the annotation. */
+  private def validateRequirement(
+    definition: AnnotationDefinition,
+    parameters: ArraySeq[AnnotationParameter],
+    context: LogEntryContext,
+    logger: ModifierLogger
+  ): Unit = {
+    definition.requires.foreach(requirement =>
+      if (!parameters.exists(_.name.exists(name => requirement.keys.contains(name.toLowerCase))))
+        logger.logAnnotationError(context, requirement.message)
+    )
+  }
+
+  /* The platform reads the parameter list as a map, so a name written more than once is validated
+   * only where it was written last, and that is the value its combination rules see. A bare value
+   * has no name to collapse on, so each one written is validated as it stands. */
+  private def lastWritten(
+    parameters: ArraySeq[AnnotationParameter]
+  ): ArraySeq[AnnotationParameter] = {
+    val lastIndex = mutable.HashMap[String, Int]()
+    parameters.zipWithIndex.foreach { case (parameter, index) =>
+      parameter.name.foreach(name => lastIndex.update(name.toLowerCase, index))
+    }
+    parameters.zipWithIndex.collect {
+      case (parameter, index)
+          if parameter.name.forall(name => lastIndex.get(name.toLowerCase).contains(index)) =>
+        parameter
+    }
   }
 
   /* Apex separates parameters by whitespace alone. The grammar and the outline parser both record a
@@ -150,8 +184,7 @@ object AnnotationValidation {
       return None
     }
 
-    val content =
-      if (AnnotationValue.isStringLiteral(value)) AnnotationValue.stringContent(value) else value
+    val content = AnnotationValue.content(value)
     if (property.allowedValues.exists(!_.contains(content.toLowerCase))) {
       logger.logAnnotationError(
         valueContext,
@@ -173,13 +206,12 @@ object AnnotationValidation {
     Option.when(formatError.isEmpty)((property, value))
   }
 
-  /* Duplicate parameters are legal, so a rule sees every value written for a property. Only
-   * parameters that are themselves valid take part, a value already reported on says nothing about
-   * the combination it was written in. */
+  /* Only parameters that are themselves valid take part, a value already reported on says nothing
+   * about the combination it was written in. */
   private def validateCombinations(
     definition: AnnotationDefinition,
     parameters: ArraySeq[AnnotationParameter],
-    values: Map[String, Seq[String]],
+    values: Map[String, String],
     context: LogEntryContext,
     logger: ModifierLogger
   ): Unit = {

@@ -116,6 +116,180 @@ class AnnotationValidationOutlineTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test("No parameter list is rejected where one is required") {
+    assert(
+      issuesFor("@JsonAccess public class Dummy {}")
+        == "Error: line 1 at 0-11: At least one JSON serialization control parameter must be specified\n"
+    )
+  }
+
+  test("No parameter list is accepted where nothing is required") {
+    assert(
+      issuesFor("public class Dummy {@AuraEnabled public static String m() {return null;}}").isEmpty
+    )
+  }
+
+  test("Json access control parameter is accepted") {
+    assert(issuesFor("@JsonAccess(serializable='always') public class Dummy {}").isEmpty)
+    assert(issuesFor("@JsonAccess(deserializable='samePackage') public class Dummy {}").isEmpty)
+  }
+
+  test("Json access unknown value is rejected") {
+    assert(
+      issuesFor("@JsonAccess(serializable='bogus') public class Dummy {}")
+        == "Error: line 1 at 25-32: Annotation property, serializable on JsonAccess, unknown value: bogus\n"
+    )
+    assert(
+      issuesFor("@JsonAccess(deserializable='bogus') public class Dummy {}")
+        == "Error: line 1 at 27-34: Annotation property, deserializable on JsonAccess, unknown value: bogus\n"
+    )
+  }
+
+  test("Rest resource without a url is rejected") {
+    assert(
+      issuesFor("@RestResource public class Dummy {}")
+        == "Error: line 1 at 0-13: Required property is missing: urlMapping\n"
+    )
+    assert(
+      issuesFor("@RestResource() public class Dummy {}")
+        == "Error: line 1 at 0-15: Required property is missing: urlMapping\n"
+    )
+  }
+
+  test("Rest resource with a url is accepted") {
+    assert(issuesFor("@RestResource(urlMapping='/x') public class Dummy {}").isEmpty)
+  }
+
+  test("Scope with a quoted false cacheable is rejected") {
+    assert(
+      issuesFor(
+        "public class Dummy {@AuraEnabled(cacheable='false' scope='global') public static String m() {return null;}}"
+      ) == "Error: line 1 at 51-65: Invalid combination of values for properties cacheable and scope on AuraEnabled\n"
+    )
+  }
+
+  test("Scope with a quoted true cacheable is accepted") {
+    assert(
+      issuesFor(
+        "public class Dummy {@AuraEnabled(cacheable='true' scope='global') public static String m() {return null;}}"
+      ).isEmpty
+    )
+  }
+
+  test("Scope with a cacheable last written false is rejected") {
+    assert(
+      issuesFor(
+        "public class Dummy {@AuraEnabled(cacheable=true cacheable=false scope='global') public static String m() {return null;}}"
+      ) == "Error: line 1 at 64-78: Invalid combination of values for properties cacheable and scope on AuraEnabled\n"
+    )
+  }
+
+  test("Scope with a cacheable last written true is accepted") {
+    assert(
+      issuesFor(
+        "public class Dummy {@AuraEnabled(cacheable=false cacheable=true scope='global') public static String m() {return null;}}"
+      ).isEmpty
+    )
+  }
+
+  test("Quoted required that is not false with a default value is rejected") {
+    assert(
+      issuesFor(
+        "public class Dummy {@InvocableVariable(required='yes' defaultValue='z') public String f;}"
+      ) == "Error: line 1 at 54-70: Invalid combination of values for properties required and defaultValue on InvocableVariable\n"
+    )
+  }
+
+  test("Quoted false required with a default value is accepted") {
+    assert(
+      issuesFor(
+        "public class Dummy {@InvocableVariable(required='false' defaultValue='z') public String f;}"
+      ).isEmpty
+    )
+  }
+
+  test("Required last written true with a default value is rejected") {
+    assert(
+      issuesFor(
+        "public class Dummy {@InvocableVariable(required=false required=true defaultValue='z') public String f;}"
+      ) == "Error: line 1 at 68-84: Invalid combination of values for properties required and defaultValue on InvocableVariable\n"
+    )
+  }
+
+  test("Required last written false with a default value is accepted") {
+    assert(
+      issuesFor(
+        "public class Dummy {@InvocableVariable(required=true required=false defaultValue='z') public String f;}"
+      ).isEmpty
+    )
+  }
+
+  test("Parallel test with a quoted true seeing all data is rejected") {
+    assert(
+      issuesFor("@IsTest(SeeAllData='true' IsParallel='true') public class Dummy {}")
+        == "Error: line 1 at 26-43: Test class annotated with @isTest(IsParallel=true) cannot also be annotated with @isTest(SeeAllData=true)\n"
+    )
+  }
+
+  test("Parallel test with a quoted seeing all data that is not true is accepted") {
+    assert(issuesFor("@IsTest(SeeAllData='yes' IsParallel=true) public class Dummy {}").isEmpty)
+  }
+
+  test("Parallel test last written to see all data is rejected") {
+    assert(
+      issuesFor("@IsTest(SeeAllData=false SeeAllData=true IsParallel=true) public class Dummy {}")
+        == "Error: line 1 at 41-56: Test class annotated with @isTest(IsParallel=true) cannot also be annotated with @isTest(SeeAllData=true)\n"
+    )
+  }
+
+  test("Parallel test last written not to see all data is accepted") {
+    assert(
+      issuesFor(
+        "@IsTest(SeeAllData=true SeeAllData=false IsParallel=true) public class Dummy {}"
+      ).isEmpty
+    )
+  }
+
+  test("Duplicate parameter is validated where it was written last") {
+    assert(
+      issuesFor("@JsonAccess(serializable='always' serializable='bogus') public class Dummy {}")
+        == "Error: line 1 at 47-54: Annotation property, serializable on JsonAccess, unknown value: bogus\n"
+    )
+  }
+
+  test("Duplicate parameter overwritten by a valid value is accepted") {
+    assert(
+      issuesFor(
+        "@JsonAccess(serializable='bogus' serializable='always') public class Dummy {}"
+      ).isEmpty
+    )
+  }
+
+  test("Duplicate unknown parameter name is reported once, where it was written last") {
+    assert(
+      issuesFor(
+        "public class Dummy {@AuraEnabled(bogus=true BOGUS=false) public static String m() {return null;}}"
+      ) == "Error: line 1 at 44-49: No such property, BOGUS, defined on this annotation: AuraEnabled\n"
+    )
+  }
+
+  test("Duplicate parameter not allowed on its target is reported once") {
+    assert(
+      issuesFor(
+        "public class Dummy {@AuraEnabled(cacheable=true cacheable=false) public String f;}"
+      )
+        == "Error: line 1 at 48-57: Annotation property, cacheable on AuraEnabled, is not allowed on fields\n"
+    )
+  }
+
+  test("Another parameter does not satisfy a required parameter") {
+    assert(
+      issuesFor("@JsonAccess(bogus='x') public class Dummy {}")
+        == "Error: line 1 at 0-22: At least one JSON serialization control parameter must be specified\n" +
+        "Error: line 1 at 12-17: No such property, bogus, defined on this annotation: JsonAccess\n"
+    )
+  }
+
   test("Rest resource url must begin with a slash") {
     assert(
       issuesFor("@RestResource(urlMapping='x') public class Dummy {}")
