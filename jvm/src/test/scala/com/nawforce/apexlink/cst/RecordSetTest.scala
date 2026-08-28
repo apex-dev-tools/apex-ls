@@ -490,7 +490,7 @@ class RecordSetTest extends AnyFunSuite with TestHelper {
         |    take(parent.Contacts, null);
         |  }
         |}""".stripMargin,
-      "Missing: line 5 at 4-31: Ambiguous method call for 'take' on 'Dummy' taking arguments '[Schema.Contact Records], null', wrong argument types for calling 'void take(System.List<Schema.Contact> values, System.String count)'\n"
+      "Missing: line 5 at 4-31: Ambiguous method call for 'take' on 'Dummy' taking arguments '[Schema.Contact Records], null', wrong argument types for calling 'void take(System.List<Schema.Contact> values, System.Integer count)'\n"
     )
   }
 

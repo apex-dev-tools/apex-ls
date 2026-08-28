@@ -68,6 +68,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The overload named in a `No matching method found` or `Ambiguous method call` message no longer
+  varies between runs on identical input. The members of an overload group were held in the order
+  they were discovered, which for platform types is the order of `java.lang.Class.getMethods` and
+  so is not stable between runs, and the message named whichever member came first. Groups are now
+  ordered by parameter type, then return type, then modifiers. The same order decided which
+  overload was resolved where an argument is `any`, or where two overloads are equally specific for
+  the arguments given, so what is resolved, and the dependencies, references and unused findings
+  that follow from it, are now stable too (#553)
 - Cold workspace loads now really do parse in parallel when the multi-threaded outline parser is
   selected. The parse loop iterated the class list through a parallel collection's iterator, which
   is sequential, so parsing ran on a single thread whichever parser was chosen. Parsing now runs on
