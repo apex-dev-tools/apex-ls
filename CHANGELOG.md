@@ -103,6 +103,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A catch clause whose type is a nested type that is not visible from the catching file is no
+  longer reported as `Type is not visible` when the handler does not use the exception variable.
+  Apex only enforces the visibility of a caught type where the handler references the exception,
+  so a handler that ignores the exception compiles while the same clause with `throw e;` in its
+  body does not. Every other written type reference, local declarations included, is checked as
+  before (#549)
 - Completions from test classes now include accessible `@TestVisible` members (#522)
 - Static final assignments from instance initializer blocks now receive targeted advisory guidance
   matching Apex legality, and final-assignment warnings distinguish enforced fields from
