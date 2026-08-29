@@ -73,6 +73,14 @@ class CodeParser(val source: Source) {
     parse(parser => parser.literal())
   }
 
+  private[nawforce] def tokenize(): CommonTokenStream = {
+    CodeParser.withCacheGuard {
+      val tokenStream = new CommonTokenStream(new ApexLexer(cis))
+      tokenStream.fill()
+      tokenStream
+    }
+  }
+
   /** Find a location for a rule, adapts based on source offsets to give absolute position in file
     */
   def getPathLocation(context: ParserRuleContext): PathLocation = {

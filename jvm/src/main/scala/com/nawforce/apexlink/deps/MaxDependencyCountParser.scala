@@ -8,9 +8,8 @@ import com.nawforce.apexlink.api.Org
 import com.nawforce.apexlink.deps.MaxDependencyCountParser.{maxCountMarker, maxCountMarkerLength}
 import com.nawforce.apexlink.types.apex.ApexDeclaration
 import com.nawforce.apexlink.types.core.TypeId
-import io.github.apexdevtools.apexparser.ApexLexer
 import com.nawforce.runtime.parsers.CodeParser
-import org.antlr.v4.runtime.{CommonTokenStream, Token}
+import org.antlr.v4.runtime.Token
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.ListHasAsScala
@@ -45,9 +44,7 @@ class MaxDependencyCountParser(org: Org) {
       case Right(source) =>
         if (source.asString.indexOf(maxCountMarker) == -1)
           return if (defaultCount.isEmpty) Left(None) else Right(defaultCount.get)
-        val parser      = CodeParser(sourcePath, source)
-        val tokenStream = new CommonTokenStream(new ApexLexer(parser.cis))
-        tokenStream.fill()
+        val tokenStream = CodeParser(sourcePath, source).tokenize()
 
         val tokensR = tokenStream.getHiddenTokensToRight(0).asScala
         val countsR = tokensR.flatMap(t => parseTokenToDependencyLimit(t))
