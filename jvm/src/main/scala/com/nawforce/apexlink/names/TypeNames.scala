@@ -14,12 +14,12 @@
 
 package com.nawforce.apexlink.names
 
-import com.nawforce.pkgforce.memory.InternCache
+import com.nawforce.pkgforce.memory.ConcurrentInternCache
 import com.nawforce.pkgforce.names.{DotName, Name, Names, TypeName}
 
 import scala.collection.immutable.ArraySeq
 
-object TypeNames extends InternCache[TypeName] {
+object TypeNames extends ConcurrentInternCache[TypeName] {
 
   lazy val Void: TypeName   = TypeName(Name("void")).intern
   lazy val Object: TypeName = TypeName(Name("Object")).intern
