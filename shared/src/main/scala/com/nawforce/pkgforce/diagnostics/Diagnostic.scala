@@ -25,6 +25,21 @@ case object MISSING_CATEGORY extends DiagnosticCategory("Missing", 2)
 case object WARNING_CATEGORY extends DiagnosticCategory("Warning", 4)
 case object UNUSED_CATEGORY  extends DiagnosticCategory("Unused", 4)
 
+object DiagnosticId {
+  val SyntaxError           = "syntax-error"
+  val MissingType           = "missing-type"
+  val InaccessibleType      = "inaccessible-type"
+  val WrongTypeArguments    = "wrong-type-arguments"
+  val MissingVariableOrType = "missing-variable-or-type"
+  val UnknownSObjectField   = "unknown-sobject-field"
+  val UnknownFieldOrType    = "unknown-field-or-type"
+  val UnusedLocalVariable   = "unused-local-variable"
+  val UnusedType            = "unused-type"
+  val UnusedField           = "unused-field"
+  val UnusedMethod          = "unused-method"
+  val UnusedLabel           = "unused-label"
+}
+
 object DiagnosticCategory {
   def apply(value: String): DiagnosticCategory = {
     value match {
@@ -48,11 +63,16 @@ object DiagnosticCategory {
   implicit val rw: RW[DiagnosticCategory] = macroRW
 }
 
-/** A diagnostic message, category tells us what type of diagnostic this is while location and
-  * messages provide details
+/** A diagnostic message. Category tells us the broad type, ID optionally identifies the finding,
+  * and location and message provide details.
   */
 @upickle.implicits.key("Diagnostic")
-case class Diagnostic(category: DiagnosticCategory, location: Location, message: String)
+case class Diagnostic(
+  category: DiagnosticCategory,
+  location: Location,
+  message: String,
+  id: String = ""
+)
 
 object Diagnostic {
   implicit val rw: RW[Diagnostic] = macroRW

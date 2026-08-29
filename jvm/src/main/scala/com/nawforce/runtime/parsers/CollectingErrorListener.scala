@@ -13,7 +13,7 @@
  */
 package com.nawforce.runtime.parsers
 
-import com.nawforce.pkgforce.diagnostics.{Diagnostic, Issue, SYNTAX_CATEGORY}
+import com.nawforce.pkgforce.diagnostics.{Diagnostic, DiagnosticId, Issue, SYNTAX_CATEGORY}
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import io.github.apexdevtools.apexparser.ApexLexer
 import org.antlr.v4.runtime.{BaseErrorListener, Parser, RecognitionException, Recognizer, Token}
@@ -63,7 +63,12 @@ class CollectingErrorListener(path: PathLike) extends BaseErrorListener {
       _issues.addOne(
         new Issue(
           path,
-          Diagnostic(SYNTAX_CATEGORY, Location(line, charPositionInLine), improvedMsg)
+          Diagnostic(
+            SYNTAX_CATEGORY,
+            Location(line, charPositionInLine),
+            improvedMsg,
+            DiagnosticId.SyntaxError
+          )
         )
       )
     }

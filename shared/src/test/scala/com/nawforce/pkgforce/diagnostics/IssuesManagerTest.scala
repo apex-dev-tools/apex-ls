@@ -368,4 +368,25 @@ class IssueLoggerTest extends AnyFunSuite with BeforeAndAfter {
     assert(issues.size == 1)
     assert(issues.head.diagnostic.message == "Logged error")
   }
+
+  test("diagnostic rules expose stable IDs with a category fallback") {
+    val identified = Issue(
+      testPath,
+      Diagnostic(ERROR_CATEGORY, location, "Missing type", DiagnosticId.MissingType)
+    )
+    assert(identified.rule().name() == ERROR_CATEGORY.name)
+    assert(identified.rule().id() == DiagnosticId.MissingType)
+
+    val uncatalogued = createWarningIssue(testPath, "Uncatalogued warning")
+    assert(uncatalogued.rule().name() == WARNING_CATEGORY.name)
+    assert(uncatalogued.rule().id() == WARNING_CATEGORY.name)
+  }
+
+  test("diagnostics serialized before IDs were added retain the fallback") {
+    val json = upickle.default.writeJs(Diagnostic(ERROR_CATEGORY, location, "Old diagnostic"))
+    json.obj.remove("id")
+
+    val diagnostic = upickle.default.read[Diagnostic](json)
+    assert(diagnostic.id.isEmpty)
+  }
 }
