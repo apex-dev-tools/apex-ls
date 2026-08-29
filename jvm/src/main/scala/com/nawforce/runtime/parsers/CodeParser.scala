@@ -88,8 +88,6 @@ class CodeParser(val source: Source) {
   }
 
   def parseReturningParser[T](parse: ApexParser => T): IssuesAnd[(ApexParser, T)] = {
-    CodeParser.autoClearCache()
-
     val listener = new CollectingErrorListener(source.path)
 
     val lexer = new ApexLexer(cis)
@@ -115,17 +113,8 @@ object CodeParser {
   type ParserRuleContext = org.antlr.v4.runtime.ParserRuleContext
   type TerminalNode      = org.antlr.v4.runtime.tree.TerminalNode
 
-  private var useCount = 0
-
   def apply(path: PathLike, code: SourceData): CodeParser = {
     new CodeParser(Source(path, code, 0, 0, None))
-  }
-
-  private def autoClearCache(): Unit = {
-    useCount += 1
-    if (useCount % 500 == 0) {
-      clearCaches()
-    }
   }
 
   def clearCaches(): Unit = {

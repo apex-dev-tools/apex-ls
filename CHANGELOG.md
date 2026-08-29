@@ -88,6 +88,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Kept ANTLR prediction caches warm for the duration of module deployment instead of clearing them
+  every 500 parser uses, reducing repeated parsing work during cold workspace loads (#548)
 - Concurrent outline parsing now uses thread-safe JVM caches for names, type names and modifier
   results, removing unsafe concurrent writes during cold workspace loads (#548)
 - The overload named in a `No matching method found` or `Ambiguous method call` message no longer
