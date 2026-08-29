@@ -13,13 +13,11 @@
  */
 package com.nawforce.pkgforce.names
 
-import com.nawforce.pkgforce.memory.CleanableCache
-
-import scala.collection.mutable
+import com.nawforce.pkgforce.memory.{CleanableCache, InternMap}
 
 /* Common names & Name interning support. */
 object Names extends CleanableCache {
-  private var nameCache = mutable.HashMap[String, Name]()
+  private val nameCache = new InternMap[String, Name]
 
   def apply(name: String): Name             = cache(name)
   def apply(name: Name): Name               = cache(name.value)
@@ -30,7 +28,7 @@ object Names extends CleanableCache {
   }
 
   override def clean(): Unit = {
-    nameCache = new mutable.HashMap[String, Name]()
+    nameCache.clear()
   }
 
   lazy val Empty: Name                   = cache("")

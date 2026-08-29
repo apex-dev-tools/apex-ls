@@ -21,7 +21,7 @@ import com.nawforce.apexlink.names.TypeNames.{TypeNameUtils, ambiguousAliasMap}
 import com.nawforce.apexlink.types.core.TypeDeclaration
 import com.nawforce.pkgforce.names.TypeName
 
-import scala.collection.mutable
+import scala.collection.concurrent.TrieMap
 
 object PlatformTypes {
   lazy val nullType: TypeDeclaration               = loadType(TypeNames.Null)
@@ -48,9 +48,9 @@ object PlatformTypes {
   lazy val chatterComponent: TypeDeclaration       = loadType(TypeNames.ChatterComponent)
   lazy val labelType: TypeDeclaration              = loadType(TypeNames.Label)
 
-  private val typeCache                                   = mutable.Map[TypeName, TypeResponse]()
-  private val firedTypes                                  = mutable.Set[TypeName]()
-  private var loadingObservers: Seq[PlatformTypeObserver] = Seq()
+  private val typeCache  = TrieMap[TypeName, TypeResponse]()
+  private val firedTypes = TrieMap[TypeName, Unit]()
+  @volatile private var loadingObservers: Seq[PlatformTypeObserver] = Seq()
 
   private def loadType(typeName: TypeName): TypeDeclaration = {
     PlatformTypeDeclaration.get(typeName, None).getOrElse(throw new NoSuchElementException)
@@ -108,14 +108,22 @@ object PlatformTypes {
 
     response match {
       case Right(td) =>
-        if (!firedTypes.contains(td.typeName)) {
-          fireLoadingEvents(td)
-          firedTypes.add(td.typeName)
-        }
+        fireLoadingEventsOnce(td)
       case _ => ()
     }
 
     response
+  }
+
+  private def fireLoadingEventsOnce(td: TypeDeclaration): Unit = {
+    if (!firedTypes.contains(td.typeName)) {
+      firedTypes.synchronized {
+        if (!firedTypes.contains(td.typeName)) {
+          fireLoadingEvents(td)
+          firedTypes.put(td.typeName, ())
+        }
+      }
+    }
   }
 
   private def fireLoadingEvents(td: TypeDeclaration): Unit = {
