@@ -196,7 +196,8 @@ case class OpenOptions private (
   indexerConfiguration: Option[(Long, Long)] = None,
   autoFlush: Option[Boolean] = None,
   unused: Option[Boolean] = None,
-  unusedOnError: Option[Boolean] = None
+  unusedOnError: Option[Boolean] = None,
+  blockPrefetchThreads: Option[Int] = None
 ) {
   def withParser(name: String): OpenOptions = {
     copy(parser = Some(name))
@@ -244,6 +245,13 @@ case class OpenOptions private (
     */
   def withUnusedOnError(enabled: Boolean): OpenOptions = {
     copy(unusedOnError = Some(enabled))
+  }
+
+  /** Configure how many threads parse method bodies ahead of validation during a load, zero to
+    * disable. See ServerOps.setBlockPrefetchThreads, only 0, 2 or 4 are accepted.
+    */
+  def withBlockPrefetchThreads(threads: Int): OpenOptions = {
+    copy(blockPrefetchThreads = Some(threads))
   }
 }
 

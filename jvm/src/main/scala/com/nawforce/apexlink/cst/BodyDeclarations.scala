@@ -74,6 +74,9 @@ abstract class ClassBodyDeclaration(modifierResults: ModifierResults)
   }
 
   protected def verify(context: BodyDeclarationVerifyContext): Unit
+
+  /** Blocks held by this declaration whose statements are parsed lazily on first verify. */
+  def deferredBlocks: Seq[Block] = Seq.empty
 }
 
 object ClassBodyDeclaration {
@@ -216,6 +219,8 @@ final case class ApexInitializerBlock(_modifiers: ModifierResults, block: Block,
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
 
+  override def deferredBlocks: Seq[Block] = Seq(block)
+
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     val blockContext = new OuterScopeVerifyContext(context, isStatic)
     block.verify(blockContext)
@@ -257,6 +262,8 @@ class ApexMethodDeclaration(
   override val children: ArraySeq[ApexNode] = ArraySeq.empty
   override lazy val signature: String       = super[ApexMethodLike].signature
   override val inTest: Boolean              = thisType.inTest
+
+  override def deferredBlocks: Seq[Block] = block.toSeq
 
   // If using a fake block then consider synthetic, we need to use a block to avoid confusion with abstract
   override def isSynthetic: Boolean = block.contains(Block.empty)
@@ -445,6 +452,8 @@ final case class ApexConstructorDeclaration(
   override val nature: Nature               = CONSTRUCTOR_NATURE
   override val thisTypeId: TypeId           = thisType.typeId
   override val inTest: Boolean              = thisType.inTest
+
+  override def deferredBlocks: Seq[Block] = Seq(block)
 
   override def verify(context: BodyDeclarationVerifyContext): Unit = {
     parameters.foreach(_.verify(context))

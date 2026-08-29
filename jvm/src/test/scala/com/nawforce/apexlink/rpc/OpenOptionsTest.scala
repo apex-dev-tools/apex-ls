@@ -26,6 +26,14 @@ class OpenOptionsTest extends AnyFunSuite {
     assert(options.unusedOnError.contains(true))
   }
 
+  test("legacy RPC options without blockPrefetchThreads retain the default") {
+    val legacyJson = ujson.read(write(OpenOptions.default().withBlockPrefetchThreads(2)))
+    legacyJson.obj.remove("blockPrefetchThreads")
+
+    val options = read[OpenOptions](legacyJson.render())
+    assert(options.blockPrefetchThreads.isEmpty)
+  }
+
   test("legacy RPC options without unusedOnError retain the default") {
     val legacyJson = ujson.read(write(OpenOptions.default()))
     legacyJson.obj.remove("unusedOnError")

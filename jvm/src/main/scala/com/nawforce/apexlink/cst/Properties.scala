@@ -46,6 +46,8 @@ final case class ApexPropertyDeclaration(
 
   override def idLocation: Location = id.location.location
 
+  override def deferredBlocks: Seq[Block] = propertyBlocks.flatMap(_.block)
+
   val setter: Option[SetterPropertyBlock] =
     propertyBlocks.flatMap {
       case x: SetterPropertyBlock => Some(x)
@@ -121,6 +123,10 @@ object ApexPropertyDeclaration {
 }
 
 sealed abstract class PropertyBlock extends CST {
+
+  /** The block this holds, absent for an auto-implemented accessor. */
+  def block: Option[Block]
+
   def verify(
     context: BodyDeclarationVerifyContext,
     isStatic: Boolean,
