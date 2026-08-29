@@ -88,7 +88,7 @@ object ServerOps {
   private val defaultExternalAnalysis        = ExternalAnalysisConfiguration(RefreshAnalysis, Map())
   private var currentParser: AvailableParser = OutlineParserMultithreaded
   private var indexerConfiguration           = IndexerConfiguration(0, 0)
-  private var blockPrefetchThreads           = 0
+  @volatile private var blockPrefetchThreads = 0
 
   def isAutoFlushEnabled: Boolean = {
     autoFlush
@@ -159,7 +159,7 @@ object ServerOps {
     * grows with concurrency, so higher counts spend CPU without shortening the load. Any other
     * value is ignored and the current setting is kept.
     */
-  def setBlockPrefetchThreads(threads: Int): Int = {
+  def setBlockPrefetchThreads(threads: Int): Int = synchronized {
     val previous = blockPrefetchThreads
     if (ServerOps.validBlockPrefetchThreads.contains(threads))
       blockPrefetchThreads = threads
@@ -169,6 +169,14 @@ object ServerOps {
           ServerOps.validBlockPrefetchThreads.mkString(", ")
       )
     previous
+  }
+
+  /** Apply an optional per-open override and return the effective value as one atomic operation.
+    * An absent override retains the current process-wide setting, which starts at zero.
+    */
+  private[nawforce] def resolveBlockPrefetchThreads(threads: Option[Int]): Int = synchronized {
+    threads.foreach(setBlockPrefetchThreads)
+    blockPrefetchThreads
   }
 
   def getIndexerConfiguration: IndexerConfiguration = {

@@ -355,7 +355,7 @@ object StreamDeployer {
   /** Declarations to keep parsed ahead of the validation cursor, per prefetch thread. File sizes
     * are uneven, so the window has to cover a run of large files to stop the cursor waiting on
     * one. Measured on a large workspace, 16 per thread removes nearly all of the waiting and 32
-    * removes the rest.
+    * removes the rest. The number of statements retained depends on the sizes of those files.
     */
   private final val PrefetchWindowPerThread = 32
 
@@ -381,7 +381,9 @@ object StreamDeployer {
     declarations: Array[FullDeclaration],
     validate: FullDeclaration => Unit
   ): Unit = {
-    val threads = ServerOps.getBlockPrefetchThreads
+    val threads = declarations.headOption
+      .map(_.module.pkg.org.blockPrefetchThreads)
+      .getOrElse(0)
     if (threads <= 0 || declarations.length < 2) {
       declarations.foreach(validate)
       return
@@ -403,7 +405,6 @@ object StreamDeployer {
     try {
       (0 until Math.min(window, declarations.length)).foreach(submit)
       declarations.indices.foreach(index => {
-        submit(index + window)
         try {
           prefetch(index).get()
         } catch {
@@ -415,6 +416,7 @@ object StreamDeployer {
         // Release only once validated, the statements are weakly held and would otherwise be
         // collectable before the declaration that needs them has run
         prefetch(index) = null
+        submit(index + window)
       })
     } finally {
       pool.shutdownNow()

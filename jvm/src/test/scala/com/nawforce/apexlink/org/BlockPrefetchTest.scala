@@ -15,7 +15,8 @@
 package com.nawforce.apexlink.org
 
 import com.nawforce.apexlink.TestHelper
-import com.nawforce.apexlink.api.ServerOps
+import com.nawforce.apexlink.api.{Org, ServerOps}
+import com.nawforce.apexlink.rpc.OpenOptions
 import com.nawforce.pkgforce.path.PathLike
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -32,7 +33,13 @@ class BlockPrefetchTest extends AnyFunSuite with TestHelper {
         s"public class Good$i {public void func() {Integer a = $i; System.debug(a);}}"
     )
     .toMap ++
-    Map("Bad.cls" -> "public class Bad {public void func() {Integer a = ; System.debug(a);}}")
+    Map(
+      "Bad.cls" ->
+        """public class Bad {
+          |  public void first() {Integer a = ; System.debug(a);}
+          |  public void second() {Integer b = ; System.debug(b);}
+          |}""".stripMargin
+    )
 
   private def withPrefetch[T](threads: Int)(op: => T): T = {
     val previous = ServerOps.setBlockPrefetchThreads(threads)
@@ -46,12 +53,11 @@ class BlockPrefetchTest extends AnyFunSuite with TestHelper {
       FileSystemHelper.run(classes) { root: PathLike =>
         val org = createOrg(root)
         org.issues
-          .issuesForFilesInternal(paths = null, includeWarnings = true, maxIssuesPerFile = 10)
+          .issuesForFileInternal(root.join("Bad.cls"))
           .map(issue =>
-            s"${issue.path.basename}: ${issue.diagnostic.category.name} " +
-              s"${issue.diagnostic.location.displayPosition} ${issue.diagnostic.message}"
+            s"${issue.diagnostic.category.name} ${issue.diagnostic.location.displayPosition} " +
+              issue.diagnostic.message
           )
-          .sorted
           .toSeq
       }
     }
@@ -59,12 +65,12 @@ class BlockPrefetchTest extends AnyFunSuite with TestHelper {
 
   test("body syntax error is reported when prefetching") {
     val expected = issuesWithPrefetch(0)
-    assert(expected.count(issue => issue.startsWith("Bad.cls: Syntax")) == 1)
+    assert(expected.count(_.startsWith("Syntax")) == 2)
     // The bad body must still be verified after its parse errors are reported
-    assert(expected.exists(issue => issue.startsWith("Bad.cls: Missing")))
+    assert(expected.exists(_.startsWith("Missing")))
 
-    assert(issuesWithPrefetch(2) == expected)
-    assert(issuesWithPrefetch(4) == expected)
+    (1 to 3).foreach(_ => assert(issuesWithPrefetch(2) == expected))
+    (1 to 3).foreach(_ => assert(issuesWithPrefetch(4) == expected))
   }
 
   test("thread count is limited to the supported values") {
@@ -76,6 +82,26 @@ class BlockPrefetchTest extends AnyFunSuite with TestHelper {
       assert(ServerOps.setBlockPrefetchThreads(4) == 2)
       assert(ServerOps.setBlockPrefetchThreads(-1) == 4)
       assert(ServerOps.getBlockPrefetchThreads == 4)
+    }
+  }
+
+  test("an org snapshots the effective process-wide setting") {
+    withPrefetch(0) {
+      FileSystemHelper.run(classes) { root: PathLike =>
+        val defaultOrg = Org.newOrg(root, OpenOptions.default()).asInstanceOf[OPM.OrgImpl]
+        assert(defaultOrg.blockPrefetchThreads == 0)
+
+        val configuredOrg = Org
+          .newOrg(root, OpenOptions.default().withBlockPrefetchThreads(2))
+          .asInstanceOf[OPM.OrgImpl]
+        assert(configuredOrg.blockPrefetchThreads == 2)
+
+        ServerOps.setBlockPrefetchThreads(4)
+        assert(configuredOrg.blockPrefetchThreads == 2)
+
+        val inheritedOrg = Org.newOrg(root, OpenOptions.default()).asInstanceOf[OPM.OrgImpl]
+        assert(inheritedOrg.blockPrefetchThreads == 4)
+      }
     }
   }
 }

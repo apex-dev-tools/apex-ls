@@ -248,7 +248,8 @@ case class OpenOptions private (
   }
 
   /** Configure how many threads parse method bodies ahead of validation during a load, zero to
-    * disable. See ServerOps.setBlockPrefetchThreads, only 0, 2 or 4 are accepted.
+    * disable. See ServerOps.setBlockPrefetchThreads, only 0, 2 or 4 are accepted. When omitted the
+    * current process-wide ServerOps setting is retained; that setting is initially zero.
     */
   def withBlockPrefetchThreads(threads: Int): OpenOptions = {
     copy(blockPrefetchThreads = Some(threads))

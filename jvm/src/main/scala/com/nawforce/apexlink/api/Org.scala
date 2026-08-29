@@ -314,7 +314,7 @@ object Org {
     options.indexerConfiguration.foreach(values =>
       ServerOps.setIndexerConfiguration(IndexerConfiguration(values._1, values._2))
     )
-    options.blockPrefetchThreads.foreach(ServerOps.setBlockPrefetchThreads)
+    val blockPrefetchThreads = ServerOps.resolveBlockPrefetchThreads(options.blockPrefetchThreads)
     options.autoFlush.foreach(enabled => ServerOps.setAutoFlush(enabled))
     options.cache.foreach(enabled =>
       if (!enabled) {
@@ -333,7 +333,8 @@ object Org {
         issueManager,
         workspace,
         unusedEnabled = options.unused.getOrElse(true),
-        unusedOnError = options.unusedOnError.getOrElse(false)
+        unusedOnError = options.unusedOnError.getOrElse(false),
+        blockPrefetchThreads = blockPrefetchThreads
       )
     }
   }
