@@ -15,7 +15,7 @@
 package com.nawforce.pkgforce.modifiers
 
 import com.nawforce.pkgforce.diagnostics.Issue
-import com.nawforce.pkgforce.memory.InternCache
+import com.nawforce.pkgforce.memory.ConcurrentInternCache
 
 import scala.collection.compat.immutable.ArraySeq
 
@@ -45,6 +45,6 @@ final case class ModifierResults(modifiers: ArraySeq[Modifier], issues: ArraySeq
   }
 }
 
-object ModifierResults extends InternCache[ModifierResults] {
+object ModifierResults extends ConcurrentInternCache[ModifierResults] {
   val empty: ModifierResults = ModifierResults(ArraySeq.empty, ArraySeq.empty)
 }

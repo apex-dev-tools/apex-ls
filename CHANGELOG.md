@@ -84,9 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Concurrent outline parsing now uses thread-safe global caches for names, type names, modifier
-  results and platform type lookups. This removes unsafe concurrent writes during cold workspace
-  loads and reduces the summed cost of parsing at the default four-thread parallelism (#548)
+- Concurrent outline parsing now uses thread-safe JVM caches for names, type names and modifier
+  results, removing unsafe concurrent writes during cold workspace loads (#548)
 - The overload named in a `No matching method found` or `Ambiguous method call` message no longer
   varies between runs on identical input. The members of an overload group were held in the order
   they were discovered, which for platform types is the order of `java.lang.Class.getMethods` and

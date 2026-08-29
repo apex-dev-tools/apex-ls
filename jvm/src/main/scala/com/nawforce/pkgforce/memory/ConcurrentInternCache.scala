@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020 Kevin Jones, All rights reserved.
+ Copyright (c) 2026 Kevin Jones, All rights reserved.
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -13,17 +13,11 @@
  */
 package com.nawforce.pkgforce.memory
 
-import scala.collection.mutable
+/** Cache suitable for interning values from concurrent JVM callers. */
+class ConcurrentInternCache[T] extends CleanableCache {
+  private val cache = new InternMap[T, T]
 
-/** Cache suitable for interning value. */
-class InternCache[T] extends CleanableCache {
-  private var cache = mutable.HashMap[T, T]()
+  def intern(value: T): T = cache.getOrElseUpdate(value, value)
 
-  def intern(value: T): T = {
-    cache.getOrElseUpdate(value, value)
-  }
-
-  def clean(): Unit = {
-    cache = new mutable.HashMap[T, T]()
-  }
+  def clean(): Unit = cache.clear()
 }

@@ -18,10 +18,10 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import java.util.concurrent.{CyclicBarrier, Executors, TimeUnit}
 
-class InternCacheTest extends AnyFunSuite {
+class ConcurrentInternCacheTest extends AnyFunSuite {
 
-  test("intern cache returns one instance to concurrent callers") {
-    val cache = new InternCache[String]
+  test("concurrent intern cache returns one instance to concurrent callers") {
+    val cache = new ConcurrentInternCache[String]
     assertConcurrentInterning(index => cache.intern(new String(s"value-$index")))
   }
 
