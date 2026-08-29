@@ -72,7 +72,8 @@ object OPM {
     val issueManager: IssueLogger,
     initWorkspace: Option[Workspace],
     private[nawforce] val unusedEnabled: Boolean = true,
-    private[nawforce] val unusedOnError: Boolean = false
+    private[nawforce] val unusedOnError: Boolean = false,
+    private[nawforce] val blockPrefetchThreads: Int = 0
   ) extends Org
       with OrgTestClasses {
     // Acquire lock for all operations that may be impacted by refresh

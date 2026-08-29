@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Optional prefetching of method bodies during a workspace load, off by default and enabled with
+  `ServerOps.setBlockPrefetchThreads(2)` or `(4)`. Method bodies are parsed lazily on first use,
+  which places that parsing inside the sequential validation pass even though it has no ordering
+  constraint; parsing them ahead of the validation cursor removes it from the critical path.
+  Measured on the public sample projects this cuts cold load time by 17-34%, at the cost of holding
+  the parsed statements of a bounded window of files until they are validated (#550)
 - Stable lower-kebab-case IDs for Apex syntax errors, missing-name diagnostics, and unused
   findings. `CheckForIssues` now uses IDs in text prefixes and PMD `rule` attributes, and adds an
   `id` field alongside `category` in JSON. Diagnostics not yet catalogued continue to use their

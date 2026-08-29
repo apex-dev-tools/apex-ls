@@ -80,10 +80,15 @@ object ExternalAnalysisConfiguration {
 
 /** Collection of Ops functions for changing global behaviours */
 object ServerOps {
+
+  /** Thread counts accepted by [[setBlockPrefetchThreads]]. */
+  val validBlockPrefetchThreads: Seq[Int] = Seq(0, 2, 4)
+
   private var autoFlush                      = true
   private val defaultExternalAnalysis        = ExternalAnalysisConfiguration(RefreshAnalysis, Map())
   private var currentParser: AvailableParser = OutlineParserMultithreaded
   private var indexerConfiguration           = IndexerConfiguration(0, 0)
+  @volatile private var blockPrefetchThreads = 0
 
   def isAutoFlushEnabled: Boolean = {
     autoFlush
@@ -137,6 +142,41 @@ object ServerOps {
         currentParser = newParser
     }
     previousParser
+  }
+
+  def getBlockPrefetchThreads: Int = {
+    blockPrefetchThreads
+  }
+
+  /** Set how many threads parse method bodies ahead of validation during a load, zero to disable.
+    *
+    * Bodies are parsed lazily on first verify, which places that parsing inside the sequential
+    * validation pass even though it has no ordering constraint. Parsing them ahead of the
+    * validation cursor removes it from the critical path at the cost of holding the parsed
+    * statements, which are otherwise weakly reachable, until they are used.
+    *
+    * Only 0, 2 or 4 are accepted. Parsing does not scale beyond a few threads, its per block cost
+    * grows with concurrency, so higher counts spend CPU without shortening the load. Any other
+    * value is ignored and the current setting is kept.
+    */
+  def setBlockPrefetchThreads(threads: Int): Int = synchronized {
+    val previous = blockPrefetchThreads
+    if (ServerOps.validBlockPrefetchThreads.contains(threads))
+      blockPrefetchThreads = threads
+    else
+      LoggerOps.info(
+        s"Ignoring block prefetch thread count '$threads', expecting one of " +
+          ServerOps.validBlockPrefetchThreads.mkString(", ")
+      )
+    previous
+  }
+
+  /** Apply an optional per-open override and return the effective value as one atomic operation.
+    * An absent override retains the current process-wide setting, which starts at zero.
+    */
+  private[nawforce] def resolveBlockPrefetchThreads(threads: Option[Int]): Int = synchronized {
+    threads.foreach(setBlockPrefetchThreads)
+    blockPrefetchThreads
   }
 
   def getIndexerConfiguration: IndexerConfiguration = {

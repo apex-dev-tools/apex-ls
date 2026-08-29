@@ -26,12 +26,21 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.names._
 import com.nawforce.pkgforce.stream._
 
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, ForkJoinPool}
+import java.util.concurrent.{
+  Callable,
+  ConcurrentHashMap,
+  ConcurrentLinkedQueue,
+  Executors,
+  ForkJoinPool,
+  Future,
+  ThreadFactory
+}
 import scala.collection.immutable.ArraySeq
 import scala.collection.parallel.CollectionConverters._
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.{BufferedIterator, mutable}
 import scala.jdk.CollectionConverters._
+import scala.util.control.NonFatal
 import scala.util.hashing.MurmurHash3
 
 /** 'Deploy' a module from a stream of PackageEvents. Deploying here really means constructing a set
@@ -285,15 +294,15 @@ class StreamDeployer(
       localAccum.entrySet.forEach(kv => {
         types.put(kv.getKey, kv.getValue)
       })
-      localAccum
-        .values()
-        .asScala
-        .foreach(td => {
+      StreamDeployer.validateWithBlockPrefetch(
+        localAccum.values().asScala.toArray,
+        td => {
           if (!td.tryValidate()) {
             types.remove(td.typeName)
             Option(docsByType.get(td.typeName)).foreach(failedDocuments.add)
           }
-        })
+        }
+      )
     }
     ArraySeq.from(failedDocuments.asScala.toSeq)
   }
@@ -342,6 +351,77 @@ object StreamDeployer {
     * that retire when they have been idle, so it does not need shutting down.
     */
   private lazy val parseTaskSupport = new ForkJoinTaskSupport(new ForkJoinPool(parseThreads))
+
+  /** Declarations to keep parsed ahead of the validation cursor, per prefetch thread. File sizes
+    * are uneven, so the window has to cover a run of large files to stop the cursor waiting on
+    * one. Measured on a large workspace, 16 per thread removes nearly all of the waiting and 32
+    * removes the rest. The number of statements retained depends on the sizes of those files.
+    */
+  private final val PrefetchWindowPerThread = 32
+
+  private val prefetchThreadFactory = new ThreadFactory {
+    private val count = new java.util.concurrent.atomic.AtomicInteger()
+    override def newThread(r: Runnable): Thread = {
+      val thread = new Thread(r, s"apex-ls-block-prefetch-${count.incrementAndGet()}")
+      thread.setDaemon(true)
+      thread
+    }
+  }
+
+  /** Validate declarations in order, parsing the method bodies of those still to come on a small
+    * pool.
+    *
+    * Method bodies are parsed lazily on first verify, so a plain sequential walk performs that
+    * parsing inline even though it carries no ordering constraint. Each task holds the statements
+    * it parsed, which are otherwise only weakly reachable, so they survive until the declaration
+    * that needs them has been validated. Extra memory is therefore bounded by the window rather
+    * than by the size of the workspace.
+    */
+  private def validateWithBlockPrefetch(
+    declarations: Array[FullDeclaration],
+    validate: FullDeclaration => Unit
+  ): Unit = {
+    val threads = declarations.headOption
+      .map(_.module.pkg.org.blockPrefetchThreads)
+      .getOrElse(0)
+    if (threads <= 0 || declarations.length < 2) {
+      declarations.foreach(validate)
+      return
+    }
+
+    val window   = threads * PrefetchWindowPerThread
+    val pool     = Executors.newFixedThreadPool(threads, prefetchThreadFactory)
+    val prefetch = new Array[Future[AnyRef]](declarations.length)
+
+    def submit(index: Int): Unit = {
+      if (index < declarations.length) {
+        val declaration = declarations(index)
+        prefetch(index) = pool.submit(new Callable[AnyRef] {
+          override def call(): AnyRef = declaration.deferredBlocks.flatMap(_.preParse())
+        })
+      }
+    }
+
+    try {
+      (0 until Math.min(window, declarations.length)).foreach(submit)
+      declarations.indices.foreach(index => {
+        try {
+          prefetch(index).get()
+        } catch {
+          // Leave the parse to the validation itself, it repeats the work but reports as normal
+          case NonFatal(ex) =>
+            LoggerOps.debug(s"Block prefetch failed for ${declarations(index).typeName}: $ex")
+        }
+        validate(declarations(index))
+        // Release only once validated, the statements are weakly held and would otherwise be
+        // collectable before the declaration that needs them has run
+        prefetch(index) = null
+        submit(index + window)
+      })
+    } finally {
+      pool.shutdownNow()
+    }
+  }
 
   /** Parse on a bounded pool. A parallel collection defaults to the global execution context, which
     * would use every core, and iterating one gives a sequential splitter rather than parallelism.

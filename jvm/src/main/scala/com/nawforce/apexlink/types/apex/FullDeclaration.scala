@@ -103,6 +103,9 @@ abstract class FullDeclaration(
   // For ApexNode compatibility
   override val children: ArraySeq[ApexNode] = bodyDeclarations
 
+  /** Deferred blocks of this type and, since nested types are body declarations, of those too. */
+  override def deferredBlocks: Seq[Block] = bodyDeclarations.flatMap(_.deferredBlocks)
+
   override def nestedTypes: ArraySeq[FullDeclaration] =
     bodyDeclarations.flatMap {
       case x: FullDeclaration => Some(x)

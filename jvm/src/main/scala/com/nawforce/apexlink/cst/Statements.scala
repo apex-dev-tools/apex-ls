@@ -63,6 +63,11 @@ abstract class Block extends Statement {
   def statementsOrErrors(
     context: Option[ScopeVerifyContext] = None
   ): Either[ParseErrors, Seq[Statement]]
+
+  /** Force a deferred parse to run now, returning the statements so that a caller may hold them
+    * while it waits to use them. Blocks that hold their statements already return None.
+    */
+  def preParse(): Option[Seq[Statement]] = None
 }
 
 object Block {
@@ -133,6 +138,11 @@ private final case class OuterBlock(
   private var reParsed                                     = false
   // Sticky once a parse fails; reset on each re-parse so re-validation reflects current source.
   private var parseErrors: ArraySeq[Issue] = ArraySeq.empty
+  // Parse errors found without a verify context to report them to, held for the first caller
+  // that supplies one. Without this a pre-parse would silently discard the syntax errors.
+  private var unreportedParseErrors: ArraySeq[Issue] = ArraySeq.empty
+
+  override def preParse(): Option[Seq[Statement]] = Some(statements())
 
   override def verify(context: ScopeVerifyContext): Unit = {
     val blockContext = new InnerScopeVerifyContext(context)
@@ -155,7 +165,10 @@ private final case class OuterBlock(
       if (statementContext == null) {
         val parser = new CodeParser(source)
         val result = parser.parseBlock()
-        context.foreach(c => result.issues.foreach(c.log))
+        context match {
+          case Some(c) => result.issues.foreach(c.log)
+          case None    => unreportedParseErrors = result.issues
+        }
         statementContext = result.value
         // Only cache the BlockContext if parsing succeeded without errors,
         // otherwise we need to re-parse on subsequent validations to re-report the errors
@@ -176,6 +189,12 @@ private final case class OuterBlock(
         statementsRef = createStatements(statementContext, parser)
         statements = statementsRef.get
       }
+    }
+    if (unreportedParseErrors.nonEmpty) {
+      context.foreach(c => {
+        unreportedParseErrors.foreach(c.log)
+        unreportedParseErrors = ArraySeq.empty
+      })
     }
     statements
   }

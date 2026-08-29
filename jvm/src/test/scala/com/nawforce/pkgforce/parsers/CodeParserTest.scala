@@ -31,7 +31,26 @@ import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import com.nawforce.runtime.platform.Path
 import org.scalatest.funsuite.AnyFunSuite
 
+import java.util.concurrent.{Callable, Executors, TimeUnit}
+
 class CodeParserTest extends AnyFunSuite {
+
+  test("Concurrent parsing is safe across automatic cache clears") {
+    val pool = Executors.newFixedThreadPool(4)
+    try {
+      val tasks = (1 to 2000).map(i =>
+        pool.submit(new Callable[Unit] {
+          override def call(): Unit = {
+            val source =
+              s"{ Integer a = $i; if (a > 0) { System.debug(a); } else { a++; } }"
+            val result = CodeParser(Path(s"Concurrent$i.cls"), SourceData(source)).parseBlock()
+            assert(result.issues.isEmpty)
+          }
+        })
+      )
+      tasks.foreach(_.get(30, TimeUnit.SECONDS))
+    } finally pool.shutdownNow()
+  }
 
   test("Class well formed") {
     val path   = Path("Dummy.cls")

@@ -20,6 +20,8 @@ import io.github.apexdevtools.apexparser.{ApexLexer, ApexParser}
 import org.antlr.v4.runtime.CommonTokenStream
 
 import java.util
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import scala.collection.compat.immutable.ArraySeq
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
@@ -71,6 +73,14 @@ class CodeParser(val source: Source) {
     parse(parser => parser.literal())
   }
 
+  private[nawforce] def tokenize(): CommonTokenStream = {
+    CodeParser.withCacheGuard {
+      val tokenStream = new CommonTokenStream(new ApexLexer(cis))
+      tokenStream.fill()
+      tokenStream
+    }
+  }
+
   /** Find a location for a rule, adapts based on source offsets to give absolute position in file
     */
   def getPathLocation(context: ParserRuleContext): PathLocation = {
@@ -88,26 +98,26 @@ class CodeParser(val source: Source) {
   }
 
   def parseReturningParser[T](parse: ApexParser => T): IssuesAnd[(ApexParser, T)] = {
-    CodeParser.autoClearCache()
+    CodeParser.withCacheGuard {
+      val listener = new CollectingErrorListener(source.path)
 
-    val listener = new CollectingErrorListener(source.path)
+      val lexer = new ApexLexer(cis)
+      lexer.removeErrorListeners()
+      lexer.addErrorListener(listener)
+      lexer.setLine(source.startLine.getOrElse(1))
+      lexer.setCharPositionInLine(source.startColumn.getOrElse(0))
+      lastTokenStream = None
+      val tokenStream = new CommonTokenStream(lexer)
+      tokenStream.fill()
 
-    val lexer = new ApexLexer(cis)
-    lexer.removeErrorListeners()
-    lexer.addErrorListener(listener)
-    lexer.setLine(source.startLine.getOrElse(1))
-    lexer.setCharPositionInLine(source.startColumn.getOrElse(0))
-    lastTokenStream = None
-    val tokenStream = new CommonTokenStream(lexer)
-    tokenStream.fill()
+      val parser = new ApexParser(tokenStream)
+      parser.removeErrorListeners()
+      parser.addErrorListener(listener)
 
-    val parser = new ApexParser(tokenStream)
-    parser.removeErrorListeners()
-    parser.addErrorListener(listener)
-
-    val result = parse(parser)
-    lastTokenStream = Some(tokenStream)
-    IssuesAnd(listener.issues, (parser, result))
+      val result = parse(parser)
+      lastTokenStream = Some(tokenStream)
+      IssuesAnd(listener.issues, (parser, result))
+    }
   }
 }
 
@@ -115,20 +125,32 @@ object CodeParser {
   type ParserRuleContext = org.antlr.v4.runtime.ParserRuleContext
   type TerminalNode      = org.antlr.v4.runtime.tree.TerminalNode
 
-  private var useCount = 0
+  private val useCount  = new AtomicInteger()
+  private val cacheLock = new ReentrantReadWriteLock(true)
 
   def apply(path: PathLike, code: SourceData): CodeParser = {
     new CodeParser(Source(path, code, 0, 0, None))
   }
 
-  private def autoClearCache(): Unit = {
-    useCount += 1
-    if (useCount % 500 == 0) {
-      clearCaches()
-    }
+  private def withCacheGuard[T](op: => T): T = {
+    val clearCache = useCount.incrementAndGet() % 500 == 0
+    val lock =
+      if (clearCache) cacheLock.writeLock() else cacheLock.readLock()
+    lock.lock()
+    try {
+      if (clearCache) clearCachesUnsafe()
+      op
+    } finally lock.unlock()
   }
 
   def clearCaches(): Unit = {
+    val lock = cacheLock.writeLock()
+    lock.lock()
+    try clearCachesUnsafe()
+    finally lock.unlock()
+  }
+
+  private def clearCachesUnsafe(): Unit = {
     val lexer  = new ApexLexer(SourceData.emptyInsensitiveStream)
     val parser = new ApexParser(new CommonTokenStream(lexer))
     lexer.clearCache()
