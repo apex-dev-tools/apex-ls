@@ -236,8 +236,9 @@ restore a source-suppressed diagnostic.
 Excluded diagnostics are omitted from the language-server API and all `CheckForIssues` formats.
 They do not contribute to the CLI exit status, which is derived from the remaining report, but
 remain in the server's internal error state so exclusions cannot make an invalid workspace valid
-or change analysis decisions. The legacy `plugins.exclude` location follows the same compatibility
-and precedence rules described above.
+or bypass structural validation. Reporting policies use the filtered set, so an excluded error no
+longer suppresses unused diagnostics on the same type. The legacy `plugins.exclude` location
+follows the same compatibility and precedence rules described above.
 
 ## Development
 

@@ -140,7 +140,7 @@ class UnusedOnErrorTest extends AnyFunSuite {
     }
   }
 
-  test("reporting exclusions do not hide errors from unused analysis") {
+  test("excluded errors do not suppress unused reporting") {
     withIsolatedRuntime {
       val project =
         """{
@@ -161,7 +161,7 @@ class UnusedOnErrorTest extends AnyFunSuite {
             .issuesForFilesInternal(null)
             .exists(issue => DiagnosticCategory.isErrorType(issue.diagnostic.category))
         )
-        assert(!org.issueManager.issues.exists(_.diagnostic.category == UNUSED_CATEGORY))
+        assertExpectedUnused(org, root)
       }
     }
   }

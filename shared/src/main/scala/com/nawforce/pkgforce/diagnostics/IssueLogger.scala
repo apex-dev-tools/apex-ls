@@ -159,10 +159,6 @@ class IssueLogger(
     issuesForFilesInternal(Array(path))
   }
 
-  /** Raw issues for analysis decisions that must not be changed by reporting exclusions. */
-  def unfilteredIssuesForFileInternal(path: PathLike): Seq[Issue] =
-    log.getOrElse(path, Nil)
-
   def issuesForFilesInternal(
     paths: Array[PathLike],
     includeWarnings: Boolean = true,
