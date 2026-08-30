@@ -44,8 +44,10 @@ import scala.collection.mutable.ArrayBuffer
   * Note: To support virtual filesystem testing then we need to have *Internal methods that pass
   * a PathLike, the public API methods use strings for simplicity.
   */
-class IssueLogger(val externalPathFilter: Option[PathLike => Boolean] = None)
-    extends IssuesCollection {
+class IssueLogger(
+  val externalPathFilter: Option[PathLike => Boolean] = None,
+  val exclusions: Seq[IssueExclusion] = Seq.empty
+) extends IssuesCollection {
 
   // === CORE STATE ===
   private[diagnostics] val log = mutable.HashMap[PathLike, List[Issue]]() withDefaultValue List()
@@ -157,6 +159,10 @@ class IssueLogger(val externalPathFilter: Option[PathLike => Boolean] = None)
     issuesForFilesInternal(Array(path))
   }
 
+  /** Raw issues for analysis decisions that must not be changed by reporting exclusions. */
+  def unfilteredIssuesForFileInternal(path: PathLike): Seq[Issue] =
+    log.getOrElse(path, Nil)
+
   def issuesForFilesInternal(
     paths: Array[PathLike],
     includeWarnings: Boolean = true,
@@ -173,8 +179,8 @@ class IssueLogger(val externalPathFilter: Option[PathLike => Boolean] = None)
       var fileIssues = log
         .getOrElse(file, Nil)
         .filter(issue => {
-          // Only apply warning filter - external path filtering is now done at write time
-          includeWarnings || DiagnosticCategory.isErrorType(issue.diagnostic.category)
+          (includeWarnings || DiagnosticCategory.isErrorType(issue.diagnostic.category)) &&
+          shouldReportIssue(issue)
         })
         .sorted(Issue.ordering)
       if (maxIssuesPerFile > 0)
@@ -194,7 +200,7 @@ class IssueLogger(val externalPathFilter: Option[PathLike => Boolean] = None)
     )
     log
       .getOrElse(path, Nil)
-      .filter(issue => loc.contains(issue.diagnostic.location))
+      .filter(issue => shouldReportIssue(issue) && loc.contains(issue.diagnostic.location))
       .toArray[APIIssue]
   }
 
@@ -211,6 +217,9 @@ class IssueLogger(val externalPathFilter: Option[PathLike => Boolean] = None)
         true
     }
   }
+
+  private def shouldReportIssue(issue: Issue): Boolean =
+    !exclusions.exists(_.matches(issue))
 
 }
 

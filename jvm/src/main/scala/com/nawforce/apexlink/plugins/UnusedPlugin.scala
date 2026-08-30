@@ -81,7 +81,8 @@ class UnusedPlugin(td: DependentType, isLibrary: Boolean) extends Plugin(td, isL
     } else {
       // By default, do not report unused alongside errors to reduce IDE noise. Batch/CI orgs can
       // opt into retaining both sets of diagnostics without affecting any other org in the JVM.
-      val existingIssues = td.paths.flatMap(td.module.pkg.org.issues.issuesForFileInternal)
+      val existingIssues =
+        td.paths.flatMap(td.module.pkg.org.issues.unfilteredIssuesForFileInternal)
       val hasErrors =
         existingIssues.exists(issue => DiagnosticCategory.isErrorType(issue.diagnostic.category))
       if (hasErrors && !td.module.pkg.org.unusedOnError) {

@@ -119,6 +119,7 @@ class SFDXProject(val projectPath: PathLike, config: ValueWithPositions) {
   def isLibrary: Boolean                        = apexConfig.isLibrary
   def externalMetadata: Seq[String]             = apexConfig.externalMetadata
   def options: Map[String, String]              = apexConfig.options
+  def exclusions: Seq[IssueExclusion]           = apexConfig.exclusions
 
   val externalMetadataPaths: Seq[PathLike] =
     externalMetadata.map(extDir => projectPath.join(extDir))

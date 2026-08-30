@@ -110,7 +110,8 @@ object Workspace {
   ): (Option[Workspace], IssueLogger) = {
     val project            = loadSFDXProject(path, logger)
     val externalPathFilter = createExternalPathFilter(project)
-    val issueManager       = new IssueLogger(externalPathFilter)
+    val exclusions         = project.map(_.exclusions).getOrElse(Seq.empty)
+    val issueManager       = new IssueLogger(externalPathFilter, exclusions)
     logger.issues.foreach(issueManager.add)
     (Workspace(project, issueManager), issueManager)
   }

@@ -152,6 +152,77 @@ class CheckForIssuesTest extends AnyFunSuite {
     }
   }
 
+  test("configured path exclusions use forceignore semantics and change CLI status") {
+    withExclusions("""[{"path": "classes/**"}]""", Map("classes/Bad.cls" -> errorSource)) { root =>
+      formats.foreach { format =>
+        val (status, output) = runAndCapture(root, format, "errors")
+        assert(status == 0, format)
+        assert(!reports(output, format, errorMessage), format)
+      }
+    }
+  }
+
+  test("configured severity exclusions filter the DiagnosticCategory") {
+    withExclusions("""[{"severity": "Warning"}]""", Map("classes/Warner.cls" -> warningSource)) {
+      root =>
+        formats.foreach { format =>
+          val (status, output) = runAndCapture(root, format, "warnings")
+          assert(status == 0, format)
+          assert(!reports(output, format, warningMessage), format)
+        }
+    }
+  }
+
+  test("configured ID exclusions filter exact stable IDs") {
+    withExclusions("""[{"id": "missing-type"}]""", Map("classes/Bad.cls" -> errorSource)) { root =>
+      formats.foreach { format =>
+        val (status, output) = runAndCapture(root, format, "errors")
+        assert(status == 0, format)
+        assert(!reports(output, format, errorMessage), format)
+      }
+    }
+  }
+
+  test("configured selectors are ANDed within an entry") {
+    withExclusions(
+      """[{"path": "classes/**", "severity": "Missing", "id": "missing-type"}]""",
+      Map(
+        "classes/Bad.cls" -> errorSource,
+        "other/Other.cls" -> errorSource.replace("class Bad", "class Other")
+      )
+    ) { root =>
+      val (status, output) = runAndCapture(root, "json", "errors")
+      assert(status == 4)
+      val files = ujson.read(output)("files").arr
+      assert(files.length == 1)
+      assert(files.head("path").str.endsWith("other/Other.cls"))
+    }
+  }
+
+  test("configured selector entries are ORed") {
+    withExclusions(
+      """[{"path": "classes/**", "id": "missing-type"}, {"severity": "Warning"}]""",
+      Map("classes/Bad.cls" -> errorSource, "other/Warner.cls" -> warningSource)
+    ) { root =>
+      val (status, output) = runAndCapture(root, "json", "warnings")
+      assert(status == 0)
+      assert(ujson.read(output)("files").arr.isEmpty)
+    }
+  }
+
+  test("source suppression happens before configured reporting exclusions") {
+    val suppressed =
+      "@SuppressWarnings('PMD') public class Dummy {class Inner {Integer b; List<Inner> a; {Integer b = a[null].b;}}}"
+    withExclusions(
+      """[{"id": "not-the-suppressed-diagnostic"}]""",
+      Map("classes/Dummy.cls" -> suppressed)
+    ) { root =>
+      val (status, output) = runAndCapture(root, "json", "warnings")
+      assert(status == 0)
+      assert(ujson.read(output)("files").arr.isEmpty)
+    }
+  }
+
   test("JSON diagnostics preserve exact XML element ranges") {
     withInvalidFieldType { root =>
       val (status, output) = runAndCapture(root, "json")
@@ -215,6 +286,18 @@ class CheckForIssuesTest extends AnyFunSuite {
         |</CustomObject>
         |""".stripMargin
     FileSystemHelper.runTempDir(Map("objects/Foo__c.object" -> source))(verify)
+  }
+
+  private def withExclusions(exclusions: String, files: Map[String, String])(
+    verify: PathLike => Unit
+  ): Unit = {
+    val project =
+      s"""{
+         |  "packageDirectories": [{"path": ".", "default": true}],
+         |  "plugins": {"apex-ls": {"exclude": $exclusions}},
+         |  "sourceApiVersion": "48.0"
+         |}""".stripMargin
+    FileSystemHelper.runTempDir(files + ("sfdx-project.json" -> project))(verify)
   }
 
   /** Extract the reported messages from a rendered report, so each renderer is checked against the

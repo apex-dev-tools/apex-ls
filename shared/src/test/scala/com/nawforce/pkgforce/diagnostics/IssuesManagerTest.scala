@@ -389,4 +389,26 @@ class IssueLoggerTest extends AnyFunSuite with BeforeAndAfter {
     val diagnostic = upickle.default.read[Diagnostic](json)
     assert(diagnostic.id.isEmpty)
   }
+
+  test("reporting exclusions are conjunctive and do not change raw error state") {
+    val exclusion = IssueExclusion(
+      Some(_.toString.endsWith("TestClass.cls")),
+      Some(ERROR_CATEGORY),
+      Some(DiagnosticId.MissingType)
+    )
+    val filtered = new IssueLogger(exclusions = Seq(exclusion))
+    val excluded = Issue(
+      testPath,
+      Diagnostic(ERROR_CATEGORY, location, "Missing type", DiagnosticId.MissingType)
+    )
+    val retained =
+      Issue(testPath, Diagnostic(ERROR_CATEGORY, location, "Other error", "other-error"))
+    filtered.log(excluded)
+    filtered.log(retained)
+
+    assert(filtered.hasErrors)
+    assert(filtered.issues.toSet == Set(excluded, retained))
+    assert(filtered.issuesForFile(testPath.toString) sameElements Array(retained))
+    assert(filtered.issuesForFileLocation(testPath.toString, location) sameElements Array(retained))
+  }
 }
