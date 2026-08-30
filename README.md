@@ -136,6 +136,11 @@ The recommended approach is to configure apex-ls settings under the `plugins.ape
           "name": 23
         }
       },
+      "exclude": [
+        {"path": "generated/**"},
+        {"severity": "Warning"},
+        {"path": "legacy/**", "id": "missing-type"}
+      ],
       "options": {
         "forceIgnoreVersion": "v2"
       }
@@ -180,6 +185,7 @@ For backward compatibility, the legacy configuration style is still supported:
 | `library`           | Boolean       | `false` | Whether this project should be treated as a library. |
 | `maxDependencyCount` | Integer      | None    | Maximum number of dependencies allowed. |
 | `dependencyCountAliases` | Object    | `{}`    | Named aliases for `maxDependencyCount` values, referenced from the `//MaxDependencyCount(name)` comment. Nested objects create dotted keys, e.g. `group.name`. |
+| `exclude`           | Array         | `[]`    | Diagnostic reporting exclusions selected by project-relative path, severity, and/or diagnostic ID. |
 
 The `options` section supports additional configuration options that may be added in future releases.
 
@@ -207,6 +213,32 @@ public class MyOtherClass {}
 ```
 
 Plain numbers, e.g. `// MaxDependencyCount(50)`, are still supported for one-off cases. If a referenced name is not found in `dependencyCountAliases`, an error is reported.
+
+##### `exclude`
+
+Each exclusion is an object containing one or more selectors. Selectors in the same object are
+combined with AND; objects in the array are combined with OR:
+
+```json
+"exclude": [
+  {"path": "generated/**"},
+  {"severity": "Warning"},
+  {"path": "legacy/**", "severity": "Missing", "id": "missing-type"}
+]
+```
+
+`path` is a single `.forceignore`/node-ignore pattern evaluated relative to the project root.
+`severity` is one of `Syntax`, `Error`, `Missing`, `Warning`, or `Unused`. `id` is an exact
+diagnostic ID; see [Diagnostic IDs](doc/Diagnostic_IDs.md). Existing source-level
+`@SuppressWarnings` handling runs before these reporting exclusions, and an exclusion cannot
+restore a source-suppressed diagnostic.
+
+Excluded diagnostics are omitted from the language-server API and all `CheckForIssues` formats.
+They do not contribute to the CLI exit status, which is derived from the remaining report, but
+remain in the server's internal error state so exclusions cannot make an invalid workspace valid
+or bypass structural validation. Reporting policies use the filtered set, so an excluded error no
+longer suppresses unused diagnostics on the same type. The legacy `plugins.exclude` location
+follows the same compatibility and precedence rules described above.
 
 ## Development
 

@@ -14,6 +14,15 @@
 package com.nawforce.pkgforce.sfdx
 
 import com.nawforce.pkgforce.diagnostics.Duplicates.IterableOps
+import com.nawforce.pkgforce.diagnostics.{
+  DiagnosticCategory,
+  ERROR_CATEGORY,
+  IssueExclusion,
+  MISSING_CATEGORY,
+  SYNTAX_CATEGORY,
+  UNUSED_CATEGORY,
+  WARNING_CATEGORY
+}
 import com.nawforce.pkgforce.names.Name
 import com.nawforce.pkgforce.path.PathLike
 import ujson.Value
@@ -36,6 +45,78 @@ case class ApexConfig(
   val isLibrary: Boolean                        = computeIsLibrary()
   val externalMetadata: Seq[String]             = computeExternalMetadata()
   val options: Map[String, String]              = computeOptions()
+  val exclusions: Seq[IssueExclusion]           = computeExclusions()
+
+  private def computeExclusions(): Seq[IssueExclusion] = {
+    configSource.getOrElse("exclude", ujson.Arr()) match {
+      case value: ujson.Arr => value.value.toSeq.zipWithIndex.map(parseExclusion)
+      case value            => throwConfigError(value, "'exclude' should be an array")
+    }
+  }
+
+  private def parseExclusion(entry: (ujson.Value, Int)): IssueExclusion = {
+    val (value, index) = entry
+    value match {
+      case obj: ujson.Obj =>
+        val errorPath = s"exclude[$index]"
+        val supported = Set("path", "severity", "id")
+        obj.value.keys.find(key => !supported.contains(key)).foreach { unknown =>
+          throwConfigError(obj(unknown), s"'$errorPath.$unknown' is not supported")
+        }
+        if (obj.value.isEmpty)
+          throwConfigError(value, s"'$errorPath' should contain path, severity, or id")
+
+        val path = obj.value.get("path").map(parseString(_, s"$errorPath.path"))
+        val severity = obj.value
+          .get("severity")
+          .map(parseSeverity(_, s"$errorPath.severity"))
+        val id = obj.value.get("id").map(parseNonEmptyString(_, s"$errorPath.id"))
+
+        val pathMatcher = path.map { pattern =>
+          val rules = IgnoreRuleV2.parseRules(pattern)
+          if (rules.length != 1)
+            throwConfigError(obj("path"), s"'$errorPath.path' should be one forceignore pattern")
+          val matcher = new ForceIgnoreV2(projectPath, rules)
+          (path: PathLike) => matcher.synchronized(!matcher.includeFile(path))
+        }
+        IssueExclusion(pathMatcher, severity, id)
+      case _ => throwConfigError(value, s"'exclude[$index]' should be an object")
+    }
+  }
+
+  private def parseSeverity(value: ujson.Value, errorPath: String): DiagnosticCategory = {
+    val severity = parseString(value, errorPath)
+    Map(
+      SYNTAX_CATEGORY.name  -> SYNTAX_CATEGORY,
+      ERROR_CATEGORY.name   -> ERROR_CATEGORY,
+      MISSING_CATEGORY.name -> MISSING_CATEGORY,
+      WARNING_CATEGORY.name -> WARNING_CATEGORY,
+      UNUSED_CATEGORY.name  -> UNUSED_CATEGORY
+    ).getOrElse(
+      severity,
+      throwConfigError(
+        value,
+        s"'$errorPath' should be one of Syntax, Error, Missing, Warning, or Unused"
+      )
+    )
+  }
+
+  private def parseNonEmptyString(value: ujson.Value, errorPath: String): String = {
+    val result = parseString(value, errorPath)
+    if (result.isEmpty)
+      throwConfigError(value, s"'$errorPath' should be a non-empty string")
+    result
+  }
+
+  private def parseString(value: ujson.Value, errorPath: String): String = value match {
+    case ujson.Str(result) => result
+    case _                 => throwConfigError(value, s"'$errorPath' should be a string")
+  }
+
+  private def throwConfigError(value: ujson.Value, message: String): Nothing = {
+    val lineAndOffset = config.lineAndOffsetOf(value).getOrElse((0, 0))
+    throw SFDXProjectError(lineAndOffset, message)
+  }
 
   private def computeDependencies(): Seq[PackageDependent] = {
     configSource.getOrElse("dependencies", ujson.Arr()) match {

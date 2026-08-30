@@ -229,4 +229,28 @@ class IssueManagerTest extends AnyFunSuite with TestHelper {
       }
     }
   }
+
+  test("configured exclusions filter API aggregation but preserve raw hasErrors") {
+    withManualFlush {
+      val project =
+        """{
+          |  "packageDirectories": [{"path": ".", "default": true}],
+          |  "plugins": {"apex-ls": {"exclude": [{"id": "missing-type"}]}},
+          |  "sourceApiVersion": "48.0"
+          |}""".stripMargin
+      FileSystemHelper.run(
+        Map("sfdx-project.json" -> project, "Dummy.cls" -> "public class Dummy { Missing value; }")
+      ) { root: PathLike =>
+        val org = createOrg(root)
+        assert(org.issueManager.hasErrors)
+        assert(org.issueManager.issues.exists(_.rule().id() == DiagnosticId.MissingType))
+        assert(org.issues.issuesForFile(root.join("Dummy.cls").toString).isEmpty)
+        assert(
+          org.issues
+            .issuesForFiles(paths = null, includeWarnings = true, maxIssuesPerFile = 100)
+            .isEmpty
+        )
+      }
+    }
+  }
 }

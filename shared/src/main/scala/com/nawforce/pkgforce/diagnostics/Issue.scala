@@ -36,6 +36,19 @@ import upickle.default.{macroRW, ReadWriter => RW}
 
 import scala.collection.compat.immutable.ArraySeq
 
+/** A reporting-time diagnostic exclusion. All populated selectors must match. */
+final case class IssueExclusion(
+  pathMatches: Option[PathLike => Boolean],
+  severity: Option[DiagnosticCategory],
+  diagnosticId: Option[String]
+) {
+  def matches(issue: Issue): Boolean = {
+    pathMatches.forall(_(issue.path)) &&
+    severity.forall(_ == issue.diagnostic.category) &&
+    diagnosticId.forall(_ == issue.rule().id())
+  }
+}
+
 /** Shim between DiagnosticCategory & Rule, upickle is unhappy if DiagnosticCategory extends Rule */
 final case class DiagnosticRule(category: DiagnosticCategory, diagnosticId: String = "")
     extends Rule {

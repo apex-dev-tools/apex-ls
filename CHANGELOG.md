@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Diagnostic reporting exclusions in `plugins.apex-ls.exclude`, selectable by project-relative
+  `.forceignore` path pattern, diagnostic severity, stable ID, or a conjunction of selectors.
+  Exclusions apply consistently to language-server API reports, CLI output, and CLI exit status
+  while retaining raw diagnostics for internal workspace validity (#322)
 - Optional prefetching of method bodies during a workspace load, off by default and enabled with
   `ServerOps.setBlockPrefetchThreads(2)` or `(4)`. Method bodies are parsed lazily on first use,
   which places that parsing inside the sequential validation pass even though it has no ordering

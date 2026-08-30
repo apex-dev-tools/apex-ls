@@ -140,6 +140,32 @@ class UnusedOnErrorTest extends AnyFunSuite {
     }
   }
 
+  test("excluded errors do not suppress unused reporting") {
+    withIsolatedRuntime {
+      val project =
+        """{
+          |  "packageDirectories": [{"path": ".", "default": true}],
+          |  "plugins": {"apex-ls": {"exclude": [{"severity": "Error"}]}},
+          |  "sourceApiVersion": "48.0"
+          |}""".stripMargin
+      FileSystemHelper.run(errorSources + ("sfdx-project.json" -> project)) { root: PathLike =>
+        val org = openOrg(root, unusedOnError = None, cacheEnabled = false)
+        assert(org.issueManager.hasErrors)
+        assert(
+          org.issueManager.issues.exists(issue =>
+            DiagnosticCategory.isErrorType(issue.diagnostic.category)
+          )
+        )
+        assert(
+          !org.issueManager
+            .issuesForFilesInternal(null)
+            .exists(issue => DiagnosticCategory.isErrorType(issue.diagnostic.category))
+        )
+        assertExpectedUnused(org, root)
+      }
+    }
+  }
+
   test("cache summaries preserve default and opt-in behavior from a default-policy cache") {
     withIsolatedRuntime {
       FileSystemHelper.runTempDir(errorSources) { root: PathLike =>

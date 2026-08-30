@@ -535,4 +535,114 @@ class ApexConfigTest extends AnyFunSuite with BeforeAndAfter {
       )
     }
   }
+
+  test("exclude selectors support path, severity, ID, and conjunctions") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "plugins": {"apex-ls": {"exclude": [
+            |    {"path": "classes/**", "severity": "Warning"},
+            |    {"id": "missing-type"},
+            |    {"path": "special.cls", "severity": "Error", "id": "Error"}
+            |  ]}},
+            |  "packageDirectories": []
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      val project    = SFDXProject(root, logger).get
+      val exclusions = project.exclusions
+      assert(exclusions.length == 3)
+
+      assert(
+        exclusions.exists(
+          _.matches(
+            Issue(root.join("classes/One.cls"), Diagnostic(WARNING_CATEGORY, Location.empty, "w"))
+          )
+        )
+      )
+      assert(
+        !exclusions.head.matches(
+          Issue(root.join("classes/One.cls"), Diagnostic(ERROR_CATEGORY, Location.empty, "e"))
+        )
+      )
+      assert(
+        exclusions.exists(
+          _.matches(
+            Issue(
+              root.join("elsewhere.cls"),
+              Diagnostic(ERROR_CATEGORY, Location.empty, "m", DiagnosticId.MissingType)
+            )
+          )
+        )
+      )
+      assert(
+        exclusions.last
+          .matches(Issue(root.join("special.cls"), Diagnostic(ERROR_CATEGORY, Location.empty, "e")))
+      )
+    }
+  }
+
+  test("exclude uses existing namespaced-over-legacy configuration precedence") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{
+            |  "plugins": {
+            |    "exclude": [{"id": "legacy"}],
+            |    "apex-ls": {"exclude": [{"id": "namespaced"}]}
+            |  },
+            |  "packageDirectories": []
+            |}""".stripMargin
+      )
+    ) { root: PathLike =>
+      val exclusions = SFDXProject(root, logger).get.exclusions
+      val issue = (id: String) =>
+        Issue(root.join("Dummy.cls"), Diagnostic(ERROR_CATEGORY, Location.empty, "e", id))
+      assert(exclusions.exists(_.matches(issue("namespaced"))))
+      assert(!exclusions.exists(_.matches(issue("legacy"))))
+    }
+  }
+
+  test("exclude remains available through legacy plugins configuration") {
+    FileSystemHelper.run(
+      Map(
+        "sfdx-project.json" ->
+          """{"plugins": {"exclude": [{"id": "legacy"}]}, "packageDirectories": []}"""
+      )
+    ) { root: PathLike =>
+      val exclusion = SFDXProject(root, logger).get.exclusions.head
+      val issue =
+        Issue(root.join("Dummy.cls"), Diagnostic(ERROR_CATEGORY, Location.empty, "e", "legacy"))
+      assert(exclusion.matches(issue))
+    }
+  }
+
+  test("exclude configuration is strictly validated") {
+    val invalid = Seq(
+      "{}"                                  -> "'exclude' should be an array",
+      "[1]"                                 -> "'exclude[0]' should be an object",
+      "[{}]"                                -> "should contain path, severity, or id",
+      "[{\"other\": true}]"                 -> "'exclude[0].other' is not supported",
+      "[{\"path\": 1}]"                     -> "'exclude[0].path' should be a string",
+      "[{\"path\": \"\"}]"                  -> "should be one forceignore pattern",
+      "[{\"severity\": \"warning\"}]"       -> "should be one of Syntax, Error",
+      "[{\"id\": \"\"}]"                    -> "'exclude[0].id' should be a non-empty string",
+      "[{\"id\": [\"missing-type\"]}]"      -> "'exclude[0].id' should be a string",
+      "[{\"path\": \"one.cls\\ntwo.cls\"}]" -> "should be one forceignore pattern"
+    )
+
+    invalid.foreach { case (exclude, expected) =>
+      logger.clear()
+      FileSystemHelper.run(
+        Map(
+          "sfdx-project.json" ->
+            s"""{"plugins": {"apex-ls": {"exclude": $exclude}}, "packageDirectories": []}"""
+        )
+      ) { root: PathLike =>
+        assert(SFDXProject(root, logger).isEmpty, exclude)
+        assert(logger.issues.exists(_.message().contains(expected)), exclude)
+      }
+    }
+  }
 }
