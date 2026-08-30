@@ -26,7 +26,8 @@ private[apexls] final case class LoadBenchmarkConfiguration(
   unused: Boolean,
   unusedOnError: Boolean,
   logging: String,
-  autoFlush: Boolean
+  autoFlush: Boolean,
+  blockPrefetchThreads: Int
 )
 
 /** Requested and observed parallelism for the measured load. */
@@ -132,10 +133,11 @@ private[apexls] object LoadBenchmarkReport {
         "directoryProvided" -> configuration.cacheDirectoryProvided,
         "directory"         -> optionalString(configuration.cacheDirectory)
       ),
-      "unused"        -> configuration.unused,
-      "unusedOnError" -> configuration.unusedOnError,
-      "logging"       -> configuration.logging,
-      "autoFlush"     -> configuration.autoFlush
+      "unused"               -> configuration.unused,
+      "unusedOnError"        -> configuration.unusedOnError,
+      "logging"              -> configuration.logging,
+      "autoFlush"            -> configuration.autoFlush,
+      "blockPrefetchThreads" -> configuration.blockPrefetchThreads
     )
   }
 

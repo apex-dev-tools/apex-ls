@@ -143,6 +143,20 @@ for. A speedup versus thread count curve is one run:
 python3 tools/load-benchmark/load-benchmark.py --workspace WS --parallelism 1,2,4,8
 ```
 
+### Block prefetch
+
+`--block-prefetch-threads N` sets how many threads parse method bodies ahead of the sequential
+validation loop, one of the counts the server accepts, `0`, `2` or `4`. A value the server would
+reject is refused here rather than silently ignored, and every result reports the count that was
+actually in force under `configuration.blockPrefetchThreads`, so a variant cannot claim a setting
+it did not have. To compare settings, interleave them:
+
+```sh
+python3 tools/load-benchmark/load-benchmark.py --workspace WS \
+    --variant 'prefetch-off:blockPrefetchThreads=0' \
+    --variant 'prefetch-4:blockPrefetchThreads=4'
+```
+
 ## Private workspaces
 
 A private codebase can be measured without disclosing anything about it. By default the output
@@ -199,7 +213,8 @@ them in VisualVM. The harness deliberately does not parse them.
 | `--logging` | `none` | `none`, `info`, `debug` or `trace`, anything above `none` distorts timings |
 | `--cache` | `off` | `off` for the cold headline, `on` to measure with a warm isolated cache |
 | `--parallelism LIST` | | one level, or a comma separated list producing one variant per level |
-| `--variant LABEL:K=V,...` | | extra variant to interleave, keys `parser`, `unused`, `unusedOnError`, `logging`, `cache`, `parallelism` |
+| `--block-prefetch-threads N` | | `0`, `2` or `4` threads parsing method bodies ahead of validation |
+| `--variant LABEL:K=V,...` | | extra variant to interleave, keys `parser`, `unused`, `unusedOnError`, `logging`, `cache`, `parallelism`, `blockPrefetchThreads` |
 | `--heap SIZE` | `4g` | `-Xms` and `-Xmx`, recorded in the output |
 | `--java PATH` | `$JAVA_HOME/bin/java` | |
 | `--classpath GLOB` | `jvm/target/scala-2.13/*` | point at a released distribution to compare versions |

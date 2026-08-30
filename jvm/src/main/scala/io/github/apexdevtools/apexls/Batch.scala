@@ -65,6 +65,7 @@ object Batch {
     val originalAutoFlush      = ServerOps.isAutoFlushEnabled
     val originalParser         = ServerOps.getCurrentParser
     val originalLoggingLevel   = LoggerOps.getLoggingLevel
+    val originalPrefetch       = ServerOps.getBlockPrefetchThreads
 
     System.setOut(diagnosticStream)
     System.setErr(diagnosticStream)
@@ -97,6 +98,7 @@ object Batch {
         ServerOps.setAutoFlush(originalAutoFlush)
         ServerOps.setCurrentParser(originalParser)
         LoggerOps.setLoggingLevel(originalLoggingLevel)
+        ServerOps.setBlockPrefetchThreads(originalPrefetch)
         System.setOut(originalStdout)
         System.setErr(originalStderr)
       }

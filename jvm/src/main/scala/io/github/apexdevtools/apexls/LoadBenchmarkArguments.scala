@@ -14,6 +14,8 @@
 
 package io.github.apexdevtools.apexls
 
+import com.nawforce.apexlink.api.ServerOps
+
 import scala.collection.mutable
 import scala.util.Try
 
@@ -29,6 +31,7 @@ private[apexls] final case class LoadBenchmarkArguments(
   unusedOnError: Boolean,
   logging: String,
   parallelism: Option[Int],
+  blockPrefetchThreads: Option[Int],
   label: Option[String],
   includePaths: Boolean
 )
@@ -45,7 +48,7 @@ private[apexls] object LoadBenchmarkArguments {
 
   private final val Required = Seq("--parser", "--unused", "--logging")
   private final val Valued =
-    Required ++ Seq("--unused-on-error", "--parallelism", "--label")
+    Required ++ Seq("--unused-on-error", "--parallelism", "--block-prefetch-threads", "--label")
 
   def parse(args: Seq[String]): Either[BatchError, LoadBenchmarkArguments] = {
     collect(args).flatMap(collected => build(collected._1, collected._2))
@@ -92,12 +95,14 @@ private[apexls] object LoadBenchmarkArguments {
       logging       <- oneOf("--logging", values("--logging"), Loggings)
       unusedOnError <- optionalBoolean("--unused-on-error", values)
       parallelism   <- optionalPositive("--parallelism", values)
+      prefetch      <- optionalBlockPrefetchThreads(values)
     } yield LoadBenchmarkArguments(
       parser = parser,
       unused = unused,
       unusedOnError = unusedOnError.getOrElse(false),
       logging = logging,
       parallelism = parallelism,
+      blockPrefetchThreads = prefetch,
       label = values.get("--label"),
       includePaths = includePaths
     )
@@ -151,6 +156,27 @@ private[apexls] object LoadBenchmarkArguments {
         Try(value.toInt).toOption.filter(_ > 0) match {
           case Some(parsed) => Right(Some(parsed))
           case None         => invalid(s"Option '$option' must be a positive integer, not '$value'")
+        }
+    }
+  }
+
+  /** Only the counts the server accepts, a rejected value would otherwise be silently ignored and
+    * the run reported as if it had been applied.
+    */
+  private def optionalBlockPrefetchThreads(
+    values: Map[String, String]
+  ): Either[BatchError, Option[Int]] = {
+    val option = "--block-prefetch-threads"
+    values.get(option) match {
+      case None => Right(None)
+      case Some(value) =>
+        Try(value.toInt).toOption.filter(ServerOps.validBlockPrefetchThreads.contains) match {
+          case Some(parsed) => Right(Some(parsed))
+          case None =>
+            invalid(
+              s"Option '$option' must be one of " +
+                s"${ServerOps.validBlockPrefetchThreads.mkString(", ")}, not '$value'"
+            )
         }
     }
   }
