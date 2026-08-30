@@ -54,6 +54,7 @@ class LoadBenchmarkCommandTest extends AnyFunSuite with BatchCommandTestSupport 
       assert(!settings("unusedOnError").bool)
       assert(settings("logging").str == "none")
       assert(!settings("autoFlush").bool)
+      assert(settings("blockPrefetchThreads").num == 0)
 
       assert(result("timings")("totalLoadMs").num > 0)
       assert(result("timings")("cacheFlushMs") == ujson.Null)
@@ -86,6 +87,20 @@ class LoadBenchmarkCommandTest extends AnyFunSuite with BatchCommandTestSupport 
       assert(result("parallelism")("availableProcessors").num > 0)
       assert(result("environment")("javaVersion").str.nonEmpty)
       assert(result("environment")("maxHeapBytes").num > 0)
+    }
+  }
+
+  test("a requested block prefetch thread count is applied and reported back") {
+    FileSystemHelper.runTempDir(files) { workspace =>
+      val invocation =
+        invoke(
+          workspace,
+          "benchmark-load",
+          cacheEnabled = false,
+          (configuration ++ Seq("--block-prefetch-threads", "2")): _*
+        )
+      assert(invocation.status == 0)
+      assert(invocation.json("result")("configuration")("blockPrefetchThreads").num == 2)
     }
   }
 

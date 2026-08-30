@@ -36,6 +36,7 @@ class LoadBenchmarkArgumentsTest extends AnyFunSuite {
     assert(!arguments.unusedOnError)
     assert(arguments.logging == "none")
     assert(arguments.parallelism.isEmpty)
+    assert(arguments.blockPrefetchThreads.isEmpty)
     assert(arguments.label.isEmpty)
     assert(!arguments.includePaths)
   }
@@ -46,6 +47,7 @@ class LoadBenchmarkArgumentsTest extends AnyFunSuite {
         "--unused-on-error=true",
         "--parallelism",
         "4",
+        "--block-prefetch-threads=2",
         "--label=cold",
         "--include-paths"
       )): _*
@@ -53,6 +55,7 @@ class LoadBenchmarkArgumentsTest extends AnyFunSuite {
 
     assert(arguments.unusedOnError)
     assert(arguments.parallelism.contains(4))
+    assert(arguments.blockPrefetchThreads.contains(2))
     assert(arguments.label.contains("cold"))
     assert(arguments.includePaths)
   }
@@ -73,6 +76,14 @@ class LoadBenchmarkArgumentsTest extends AnyFunSuite {
     assert(errorFor((minimal.updated(3, "maybe")): _*).contains("'true' or 'false'"))
     assert(errorFor((minimal.updated(5, "verbose")): _*).contains("none, info, debug, trace"))
     assert(errorFor((minimal :+ "--parallelism" :+ "0"): _*).contains("must be a positive integer"))
+    assert(
+      errorFor((minimal :+ "--block-prefetch-threads" :+ "3"): _*)
+        .contains("must be one of 0, 2, 4")
+    )
+    assert(
+      errorFor((minimal :+ "--block-prefetch-threads" :+ "two"): _*)
+        .contains("must be one of 0, 2, 4")
+    )
   }
 
   test("malformed and repeated options are rejected") {

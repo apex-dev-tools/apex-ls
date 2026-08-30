@@ -138,7 +138,7 @@ private[apexls] object LoadBenchmarkCommand extends BatchCommand {
   }
 
   private def openOptions(options: BatchOptions, arguments: LoadBenchmarkArguments): OpenOptions = {
-    OpenOptions
+    val base = OpenOptions
       .default()
       .withParser(arguments.parser)
       .withLoggingLevel(arguments.logging)
@@ -147,6 +147,7 @@ private[apexls] object LoadBenchmarkCommand extends BatchCommand {
       .withAutoFlush(enabled = false)
       .withUnused(arguments.unused)
       .withUnusedOnError(arguments.unusedOnError)
+    arguments.blockPrefetchThreads.fold(base)(base.withBlockPrefetchThreads)
   }
 
   /** Cache writing is timed separately, it is not part of the wait for first feedback. */
@@ -181,7 +182,8 @@ private[apexls] object LoadBenchmarkCommand extends BatchCommand {
       unused = arguments.unused,
       unusedOnError = arguments.unusedOnError,
       logging = arguments.logging,
-      autoFlush = ServerOps.isAutoFlushEnabled
+      autoFlush = ServerOps.isAutoFlushEnabled,
+      blockPrefetchThreads = ServerOps.getBlockPrefetchThreads
     )
   }
 

@@ -50,6 +50,7 @@ private[apexls] trait BatchCommandTestSupport {
     val originalAutoFlush      = ServerOps.isAutoFlushEnabled
     val originalParser         = ServerOps.getCurrentParser
     val originalLoggingLevel   = LoggerOps.getLoggingLevel
+    val originalPrefetch       = ServerOps.getBlockPrefetchThreads
     val status                 = Batch.run(args.toArray, stdout, stderr)
     val stdoutText             = new String(stdout.toByteArray, StandardCharsets.UTF_8)
 
@@ -57,6 +58,7 @@ private[apexls] trait BatchCommandTestSupport {
     assert(ServerOps.isAutoFlushEnabled == originalAutoFlush)
     assert(ServerOps.getCurrentParser == originalParser)
     assert(LoggerOps.getLoggingLevel == originalLoggingLevel)
+    assert(ServerOps.getBlockPrefetchThreads == originalPrefetch)
     assert(stdoutText.count(_ == '\n') == 1)
     new Invocation(
       status,

@@ -28,7 +28,15 @@ BATCH_MAIN = "io.github.apexdevtools.apexls.Batch"
 TOOL_DIR = Path(__file__).resolve().parent
 REPO_DIR = TOOL_DIR.parent.parent
 
-VARIANT_KEYS = ("parser", "unused", "unusedOnError", "logging", "cache", "parallelism")
+VARIANT_KEYS = (
+    "parser",
+    "unused",
+    "unusedOnError",
+    "logging",
+    "cache",
+    "parallelism",
+    "blockPrefetchThreads",
+)
 
 
 class BenchmarkError(Exception):
@@ -77,6 +85,12 @@ def parse_args(argv):
         metavar="LIST",
         help="bounded parallelism, a single level or a comma separated list producing one variant "
         "per level",
+    )
+    parser.add_argument(
+        "--block-prefetch-threads",
+        default="",
+        metavar="N",
+        help="threads used to parse method bodies ahead of validation, one of 0, 2 or 4",
     )
     parser.add_argument(
         "--variant",
@@ -174,6 +188,7 @@ def build_variants(args):
         "logging": args.logging,
         "cache": args.cache,
         "parallelism": levels[0] if len(levels) == 1 else "",
+        "blockPrefetchThreads": args.block_prefetch_threads,
     }
 
     if args.variant:
@@ -218,6 +233,8 @@ def batch_command(args, variant, workspace, cache_dir):
     command += ["--cache-dir", str(cache_dir)] if variant["cache"] == "on" else ["--no-cache"]
     if variant["parallelism"]:
         command += ["--parallelism", variant["parallelism"]]
+    if variant["blockPrefetchThreads"]:
+        command += ["--block-prefetch-threads", variant["blockPrefetchThreads"]]
     if args.include_paths:
         command.append("--include-paths")
     return command
