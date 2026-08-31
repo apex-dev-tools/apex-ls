@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Hover results now identify their content as markdown and deliberately fence Apex type, method, and
+  constructor signatures. Constructor signatures use the declaring type name and qualified
+  parameter types (#564)
 - Diagnostic reporting exclusions in `plugins.apex-ls.exclude`, selectable by project-relative
   `.forceignore` path pattern, diagnostic severity, stable ID, or a conjunction of selectors.
   Exclusions apply consistently to language-server API reports, CLI output, and CLI exit status

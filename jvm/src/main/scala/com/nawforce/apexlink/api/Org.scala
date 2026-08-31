@@ -144,11 +144,11 @@ trait Org {
     *
     * This will attempt to locate the type definition of a type name at the provided line & offset
     * in the path. The returned hover item contains the header of the type declaration for a method,
-    * constructor or class, as well as the position for the hover popover. If no type declaration
-    * can be found for the hovered content or it is an unsupported type, an empty HoverItem is
-    * returned. If content is null, path will be used to load the source code. It is not necessary
-    * for the file being searched from to be free of errors, but errors may impact the ability to
-    * locate inner classes within that file.
+    * constructor or class as fenced Apex markdown, its content kind, and the position for the hover
+    * popover. If no type declaration can be found for the hovered content or it is an unsupported
+    * type, an empty HoverItem is returned. If content is null, path will be used to load the source
+    * code. It is not necessary for the file being searched from to be free of errors, but errors may
+    * impact the ability to locate inner classes within that file.
     */
   def getHover(path: String, line: Int, offset: Int, content: String): HoverItem
 

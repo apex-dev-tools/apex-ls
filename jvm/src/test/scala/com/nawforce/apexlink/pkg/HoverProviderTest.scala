@@ -21,8 +21,10 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
       val offset    = content.split('\n').head.length - 10
       val hoverItem = org.unmanaged.getHover(path, line = 1, offset, Some(content))
       assert(
-        hoverItem.content.get == "public System.String methodB(System.Integer a, System.Integer b)"
+        hoverItem.content.get ==
+          "```apex\npublic System.String methodB(System.Integer a, System.Integer b)\n```"
       )
+      assert(hoverItem.kind.contains("markdown"))
       assert(hoverItem.location.get.startLine == 1)
       assert(hoverItem.location.get.startPosition == 47)
       assert(hoverItem.location.get.endLine == 1)
@@ -40,7 +42,7 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
       val org = createHappyOrg(root)
       val hoverItem =
         org.unmanaged.getHover(root.join("Foo.cls"), line = 1, contentAndCursorPos._2, None)
-      assert(hoverItem.content.get == "private class Dummy")
+      assert(hoverItem.content.get == "```apex\nprivate class Dummy\n```")
       assert(hoverItem.location.get.startLine == 1)
       assert(hoverItem.location.get.startPosition == 46)
       assert(hoverItem.location.get.endLine == 1)
@@ -59,7 +61,8 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
       val org = createHappyOrg(root)
       val hoverItem =
         org.unmanaged.getHover(root.join("Foo.cls"), line = 1, contentAndCursorPos._2, None)
-      assert(hoverItem.content.get == "public class Dummy implements DummyTwo")
+      assert(hoverItem.content.get == "```apex\npublic class Dummy implements DummyTwo\n```")
+      assert(hoverItem.kind.contains("markdown"))
       assert(hoverItem.location.get.startLine == 1)
       assert(hoverItem.location.get.startPosition == 46)
       assert(hoverItem.location.get.endLine == 1)
@@ -88,7 +91,8 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
       val hoverItem =
         org.unmanaged.getHover(root.join("Foo.cls"), line = 1, contentAndCursorPos._2, None)
       assert(
-        hoverItem.content.get == "public class Dummy implements DummyTwo, DummyThree, DummyFour"
+        hoverItem.content.get ==
+          "```apex\npublic class Dummy implements DummyTwo, DummyThree, DummyFour\n```"
       )
       assert(hoverItem.location.get.startLine == 1)
       assert(hoverItem.location.get.startPosition == 46)
@@ -118,7 +122,8 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
       val hoverItem =
         org.unmanaged.getHover(root.join("Foo.cls"), line = 1, contentAndCursorPos._2, None)
       assert(
-        hoverItem.content.get == "public class Dummy extends DummyTwo implements DummyThree, DummyFour"
+        hoverItem.content.get ==
+          "```apex\npublic class Dummy extends DummyTwo implements DummyThree, DummyFour\n```"
       )
       assert(hoverItem.location.get.startLine == 1)
       assert(hoverItem.location.get.startPosition == 46)
@@ -136,7 +141,8 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
         val org = createHappyOrg(root)
         val hoverItem =
           org.unmanaged.getHover(root.join("Foo.cls"), line = 1, contentAndCursorPos._2, None)
-        assert(hoverItem.content.get == "public constructor(Integer a)")
+        assert(hoverItem.content.get == "```apex\npublic Dummy(System.Integer a)\n```")
+        assert(hoverItem.kind.contains("markdown"))
         assert(hoverItem.location.get.startLine == 1)
         assert(hoverItem.location.get.startPosition == 46)
         assert(hoverItem.location.get.endLine == 1)
@@ -157,6 +163,7 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
         org.unmanaged.getHover(root.join("Foo.cls"), line = 1, contentAndCursorPos._2, None)
       assert(hoverItem.content.isEmpty)
       assert(hoverItem.location.isEmpty)
+      assert(hoverItem.kind.isEmpty)
     }
   }
 }

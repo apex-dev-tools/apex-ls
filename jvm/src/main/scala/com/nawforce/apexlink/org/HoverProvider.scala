@@ -53,8 +53,22 @@ trait HoverProvider extends SourceOps {
 
   private def toHoverItem(l: Option[(Locatable, Location)]): HoverItem = {
     l match {
-      case Some((td, loc)) => HoverItem(Some(td.toString), Some(loc))
-      case _               => HoverItem(None, None)
+      case Some((td, loc)) =>
+        HoverItem(Some(s"```apex\n${signature(td)}\n```"), Some(loc), Some("markdown"))
+      case _ => HoverItem(None, None)
+    }
+  }
+
+  private def signature(declaration: Locatable): String = {
+    declaration match {
+      case constructor: ApexConstructorLike =>
+        val modifiers = constructor.modifiers.map(_.toString).mkString(" ")
+        val prefix    = if (modifiers.nonEmpty) s"$modifiers " else ""
+        val parameters = constructor.parameters
+          .map(parameter => s"${parameter.typeName} ${parameter.name}")
+          .mkString(", ")
+        s"$prefix${constructor.thisTypeId.typeName.name}($parameters)"
+      case other => other.toString
     }
   }
 }
