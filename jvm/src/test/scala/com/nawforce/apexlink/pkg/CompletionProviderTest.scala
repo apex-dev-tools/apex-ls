@@ -534,6 +534,49 @@ class CompletionProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("constructor completion detail uses type name and qualified parameter types") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "",
+        "Foo.cls"   -> "public class Foo { public Foo(String s){} public Foo(){}}"
+      )
+    ) { root: PathLike =>
+      val org     = createOrg(root)
+      val testSrc = s"class Dummy {{new Fo"
+      assert(
+        org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+          .map(_.detail)
+          .sorted sameElements Array("public Foo()", "public Foo(System.String s)").sorted
+      )
+    }
+  }
+
+  test("this constructor completion detail uses type name") {
+    FileSystemHelper.run(Map("Dummy.cls" -> "")) { root: PathLike =>
+      val org = createOrg(root)
+      val testSrc =
+        "public class Dummy { public Dummy(Integer i){} public Dummy(){th"
+      assert(
+        org
+          .getCompletionItemsInternal(
+            root.join("Dummy.cls"),
+            line = 1,
+            offset = testSrc.length,
+            testSrc
+          )
+          .filter(_.label.startsWith("this("))
+          .map(_.detail)
+          .sorted sameElements Array("public Dummy()", "public Dummy(System.Integer i)").sorted
+      )
+    }
+  }
+
   test("private constructor completion") {
     FileSystemHelper.run(
       Map(

@@ -53,8 +53,16 @@ trait HoverProvider extends SourceOps {
 
   private def toHoverItem(l: Option[(Locatable, Location)]): HoverItem = {
     l match {
-      case Some((td, loc)) => HoverItem(Some(td.toString), Some(loc))
-      case _               => HoverItem(None, None)
+      case Some((td, loc)) =>
+        HoverItem(Some(s"```apex\n${header(td)}\n```"), Some(loc), Some("markdown"))
+      case _ => HoverItem(None, None)
+    }
+  }
+
+  private def header(declaration: Locatable): String = {
+    declaration match {
+      case constructor: ApexConstructorLike => constructor.header
+      case other                            => other.toString
     }
   }
 }

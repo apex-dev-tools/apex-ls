@@ -100,6 +100,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constructor map, body declaration and outer dependency spans, and counts of the type resolutions
   performed while validating along with how many were answered from the per type cache (#540)
 
+### Changed
+
+- Hover results now identify their content as markdown and deliberately fence Apex type, method,
+  and constructor signatures, so clients no longer have to guess the payload format or add their
+  own code fence. Constructor headers now use the declaring type name and qualified parameter
+  types instead of the literal word `constructor` with unqualified types, in both hover and
+  completion item detail (#564)
+
 ### Fixed
 
 - Concurrent outline parsing now uses thread-safe JVM caches for names, type names and modifier

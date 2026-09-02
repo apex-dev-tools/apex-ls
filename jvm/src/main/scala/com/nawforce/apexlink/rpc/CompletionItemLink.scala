@@ -45,7 +45,7 @@ object CompletionItemLink {
   def apply(typName: Name, ctor: ConstructorDeclaration): CompletionItemLink = {
     val ctorString =
       typName.toString + "(" + ctor.parameters.map(_.name.toString()).mkString(", ") + ")"
-    CompletionItemLink(ctorString, "Constructor", ctor.toString)
+    CompletionItemLink(ctorString, "Constructor", ctor.header)
   }
 
 }
