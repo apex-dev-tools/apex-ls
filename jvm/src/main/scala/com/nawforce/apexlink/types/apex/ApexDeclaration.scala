@@ -59,6 +59,13 @@ trait ApexConstructorLike extends ApexVisibleConstructorLike with Referenceable 
   val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
+  /** Header using the declaring type name and qualified parameter types, as methods do. */
+  override def header: String = {
+    val modifierStr = if (modifiers.nonEmpty) modifiers.map(_.toString).mkString(" ") + " " else ""
+    modifierStr + thisTypeId.typeName.name.toString + "(" +
+      parameters.map(_.toString).mkString(", ") + ")"
+  }
+
   def summary: ConstructorSummary = {
     ConstructorSummary(
       location.location,

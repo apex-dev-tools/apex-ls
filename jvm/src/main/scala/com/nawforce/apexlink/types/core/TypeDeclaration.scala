@@ -268,6 +268,9 @@ trait ConstructorDeclaration extends DependencyHolder with Dependent with Parame
     hasCompatibleParameters(other.parameters.map(_.typeName), allowPlatformGenericEquivalence)
   }
 
+  /** Declaration header as shown to a user, overridden where the declaring type name is known. */
+  def header: String = toString
+
   override def toString: String =
     modifiers.map(_.toString).mkString(" ") + " constructor(" + parameters
       .map(p => s"${p.typeName.name} ${p.name}")

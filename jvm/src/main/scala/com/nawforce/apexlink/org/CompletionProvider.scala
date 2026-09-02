@@ -332,7 +332,7 @@ trait CompletionProvider {
             .map(constructor =>
               (
                 "super(" + constructor.parameters.map(_.name.toString()).mkString(", ") + ")",
-                constructor.toString
+                constructor.header
               )
             )
             .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
@@ -351,7 +351,7 @@ trait CompletionProvider {
         .map(constructor =>
           (
             "this(" + constructor.parameters.map(_.name.toString()).mkString(", ") + ")",
-            constructor.toString
+            constructor.header
           )
         )
         .map(labelDetail => CompletionItemLink(labelDetail._1, "Constructor", labelDetail._2))
