@@ -506,6 +506,9 @@ object FullDeclaration {
           )
       )
 
-    cst.map(_.withContext(typeDeclaration))
+    cst.map(td => {
+      td.docComment = DocComment.find(parser, typeDeclaration)
+      td.withContext(typeDeclaration)
+    })
   }
 }

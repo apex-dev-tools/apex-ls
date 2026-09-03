@@ -107,28 +107,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   own code fence. Constructor headers now use the declaring type name and qualified parameter
   types instead of the literal word `constructor` with unqualified types, in both hover and
   completion item detail (#564)
-
-### Fixed
-
-- Concurrent outline parsing now uses thread-safe JVM caches for names, type names and modifier
-  results, removing unsafe concurrent writes during cold workspace loads (#548)
-- The overload named in a `No matching method found` or `Ambiguous method call` message no longer
-  varies between runs on identical input. The members of an overload group were held in the order
-  they were discovered, which for platform types is the order of `java.lang.Class.getMethods` and
-  so is not stable between runs, and the message named whichever member came first. Groups are now
-  ordered by parameter type, then return type, then modifiers. The same order decided which
-  overload was resolved where an argument is `any`, or where two overloads are equally specific for
-  the arguments given, so what is resolved, and the dependencies, references and unused findings
-  that follow from it, are now stable too (#553)
-- Cold workspace loads now really do parse in parallel when the multi-threaded outline parser is
-  selected. The parse loop iterated the class list through a parallel collection's iterator, which
-  is sequential, so parsing ran on a single thread whichever parser was chosen. Parsing now runs on
-  a bounded pool of at most four threads: measurement shows the per file cost of parsing grows with
-  concurrency, so beyond a few threads wall clock stops improving while CPU use keeps climbing.
-  `-Dscala.concurrent.context.maxThreads=N` sets the level explicitly (#540)
-
-### Changed
-
 - A required annotation parameter is now also checked on the bare annotation form, so
   `@JsonAccess` with no parentheses is reported just as `@JsonAccess()` is, matching the platform
   (#556)
@@ -157,6 +135,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The private parent class check on `extends` now reports `Type is not visible: <type>` against the
   written parent type name rather than the class identifier, and applies the same `@TestVisible`
   and same-file rules as every other explicit type reference (#341)
+- Hover now appends the ApexDoc comment written immediately before a type, method or
+  constructor, after the fenced signature, for declarations parsed by the ANTLR parser: that is
+  edited files and files opened for hover. The comment delimiters and leading asterisks are removed
+  but the text is otherwise shown as written. Annotations and modifiers do not separate a comment
+  from the declaration it documents, so `@AuraEnabled` and `@TestVisible` members keep their
+  documentation, while an ordinary comment or another declaration in between does. A comment with
+  no text, such as a banner of asterisks, leaves the signature-only hover unchanged (#565)
+
+### Fixed
+
+- Concurrent outline parsing now uses thread-safe JVM caches for names, type names and modifier
+  results, removing unsafe concurrent writes during cold workspace loads (#548)
+- The overload named in a `No matching method found` or `Ambiguous method call` message no longer
+  varies between runs on identical input. The members of an overload group were held in the order
+  they were discovered, which for platform types is the order of `java.lang.Class.getMethods` and
+  so is not stable between runs, and the message named whichever member came first. Groups are now
+  ordered by parameter type, then return type, then modifiers. The same order decided which
+  overload was resolved where an argument is `any`, or where two overloads are equally specific for
+  the arguments given, so what is resolved, and the dependencies, references and unused findings
+  that follow from it, are now stable too (#553)
+- Cold workspace loads now really do parse in parallel when the multi-threaded outline parser is
+  selected. The parse loop iterated the class list through a parallel collection's iterator, which
+  is sequential, so parsing ran on a single thread whichever parser was chosen. Parsing now runs on
+  a bounded pool of at most four threads: measurement shows the per file cost of parsing grows with
+  concurrency, so beyond a few threads wall clock stops improving while CPU use keeps climbing.
+  `-Dscala.concurrent.context.maxThreads=N` sets the level explicitly (#540)
 
 ## [6.2.0] - 2026-07-29
 
