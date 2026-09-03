@@ -3,6 +3,7 @@
  */
 package com.nawforce.apexlink.org
 
+import com.nawforce.apexlink.cst.{DocComment, DocumentedDeclaration}
 import com.nawforce.apexlink.rpc.HoverItem
 import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
@@ -54,8 +55,17 @@ trait HoverProvider extends SourceOps {
   private def toHoverItem(l: Option[(Locatable, Location)]): HoverItem = {
     l match {
       case Some((td, loc)) =>
-        HoverItem(Some(s"```apex\n${header(td)}\n```"), Some(loc), Some("markdown"))
+        val signature = s"```apex\n${header(td)}\n```"
+        val content   = documentation(td).map(doc => s"$signature\n\n$doc").getOrElse(signature)
+        HoverItem(Some(content), Some(loc), Some("markdown"))
       case _ => HoverItem(None, None)
+    }
+  }
+
+  private def documentation(declaration: Locatable): Option[String] = {
+    declaration match {
+      case documented: DocumentedDeclaration => documented.docComment.flatMap(DocComment.text)
+      case _                                 => None
     }
   }
 

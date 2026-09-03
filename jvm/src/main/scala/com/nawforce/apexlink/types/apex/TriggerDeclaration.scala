@@ -58,6 +58,7 @@ final case class TriggerDeclaration(
 ) extends CST
     with ApexTriggerDeclaration
     with ApexFullDeclaration
+    with DocumentedDeclaration
     with DependencyHolder {
 
   override val idLocation: Location      = nameId.location.location
@@ -251,6 +252,10 @@ object TriggerDeclaration {
             cases,
             Some(Block.constructTrigger(parser, trigger, statementsAndDeclarations._1))
           ).withContext(trigger)
+        })
+        .map(td => {
+          td.docComment = DocComment.find(parser, trigger)
+          td
         })
     }
   }
