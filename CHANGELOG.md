@@ -103,6 +103,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constructors and types were served. Identifiers at declaration sites are also hoverable, so the
   name of a class, method, constructor, field, property, enum constant or trigger shows the same
   signature as a reference to it (#569)
+- Hover now appends the ApexDoc comment written immediately before a type, method, constructor,
+  field, property, enum constant or trigger, after the fenced signature, for declarations parsed by
+  the ANTLR parser, such as files sent with editor content. The comment delimiters and leading
+  asterisks are removed but the text is otherwise shown as written. Annotations and modifiers do
+  not separate a comment from the declaration it documents, so `@AuraEnabled` and `@TestVisible`
+  members keep their documentation, while an ordinary comment or another declaration in between
+  does. A comment with no text, such as a banner of asterisks, leaves the signature-only hover
+  unchanged (#565)
 
 ### Changed
 
@@ -139,13 +147,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The private parent class check on `extends` now reports `Type is not visible: <type>` against the
   written parent type name rather than the class identifier, and applies the same `@TestVisible`
   and same-file rules as every other explicit type reference (#341)
-- Hover now appends the ApexDoc comment written immediately before a type, method or
-  constructor, after the fenced signature, for declarations parsed by the ANTLR parser: that is
-  edited files and files opened for hover. The comment delimiters and leading asterisks are removed
-  but the text is otherwise shown as written. Annotations and modifiers do not separate a comment
-  from the declaration it documents, so `@AuraEnabled` and `@TestVisible` members keep their
-  documentation, while an ordinary comment or another declaration in between does. A comment with
-  no text, such as a banner of asterisks, leaves the signature-only hover unchanged (#565)
 
 ### Fixed
 

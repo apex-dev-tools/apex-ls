@@ -296,13 +296,26 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  private def hoverWithContentAt(files: Map[String, String], file: String, cursor: CursorPos)(
+    assertion: HoverItem => Unit
+  ): Unit = {
+    FileSystemHelper.run(files) { root: PathLike =>
+      val org = createHappyOrg(root)
+      assertion(
+        org.unmanaged.getHover(root.join(file), cursor.line, cursor.offset, files.get(file))
+      )
+    }
+  }
+
   private def assertHover(
     hoverItem: HoverItem,
     header: String,
     source: String,
-    identifier: String
+    identifier: String,
+    doc: Option[String] = None
   ): Unit = {
-    assert(hoverItem.content.contains(s"```apex\n$header\n```"))
+    val signature = s"```apex\n$header\n```"
+    assert(hoverItem.content.contains(doc.map(d => s"$signature\n\n$d").getOrElse(signature)))
     assert(hoverItem.kind.contains("markdown"))
     assert(locToString(source, hoverItem.location.get) == identifier)
   }
@@ -505,5 +518,65 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
       val (content, cursor) = withCursorMultiLine(source)
       hoverAt(Map("Foo.cls" -> content), "Foo.cls", cursor)(assertNoHover)
     })
+  }
+
+  test("Hover for documented field reference") {
+    val (content, cursor) = withCursorMultiLine(s"""public class Foo {
+         |  /** The name. */
+         |  private String name;
+         |  public void method() { na${CURSOR}me = 'a'; }
+         |}""".stripMargin)
+    hoverWithContentAt(Map("Foo.cls" -> content), "Foo.cls", cursor) { hoverItem =>
+      assertHover(hoverItem, "private String name", content, "name", Some("The name."))
+    }
+  }
+
+  test("Hover for documented field declaration") {
+    val (content, cursor) = withCursorMultiLine(s"""public class Foo {
+         |  /** The name. */
+         |  private static final String na${CURSOR}me = 'a';
+         |}""".stripMargin)
+    hoverWithContentAt(Map("Foo.cls" -> content), "Foo.cls", cursor) { hoverItem =>
+      assertHover(hoverItem, "private static final String name", content, "name", Some("The name."))
+    }
+  }
+
+  test("Hover for documented property reference") {
+    val (content, cursor) = withCursorMultiLine(s"""public class Foo {
+         |  /** The label. */
+         |  public String Label { get; set; }
+         |  public void method() { La${CURSOR}bel = 'a'; }
+         |}""".stripMargin)
+    hoverWithContentAt(Map("Foo.cls" -> content), "Foo.cls", cursor) { hoverItem =>
+      assertHover(hoverItem, "public String Label", content, "Label", Some("The label."))
+    }
+  }
+
+  test("Hover for documented enum constant declaration") {
+    val (content, cursor) =
+      withCursorMultiLine(s"public enum Colour { RED, /** The green. */ GR${CURSOR}EEN }")
+    hoverWithContentAt(Map("Colour.cls" -> content), "Colour.cls", cursor) { hoverItem =>
+      assertHover(
+        hoverItem,
+        "public static final Colour GREEN",
+        content,
+        "GREEN",
+        Some("The green.")
+      )
+    }
+  }
+
+  test("Hover for documented trigger declaration") {
+    val (content, cursor) = withCursorMultiLine(s"""/** Account trigger. */
+         |trigger Du${CURSOR}mmy on Account (before insert) { }""".stripMargin)
+    hoverWithContentAt(Map("Dummy.trigger" -> content), "Dummy.trigger", cursor) { hoverItem =>
+      assertHover(
+        hoverItem,
+        "trigger Dummy on Account (before insert)",
+        content,
+        "Dummy",
+        Some("Account trigger.")
+      )
+    }
   }
 }
