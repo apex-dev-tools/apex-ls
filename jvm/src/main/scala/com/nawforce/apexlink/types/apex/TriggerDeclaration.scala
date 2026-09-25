@@ -76,6 +76,9 @@ final case class TriggerDeclaration(
   override val interfaces: ArraySeq[TypeName]         = ArraySeq()
   override val nestedTypes: ArraySeq[ApexDeclaration] = ArraySeq()
 
+  override def toString: String =
+    s"trigger ${nameId.name} on ${objectNameId.name} (${cases.map(_.name).mkString(", ")})"
+
   override val blocks: ArraySeq[BlockDeclaration] = BlockDeclaration.emptyBlockDeclarations
   override val fields: ArraySeq[FieldDeclaration] = FieldDeclaration.emptyFieldDeclarations
 

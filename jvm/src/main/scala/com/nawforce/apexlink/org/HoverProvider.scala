@@ -7,8 +7,10 @@ import com.nawforce.apexlink.rpc.HoverItem
 import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
   ApexConstructorLike,
+  ApexFieldLike,
   ApexFullDeclaration,
-  ApexMethodLike
+  ApexMethodLike,
+  TriggerDeclaration
 }
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
 import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
@@ -21,7 +23,10 @@ trait HoverProvider extends SourceOps {
     if (sourceAndType.isEmpty)
       return HoverItem(None, None)
 
-    toHoverItem(getFromValidationLocatable(sourceAndType.get._2, line, offset))
+    val td = sourceAndType.get._2
+    toHoverItem(
+      getFromValidationLocatable(td, line, offset).orElse(getFromDeclaration(td, line, offset))
+    )
   }
 
   private def getFromValidationLocatable(
@@ -33,22 +38,41 @@ trait HoverProvider extends SourceOps {
 
     validation._2.flatMap(loc => {
       val result = validation._1(loc).result
-      result.locatable match {
-        case Some(l: ApexMethodLike) =>
-          Some(l, loc)
-        case Some(l: ApexConstructorLike) =>
-          Some(l, loc)
-        case Some(l: ApexClassDeclaration) =>
-          Some(l, loc)
-        case Some(_: CustomConstructorDeclaration) =>
-          result.declaration match {
-            case Some(c: ApexClassDeclaration) => Some(c, loc)
-            case _                             => None
-          }
-        case _ =>
-          None
-      }
+      result.locatable
+        .flatMap {
+          case _: CustomConstructorDeclaration =>
+            result.declaration.collect { case c: ApexClassDeclaration => c }
+          case other => hoverTarget(other)
+        }
+        .map(target => (target, loc))
     })
+  }
+
+  /** Declaration identifiers are not expressions so have no validation result, resolve them from
+    * the declared members instead so a declaration site hovers the same as a reference to it.
+    */
+  private def getFromDeclaration(
+    td: ApexFullDeclaration,
+    line: Int,
+    offset: Int
+  ): Option[(Locatable, Location)] = {
+    td match {
+      case trigger: TriggerDeclaration =>
+        Some(trigger).filter(_.idLocation.contains(line, offset)).map(t => (t, t.idLocation))
+      case _ =>
+        td.findReferenceableFromLocation(line, offset)
+          .flatMap(ref => hoverTarget(ref).map(target => (target, ref.idLocation)))
+    }
+  }
+
+  private def hoverTarget(locatable: Locatable): Option[Locatable] = {
+    locatable match {
+      case l: ApexMethodLike       => Some(l)
+      case l: ApexConstructorLike  => Some(l)
+      case l: ApexClassDeclaration => Some(l)
+      case l: ApexFieldLike        => Some(l)
+      case _                       => None
+    }
   }
 
   private def toHoverItem(l: Option[(Locatable, Location)]): HoverItem = {
