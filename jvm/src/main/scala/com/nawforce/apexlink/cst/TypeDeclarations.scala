@@ -241,7 +241,7 @@ object InterfaceDeclaration {
         .map(interfaceBody => CodeParser.toScala(interfaceBody.interfaceMethodDeclaration()))
         .map(methods => {
           methods.map(method => {
-            ApexMethodDeclaration.construct(
+            val declaration = ApexMethodDeclaration.construct(
               parser,
               thisType,
               typeContext,
@@ -253,6 +253,8 @@ object InterfaceDeclaration {
               ),
               method
             )
+            declaration.docComment = DocComment.find(parser, method)
+            declaration
           })
         })
         .getOrElse(ArraySeq[ApexMethodDeclaration]())
@@ -412,7 +414,7 @@ object EnumDeclaration {
       .map(ec => CodeParser.toScala(ec.id()))
       .getOrElse(ArraySeq())
     val fields = constants.map(constant => {
-      ApexFieldDeclaration(
+      val field = ApexFieldDeclaration(
         thisType,
         ApexModifiers.enumConstantModifiers(),
         thisType.typeName,
@@ -420,6 +422,8 @@ object EnumDeclaration {
           .withContext(constant),
         isEnumConstant = true
       ).withContext(constant)
+      field.docComment = DocComment.find(parser, constant)
+      field
     })
 
     val typeContext = new RelativeTypeContext()

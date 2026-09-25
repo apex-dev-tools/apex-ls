@@ -39,6 +39,7 @@ import scala.collection.mutable
 abstract class ClassBodyDeclaration(modifierResults: ModifierResults)
     extends CST
     with DependencyHolder
+    with DocumentedDeclaration
     with ApexNode {
 
   val modifiers: ArraySeq[Modifier] = modifierResults.modifiers
@@ -202,7 +203,12 @@ object ClassBodyDeclaration {
       case _ => Seq()
     }
 
-    declarations.map(_.withContext(memberDeclarationContext))
+    val docComment =
+      DocComment.find(parser, modifiers.headOption.getOrElse(memberDeclarationContext))
+    declarations.map(declaration => {
+      declaration.docComment = docComment
+      declaration.withContext(memberDeclarationContext)
+    })
   }
 }
 
