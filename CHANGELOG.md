@@ -111,6 +111,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   members keep their documentation, while an ordinary comment or another declaration in between
   does. A comment with no text, such as a banner of asterisks, leaves the signature-only hover
   unchanged (#565)
+- Hover shows ApexDoc comments for types, methods, constructors, fields, properties and enum
+  constants loaded by the outline parser, so documentation is available after a workspace load
+  and not only once a file has been re-parsed. The comments attached match those found by the
+  ANTLR parser (#566)
 
 ### Changed
 
@@ -138,6 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The ANTLR path previously read only a bare value, so a named parameter such as
   `@AuraEnabled(cacheable=true)` was seen as having no parameters at all. No new validation is
   applied to what is read (#541)
+- Updated `outline-parser` to 2.2.0 to read the location of ApexDoc comments (#566)
 - Updated `outline-parser` to 2.1.0 and `apex-parser` to 5.2.0. The apex-parser annotation grammar
   is tightened to match the platform: `@Schema.AuraEnabled`, nested annotations, array-initialiser
   values such as `label={'a','b'}`, and non-literal values such as `@AuraEnabled(cacheable=foo)`

@@ -55,7 +55,8 @@ sealed class TypeDeclaration(
   _enclosing: IMutableModuleTypeDeclaration
 ) extends IMutableModuleTypeDeclaration {
 
-  private var _location: Location = _
+  private var _location: Location            = _
+  private var _docLocation: Option[Location] = None
 
   private var _id: IdWithLocation                    = _
   private var _extendsTypeRef: TypeRef               = _
@@ -74,8 +75,9 @@ sealed class TypeDeclaration(
   // This is used to stage declaration that need adding to above, see syncBodyDeclarations()
   private var _bodyDecls: mutable.ArrayBuffer[MutableTypeAppendable] = mutable.ArrayBuffer()
 
-  override def paths: Array[String] = Array(path)
-  override def location: Location   = _location
+  override def paths: Array[String]          = Array(path)
+  override def location: Location            = _location
+  override def docLocation: Option[Location] = _docLocation
 
   override def id: IdWithLocation = _id
 
@@ -99,6 +101,7 @@ sealed class TypeDeclaration(
 
   override def setId(id: IdWithLocation): Unit                  = _id = id
   override def setLocation(location: Location): Unit            = _location = location
+  override def setDocLocation(location: Location): Unit         = _docLocation = Some(location)
   override def setExtends(typeRef: TypeRef): Unit               = _extendsTypeRef = typeRef
   override def setImplements(typeList: ArraySeq[TypeRef]): Unit = _implementsTypeList = typeList
   override def setModifiers(modifiers: Array[Modifier]): Unit =
