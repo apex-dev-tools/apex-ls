@@ -99,6 +99,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load benchmark reporting of what validation spends its time on: separately timed method map,
   constructor map, body declaration and outer dependency spans, and counts of the type resolutions
   performed while validating along with how many were answered from the per type cache (#540)
+- Hover for fields, properties, enum constants and triggers, where before only methods,
+  constructors and types were served. Identifiers at declaration sites are also hoverable, so the
+  name of a class, method, constructor, field, property, enum constant or trigger shows the same
+  signature as a reference to it (#569)
 
 ### Changed
 
