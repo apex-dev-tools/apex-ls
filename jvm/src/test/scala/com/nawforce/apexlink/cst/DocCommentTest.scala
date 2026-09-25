@@ -183,24 +183,6 @@ class DocCommentTest extends AnyFunSuite with TestHelper {
     }
   }
 
-  test("Text strips delimiters and leading asterisks") {
-    assert(DocComment.text("/** Single line */").contains("Single line"))
-    assert(
-      DocComment
-        .text("/**\n   * First line\n   *\n   *   indented second\n   */")
-        .contains("First line\n\n  indented second")
-    )
-    assert(DocComment.text("/**\r\n * Windows\r\n */").contains("Windows"))
-    assert(DocComment.text("/** @description Tagged */").contains("@description Tagged"))
-  }
-
-  test("Text is absent for banners and empty comments") {
-    assert(DocComment.text("/** */").isEmpty)
-    assert(DocComment.text("/*****/").isEmpty)
-    assert(DocComment.text("/**********\n **********\n **********/").isEmpty)
-    assert(DocComment.text("/**\n *\n *\n */").isEmpty)
-  }
-
   private val allDeclarations =
     """/** Class doc */
       |@IsTest

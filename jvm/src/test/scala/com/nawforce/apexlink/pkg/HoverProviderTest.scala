@@ -187,9 +187,33 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
       assert(
         hoverItem.content.get ==
           "```apex\npublic System.String methodB(System.Integer a, System.Integer b)\n```\n\n" +
-          "Adds two numbers.\n\n@param a first"
+          "Adds two numbers.\n\n**Parameters**\n- `a` — first"
       )
       assert(hoverItem.kind.contains("markdown"))
+    }
+  }
+
+  test("Hover renders community-style ApexDoc tags") {
+    FileSystemHelper.run(Map()) { root: PathLike =>
+      val org  = createOrg(root)
+      val path = root.join("Hover.cls")
+      val content =
+        """public class Dummy { public void someMethod() {methodB(1, 2);}
+          |/*******************************************************************************
+          | * @description Adds two numbers.
+          | * @params a - first
+          | * @returns the sum
+          | * @date 2015
+          | *******************************************************************************/
+          |public String methodB(Integer a, Integer b){}
+          |}""".stripMargin.replaceAll("\r\n", "\n")
+      val offset    = content.split('\n').head.length - 10
+      val hoverItem = org.unmanaged.getHover(path, line = 1, offset, Some(content))
+      assert(
+        hoverItem.content.get ==
+          "```apex\npublic System.String methodB(System.Integer a, System.Integer b)\n```\n\n" +
+          "Adds two numbers.\n\n**Parameters**\n- `a` — first\n\n**Returns** — the sum\n\n**@date** 2015"
+      )
     }
   }
 

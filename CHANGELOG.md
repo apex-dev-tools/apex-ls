@@ -115,6 +115,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constants loaded by the outline parser, so documentation is available after a workspace load
   and not only once a file has been re-parsed. The comments attached match those found by the
   ANTLR parser (#566)
+- Hover renders ApexDoc comments as structured markdown rather than stripped raw text. The reader
+  is deliberately tolerant of real-world comments: decorative banners, `**/` terminators and lines
+  without a leading `*` are handled, `@description` is treated as the main description, and
+  `@exception`, `@returns` and `@params` are read as `@throws`, `@return` and `@param`, including
+  `@param name - description`. Parameters, return, throws and see-also tags get their own
+  sections, while other tags, including unknown and misspelled ones, stay visible as `**@tag**
+  value`. `{@code}` renders as code, and `{@link}`, `{@literal}` and `{@hidden}` render as text.
+  Long descriptions are capped at 10 lines while recognised tag sections are retained, the whole
+  output is length limited, and HTML, headings and unbalanced code fences in a comment cannot break
+  the hover's structure. Malformed comments never produce diagnostics (#568)
 
 ### Changed
 
