@@ -3,7 +3,7 @@
  */
 package com.nawforce.apexlink.org
 
-import com.nawforce.apexlink.cst.{DocComment, DocumentedDeclaration}
+import com.nawforce.apexlink.cst.{ApexDoc, DocumentedDeclaration}
 import com.nawforce.apexlink.rpc.HoverItem
 import com.nawforce.apexlink.types.apex.{
   ApexClassDeclaration,
@@ -88,8 +88,9 @@ trait HoverProvider extends SourceOps {
 
   private def documentation(declaration: Locatable): Option[String] = {
     declaration match {
-      case documented: DocumentedDeclaration => documented.docComment.flatMap(DocComment.text)
-      case _                                 => None
+      case documented: DocumentedDeclaration =>
+        documented.docComment.flatMap(doc => ApexDoc.markdown(doc.asString))
+      case _ => None
     }
   }
 

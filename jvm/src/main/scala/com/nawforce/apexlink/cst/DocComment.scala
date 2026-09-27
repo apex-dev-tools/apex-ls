@@ -51,27 +51,4 @@ object DocComment {
     }
     None
   }
-
-  /** Plain text of a doc comment with the delimiters and leading line asterisks removed. Absent
-    * when nothing but decoration remains, such as for a banner of asterisks.
-    */
-  def text(docComment: SourceData): Option[String] = text(docComment.asString)
-
-  def text(raw: String): Option[String] = {
-    var body = raw.trim
-    if (body.startsWith("/**"))
-      body = body.substring(3)
-    if (body.endsWith("*/"))
-      body = body.substring(0, body.length - 2)
-
-    val lines = body
-      .split("\r?\n", -1)
-      .map(line => {
-        val stripped = line.trim.dropWhile(_ == '*')
-        val unpadded = if (stripped.startsWith(" ")) stripped.substring(1) else stripped
-        unpadded.replaceAll("\\s+$", "")
-      })
-    val trimmed = lines.dropWhile(_.isEmpty).reverse.dropWhile(_.isEmpty).reverse
-    if (trimmed.isEmpty) None else Some(trimmed.mkString("\n"))
-  }
 }
