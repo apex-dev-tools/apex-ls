@@ -169,7 +169,8 @@ final case class TriggerDeclaration(
       ArraySeq(),
       ArraySeq(),
       ArraySeq(),
-      dependencySummary()
+      dependencySummary(),
+      docSummary
     )
   }
 

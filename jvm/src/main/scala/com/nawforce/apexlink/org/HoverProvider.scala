@@ -11,6 +11,7 @@ import com.nawforce.apexlink.types.apex.{
   ApexFieldLike,
   ApexFullDeclaration,
   ApexMethodLike,
+  SummaryDocumented,
   TriggerDeclaration
 }
 import com.nawforce.apexlink.types.synthetic.CustomConstructorDeclaration
@@ -90,6 +91,8 @@ trait HoverProvider extends SourceOps {
     declaration match {
       case documented: DocumentedDeclaration =>
         documented.docComment.flatMap(doc => ApexDoc.markdown(doc.asString))
+      case summary: SummaryDocumented =>
+        summary.docText.flatMap(ApexDoc.markdown)
       case _ => None
     }
   }

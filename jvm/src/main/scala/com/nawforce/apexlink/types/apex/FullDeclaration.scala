@@ -413,7 +413,8 @@ abstract class FullDeclaration(
       localConstructors.map(_.summary).sortBy(_.parameters.length),
       localMethods.map(_.summary).sortBy(_.name),
       nestedTypes.map(_.summary).sortBy(_.name),
-      dependencySummary()
+      dependencySummary(),
+      docSummary
     )
   }
 }

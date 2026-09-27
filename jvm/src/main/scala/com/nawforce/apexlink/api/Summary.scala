@@ -48,7 +48,8 @@ case class TypeSummary(
   constructors: ArraySeq[ConstructorSummary],
   methods: ArraySeq[MethodSummary],
   nestedTypes: ArraySeq[TypeSummary],
-  dependents: Array[DependentSummary]
+  dependents: Array[DependentSummary],
+  doc: Option[DocSummary] = None
 ) {
 
   // For backwards compatibility in ApexFlow
@@ -115,8 +116,10 @@ case class FieldSummary(
   typeName: TypeName,
   readAccess: Modifier,
   writeAccess: Modifier,
-  dependents: Array[DependentSummary]
+  dependents: Array[DependentSummary],
+  doc: Option[DocSummary] = None
 ) {
+
   override def equals(that: Any): Boolean = {
     that match {
       case other: FieldSummary => other.canEqual(this) && doesEqual(other)
@@ -144,8 +147,10 @@ case class ConstructorSummary(
   idLocation: Location,
   modifiers: ArraySeq[Modifier],
   parameters: ArraySeq[ParameterSummary],
-  dependents: Array[DependentSummary]
+  dependents: Array[DependentSummary],
+  doc: Option[DocSummary] = None
 ) {
+
   override def equals(that: Any): Boolean = {
     that match {
       case other: ConstructorSummary => other.canEqual(this) && doesEqual(other)
@@ -174,7 +179,8 @@ case class MethodSummary(
   parameters: ArraySeq[ParameterSummary],
   hasBlock: Boolean,
   dependents: Array[DependentSummary],
-  isSynthetic: Boolean = false
+  isSynthetic: Boolean = false,
+  doc: Option[DocSummary] = None
 ) {
 
   typeName = typeName.intern
@@ -200,6 +206,11 @@ case class MethodSummary(
     this.dependents.sameElements(other.dependents)
   }
 }
+
+/** Location of an ApexDoc comment as a byte range of the declaring source file. The comment text is
+  * not held, it is recovered from the file when needed if the file still matches the summary.
+  */
+case class DocSummary(offset: Int, length: Int)
 
 /** Summary of a constructor or method parameters */
 case class ParameterSummary(name: String, var typeName: TypeName) {
@@ -276,6 +287,10 @@ object ConstructorSummary {
 object MethodSummary {
   implicit val rw: RW[MethodSummary]    = macroRW
   implicit val rwModifier: RW[Modifier] = macroRW
+}
+
+object DocSummary {
+  implicit val rw: RW[DocSummary] = macroRW
 }
 
 object ParameterSummary {

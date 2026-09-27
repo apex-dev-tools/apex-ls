@@ -125,9 +125,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Long descriptions are capped at 10 lines while recognised tag sections are retained, the whole
   output is length limited, and HTML, headings and unbalanced code fences in a comment cannot break
   the hover's structure. Malformed comments never produce diagnostics (#568)
+- Hover shows ApexDoc comments for types, methods, constructors, fields and properties loaded from
+  the parsed cache, so documentation no longer disappears on a warm workspace load. Summaries
+  record only the byte range of each comment, and the text is read back from the declaring file
+  when hovered, but only while that file still matches the summary's `sourceHash`. An edited,
+  missing or unreadable file gives the signature-only hover rather than stale documentation (#567)
 
 ### Changed
 
+- `TypeSummary`, `MethodSummary`, `FieldSummary` and `ConstructorSummary` gain a trailing
+  `doc: Option[DocSummary] = None` field holding the doc comment byte range. Existing source
+  that constructs these positionally still compiles, but binary consumers must be recompiled
+  against this release, and pattern matches that destructure these case classes need the extra
+  field. The doc range is not part of summary equality, so documentation-only edits do not
+  affect change detection (#567)
 - Hover results now identify their content as markdown and deliberately fence Apex type, method,
   and constructor signatures, so clients no longer have to guess the payload format or add their
   own code fence. Constructor headers now use the declaring type name and qualified parameter
