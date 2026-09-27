@@ -28,10 +28,16 @@ object ApexDoc {
   val MaxTagChars         = 300
   val MaxLength           = 3000
 
-  private val Ellipsis        = "…"
-  private val BannerChars     = "*=-_#+/"
-  private val TagLine         = "^\\s*@([A-Za-z][A-Za-z0-9_-]*)(.*)$".r
-  private val Dashes          = Set("-", "–", "—")
+  private val Ellipsis       = "…"
+  private val BannerChars    = "*=-_#+/"
+  private val TagLine        = "^\\s*@([A-Za-z][A-Za-z0-9_-]*)(.*)$".r
+  private val Separators     = Set("-", "–", "—", ":")
+  private val LineBreak      = "\r\n|[\r\n\u0085\u2028\u2029]"
+  private val Emphasis       = "^(\\*{1,3})[^*\\s](?:.*[^*\\s])?\\1(?:[^*]|$).*".r
+  private val LinkDefinition = "^\\[[^\\]]*\\]:.*".r
+  private val OrderedMarker  = "^\\d{1,9}[.)](?:\\s.*)?$".r
+  private val BlockMarker =
+    "^(?:[#>~=]|[-+*](?:\\s|$)|(?:[-*_]\\s*){3,}$|\\[[^\\]]*\\]:).*".r
   private val InlineTextTags  = Set("link", "linkplain", "literal", "hidden")
   private val MarkdownSpecial = "\\`*_[]#"
 
@@ -41,11 +47,6 @@ object ApexDoc {
     val lower = name.toLowerCase
     Aliases.getOrElse(lower, lower)
   }
-
-  /** Comment text with the delimiters, leading asterisk runs and banner lines removed. Absent when
-    * nothing but decoration remains.
-    */
-  def text(raw: String): Option[String] = Some(strip(raw).mkString("\n")).filter(_.nonEmpty)
 
   /** Markdown for a doc comment, absent if it holds nothing to show. Never fails; content that
     * cannot be rendered is left for the caller to fall back on the signature alone.
@@ -111,11 +112,11 @@ object ApexDoc {
 
     /* Only lines led by asterisks keep indentation, the common part of which is removed */
     val lines = body
-      .split("\r?\n", -1)
+      .split(LineBreak, -1)
       .toSeq
       .map(line => {
         val trimmed  = line.trim
-        val starred  = trimmed.startsWith("*")
+        val starred  = trimmed.startsWith("*") && !Emphasis.matches(trimmed)
         val content  = if (starred) expandIndent(trimmed.dropWhile(_ == '*')) else trimmed
         val cleaned  = stripTrailing(content)
         val isBanner = cleaned.trim.forall(c => BannerChars.indexOf(c) >= 0)
@@ -147,14 +148,14 @@ object ApexDoc {
     val (params, rest1)  = doc.tags.partition(t => t.kind == "param" && target(t).nonEmpty)
     val (returns, rest2) = rest1.partition(_.kind == "return")
     val (throws, rest3)  = rest2.partition(t => t.kind == "throws" && target(t).nonEmpty)
-    val (sees, others)   = rest3.partition(_.kind == "see")
+    val (sees, others)   = rest3.partition(t => t.kind == "see" && t.text.trim.nonEmpty)
 
     val sections = Seq(
       renderDescription(doc.description.split("\n", -1).toSeq),
       list("Parameters", params.map(targetItem)),
-      returns.map(t => s"**Returns**${separated(tagText(t.text))}"),
+      renderReturns(returns),
       list("Throws", throws.map(targetItem)),
-      list("See", sees.map(t => s"- ${tagText(t.text)}"))
+      list("See", sees.flatMap(t => listItem(t.text)))
     ) ++ others.map(renderOther)
 
     assemble(sections.filter(_.exists(_.nonEmpty)))
@@ -164,6 +165,11 @@ object ApexDoc {
     val (kept, truncated) = cap(collapseBlank(lines), MaxDescriptionLines, MaxDescriptionChars)
     val block             = renderBlock(kept)
     if (truncated) block :+ Ellipsis else block
+  }
+
+  private def renderReturns(returns: Seq[Tag]): Seq[String] = returns match {
+    case Seq(tag) => Seq(s"**Returns**${separated(tagText(tag.text))}")
+    case _        => list("Returns", returns.flatMap(t => listItem(t.text)))
   }
 
   private def renderOther(tag: Tag): Seq[String] = {
@@ -184,13 +190,16 @@ object ApexDoc {
   private def list(title: String, items: Seq[String]): Seq[String] =
     if (items.isEmpty) Nil else s"**$title**" +: items
 
+  private def listItem(text: String): Option[String] =
+    Some(tagText(text)).filter(_.nonEmpty).map(item => s"- ${escapeBlockStart(item)}")
+
   private def targetItem(tag: Tag): String = {
     val name = target(tag).replace("`", "")
     val text = tag.text.trim.split("\\s+", 2).lift(1).getOrElse("").trim
     val description = text.split("\\s+", 2) match {
-      case Array(dash, remainder) if Dashes.contains(dash) => remainder
-      case Array(dash) if Dashes.contains(dash)            => ""
-      case _                                               => text
+      case Array(dash, remainder) if Separators.contains(dash) => remainder
+      case Array(dash) if Separators.contains(dash)            => ""
+      case _                                                   => text
     }
     s"- `$name`${separated(tagText(description))}"
   }
@@ -216,12 +225,13 @@ object ApexDoc {
       val lines = if (out.isEmpty) section else "" +: section
       lines.foreach(line => {
         if (!truncated) {
-          if (length + line.length + 1 > MaxLength) {
+          val next = updateFence(fence, line)
+          if (length + line.length + closing(next) + Ellipsis.length + 1 > MaxLength) {
             truncated = true
           } else {
             out += line
             length += line.length + 1
-            fence = updateFence(fence, line)
+            fence = next
           }
         }
       })
@@ -230,6 +240,8 @@ object ApexDoc {
     if (truncated) out += Ellipsis
     Some(out.mkString("\n").trim).filter(_.nonEmpty)
   }
+
+  private def closing(fence: Option[Fence]): Int = fence.map(_.length + 1).getOrElse(0)
 
   /* Escapes lines outside fences and closes a fence left open, so nothing can leak into what follows */
   private def renderBlock(lines: Seq[String]): Seq[String] = {
@@ -249,7 +261,20 @@ object ApexDoc {
   private def escapeLine(line: String): String = {
     val indent = line.takeWhile(_.isWhitespace)
     val body   = line.drop(indent.length)
-    indent + (if (body.startsWith("#")) "\\" else "") + inline(body)
+    val escaped =
+      if (body.startsWith("#") || LinkDefinition.matches(body)) "\\" + body else body
+    indent + inline(escaped)
+  }
+
+  /* Stops text placed at the start of a list item from opening a heading, quote, list, break or
+   * link reference definition
+   */
+  private def escapeBlockStart(text: String): String = {
+    if (OrderedMarker.matches(text)) {
+      val digits = text.takeWhile(_.isDigit)
+      s"$digits\\${text.drop(digits.length)}"
+    } else if (BlockMarker.matches(text)) "\\" + text
+    else text
   }
 
   /* Renders inline tags and neutralises HTML, leaving other markdown in place */
@@ -283,6 +308,9 @@ object ApexDoc {
           case _ => out.append(escapeText(text.substring(i, end + 1)))
         }
         i = end + 1
+      } else if (c == '!' && text.startsWith("![", i)) {
+        out.append("\\!")
+        i += 1
       } else if (c == '<') {
         out.append("&lt;")
         i += 1
