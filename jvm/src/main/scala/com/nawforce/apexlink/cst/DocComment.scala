@@ -3,18 +3,29 @@
  */
 package com.nawforce.apexlink.cst
 
+import com.nawforce.apexlink.api.DocSummary
 import com.nawforce.runtime.parsers.CodeParser.ParserRuleContext
 import com.nawforce.runtime.parsers.{CodeParser, SourceData}
 import io.github.apexdevtools.apexparser.ApexLexer
 import org.antlr.v4.runtime.{BufferedTokenStream, Token}
 
+/** A declaration that may be able to locate its ApexDoc comment within its source file. */
+trait DocSummaryProvider {
+
+  /** Byte range of the doc comment within the source file, for recording in a summary. */
+  def docSummary: Option[DocSummary] = None
+}
+
 /** A declaration that may carry the ApexDoc comment written immediately before it. */
-trait DocumentedDeclaration {
+trait DocumentedDeclaration extends DocSummaryProvider {
 
   /** Byte span of the attached `/** ... */` comment, sharing the bytes of the source it was parsed
     * from rather than copying them. Absent for undocumented declarations.
     */
   var docComment: Option[SourceData] = None
+
+  override def docSummary: Option[DocSummary] =
+    docComment.map(doc => DocSummary(doc.offset, doc.length))
 }
 
 object DocComment {

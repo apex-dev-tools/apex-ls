@@ -15,6 +15,7 @@
 package com.nawforce.apexlink.types.apex
 
 import com.nawforce.apexlink.api._
+import com.nawforce.apexlink.cst.DocSummaryProvider
 import com.nawforce.apexlink.finding.TypeResolver
 import com.nawforce.apexlink.finding.TypeResolver.TypeCache
 import com.nawforce.apexlink.names.TypeNames._
@@ -30,8 +31,11 @@ import com.nawforce.pkgforce.parsers.Nature
 import com.nawforce.pkgforce.path.{Location, PathLike, PathLocation}
 import upickle.default._
 
+import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
+import scala.util.Try
+import scala.util.hashing.MurmurHash3
 
 /* Helper for bulk handling of DependentSummary, normally this logic would be encapsulated by DependentSummary but
  * that is exposed as part of the API so we are using this helper instead to hide logic.
@@ -241,6 +245,31 @@ trait SummaryDependencyHandler extends DependencyHolder {
   }
 }
 
+/** Summary element whose ApexDoc comment can be recovered from the source file it was built from.
+  * The file is only used while it still hashes to the summary sourceHash, so an edited, missing or
+  * unreadable file yields no documentation rather than a misaligned slice.
+  */
+trait SummaryDocumented extends DocSummaryProvider {
+  protected def docPath: PathLike
+  protected def docSourceHash: Int
+
+  def docText: Option[String] =
+    docSummary.flatMap(doc => SummaryDocumented.read(docPath, docSourceHash, doc))
+}
+
+object SummaryDocumented {
+  def read(path: PathLike, sourceHash: Int, doc: DocSummary): Option[String] = {
+    Try(path.readBytes()).toOption
+      .flatMap(_.toOption)
+      .filter(bytes =>
+        doc.offset >= 0 && doc.length > 0 && doc.offset.toLong + doc.length <= bytes.length &&
+          MurmurHash3.bytesHash(bytes) == sourceHash
+      )
+      .map(bytes => new String(bytes, doc.offset, doc.length, StandardCharsets.UTF_8))
+      .filter(text => text.startsWith("/**") && text.endsWith("*/"))
+  }
+}
+
 class SummaryParameter(parameterSummary: ParameterSummary) extends ParameterDeclaration {
 
   override val name: Name         = Names(parameterSummary.name)
@@ -252,9 +281,15 @@ class SummaryMethod(
   path: PathLike,
   val thisTypeId: TypeId,
   override val inTest: Boolean,
-  methodSummary: MethodSummary
+  methodSummary: MethodSummary,
+  sourceHash: Int
 ) extends ApexMethodLike
-    with SummaryDependencyHandler {
+    with SummaryDependencyHandler
+    with SummaryDocumented {
+
+  override protected def docPath: PathLike    = path
+  override protected def docSourceHash: Int   = sourceHash
+  override def docSummary: Option[DocSummary] = methodSummary.doc
 
   override val dependents: Array[DependentSummary] = methodSummary.dependents.map(_.intern)
 
@@ -293,9 +328,15 @@ class SummaryField(
   path: PathLike,
   val thisTypeId: TypeId,
   override val inTest: Boolean,
-  fieldSummary: FieldSummary
+  fieldSummary: FieldSummary,
+  sourceHash: Int
 ) extends ApexFieldLike
-    with SummaryDependencyHandler {
+    with SummaryDependencyHandler
+    with SummaryDocumented {
+
+  override protected def docPath: PathLike    = path
+  override protected def docSourceHash: Int   = sourceHash
+  override def docSummary: Option[DocSummary] = fieldSummary.doc
 
   override val dependents: Array[DependentSummary] = fieldSummary.dependents.map(_.intern)
 
@@ -314,9 +355,15 @@ class SummaryConstructor(
   path: PathLike,
   override val thisTypeId: TypeId,
   override val inTest: Boolean,
-  constructorSummary: ConstructorSummary
+  constructorSummary: ConstructorSummary,
+  sourceHash: Int
 ) extends ApexConstructorLike
-    with SummaryDependencyHandler {
+    with SummaryDependencyHandler
+    with SummaryDocumented {
+
+  override protected def docPath: PathLike    = path
+  override protected def docSourceHash: Int   = sourceHash
+  override def docSummary: Option[DocSummary] = constructorSummary.doc
 
   override val dependents: Array[DependentSummary] = constructorSummary.dependents.map(_.intern)
 
@@ -333,7 +380,8 @@ class SummaryDeclaration(
   val outerTypeName: Option[TypeName],
   typeSummary: TypeSummary
 ) extends ApexClassDeclaration
-    with SummaryDependencyHandler {
+    with SummaryDependencyHandler
+    with SummaryDocumented {
 
   override val dependents: Array[DependentSummary] = typeSummary.dependents.map(_.intern)
 
@@ -342,6 +390,10 @@ class SummaryDeclaration(
   override val sourceHash: Int        = typeSummary.sourceHash
   override val location: PathLocation = PathLocation(path, typeSummary.location)
   override val idLocation: Location   = typeSummary.idLocation
+
+  override protected def docPath: PathLike    = path
+  override protected def docSourceHash: Int   = sourceHash
+  override def docSummary: Option[DocSummary] = typeSummary.doc
 
   override val moduleDeclaration: Option[OPM.Module] = Some(module)
 
@@ -361,11 +413,13 @@ class SummaryDeclaration(
   override val blocks: ArraySeq[SummaryBlock] =
     typeSummary.blocks.map(new SummaryBlock(module, path, typeId, inTest, _))
   override val localFields: ArraySeq[SummaryField] =
-    typeSummary.fields.map(new SummaryField(module, path, typeId, inTest, _))
+    typeSummary.fields.map(new SummaryField(module, path, typeId, inTest, _, sourceHash))
   override val localConstructors: ArraySeq[SummaryConstructor] =
-    typeSummary.constructors.map(new SummaryConstructor(module, path, typeId, inTest, _))
+    typeSummary.constructors.map(
+      new SummaryConstructor(module, path, typeId, inTest, _, sourceHash)
+    )
   override val localMethods: ArraySeq[SummaryMethod] =
-    typeSummary.methods.map(new SummaryMethod(module, path, typeId, inTest, _))
+    typeSummary.methods.map(new SummaryMethod(module, path, typeId, inTest, _, sourceHash))
 
   override def summary: TypeSummary = {
     TypeSummary(
@@ -387,7 +441,8 @@ class SummaryDeclaration(
         .collect { case x: SummaryDeclaration => x }
         .map(_.summary)
         .sortBy(_.name),
-      dependents
+      dependents,
+      docSummary
     )
   }
 

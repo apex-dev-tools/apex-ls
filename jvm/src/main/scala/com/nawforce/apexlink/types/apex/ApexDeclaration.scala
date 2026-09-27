@@ -55,7 +55,10 @@ trait ApexVisibleConstructorLike extends ConstructorDeclaration {
 }
 
 /** Apex defined constructor core features, be they full or summary style */
-trait ApexConstructorLike extends ApexVisibleConstructorLike with Referenceable {
+trait ApexConstructorLike
+    extends ApexVisibleConstructorLike
+    with Referenceable
+    with DocSummaryProvider {
   val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
@@ -72,7 +75,8 @@ trait ApexConstructorLike extends ApexVisibleConstructorLike with Referenceable 
       idLocation,
       modifiers,
       parameters.map(_.serialise),
-      dependencySummary()
+      dependencySummary(),
+      docSummary
     )
   }
 }
@@ -85,7 +89,7 @@ trait ApexVisibleMethodLike extends MethodDeclaration {
 }
 
 /** Apex defined method core features, be they full or summary style */
-trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable {
+trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable with DocSummaryProvider {
   override val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
 
@@ -171,13 +175,14 @@ trait ApexMethodLike extends ApexVisibleMethodLike with Referenceable {
       parameters.map(_.serialise),
       hasBlock,
       dependencySummary(),
-      isSynthetic
+      isSynthetic,
+      docSummary
     )
   }
 }
 
 /** Apex defined fields core features, be they full or summary style */
-trait ApexFieldLike extends FieldDeclaration with Referenceable {
+trait ApexFieldLike extends FieldDeclaration with Referenceable with DocSummaryProvider {
   val thisTypeId: TypeId
   override def thisTypeIdOpt: Option[TypeId] = Some(thisTypeId)
   val nature: Nature
@@ -195,13 +200,14 @@ trait ApexFieldLike extends FieldDeclaration with Referenceable {
       typeName,
       readAccess,
       writeAccess,
-      dependencySummary()
+      dependencySummary(),
+      docSummary
     )
   }
 }
 
 /** Apex defined types core features, be they full or summary style */
-trait ApexDeclaration extends DependentType with IdLocatable {
+trait ApexDeclaration extends DependentType with IdLocatable with DocSummaryProvider {
 
   val module: OPM.Module
   val isEntryPoint: Boolean
