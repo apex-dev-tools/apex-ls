@@ -81,7 +81,7 @@ class ApexDocTest extends AnyFunSuite {
            | *   across multiple lines.
            | */""".stripMargin) ==
         """Handles opportunities
-          |  across multiple lines.
+          |across multiple lines.
           |
           |**@author** Salesforce.org
           |
@@ -201,15 +201,86 @@ class ApexDocTest extends AnyFunSuite {
       "",
       "/**",
       "*/",
+      "/**/",
       "/** @",
       "/** {@",
       "/** {@code",
       "/** ``` */",
       "/** @param - */",
       "/**\n@\n*/"
-    )
-      .foreach(raw => ApexDoc.markdown(raw))
-    assert(ApexDoc.markdown("/** @ */").contains("@"))
+    ).foreach(raw => ApexDoc.render(ApexDoc.parse(raw)))
+    assert(ApexDoc.render(ApexDoc.parse("")).isEmpty)
+    assert(ApexDoc.render(ApexDoc.parse("/**/")).isEmpty)
+    assert(ApexDoc.render(ApexDoc.parse("/** @")).contains("@"))
+    assert(ApexDoc.render(ApexDoc.parse("/** {@code")).contains("{@code"))
+    assert(ApexDoc.render(ApexDoc.parse("/** ``` */")).contains("```\n```"))
+    assert(ApexDoc.render(ApexDoc.parse("/**\n@\n*/")).contains("@"))
+    assert(md("/** @ */") == "@")
     assert(md("/** @param - */") == "**Parameters**\n- `-`")
+  }
+
+  test("Fence opened on a tag line is tracked") {
+    assert(
+      md(
+        "/**\n * @example ```\n * @AuraEnabled\n * public void x(){}\n * ```\n * @return y\n */"
+      ) ==
+        "**Returns** — y\n\n**@example**\n```\n@AuraEnabled\npublic void x(){}\n```"
+    )
+    assert(
+      md("/**\n * @description ```\n * @AuraEnabled\n * ```\n * @return y\n */") ==
+        "```\n@AuraEnabled\n```\n\n**Returns** — y"
+    )
+  }
+
+  test("Tabs and aligned continuation lines are dedented") {
+    assert(md("/**\n *\tSummary.\n *\n *\tMore detail.\n */") == "Summary.\n\nMore detail.")
+    assert(
+      md(
+        "/**\n * @description Summary\n *              with {@literal <b>}\n *\n *              More.\n */"
+      ) ==
+        "Summary\nwith &lt;b>\n\nMore."
+    )
+  }
+
+  test("CRLF line endings render") {
+    assert(
+      md("/**\r\n * Summary.\r\n * @param a - first\r\n * @return sum\r\n */") ==
+        "Summary.\n\n**Parameters**\n- `a` — first\n\n**Returns** — sum"
+    )
+  }
+
+  test("Linkplain renders as text and em dash separates parameter description") {
+    assert(md("/** See {@linkplain Foo#bar the bar} */") == "See Foo\\#bar the bar")
+    assert(md("/** @param a — first */") == "**Parameters**\n- `a` — first")
+  }
+
+  test("Escaped backticks do not open code spans") {
+    assert(md("/** \\`<img src=x onerror=alert(1)>` */") == "\\`&lt;img src=x onerror=alert(1)>\\`")
+    assert(md("/** \\`<!--` a\n * b --> c */") == "\\`&lt;!--\\` a\nb --> c")
+    assert(md("/** \\<b> */") == "&lt;b>")
+  }
+
+  test("Truncation never splits surrogate pairs") {
+    val emoji = "\uD83D\uDE00" * 200
+    val out   = md(s"/** @author a$emoji */")
+    val text  = out.stripPrefix("**@author** ").stripSuffix(" …")
+    assert(out.endsWith(" …"))
+    assert(!Character.isHighSurrogate(text.last))
+    assert(text.codePoints().allMatch(cp => !Character.isSurrogate(cp.toChar)))
+
+    val desc = md(s"/**\n * ${"\uD83D\uDE00" * 600}\n */")
+    assert(!Character.isHighSurrogate(desc.stripSuffix("\n…").last))
+  }
+
+  test("Over-long unbroken description is hard cut with an ellipsis") {
+    val out = md(s"/**\n *   ${"x" * 2000}\n * @return r */")
+    assert(out == "x" * ApexDoc.MaxDescriptionChars + "\n…\n\n**Returns** — r")
+  }
+
+  test("Long whitespace runs render quickly") {
+    val line  = "a" + " " * 50000 + "b"
+    val start = System.nanoTime()
+    assert(md(s"/**\n * $line\n * $line *\n */").startsWith("a"))
+    assert((System.nanoTime() - start) / 1000000 < 1000)
   }
 }

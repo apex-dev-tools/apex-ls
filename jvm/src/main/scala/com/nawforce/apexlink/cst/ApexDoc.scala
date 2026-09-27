@@ -53,8 +53,8 @@ object ApexDoc {
   def markdown(raw: String): Option[String] = Try(render(parse(raw))).toOption.flatten
 
   def parse(raw: String): Doc = {
-    val description          = ArrayBuffer[String]()
-    val tags                 = ArrayBuffer[(String, ArrayBuffer[String])]()
+    val description          = ArrayBuffer[Line]()
+    val tags                 = ArrayBuffer[(String, ArrayBuffer[Line])]()
     var current              = description
     var fence: Option[Fence] = None
 
@@ -63,24 +63,44 @@ object ApexDoc {
         case TagLine(name, rest) if fence.isEmpty =>
           val first = rest.trim.stripPrefix(":").trim
           if (canonicalName(name) == "description") {
-            if (description.exists(_.trim.nonEmpty)) description += ""
+            if (description.exists(_.text.trim.nonEmpty)) description += Line("", fromTag = false)
             current = description
           } else {
-            current = ArrayBuffer[String]()
+            current = ArrayBuffer[Line]()
             tags += ((name, current))
           }
-          if (first.nonEmpty) current += first
+          if (first.nonEmpty) {
+            fence = updateFence(fence, first)
+            current += Line(first, fromTag = true)
+          }
         case _ =>
           fence = updateFence(fence, line)
-          current += line
+          current += Line(line, fromTag = false)
       }
     })
 
-    Doc(
-      trimBlank(description.toSeq).mkString("\n"),
-      tags.map(t => Tag(t._1, trimBlank(t._2.toSeq).mkString("\n"))).toSeq
-    )
+    Doc(block(description.toSeq), tags.map(t => Tag(t._1, block(t._2.toSeq))).toSeq)
   }
+
+  private final case class Line(text: String, fromTag: Boolean)
+
+  /* Joins a block's lines, removing the indentation its continuation lines share. Text on a tag line
+   * was trimmed where the tag ended so it takes no part in finding the common indent.
+   */
+  private def block(lines: Seq[Line]): String = {
+    val continuation = lines.filterNot(_.fromTag).map(_.text)
+    val indent       = commonIndent(continuation)
+    trimBlank(lines.map(line => if (line.fromTag) line.text else dedent(line.text, indent)))
+      .mkString("\n")
+  }
+
+  private def commonIndent(lines: Seq[String]): Int = {
+    val indents = lines.filter(_.trim.nonEmpty).map(_.takeWhile(_ == ' ').length)
+    if (indents.isEmpty) 0 else indents.min
+  }
+
+  private def dedent(line: String, indent: Int): String =
+    line.drop(math.min(indent, line.takeWhile(_ == ' ').length))
 
   private[cst] def strip(raw: String): Seq[String] = {
     var body = raw.trim
@@ -89,20 +109,41 @@ object ApexDoc {
     if (body.endsWith("*/"))
       body = body.substring(0, body.length - 2).reverse.dropWhile(_ == '*').reverse
 
-    trimBlank(
-      body
-        .split("\r?\n", -1)
-        .toSeq
-        .map(line => {
-          val stripped = line.trim.dropWhile(_ == '*')
-          val unpadded = if (stripped.startsWith(" ")) stripped.substring(1) else stripped
-          val cleaned  = unpadded.replaceAll("\\s+\\*+\\s*$", "").replaceAll("\\s+$", "")
-          if (cleaned.trim.forall(c => BannerChars.indexOf(c) >= 0)) "" else cleaned
-        })
-    )
+    /* Only lines led by asterisks keep indentation, the common part of which is removed */
+    val lines = body
+      .split("\r?\n", -1)
+      .toSeq
+      .map(line => {
+        val trimmed  = line.trim
+        val starred  = trimmed.startsWith("*")
+        val content  = if (starred) expandIndent(trimmed.dropWhile(_ == '*')) else trimmed
+        val cleaned  = stripTrailing(content)
+        val isBanner = cleaned.trim.forall(c => BannerChars.indexOf(c) >= 0)
+        (if (isBanner) "" else cleaned, starred)
+      })
+    val indent = commonIndent(lines.filter(_._2).map(_._1))
+    trimBlank(lines.map(line => if (line._2) dedent(line._1, indent) else line._1))
   }
 
-  private def render(doc: Doc): Option[String] = {
+  private def expandIndent(line: String): String = {
+    val indent = line.takeWhile(_.isWhitespace)
+    indent.replace("\t", "    ") + line.substring(indent.length)
+  }
+
+  /* Removes trailing whitespace and a trailing box border of asterisks, scanning back from the end */
+  private def stripTrailing(line: String): String = {
+    var end = line.length
+    while (end > 0 && line.charAt(end - 1).isWhitespace) end -= 1
+    var stars = end
+    while (stars > 0 && line.charAt(stars - 1) == '*') stars -= 1
+    if (stars < end && stars > 0 && line.charAt(stars - 1).isWhitespace) {
+      end = stars
+      while (end > 0 && line.charAt(end - 1).isWhitespace) end -= 1
+    }
+    line.substring(0, end)
+  }
+
+  private[cst] def render(doc: Doc): Option[String] = {
     val (params, rest1)  = doc.tags.partition(t => t.kind == "param" && target(t).nonEmpty)
     val (returns, rest2) = rest1.partition(_.kind == "return")
     val (throws, rest3)  = rest2.partition(t => t.kind == "throws" && target(t).nonEmpty)
@@ -217,7 +258,10 @@ object ApexDoc {
     var i   = 0
     while (i < text.length) {
       val c = text.charAt(i)
-      if (c == '`') {
+      if (c == '\\' && i + 1 < text.length && isAsciiPunctuation(text.charAt(i + 1))) {
+        out.append(if (text.charAt(i + 1) == '<') "&lt;" else text.substring(i, i + 2))
+        i += 2
+      } else if (c == '`') {
         val run = text.indexWhere(_ != '`', i) match { case -1 => text.length - i; case j => j - i }
         val ticks = "`" * run
         val close = findRun(text, ticks, i + run)
@@ -251,6 +295,9 @@ object ApexDoc {
   }
 
   /* Position of a backtick run of exactly the same length, as markdown requires to close a span */
+  private def isAsciiPunctuation(c: Char): Boolean =
+    c < 128 && !c.isLetterOrDigit && !c.isWhitespace && !c.isControl
+
   private def findRun(text: String, ticks: String, from: Int): Int = {
     var j = text.indexOf(ticks, from)
     while (j >= 0) {
@@ -319,28 +366,34 @@ object ApexDoc {
 
   /* Takes whole lines up to the limits, cutting an over-long first line at a word boundary */
   private def cap(lines: Seq[String], maxLines: Int, maxChars: Int): (Seq[String], Boolean) = {
-    val kept  = ArrayBuffer[String]()
-    var chars = 0
+    val kept      = ArrayBuffer[String]()
+    var chars     = 0
+    var truncated = false
     lines.foreach(line => {
-      if (kept.size < maxLines && chars + line.length <= maxChars) {
+      if (!truncated && kept.size < maxLines && chars + line.length <= maxChars) {
         kept += line
         chars += line.length + 1
-      } else if (kept.isEmpty) {
+      } else if (!truncated && kept.isEmpty) {
         kept += truncate(line, maxChars)
-        chars = maxChars + 1
+        truncated = true
       } else {
-        chars = maxChars + 1
+        truncated = true
       }
     })
-    val result = trimBlank(kept.toSeq)
-    (result, kept.size < lines.size || result.headOption.exists(_ != lines.head))
+    (trimBlank(kept.toSeq), truncated)
   }
 
+  /* Cuts at the last word boundary that keeps some text, else hard, never splitting a surrogate pair */
   private def truncate(text: String, max: Int): String = {
     if (text.length <= max) text
     else {
       val space = text.lastIndexWhere(_.isWhitespace, max)
-      text.substring(0, if (space > 0) space else max).trim
+      if (space > 0 && text.substring(0, space).trim.nonEmpty)
+        text.substring(0, space).trim
+      else {
+        val cut = if (Character.isLowSurrogate(text.charAt(max))) max - 1 else max
+        text.substring(0, cut).trim
+      }
     }
   }
 
