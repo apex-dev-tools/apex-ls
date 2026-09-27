@@ -137,7 +137,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `doc: Option[DocSummary] = None` field holding the doc comment byte range. Existing source
   that constructs these positionally still compiles, but binary consumers must be recompiled
   against this release, and pattern matches that destructure these case classes need the extra
-  field (#567)
+  field. The doc range is not part of summary equality, so documentation-only edits do not
+  affect change detection (#567)
 - Hover results now identify their content as markdown and deliberately fence Apex type, method,
   and constructor signatures, so clients no longer have to guess the payload format or add their
   own code fence. Constructor headers now use the declaring type name and qualified parameter

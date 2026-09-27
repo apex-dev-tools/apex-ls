@@ -80,8 +80,7 @@ case class TypeSummary(
     this.constructors == other.constructors &&
     this.methods == other.methods &&
     this.nestedTypes == other.nestedTypes &&
-    this.dependents.sameElements(other.dependents) &&
-    this.doc == other.doc
+    this.dependents.sameElements(other.dependents)
   }
 }
 
@@ -138,8 +137,7 @@ case class FieldSummary(
     this.typeName == other.typeName &&
     this.readAccess == other.readAccess &&
     this.writeAccess == other.writeAccess &&
-    this.dependents.sameElements(other.dependents) &&
-    this.doc == other.doc
+    this.dependents.sameElements(other.dependents)
   }
 }
 
@@ -167,8 +165,7 @@ case class ConstructorSummary(
     this.idLocation == other.idLocation &&
     this.modifiers == other.modifiers &&
     this.parameters == other.parameters &&
-    this.dependents.sameElements(other.dependents) &&
-    this.doc == other.doc
+    this.dependents.sameElements(other.dependents)
   }
 }
 
@@ -206,8 +203,7 @@ case class MethodSummary(
     this.parameters == other.parameters &&
     this.hasBlock == other.hasBlock &&
     this.isSynthetic == other.isSynthetic &&
-    this.dependents.sameElements(other.dependents) &&
-    this.doc == other.doc
+    this.dependents.sameElements(other.dependents)
   }
 }
 

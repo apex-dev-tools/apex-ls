@@ -242,8 +242,12 @@ class SummaryDocHoverTest extends AnyFunSuite {
       Array(),
       doc
     )
-    assert(readBinary[TypeSummary](writeBinary(tpe)) == tpe)
-    assert(readBinary[TypeSummary](writeBinary(tpe)).methods.head.doc == doc)
+    val decoded = readBinary[TypeSummary](writeBinary(tpe))
+    assert(decoded == tpe)
+    assert(decoded.doc == doc)
+    assert(decoded.fields.head.doc == doc)
+    assert(decoded.constructors.head.doc == doc)
+    assert(decoded.methods.head.doc == doc)
 
     val undocumented = TypeSummary(
       1,
@@ -277,6 +281,54 @@ class SummaryDocHoverTest extends AnyFunSuite {
     assert(undocumented.doc.isEmpty)
     assert(undocumented.constructors.head.doc.isEmpty)
     assert(undocumented.methods.head.doc.isEmpty)
-    assert(readBinary[TypeSummary](writeBinary(undocumented)) == undocumented)
+    val decodedUndocumented = readBinary[TypeSummary](writeBinary(undocumented))
+    assert(decodedUndocumented == undocumented)
+    assert(decodedUndocumented.doc.isEmpty)
+    assert(decodedUndocumented.fields.head.doc.isEmpty)
+    assert(decodedUndocumented.constructors.head.doc.isEmpty)
+    assert(decodedUndocumented.methods.head.doc.isEmpty)
+  }
+
+  test("doc offsets do not affect summary equality") {
+    val location = Location(1, 0, 1, 10)
+    val doc      = Some(DocSummary(3, 12))
+    val method =
+      MethodSummary(location, location, "run", ArraySeq(), TypeName.Void, ArraySeq(), true, Array())
+    val field = FieldSummary(
+      location,
+      location,
+      "name",
+      com.nawforce.pkgforce.parsers.FIELD_NATURE,
+      ArraySeq(),
+      TypeNames.String,
+      com.nawforce.pkgforce.modifiers.PUBLIC_MODIFIER,
+      com.nawforce.pkgforce.modifiers.PUBLIC_MODIFIER,
+      Array()
+    )
+    val constructor = ConstructorSummary(location, location, ArraySeq(), ArraySeq(), Array())
+    val tpe = TypeSummary(
+      1,
+      location,
+      location,
+      "Dummy",
+      TypeName(Name("Dummy")),
+      "class",
+      ArraySeq(),
+      inTest = false,
+      None,
+      ArraySeq(),
+      ArraySeq(),
+      ArraySeq(field),
+      ArraySeq(constructor),
+      ArraySeq(method),
+      ArraySeq(),
+      Array()
+    )
+
+    assert(method.copy(doc = doc) == method)
+    assert(field.copy(doc = doc) == field)
+    assert(constructor.copy(doc = doc) == constructor)
+    assert(tpe.copy(doc = doc) == tpe)
+    assert(tpe.copy(doc = doc, methods = ArraySeq(method.copy(doc = doc))) == tpe)
   }
 }
