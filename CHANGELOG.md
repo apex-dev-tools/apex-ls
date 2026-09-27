@@ -119,12 +119,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is deliberately tolerant of real-world comments: decorative banners, `**/` terminators and lines
   without a leading `*` are handled, `@description` is treated as the main description, and
   `@exception`, `@returns` and `@params` are read as `@throws`, `@return` and `@param`, including
-  `@param name - description`. Parameters, return, throws and see-also tags get their own
-  sections, while other tags, including unknown and misspelled ones, stay visible as `**@tag**
-  value`. `{@code}` renders as code, and `{@link}`, `{@literal}` and `{@hidden}` render as text.
-  Long descriptions are capped at 10 lines while recognised tag sections are retained, the whole
-  output is length limited, and HTML, headings and unbalanced code fences in a comment cannot break
-  the hover's structure. Malformed comments never produce diagnostics (#568)
+  `@param name - description` and `@param name : description`. Parameters, return, throws and
+  see-also tags get their own sections, with repeated return tags listed separately, while other
+  tags, including unknown and misspelled ones, stay visible as `**@tag** value`. `{@code}` renders
+  as code, and `{@link}`, `{@linkplain}`, `{@literal}` and `{@hidden}` render as text. Long
+  descriptions are capped at 10 lines and 1000 characters while recognised tag sections are
+  retained, and the whole output, including any code fence it has to close, is capped at 3000
+  characters. HTML, images, headings, link reference definitions and unbalanced code fences in a
+  comment cannot break the hover's structure. CR-only and Unicode line separators are read as line
+  breaks, and a line starting with bold text is not mistaken for asterisk decoration. Malformed
+  comments never produce diagnostics (#568, #577)
 - Hover shows ApexDoc comments for types, methods, constructors, fields and properties loaded from
   the parsed cache, so documentation no longer disappears on a warm workspace load. Summaries
   record only the byte range of each comment, and the text is read back from the declaring file
