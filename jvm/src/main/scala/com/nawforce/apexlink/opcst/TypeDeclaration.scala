@@ -27,6 +27,7 @@ import com.nawforce.apexlink.cst.{
   CST,
   ClassBodyDeclaration,
   ClassDeclaration,
+  DocumentedDeclaration,
   EnumDeclaration,
   Expression,
   FormalParameter,
@@ -84,6 +85,31 @@ private[opcst] object OutlineParserId {
       src.location.endLineOffset
     )
     id
+  }
+}
+
+private[opcst] object OutlineParserDocComment {
+
+  /** Attach the doc comment the outline parser located before a declaration as a slice of the
+    * source bytes, leaving the declaration undocumented when there is none.
+    */
+  def attach(
+    declaration: DocumentedDeclaration,
+    docLocation: Option[OPLocation],
+    source: Source
+  ): Unit = {
+    docLocation.foreach(location => {
+      val code = source.code
+      declaration.docComment = Some(
+        SourceData(
+          code.source,
+          code.offset + location.startByteOffset,
+          location.endByteOffset - location.startByteOffset,
+          code.sourceHash,
+          code.isASCII
+        )
+      )
+    })
   }
 }
 
@@ -177,6 +203,7 @@ private[opcst] object OutlineParserClassDeclaration {
     )
     declaration.superTypeOccurrences =
       SourceTypeOccurrence.concat(extendOccurrences, implementsOccurrences)
+    OutlineParserDocComment.attach(declaration, ctd.docLocation, source)
     stampLocation(
       declaration,
       ctd.location.copy(
@@ -269,6 +296,7 @@ private[opcst] object OutlineParserInterfaceDeclaration {
       ArraySeq.from(methods)
     )
     declaration.superTypeOccurrences = implementsOccurrences
+    OutlineParserDocComment.attach(declaration, itd.docLocation, source)
     stampLocation(
       declaration,
       itd.location.copy(
@@ -310,7 +338,7 @@ private[opcst] object OutlineParserEnumDeclaration {
 
     val typeContext = new RelativeTypeContext
 
-    val fields = etd.fields.flatMap(f => constructEnumConstant(f.id, source, thisType))
+    val fields = etd.fields.flatMap(f => constructEnumConstant(f, source, thisType))
 
     val declaration = EnumDeclaration(
       source,
@@ -323,6 +351,7 @@ private[opcst] object OutlineParserEnumDeclaration {
       thisType.inTest,
       ArraySeq.from(fields)
     )
+    OutlineParserDocComment.attach(declaration, etd.docLocation, source)
     stampLocation(
       declaration,
       etd.location.copy(
@@ -336,10 +365,12 @@ private[opcst] object OutlineParserEnumDeclaration {
   }
 
   private def constructEnumConstant(
-    id: OPId,
+    fd: OPFieldDeclaration,
     source: Source,
     thisType: ThisType
   ): Option[ClassBodyDeclaration] = {
+
+    val id = fd.id
 
     val modifierResults = enumConstantModifiers()
     val vd =
@@ -352,6 +383,7 @@ private[opcst] object OutlineParserEnumDeclaration {
 
     val declaration =
       ApexFieldDeclaration(thisType, modifierResults, thisType.typeName, vd, isEnumConstant = true)
+    OutlineParserDocComment.attach(declaration, fd.docLocation, source)
     stampLocation(
       declaration,
       id.location.copy(startLineOffset = id.location.startLineOffset),
@@ -393,6 +425,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
 
     val declaration =
       ApexConstructorDeclaration(modifierResults, qualifiedName, parameters, thisType, block)
+    OutlineParserDocComment.attach(declaration, cd.docLocation, source)
     val location = OPLocation(
       cd.id.location.startLine,
       cd.id.location.startLineOffset,
@@ -443,6 +476,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       parameters,
       block
     )
+    OutlineParserDocComment.attach(declaration, md.docLocation, source)
 
     val location = OPLocation(
       md.typeRef
@@ -498,6 +532,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       parameters,
       None
     )
+    OutlineParserDocComment.attach(declaration, md.docLocation, source)
 
     val location = OPLocation(
       md.typeRef
@@ -554,6 +589,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
       vd,
       typeOccurrences = fieldTypeOccurrences
     )
+    OutlineParserDocComment.attach(declaration, fd.docLocation, source)
     val location = OPLocation(
       fd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.location.startLine,
       fd.typeRef
@@ -705,6 +741,7 @@ private[opcst] object OutlineParserClassBodyDeclaration {
         propertyBlocks,
         propertyTypeOccurrences
       )
+    OutlineParserDocComment.attach(declaration, pd.docLocation, source)
 
     val location = OPLocation(
       pd.typeRef.asInstanceOf[UnresolvedTypeRef].typeNameSegments(0).id.location.startLine,

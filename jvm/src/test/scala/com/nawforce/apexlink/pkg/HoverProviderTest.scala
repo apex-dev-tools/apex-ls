@@ -6,6 +6,7 @@ package com.nawforce.apexlink.pkg
 import com.nawforce.apexlink.TestHelper.{CURSOR, locToString}
 import com.nawforce.apexlink.rpc.HoverItem
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.apexlink.api.OutlineParserSingleThreaded
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
 import org.scalatest.funsuite.AnyFunSuite
@@ -284,6 +285,49 @@ class HoverProviderTest extends AnyFunSuite with TestHelper {
           )
           assert(classHover.content.get == "```apex\npublic class Dummy\n```\n\nA dummy class.")
       }
+    }
+  }
+
+  test("Hover for documented external class and constructor loaded by outline parser") {
+    val contentAndCursorPos =
+      withCursor(s"public virtual class Foo {public void after(){new Du${CURSOR}mmy(1);} }")
+    val dummy =
+      """/** A dummy class. */
+        |public class Dummy {
+        |  /** Builds a dummy. */
+        |  public Dummy(Integer a) {}
+        |  public Dummy() {}
+        |}""".stripMargin
+    FileSystemHelper.run(Map("Foo.cls" -> contentAndCursorPos._1, "Dummy.cls" -> dummy)) {
+      root: PathLike =>
+        val org = createHappyOrg(root, Some(OutlineParserSingleThreaded.shortName))
+        val hoverItem =
+          org.unmanaged.getHover(root.join("Foo.cls"), line = 1, contentAndCursorPos._2, None)
+        assert(
+          hoverItem.content.get ==
+            "```apex\npublic Dummy(System.Integer a)\n```\n\nBuilds a dummy."
+        )
+
+        val classCursor =
+          withCursor(s"public virtual class Foo {public void after(){Du${CURSOR}mmy.toString();} }")
+        val classHover =
+          org.unmanaged.getHover(
+            root.join("Foo.cls"),
+            line = 1,
+            classCursor._2,
+            Some(classCursor._1)
+          )
+        assert(classHover.content.get == "```apex\npublic class Dummy\n```\n\nA dummy class.")
+
+        val undocumentedCursor =
+          withCursor(s"public virtual class Foo {public void after(){new Du${CURSOR}mmy();} }")
+        val undocumentedHover = org.unmanaged.getHover(
+          root.join("Foo.cls"),
+          line = 1,
+          undocumentedCursor._2,
+          Some(undocumentedCursor._1)
+        )
+        assert(undocumentedHover.content.get == "```apex\npublic Dummy()\n```")
     }
   }
 

@@ -4,6 +4,7 @@
 package com.nawforce.apexlink.cst
 
 import com.nawforce.apexlink.TestHelper
+import com.nawforce.apexlink.api.OutlineParserSingleThreaded
 import com.nawforce.apexlink.types.apex.{FullDeclaration, TriggerDeclaration}
 import com.nawforce.pkgforce.names.{Name, TypeName}
 import com.nawforce.pkgforce.path.PathLike
@@ -23,6 +24,28 @@ class DocCommentTest extends AnyFunSuite with TestHelper {
         op(unmanagedClass("Dummy").get.asInstanceOf[FullDeclaration])
       }
     }
+  }
+
+  private def outlineClass(content: String)(op: FullDeclaration => Unit): Unit = {
+    FileSystemHelper.run(Map("Dummy.cls" -> content)) { root: PathLike =>
+      createOrg(root, Some(OutlineParserSingleThreaded.shortName))
+      op(unmanagedClass("Dummy").get.asInstanceOf[FullDeclaration])
+    }
+  }
+
+  /* Doc comment text of a type and everything declared within it, keyed by declaration path */
+  private def docTexts(td: FullDeclaration): Map[String, Option[String]] = {
+    def collect(
+      prefix: String,
+      declaration: ClassBodyDeclaration
+    ): Seq[(String, Option[String])] = {
+      val key = s"$prefix/${declaration.getClass.getSimpleName}:${declaration.name}"
+      (key -> docText(declaration)) +: (declaration match {
+        case inner: FullDeclaration => inner.bodyDeclarations.flatMap(collect(key, _))
+        case _                      => Seq()
+      })
+    }
+    (("" -> docText(td)) +: td.bodyDeclarations.flatMap(collect("", _))).toMap
   }
 
   private def docText(declaration: DocumentedDeclaration): Option[String] =
@@ -176,5 +199,81 @@ class DocCommentTest extends AnyFunSuite with TestHelper {
     assert(DocComment.text("/*****/").isEmpty)
     assert(DocComment.text("/**********\n **********\n **********/").isEmpty)
     assert(DocComment.text("/**\n *\n *\n */").isEmpty)
+  }
+
+  private val allDeclarations =
+    """/** Class doc */
+      |@IsTest
+      |public class Dummy {
+      |  /** Field doc */
+      |  @TestVisible
+      |  private static String field;
+      |  /** Multiple field doc */
+      |  private Integer first, second;
+      |  /** Property doc */
+      |  public Integer prop { get; set; }
+      |  /** Constructor doc */
+      |  public Dummy() {}
+      |  /**
+      |   * Método doc
+      |   */
+      |  @AuraEnabled
+      |  public static void method() {}
+      |  /** Initializer doc */
+      |  static {}
+      |  public void undocumented() {}
+      |  /** Separated doc */
+      |  // Not a doc comment
+      |  public void separated() {}
+      |  /** Inner doc */
+      |  public class Inner { /** Inner method doc */ public void run() {} }
+      |  /** Interface doc */
+      |  public interface Iface { /** Iface method doc */ void run(); void other(); }
+      |  /** Enum doc */
+      |  public enum Colour { /** Red doc */ RED, GREEN }
+      |}""".stripMargin
+
+  test("Outline parser doc comments match ANTLR") {
+    var antlrDocs: Map[String, Option[String]] = Map()
+    antlrClass(allDeclarations) { td => antlrDocs = docTexts(td) }
+    outlineClass(allDeclarations) { td =>
+      val outlineDocs = docTexts(td)
+      assert(outlineDocs.values.count(_.nonEmpty) == 13)
+      assert(outlineDocs == antlrDocs)
+    }
+  }
+
+  test("Outline parser attaches doc comments to types and members") {
+    outlineClass(allDeclarations) { td =>
+      assert(docText(td).contains("/** Class doc */"))
+      assert(docText(member(td, "field")).contains("/** Field doc */"))
+      assert(docText(member(td, "first")).contains("/** Multiple field doc */"))
+      assert(docText(member(td, "second")).contains("/** Multiple field doc */"))
+      assert(docText(member(td, "prop")).contains("/** Property doc */"))
+      assert(docText(member(td, "Dummy")).contains("/** Constructor doc */"))
+      assert(docText(member(td, "method")).contains("/**\n   * Método doc\n   */"))
+      assert(member(td, "undocumented").docComment.isEmpty)
+      assert(member(td, "separated").docComment.isEmpty)
+      val iface = member(td, "Iface").asInstanceOf[FullDeclaration]
+      assert(docText(iface).contains("/** Interface doc */"))
+      assert(docText(member(iface, "run")).contains("/** Iface method doc */"))
+      assert(member(iface, "other").docComment.isEmpty)
+      val colour = member(td, "Colour").asInstanceOf[FullDeclaration]
+      assert(docText(colour).contains("/** Enum doc */"))
+      assert(docText(member(colour, "RED")).contains("/** Red doc */"))
+      assert(member(colour, "GREEN").docComment.isEmpty)
+    }
+  }
+
+  test("Outline parser doc comment shares source bytes without copying") {
+    outlineClass("""public class Dummy {
+        |  /** Método doc */
+        |  public void method() {}
+        |}""".stripMargin) { td =>
+      assert(td.docComment.isEmpty)
+      val doc = member(td, "method").docComment.get
+      assert(doc.source eq td.source.code.source)
+      assert(doc.asString == "/** Método doc */")
+    }
   }
 }
