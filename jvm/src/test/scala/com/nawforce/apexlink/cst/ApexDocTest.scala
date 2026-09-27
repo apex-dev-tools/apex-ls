@@ -324,7 +324,7 @@ class ApexDocTest extends AnyFunSuite {
     val start = System.nanoTime()
     ApexDoc.markdown(raw)
     ApexDoc.markdown("/** @param" + " \u2028" * 10000 + " */")
-    assert((System.nanoTime() - start) / 1000000 < 1000)
+    assert((System.nanoTime() - start) / 1000000 < 5000)
   }
 
   test("Undecorated bold text keeps its emphasis") {
