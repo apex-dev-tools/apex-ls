@@ -15,7 +15,6 @@
 package io.github.apexdevtools.apexls
 
 import com.nawforce.apexlink.rpc.BombScore
-import com.nawforce.pkgforce.names.TypeIdentifier
 
 private[apexls] object DependencyBombsCommand extends BatchCommand {
   override type Result = Array[BombScore]
@@ -34,23 +33,22 @@ private[apexls] object DependencyBombsCommand extends BatchCommand {
     DependencyBombsArguments.parse(args).map { arguments =>
       context.org.get
         .getDependencyBombs(arguments.count)
-        .sortBy(bomb => (-bomb.score, identifierName(bomb.identifier)))
+        .sortBy(bomb => (-bomb.score, BatchTypeIdentifiers.name(bomb.identifier)))
     }
   }
 
   override def writeResult(result: Array[BombScore]): ujson.Value = {
     val bombs = result.map { bomb =>
       ujson.Obj(
-        "name"   -> identifierName(bomb.identifier),
-        "usedBy" -> bomb.usedBy,
-        "uses"   -> bomb.uses,
-        "score"  -> bomb.score
+        "name"      -> BatchTypeIdentifiers.name(bomb.identifier),
+        "namespace" -> BatchTypeIdentifiers.namespace(bomb.identifier),
+        "usedBy"    -> bomb.usedBy,
+        "uses"      -> bomb.uses,
+        "score"     -> bomb.score
       )
     }
     ujson.Obj("bombs" -> ujson.Arr(bombs.toIndexedSeq: _*))
   }
-
-  private def identifierName(identifier: TypeIdentifier): String = identifier.typeName.toString
 
   private final case class DependencyBombsArguments(count: Int)
 

@@ -33,17 +33,21 @@ private[apexls] object DependencyReportCommand extends BatchCommand {
   }
 
   override def writeResult(result: Array[DependencyNode]): ujson.Value = {
-    val nodes = result.sortBy(node => identifierName(node.identifier)).map { node =>
+    val nodes = result.sortBy(node => BatchTypeIdentifiers.name(node.identifier)).map { node =>
       ujson.Obj(
-        "name"               -> identifierName(node.identifier),
-        "nature"             -> node.nature,
-        "size"               -> ujson.Num(node.size.toDouble),
-        "transitiveCount"    -> node.transitiveCount,
-        "maxDependencyCount" -> optionalNumber(node.maxDependencyCount),
-        "isEntryPoint"       -> node.isEntryPoint,
-        "extending"          -> identifiers(node.extending),
-        "implementing"       -> identifiers(node.implementing),
-        "using"              -> identifiers(node.using)
+        "name"                    -> BatchTypeIdentifiers.name(node.identifier),
+        "namespace"               -> BatchTypeIdentifiers.namespace(node.identifier),
+        "nature"                  -> node.nature,
+        "size"                    -> ujson.Num(node.size.toDouble),
+        "transitiveCount"         -> node.transitiveCount,
+        "maxDependencyCount"      -> optionalNumber(node.maxDependencyCount),
+        "isEntryPoint"            -> node.isEntryPoint,
+        "extending"               -> identifiers(node.extending),
+        "implementing"            -> identifiers(node.implementing),
+        "using"                   -> identifiers(node.using),
+        "extendingIdentifiers"    -> identifierObjects(node.extending),
+        "implementingIdentifiers" -> identifierObjects(node.implementing),
+        "usingIdentifiers"        -> identifierObjects(node.using)
       )
     }
     ujson.Obj("nodes" -> ujson.Arr(nodes.toIndexedSeq: _*))
@@ -53,9 +57,16 @@ private[apexls] object DependencyReportCommand extends BatchCommand {
     value.map(ujson.Num(_)).getOrElse(ujson.Null)
   }
 
-  private def identifierName(identifier: TypeIdentifier): String = identifier.typeName.toString
+  private def sorted(values: Array[TypeIdentifier]): Array[TypeIdentifier] = {
+    values.sortBy(BatchTypeIdentifiers.name)
+  }
 
   private def identifiers(values: Array[TypeIdentifier]): ujson.Arr = {
-    ujson.Arr(values.map(identifierName).sorted.map(ujson.Str).toIndexedSeq: _*)
+    ujson.Arr(sorted(values).map(id => ujson.Str(BatchTypeIdentifiers.name(id))).toIndexedSeq: _*)
+  }
+
+  /** In the same order as [[identifiers]], so the two arrays correspond by index */
+  private def identifierObjects(values: Array[TypeIdentifier]): ujson.Arr = {
+    ujson.Arr(sorted(values).map(BatchTypeIdentifiers.toJson).toIndexedSeq: _*)
   }
 }

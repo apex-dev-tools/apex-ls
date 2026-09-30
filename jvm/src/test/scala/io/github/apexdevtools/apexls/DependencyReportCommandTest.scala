@@ -43,6 +43,7 @@ class DependencyReportCommandTest extends AnyFunSuite with BatchCommandTestSuppo
       assert(
         subject.obj.keySet == Set(
           "name",
+          "namespace",
           "nature",
           "size",
           "transitiveCount",
@@ -50,9 +51,13 @@ class DependencyReportCommandTest extends AnyFunSuite with BatchCommandTestSuppo
           "isEntryPoint",
           "extending",
           "implementing",
-          "using"
+          "using",
+          "extendingIdentifiers",
+          "implementingIdentifiers",
+          "usingIdentifiers"
         )
       )
+      assert(subject("namespace").str == "pkg")
       assert(subject("nature").str == "class")
       assert(subject("size").num > 0)
       assert(subject("transitiveCount").num == 3)
@@ -61,7 +66,39 @@ class DependencyReportCommandTest extends AnyFunSuite with BatchCommandTestSuppo
       assert(subject("extending").arr.map(_.str) == Seq("pkg.Base"))
       assert(subject("implementing").arr.map(_.str) == Seq("pkg.Contract"))
       assert(subject("using").arr.map(_.str) == Seq("pkg.Helper"))
+      assert(
+        subject("extendingIdentifiers") == ujson
+          .Arr(ujson.Obj("name" -> "pkg.Base", "namespace" -> "pkg"))
+      )
+      assert(
+        subject("implementingIdentifiers") == ujson
+          .Arr(ujson.Obj("name" -> "pkg.Contract", "namespace" -> "pkg"))
+      )
+      assert(
+        subject("usingIdentifiers") == ujson
+          .Arr(ujson.Obj("name" -> "pkg.Helper", "namespace" -> "pkg"))
+      )
       assert(first.stderr.isEmpty)
+    }
+  }
+
+  test("dependency-report identifier arrays follow the name arrays without a namespace") {
+    val files = Map(
+      "sfdx-project.json" -> project("", Seq(".")),
+      "Alpha.cls"         -> "public class Alpha {}",
+      "Beta.cls"          -> "public class Beta {}",
+      "Subject.cls"       -> "public class Subject { Beta b; Alpha a; }"
+    )
+
+    FileSystemHelper.runTempDir(files) { workspace =>
+      val invocation = invoke(workspace, "dependency-report", cacheEnabled = false)
+      assert(invocation.status == 0)
+
+      val subject = invocation.json("result")("nodes").arr.find(_("name").str == "Subject").get
+      assert(subject("namespace").isNull)
+      assert(subject("using").arr.map(_.str) == Seq("Alpha", "Beta"))
+      assert(subject("usingIdentifiers").arr.map(_("name").str) == Seq("Alpha", "Beta"))
+      assert(subject("usingIdentifiers").arr.forall(_("namespace").isNull))
     }
   }
 
