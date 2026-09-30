@@ -158,6 +158,48 @@ class BatchTest extends AnyFunSuite {
     assert(captures.head.cacheEnabled)
     assert(captures(1).workspace == "/workspace with spaces")
     assert(!captures(1).cacheEnabled)
+    assert(captures.forall(_.loggingLevel == "none"))
+  }
+
+  test("logging level option is passed to workspace commands") {
+    val command  = new TestCommand("workspace", requiresWorkspace = true)
+    val captures = collection.mutable.ArrayBuffer[BatchOptions]()
+    val loader = new BatchWorkspaceLoader {
+      override def load(options: BatchOptions): Either[BatchDispatchFailure, Org] = {
+        captures += options
+        Right(null.asInstanceOf[Org])
+      }
+    }
+
+    Seq("none", "info", "debug", "trace").foreach { level =>
+      val result = invoke(
+        Array("workspace", "--workspace", "/workspace", "--log-level", level),
+        commands = Seq(command),
+        loader = loader
+      )
+      assert(result.status == 0)
+    }
+    assert(captures.map(_.loggingLevel) == Seq("none", "info", "debug", "trace"))
+
+    val inline = invoke(
+      Array("workspace", "--workspace", "/workspace", "--log-level=debug"),
+      commands = Seq(command),
+      loader = loader
+    )
+    assert(inline.status == 0)
+    assert(captures.last.loggingLevel == "debug")
+  }
+
+  test("invalid logging levels are argument failures") {
+    Seq(
+      Array("ping", "--log-level", "verbose"),
+      Array("ping", "--log-level"),
+      Array("ping", "--log-level=info", "--log-level=debug")
+    ).foreach { args =>
+      val result = invoke(args)
+      assert(result.status == 1)
+      assert(result.json("error")("code").str == "INVALID_ARGUMENT")
+    }
   }
 
   test("thrown command exceptions return analysis failures and keep stdout clean") {

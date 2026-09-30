@@ -19,14 +19,19 @@ import scala.collection.mutable
 private[apexls] final case class BatchOptions(
   workspace: String,
   cacheDirectory: Option[String],
-  cacheEnabled: Boolean
+  cacheEnabled: Boolean,
+  loggingLevel: String = BatchOptions.DefaultLoggingLevel
 )
 
 private[apexls] object BatchOptions {
+  final val DefaultLoggingLevel: String = "none"
+  private final val LoggingLevels       = Seq("none", "info", "debug", "trace")
+
   def parse(args: IndexedSeq[String]): Either[BatchError, (BatchOptions, Seq[String])] = {
     var workspace      = Option(System.getProperty("user.dir")).getOrElse(".")
     var cacheDirectory = Option.empty[String]
     var cacheEnabled   = true
+    var loggingLevel   = DefaultLoggingLevel
     var index          = 0
     val commandArgs    = mutable.ArrayBuffer[String]()
     val seen           = mutable.Set[String]()
@@ -63,6 +68,19 @@ private[apexls] object BatchOptions {
             case Left(error)      => return Left(error)
             case Right(candidate) => cacheDirectory = Some(candidate)
           }
+        case "--log-level" =>
+          if (!seen.add(option)) return duplicate(option)
+          value(option, inlineValue) match {
+            case Left(error)                                           => return Left(error)
+            case Right(candidate) if LoggingLevels.contains(candidate) => loggingLevel = candidate
+            case Right(candidate) =>
+              return Left(
+                BatchError(
+                  "INVALID_ARGUMENT",
+                  s"Unknown logging level '$candidate', expected one of ${LoggingLevels.mkString(", ")}"
+                )
+              )
+          }
         case "--no-cache" =>
           if (inlineValue.nonEmpty) {
             return Left(BatchError("INVALID_ARGUMENT", "Option '--no-cache' does not take a value"))
@@ -74,7 +92,7 @@ private[apexls] object BatchOptions {
       index += 1
     }
 
-    Right((BatchOptions(workspace, cacheDirectory, cacheEnabled), commandArgs.toSeq))
+    Right((BatchOptions(workspace, cacheDirectory, cacheEnabled, loggingLevel), commandArgs.toSeq))
   }
 
   private def splitOption(token: String): (String, Option[String]) = {
