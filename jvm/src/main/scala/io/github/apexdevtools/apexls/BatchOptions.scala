@@ -71,7 +71,7 @@ private[apexls] object BatchOptions {
         case "--log-level" =>
           if (!seen.add(option)) return duplicate(option)
           value(option, inlineValue) match {
-            case Left(error) => return Left(error)
+            case Left(error)                                           => return Left(error)
             case Right(candidate) if LoggingLevels.contains(candidate) => loggingLevel = candidate
             case Right(candidate) =>
               return Left(

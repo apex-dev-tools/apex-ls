@@ -66,10 +66,8 @@ class DependencyReportCommandTest extends AnyFunSuite with BatchCommandTestSuppo
   }
 
   test("dependency-report writes workspace load logs to stderr at the requested level") {
-    val files = Map(
-      "sfdx-project.json" -> project("pkg", Seq(".")),
-      "Helper.cls"        -> "public class Helper {}"
-    )
+    val files =
+      Map("sfdx-project.json" -> project("pkg", Seq(".")), "Helper.cls" -> "public class Helper {}")
 
     FileSystemHelper.runTempDir(files) { workspace =>
       val quiet = invoke(workspace, "dependency-report", cacheEnabled = false)
