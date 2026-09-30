@@ -169,15 +169,19 @@ trait OrgTestClasses {
       .headOption
   }
 
-  /** Collect source information from a summary, examines super classes & interfaces */
+  /** Collect source information from a summary, examines super classes & interfaces. A type
+    * already collected has had these examined, so is not examined again as they may form a cycle.
+    */
   private def sourcesForType(
     td: ApexDeclaration,
     primary: Boolean,
     accum: mutable.Set[NodeInfo]
   ): Unit = {
-    accum.add(NodeInfo(td, primary))
-    sourcesForSuperclass(td, accum)
-    sourcesForInterfaces(td, accum)
+    val examined = accum.contains(NodeInfo(td, !primary))
+    if (accum.add(NodeInfo(td, primary)) && !examined) {
+      sourcesForSuperclass(td, accum)
+      sourcesForInterfaces(td, accum)
+    }
   }
 
   /** Collect source information on interfaces, recursive over super classes & includes interfaces.
@@ -194,8 +198,8 @@ trait OrgTestClasses {
   private def sourcesForInterfaces(td: ApexDeclaration, accum: mutable.Set[NodeInfo]): Unit = {
     td.interfaces.foreach { interface =>
       toApexDeclaration(interface, td).foreach(interfaceTd => {
-        accum.addOne(NodeInfo(interfaceTd, primary = false))
-        sourcesForInterfaces(interfaceTd, accum)
+        if (accum.add(NodeInfo(interfaceTd, primary = false)))
+          sourcesForInterfaces(interfaceTd, accum)
       })
     }
   }
