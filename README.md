@@ -57,6 +57,10 @@ accepts `--scope <directory>` (workspace-relative or absolute within the workspa
 `--exclude-tests`; `dependency-bombs` accepts a non-negative `--count <n>` that defaults to 20.
 `test-classes` accepts `--mode impacted` with one or more repeatable `--path <path>` arguments, or
 `--mode all` with optional repeatable paths. Paths may be absolute or workspace-relative.
+`dependency-report` and `dependency-bombs` name each type by its qualified type name (`name`) and
+report its `namespace` (or `null`) alongside. Report nodes also carry `extendingIdentifiers`,
+`implementingIdentifiers` and `usingIdentifiers`, arrays of `{name, namespace}` in the same order as
+the `extending`, `implementing` and `using` name arrays.
 Exit status `0` indicates success, `1` indicates an invalid command, argument, or request scope, and
 `3` indicates a workspace, analysis, serialization, or unexpected internal failure. Logs and
 exception details are written to stderr. Stable error codes are `INVALID_ARGUMENT`,
