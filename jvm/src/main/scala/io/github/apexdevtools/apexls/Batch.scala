@@ -15,7 +15,7 @@
 package io.github.apexdevtools.apexls
 
 import com.nawforce.apexlink.api.ServerOps
-import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.pkgforce.diagnostics.{DefaultLogger, LoggerOps}
 import com.nawforce.runtime.platform.Environment
 
 import java.io.{OutputStream, PrintStream}
@@ -69,6 +69,8 @@ object Batch {
 
     System.setOut(diagnosticStream)
     System.setErr(diagnosticStream)
+    // The default logger holds the stderr it was created with, so point it at this run's stream
+    val originalLogger = LoggerOps.setLogger(new DefaultLogger(diagnosticStream))
     val (envelope, status) =
       try {
         Console.withOut(diagnosticStream) {
@@ -98,6 +100,7 @@ object Batch {
         ServerOps.setAutoFlush(originalAutoFlush)
         ServerOps.setCurrentParser(originalParser)
         LoggerOps.setLoggingLevel(originalLoggingLevel)
+        LoggerOps.setLogger(originalLogger)
         ServerOps.setBlockPrefetchThreads(originalPrefetch)
         System.setOut(originalStdout)
         System.setErr(originalStderr)

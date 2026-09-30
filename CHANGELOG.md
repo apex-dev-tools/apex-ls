@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A `--log-level none|info|debug|trace` option shared by the batch commands, defaulting to `none`.
+  Workspace load and analysis logs are written to stderr, so stdout still carries exactly one JSON
+  response. Batch commands previously always loaded the workspace with logging off, leaving batch
+  callers no way to get these logs (#582)
+
 ## [6.3.0] - 2026-09-30
 
 ### Added

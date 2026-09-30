@@ -55,7 +55,7 @@ private[apexls] object DefaultBatchWorkspaceLoader extends BatchWorkspaceLoader 
     try {
       val openOptions = OpenOptions
         .default()
-        .withLoggingLevel("none")
+        .withLoggingLevel(options.loggingLevel)
         .withAutoFlush(enabled = false)
         .withCache(options.cacheEnabled)
         .withCacheDirectory(options.cacheDirectory.getOrElse(""))
