@@ -42,6 +42,7 @@ class DependencyBombsCommandTest extends AnyFunSuite with BatchCommandTestSuppor
       assert(invocation.status == 0)
       val bombs = invocation.json("result")("bombs").arr
       assert(bombs.map(_("name").str) == Seq("test.Dummy2", "test.Dummy1"))
+      assert(bombs.forall(_("namespace").str == "test"))
       assert(
         bombs.map(value =>
           (

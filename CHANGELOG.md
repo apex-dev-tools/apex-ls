@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A `namespace` field on each type in the `dependency-report` and `dependency-bombs` batch results,
+  and `extendingIdentifiers`, `implementingIdentifiers` and `usingIdentifiers` arrays of
+  `{name, namespace}` on report nodes, alongside the existing name arrays. A qualified name alone
+  cannot distinguish a namespaced `ns.Foo` from an inner class of an unnamespaced class `ns`, and
+  referenced types from dependency packages have no node of their own to look the namespace up
+  from (#581)
 - A `--log-level none|info|debug|trace` option shared by the batch commands, defaulting to `none`.
   Workspace load and analysis logs are written to stderr, so stdout still carries exactly one JSON
   response. Batch commands previously always loaded the workspace with logging off, leaving batch
