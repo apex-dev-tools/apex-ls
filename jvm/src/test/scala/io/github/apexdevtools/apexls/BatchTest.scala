@@ -220,6 +220,19 @@ class BatchTest extends AnyFunSuite {
     assert(invocation.stderr.contains("analysis broke"))
   }
 
+  test("stack overflows return analysis failures") {
+    val command = new TestCommand(
+      "overflows",
+      requiresWorkspace = false,
+      action = _ => throw new StackOverflowError()
+    )
+    val invocation = invoke(Array("overflows"), commands = Seq(command))
+
+    assert(invocation.status == 3)
+    assert(invocation.json("error")("code").str == "ANALYSIS_FAILED")
+    assert(invocation.json("error")("message").str == "StackOverflowError")
+  }
+
   test("serialization failures return a valid fallback envelope") {
     val command = new TestCommand("serialize", requiresWorkspace = false)
     val invocation = invoke(

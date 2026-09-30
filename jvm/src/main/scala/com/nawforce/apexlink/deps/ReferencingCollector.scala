@@ -72,16 +72,7 @@ object ReferencingCollector {
     * Mirrors the scope of doesExtend so that both checks are symmetrical.
     */
   private def doesImplement(holder: ApexDeclaration, iface: ApexDeclaration): Boolean = {
-    // Direct implementation
-    holder.interfaceDeclarations.exists(_ eq iface) ||
-    // Indirect via superclass
-    holder.superClassDeclaration
-      .collect { case ad: ApexDeclaration => ad }
-      .exists(parent => doesImplement(parent, iface)) ||
-    // Outer class implements
-    holder.outerTypeDeclaration
-      .collect { case ad: ApexDeclaration => ad }
-      .exists(outer => doesImplement(outer, iface))
+    existsInHierarchy(holder)(_.interfaceDeclarations.exists(_ eq iface))
   }
 
   /** Determine if the holder has some form of extends relationship with the dependent. We include
@@ -91,16 +82,30 @@ object ReferencingCollector {
     * probably be reduced.
     */
   private def doesExtend(holder: ApexDeclaration, dependent: ApexDeclaration): Boolean = {
-    // Direct superclass
-    holder.superClassDeclaration.contains(dependent) ||
-    // Indirect superclass
-    holder.superClassDeclaration
-      .collect { case ad: ApexDeclaration => ad }
-      .exists(parent => doesExtend(parent, dependent)) ||
-    // Outer class extends
-    holder.outerTypeDeclaration
-      .collect { case ad: ApexDeclaration => ad }
-      .exists(outer => doesExtend(outer, dependent))
+    existsInHierarchy(holder)(_.superClassDeclaration.contains(dependent))
+  }
+
+  /** Test the holder and the declarations reachable from it through super & outer classes. Each is
+    * tested once, as these can form a cycle, e.g. when an outer class extends its own inner class.
+    */
+  private def existsInHierarchy(
+    holder: ApexDeclaration
+  )(test: ApexDeclaration => Boolean): Boolean = {
+    var visited = List[ApexDeclaration]()
+    var pending = List(holder)
+    while (pending.nonEmpty) {
+      val td = pending.head
+      pending = pending.tail
+      if (!visited.exists(_ eq td)) {
+        if (test(td))
+          return true
+        visited = td :: visited
+        pending = (td.superClassDeclaration ++ td.outerTypeDeclaration).collect {
+          case ad: ApexDeclaration => ad
+        }.toList ++ pending
+      }
+    }
+    false
   }
 
   /** Visit references to the passed type declarations. The visit function is called on all unique

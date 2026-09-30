@@ -79,7 +79,7 @@ object Batch {
           }
         }
       } catch {
-        case NonFatal(exception) =>
+        case Reportable(exception) =>
           exception.printStackTrace(diagnosticStream)
           failure("", "INTERNAL_ERROR", message(exception), StatusInternal)
       }
@@ -88,7 +88,7 @@ object Batch {
       try {
         (encoder(envelope), status)
       } catch {
-        case NonFatal(exception) =>
+        case Reportable(exception) =>
           exception.printStackTrace(diagnosticStream)
           val serializationFailure = BatchProtocol.failure(
             envelope.command,
@@ -151,7 +151,7 @@ object Batch {
                               StatusOk
                             )
                           } catch {
-                            case NonFatal(exception) =>
+                            case Reportable(exception) =>
                               exception.printStackTrace(System.err)
                               failure(
                                 commandName,
@@ -162,7 +162,7 @@ object Batch {
                           }
                       }
                     } catch {
-                      case NonFatal(exception) =>
+                      case Reportable(exception) =>
                         exception.printStackTrace(System.err)
                         failure(commandName, "ANALYSIS_FAILED", message(exception), StatusInternal)
                     }
@@ -183,7 +183,7 @@ object Batch {
       try {
         workspaceLoader.load(options).map(org => BatchContext(options, Some(org)))
       } catch {
-        case NonFatal(exception) =>
+        case Reportable(exception) =>
           exception.printStackTrace(System.err)
           Left(
             BatchDispatchFailure(
@@ -202,6 +202,16 @@ object Batch {
     status: Int
   ): (BatchEnvelope, Int) = {
     (BatchProtocol.failure(command, BatchError(code, errorMessage)), status)
+  }
+
+  /** Failures reported in the response. A stack overflow has unwound by the time it is caught, so
+    * can be reported like any non-fatal exception.
+    */
+  private object Reportable {
+    def unapply(exception: Throwable): Option[Throwable] = exception match {
+      case NonFatal(_) | _: StackOverflowError => Some(exception)
+      case _                                   => None
+    }
   }
 
   private def message(exception: Throwable): String = {

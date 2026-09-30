@@ -24,6 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   command-line length limit, 32,767 characters on Windows, where the JSON-RPC request carried its
   paths in the message body (#585)
 
+### Fixed
+
+- Impacted test class discovery, used by the `test-classes` batch command and the RPC
+  `getTestClassNames`, failing with a stack overflow on a cyclic class hierarchy. An outer class
+  extending its own inner class is valid Apex, but the checks walking superclasses and outer
+  classes did not track what they had visited, and superclass or interface cycles in invalid code
+  were followed indefinitely. The batch dispatcher now also reports a stack overflow as a failure
+  response instead of exiting without one (#587)
+
 ## [6.3.0] - 2026-09-30
 
 ### Added

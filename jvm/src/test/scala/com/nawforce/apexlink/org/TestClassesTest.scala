@@ -96,6 +96,37 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Outer class extending its own inner class") {
+    run(
+      Map(
+        "Shape.cls"  -> "public interface Shape {}",
+        "Square.cls" -> "public class Square implements Shape {}",
+        "Outer.cls" ->
+          "public class Outer extends Inner { public virtual class Inner implements Shape {} }",
+        "OuterTest.cls" -> "@isTest private class OuterTest { static testMethod void t() { Outer o; } }"
+      )
+    ) { (root: PathLike, ns: Option[String]) =>
+      assert(getTestClassNames(root, Array("Square.cls")).isEmpty)
+      assert(getTestClassNames(root, Array("Outer.cls")) == Set(withNamespace(ns, "OuterTest")))
+    }
+  }
+
+  test("Cyclic superclasses and interfaces") {
+    val files = Map(
+      "A.cls"     -> "public virtual class A extends B {}",
+      "B.cls"     -> "public virtual class B extends A {}",
+      "I.cls"     -> "public interface I extends J {}",
+      "J.cls"     -> "public interface J extends I {}",
+      "Impl.cls"  -> "public class Impl implements I {}",
+      "ATest.cls" -> "@isTest private class ATest { static testMethod void t() { A a; Impl i; } }"
+    )
+    FileSystemHelper.run(files) { root: PathLike =>
+      val org   = createOrg(root)
+      val tests = org.getImpactedTestClasses(Array("A.cls", "Impl.cls").map(root.join(_).toString))
+      assert(tests.map(_.name).toSet == Set("ATest"))
+    }
+  }
+
   test("No tests") {
     run(Map("Dummy.cls" -> "public class Dummy {}")) { (root: PathLike, _: Option[String]) =>
       assert(getTestClassNames(root, Array("Dummy.cls")).isEmpty)
