@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.3.0] - 2026-09-30
+
 ### Added
 
 - Diagnostic reporting exclusions in `plugins.apex-ls.exclude`, selectable by project-relative
@@ -79,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   qualifier, catch, for-loop, switch, extends and implements positions, honouring same-file access
   and the `@TestVisible` unit-test exception. Type reference positions are checked for qualified
   names such as `Outer.Hidden`; a name Apex resolves unqualified through a superclass in another
-  file is not reported there (#341)
+  file is not reported there. A `catch` clause type is only checked when its exception variable is
+  used, matching when the platform enforces it (#341, #549)
 - An error where a method is called whose return type is a nested type not visible from the calling
   file, `Method return type Outer.Hidden is not visible for: Outer.Hidden Outer.make()`. The return
   type is not written at the call site, so it was not covered by the checks on written type
