@@ -57,7 +57,10 @@ The dispatcher writes exactly one UTF-8 JSON response to stdout. Its shared opti
 accepts `--scope <directory>` (workspace-relative or absolute within the workspace) and
 `--exclude-tests`; `dependency-bombs` accepts a non-negative `--count <n>` that defaults to 20.
 `test-classes` accepts `--mode impacted` with one or more repeatable `--path <path>` arguments, or
-`--mode all` with optional repeatable paths. Paths may be absolute or workspace-relative.
+`--mode all` with optional repeatable paths. Paths may be absolute or workspace-relative. Paths can
+also be read from a UTF-8 file with `--paths-file <file>`, one per line, blank lines ignored; its
+entries are added to any `--path` arguments, avoiding command-line length limits for large
+selections.
 `dependency-report` and `dependency-bombs` name each type by its qualified type name (`name`) and
 report its `namespace` (or `null`) alongside. Report nodes also carry `extendingIdentifiers`,
 `implementingIdentifiers` and `usingIdentifiers`, arrays of `{name, namespace}` in the same order as

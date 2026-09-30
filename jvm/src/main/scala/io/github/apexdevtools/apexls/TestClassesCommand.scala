@@ -17,8 +17,11 @@ package io.github.apexdevtools.apexls
 import com.nawforce.apexlink.api.TestClass
 import com.nawforce.runtime.platform.Path
 
-import java.nio.file.Paths
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
+import scala.util.control.NonFatal
 
 private[apexls] final case class TestClassesResult(testClasses: Array[TestClass])
 
@@ -69,9 +72,10 @@ private[apexls] object TestClassesCommand extends BatchCommand {
 
   private object TestClassesArguments {
     def parse(args: Seq[String]): Either[BatchError, TestClassesArguments] = {
-      var mode  = Option.empty[TestClassesMode]
-      val paths = mutable.ArrayBuffer[String]()
-      var index = 0
+      var mode      = Option.empty[TestClassesMode]
+      var pathsFile = Option.empty[String]
+      val paths     = mutable.ArrayBuffer[String]()
+      var index     = 0
 
       def value(option: String, token: String): Either[BatchError, String] = {
         if (token == option) {
@@ -111,6 +115,17 @@ private[apexls] object TestClassesCommand extends BatchCommand {
             case Left(error)      => return Left(error)
             case Right(candidate) => paths += candidate
           }
+        } else if (token == "--paths-file" || token.startsWith("--paths-file=")) {
+          if (pathsFile.nonEmpty)
+            return Left(
+              BatchError("INVALID_ARGUMENT", "Option '--paths-file' may only be provided once")
+            )
+          value("--paths-file", token).flatMap(readPaths) match {
+            case Left(error) => return Left(error)
+            case Right((file, filePaths)) =>
+              pathsFile = Some(file)
+              paths ++= filePaths
+          }
         } else {
           return Left(BatchError("INVALID_ARGUMENT", s"Unexpected argument '$token'"))
         }
@@ -120,8 +135,24 @@ private[apexls] object TestClassesCommand extends BatchCommand {
       mode match {
         case None => Left(BatchError("INVALID_ARGUMENT", "Option '--mode' is required"))
         case Some(ImpactedMode) if paths.isEmpty =>
-          Left(BatchError("INVALID_ARGUMENT", "Mode 'impacted' requires at least one '--path'"))
+          Left(
+            BatchError(
+              "INVALID_ARGUMENT",
+              "Mode 'impacted' requires at least one '--path' or '--paths-file' entry"
+            )
+          )
         case Some(selectedMode) => Right(TestClassesArguments(selectedMode, paths.toSeq))
+      }
+    }
+
+    /** Read a UTF-8 file of paths, one per line, ignoring blank lines */
+    private def readPaths(file: String): Either[BatchError, (String, Seq[String])] = {
+      try {
+        val lines = Files.readAllLines(Paths.get(file), StandardCharsets.UTF_8).asScala
+        Right((file, lines.filter(_.trim.nonEmpty).toSeq))
+      } catch {
+        case NonFatal(ex) =>
+          Left(BatchError("INVALID_ARGUMENT", s"Cannot read paths file '$file': ${ex.getMessage}"))
       }
     }
   }

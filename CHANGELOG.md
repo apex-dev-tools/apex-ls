@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Workspace load and analysis logs are written to stderr, so stdout still carries exactly one JSON
   response. Batch commands previously always loaded the workspace with logging off, leaving batch
   callers no way to get these logs (#582)
+- A `--paths-file <file>` option on the `test-classes` batch command, reading additional paths from
+  a UTF-8 file with one path per line. Selections passed as `--path` arguments could exceed the
+  command-line length limit, 32,767 characters on Windows, where the JSON-RPC request carried its
+  paths in the message body (#585)
 
 ## [6.3.0] - 2026-09-30
 
