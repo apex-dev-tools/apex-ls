@@ -65,6 +65,7 @@ trait Text extends CharacterData {}
 @js.native
 trait Document extends js.Object {
   val documentElement: Element = js.native
+  val childNodes: NodeList     = js.native
 }
 
 @js.native

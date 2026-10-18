@@ -152,15 +152,20 @@ class XMLDocumentTest extends AnyFunSuite {
     }
   }
 
-  test("element locations handle DOCTYPE internal subsets") {
-    val source =
-      s" \r\n<!DOCTYPE m:root [<!-- ] > --><!ENTITY sample 'a > b'>]>\r\n<m:root xmlns:m='$namespace'><m:child>&amp;</m:child></m:root>"
-    withDocument(source) { doc =>
-      val root  = doc.rootElement
-      val child = root.getChildren("child").head
-      assert(root.line == 3)
-      assert(slice(source, root.location) == source.substring(source.indexOf("<m:root")))
-      assert(slice(source, child.location) == "<m:child>&amp;</m:child>")
+  test("DOCTYPE is rejected") {
+    FileSystemHelper.run(
+      Map[String, String](
+        "test.xml" -> s"<!DOCTYPE root [<!ENTITY sample 'a > b'>]>\n<root xmlns='$namespace'>&sample;</root>"
+      )
+    ) { root: PathLike =>
+      val file = root.join("test.xml")
+      parse(file) match {
+        case Left(Issue(f, Diagnostic(ERROR_CATEGORY, Location(1, _, 1, _), message, _), _))
+            if f == file && message.contains("DOCTYPE is disallowed") =>
+          ()
+        case Left(err) => assert(false, err)
+        case Right(_)  => assert(false)
+      }
     }
   }
 
