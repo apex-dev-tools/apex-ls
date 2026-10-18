@@ -26,6 +26,7 @@ import com.nawforce.runtime.parsers.SourceData
 import org.xml.sax.Locator
 
 import java.io.ByteArrayInputStream
+import javax.xml.XMLConstants
 import javax.xml.parsers.SAXParserFactory
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -66,6 +67,10 @@ final class XMLDocument private[xml] (
 
 object XMLDocument {
   val sfNamespace = "http://soap.sforce.com/2006/04/metadata"
+
+  // Salesforce rejects metadata containing a DOCTYPE, rejecting here also prevents DTD and external
+  // entity resolution
+  val disallowDoctypeFeature = "http://apache.org/xml/features/disallow-doctype-decl"
 
   def apply(path: PathLike, sourceData: SourceData): IssuesAnd[Option[XMLDocument]] = {
     val bytes = sourceData.asUTF8
@@ -157,6 +162,8 @@ object XMLLineLoader extends factory.XMLLoader[Elem] {
   private lazy val cachedParser = {
     val f = SAXParserFactory.newInstance()
     f.setNamespaceAware(false)
+    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+    f.setFeature(XMLDocument.disallowDoctypeFeature, true)
     f.newSAXParser()
   }
 

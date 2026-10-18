@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- Metadata XML files containing a DOCTYPE declaration are now rejected with an error diagnostic,
+  matching Salesforce, which rejects them on deploy. The JVM parser previously processed DTDs, so
+  a crafted metadata file could load an external DTD and resolve external entities, disclosing
+  local files or HTTP responses reachable from the analyzing process (GHSA-5cjp-4vvm-c9p6)
+
 ## [6.3.1] - 2026-09-30
 
 ### Added

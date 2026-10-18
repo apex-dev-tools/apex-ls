@@ -95,12 +95,38 @@ object XMLDocument {
     errors = Nil
     val parser = new DOMParser(getOptions(path))
     val doc    = parser.parseFromString(trimLeadingXmlWhitespace(source), "text/xml")
-    if (errors.nonEmpty) {
-      IssuesAnd(ArraySeq(errors.last), None)
-    } else {
-      val sourceElement = XMLSourceRange.index(source).filter(matchesTree(doc.documentElement, _))
-      IssuesAnd(Some(new XMLDocument(path, doc, sourceElement)))
+    doctype(doc) match {
+      case Some(node) =>
+        IssuesAnd(
+          ArraySeq(
+            Issue(
+              path,
+              Diagnostic(
+                ERROR_CATEGORY,
+                Location(node.lineNumber, node.columnNumber - 1),
+                doctypeDisallowedMessage
+              )
+            )
+          ),
+          None
+        )
+      case None if errors.nonEmpty =>
+        IssuesAnd(ArraySeq(errors.last), None)
+      case None =>
+        val sourceElement = XMLSourceRange.index(source).filter(matchesTree(doc.documentElement, _))
+        IssuesAnd(Some(new XMLDocument(path, doc, sourceElement)))
     }
+  }
+
+  // Matches Salesforce, which rejects metadata containing a DOCTYPE
+  private val doctypeDisallowedMessage =
+    "DOCTYPE is disallowed when the feature \"http://apache.org/xml/features/disallow-doctype-decl\" set to true."
+
+  private def doctype(doc: Document): Option[Node] = {
+    if (js.isUndefined(doc) || doc == null)
+      return None
+    val nodes = doc.childNodes
+    (0 until nodes.length).map(nodes.item).find(_.nodeType == Node.DOCUMENT_TYPE_NODE)
   }
 
   private def trimLeadingXmlWhitespace(value: String): String = {
