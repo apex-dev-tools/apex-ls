@@ -804,6 +804,25 @@ class TestClassesTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Should not get integration test lifecycle hooks as method items") {
+    run(
+      Map(
+        "DummyTest.cls" -> "@IntegrationTest public class DummyTest { @BeforeClass static void setup() {} @IntegrationTest static void dummy() {} @TearDown static void cleanup() {} }"
+      )
+    ) { (root: PathLike, _: Option[String]) =>
+      assert(
+        withOrg(_.getTestMethodItems(getFullPaths(root, Array("DummyTest.cls")))).toSet ==
+          Set(
+            MethodTestItem(
+              "dummy",
+              "DummyTest",
+              TargetLocation(pathString(root, "DummyTest.cls"), Location(1, 107, 1, 112))
+            )
+          )
+      )
+    }
+  }
+
   test("Should get testMethod method items") {
     run(
       Map(

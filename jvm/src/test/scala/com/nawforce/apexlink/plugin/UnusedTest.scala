@@ -481,6 +481,28 @@ class UnusedTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("Unused BeforeClass method") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@IntegrationTest public class Dummy {@BeforeClass static void setup() {helper();} static void helper() {} @IntegrationTest static void t() {}}"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
+  test("Unused BeforeClass method is case insensitive") {
+    FileSystemHelper.run(
+      Map(
+        "Dummy.cls" -> "@IntegrationTest public class Dummy {@beforeclass static void setup() {} @IntegrationTest static void t() {}}"
+      )
+    ) { root: PathLike =>
+      val org = createOrgWithUnused(root)
+      assert(orgIssuesFor(org, root.join("Dummy.cls")).isEmpty)
+    }
+  }
+
   test("Unused class") {
     FileSystemHelper.run(Map("Dummy.cls" -> "public class Dummy {Object a; void func() {}}")) {
       root: PathLike =>

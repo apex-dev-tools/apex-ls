@@ -528,6 +528,57 @@ class MethodModifierTest extends AnyFunSuite {
     )
   }
 
+  test("BeforeClass in non-integration test class should error") {
+    val issues =
+      illegalClassMethodAccess(ArraySeq(BEFORE_CLASS_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER))
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 54, 1, 58),
+            "Method with @BeforeClass annotation must be in an @IntegrationTest class"
+          )
+        )
+      )
+    )
+  }
+
+  test("BeforeClass in isTest class should error") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(BEFORE_CLASS_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+      ArraySeq(ISTEST_ANNOTATION)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(
+            ERROR_CATEGORY,
+            Location(1, 55, 1, 59),
+            "Method with @BeforeClass annotation must be in an @IntegrationTest class"
+          )
+        )
+      )
+    )
+  }
+
+  test("BeforeClass without static should error") {
+    val issues = illegalClassMethodAccess(
+      ArraySeq(BEFORE_CLASS_ANNOTATION, PUBLIC_MODIFIER),
+      ArraySeq(INTEGRATION_TEST_ANNOTATION)
+    )
+    assert(
+      issues == Seq[Issue](
+        Issue(
+          Path("Dummy.cls"),
+          Diagnostic(ERROR_CATEGORY, Location(1, 57, 1, 61), "@BeforeClass methods must be static")
+        )
+      )
+    )
+  }
+
   test("TestMethod without static should error") {
     val issues = illegalClassMethodAccess(
       ArraySeq(ISTEST_ANNOTATION, PUBLIC_MODIFIER),
@@ -589,6 +640,16 @@ class MethodModifierTest extends AnyFunSuite {
       legalClassMethodAccess(
         ArraySeq(TEAR_DOWN_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
         ArraySeq(TEAR_DOWN_ANNOTATION, PUBLIC_MODIFIER, STATIC_MODIFIER),
+        ArraySeq(INTEGRATION_TEST_ANNOTATION)
+      )
+    )
+  }
+
+  test("BeforeClass in integration test class should be ok") {
+    assert(
+      legalClassMethodAccess(
+        ArraySeq(BEFORE_CLASS_ANNOTATION, STATIC_MODIFIER),
+        ArraySeq(BEFORE_CLASS_ANNOTATION, STATIC_MODIFIER),
         ArraySeq(INTEGRATION_TEST_ANNOTATION)
       )
     )

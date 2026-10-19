@@ -186,6 +186,7 @@ object AnnotationDefinition {
           )
         )
       ),
+      AnnotationDefinition("BeforeClass"),
       AnnotationDefinition("Deprecated"),
       AnnotationDefinition("Future", Seq(AnnotationProperty("callout", BooleanType))),
       AnnotationDefinition("HttpDelete"),
