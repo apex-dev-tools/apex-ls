@@ -56,6 +56,7 @@ object MethodModifiers {
     SUPPRESS_WARNINGS_ANNOTATION_UNUSED,
     TEST_SETUP_ANNOTATION,
     TEAR_DOWN_ANNOTATION,
+    BEFORE_CLASS_ANNOTATION,
     HTTP_DELETE_ANNOTATION,
     HTTP_GET_ANNOTATION,
     HTTP_PATCH_ANNOTATION,
@@ -220,6 +221,21 @@ object MethodModifiers {
         logger.logError(
           context,
           "Method with @TearDown annotation must be in an @IntegrationTest class"
+        )
+        extendedModifiers
+      } else if (
+        extendedModifiers.contains(BEFORE_CLASS_ANNOTATION) &&
+        !extendedModifiers.contains(STATIC_MODIFIER)
+      ) {
+        logger.logError(context, "@BeforeClass methods must be static")
+        STATIC_MODIFIER +: extendedModifiers
+      } else if (
+        extendedModifiers.contains(BEFORE_CLASS_ANNOTATION) &&
+        !ownerInfo.modifiers.contains(INTEGRATION_TEST_ANNOTATION)
+      ) {
+        logger.logError(
+          context,
+          "Method with @BeforeClass annotation must be in an @IntegrationTest class"
         )
         extendedModifiers
       } else {

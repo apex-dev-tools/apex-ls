@@ -27,7 +27,7 @@ import com.nawforce.pkgforce.documents._
 import com.nawforce.pkgforce.modifiers._
 import com.nawforce.pkgforce.names.{Name, Names, TypeIdentifier, TypeName}
 import com.nawforce.pkgforce.parsers.{ApexNode, CLASS_NATURE, INTERFACE_NATURE, Nature}
-import com.nawforce.pkgforce.path.{Locatable, Location, PathLike}
+import com.nawforce.pkgforce.path.{Locatable, Location, PathLike, PathLocation}
 import com.nawforce.runtime.parsers.{CodeParser, Source, SourceData}
 import io.github.apexdevtools.apexparser.ApexParser.TypeDeclarationContext
 import upickle.default.writeBinary
@@ -257,6 +257,19 @@ abstract class FullDeclaration(
       OrgInfo.logError(td.location, s"Duplicate type name '${td.name.toString}'")
     )
 
+    // Check single use lifecycle annotations
+    FullDeclaration.singleMethodAnnotations.foreach(annotation =>
+      localMethods
+        .filter(_.modifiers.contains(annotation))
+        .drop(1)
+        .foreach(method =>
+          OrgInfo.logError(
+            PathLocation(location.path, method.idLocation),
+            s"Only one method per class can be annotated with ${annotation.name}"
+          )
+        )
+    )
+
     // Check interfaces are visible
     interfaces.foreach(interface => {
       val td = context.getTypeAndAddDependency(interface, context.thisType).toOption
@@ -430,6 +443,8 @@ final case class ThisType(module: OPM.Module, typeName: TypeName, inTest: Boolea
 }
 
 object FullDeclaration {
+
+  private val singleMethodAnnotations = Seq(BEFORE_CLASS_ANNOTATION, TEAR_DOWN_ANNOTATION)
 
   /** Labels for the timed spans that decompose validation. Constant so that recording one costs no
     * allocation, and never logged, so they are invisible at every logging level. Deliberately not

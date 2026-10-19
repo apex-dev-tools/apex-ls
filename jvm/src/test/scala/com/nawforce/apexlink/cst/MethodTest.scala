@@ -210,6 +210,66 @@ class MethodTest extends AnyFunSuite with TestHelper {
     assert(dummyIssues.isEmpty)
   }
 
+  test("BeforeClass hook in IntegrationTest class") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@BeforeClass static void setup() {insert new Account(Name='Fixture');} @IntegrationTest static void checkFixture() {}}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("BeforeClass hook with parameters") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@BeforeClass static void setup(Integer a) {} @IntegrationTest static void t() {}}"
+    )
+    assert(dummyIssues == "Error: line 1 at 62-67: @BeforeClass methods must have no parameters\n")
+  }
+
+  test("BeforeClass hook with return value") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@BeforeClass static Integer setup() {return 1;} @IntegrationTest static void t() {}}"
+    )
+    assert(dummyIssues == "Error: line 1 at 65-70: @BeforeClass methods must return void\n")
+  }
+
+  test("BeforeClass hook with properties") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@BeforeClass(value=true) static void setup() {} @IntegrationTest static void t() {}}"
+    )
+    assert(dummyIssues.contains("No such property, value, defined on this annotation: BeforeClass"))
+  }
+
+  test("BeforeClass on field") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@BeforeClass static Integer a; @IntegrationTest static void t() {}}"
+    )
+    assert(dummyIssues.contains("Annotation '@BeforeClass' is not supported on fields"))
+  }
+
+  test("Multiple BeforeClass hooks") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@BeforeClass static void a() {} @BeforeClass static void b() {} @IntegrationTest static void t() {}}"
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 94-95: Only one method per class can be annotated with @BeforeClass\n"
+    )
+  }
+
+  test("Multiple TearDown hooks") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@TearDown static void a() {} @TearDown static void b() {} @IntegrationTest static void t() {}}"
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 88-89: Only one method per class can be annotated with @TearDown\n"
+    )
+  }
+
+  test("BeforeClass and TearDown hooks together") {
+    typeDeclaration(
+      "@IntegrationTest public class Dummy {@BeforeClass static void setup() {} @TearDown static void cleanup() {} @IntegrationTest static void t() {}}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
   test("IntegrationTest can not access private TestVisible method") {
     typeDeclarations(
       Map(

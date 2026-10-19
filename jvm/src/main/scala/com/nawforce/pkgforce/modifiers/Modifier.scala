@@ -93,6 +93,8 @@ case object TEST_SETUP_ANNOTATION extends Modifier("@TestSetup")
 
 case object TEAR_DOWN_ANNOTATION extends Modifier("@TearDown")
 
+case object BEFORE_CLASS_ANNOTATION extends Modifier("@BeforeClass")
+
 case object TEST_VISIBLE_ANNOTATION extends Modifier("@TestVisible")
 
 case object NAMESPACE_ACCESSIBLE_ANNOTATION extends Modifier("@NamespaceAccessible")
@@ -148,6 +150,7 @@ object ModifierOps {
       SUPPRESS_WARNINGS_ANNOTATION_UNUSED,
       TEST_SETUP_ANNOTATION,
       TEAR_DOWN_ANNOTATION,
+      BEFORE_CLASS_ANNOTATION,
       TEST_VISIBLE_ANNOTATION,
       NAMESPACE_ACCESSIBLE_ANNOTATION,
       REST_RESOURCE_ANNOTATION,

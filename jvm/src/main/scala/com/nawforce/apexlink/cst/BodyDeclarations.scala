@@ -295,6 +295,13 @@ class ApexMethodDeclaration(
       )
     }
 
+    if (modifiers.contains(BEFORE_CLASS_ANNOTATION)) {
+      if (parameters.nonEmpty)
+        context.logError(id.location, "@BeforeClass methods must have no parameters")
+      if (typeName != TypeName.Void)
+        context.logError(id.location, "@BeforeClass methods must return void")
+    }
+
     returnTypeName.dependOn(id.location, context)
     id.validateForMethod(context)
     parameters.foreach(_.verify(context))
