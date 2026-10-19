@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   they must be static, in an `@IntegrationTest` class, take no parameters, return void, and appear
   at most once per class (#591)
 
+### Changed
+
+- Updated apex-parser to 5.3.0, adding support for the SOQL `SET OPTIONS` clause. Inline queries
+  can end with a bind such as `[SELECT Id FROM Account SET OPTIONS :opts]`, and the bound
+  variable is resolved and counted as used like any other bind (#601)
+
 ### Fixed
 
 - More than one `@TearDown` method in a class is now reported as an error, as the platform only
