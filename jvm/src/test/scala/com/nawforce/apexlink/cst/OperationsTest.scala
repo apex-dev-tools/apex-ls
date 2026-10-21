@@ -132,6 +132,27 @@ class OperationsTest extends AnyFunSuite with TestHelper {
     )
   }
 
+  test(
+    "Set<Id> addAll/removeAll/retainAll with unresolved argument only reports the missing type"
+  ) {
+    typeDeclaration(
+      "public class Dummy {{Set<Id> a = new Set<Id>(); a.addAll(Missing.ids()); a.removeAll(Missing.ids()); a.retainAll(Missing.ids());}}"
+    )
+    assert(
+      dummyIssues ==
+        "Missing: line 1 at 57-64: No variable or type found for 'Missing' on 'Dummy'\n" +
+        "Missing: line 1 at 85-92: No variable or type found for 'Missing' on 'Dummy'\n" +
+        "Missing: line 1 at 113-120: No variable or type found for 'Missing' on 'Dummy'\n"
+    )
+  }
+
+  test("List<Id> addAll with unresolved argument only reports the missing type") {
+    typeDeclaration("public class Dummy {{List<Id> a = new List<Id>(); a.addAll(Missing.ids());}}")
+    assert(
+      dummyIssues == "Missing: line 1 at 59-66: No variable or type found for 'Missing' on 'Dummy'\n"
+    )
+  }
+
   test("Alternative not equal") {
     happyTypeDeclaration("public class Dummy {{Boolean a; a = 1 <> 2; }}")
   }

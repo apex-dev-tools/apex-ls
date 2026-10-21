@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - More than one `@TearDown` method in a class is now reported as an error, as the platform only
   allows one (#591)
+- A spurious "No matching method found" warning for `Set.addAll`, `removeAll` or `retainAll` when
+  the argument's type can't be resolved. The unresolved type is already reported, so only that
+  error remains (#579)
 
 ## [6.3.2] - 2026-10-18
 

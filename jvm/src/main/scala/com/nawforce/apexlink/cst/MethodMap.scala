@@ -134,7 +134,10 @@ final case class MethodMap private (
     // the sole exception of the List<T>.addAll(List<T>) overload, which behaves like a normal call.
     // As an exact match already failed above, drop these from the candidates for the fuzzy match
     // stages below so they correctly report no match instead of matching via loose conversions.
-    val fuzzyMatchCandidates = staticContextMatches.filterNot(isInvariantCollectionMutator)
+    // An unresolved (any) argument can't be checked for invariance, so they are kept for that.
+    val fuzzyMatchCandidates =
+      if (params.contains(TypeNames.Any)) staticContextMatches
+      else staticContextMatches.filterNot(isInvariantCollectionMutator)
 
     // If no exact we need to search for possible in two stages, either using strict assignment or lax if
     // we are still short of a possible match
