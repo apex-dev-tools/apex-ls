@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated apex-parser to 5.3.0, adding support for the SOQL `SET OPTIONS` clause. Inline queries
+  can end with a bind such as `[SELECT Id FROM Account SET OPTIONS :opts]`, and the bound
+  variable is resolved and counted as used like any other bind (#601)
 - Upgraded platform types to Salesforce Winter '27 via standard-types and sobject-types 68.0.0.
   This adds the Data 360 `Limits` cursor and flex-credit methods, `Database.QueryOptions` and
   `Database.QueryOptionsBuilder`, the Winter '27 CMS `ConnectApi` methods and types, and the
