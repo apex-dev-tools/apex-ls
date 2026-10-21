@@ -506,7 +506,7 @@ class UnusedTest extends AnyFunSuite with TestHelper {
   test("Local var used in SOQL SET OPTIONS bind") {
     FileSystemHelper.run(
       Map(
-        "Dummy.cls" -> "public class Dummy { {Object opts; Object a = [Select Id from Account SET OPTIONS :opts]; System.debug(a);} }"
+        "Dummy.cls" -> "public class Dummy { {Database.QueryOptions opts; Object a = [Select Id from Account SET OPTIONS :opts]; System.debug(a);} }"
       )
     ) { root: PathLike =>
       createOrgWithUnused(root)

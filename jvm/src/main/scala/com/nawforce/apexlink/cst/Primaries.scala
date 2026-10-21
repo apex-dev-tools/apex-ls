@@ -262,12 +262,14 @@ case object AGGREGATE_RESULT_QUERY extends QueryResultType
 /** Inline SOQL primary, captures just enough detail to enable downstream processing
   * @param queryResultType type of results expected from query
   * @param fromNames dot names used in FROM
-  * @param boundExpressions bound expressions used anywhere in the query
+  * @param boundExpressions bound expressions used anywhere in the query, except SET OPTIONS
+  * @param setOptionsExpression bound expression used in a SET OPTIONS clause
   */
 final case class SOQL(
   queryResultType: QueryResultType,
   fromNames: Array[DotName],
   boundExpressions: ArraySeq[Expression],
+  setOptionsExpression: Option[Expression],
   deprecatedSecurityEnforcedLocation: Option[PathLocation]
 ) extends Primary {
 
@@ -275,6 +277,21 @@ final case class SOQL(
 
     boundExpressions.foreach(expr => {
       expr.verify(input, context)
+    })
+
+    setOptionsExpression.foreach(expr => {
+      expr
+        .verify(input, context)
+        .declaration
+        .filterNot(td =>
+          AssignableSupport.isAssignableDeclaration(TypeNames.QueryOptions, td, context)
+        )
+        .foreach(_ =>
+          context.logError(
+            location,
+            s"SET OPTIONS bind variable must be of type ${TypeNames.QueryOptions}"
+          )
+        )
     })
 
     deprecatedSecurityEnforcedLocation.foreach(location =>
@@ -357,7 +374,13 @@ object SOQL {
 
     // NOTE: Bound variables don't support all expressions but we have not worked out what
     // is available so currently model as an expression
-    val boundedExpressions = new BoundExprVisitor().visit(query).map(ec => Expression.construct(ec))
+    val setOptionsContext = Option(query.setOptionsClause()).flatMap(clause =>
+      Option(clause.boundExpression()).map(_.expression())
+    )
+    val boundedExpressions = new BoundExprVisitor()
+      .visit(query)
+      .filterNot(ec => setOptionsContext.contains(ec))
+      .map(ec => Expression.construct(ec))
     val fromNames =
       Option(query.fromNameList())
         .map(fromNameList => CodeParser.toScala(fromNameList.fieldName()))
@@ -375,7 +398,13 @@ object SOQL {
         .filter(withClause => Option(withClause.SECURITY_ENFORCED()).nonEmpty)
         .map(withClause => CST.sourceContext.value.get.getLocation(withClause))
 
-    new SOQL(resultType, fromNames.toArray, boundedExpressions, deprecatedSecurityEnforcedLocation)
+    new SOQL(
+      resultType,
+      fromNames.toArray,
+      boundedExpressions,
+      setOptionsContext.map(ec => Expression.construct(ec)),
+      deprecatedSecurityEnforcedLocation
+    )
   }
 }
 
