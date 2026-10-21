@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   they must be static, in an `@IntegrationTest` class, take no parameters, return void, and appear
   at most once per class (#591)
 
+### Changed
+
+- Upgraded platform types to Salesforce Winter '27 via standard-types and sobject-types 68.0.0.
+  This adds the Data 360 `Limits` cursor and flex-credit methods, `Database.QueryOptions` and
+  `Database.QueryOptionsBuilder`, the Winter '27 CMS `ConnectApi` methods and types, and the
+  Winter '27 SObjects. Change event `ChangeEventHeader` fields are now typed as
+  `EventBus.ChangeEventHeader`, so passing them to methods that take that type no longer reports
+  an error
+
 ### Fixed
 
 - More than one `@TearDown` method in a class is now reported as an error, as the platform only

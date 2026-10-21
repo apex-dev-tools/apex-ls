@@ -34648,10 +34648,6 @@ exports[`Check samples Sample: apex-trigger-actions-framework 1`] = `
       "unused-method: line 40 at 20-26: Unused public static method 'void bypass(System.List<TriggerActionFlowBypass.Request>)'; only referenced by test code, remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
     ],
     [
-      "trigger-actions-framework/main/default/classes/TriggerActionFlowChangeEventTest.cls",
-      "Error: line 93 at 28-59: Constructor not defined: FlowChangeEventHeader.<constructor>(Object)",
-    ],
-    [
       "trigger-actions-framework/main/default/classes/TriggerActionFlowClearAllBypasses.cls",
       "unused-method: line 43 at 20-36: Unused public static method 'void clearAllBypasses(System.List<System.String>)'; only referenced by test code, remove, make private @TestVisible, or add @SuppressWarnings('Unused') with a comment if this is an external entry point",
     ],
@@ -34677,7 +34673,7 @@ exports[`Check samples Sample: apex-trigger-actions-framework 1`] = `
       "unused-method: line 173 at 13-16: Unused public method 'void run()', only referenced by test code, remove or make private @TestVisible",
     ],
   ],
-  "status": 4,
+  "status": 6,
 }
 `;
 
