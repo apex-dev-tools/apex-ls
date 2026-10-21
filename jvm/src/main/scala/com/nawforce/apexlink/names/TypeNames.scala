@@ -113,6 +113,8 @@ object TypeNames extends ConcurrentInternCache[TypeName] {
     TypeName(Names.BatchableContext, Nil, Some(TypeNames.Database)).intern
   lazy val QueryLocator: TypeName =
     TypeName(XNames.QueryLocator, Nil, Some(TypeNames.Database)).intern
+  lazy val QueryOptions: TypeName =
+    TypeName(XNames.QueryOptions, Nil, Some(TypeNames.Database)).intern
 
   lazy val UserSObject: TypeName = TypeName(Names.User, Nil, Some(TypeNames.Schema))
   lazy val Version: TypeName     = TypeName(Names.Version, Nil, Some(TypeNames.System))

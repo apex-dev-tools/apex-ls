@@ -79,6 +79,7 @@ object XNames {
   val Tostring: Name             = XNames("tostring")
   val Start: Name                = XNames("start")
   val QueryLocator: Name         = XNames("QueryLocator")
+  val QueryOptions: Name         = XNames("QueryOptions")
 
   /** Name extensions */
   implicit class NameUtils(name: Name) {

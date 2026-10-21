@@ -39,9 +39,43 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
 
   test("SOQL SET OPTIONS bind") {
     typeDeclaration(
-      "public class Dummy {{ Object opts; Object a = [Select Id from Account SET OPTIONS :opts]; }}"
+      "public class Dummy {{ Database.QueryOptions opts; Object a = [Select Id from Account SET OPTIONS :opts]; }}"
     )
     assert(dummyIssues.isEmpty)
+  }
+
+  test("SOQL SET OPTIONS null bind") {
+    typeDeclaration(
+      "public class Dummy {{ Object a = [Select Id from Account SET OPTIONS :null]; }}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("SOQL SET OPTIONS bind must be QueryOptions") {
+    typeDeclaration(
+      "public class Dummy {{ String opts; Object a = [Select Id from Account SET OPTIONS :opts]; }}"
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 46-88: SET OPTIONS bind variable must be of type Database.QueryOptions\n"
+    )
+  }
+
+  test("SOQL SET OPTIONS Object bind must be QueryOptions") {
+    typeDeclaration(
+      "public class Dummy {{ Object opts; Object a = [Select Id from Account SET OPTIONS :opts]; }}"
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 46-88: SET OPTIONS bind variable must be of type Database.QueryOptions\n"
+    )
+  }
+
+  test("SOQL SET OPTIONS builder bind must be QueryOptions") {
+    typeDeclaration(
+      "public class Dummy {{ Object a = [Select Id from Account SET OPTIONS :Database.QueryOptions.builder()]; }}"
+    )
+    assert(
+      dummyIssues == "Error: line 1 at 33-102: SET OPTIONS bind variable must be of type Database.QueryOptions\n"
+    )
   }
 
   test("SOQL SET OPTIONS bind is validated") {

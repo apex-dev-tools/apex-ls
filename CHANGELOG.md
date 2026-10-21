@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reported as unused or listed as test methods, and are validated against the platform's rules:
   they must be static, in an `@IntegrationTest` class, take no parameters, return void, and appear
   at most once per class (#591)
+- The value bound in an inline SOQL `SET OPTIONS` clause must now be a `Database.QueryOptions`.
+  Other types report "SET OPTIONS bind variable must be of type Database.QueryOptions", matching
+  the platform (#602)
 
 ### Changed
 
