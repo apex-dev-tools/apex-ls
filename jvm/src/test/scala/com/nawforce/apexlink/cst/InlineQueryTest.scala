@@ -37,6 +37,29 @@ class InlineQueryTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("SOQL SET OPTIONS bind") {
+    typeDeclaration(
+      "public class Dummy {{ Object opts; Object a = [Select Id from Account SET OPTIONS :opts]; }}"
+    )
+    assert(dummyIssues.isEmpty)
+  }
+
+  test("SOQL SET OPTIONS bind is validated") {
+    typeDeclaration(
+      "public class Dummy {{ Object a = [Select Id from Account SET OPTIONS :opts]; }}"
+    )
+    assert(
+      dummyIssues == "Missing: line 1 at 70-74: No variable or type found for 'opts' on 'Dummy'\n"
+    )
+  }
+
+  test("SOQL SET OPTIONS literal list is a syntax error") {
+    typeDeclaration(
+      "public class Dummy {{ Object a = [Select Id from Account SET OPTIONS (dataspace='default')]; }}"
+    )
+    assert(dummyIssues.startsWith("Syntax: "))
+  }
+
   test("SOQL security enforced warning") {
     typeDeclaration(
       "public class Dummy {{ Object a = [Select Id from Account WITH SECURITY_ENFORCED]; }}"
