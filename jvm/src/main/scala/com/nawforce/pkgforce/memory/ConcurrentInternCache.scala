@@ -19,5 +19,6 @@ class ConcurrentInternCache[T] extends CleanableCache {
 
   def intern(value: T): T = cache.getOrElseUpdate(value, value)
 
-  def clean(): Unit = cache.clear()
+  // Null while constructing, as CleanableCache registers before this class is initialised
+  def clean(): Unit = if (cache != null) cache.clear()
 }
