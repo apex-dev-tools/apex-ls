@@ -85,6 +85,15 @@ class BlockPrefetchTest extends AnyFunSuite with TestHelper {
     }
   }
 
+  test("initial thread count is read from APEXLS_BLOCK_PREFETCH_THREADS") {
+    assert(ServerOps.initialBlockPrefetchThreads(None) == 0)
+    assert(ServerOps.initialBlockPrefetchThreads(Some("0")) == 0)
+    assert(ServerOps.initialBlockPrefetchThreads(Some("2")) == 2)
+    assert(ServerOps.initialBlockPrefetchThreads(Some(" 4 ")) == 4)
+    assert(ServerOps.initialBlockPrefetchThreads(Some("3")) == 0)
+    assert(ServerOps.initialBlockPrefetchThreads(Some("four")) == 0)
+  }
+
   test("an org snapshots the effective process-wide setting") {
     withPrefetch(0) {
       FileSystemHelper.run(classes) { root: PathLike =>

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The `APEXLS_BLOCK_PREFETCH_THREADS` environment variable sets the starting method body prefetch
+  thread count, `0`, `2` or `4`, for every JVM entry point, including `Batch`, `CheckForIssues`
+  and the language server. Prefetching stays off by default, and a count set through the API or
+  `benchmark-load` takes precedence (#590)
 - Support for the Winter '27 `@BeforeClass` integration-test lifecycle hook. Hooks are no longer
   reported as unused or listed as test methods, and are validated against the platform's rules:
   they must be static, in an `@IntegrationTest` class, take no parameters, return void, and appear

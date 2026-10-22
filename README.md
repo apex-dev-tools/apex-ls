@@ -248,6 +248,17 @@ or bypass structural validation. Reporting policies use the filtered set, so an 
 longer suppresses unused diagnostics on the same type. The legacy `plugins.exclude` location
 follows the same compatibility and precedence rules described above.
 
+### Environment Variables
+
+| Variable                        | Description                                                                                                                                                                                             |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `APEXLINK_CACHE_DIR`            | Cache directory path, defaults to `$HOME/.apexlink_cache`. The `--cache-dir` option takes precedence.                                                                                                   |
+| `APEXLS_BLOCK_PREFETCH_THREADS` | Threads used to parse method bodies ahead of validation during a load: `0 (default) \| 2 \| 4`. Other values are ignored. JVM only. Prefetching makes cold loads faster at the cost of higher peak memory. |
+
+`APEXLS_BLOCK_PREFETCH_THREADS` sets the starting value for every JVM entry point, including
+`Batch`, `CheckForIssues` and the language server. A thread count set through the API or the
+`benchmark-load` `--block-prefetch-threads` option takes precedence.
+
 ## Development
 
 ### Building
