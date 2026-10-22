@@ -48,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the argument's type can't be resolved. The unresolved type is already reported, so only that
   error remains (#579)
 
+### Security
+
+- Updated `@xmldom/xmldom` to 0.8.15 in the npm package, fixing advisories that let crafted
+  metadata XML cause quadratic parsing time or memory use. Most of the other xmldom advisories
+  affect DOM creation and serialization, which apex-ls doesn't use
+
 ## [6.3.2] - 2026-10-18
 
 ### Security
