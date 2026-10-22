@@ -4,9 +4,24 @@ import com.nawforce.apexlink.TestHelper
 import com.nawforce.apexlink.TestHelper.CURSOR
 import com.nawforce.pkgforce.path.{Location, PathLike}
 import com.nawforce.runtime.FileSystemHelper
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.{Failed, Outcome}
 
 class RenameProviderTest extends AnyFunSuite with TestHelper {
+
+  // Rename relies on validation, which logs exceptions as diagnostics rather than throwing, so
+  // include the org's diagnostics when a test fails to help diagnose intermittent failures (#589)
+  override def withFixture(test: NoArgTest): Outcome = {
+    super.withFixture(test) match {
+      case Failed(ex: TestFailedException) =>
+        val diagnostics = scala.util.Try(getMessages()).getOrElse("")
+        if (diagnostics.isEmpty) Failed(ex)
+        else Failed(ex.modifyMessage(_.map(msg => s"$msg\nOrg diagnostics:\n$diagnostics")))
+      case outcome => outcome
+    }
+  }
+
   test("Rename: Variable | Scope: Function | rename param var declaration") {
     val contentAndCursorPos = withCursorMultiLine(
       s"""public class Dummy { public void someMethod(String te${CURSOR}st) {
