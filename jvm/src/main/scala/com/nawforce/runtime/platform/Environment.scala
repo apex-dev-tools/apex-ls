@@ -42,6 +42,14 @@ object Environment {
     }
   }
 
+  def blockPrefetchThreads: Option[String] = {
+    try {
+      Option(System.getenv("APEXLS_BLOCK_PREFETCH_THREADS")).filter(_.nonEmpty)
+    } catch {
+      case _: Throwable => None
+    }
+  }
+
   def setCacheDirOverride(value: Option[Option[PathLike]]): Unit = {
     cacheDirOverride = value
   }

@@ -15,6 +15,7 @@
 package com.nawforce.apexlink.api
 
 import com.nawforce.pkgforce.diagnostics.LoggerOps
+import com.nawforce.runtime.platform.Environment
 
 sealed trait AvailableParser { val shortName: String }
 case object ANTLRParser extends AvailableParser {
@@ -88,7 +89,8 @@ object ServerOps {
   private val defaultExternalAnalysis        = ExternalAnalysisConfiguration(RefreshAnalysis, Map())
   private var currentParser: AvailableParser = OutlineParserMultithreaded
   private var indexerConfiguration           = IndexerConfiguration(0, 0)
-  @volatile private var blockPrefetchThreads = 0
+  @volatile private var blockPrefetchThreads =
+    initialBlockPrefetchThreads(Environment.blockPrefetchThreads)
 
   def isAutoFlushEnabled: Boolean = {
     autoFlush
@@ -171,8 +173,27 @@ object ServerOps {
     previous
   }
 
+  /** The starting process-wide prefetch thread count, taken from the
+    * APEXLS_BLOCK_PREFETCH_THREADS environment variable. Prefetching is off if it is unset or not
+    * one of [[validBlockPrefetchThreads]].
+    */
+  private[nawforce] def initialBlockPrefetchThreads(value: Option[String]): Int = {
+    value
+      .map(v => {
+        v.trim.toIntOption.filter(validBlockPrefetchThreads.contains).getOrElse {
+          LoggerOps.info(
+            s"Ignoring APEXLS_BLOCK_PREFETCH_THREADS value '$v', expecting one of " +
+              validBlockPrefetchThreads.mkString(", ")
+          )
+          0
+        }
+      })
+      .getOrElse(0)
+  }
+
   /** Apply an optional per-open override and return the effective value as one atomic operation.
-    * An absent override retains the current process-wide setting, which starts at zero.
+    * An absent override retains the current process-wide setting, which starts from
+    * APEXLS_BLOCK_PREFETCH_THREADS or zero.
     */
   private[nawforce] def resolveBlockPrefetchThreads(threads: Option[Int]): Int = synchronized {
     threads.foreach(setBlockPrefetchThreads)
