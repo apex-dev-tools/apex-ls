@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.4.0] - 2026-10-22
+
 ### Added
 
 - The `APEXLS_BLOCK_PREFETCH_THREADS` environment variable sets the starting method body prefetch
@@ -31,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Database.QueryOptionsBuilder`, the Winter '27 CMS `ConnectApi` methods and types, and the
   Winter '27 SObjects. Change event `ChangeEventHeader` fields are now typed as
   `EventBus.ChangeEventHeader`, so passing them to methods that take that type no longer reports
-  an error
+  an error (#602, #603)
 
 ### Fixed
 
