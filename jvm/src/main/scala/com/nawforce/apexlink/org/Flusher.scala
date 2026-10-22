@@ -19,7 +19,9 @@ import com.nawforce.pkgforce.documents.ParsedCache
 import com.nawforce.pkgforce.memory.Cleanable
 import com.nawforce.pkgforce.path.PathLike
 
+import java.lang.ref.WeakReference
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 trait RefreshListener {
   def onRefreshOne(orgPath: PathLike, updatedPath: PathLike): Unit
@@ -41,10 +43,10 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
   }
 
   def queue(request: RefreshRequest): Unit = {
-    if (!request.highPriority || refreshQueue.nonEmpty) {
-      refreshQueue.enqueue(request)
-    } else {
-      org.refreshLock.synchronized {
+    org.refreshLock.synchronized {
+      if (!request.highPriority || refreshQueue.nonEmpty) {
+        refreshQueue.enqueue(request)
+      } else {
         val updated = request.pkg.refreshBatched(Seq(request))
         // Notify of updated path
         if (updated) listener.foreach(_.onRefreshOne(org.path, request.path))
@@ -56,7 +58,7 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
   }
 
   def queueAll(request: Iterable[RefreshRequest]): Unit = {
-    refreshQueue.enqueueAll(request)
+    org.refreshLock.synchronized { refreshQueue.enqueueAll(request) }
   }
 
   def refreshAndFlush(): Boolean = {
@@ -118,38 +120,52 @@ class Flusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache]) {
 }
 
 class CacheFlusher(org: OPM.OrgImpl, parsedCache: Option[ParsedCache])
-    extends Flusher(org, parsedCache)
-    with Runnable {
+    extends Flusher(org, parsedCache) {
 
-  private val t = new Thread(this)
-  t.setDaemon(true)
-  t.setName("apex-link cache flusher")
-  t.start()
+  CacheFlusher.start(this)
 
-  override def run(): Unit = {
-    def queueSize: Int   = org.refreshLock.synchronized { refreshQueue.size }
-    def skipped: Boolean = org.refreshLock.synchronized { skippedQueue }
+  private def queueSize: Int   = org.refreshLock.synchronized { refreshQueue.size }
+  private def skipped: Boolean = org.refreshLock.synchronized { skippedQueue }
 
-    while (true) {
-      // Wait for non-zero queue to be stable
-      // Or with an empty queue and a priority/single update
-      var stable = false
-      var skip   = false
-      while (!stable && !skip) {
-        val start = queueSize
-        Thread.sleep(1000)
-        val end = queueSize
-        stable = start > 0 && start == end
-        skip = skipped
-      }
+  /* Process the queue if it has been stable since startSize was taken, or flush if a priority
+   * update skipped the queue. */
+  private def process(startSize: Int): Unit = {
+    val endSize = queueSize
+    if (startSize > 0 && startSize == endSize) {
+      refreshAndFlush()
+    } else if (skipped) {
+      flush()
+    }
+  }
+}
 
-      if (stable) {
-        // Process refresh requests & flush
-        refreshAndFlush()
-      } else if (skip) {
-        // Already refreshed, just flush
-        flush()
-      }
+object CacheFlusher {
+
+  /* The thread holds the flusher weakly so it stops once the org is no longer in use, rather than
+   * keeping the org alive and polling for the lifetime of the process. It is created with no current
+   * org, as the thread would otherwise inherit a strong reference to it. */
+  private def start(flusher: CacheFlusher): Unit = {
+    val ref = new WeakReference(flusher)
+    OrgInfo.current.withValue(null) {
+      val t = new Thread(() => run(ref))
+      t.setDaemon(true)
+      t.setName("apex-link cache flusher")
+      t.start()
+    }
+  }
+
+  private def run(ref: WeakReference[CacheFlusher]): Unit = {
+    var startSize = Option(ref.get()).map(_.queueSize)
+    while (startSize.nonEmpty) {
+      Thread.sleep(1000)
+      startSize = Option(ref.get()).map(flusher => {
+        try {
+          flusher.process(startSize.get)
+        } catch {
+          case NonFatal(ex) => LoggerOps.info("Cache flush failed", ex)
+        }
+        flusher.queueSize
+      })
     }
   }
 }

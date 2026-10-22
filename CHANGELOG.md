@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The background cache flusher used when auto-flush is enabled is more robust. An error while
+  flushing no longer stops the thread, ending later automatic refreshes and cache writes, and its
+  thread now stops once the org is no longer referenced instead of keeping it in memory. Refresh
+  requests are now queued under the org's refresh lock, and clearing the shared name caches no
+  longer races with cache creation (#589)
 - More than one `@TearDown` method in a class is now reported as an error, as the platform only
   allows one (#591)
 - A spurious "No matching method found" warning for `Set.addAll`, `removeAll` or `retainAll` when

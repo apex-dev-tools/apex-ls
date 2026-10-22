@@ -28,12 +28,12 @@ trait CleanableCache {
 object Cleanable {
   private val cleanable = mutable.Set[IdentityBox[CleanableCache]]()
 
-  def register(cache: CleanableCache): Unit = {
+  def register(cache: CleanableCache): Unit = synchronized {
     cleanable.add(new IdentityBox(cache))
   }
 
   def clean(): Unit = {
-    cleanable.foreach(_.value.clean())
+    synchronized { cleanable.foreach(_.value.clean()) }
     Environment.gc()
   }
 }
